@@ -27,8 +27,22 @@ function setupOnboarding() {
       e.currentTarget.classList.add('selected');
       choices[question] = value;
       
-      // Enable start button if all questions answered
-      if (choices.situation && choices.skill && choices.cofounder) {
+      // Show/hide cofounder fulltime question based on Q4
+      if (question === 'cofounder') {
+        const cofounderFTQuestion = document.getElementById('cofounder-fulltime-question');
+        if (value === '1') {
+          cofounderFTQuestion.style.display = 'block';
+        } else {
+          cofounderFTQuestion.style.display = 'none';
+          delete choices.cofounder_fulltime;
+        }
+      }
+      
+      // Enable start button if all required questions answered
+      const required = choices.situation && choices.skill && choices.fulltime && choices.cofounder;
+      const cofounderAnswered = choices.cofounder === '2' || choices.cofounder_fulltime;
+      
+      if (required && cofounderAnswered) {
         document.getElementById('start-game-btn').disabled = false;
       }
     });
@@ -42,7 +56,13 @@ function setupOnboarding() {
 
 function startGame(choices) {
   game = new StartupGame();
-  const message = game.applyOnboarding(choices.situation, choices.skill, choices.cofounder);
+  const message = game.applyOnboarding(
+    choices.situation, 
+    choices.skill, 
+    choices.fulltime,
+    choices.cofounder,
+    choices.cofounder_fulltime || '2'  // Default to part-time if no cofounder
+  );
   game.updateDerivedValues();
   
   // Show game screen
@@ -63,6 +83,7 @@ function updateUI() {
   const state = game.getState();
   
   // Update stats
+  document.getElementById('stat-date').textContent = state.date;
   document.getElementById('stat-week').textContent = state.weeks;
   document.getElementById('stat-cash').textContent = `$${state.cash.toLocaleString()}`;
   

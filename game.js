@@ -5,6 +5,7 @@ class StartupGame {
     this.game = {
       cash: 0,
       weeks_elapsed: 0,
+      start_date: new Date(2024, 0, 1), // January 1, 2024
       product_progress: 0,
       customers: 0,
       monthly_revenue: 0,
@@ -548,10 +549,23 @@ class StartupGame {
 
   // ===== GETTERS =====
 
+  getCurrentDate() {
+    const date = new Date(this.game.start_date);
+    date.setDate(date.getDate() + (this.game.weeks_elapsed * 7));
+    return date;
+  }
+
+  getFormattedDate() {
+    const date = this.getCurrentDate();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
   getState() {
     return {
       cash: this.game.cash,
       weeks: this.game.weeks_elapsed,
+      date: this.getFormattedDate(),
       product: this.game.product_progress,
       product_launched: this.game.product_launched,
       customers: this.game.customers,
