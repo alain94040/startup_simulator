@@ -17,7 +17,9 @@ class StartupGame {
       founder: {
         technical_skill: 0,
         sales_skill: 0,
-        equity: 100
+        equity: 100,
+        full_time: true,
+        productivity: 1.0
       },
       team: [],
       game_over: false,
@@ -29,7 +31,7 @@ class StartupGame {
 
   // ===== INITIALIZATION =====
 
-  applyOnboarding(situation, skill, hasCofounder) {
+  applyOnboarding(situation, skill, fulltime, hasCofounder, cofounderFulltime) {
     // Apply situation
     if (situation === "1") {
       this.game.cash = 0;
@@ -56,12 +58,18 @@ class StartupGame {
       this.game.founder.sales_skill += 1;
     }
 
+    // Apply full-time vs part-time
+    this.game.founder.full_time = (fulltime === "1");
+    this.game.founder.productivity = this.game.founder.full_time ? 1.0 : 0.5;
+
     // Add co-founder if chosen
     if (hasCofounder === "1") {
       const cofounder = this.generateCofounder();
+      cofounder.full_time = (cofounderFulltime === "1");
+      cofounder.productivity = cofounder.full_time ? 1.0 : 0.5;
       this.game.team.push(cofounder);
       this.game.founder.equity -= cofounder.equity;
-      return `Added ${cofounder.name} as co-founder (${cofounder.equity}% equity)`;
+      return `Added ${cofounder.name} as co-founder (${cofounder.equity}% equity, ${cofounder.full_time ? 'full-time' : 'part-time'})`;
     }
     return null;
   }
@@ -366,19 +374,28 @@ class StartupGame {
   // ===== CALCULATIONS =====
 
   getTotalTechnicalSkill() {
-    let total = this.game.founder.technical_skill;
-    this.game.team.forEach(member => total += member.technical_skill);
+    let total = this.game.founder.technical_skill * this.game.founder.productivity;
+    this.game.team.forEach(member => {
+      total += member.technical_skill * member.productivity;
+    });
     return total;
   }
 
   getTotalSalesSkill() {
-    let total = this.game.founder.sales_skill;
-    this.game.team.forEach(member => total += member.sales_skill);
+    let total = this.game.founder.sales_skill * this.game.founder.productivity;
+    this.game.team.forEach(member => {
+      total += member.sales_skill * member.productivity;
+    });
     return total;
   }
 
   calculateBurn() {
-    return 3000 + (this.game.team.length * 5000);
+    // Only pay salary if working full-time
+    const founderBurn = this.game.founder.full_time ? 3000 : 0;
+    const teamBurn = this.game.team.reduce((sum, member) => {
+      return sum + (member.full_time ? 5000 : 0);
+    }, 0);
+    return founderBurn + teamBurn;
   }
 
   calculateFundraisingScore() {
@@ -436,7 +453,9 @@ class StartupGame {
       sales_skill: Math.floor(Math.random() * 8) + 3,
       equity: Math.floor(Math.random() * 16) + 10,
       months_on_team: 0,
-      will_quit: Math.random() < 0.3
+      will_quit: Math.random() < 0.3,
+      full_time: true,  // Default to full-time when found during game
+      productivity: 1.0
     };
   }
 
@@ -506,7 +525,8 @@ class StartupGame {
   // ===== GAME OVER =====
 
   checkGameOver() {
-    if (this.game.cash <= 0) {
+    // Game over only if you can't pay your team's burn rate
+    if (this.game.cash < 0) {
       this.game.game_over = true;
     }
   }
