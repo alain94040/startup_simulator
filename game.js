@@ -7,6 +7,7 @@ class StartupGame {
       weeks_elapsed: 0,
       start_date: new Date(2024, 0, 1), // January 1, 2024
       product_progress: 0,
+      product_market_fit: 50, // 0-100, hidden metric for building right thing
       customers: 0,
       monthly_revenue: 0,
       product_launched: false,
@@ -63,6 +64,9 @@ class StartupGame {
     this.game.founder.full_time = (fulltime === "1");
     this.game.founder.productivity = this.game.founder.full_time ? 1.0 : 0.5;
 
+    // Calculate initial product-market fit based on team composition
+    this.game.product_market_fit = this.calculateInitialMarketFit(situation, skill, hasCofounder);
+
     // Add co-founder if chosen
     if (hasCofounder === "1") {
       const cofounder = this.generateCofounder();
@@ -70,9 +74,55 @@ class StartupGame {
       cofounder.productivity = cofounder.full_time ? 1.0 : 0.5;
       this.game.team.push(cofounder);
       this.game.founder.equity -= cofounder.equity;
+      
+      // Improve market fit if co-founder has good sales skills
+      this.recalculateMarketFit();
+      
       return `Added ${cofounder.name} as co-founder (${cofounder.equity}% equity, ${cofounder.full_time ? 'full-time' : 'part-time'})`;
     }
     return null;
+  }
+
+  calculateInitialMarketFit(situation, skill) {
+    let fit = 30; // Base for pure technical founder
+    
+    // Bonus for previous founder experience (they've learned from mistakes)
+    if (situation === "3") {
+      fit += 20;
+    }
+    
+    // Bonus for sales/marketing skills
+    if (skill === "2") {
+      fit += 20; // Sales-focused founder understands market better
+    } else if (skill === "3") {
+      fit += 10; // Balanced founder has some market sense
+    }
+    
+    return Math.min(100, fit);
+  }
+
+  recalculateMarketFit() {
+    // Recalculate market fit based on team composition
+    const totalSales = this.getTotalSalesSkill();
+    const totalTech = this.getTotalTechnicalSkill();
+    
+    // Base fit depends on sales/market understanding
+    let fit = 30;
+    
+    // Each point of sales skill adds market understanding
+    fit += Math.min(30, totalSales * 2);
+    
+    // Pure technical teams (high tech, low sales) have poor market fit
+    if (totalTech > totalSales * 2) {
+      fit -= 10; // Penalty for tech-heavy team with no market voice
+    }
+    
+    // Cap at current level (can't decrease from customer learning)
+    if (this.game.customers > 0) {
+      fit = Math.max(this.game.product_market_fit, fit);
+    }
+    
+    this.game.product_market_fit = Math.min(100, Math.max(20, fit));
   }
 
   // ===== ACTION DEFINITIONS =====
@@ -114,17 +164,17 @@ class StartupGame {
 
   getActionInfo(action) {
     const info = {
-      'BUILD_PRODUCT': { name: 'Build Product', time: 2 },
-      'LAUNCH_PRODUCT': { name: 'Launch Product', time: 1 },
-      'GET_CUSTOMERS': { name: 'Get Customers', time: 2 },
-      'FIND_COFOUNDER': { name: 'Find Co-founder', time: 4 },
-      'PIVOT': { name: 'Pivot Product', time: 4 },
-      'APPLY_YC': { name: 'Apply to Y Combinator', time: 5 },
-      'APPLY_TECHSTARS': { name: 'Apply to Techstars', time: 5 },
-      'ASK_FRIENDS_FAMILY': { name: 'Ask Friends & Family', time: 1 },
-      'PREPARE_PITCH': { name: 'Prepare Pitch Deck', time: 1 },
-      'PITCH_ANGELS': { name: 'Pitch Angels', time: 4 },
-      'PITCH_SEED': { name: 'Pitch VCs for Seed', time: 8 }
+      'BUILD_PRODUCT': { name: 'Build Product', time: 2, category: 'product' },
+      'LAUNCH_PRODUCT': { name: 'Launch Product', time: 1, category: 'sales' },
+      'GET_CUSTOMERS': { name: 'Get Customers', time: 2, category: 'sales' },
+      'FIND_COFOUNDER': { name: 'Find Co-founder', time: 4, category: 'team' },
+      'PIVOT': { name: 'Pivot Product', time: 4, category: 'product' },
+      'APPLY_YC': { name: 'Apply to Y Combinator', time: 5, category: 'fundraising' },
+      'APPLY_TECHSTARS': { name: 'Apply to Techstars', time: 5, category: 'fundraising' },
+      'ASK_FRIENDS_FAMILY': { name: 'Ask Friends & Family', time: 1, category: 'fundraising' },
+      'PREPARE_PITCH': { name: 'Prepare Pitch Deck', time: 1, category: 'fundraising' },
+      'PITCH_ANGELS': { name: 'Pitch Angels', time: 4, category: 'fundraising' },
+      'PITCH_SEED': { name: 'Pitch VCs for Seed', time: 8, category: 'fundraising' }
     };
     return info[action];
   }
@@ -200,12 +250,37 @@ class StartupGame {
   }
 
   getCustomers() {
-    const newCustomers = Math.floor(this.getTotalSalesSkill() * 20);
+    const baseSalesSkill = this.getTotalSalesSkill();
+    
+    // Market fit acts as a multiplier on customer acquisition
+    const marketFitMultiplier = this.game.product_market_fit / 100;
+    
+    const newCustomers = Math.floor(baseSalesSkill * 20 * marketFitMultiplier);
     this.game.customers += newCustomers;
+    
+    // Learn from customer feedback - each customer interaction improves market fit slightly
+    if (newCustomers > 0) {
+      this.improveMarketFitFromCustomers(newCustomers);
+    }
+    
+    let message = `Acquired ${newCustomers} new customers! Total: ${this.game.customers}`;
+    
+    // Warn player if market fit is poor
+    if (marketFitMultiplier < 0.4) {
+      message += `\n⚠️ Customer acquisition is slower than expected. Are you building what people want?`;
+    }
+    
     return {
-      message: `Acquired ${newCustomers} new customers! Total: ${this.game.customers}`,
-      type: 'success'
+      message: message,
+      type: newCustomers < baseSalesSkill * 10 ? 'warning' : 'success'
     };
+  }
+
+  improveMarketFitFromCustomers(newCustomers) {
+    // Each batch of customers provides market feedback
+    // More customers = more learning, but diminishing returns
+    const learning = Math.min(5, newCustomers / 20);
+    this.game.product_market_fit = Math.min(100, this.game.product_market_fit + learning);
   }
 
   findCofounder() {
@@ -328,6 +403,10 @@ class StartupGame {
     this.game.team.push(cofounder);
     this.game.founder.equity -= cofounder.equity;
     this.game.pending_cofounder_offer = null;
+    
+    // Recalculate market fit with new team member
+    this.recalculateMarketFit();
+    
     this.updateDerivedValues();
     return {
       message: `✓ ${cofounder.name} joined the team!`,
@@ -351,6 +430,10 @@ class StartupGame {
     this.game.incubator_name = offer.name;
     this.game.incubator_bonus = offer.bonus;
     
+    // Incubators dramatically improve product-market fit through mentorship
+    const marketFitBonus = offer.name === 'Y Combinator' ? 25 : 15;
+    this.game.product_market_fit = Math.min(100, this.game.product_market_fit + marketFitBonus);
+    
     this.advanceTime(offer.weeks);
     this.game.in_incubator = false;
     this.game.pending_incubator_offer = null;
@@ -359,7 +442,7 @@ class StartupGame {
     this.checkMonthlyCheckpoint();
     
     return {
-      message: `✓ Joined ${offer.name}! Completed ${offer.weeks}-week program. Fundraising score boosted by +${offer.bonus}`,
+      message: `✓ Joined ${offer.name}! Completed ${offer.weeks}-week program. Fundraising score boosted by +${offer.bonus}. Market understanding significantly improved!`,
       type: 'success'
     };
   }
@@ -568,6 +651,7 @@ class StartupGame {
       date: this.getFormattedDate(),
       product: this.game.product_progress,
       product_launched: this.game.product_launched,
+      product_market_fit: Math.floor(this.game.product_market_fit), // For dev display
       customers: this.game.customers,
       revenue: this.game.monthly_revenue,
       team_size: this.game.team.length + 1,

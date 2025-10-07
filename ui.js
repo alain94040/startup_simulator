@@ -94,6 +94,10 @@ function updateUI() {
   document.getElementById('stat-product').textContent = state.product_launched ? `${productText} (LAUNCHED)` : productText;
   document.getElementById('product-bar').style.width = state.product + '%';
   
+  // Update market fit (dev display)
+  document.getElementById('stat-market-fit').textContent = state.product_market_fit + '%';
+  document.getElementById('market-fit-bar').style.width = state.product_market_fit + '%';
+  
   document.getElementById('stat-customers').textContent = state.customers.toLocaleString();
   document.getElementById('stat-team').textContent = state.team_size;
   document.getElementById('stat-equity').textContent = state.equity + '%';
@@ -112,8 +116,17 @@ function updateUI() {
 // ===== ACTION HANDLING =====
 
 function renderActions() {
-  const container = document.getElementById('action-buttons');
-  container.innerHTML = '';
+  // Clear all category containers
+  const containers = {
+    product: document.getElementById('action-buttons-product'),
+    sales: document.getElementById('action-buttons-sales'),
+    fundraising: document.getElementById('action-buttons-fundraising'),
+    team: document.getElementById('action-buttons-team')
+  };
+  
+  Object.values(containers).forEach(container => {
+    if (container) container.innerHTML = '';
+  });
   
   const actions = game.getAvailableActions();
   
@@ -126,7 +139,20 @@ function renderActions() {
       <div class="action-btn-time">${info.time} weeks</div>
     `;
     button.onclick = () => executeAction(action);
-    container.appendChild(button);
+    
+    // Add to appropriate category
+    const container = containers[info.category];
+    if (container) {
+      container.appendChild(button);
+    }
+  });
+  
+  // Hide empty categories
+  Object.entries(containers).forEach(([category, container]) => {
+    const categoryDiv = container.closest('.action-category');
+    if (categoryDiv) {
+      categoryDiv.style.display = container.children.length > 0 ? 'block' : 'none';
+    }
   });
 }
 

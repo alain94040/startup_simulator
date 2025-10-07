@@ -103,6 +103,13 @@
                 <div class="progress-fill" id="product-bar" style="width: 0%"></div>
               </div>
             </div>
+            <div class="stat-item" style="background: #fff3e0; border-color: #ff9800;">
+              <div class="stat-label">Market Fit (dev)</div>
+              <div class="stat-value" id="stat-market-fit" style="color: #f57c00;">50%</div>
+              <div class="progress-bar">
+                <div class="progress-fill" id="market-fit-bar" style="width: 50%; background: #ff9800;"></div>
+              </div>
+            </div>
             <div class="stat-item">
               <div class="stat-label">Customers</div>
               <div class="stat-value" id="stat-customers">0</div>
@@ -139,7 +146,30 @@
         <!-- Actions Panel -->
         <div class="actions-panel">
           <h2>Available Actions</h2>
-          <div class="action-buttons" id="action-buttons"></div>
+          
+          <!-- R&D Actions -->
+          <div class="action-category">
+            <h3>🔬 Product Development</h3>
+            <div class="action-buttons" id="action-buttons-product"></div>
+          </div>
+          
+          <!-- Sales & Marketing Actions -->
+          <div class="action-category">
+            <h3>💼 Sales & Marketing</h3>
+            <div class="action-buttons" id="action-buttons-sales"></div>
+          </div>
+          
+          <!-- Fundraising Actions -->
+          <div class="action-category">
+            <h3>💰 Fundraising</h3>
+            <div class="action-buttons" id="action-buttons-fundraising"></div>
+          </div>
+          
+          <!-- Team Actions -->
+          <div class="action-category">
+            <h3>👥 Team</h3>
+            <div class="action-buttons" id="action-buttons-team"></div>
+          </div>
         </div>
       </div>
 
