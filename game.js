@@ -133,6 +133,9 @@ class StartupGame {
     actions.push('BUILD_PRODUCT');
     actions.push('FIND_COFOUNDER');
     
+    // Market research available anytime
+    actions.push('TALK_TO_USERS');
+    
     if (this.game.product_progress >= 60 && !this.game.product_launched) {
       actions.push('LAUNCH_PRODUCT');
     }
@@ -165,6 +168,7 @@ class StartupGame {
   getActionInfo(action) {
     const info = {
       'BUILD_PRODUCT': { name: 'Build Product', time: 2, category: 'product' },
+      'TALK_TO_USERS': { name: 'Talk to Potential Users', time: 1, category: 'sales' },
       'LAUNCH_PRODUCT': { name: 'Launch Product', time: 1, category: 'sales' },
       'GET_CUSTOMERS': { name: 'Get Customers', time: 2, category: 'sales' },
       'FIND_COFOUNDER': { name: 'Find Co-founder', time: 4, category: 'team' },
@@ -190,6 +194,9 @@ class StartupGame {
     switch(action) {
       case 'BUILD_PRODUCT':
         result = this.buildProduct();
+        break;
+      case 'TALK_TO_USERS':
+        result = this.talkToUsers();
         break;
       case 'LAUNCH_PRODUCT':
         result = this.launchProduct();
@@ -233,11 +240,38 @@ class StartupGame {
   // ===== ACTION IMPLEMENTATIONS =====
 
   buildProduct() {
-    const gain = this.getTotalTechnicalSkill() * 2;
-    this.game.product_progress = Math.min(100, this.game.product_progress + gain);
+    const baseGain = this.getTotalTechnicalSkill() * 2;
+    
+    // Calculate efficiency penalty when building ahead of market understanding
+    const gap = this.game.product_progress - this.game.product_market_fit;
+    let efficiency = 1.0;
+    
+    if (gap > 10) {
+      // Exponential decay: for every 10 points ahead, lose significant efficiency
+      const excess = gap - 10;
+      efficiency = Math.max(0.1, 1.0 - (excess * 0.025)); // 2.5% loss per point
+    }
+    
+    const actualGain = baseGain * efficiency;
+    this.game.product_progress = Math.min(100, this.game.product_progress + actualGain);
+    
+    let message = `Built ${actualGain.toFixed(1)}% of product. Total progress: ${Math.floor(this.game.product_progress)}%`;
+    
+    // Warn player if building is slowing down
+    if (efficiency < 0.7) {
+      message += `\n⚠️ Progress is slowing. Without customer feedback, you might be building the wrong features.`;
+    } else if (efficiency < 0.9) {
+      message += `\n💡 Consider talking to customers to validate your direction.`;
+    }
+    
     return {
-      message: `Built ${gain}% of product. Total progress: ${Math.floor(this.game.product_progress)}%`,
-      type: 'success'
+      message: message,
+      type: efficiency < 0.7 ? 'warning' : 'success',
+      debug: {
+        base_gain: baseGain,
+        efficiency: efficiency,
+        gap: gap
+      }
     };
   }
 
@@ -249,37 +283,110 @@ class StartupGame {
     };
   }
 
-  getCustomers() {
+  talkToUsers() {
     const baseSalesSkill = this.getTotalSalesSkill();
     
-    // Market fit acts as a multiplier on customer acquisition
-    const marketFitMultiplier = this.game.product_market_fit / 100;
+    // Base market fit improvement from user interviews
+    let baseImprovement = baseSalesSkill * 0.5; // 0.5% per sales skill point
     
-    const newCustomers = Math.floor(baseSalesSkill * 20 * marketFitMultiplier);
-    this.game.customers += newCustomers;
-    
-    // Learn from customer feedback - each customer interaction improves market fit slightly
-    if (newCustomers > 0) {
-      this.improveMarketFitFromCustomers(newCustomers);
+    // Diminishing returns - harder to learn more as you already know more
+    let effectiveness = 1.0;
+    if (this.game.product_market_fit > 60) {
+      effectiveness = 0.5; // Half as effective when you already know a lot
+    } else if (this.game.product_market_fit > 40) {
+      effectiveness = 0.75;
     }
     
-    let message = `Acquired ${newCustomers} new customers! Total: ${this.game.customers}`;
+    // Having some product helps conversations be more concrete
+    let concretenessBonus = 1.0;
+    if (this.game.product_progress > 30) {
+      concretenessBonus = 1.3; // 30% bonus with something to show
+    } else if (this.game.product_progress > 50) {
+      concretenessBonus = 1.5; // 50% bonus with substantial product
+    }
     
-    // Warn player if market fit is poor
-    if (marketFitMultiplier < 0.4) {
-      message += `\n⚠️ Customer acquisition is slower than expected. Are you building what people want?`;
+    const actualImprovement = baseImprovement * effectiveness * concretenessBonus;
+    const oldFit = this.game.product_market_fit;
+    this.game.product_market_fit = Math.min(100, this.game.product_market_fit + actualImprovement);
+    
+    let message = `Talked to potential users. Market understanding improved by ${actualImprovement.toFixed(1)}% (now ${Math.floor(this.game.product_market_fit)}%)`;
+    
+    // Contextual feedback
+    if (this.game.product_progress < 30) {
+      message += `\n💡 Conversations would be more valuable with a prototype to show.`;
+    } else if (this.game.product_progress > 50 && this.game.product_market_fit < 60) {
+      message += `\n✓ Having a product helps get concrete feedback!`;
+    }
+    
+    if (effectiveness < 1.0) {
+      message += `\n💡 Diminishing returns on user interviews. Consider building and testing with real customers.`;
     }
     
     return {
       message: message,
-      type: newCustomers < baseSalesSkill * 10 ? 'warning' : 'success'
+      type: 'success',
+      debug: {
+        base: baseImprovement,
+        effectiveness: effectiveness,
+        concreteness_bonus: concretenessBonus,
+        actual: actualImprovement
+      }
     };
   }
 
-  improveMarketFitFromCustomers(newCustomers) {
-    // Each batch of customers provides market feedback
-    // More customers = more learning, but diminishing returns
-    const learning = Math.min(5, newCustomers / 20);
+  getCustomers() {
+    const baseSalesSkill = this.getTotalSalesSkill();
+    
+    // Market fit multiplier (are you building right thing?)
+    const marketFitMultiplier = this.game.product_market_fit / 100;
+    
+    // Product readiness multiplier (is there enough to show?)
+    // Need at least 40% product to get meaningful traction
+    const productMultiplier = Math.min(1.0, Math.max(0.3, this.game.product_progress / 60));
+    
+    const newCustomers = Math.floor(baseSalesSkill * 20 * marketFitMultiplier * productMultiplier);
+    this.game.customers += newCustomers;
+    
+    // Learn from customer feedback - but learning rate depends on product completeness
+    // Need something substantial to get meaningful feedback
+    let learningRate = 1.0;
+    if (this.game.product_progress < 30) {
+      learningRate = 0.4; // Hard to learn without much to show
+    } else if (this.game.product_progress < 50) {
+      learningRate = 0.7; // Some learning possible
+    }
+    
+    if (newCustomers > 0) {
+      const baseLearning = Math.min(5, newCustomers / 20);
+      const actualLearning = baseLearning * learningRate;
+      this.improveMarketFitFromCustomers(actualLearning);
+    }
+    
+    let message = `Acquired ${newCustomers} new customers! Total: ${this.game.customers}`;
+    
+    // Contextual warnings
+    if (this.game.product_progress < 40) {
+      message += `\n⚠️ Hard to get meaningful traction without more product to show.`;
+    } else if (marketFitMultiplier < 0.4) {
+      message += `\n⚠️ Customer acquisition is slower than expected. Are you building what people want?`;
+    } else if (learningRate < 1.0) {
+      message += `\n💡 Build more product features to get better customer feedback.`;
+    }
+    
+    return {
+      message: message,
+      type: newCustomers < baseSalesSkill * 8 ? 'warning' : 'success',
+      debug: {
+        base_potential: baseSalesSkill * 20,
+        market_fit_multiplier: marketFitMultiplier,
+        product_multiplier: productMultiplier,
+        learning_rate: learningRate
+      }
+    };
+  }
+
+  improveMarketFitFromCustomers(learning) {
+    // Market fit improves from customer feedback
     this.game.product_market_fit = Math.min(100, this.game.product_market_fit + learning);
   }
 
@@ -645,13 +752,30 @@ class StartupGame {
   }
 
   getState() {
+    // Calculate current efficiencies for debug display
+    const productGap = this.game.product_progress - this.game.product_market_fit;
+    let buildEfficiency = 1.0;
+    if (productGap > 10) {
+      const excess = productGap - 10;
+      buildEfficiency = Math.max(0.1, 1.0 - (excess * 0.025));
+    }
+    
+    let learningRate = 1.0;
+    if (this.game.product_progress < 30) {
+      learningRate = 0.4;
+    } else if (this.game.product_progress < 50) {
+      learningRate = 0.7;
+    }
+    
     return {
       cash: this.game.cash,
       weeks: this.game.weeks_elapsed,
       date: this.getFormattedDate(),
       product: this.game.product_progress,
       product_launched: this.game.product_launched,
-      product_market_fit: Math.floor(this.game.product_market_fit), // For dev display
+      product_market_fit: Math.floor(this.game.product_market_fit),
+      build_efficiency: Math.floor(buildEfficiency * 100), // For dev display
+      learning_rate: Math.floor(learningRate * 100), // For dev display
       customers: this.game.customers,
       revenue: this.game.monthly_revenue,
       team_size: this.game.team.length + 1,

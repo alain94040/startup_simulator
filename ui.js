@@ -98,6 +98,10 @@ function updateUI() {
   document.getElementById('stat-market-fit').textContent = state.product_market_fit + '%';
   document.getElementById('market-fit-bar').style.width = state.product_market_fit + '%';
   
+  // Update efficiency metrics (dev display)
+  document.getElementById('stat-build-efficiency').textContent = state.build_efficiency + '%';
+  document.getElementById('stat-learning-rate').textContent = state.learning_rate + '%';
+  
   document.getElementById('stat-customers').textContent = state.customers.toLocaleString();
   document.getElementById('stat-team').textContent = state.team_size;
   document.getElementById('stat-equity').textContent = state.equity + '%';
