@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Game Tests</title>
+  <style>
+    body {
+      font-family: monospace;
+      padding: 20px;
+      background: #1e1e1e;
+      color: #d4d4d4;
+    }
+    .test-suite {
+      margin-bottom: 30px;
+    }
+    .test-suite h2 {
+      color: #4ec9b0;
+      border-bottom: 2px solid #4ec9b0;
+      padding-bottom: 5px;
+    }
+    .test {
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 4px;
+    }
+    .test.pass {
+      background: #1e3a1e;
+      color: #4ec9b0;
+    }
+    .test.fail {
+      background: #3a1e1e;
+      color: #f48771;
+    }
+    .test-name {
+      font-weight: bold;
+    }
+    .test-details {
+      margin-top: 5px;
+      font-size: 0.9em;
+      opacity: 0.8;
+    }
+    .summary {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 15px;
+      background: #2d2d2d;
+      border-radius: 8px;
+      border: 2px solid #4ec9b0;
+    }
+    .summary.has-failures {
+      border-color: #f48771;
+    }
+  </style>
+</head>
+<body>
+  <div class="summary" id="summary">
+    <div id="summary-text">Running tests...</div>
+  </div>
+
+  <h1>🧪 Game Logic Tests</h1>
+  <div id="test-results"></div>
+
+  <script src="game.js"></script>
+  <script>
+    // Simple test framework
+    const tests = [];
+    let passCount = 0;
+    let failCount = 0;
+
+    function test(name, fn) {
+      tests.push({ name, fn });
+    }
+
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message || 'Assertion failed');
+      }
+    }
+
+    function runTests() {
+      const resultsDiv = document.getElementById('test-results');
+      
+      tests.forEach(({ name, fn }) => {
+        const testDiv = document.createElement('div');
+        testDiv.className = 'test';
+        
+        try {
+          fn();
+          testDiv.classList.add('pass');
+          testDiv.innerHTML = `<div class="test-name">✓ ${name}</div>`;
+          passCount++;
+        } catch (error) {
+          testDiv.classList.add('fail');
+          testDiv.innerHTML = `
+            <div class="test-name">✗ ${name}</div>
+            <div class="test-details">${error.message}</div>
+          `;
+          failCount++;
+        }
+        
+        resultsDiv.appendChild(testDiv);
+      });
+
+      // Update summary
+      const summaryDiv = document.getElementById('summary');
+      const summaryText = document.getElementById('summary-text');
+      summaryText.innerHTML = `
+        <strong>${passCount} passed, ${failCount} failed</strong><br>
+        Total: ${tests.length} tests
+      `;
+      if (failCount > 0) {
+        summaryDiv.classList.add('has-failures');
+      }
+    }
+
+    // ===== BEHAVIORAL TESTS =====
+
+    test("Can't reach 100% product by just building repeatedly", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2"); // Pure technical, full-time
+      game.updateDerivedValues();
+      
+      // Build 20 times
+      for (let i = 0; i < 20; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      const state = game.getState();
+      assert(state.product < 100, `Product should be blocked before 100%, got ${state.product}%`);
+      assert(state.product > 50, `Product should make some progress, got ${state.product}%`);
+    });
+
+    test("Can't get customers without launching product", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "2", "2"); // Sales-focused
+      game.updateDerivedValues();
+      
+      // Try to get customers without launching
+      const actions = game.getAvailableActions();
+      assert(!actions.includes('GET_CUSTOMERS'), 'Should not be able to get customers before launch');
+    });
+
+    test("Can't launch without building product first", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const actions = game.getAvailableActions();
+      assert(!actions.includes('LAUNCH_PRODUCT'), 'Should not be able to launch with 0% product');
+    });
+
+    test("Part-time solo founder doesn't immediately lose with $0", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "2", "2", "2"); // Student, part-time, $0
+      game.updateDerivedValues();
+      
+      // Advance through several months
+      for (let i = 0; i < 12; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      assert(!game.game.game_over, 'Part-time solo founder should survive with $0');
+    });
+
+    test("Full-time founder with $0 eventually runs out of money", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2"); // Student, full-time, $0
+      game.updateDerivedValues();
+      
+      // Advance several months - should eventually game over
+      for (let i = 0; i < 20; i++) {
+        if (game.isGameOver()) break;
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      assert(game.game.game_over, 'Full-time founder with $0 should eventually run out of money');
+    });
+
+    test("Talking to users improves market fit", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const initialFit = game.game.product_market_fit;
+      game.executeAction('TALK_TO_USERS');
+      const newFit = game.game.product_market_fit;
+      
+      assert(newFit > initialFit, `Market fit should improve, was ${initialFit}, now ${newFit}`);
+    });
+
+    test("Can't just talk to users to reach 100% market fit", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "2", "2"); // Sales-focused for faster learning
+      game.updateDerivedValues();
+      
+      // Talk to users 30 times
+      for (let i = 0; i < 30; i++) {
+        game.executeAction('TALK_TO_USERS');
+      }
+      
+      const state = game.getState();
+      assert(state.product_market_fit < 100, `Market fit should hit diminishing returns, got ${state.product_market_fit}%`);
+    });
+
+    test("Building with balanced product and market fit is efficient", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("3", "3", "1", "2", "2"); // Experienced, balanced
+      game.updateDerivedValues();
+      
+      // Build some, talk some - keep them balanced
+      for (let i = 0; i < 5; i++) {
+        game.executeAction('BUILD_PRODUCT');
+        game.executeAction('TALK_TO_USERS');
+      }
+      
+      const state = game.getState();
+      // With balanced approach, should make good progress
+      assert(state.product > 40, `Should make good progress with balanced approach, got ${state.product}%`);
+      assert(Math.abs(state.product - state.product_market_fit) < 30, 'Product and market fit should stay relatively close');
+    });
+
+    test("Getting customers improves market fit", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "1", "1"); // Sales-focused with co-founder
+      game.updateDerivedValues();
+      
+      // Build to launch
+      while (game.game.product_progress < 60) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      game.executeAction('LAUNCH_PRODUCT');
+      
+      const fitBefore = game.game.product_market_fit;
+      game.executeAction('GET_CUSTOMERS');
+      const fitAfter = game.game.product_market_fit;
+      
+      assert(fitAfter >= fitBefore, 'Getting customers should improve or maintain market fit');
+    });
+
+    test("Incubator improves market fit significantly", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("3", "1", "1", "1", "1"); // Best chance for acceptance
+      game.updateDerivedValues();
+      
+      // Build some product to increase acceptance odds
+      for (let i = 0; i < 8; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      const fitBefore = game.game.product_market_fit;
+      
+      // Try applying to incubator multiple times (acceptance is random)
+      let accepted = false;
+      for (let i = 0; i < 10 && !accepted; i++) {
+        const result = game.applyToIncubator('YC');
+        if (game.game.pending_incubator_offer) {
+          game.acceptIncubator();
+          accepted = true;
+        }
+      }
+      
+      if (accepted) {
+        const fitAfter = game.game.product_market_fit;
+        assert(fitAfter > fitBefore + 10, `Incubator should significantly boost market fit, was ${fitBefore}, now ${fitAfter}`);
+      } else {
+        console.log('⚠️ Skipped incubator test - not accepted (random)');
+      }
+    });
+
+    test("Raising seed round with high fundraising score triggers win", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("3", "3", "1", "1", "1");
+      game.updateDerivedValues();
+      
+      // Cheat to create winning conditions
+      game.game.product_progress = 100;
+      game.game.product_market_fit = 100;
+      game.game.customers = 2000;
+      game.game.product_launched = true;
+      game.game.pitch_deck_ready = true;
+      game.game.cash = 1000000; // Ensure we don't run out
+      game.updateDerivedValues();
+      
+      // Should have high fundraising score
+      const state = game.getState();
+      assert(state.fundraising_score > 60, `Should have high fundraising score, got ${state.fundraising_score}`);
+      
+      // Pitch seed - may need multiple attempts due to randomness
+      let won = false;
+      for (let i = 0; i < 20 && !won; i++) {
+        game.executeAction('PITCH_SEED');
+        if (game.game.game_won) {
+          won = true;
+        }
+      }
+      
+      assert(won, 'Should eventually win with high fundraising score');
+    });
+
+    test("Actions consume time correctly", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const startWeek = game.game.weeks_elapsed;
+      game.executeAction('BUILD_PRODUCT'); // 2 weeks
+      const afterBuild = game.game.weeks_elapsed;
+      
+      assert(afterBuild === startWeek + 2, `Build should take 2 weeks, elapsed ${afterBuild - startWeek}`);
+      
+      game.executeAction('TALK_TO_USERS'); // 1 week
+      const afterTalk = game.game.weeks_elapsed;
+      
+      assert(afterTalk === afterBuild + 1, `Talk should take 1 week, elapsed ${afterTalk - afterBuild}`);
+    });
+
+    test("Monthly checkpoint deducts burn rate", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "1", "1", "2", "2"); // Has $30k
+      game.updateDerivedValues();
+      
+      const startCash = game.game.cash;
+      const burn = game.calculateBurn();
+      
+      // Advance 4 weeks (1 month)
+      game.executeAction('BUILD_PRODUCT'); // 2 weeks
+      game.executeAction('BUILD_PRODUCT'); // 2 weeks
+      
+      const endCash = game.game.cash;
+      assert(endCash < startCash, `Cash should decrease after monthly checkpoint, was ${startCash}, now ${endCash}`);
+      assert(endCash === startCash - burn, `Should deduct exactly the burn rate (${burn})`);
+    });
+
+    test("Can't pitch without preparing deck first", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const actions = game.getAvailableActions();
+      assert(!actions.includes('PITCH_ANGELS'), 'Should not be able to pitch angels without deck');
+      assert(!actions.includes('PITCH_SEED'), 'Should not be able to pitch VCs without deck');
+      assert(actions.includes('PREPARE_PITCH'), 'Should be able to prepare pitch deck');
+    });
+
+    // Run all tests when page loads
+    window.addEventListener('DOMContentLoaded', runTests);
+  </script>
+</body>
+</html>
