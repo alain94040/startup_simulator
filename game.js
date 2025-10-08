@@ -247,9 +247,11 @@ class StartupGame {
     let efficiency = 1.0;
     
     if (gap > 10) {
-      // Exponential decay: for every 10 points ahead, lose significant efficiency
+      // More aggressive exponential decay
       const excess = gap - 10;
-      efficiency = Math.max(0.1, 1.0 - (excess * 0.025)); // 2.5% loss per point
+      // Exponential formula: efficiency = 0.95^(excess)
+      efficiency = Math.pow(0.95, excess);
+      efficiency = Math.max(0.05, efficiency); // Minimum 5%
     }
     
     const actualGain = baseGain * efficiency;
@@ -258,7 +260,9 @@ class StartupGame {
     let message = `Built ${actualGain.toFixed(1)}% of product. Total progress: ${Math.floor(this.game.product_progress)}%`;
     
     // Warn player if building is slowing down
-    if (efficiency < 0.7) {
+    if (efficiency < 0.5) {
+      message += `\n⚠️ Progress is crawling. Without customer feedback, you're likely building the wrong things.`;
+    } else if (efficiency < 0.7) {
       message += `\n⚠️ Progress is slowing. Without customer feedback, you might be building the wrong features.`;
     } else if (efficiency < 0.9) {
       message += `\n💡 Consider talking to customers to validate your direction.`;
@@ -289,20 +293,23 @@ class StartupGame {
     // Base market fit improvement from user interviews
     let baseImprovement = baseSalesSkill * 0.5; // 0.5% per sales skill point
     
-    // Diminishing returns - harder to learn more as you already know more
+    // More aggressive diminishing returns - exponential decay as knowledge increases
     let effectiveness = 1.0;
-    if (this.game.product_market_fit > 60) {
-      effectiveness = 0.5; // Half as effective when you already know a lot
-    } else if (this.game.product_market_fit > 40) {
-      effectiveness = 0.75;
+    if (this.game.product_market_fit > 70) {
+      // Very hard to learn more just by talking
+      effectiveness = 0.15;
+    } else if (this.game.product_market_fit > 50) {
+      effectiveness = 0.4;
+    } else if (this.game.product_market_fit > 30) {
+      effectiveness = 0.7;
     }
     
     // Having some product helps conversations be more concrete
     let concretenessBonus = 1.0;
-    if (this.game.product_progress > 30) {
-      concretenessBonus = 1.3; // 30% bonus with something to show
-    } else if (this.game.product_progress > 50) {
+    if (this.game.product_progress > 50) {
       concretenessBonus = 1.5; // 50% bonus with substantial product
+    } else if (this.game.product_progress > 30) {
+      concretenessBonus = 1.3; // 30% bonus with something to show
     }
     
     const actualImprovement = baseImprovement * effectiveness * concretenessBonus;
@@ -318,8 +325,8 @@ class StartupGame {
       message += `\n✓ Having a product helps get concrete feedback!`;
     }
     
-    if (effectiveness < 1.0) {
-      message += `\n💡 Diminishing returns on user interviews. Consider building and testing with real customers.`;
+    if (effectiveness <= 0.4) {
+      message += `\n⚠️ Diminishing returns on user interviews. You need to build and test with real customers.`;
     }
     
     return {
