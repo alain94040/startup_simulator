@@ -344,6 +344,27 @@
       assert(actions.includes('PREPARE_PITCH'), 'Should be able to prepare pitch deck');
     });
 
+    test("Full-time founder with $30k survives at least 3 months", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "1", "1", "2", "2"); // Employed, full-time, $30k
+      game.updateDerivedValues();
+      
+      const startWeeks = game.game.weeks_elapsed;
+      const startCash = game.game.cash;
+      
+      // Do actions for 3 months (12 weeks)
+      for (let i = 0; i < 6; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      const endWeeks = game.game.weeks_elapsed;
+      const endCash = game.game.cash;
+      
+      assert(!game.game.game_over, `Should survive 3 months, but got game over. Cash: ${endCash}, Started with: ${startCash}`);
+      assert(endWeeks >= 12, `Should have advanced at least 12 weeks, got ${endWeeks}`);
+      assert(endCash > 0, `Should have positive cash after 3 months, got ${endCash}`);
+    });
+
     // Run all tests when page loads
     window.addEventListener('DOMContentLoaded', runTests);
   </script>
