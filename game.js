@@ -514,6 +514,8 @@ class StartupGame {
 
   acceptCofounder() {
     const cofounder = this.game.pending_cofounder_offer;
+    cofounder.salary = 0;  // Start with no salary (equity only)
+    cofounder.productivity = 0.5;  // Part-time at first
     this.game.team.push(cofounder);
     this.game.founder.equity -= cofounder.equity;
     this.game.pending_cofounder_offer = null;
@@ -523,7 +525,7 @@ class StartupGame {
     
     this.updateDerivedValues();
     return {
-      message: `✓ ${cofounder.name} joined the team!`,
+      message: `✓ ${cofounder.name} joined the team! (On equity, starting part-time)`,
       type: 'success'
     };
   }
@@ -588,11 +590,14 @@ class StartupGame {
   }
 
   calculateBurn() {
-    // Only pay salary if working full-time
+    // Founder salary (if full-time)
     const founderBurn = this.game.founder.full_time ? 3000 : 0;
+    
+    // Co-founder salaries (only what we're actually paying them)
     const teamBurn = this.game.team.reduce((sum, member) => {
-      return sum + (member.full_time ? 5000 : 0);
+      return sum + member.salary;
     }, 0);
+    
     return founderBurn + teamBurn;
   }
 
@@ -652,8 +657,8 @@ class StartupGame {
       equity: Math.floor(Math.random() * 16) + 10,
       months_on_team: 0,
       will_quit: Math.random() < 0.3,
-      full_time: true,  // Default to full-time when found during game
-      productivity: 1.0
+      salary: 0,  // Start with no salary (equity only)
+      productivity: 0.5  // Part-time at first
     };
   }
 

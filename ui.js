@@ -30,20 +30,32 @@ function setupOnboarding() {
       // Show/hide cofounder fulltime question based on Q4
       if (question === 'cofounder') {
         const cofounderFTQuestion = document.getElementById('cofounder-fulltime-question');
-        if (value === '1') {
-          cofounderFTQuestion.style.display = 'block';
-        } else {
-          cofounderFTQuestion.style.display = 'none';
-          delete choices.cofounder_fulltime;
+        console.log('Cofounder question element:', cofounderFTQuestion);
+        console.log('Current display style:', cofounderFTQuestion ? cofounderFTQuestion.style.display : 'NULL');
+        if (cofounderFTQuestion) {
+          if (value === '1') {
+            console.log('Setting display to block');
+            cofounderFTQuestion.style.display = 'block';
+            console.log('After setting, display is:', cofounderFTQuestion.style.display);
+          } else {
+            console.log('Setting display to none');
+            cofounderFTQuestion.style.display = 'none';
+            delete choices.cofounder_fulltime;
+          }
         }
       }
       
-      // Enable start button if all required questions answered
-      const required = choices.situation && choices.skill && choices.fulltime && choices.cofounder;
-      const cofounderAnswered = choices.cofounder === '2' || choices.cofounder_fulltime;
-      
-      if (required && cofounderAnswered) {
-        document.getElementById('start-game-btn').disabled = false;
+      // Enable start button when ready
+      const startBtn = document.getElementById('start-game-btn');
+      if (choices.situation && choices.skill && choices.fulltime && choices.cofounder) {
+        // If no cofounder, we're done
+        if (choices.cofounder === '2') {
+          startBtn.disabled = false;
+        }
+        // If has cofounder, need their fulltime answer too
+        else if (choices.cofounder === '1' && choices.cofounder_fulltime) {
+          startBtn.disabled = false;
+        }
       }
     });
   });
