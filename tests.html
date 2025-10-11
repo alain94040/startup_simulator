@@ -132,6 +132,21 @@
       assert(state.product > 50, `Product should make some progress, got ${state.product}%`);
     });
 
+  test("Full-time university student with $0 survives at least 3 months", () => {
+  const game = new StartupGame();
+  game.applyOnboarding("1", "1", "1", "2", "2");
+  game.updateDerivedValues();
+  
+  const startWeeks = game.game.weeks_elapsed;
+  
+  for (let i = 0; i < 6; i++) {
+    game.executeAction('BUILD_PRODUCT');
+  }
+  
+  const weeksElapsed = game.game.weeks_elapsed - startWeeks;
+  assert(!game.game.game_over, `Should survive 3 months, but got game over. Cash: ${game.game.cash}`);
+  assert(weeksElapsed >= 12, `Should have advanced at least 12 weeks, got ${weeksElapsed}`);
+});
     test("Can't get customers without launching product", () => {
       const game = new StartupGame();
       game.applyOnboarding("2", "2", "1", "2", "2"); // Sales-focused
@@ -166,7 +181,9 @@
 
     test("Full-time founder with $0 eventually runs out of money", () => {
       const game = new StartupGame();
-      game.applyOnboarding("1", "1", "1", "2", "2"); // Student, full-time, $0
+      // Use experienced entrepreneur (situation "3") but force cash to $0
+      game.applyOnboarding("3", "1", "1", "2", "2"); // Experienced, full‑time
+      game.game.cash = 0;
       game.updateDerivedValues();
       
       // Advance several months - should eventually game over
