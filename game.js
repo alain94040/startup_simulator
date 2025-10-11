@@ -62,7 +62,14 @@ class StartupGame {
 
     // Apply full-time vs part-time
     this.game.founder.full_time = (fulltime === "1");
-    this.game.founder.productivity = this.game.founder.full_time ? 1.0 : 0.5;
+    // Flag university founder for special handling
+    this.game.founder.university = (situation === "1");
+    // Productivity: part‑time = 0.5, full‑time experienced = 1.0
+    if (this.game.founder.university) {
+      this.game.founder.productivity = 0.75; // halfway between 0.5 and 1.0
+    } else {
+      this.game.founder.productivity = this.game.founder.full_time ? 1.0 : 0.5;
+    }
 
     // Calculate initial product-market fit based on team composition
     this.game.product_market_fit = this.calculateInitialMarketFit(situation, skill, hasCofounder);
@@ -590,8 +597,8 @@ class StartupGame {
   }
 
   calculateBurn() {
-    // Founder salary (if full-time)
-    const founderBurn = this.game.founder.full_time ? 3000 : 0;
+    // Founder salary: full‑time university founders do not receive a salary
+    const founderBurn = this.game.founder.full_time && !this.game.founder.university ? 3000 : 0;
     
     // Co-founder salaries (only what we're actually paying them)
     const teamBurn = this.game.team.reduce((sum, member) => {
