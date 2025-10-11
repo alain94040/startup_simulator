@@ -261,11 +261,11 @@ class StartupGame {
     
     // Warn player if building is slowing down
     if (efficiency < 0.5) {
-      message += `\n⚠️ Progress is crawling. Without customer feedback, you're likely building the wrong things.`;
+      message += `\n[WARNING] Progress is crawling. Without customer feedback, you're likely building the wrong things.`;
     } else if (efficiency < 0.7) {
-      message += `\n⚠️ Progress is slowing. Without customer feedback, you might be building the wrong features.`;
+      message += `\n[WARNING] Progress is slowing. Without customer feedback, you might be building the wrong features.`;
     } else if (efficiency < 0.9) {
-      message += `\n💡 Consider talking to customers to validate your direction.`;
+      message += `\n[TIP] Consider talking to customers to validate your direction.`;
     }
     
     return {
@@ -282,7 +282,7 @@ class StartupGame {
   launchProduct() {
     this.game.product_launched = true;
     return {
-      message: "🚀 Product launched! You can now acquire customers.",
+      message: "[SUCCESS] Product launched! You can now acquire customers.",
       type: 'success'
     };
   }
@@ -320,13 +320,13 @@ class StartupGame {
     
     // Contextual feedback
     if (this.game.product_progress < 30) {
-      message += `\n💡 Conversations would be more valuable with a prototype to show.`;
+      message += `\n[TIP] Conversations would be more valuable with a prototype to show.`;
     } else if (this.game.product_progress > 50 && this.game.product_market_fit < 60) {
-      message += `\n✓ Having a product helps get concrete feedback!`;
+      message += `\n[SUCCESS] Having a product helps get concrete feedback!`;
     }
     
     if (effectiveness <= 0.4) {
-      message += `\n⚠️ Diminishing returns on user interviews. You need to build and test with real customers.`;
+      message += `\n[WARNING] Diminishing returns on user interviews. You need to build and test with real customers.`;
     }
     
     return {
@@ -373,11 +373,11 @@ class StartupGame {
     
     // Contextual warnings
     if (this.game.product_progress < 40) {
-      message += `\n⚠️ Hard to get meaningful traction without more product to show.`;
+      message += `\n[WARNING] Hard to get meaningful traction without more product to show.`;
     } else if (marketFitMultiplier < 0.4) {
-      message += `\n⚠️ Customer acquisition is slower than expected. Are you building what people want?`;
+      message += `\n[WARNING] Customer acquisition is slower than expected. Are you building what people want?`;
     } else if (learningRate < 1.0) {
-      message += `\n💡 Build more product features to get better customer feedback.`;
+      message += `\n[TIP] Build more product features to get better customer feedback.`;
     }
     
     return {
@@ -433,7 +433,7 @@ class StartupGame {
       };
     } else {
       return {
-        message: `❌ Rejected from ${name}.`,
+        message: `[REJECTED] Rejected from ${name}.`,
         type: 'error'
       };
     }
@@ -448,12 +448,12 @@ class StartupGame {
       this.game.cash += investment;
       this.game.founder.equity -= equity;
       return {
-        message: `✓ Raised $${investment.toLocaleString()} from friends & family (-${equity}% equity)`,
+        message: `[SUCCESS] Raised $${investment.toLocaleString()} from friends & family (-${equity}% equity)`,
         type: 'success'
       };
     } else {
       return {
-        message: "✗ Nobody was willing to invest right now.",
+        message: "[REJECTED] Nobody was willing to invest right now.",
         type: 'warning'
       };
     }
@@ -462,7 +462,7 @@ class StartupGame {
   preparePitch() {
     this.game.pitch_deck_ready = true;
     return {
-      message: "✓ Pitch deck ready! You can now pitch to investors.",
+      message: "[SUCCESS] Pitch deck ready! You can now pitch to investors.",
       type: 'success'
     };
   }
@@ -477,12 +477,12 @@ class StartupGame {
       this.game.cash += investment;
       this.game.founder.equity -= equity;
       return {
-        message: `✓ Raised $${investment.toLocaleString()} from angels! (-${equity}% equity)`,
+        message: `[SUCCESS] Raised $${investment.toLocaleString()} from angels! (-${equity}% equity)`,
         type: 'success'
       };
     } else {
       return {
-        message: `✗ Angels passed (fundraising score: ${Math.floor(score)}). Keep building traction.`,
+        message: `[REJECTED] Angels passed (fundraising score: ${Math.floor(score)}). Keep building traction.`,
         type: 'warning'
       };
     }
@@ -499,12 +499,12 @@ class StartupGame {
       this.game.founder.equity -= equity;
       this.game.game_won = true;
       return {
-        message: `🎉🎉🎉 SEED ROUND RAISED! 🎉🎉🎉\n\nInvestment: $${investment.toLocaleString()}\nEquity: -${equity}%`,
+        message: `[SEED ROUND RAISED!]\n\nInvestment: $${investment.toLocaleString()}\nEquity: -${equity}%`,
         type: 'success'
       };
     } else {
       return {
-        message: `✗ VCs passed (fundraising score: ${Math.floor(score)}). Need more traction or stronger team.`,
+        message: `[REJECTED] VCs passed (fundraising score: ${Math.floor(score)}). Need more traction or stronger team.`,
         type: 'error'
       };
     }
@@ -525,7 +525,7 @@ class StartupGame {
     
     this.updateDerivedValues();
     return {
-      message: `✓ ${cofounder.name} joined the team! (On equity, starting part-time)`,
+      message: `[SUCCESS] ${cofounder.name} joined the team! (On equity, starting part-time)`,
       type: 'success'
     };
   }
@@ -533,7 +533,7 @@ class StartupGame {
   declineCofounder() {
     this.game.pending_cofounder_offer = null;
     return {
-      message: "✗ Declined the co-founder offer.",
+      message: "[DECLINED] Declined the co-founder offer.",
       type: 'warning'
     };
   }
@@ -558,7 +558,7 @@ class StartupGame {
     this.checkMonthlyCheckpoint();
     
     return {
-      message: `✓ Joined ${offer.name}! Completed ${offer.weeks}-week program. Fundraising score boosted by +${offer.bonus}. Market understanding significantly improved!`,
+      message: `[SUCCESS] Joined ${offer.name}! Completed ${offer.weeks}-week program. Fundraising score boosted by +${offer.bonus}. Market understanding significantly improved!`,
       type: 'success'
     };
   }
@@ -566,7 +566,7 @@ class StartupGame {
   declineIncubator() {
     this.game.pending_incubator_offer = null;
     return {
-      message: "✗ Declined the incubator offer.",
+      message: "[DECLINED] Declined the incubator offer.",
       type: 'warning'
     };
   }
@@ -682,12 +682,12 @@ class StartupGame {
     const burn = this.calculateBurn();
     this.game.cash -= burn;
     
-    let message = `📅 Monthly checkpoint: -${burn.toLocaleString()} burn`;
+    let message = `[CHECKPOINT] Monthly checkpoint: -${burn.toLocaleString()} burn`;
     
     if (this.game.product_launched && this.game.customers > 0) {
       const growth = Math.floor(this.game.customers * 0.05);
       this.game.customers += growth;
-      message += `\n🌱 Organic growth: +${growth} customers`;
+      message += `\n[GROWTH] Organic growth: +${growth} customers`;
     }
     
     this.game.monthly_revenue = Math.floor(this.game.customers * 0.5);
@@ -712,7 +712,7 @@ class StartupGame {
       member.months_on_team += 3;
       
       if (member.will_quit && member.months_on_team >= 6) {
-        messages.push(`⚠️ ${member.name} quit the team! Losing 4 weeks dealing with transition...`);
+        messages.push(`[WARNING] ${member.name} quit the team! Losing 4 weeks dealing with transition...`);
         this.game.team.splice(i, 1);
         this.advanceTime(4);
       }
