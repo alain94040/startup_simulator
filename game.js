@@ -443,8 +443,16 @@ class StartupGame {
         message: `[REJECTED] Rejected from ${name}.`,
         type: 'error'
       };
-    }
+}
   }
+
+  // === Customer dynamics constants ===
+  // Base growth / churn percentages applied each monthly checkpoint
+  get BASE_GROWTH_RATE() { return 0.05; }
+  get BASE_CHURN_RATE() { return 0.10; }
+  // Effect of product‑market fit (0‑100) on growth and churn
+  get FIT_GROWTH_FACTOR() { return 0.10; }
+  get FIT_CHURN_FACTOR()  { return 0.05; }
 
   askFriendsFamily() {
     const success = Math.random() < 0.5;
@@ -635,6 +643,18 @@ class StartupGame {
     }
   }
 
+  // --- Customer dynamics after a monthly checkpoint ---
+  updateCustomerDynamics() {
+    if (!this.game.product_launched || this.game.customers <= 0) {
+      return;
+    }
+    const pf = this.game.product_market_fit; // 0‑100
+    const growthRate = this.BASE_GROWTH_RATE + (pf / 100) * this.FIT_GROWTH_FACTOR;
+    const churnRate  = Math.max(0, this.BASE_CHURN_RATE - (pf / 100) * this.FIT_CHURN_FACTOR);
+    const netChange = Math.floor(this.game.customers * (growthRate - churnRate));
+    this.game.customers = Math.max(0, this.game.customers + netChange);
+  }
+
   generateIncubatorOffer(name) {
     if (name === 'YC') {
       return {
@@ -672,7 +692,10 @@ class StartupGame {
   // ===== TIME & CHECKPOINTS =====
 
   advanceTime(weeks) {
-    this.game.weeks_elapsed += weeks;
+    for (let i = 0; i < weeks; i++) {
+      this.game.weeks_elapsed += 1;
+      this.checkMonthlyCheckpoint();
+    }
   }
 
   checkMonthlyCheckpoint() {
@@ -691,15 +714,20 @@ class StartupGame {
     
     let message = `[CHECKPOINT] Monthly checkpoint: -${burn.toLocaleString()} burn`;
     
+    // Customer dynamics now handled by updateCustomerDynamics()
     if (this.game.product_launched && this.game.customers > 0) {
-      const growth = Math.floor(this.game.customers * 0.05);
-      this.game.customers += growth;
-      message += `\n[GROWTH] Organic growth: +${growth} customers`;
+      // Previous static growth logic removed.  Customers adjust in updateCustomerDynamics().
     }
     
     this.game.monthly_revenue = Math.floor(this.game.customers * 0.5);
+    // Update customers based on product-market fit
+    this.updateCustomerDynamics();
     
-    if (this.game.weeks_elapsed % 12 === 0) {
+    // Ensure that monthly checkpoints are evaluated every time we finish
+    // a week, even if actions previously advanced more than one week.
+    // This guarantees that the monthly burn deduction, co‑founder
+    // churn, and customer dynamics happen regularly.
+    if ((this.game.weeks_elapsed - 1) % 12 === 0) {
       const quitMessage = this.checkCofounderQuits();
       if (quitMessage) {
         message += '\n' + quitMessage;

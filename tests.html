@@ -235,7 +235,29 @@
       const state = game.getState();
       // With balanced approach, should make good progress
       assert(state.product > 40, `Should make good progress with balanced approach, got ${state.product}%`);
-      assert(Math.abs(state.product - state.product_market_fit) < 30, 'Product and market fit should stay relatively close');
+    assert(Math.abs(state.product - state.product_market_fit) < 30, 'Product and market fit should stay relatively close');
+  });
+
+    // --- New test: low fit leads to churn after launch ---
+    test("Low product fit reduces customers after launch", () => {
+      const game = new StartupGame();
+      // University founder, full‑time; keeps salary zero but product fit will be low
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      // Manually set progress to enable launch
+      game.game.product_progress = 60;
+      // Force very low product‑market fit
+      game.game.product_market_fit = 10;
+      // Launch product
+      game.executeAction('LAUNCH_PRODUCT');
+      // Inject an initial customer base
+      game.game.customers = 20;
+      // Simulate a few months of checkpoint churn
+      for (let i = 0; i < 4; i++) {
+        game.monthlyCheckpoint();
+      }
+      // After several months, customers should have dropped
+      assert(game.game.customers < 20, `Customers should drop with low fit, got ${game.game.customers}`);
     });
 
     test("Getting customers improves market fit", () => {
