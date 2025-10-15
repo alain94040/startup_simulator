@@ -29,6 +29,13 @@ class StartupGame {
       pending_cofounder_offer: null,
       pending_incubator_offer: null
     };
+
+    // Y Combinator application delay logic
+    // Pick a random delay between 1 and 6 months after the start date
+    const ycDelayMonths = Math.floor(Math.random() * 6) + 1;
+    const start = this.game.start_date;
+    this.game.yc_application_open_date = new Date(start.getFullYear(), start.getMonth() + ycDelayMonths, 1);
+    this.game.yc_application_delay_months = ycDelayMonths;
   }
 
   // ===== INITIALIZATION =====
@@ -796,6 +803,17 @@ class StartupGame {
     const date = this.getCurrentDate();
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return `${months[date.getMonth()]} ${date.getFullYear()}`;
+  }
+
+  // Helper to get the current date based on weeks elapsed
+  getCurrentDate() {
+    const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+    return new Date(this.game.start_date.getTime() + this.game.weeks_elapsed * msPerWeek);
+  }
+
+  // Returns true if Y Combinator application window is open
+  isYCApplicationOpen() {
+    return this.getCurrentDate() >= this.game.yc_application_open_date;
   }
 
   getState() {

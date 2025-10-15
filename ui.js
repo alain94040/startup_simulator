@@ -150,8 +150,15 @@ function renderActions() {
     const info = game.getActionInfo(action);
     const button = document.createElement('button');
     button.className = 'action-btn';
+    // Override title for YC when applications are closed
+    let title = info.name;
+    if (action === 'APPLY_YC' && !game.isYCApplicationOpen()) {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const openDate = game.game.yc_application_open_date;
+      title = `Applications to Ycombinator open in ${months[openDate.getMonth()]} ${openDate.getFullYear()}`;
+    }
     button.innerHTML = `
-      <div class="action-btn-title">${info.name}</div>
+      <div class="action-btn-title">${title}</div>
       <div class="action-btn-time">${info.time} weeks</div>
     `;
     button.onclick = () => executeAction(action);
