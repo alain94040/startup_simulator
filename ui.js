@@ -154,8 +154,8 @@ function renderActions() {
     let title = info.name;
     if (action === 'APPLY_YC' && !game.isYCApplicationOpen()) {
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const openDate = game.game.yc_application_open_date;
-      title = `Applications to Ycombinator open in ${months[openDate.getMonth()]} ${openDate.getFullYear()}`;
+      const nextOpen = game.getNextYCOpenDate();
+      title = `Applications to Ycombinator open in ${months[nextOpen.getMonth()]} ${nextOpen.getFullYear()}`;
     }
     button.innerHTML = `
       <div class="action-btn-title">${title}</div>

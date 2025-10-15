@@ -813,7 +813,36 @@ class StartupGame {
 
   // Returns true if Y Combinator application window is open
   isYCApplicationOpen() {
-    return this.getCurrentDate() >= this.game.yc_application_open_date;
+    // Y Combinator application window opens 2 months after the first open date, then closes.
+    // The cycle repeats every 6 months.
+    const current = this.getCurrentDate();
+    const start = this.game.start_date;
+    // Calculate months elapsed since start
+    const monthsSinceStart = (current.getFullYear() - start.getFullYear()) * 12 + (current.getMonth() - start.getMonth());
+    // Offset from the first open month
+    const offset = monthsSinceStart - this.game.yc_application_delay_months;
+    if (offset < 0) {
+      return false; // before first open window
+    }
+    const cycleMonth = offset % 6;
+    return cycleMonth < 2; // open for first 2 months of each 6‑month cycle
+  }
+
+  // Returns the date of the next opening of the Y Combinator application window
+  // based on the current game date. If the window is currently open, this
+  // returns the first day of the month when the next opening occurs.
+  getNextYCOpenDate() {
+    const start = this.game.start_date;
+    const current = this.getCurrentDate();
+    const monthsSinceStart = (current.getFullYear() - start.getFullYear()) * 12 + (current.getMonth() - start.getMonth());
+    const offset = monthsSinceStart - this.game.yc_application_delay_months;
+    if (offset < 0) {
+      // Before first opening
+      return this.game.yc_application_open_date;
+    }
+    const cycles = Math.floor(offset / 6) + 1;
+    const nextOpenMonth = this.game.yc_application_delay_months + cycles * 6;
+    return new Date(start.getFullYear(), start.getMonth() + nextOpenMonth, 1);
   }
 
   getState() {

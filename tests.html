@@ -207,6 +207,56 @@
       assert(newFit > initialFit, `Market fit should improve, was ${initialFit}, now ${newFit}`);
     });
 
+    // ===== YC APPLICATION WINDOW TEST =====
+    test("YC application opens at correct date", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+
+      // Initially should not be open
+      assert(!game.isYCApplicationOpen(), 'YC should not be open initially');
+
+      // Calculate weeks needed to reach the open date
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+      const start = game.game.start_date;
+      const open = game.game.yc_application_open_date;
+      const diffWeeks = Math.ceil((open.getTime() - start.getTime()) / msPerWeek);
+
+      // Advance time to just before open date
+      if (diffWeeks > 0) {
+        game.advanceTime(diffWeeks - 1);
+      }
+      assert(!game.isYCApplicationOpen(), 'YC should still be closed before open date');
+
+      // Advance one week to reach open date
+      game.advanceTime(1);
+      assert(game.isYCApplicationOpen(), 'YC should be open after reaching open date');
+
+      // The window should stay open for 2 months (8 weeks)
+      game.advanceTime(7); // advance 7 more weeks, total 8 weeks from open
+      assert(game.isYCApplicationOpen(), 'YC should still be open during 2nd month');
+
+      // After 2 months, the window should close
+      game.advanceTime(1); // 9th week
+      assert(!game.isYCApplicationOpen(), 'YC should close after 2 months');
+
+      // Verify next open date is 6 months later
+      const nextOpen = game.getNextYCOpenDate();
+      const expectedNext = new Date(game.game.start_date.getFullYear(),
+        game.game.start_date.getMonth() + game.game.yc_application_delay_months + 6, 1);
+      assert(nextOpen.getTime() === expectedNext.getTime(),
+        `Next open date should be 6 months after first open`);
+
+      // Advance to just before the next open date
+      const diffWeeksToNextOpen = Math.ceil((nextOpen.getTime() - game.getCurrentDate().getTime()) / msPerWeek) - 1;
+      if (diffWeeksToNextOpen > 0) {
+        game.advanceTime(diffWeeks);
+      }
+      assert(!game.isYCApplicationOpen(), 'YC should still be closed before second open date');
+      game.advanceTime(1); // reach open
+      assert(game.isYCApplicationOpen(), 'YC should open again after 6-month cycle');
+    });
+
     test("Can't just talk to users to reach 100% market fit", () => {
       const game = new StartupGame();
       game.applyOnboarding("2", "2", "1", "2", "2"); // Sales-focused for faster learning
