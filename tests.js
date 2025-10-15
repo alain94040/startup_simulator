@@ -1,0 +1,393 @@
+    // Simple test framework
+    const tests = [];
+    let passCount = 0;
+    let failCount = 0;
+
+    function test(name, fn) {
+      tests.push({ name, fn });
+    }
+
+    function assert(condition, message) {
+      if (!condition) {
+        throw new Error(message || 'Assertion failed');
+      }
+    }
+
+    function runTests() {
+      const resultsDiv = document.getElementById('test-results');
+      
+      tests.forEach(({ name, fn }) => {
+        const testDiv = document.createElement('div');
+        testDiv.className = 'test';
+        
+        try {
+          fn();
+          testDiv.classList.add('pass');
+          testDiv.innerHTML = `<div class="test-name">✓ ${name}</div>`;
+          passCount++;
+        } catch (error) {
+          testDiv.classList.add('fail');
+          testDiv.innerHTML = `
+            <div class="test-name">✗ ${name}</div>
+            <div class="test-details">${error.message}</div>
+          `;
+          failCount++;
+        }
+        
+        resultsDiv.appendChild(testDiv);
+      });
+
+      // Update summary
+      const summaryDiv = document.getElementById('summary');
+      const summaryText = document.getElementById('summary-text');
+      summaryText.innerHTML = `
+        <strong>${passCount} passed, ${failCount} failed</strong><br>
+        Total: ${tests.length} tests
+      `;
+      if (failCount > 0) {
+        summaryDiv.classList.add('has-failures');
+      }
+    }
+
+    // ===== BEHAVIORAL TESTS =====
+
+    test("Can't reach 100% product by just building repeatedly", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2"); // Pure technical, full-time
+      game.updateDerivedValues();
+      
+      // Build 20 times
+      for (let i = 0; i < 20; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      const state = game.getState();
+      assert(state.product < 100, `Product should be blocked before 100%, got ${state.product}%`);
+      assert(state.product > 50, `Product should make some progress, got ${state.product}%`);
+    });
+
+  test("Full-time university student with $0 survives at least 3 months", () => {
+  const game = new StartupGame();
+  game.applyOnboarding("1", "1", "1", "2", "2");
+  game.updateDerivedValues();
+  
+  const startWeeks = game.game.weeks_elapsed;
+  
+  for (let i = 0; i < 6; i++) {
+    game.executeAction('BUILD_PRODUCT');
+  }
+  
+  const weeksElapsed = game.game.weeks_elapsed - startWeeks;
+  assert(!game.game.game_over, `Should survive 3 months, but got game over. Cash: ${game.game.cash}`);
+  assert(weeksElapsed >= 12, `Should have advanced at least 12 weeks, got ${weeksElapsed}`);
+});
+    test("Can't get customers without launching product", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "2", "2"); // Sales-focused
+      game.updateDerivedValues();
+      
+      // Try to get customers without launching
+      const actions = game.getAvailableActions();
+      assert(!actions.includes('GET_CUSTOMERS'), 'Should not be able to get customers before launch');
+    });
+
+    test("Can't launch without building product first", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const actions = game.getAvailableActions();
+      assert(!actions.includes('LAUNCH_PRODUCT'), 'Should not be able to launch with 0% product');
+    });
+
+    test("Part-time solo founder doesn't immediately lose with $0", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "2", "2", "2"); // Student, part-time, $0
+      game.updateDerivedValues();
+      
+      // Advance through several months
+      for (let i = 0; i < 12; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      assert(!game.game.game_over, 'Part-time solo founder should survive with $0');
+    });
+
+    test("Full-time founder with $0 eventually runs out of money", () => {
+      const game = new StartupGame();
+      // Use experienced entrepreneur (situation "3") but force cash to $0
+      game.applyOnboarding("3", "1", "1", "2", "2"); // Experienced, full‑time
+      game.game.cash = 0;
+      game.updateDerivedValues();
+      
+      // Advance several months - should eventually game over
+      for (let i = 0; i < 20; i++) {
+        if (game.isGameOver()) break;
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      assert(game.game.game_over, 'Full-time founder with $0 should eventually run out of money');
+    });
+
+    test("Talking to users improves market fit", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const initialFit = game.game.product_market_fit;
+      game.executeAction('TALK_TO_USERS');
+      const newFit = game.game.product_market_fit;
+      
+      assert(newFit > initialFit, `Market fit should improve, was ${initialFit}, now ${newFit}`);
+    });
+
+    // ===== YC APPLICATION WINDOW TEST =====
+    test("YC application opens at correct date", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+
+      // Initially should not be open
+      assert(!game.isYCApplicationOpen(), 'YC should not be open initially');
+
+      // Calculate weeks needed to reach the open date
+      const msPerWeek = 7 * 24 * 60 * 60 * 1000;
+      const start = game.game.start_date;
+      const open = game.game.yc_application_open_date;
+      const diffWeeks = Math.ceil((open.getTime() - start.getTime()) / msPerWeek);
+
+      // Advance time to just before open date
+      if (diffWeeks > 0) {
+        game.advanceTime(diffWeeks - 1);
+      }
+      assert(!game.isYCApplicationOpen(), 'YC should still be closed before open date');
+
+      // Advance one week to reach open date
+      game.advanceTime(1);
+      assert(game.isYCApplicationOpen(), 'YC should be open after reaching open date');
+
+      // The window should stay open for 2 months (8 weeks)
+      game.advanceTime(7); // advance 7 more weeks, total 8 weeks from open
+      assert(game.isYCApplicationOpen(), 'YC should still be open during 2nd month');
+
+      // After 2 months, the window should close
+      game.advanceTime(1); // 9th week
+      assert(!game.isYCApplicationOpen(), 'YC should close after 2 months');
+
+      // Verify next open date is 6 months later
+      const nextOpen = game.getNextYCOpenDate();
+      const expectedNext = new Date(game.game.start_date.getFullYear(),
+        game.game.start_date.getMonth() + game.game.yc_application_delay_months + 6, 1);
+      assert(nextOpen.getTime() === expectedNext.getTime(),
+        `Next open date should be 6 months after first open`);
+
+      // Advance to just before the next open date
+      const diffWeeksToNextOpen = Math.ceil((nextOpen.getTime() - game.getCurrentDate().getTime()) / msPerWeek) - 1;
+      if (diffWeeksToNextOpen > 0) {
+        game.advanceTime(diffWeeks);
+      }
+      assert(!game.isYCApplicationOpen(), 'YC should still be closed before second open date');
+      game.advanceTime(1); // reach open
+      assert(game.isYCApplicationOpen(), 'YC should open again after 6-month cycle');
+    });
+
+    test("Can't just talk to users to reach 100% market fit", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "2", "2"); // Sales-focused for faster learning
+      game.updateDerivedValues();
+      
+      // Talk to users 30 times
+      for (let i = 0; i < 30; i++) {
+        game.executeAction('TALK_TO_USERS');
+      }
+      
+      const state = game.getState();
+      assert(state.product_market_fit < 100, `Market fit should hit diminishing returns, got ${state.product_market_fit}%`);
+    });
+
+    test("Building with balanced product and market fit is efficient", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("3", "3", "1", "2", "2"); // Experienced, balanced
+      game.updateDerivedValues();
+      
+      // Build some, talk some - keep them balanced
+      for (let i = 0; i < 5; i++) {
+        game.executeAction('BUILD_PRODUCT');
+        game.executeAction('TALK_TO_USERS');
+      }
+      
+      const state = game.getState();
+      // With balanced approach, should make good progress
+      assert(state.product > 40, `Should make good progress with balanced approach, got ${state.product}%`);
+    assert(Math.abs(state.product - state.product_market_fit) < 30, 'Product and market fit should stay relatively close');
+  });
+
+    // --- New test: low fit leads to churn after launch ---
+    test("Low product fit reduces customers after launch", () => {
+      const game = new StartupGame();
+      // University founder, full‑time; keeps salary zero but product fit will be low
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      // Manually set progress to enable launch
+      game.game.product_progress = 60;
+      // Force very low product‑market fit
+      game.game.product_market_fit = 10;
+      // Launch product
+      game.executeAction('LAUNCH_PRODUCT');
+      // Inject an initial customer base
+      game.game.customers = 20;
+      // Simulate a few months of checkpoint churn
+      for (let i = 0; i < 4; i++) {
+        game.monthlyCheckpoint();
+      }
+      // After several months, customers should have dropped
+      assert(game.game.customers < 20, `Customers should drop with low fit, got ${game.game.customers}`);
+    });
+
+    test("Getting customers improves market fit", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "1", "1"); // Sales-focused with co-founder
+      game.updateDerivedValues();
+      
+      // Build to launch
+      while (game.game.product_progress < 60) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      game.executeAction('LAUNCH_PRODUCT');
+      
+      const fitBefore = game.game.product_market_fit;
+      game.executeAction('GET_CUSTOMERS');
+      const fitAfter = game.game.product_market_fit;
+      
+      assert(fitAfter >= fitBefore, 'Getting customers should improve or maintain market fit');
+    });
+
+    test("Incubator improves market fit significantly", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("3", "1", "1", "1", "1"); // Best chance for acceptance
+      game.updateDerivedValues();
+      
+      // Build some product to increase acceptance odds
+      for (let i = 0; i < 8; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      const fitBefore = game.game.product_market_fit;
+      
+      // Try applying to incubator multiple times (acceptance is random)
+      let accepted = false;
+      for (let i = 0; i < 10 && !accepted; i++) {
+        const result = game.applyToIncubator('YC');
+        if (game.game.pending_incubator_offer) {
+          game.acceptIncubator();
+          accepted = true;
+        }
+      }
+      
+      if (accepted) {
+        const fitAfter = game.game.product_market_fit;
+        assert(fitAfter > fitBefore + 10, `Incubator should significantly boost market fit, was ${fitBefore}, now ${fitAfter}`);
+      } else {
+        console.log('⚠️ Skipped incubator test - not accepted (random)');
+      }
+    });
+
+    test("Raising seed round with high fundraising score triggers win", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("3", "3", "1", "1", "1");
+      game.updateDerivedValues();
+      
+      // Cheat to create winning conditions
+      game.game.product_progress = 100;
+      game.game.product_market_fit = 100;
+      game.game.customers = 2000;
+      game.game.product_launched = true;
+      game.game.pitch_deck_ready = true;
+      game.game.cash = 1000000; // Ensure we don't run out
+      game.updateDerivedValues();
+      
+      // Should have high fundraising score
+      const state = game.getState();
+      assert(state.fundraising_score > 60, `Should have high fundraising score, got ${state.fundraising_score}`);
+      
+      // Pitch seed - may need multiple attempts due to randomness
+      let won = false;
+      for (let i = 0; i < 20 && !won; i++) {
+        game.executeAction('PITCH_SEED');
+        if (game.game.game_won) {
+          won = true;
+        }
+      }
+      
+      assert(won, 'Should eventually win with high fundraising score');
+    });
+
+    test("Actions consume time correctly", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("1", "1", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const startWeek = game.game.weeks_elapsed;
+      game.executeAction('BUILD_PRODUCT'); // 2 weeks
+      const afterBuild = game.game.weeks_elapsed;
+      
+      assert(afterBuild === startWeek + 2, `Build should take 2 weeks, elapsed ${afterBuild - startWeek}`);
+      
+      game.executeAction('TALK_TO_USERS'); // 1 week
+      const afterTalk = game.game.weeks_elapsed;
+      
+      assert(afterTalk === afterBuild + 1, `Talk should take 1 week, elapsed ${afterTalk - afterBuild}`);
+    });
+
+    test("Monthly checkpoint deducts burn rate", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "1", "1", "2", "2"); // Has $30k
+      game.updateDerivedValues();
+      
+      const startCash = game.game.cash;
+      const burn = game.calculateBurn();
+      
+      // Advance 4 weeks (1 month)
+      game.executeAction('BUILD_PRODUCT'); // 2 weeks
+      game.executeAction('BUILD_PRODUCT'); // 2 weeks
+      
+      const endCash = game.game.cash;
+      assert(endCash < startCash, `Cash should decrease after monthly checkpoint, was ${startCash}, now ${endCash}`);
+      assert(endCash === startCash - burn, `Should deduct exactly the burn rate (${burn})`);
+    });
+
+    test("Can't pitch without preparing deck first", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "2", "1", "2", "2");
+      game.updateDerivedValues();
+      
+      const actions = game.getAvailableActions();
+      assert(!actions.includes('PITCH_ANGELS'), 'Should not be able to pitch angels without deck');
+      assert(!actions.includes('PITCH_SEED'), 'Should not be able to pitch VCs without deck');
+      assert(actions.includes('PREPARE_PITCH'), 'Should be able to prepare pitch deck');
+    });
+
+    test("Full-time founder with $30k survives at least 3 months", () => {
+      const game = new StartupGame();
+      game.applyOnboarding("2", "1", "1", "2", "2"); // Employed, full-time, $30k
+      game.updateDerivedValues();
+      
+      const startWeeks = game.game.weeks_elapsed;
+      const startCash = game.game.cash;
+      
+      // Do actions for 3 months (12 weeks)
+      for (let i = 0; i < 6; i++) {
+        game.executeAction('BUILD_PRODUCT');
+      }
+      
+      const endWeeks = game.game.weeks_elapsed;
+      const endCash = game.game.cash;
+      
+      assert(!game.game.game_over, `Should survive 3 months, but got game over. Cash: ${endCash}, Started with: ${startCash}`);
+      assert(endWeeks >= 12, `Should have advanced at least 12 weeks, got ${endWeeks}`);
+      assert(endCash > 0, `Should have positive cash after 3 months, got ${endCash}`);
+    });
+
+        // Run all tests when page loads
+    window.addEventListener('DOMContentLoaded', runTests);
+
