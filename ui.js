@@ -146,22 +146,27 @@ function renderActions() {
   
   const actions = game.getAvailableActions();
   
-  actions.forEach(action => {
-    const info = game.getActionInfo(action);
-    const button = document.createElement('button');
-    button.className = 'action-btn';
-    // Override title for YC when applications are closed
-    let title = info.name;
-    if (action === 'APPLY_YC' && !game.isYCApplicationOpen()) {
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const nextOpen = game.getNextYCOpenDate();
-      title = `Applications to Ycombinator open in ${months[nextOpen.getMonth()]} ${nextOpen.getFullYear()}`;
-    }
+    actions.forEach(action => {
+      const info = game.getActionInfo(action);
+      const button = document.createElement('button');
+      button.className = 'action-btn';
+      // Override title for YC when applications are closed
+      let title = info.name;
+      if (action === 'APPLY_YC' && !game.isYCApplicationOpen()) {
+        const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const nextOpen = game.getNextYCOpenDate();
+        title = `Applications to Ycombinator open in ${months[nextOpen.getMonth()]} ${nextOpen.getFullYear()}`;
+      }
     button.innerHTML = `
       <div class="action-btn-title">${title}</div>
       <div class="action-btn-time">${info.time} weeks</div>
     `;
-    button.onclick = () => executeAction(action);
+    // Disable button if Y Combinator window is closed
+    if (action === 'APPLY_YC' && (!game.isYCApplicationOpen() || game.yc_application_submitted)) {
+      button.disabled = true;
+    } else {
+      button.onclick = () => executeAction(action);
+    }
     
     // Add to appropriate category
     const container = containers[info.category];
@@ -177,6 +182,15 @@ function renderActions() {
       categoryDiv.style.display = container.children.length > 0 ? 'block' : 'none';
     }
   });
+  // Show any pending YC decision or incubator offer after a month
+  if (game.pending_yc_decision_message) {
+    showMessage(game.pending_yc_decision_message, 'error');
+    game.pending_yc_decision_message = null;
+  }
+  if (game.pending_incubator_offer) {
+    showIncubatorDecision(game.pending_incubator_offer);
+    game.pending_incubator_offer = null;
+  }
 }
 
 function executeAction(action) {
@@ -189,8 +203,22 @@ function executeAction(action) {
     } else if (result.message === 'incubator_offer') {
       showIncubatorDecision(result.data);
     }
+    // Clear any pending incubator offer set during this action
+    if (game.pending_incubator_offer) {
+      game.pending_incubator_offer = null;
+    }
   } else {
     showMessage(result.message, result.type);
+  }
+  // Handle delayed Y Combinator decision if pending
+  if (game.pending_yc_decision_message) {
+    showMessage(game.pending_yc_decision_message, 'error');
+    game.pending_yc_decision_message = null;
+  }
+  // Handle any pending incubator offer that may have been set by a monthly checkpoint
+  if (game.pending_incubator_offer) {
+    showIncubatorDecision(game.pending_incubator_offer);
+    game.pending_incubator_offer = null;
   }
   
   // Show checkpoint message if any
