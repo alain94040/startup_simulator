@@ -42,6 +42,11 @@ class StartupGame {
     this.game.pending_yc_decision_message = null;
   }
 
+  // Expose some internal state for testing utilities
+  get pending_yc_application() {
+    return this.game.pending_yc_application;
+  }
+
   // ===== INITIALIZATION =====
 
   applyOnboarding(situation, skill, fulltime, hasCofounder, cofounderFulltime) {
@@ -437,7 +442,6 @@ class StartupGame {
   }
 
   applyToIncubator(name) {
-    this.advanceTime(4); // Wait time
 
     // Handle Y Combinator specially: decision delayed one month
     if (name === 'YC') {
@@ -450,7 +454,8 @@ class StartupGame {
       const acceptance = this.calculateIncubatorAcceptance(name);
       const offer = this.generateIncubatorOffer(name);
       this.game.pending_yc_application = {
-        weeks_remaining: 4,
+        // Decision after one month (4 weeks). Stored as weeks remaining.
+        weeks_remaining: 4, // 4 weeks per month
         acceptance,
         offer
       };
@@ -722,33 +727,35 @@ class StartupGame {
   advanceTime(weeks) {
     for (let i = 0; i < weeks; i++) {
       this.game.weeks_elapsed += 1;
+      // Trigger monthly checkpoint logic after each week
       this.checkMonthlyCheckpoint();
     }
   }
 
   checkMonthlyCheckpoint() {
+    // Decrement Y Combinator delay counter every week
+    if (this.game.pending_yc_application) {
+      this.game.pending_yc_application.weeks_remaining -= 1;
+      if (this.game.pending_yc_application.weeks_remaining <= 0) {
+        const { acceptance, offer } = this.game.pending_yc_application;
+        if (acceptance) {
+          // Accept: store as pending incubator offer
+          this.game.pending_incubator_offer = offer;
+        } else {
+            // Rejection: create a simple rejection message to display
+            this.game.pending_yc_decision_message = `[REJECTED] Rejected from Y Combinator.`;
+          }
+        // Reset flags for next cycle
+        this.game.pending_yc_application = null;
+        this.game.yc_application_submitted = false;
+      }
+    }
+
     const currentMonth = Math.floor(this.game.weeks_elapsed / 4);
     const previousMonth = Math.floor((this.game.weeks_elapsed - 1) / 4);
 
     if (currentMonth > previousMonth) {
       const monthly = this.monthlyCheckpoint();
-      // Handle delayed Y Combinator decision
-      if (this.game.pending_yc_application) {
-        this.game.pending_yc_application.weeks_remaining -= 1;
-        if (this.game.pending_yc_application.weeks_remaining <= 0) {
-          const { acceptance, offer } = this.game.pending_yc_application;
-          if (acceptance) {
-            // Accept: store as pending incubator offer
-            this.game.pending_incubator_offer = offer;
-          } else {
-            // Rejection: create a simple rejection message to display
-            this.game.pending_yc_decision_message = `[REJECTED] Rejected from Y Combinator.`;
-          }
-          // Reset flags for next cycle
-          this.game.pending_yc_application = null;
-          this.game.yc_application_submitted = false;
-        }
-      }
       return monthly;
     }
     return null;

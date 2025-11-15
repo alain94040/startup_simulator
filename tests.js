@@ -356,6 +356,34 @@
       assert(endCash === startCash - burn, `Should deduct exactly the burn rate (${burn})`);
     });
 
+    // ==== YC acceptance flow test ==== 
+    test("Y Combinator acceptance correctly updates state", () => {
+      const game = new StartupGame();
+      game.applyOnboarding('1', '1', '1', '2', '2');
+      game.updateDerivedValues();
+      // Force acceptance
+      game.calculateIncubatorAcceptance = () => 1;
+      const result = game.executeAction('APPLY_YC');
+      assert(result.type === 'info', 'Apply action should return info message');
+      // Advance one month to trigger decision
+      game.advanceTime(4);
+      // Decision should be made, offer pending
+      assert(game.pending_yc_application === null, 'YC application should be cleared after decision');
+      assert(game.pending_incubator_offer !== null, 'Incubator offer should be set after decision');
+      const { cash: beforeCash, founder: beforeFounder, product_market_fit: beforeFit } = game.game;
+      // Accept the offer
+      game.acceptIncubator();
+      // Check cash increase
+      assert(game.game.cash === beforeCash + 500000, 'Cash should increase by YC investment');
+      // Check equity decrease
+      assert(game.game.founder.equity === beforeFounder.equity - 7, 'Founder equity should decrease by YC equity');
+      // Check product-market fit boost
+      const expectedFit = Math.min(100, beforeFit + 25);
+      assert(game.game.product_market_fit === expectedFit, 'Product-market fit should increase by 25 points');
+      // Ensure pending offer cleared and incubator flag reset
+      assert(game.pending_incubator_offer === null, 'Pending incubator offer should be cleared after acceptance');
+      assert(game.game.in_incubator === false, 'Incubator flag should be reset after acceptance');
+    });
     test("Can't pitch without preparing deck first", () => {
       const game = new StartupGame();
       game.applyOnboarding("2", "2", "1", "2", "2");
@@ -388,6 +416,32 @@
       assert(endCash > 0, `Should have positive cash after 3 months, got ${endCash}`);
     });
 
-        // Run all tests when page loads
-    window.addEventListener('DOMContentLoaded', runTests);
+    // ==== Y Combinator delayed acceptance test ==== 
+    test("Y Combinator acceptance delayed by one month", () => {
+      const game = new StartupGame();
+      game.applyOnboarding('1', '1', '1', '2', '2');
+      // Force acceptance for deterministic test
+      game.calculateIncubatorAcceptance = () => 1;
+      const result = game.executeAction('APPLY_YC');
+      assert(result.type === 'info', 'Apply action should return info message');
+    // After the action, the pending application should exist
+    assert(game.game.pending_yc_application !== null, 'YC application should exist after action');
+    // No incubator offer yet
+    assert(game.game.pending_incubator_offer === null, 'No incubator offer until decision month');
+      // Advance one month to trigger the decision
+      game.advanceTime(4);
+      // Decision should now be made
+    assert(game.game.pending_yc_application === null, 'YC application should be cleared after 1 month');
+    assert(game.game.pending_incubator_offer !== null, 'Incubator offer should be set after decision');
+    assert(game.game.pending_incubator_offer.name === 'Y Combinator', 'Offer should be from YC');
+      // No rejection message for acceptance
+      assert(!game.game.pending_yc_decision_message, 'No rejection message should be set');
+    });
 
+    // Run all tests when page loads (browser) or immediately (Node)
+    if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+      window.addEventListener('DOMContentLoaded', runTests);
+    } else {
+      // In Node, run tests directly
+      runTests();
+    }
