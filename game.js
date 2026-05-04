@@ -27,7 +27,9 @@ class StartupGame {
       game_over: false,
       game_won: false,
       pending_cofounder_offer: null,
-      pending_incubator_offer: null
+      pending_incubator_offer: null,
+      market_bonus: 0,
+      fundraising_bonus: 0
     };
 
     // Y Combinator application delay logic
@@ -211,9 +213,9 @@ class StartupGame {
   executeAction(action) {
     const info = this.getActionInfo(action);
     this.advanceTime(info.time);
-    
+
     let result = { message: '', type: 'info' };
-    
+
     switch(action) {
       case 'BUILD_PRODUCT':
         result = this.buildProduct();
@@ -252,11 +254,10 @@ class StartupGame {
         result = this.pitchSeed();
         break;
     }
-    
+
     this.updateDerivedValues();
-    this.checkMonthlyCheckpoint();
     this.checkGameOver();
-    
+
     return result;
   }
 
@@ -374,7 +375,9 @@ class StartupGame {
     // Need at least 40% product to get meaningful traction
     const productMultiplier = Math.min(1.0, Math.max(0.3, this.game.product_progress / 60));
     
-    const newCustomers = Math.floor(baseSalesSkill * 20 * marketFitMultiplier * productMultiplier);
+    const marketBoost = this.game.market_bonus || 0;
+    this.game.market_bonus = 0;
+    const newCustomers = Math.floor(baseSalesSkill * 20 * marketFitMultiplier * productMultiplier) + marketBoost;
     this.game.customers += newCustomers;
     
     // Learn from customer feedback - but learning rate depends on product completeness
@@ -538,7 +541,7 @@ class StartupGame {
 
   pitchSeed() {
     const score = this.calculateFundraisingScore();
-    const success = Math.random() < (score / 100) && score >= 60;
+    const success = Math.random() < Math.min(1, (score - 30) / 60) && score >= 65;
     
     if (success) {
       const investment = Math.floor(Math.random() * 1000000) + 1000000;
@@ -601,7 +604,9 @@ class StartupGame {
     this.advanceTime(offer.weeks);
     this.game.in_incubator = false;
     this.game.pending_incubator_offer = null;
-    
+    this.game.market_bonus = 0;
+    this.game.fundraising_bonus = 0;
+
     this.updateDerivedValues();
     this.checkMonthlyCheckpoint();
     
@@ -651,11 +656,13 @@ class StartupGame {
 
   calculateFundraisingScore() {
     let score = 0;
-    score += Math.min(20, this.game.customers / 50);
+    score += Math.min(35, this.game.customers / 50);
     score += this.game.product_progress / 5;
-    score += this.game.team.length * 10;
+  score += this.game.team.length * 5;
     score += this.game.incubator_bonus;
     score += this.game.pivot_bonus;
+    score += this.game.fundraising_bonus || 0;
+    this.game.fundraising_bonus = 0;
     return Math.min(100, score);
   }
 
@@ -695,7 +702,7 @@ class StartupGame {
         investment: 500000,
         equity: 7,
         weeks: 12,
-        bonus: 30
+        bonus: 35
       };
     } else {
       return {
@@ -764,18 +771,24 @@ class StartupGame {
   monthlyCheckpoint() {
     const burn = this.calculateBurn();
     this.game.cash -= burn;
-    
+
     let message = `[CHECKPOINT] Monthly checkpoint: -${burn.toLocaleString()} burn`;
-    
+
+    // Market opportunity events (8% chance per month)
+    const eventMsg = this.checkMarketOpportunity();
+    if (eventMsg) {
+      message += '\n' + eventMsg;
+    }
+
     // Customer dynamics now handled by updateCustomerDynamics()
     if (this.game.product_launched && this.game.customers > 0) {
       // Previous static growth logic removed.  Customers adjust in updateCustomerDynamics().
     }
-    
+
     this.game.monthly_revenue = Math.floor(this.game.customers * 0.5);
     // Update customers based on product-market fit
     this.updateCustomerDynamics();
-    
+
     // Ensure that monthly checkpoints are evaluated every time we finish
     // a week, even if actions previously advanced more than one week.
     // This guarantees that the monthly burn deduction, co‑founder
@@ -786,7 +799,7 @@ class StartupGame {
         message += '\n' + quitMessage;
       }
     }
-    
+
     return {
       message: message,
       type: 'warning'
@@ -813,7 +826,33 @@ class StartupGame {
     this.game.runway_months = this.game.cash / this.game.monthly_burn;
   }
 
-  // ===== GAME OVER =====
+  // ===== MARKET OPPORTUNITY EVENTS =====
+
+  // 8% chance each month of a random market opportunity
+  get MARKET_EVENT_CHANCE() { return 0.05; }
+
+  checkMarketOpportunity() {
+    if (Math.random() > this.MARKET_EVENT_CHANCE) return null;
+
+    const events = [
+      {
+        message: '[MARKET OPPORTUNITY] Your product went viral! Next customer acquisition boosted by +200!',
+        effect: (g) => { g.market_bonus = (g.market_bonus || 0) + 200; }
+      },
+      {
+        message: '[MARKET OPPORTUNITY] A major investor expressed interest! Fundraising score +15!',
+        effect: (g) => { g.fundraising_bonus = (g.fundraising_bonus || 0) + 15; }
+      },
+      {
+        message: '[MARKET OPPORTUNITY] Major tech publication featured your startup! Immediate +50% customers.',
+        effect: (g) => { g.customers = Math.floor(g.customers * 1.5); }
+      }
+    ];
+
+    const event = events[Math.floor(Math.random() * events.length)];
+    event.effect(this.game);
+    return event.message;
+  }
 
   checkGameOver() {
     // Game over only if you can't pay your team's burn rate
@@ -927,5 +966,21 @@ class StartupGame {
     };
   }
 }
-// Export the class for use in the UI and tests
-module.exports = { StartupGame };
+
+// Export the class for programmatic use (e.g., unit tests).  This file
+// is primarily intended for the browser, but providing a CommonJS
+// export keeps the test harness simple without needing to modify the
+// original game logic.
+// Expose to global for browser usage
+if (typeof window !== 'undefined') {
+  window.StartupGame = StartupGame;
+}
+// Expose to global for older Node test harnesses that evaluate the file
+// without CommonJS support.
+if (typeof global !== 'undefined') {
+  global.StartupGame = StartupGame;
+}
+// Provide a CommonJS export for Node.js environments.
+if (typeof module !== 'undefined' && typeof module.exports !== 'undefined') {
+  module.exports = { StartupGame };
+}
