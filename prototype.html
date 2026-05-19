@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Startup Simulator — Prototype v3</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f0f0f5; color: #1a1a2e;
+  height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── Header ── */
+#header {
+  background: white; border-bottom: 1px solid #e0e0ea;
+  padding: 10px 20px; display: flex; flex-direction: column; gap: 7px; flex-shrink: 0;
+}
+#row-status { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+#week-badge {
+  font-weight: 700; font-size: 14px; background: #1a1a2e; color: white;
+  padding: 3px 10px; border-radius: 12px; white-space: nowrap;
+}
+.st { font-size: 13px; color: #888; }
+.st strong { color: #1a1a2e; font-size: 14px; }
+.st.warn strong { color: #d97706; }
+.st.danger strong { color: #dc2626; }
+.pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
+.pill-live { background: #d1fae5; color: #065f46; }
+.pill-deck { background: #ede9fe; color: #5b21b6; }
+#alex-mood { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #888; margin-left: auto; }
+#alex-dot { width: 9px; height: 9px; border-radius: 50%; background: #22c55e; transition: background .4s; }
+
+/* ── Gauge ── */
+#row-gauge { display: flex; align-items: center; gap: 10px; }
+#gauge-lbl { font-size: 12px; color: #aaa; min-width: 90px; }
+#gauge-bar { display: flex; gap: 3px; width: 200px; }
+.gs { flex: 1; height: 10px; border-radius: 5px; background: #e8e8f0; transition: background .4s; }
+.gs.a0{background:#94a3b8} .gs.a1{background:#60a5fa} .gs.a2{background:#fbbf24}
+.gs.a3{background:#f97316} .gs.a4{background:#22c55e}
+#gauge-desc { font-size: 12px; color: #777; font-style: italic; }
+
+/* ── Horizon ── */
+#row-horizon { display: flex; gap: 12px; align-items: center; font-size: 12px; }
+.hi { color: #aaa; }
+.hi.soon { color: #d97706; font-weight: 600; }
+.hi.now  { color: #16a34a; font-weight: 600; }
+.hi.hot  { color: #dc2626; font-weight: 600; }
+
+/* ── Main ── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* ── Controls panel (left) ── */
+#pick-panel {
+  width: 210px; flex-shrink: 0; border-right: 1px solid #e0e0ea;
+  background: white; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+#pick-panel h3 { font-size: 14px; font-weight: 600; }
+#counter { font-size: 13px; color: #aaa; }
+
+#flash {
+  background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px;
+  padding: 9px 12px; font-size: 12px; color: #166534; line-height: 1.5; display: none;
+}
+#flash.on { display: block; }
+#btn {
+  background: #1a1a2e; color: white; border: none; padding: 10px 16px;
+  border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background .15s; margin-top: auto;
+}
+#btn:disabled { background: #ccc; cursor: not-allowed; }
+#btn:not(:disabled):hover { background: #2d2d52; }
+
+/* ── Demand panel (right) ── */
+#msg-panel {
+  flex: 1; display: flex; flex-direction: column; background: #f5f5fb; overflow-y: auto;
+}
+#demands-section {
+  padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 0; min-height: 100%;
+}
+#demands-lbl {
+  font-size: 11px; color: #bbb; text-transform: uppercase; letter-spacing: .5px;
+  margin-bottom: 12px; font-weight: 600;
+}
+#demands-list { display: flex; flex-direction: column; gap: 10px; }
+
+/* Actionable demand bubbles */
+.dmnd {
+  background: white; border-radius: 12px; border: 1.5px solid #e8e8f0;
+  border-left: 4px solid #ddd; padding: 14px 16px 12px;
+  cursor: pointer; user-select: none; position: relative;
+  transition: box-shadow .12s, border-color .12s, background .12s;
+}
+.dmnd:hover { box-shadow: 0 3px 12px rgba(0,0,0,.09); }
+.dmnd.sel { border-left-width: 4px; border-color: currentColor; background: #fafcff; box-shadow: 0 3px 14px rgba(0,0,0,.11); }
+.dmnd.expiring::after {
+  content: '⚠ last chance'; position: absolute; bottom: 7px; right: 10px;
+  font-size: 10px; color: #dc2626; font-weight: 600;
+}
+.dmnd.p { border-left-color: #0ea5e9; color: #0ea5e9; }
+.dmnd.c { border-left-color: #22c55e; color: #22c55e; }
+.dmnd.t { border-left-color: #a855f7; color: #a855f7; }
+.dmnd.e { border-left-color: #f59e0b; color: #f59e0b; }
+
+.dmnd-meta { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
+.dmnd-from { font-size: 12px; font-weight: 600; color: #1a1a2e; flex: 1; }
+.dmnd-check { font-size: 13px; font-weight: 700; }
+.dmnd-body { font-size: 13px; color: #444; line-height: 1.45; padding-right: 48px; }
+.dmnd-foot { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+.dur { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 8px; background: #f3f4f6; color: #6b7280; }
+.dur.two { background: #fef3c7; color: #92400e; }
+.urg { font-size: 11px; font-weight: 600; padding: 1px 7px; border-radius: 8px; }
+.u1{background:#f0fdf4;color:#16a34a} .u2{background:#fffbeb;color:#b45309} .u3{background:#fef2f2;color:#dc2626}
+
+.dmnd-options { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+.opt-btn {
+  font-size: 12px; padding: 5px 11px; border-radius: 7px;
+  border: 1.5px solid #e0e0ea; background: white;
+  color: #555; cursor: pointer; transition: all .12s; font-weight: 500;
+}
+.opt-btn:hover { border-color: #a855f7; color: #7c3aed; background: #faf5ff; }
+.opt-btn.chosen { background: #1a1a2e; color: white; border-color: #1a1a2e; }
+
+/* ── Overlay ── */
+#overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50; align-items: center; justify-content: center; }
+#overlay.on { display: flex; }
+#ov-card { background: white; border-radius: 16px; padding: 40px 48px; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+#ov-title { font-size: 26px; font-weight: 700; margin-bottom: 12px; }
+#ov-body  { font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 28px; }
+#ov-btn { background: #1a1a2e; color: white; border: none; padding: 12px 36px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; }
+#ov-btn:hover { background: #2d2d52; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div id="row-status">
+    <span id="week-badge">Month 1 · Wk 1</span>
+    <span class="st" id="s-cash">Cash <strong>$20,000</strong></span>
+    <span class="st" id="s-runway"><strong>—</strong> runway</span>
+    <span class="st" id="s-product">Product <strong>0%</strong></span>
+    <span class="st" id="s-customers">Customers <strong>0</strong></span>
+    <span class="pill pill-live" id="p-live" style="display:none">LIVE</span>
+    <span class="pill pill-deck" id="p-deck" style="display:none">Deck ready</span>
+    <span class="st" id="s-network">Network <strong>👥 12</strong></span>
+    <span id="alex-mood">Alex <span id="alex-dot"></span> <span id="alex-focus-lbl" style="font-size:11px;color:#aaa;margin-left:3px">building</span></span>
+  </div>
+  <div id="row-gauge">
+    <span id="gauge-lbl">Market signal</span>
+    <div id="gauge-bar">
+      <div class="gs" id="g0"></div><div class="gs" id="g1"></div>
+      <div class="gs" id="g2"></div><div class="gs" id="g3"></div><div class="gs" id="g4"></div>
+    </div>
+    <span id="gauge-desc"></span>
+  </div>
+  <div id="row-horizon"></div>
+</div>
+
+<div id="main">
+  <div id="pick-panel">
+    <h3>This sprint</h3>
+    <span id="counter">Pick 2 of 4</span>
+    <div id="flash"></div>
+    <button id="btn" disabled>Pick 2 to continue</button>
+  </div>
+  <div id="msg-panel">
+    <div id="demands-section">
+      <div id="demands-lbl">Needs your attention — pick 2</div>
+      <div id="demands-list"></div>
+    </div>
+  </div>
+</div>
+
+<div id="overlay">
+  <div id="ov-card">
+    <div id="ov-title"></div>
+    <div id="ov-body"></div>
+    <button id="ov-btn" onclick="boot()">Play Again</button>
+  </div>
+</div>
+
+<script>
+const rnd   = n => Math.floor(Math.random() * n);
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+// ─────────────────────────────────────────────
+// CHARACTER DEFINITIONS
+// Each character owns their card pool.
+// Card functions receive (globalState, charInstance, engine).
+// charInstance is null for global-pool cards.
+// ─────────────────────────────────────────────
+
+const CHARACTER_DEFS = {
+
+  alex: {
+    id: 'alex', name: 'Alex', type: 'cofounder',
+    skills: { build: 1.2, discover: 0.7, pitch: 0.5 },
+    cards: [
+
+      // ── EARLY: RELATIONSHIP ─────────────────
+      {
+        id: 'equity_talk', cat: 't', from: 'Alex',
+        body: "hey — can we actually write down the equity split? i told my girlfriend i own half the company and she asked me to show her something official. also want to make sure we agree before it gets complicated.",
+        urgency: 2, weeks: 1, priority: true,
+        available: (s, char) => s.week <= 8 && !char.flags.equity_set,
+        options: [
+          { label: 'Agree — 50/50', key: 'fair',
+            execute(s, char) { char.flags.equity_set = true; char.morale = clamp(char.morale + 10, 0, 100); char.trust = clamp(char.trust + 8, 0, 100); return "50/50 agreed. 4-year vesting, 1-year cliff. Both sides signed. Feels solid."; } },
+          { label: 'Push for 60/40', key: 'negotiate',
+            execute(s, char) { char.flags.equity_set = true; char.morale = clamp(char.morale - 12, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); return "After a long conversation, Alex accepted 60/40. He agreed, but wasn't thrilled. Watch his mood."; } },
+        ],
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "i keep getting asked about my equity stake and i don't have anything to show. this really needs to happen.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 15, 0, 100); char.trust = clamp(char.trust - 8, 0, 100); },
+      },
+      {
+        id: 'alex_commitment', cat: 't', from: 'Alex',
+        body: "i've been thinking — i can't quit my job until we have some real traction. evenings and weekends for now. that should be enough to get to launch, right?",
+        urgency: 3, weeks: 1, priority: true,
+        available: (s, char) => s.week <= 5 && !char.flags.commitment_resolved,
+        options: [
+          { label: 'Accept — milestones first', key: 'accept',
+            execute(s, char) { char.flags.commitment_resolved = true; char.morale = clamp(char.morale - 5, 0, 100); s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
+          { label: 'Push for full commitment', key: 'push',
+            execute(s, char) { char.flags.commitment_resolved = true; char.morale = clamp(char.morale - 25, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); s.product = clamp(s.product + 4, 0, 100); return "Alex agreed to go full-time. He's not happy about the pressure. Watch his mood."; } },
+        ],
+        dropDelay: 3, dropFrom: 'Alex',
+        dropMsg: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?",
+        dropFx(s, char) { char.morale = clamp(char.morale - 30, 0, 100); char.trust = clamp(char.trust - 15, 0, 100); },
+      },
+      {
+        id: 'vision_mismatch', cat: 't', from: 'Alex',
+        body: "wait — i demoed to my colleague today and called it a 'team productivity tool'. you've been telling people it's a 'workflow automation platform'. those are completely different products. which are we building?",
+        urgency: 3, weeks: 1, priority: true,
+        available: (s, char) => s.week <= 10 && s.product < 50,
+        execute(s, char) {
+          s.signal = clamp(s.signal + 8, 0, 100);
+          char.morale = clamp(char.morale + 5, 0, 100);
+          char.trust = clamp(char.trust + 5, 0, 100);
+          return "2 hours on a whiteboard. Painful but clarifying. You agree now — the cleaner framing tested better.";
+        },
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "pitched it differently again. i think we're building two different products in our heads. investors are going to notice.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 8, 0, 100); },
+      },
+      {
+        id: 'alex_side_project', cat: 't', from: 'Alex',
+        body: "full disclosure — i've been doing about 3 hours a day on a side project. just exploring, not competitive. didn't mention it because i didn't think it was a big deal.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.week >= 3 && s.week <= 14 && char.morale > 50,
+        execute(s, char) {
+          char.morale = clamp(char.morale + 5, 0, 100);
+          char.trust = clamp(char.trust + 5, 0, 100);
+          return "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it.";
+        },
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "i've been thinking — i'm putting in more time than we agreed and progress is slow. is our commitment really equal here?",
+        dropFx(s, char) { char.morale = clamp(char.morale - 20, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); },
+      },
+      {
+        id: 'alex_quiet', cat: 't', from: 'Alex',
+        body: "short replies for 3 days, skipped standup yesterday. you don't know if it's burnout, frustration with progress, or something personal.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.week > 4 && char.morale < 65,
+        execute(s, char) {
+          char.morale = clamp(char.morale + 20, 0, 100);
+          return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week.";
+        },
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "i need some space. working from home this week to figure some things out.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 25, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); },
+      },
+      {
+        id: 'friend_wants_in', cat: 't', from: 'Alex',
+        body: "my friend Jamie wants to join as the first employee. smart, enthusiastic. skills overlap with mine a lot but they'd ship fast. your call though.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.week >= 4 && s.week <= 18 && s.product < 70,
+        execute(s, char) {
+          s.product = clamp(s.product + 6, 0, 100);
+          char.morale = clamp(char.morale + 8, 0, 100);
+          s.network.peers += 2;
+          return "Jamie joined. High energy, shipped 2 useful features in the first week.";
+        },
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "jamie went with another startup. they asked why we passed and honestly i didn't have a great answer.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 10, 0, 100); },
+      },
+      {
+        id: 'alex_equity', cat: 't', from: 'Alex',
+        body: "third time this month. 'i'm not sure the current split reflects what i'm actually contributing.' getting harder to deflect.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.week > 8 && char.morale < 55,
+        options: [
+          { label: 'Revise fairly', key: 'fair',
+            execute(s, char) { char.morale = clamp(char.morale + 30, 0, 100); char.trust = clamp(char.trust + 15, 0, 100); return "Revised the split. Both sides signed. Relationship back on solid ground."; } },
+          { label: 'Bargain hard', key: 'hard',
+            execute(s, char) { char.morale = clamp(char.morale + 8, 0, 100); return "Pushed back hard. Alex accepted for now but isn't happy — expect this again."; } },
+          { label: 'Defer it', key: 'defer',
+            execute(s, char) { char.morale = clamp(char.morale - 8, 0, 100); char.trust = clamp(char.trust - 5, 0, 100); return "Kicked the can. Alex grudgingly agreed to wait, but this is coming back."; } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "i've been talking to a lawyer. i want to revisit the founder agreement formally. this isn't going away.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 35, 0, 100); char.trust = clamp(char.trust - 20, 0, 100); },
+      },
+
+      // ── FOCUS ALIGNMENT ──────────────────────
+      {
+        id: 'alex_sync_discover', cat: 't', from: 'Alex',
+        body: "we've been heads-down building for a while without talking to anyone outside. should we shift focus to customer discovery for a sprint or two?",
+        urgency: 2, weeks: 1, priority: true,
+        available: (s, char) => char.focus === 'build' && char.focusSprints >= 2,
+        options: [
+          { label: 'Yes — shift to discovery', key: 'discover',
+            execute(s, char) { char.focus = 'discover'; char.focusSprints = 0; return "Agreed. Alex on customer discovery this sprint."; } },
+          { label: 'Not yet — keep building', key: 'build',
+            execute(s, char) { char.focusSprints = 0; char.morale = clamp(char.morale - 5, 0, 100); return "Keeping Alex on building. He noted it."; } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "didn't hear back on this. sticking to what we're doing, but we should talk.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 5, 0, 100); char.focusSprints = 0; },
+      },
+      {
+        id: 'alex_sync_build', cat: 't', from: 'Alex',
+        body: "i think we have enough customer feedback to act on for now. ready to get back to building?",
+        urgency: 2, weeks: 1, priority: true,
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal > 35,
+        options: [
+          { label: 'Yes — back to building', key: 'build',
+            execute(s, char) { char.focus = 'build'; char.focusSprints = 0; return "Agreed. Alex back to building."; } },
+          { label: 'Stay in discovery', key: 'discover',
+            execute(s, char) { char.focusSprints = 0; char.morale = clamp(char.morale - 5, 0, 100); return "Staying in discovery mode. Alex a bit frustrated."; } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "still doing discovery then. fine — but product progress is going to stall.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 5, 0, 100); char.focusSprints = 0; },
+      },
+      {
+        id: 'alex_sync_pitch', cat: 't', from: 'Alex',
+        body: "our traction story is getting solid. i could start warming up investor conversations instead of coding — free you up to focus on the product. worth trying?",
+        urgency: 1, weeks: 1, priority: true,
+        available: (s, char) => char.focus !== 'pitch' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 15 && s.deck_ready,
+        options: [
+          { label: 'Yes — work the pipeline', key: 'pitch',
+            execute(s, char) { char.focus = 'pitch'; char.focusSprints = 0; return "Agreed. Alex working the investor pipeline."; } },
+          { label: 'Not yet', key: 'stay',
+            execute(s, char) { char.focusSprints = 0; return "Staying the course for now."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── EARLY: ADMIN & LEGAL ─────────────────
+      {
+        id: 'incorporate_now', cat: 'e', from: 'Alex',
+        body: "a potential user just asked us to sign an NDA before they'd demo their workflow. we can't sign anything without a legal entity. also — we need a bank account. do we use Stripe Atlas or find a lawyer?",
+        urgency: 2, weeks: 1, priority: true,
+        available: (s, char) => s.week <= 8 && !s.incorporated,
+        execute(s, char) {
+          s.incorporated = true;
+          return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official.";
+        },
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "that user followed up on the NDA again. we still don't have a legal entity.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 6, 0, 100); },
+      },
+      {
+        id: 'ip_concern', cat: 'e', from: 'Alex',
+        body: "i was filling out the YC application and it asks about IP. i wrote some early prototypes at my last job — same general problem space. could they claim it?",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.week <= 12 && !s.ip_clear,
+        execute(s, char) {
+          s.ip_clear = true;
+          return "Lawyer reviewed. Previous employer has no claim — personal time, unrelated enough. IP assignment signed. Clean.";
+        },
+        dropDelay: 3, dropFrom: 'Lawyer (friend)',
+        dropMsg: "heads up — looked at your previous employer's IP agreement. it's broadly written. clean this up before investor diligence.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 12, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100); },
+      },
+
+      // ── EARLY: MARKET & IDEA ─────────────────
+      {
+        id: 'first_interview_shock', cat: 'c', from: 'Alex',
+        body: "just got off a customer interview. they said the real problem isn't what we're solving — it's actually the step before it. they'd pay $200/month for that. we might be building the wrong thing.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.week <= 8 && s.product < 40 && char.focus === 'discover',
+        options: [
+          { label: 'Pivot — investigate upstream', key: 'pivot',
+            execute(s, char) { s.signal = clamp(s.signal + 15, 0, 100); s.product = clamp(s.product - 5, 0, 100); return "Pivoted focus. Lost a week of progress but gained real signal. Three more interviews confirmed it."; } },
+          { label: 'Stay the course', key: 'stay',
+            execute(s, char) { s.signal = clamp(s.signal + 5, 0, 100); return "Filed it away. Not ready to pivot on one data point. Logged it for later."; } },
+        ],
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "had 2 more interviews. same thing — everyone says the problem is upstream. we need to talk.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 15, 0, 100); },
+      },
+      {
+        id: 'cold_silence', cat: 'c', from: 'Alex',
+        body: "sent 30 cold emails this week to people in our target market. 0 replies. not even 'not interested'. is the messaging wrong, or are we targeting the wrong people?",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.week >= 2 && s.week <= 12 && !s.launched && s.signal < 50 && char.focus === 'discover',
+        execute(s, char) {
+          s.signal = clamp(s.signal + 10, 0, 100);
+          return "Rewrote the cold email. New version leads with the pain, not the product. First reply came in 4 hours.";
+        },
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "week 2 of silence. i'm starting to wonder if anyone actually has this problem badly enough.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); },
+      },
+      {
+        id: 'random_reframe', cat: 'c', from: 'Alex',
+        body: "talked to a stranger at a coffee shop about what we're building. they said 'oh so it's like [completely different description] but for [different market].' we both went quiet. it kind of makes more sense than our own pitch.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.week <= 12 && s.signal < 55 && char.focus === 'discover',
+        execute(s, char) {
+          s.signal = clamp(s.signal + 12, 0, 100);
+          s.network.peers += 3;
+          return "Ran the new framing by 3 more people. All 3 immediately got it. Updated the positioning.";
+        },
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'family_doubt', cat: 't', from: 'Alex',
+        body: "my parents asked me again when i'm getting a real job. yours too? i keep explaining it but they don't really get it. tbh it's starting to get in my head a little.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week >= 2 && s.week <= 18 && char.morale < 80,
+        execute(s, char) {
+          char.morale = clamp(char.morale + 12, 0, 100);
+          return "Long talk. Reminded each other why you're doing this. Morale reset.";
+        },
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── MID: PRODUCT ─────────────────────────
+      {
+        id: 'good_enough_launch', cat: 'p', from: 'Alex',
+        body: "it's good enough. every week we wait is a week we're not learning from real users. i know it's not perfect but i think we should just ship it.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.product >= 55 && !s.launched && char.focus === 'build',
+        options: [
+          { label: 'Ship it — launch now', key: 'ship',
+            execute(s, char) { s.launched = true; s.signal = clamp(s.signal + 12, 0, 100); return "Launched. First real users are in. Feedback starts flowing."; } },
+          { label: 'Two more weeks', key: 'wait',
+            execute(s, char) { s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale - 12, 0, 100); return "Polished a few more things. Alex thinks you're stalling — and he might be right."; } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "another week building in a vacuum. runway is ticking and we still have zero real user feedback.",
+        dropFx(s, char) { s.cash = clamp(s.cash - 800, 0, 9999999); char.morale = clamp(char.morale - 10, 0, 100); },
+      },
+      {
+        id: 'alex_wants_rebuild', cat: 'p', from: 'Alex',
+        body: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",
+        urgency: 2, weeks: 2,
+        available: (s, char) => s.product > 40 && s.week > 8 && char.focus === 'build',
+        execute(s, char) {
+          s.product = clamp(s.product + 12, 0, 100);
+          char.morale = clamp(char.morale + 15, 0, 100);
+          return "Architecture refactored. Faster, cleaner. Alex is energized.";
+        },
+        dropDelay: 4, dropFrom: 'Alex',
+        dropMsg: "3 active outages this week from the tech debt i flagged. we're losing users in real time.",
+        dropFx(s, char) { s.customers = clamp(s.customers - 8, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
+      },
+      {
+        id: 'alex_decision', cat: 't', from: 'Customer',
+        body: "alex told me you'd ship a full integration by friday. it's wednesday. i don't see anything about this in the roadmap.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.launched && s.customers > 3,
+        execute(s, char) {
+          s.customers += 3;
+          char.morale = clamp(char.morale + 5, 0, 100);
+          return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments.";
+        },
+        dropDelay: 1, dropFrom: 'Customer',
+        dropMsg: "it's monday. still nothing. we're blocking our launch on this.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 4, 0, 9999); },
+      },
+
+      // ── DEPARTURE ARC ────────────────────────
+      {
+        id: 'alex_leaving_threat', cat: 't', from: 'Alex',
+        body: "got a message from an old colleague at a well-funded startup. not going anywhere — but i think we need to have an honest conversation about where this is headed for me.",
+        urgency: 3, weeks: 1, priority: true,
+        available: (s, char, e) => e.alexDepartureRisk && char.active,
+        execute(s, char, e) {
+          char.trust  = clamp(char.trust  + 20, 0, 100);
+          char.morale = clamp(char.morale + 15, 0, 100);
+          e.alexDepartureRisk = false;
+          return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now.";
+        },
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "i accepted the offer. i'm sorry — i think this is right for me. i'll do a proper handoff this week.",
+        dropFx(s, char, e) { char.active = false; e.alexDepartureRisk = false; },
+      },
+    ],
+  },
+
+  priya: {
+    id: 'priya', name: 'Priya (advisor)', type: 'advisor',
+    cards: [
+      {
+        id: 'mentor_competitor_bomb', cat: 'c', from: 'Priya (advisor)',
+        body: "looked at your idea over the weekend. you should know: there are at least 3 companies working on this right now. one is YC-backed from 2022. you need a much sharper answer to 'why you.'",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.week <= 10 && s.signal < 60,
+        execute(s, char) {
+          s.signal = clamp(s.signal + 8, 0, 100);
+          s.network.advisors++;
+          return "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor.";
+        },
+        dropDelay: 2, dropFrom: 'Priya',
+        dropMsg: "any progress on differentiating from the competition? investors will definitely ask.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 8, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 8, 0, 100); },
+      },
+    ],
+  },
+
+  marcus: {
+    id: 'marcus', name: 'Marcus (angel)', type: 'investor',
+    cards: [
+      {
+        id: 'investor_intro_warm', cat: 'e', from: 'Marcus (angel)',
+        body: "following up — genuinely interested in what you're building. if i don't hear back by end of week i'll assume timing's off.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.week > 4 && s.investor_warmth < 50,
+        execute(s, char) {
+          s.investor_warmth = clamp(s.investor_warmth + 20, 0, 100);
+          s.network.angels++;
+          return "Great call. Marcus is following your progress.";
+        },
+        dropDelay: 1, dropFrom: 'Marcus',
+        dropMsg: "tried twice. no reply. moving on — good luck with the company.",
+        dropFx(s, char) { s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100); },
+      },
+      {
+        id: 'prep_deck', cat: 'e', from: 'Marcus (angel)',
+        body: "when you're ready to have a more formal conversation, can you send me a deck? you don't want to be scrambling to build one mid-diligence.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => !s.deck_ready && s.signal >= 38 && s.customers >= 5,
+        execute(s, char) {
+          s.deck_ready = true;
+          return "Deck done. Story is clear. Ready when the time comes.";
+        },
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'investor_ready', cat: 'e', from: 'Marcus (angel)',
+        body: "two investors want to meet this week. deck is ready, story is tight, both have context. momentum is high right now.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.deck_ready && s.signal >= 38 && s.investor_warmth < 75 && s.network.angels >= 1,
+        execute(s, char) {
+          s.investor_warmth = clamp(s.investor_warmth + 28, 0, 100);
+          return "Strong meetings. Both investors want to see your next milestone.";
+        },
+        dropDelay: 2, dropFrom: 'Investor',
+        dropMsg: "reached out twice. no reply. assumed timing wasn't right. moving on.",
+        dropFx(s, char) { s.investor_warmth = clamp(s.investor_warmth - 20, 0, 100); },
+      },
+      {
+        id: 'seed_pitch', cat: 'e', from: 'Marcus (angel)',
+        body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about leading your seed?",
+        urgency: 2, weeks: 2,
+        available: (s, char) => s.investor_warmth >= 62 && s.deck_ready && s.customers >= 35 && s.signal >= 38,
+        execute(s, char, e) {
+          const score = clamp(s.customers / 3, 0, 35) + clamp(s.product / 5, 0, 20)
+            + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0) + (s.ycAccepted ? 20 : 0);
+          if (Math.random() < (score >= 65 ? 0.80 : score >= 50 ? 0.45 : 0.15)) {
+            s.game_won = true;
+            return "Seed round closed!";
+          }
+          s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100);
+          return "Marcus: \"we love the vision but need more traction to lead. come back in 2 months.\"";
+        },
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+    ],
+  },
+
+  sarah: {
+    id: 'sarah', name: 'Sarah (mutual)', type: 'connector',
+    cards: [
+      {
+        id: 'intro_expiring', cat: 'c', from: 'Sarah (mutual)',
+        body: "intro'd you to the head of ops at a fast-growing startup. she told me yesterday she's evaluating 2 other tools. you need to reply today.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.week > 3,
+        execute(s, char) {
+          s.customers += 5 + rnd(5);
+          s.signal = clamp(s.signal + 7, 0, 100);
+          s.network.advisors++;
+          return "Had the call. Strong fit — they signed up on the spot. Sarah is now a connector you can rely on.";
+        },
+        dropDelay: 1, dropFrom: 'Sarah',
+        dropMsg: "they went with something else. mentioned they didn't hear back in time. that one hurt.",
+        dropFx(s, char) { s.signal = clamp(s.signal - 8, 0, 100); },
+      },
+    ],
+  },
+};
+
+// ─────────────────────────────────────────────
+// GLOBAL SITUATION POOL
+// Market events and system alerts — no character owner.
+// ─────────────────────────────────────────────
+
+const SITUATIONS = [
+  {
+    id: 'hn_thread', cat: 'e', from: 'Hacker News',
+    body: "'Ask HN: Why is [your space] still so broken?' — top thread right now, 300 comments. this is your market talking openly.",
+    urgency: 2, weeks: 1,
+    available: (s) => !s.launched,
+    execute(s) { s.signal = clamp(s.signal + 12, 0, 100); s.customers += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; },
+    dropDelay: 0, dropMsg: null, dropFx(s) { s.signal = clamp(s.signal - 3, 0, 100); },
+  },
+  {
+    id: 'reporter_deadline', cat: 'e', from: 'Lena (TechMedia)',
+    body: "writing about startups in your space. you'd be the only founder quote. story publishes tomorrow 9am — you're out if i don't hear back tonight.",
+    urgency: 3, weeks: 1,
+    available: (s) => s.launched,
+    execute(s) { const n = 10 + rnd(10); s.customers += n; s.signal = clamp(s.signal + 10, 0, 100); s.network.press++; return `Story ran. ${n} signups in 24 hours.`; },
+    dropDelay: 0, dropMsg: null, dropFx: null,
+  },
+  {
+    id: 'competitor_launch', cat: 'e', from: 'TechCrunch',
+    body: "Rivalio just came out of stealth with $3M. product looks similar. they're running ads on your keywords today.",
+    urgency: 3, weeks: 1,
+    available: (s) => s.product > 20,
+    execute(s) { s.signal = clamp(s.signal + 6, 0, 100); return "Published a direct comparison. Your niche is clearer. A few users switched from Rivalio to you."; },
+    dropDelay: 2, dropFrom: 'Priya (advisor)',
+    dropMsg: "Rivalio has 200 customers and is well-funded. you need a sharper answer to 'why you and not them.'",
+    dropFx(s) { s.signal = clamp(s.signal - 12, 0, 100); },
+  },
+  {
+    id: 'bug_reports', cat: 'p', from: 'Priya + 2 others',
+    body: "all three emailed within an hour. same crash, same workflow. the product is unusable for them right now.",
+    urgency: 3, weeks: 1,
+    available: (s) => s.launched && s.customers >= 3,
+    execute(s) { return "Fixed the crash. Users notified. Goodwill recovered."; },
+    dropDelay: 1, dropFrom: 'Priya',
+    dropMsg: "we cancelled. the bug never got fixed and we had a deadline. no hard feelings.",
+    dropFx(s) { s.customers = clamp(s.customers - 10, 0, 9999); s.signal = clamp(s.signal - 10, 0, 100); },
+  },
+  {
+    id: 'feature_cluster', cat: 'p', from: '3 users (separately)',
+    body: "none of them know each other. all three asked for the exact same thing this week. that's not coincidence.",
+    urgency: 2, weeks: 2,
+    available: (s) => s.launched && s.customers >= 5,
+    execute(s) { s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; },
+    dropDelay: 3, dropFrom: 'User',
+    dropMsg: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",
+    dropFx(s) { s.signal = clamp(s.signal - 8, 0, 100); },
+  },
+  {
+    id: 'waitlist_cold', cat: 'c', from: 'Waitlist (22 people)',
+    body: "they signed up 2 weeks ago and haven't heard from you. every day you wait, a few more move on.",
+    urgency: 2, weeks: 1,
+    available: (s) => !s.launched && s.signal > 30,
+    execute(s) { s.customers += 8; s.signal = clamp(s.signal + 8, 0, 100); return "Reached out to waitlist. 8 became active beta testers."; },
+    dropDelay: 2, dropFrom: 'Waitlist',
+    dropMsg: "signed up a few weeks ago. assumed the product was dead. unsubscribed.",
+    dropFx(s) { s.signal = clamp(s.signal - 10, 0, 100); },
+  },
+  {
+    id: 'silent_churn', cat: 'c', from: 'Analytics',
+    body: "your first 3 beta users signed up, poked around for 20 minutes, and disappeared. no explanation.",
+    urgency: 3, weeks: 1,
+    available: (s) => s.launched && s.customers >= 3 && s.customers < 20,
+    execute(s) { s.signal = clamp(s.signal + 6, 0, 100); return "Called all 3. Found a critical onboarding gap. Fixed it. 2 came back."; },
+    dropDelay: 2, dropFrom: 'Analytics',
+    dropMsg: "churn rate this month: 40%. every new signup leaves after a day.",
+    dropFx(s) { s.signal = clamp(s.signal - 12, 0, 100); s.customers = clamp(s.customers - 5, 0, 9999); },
+  },
+  {
+    id: 'public_complaint', cat: 'c', from: 'Twitter',
+    body: "'@yourproduct has been broken for 3 days and nobody responded to my support email. do not use this.' — 40 retweets and counting.",
+    urgency: 3, weeks: 1,
+    available: (s) => s.launched && s.customers >= 5,
+    execute(s) { s.signal = clamp(s.signal + 5, 0, 100); return "Responded publicly, fixed the issue. Turned a critic into a vocal supporter."; },
+    dropDelay: 1, dropFrom: 'Twitter',
+    dropMsg: "tweet is at 200 retweets. a journalist screenshot it. signup rate dropped 30%.",
+    dropFx(s) { s.signal = clamp(s.signal - 18, 0, 100); s.customers = clamp(s.customers - 8, 0, 9999); },
+  },
+  {
+    id: 'power_user_quiet', cat: 'c', from: 'Tom (your top user)',
+    body: "he was in the product every single day for 6 weeks. then nothing for 10 days. something changed.",
+    urgency: 2, weeks: 1,
+    available: (s) => s.customers >= 10,
+    execute(s) { s.signal = clamp(s.signal + 8, 0, 100); return "Called Tom. He was stuck on a new workflow. Unblocked him — he's back and grateful."; },
+    dropDelay: 2, dropFrom: 'Tom',
+    dropMsg: "moved on to Rivalio. nothing personal, just works better for my workflow now.",
+    dropFx(s) { s.signal = clamp(s.signal - 14, 0, 100); s.customers = clamp(s.customers - 3, 0, 9999); },
+  },
+  {
+    id: 'yc_window', cat: 'e', from: 'Y Combinator',
+    body: "applications close in 2 weeks. based on your stats you qualify. applications take about a week to do well.",
+    urgency: 3, weeks: 1,
+    available(s, char, e) { return s.week >= e.ycWeek && !s.ycApplied && s.product >= 60 && s.customers >= 40; },
+    execute(s) { s.ycApplied = true; return "Applied. Decision in 3 weeks."; },
+    dropDelay: 0, dropMsg: null, dropFx: null,
+  },
+];
+
+// ─────────────────────────────────────────────
+// WORLD EVENTS — silent effects each sprint
+// ─────────────────────────────────────────────
+
+const WORLD = [
+  {
+    available: s => s.launched && s.customers > 0,
+    fx: s => { s.customers += 2 + rnd(4); s.signal = clamp(s.signal + 3, 0, 100); },
+  },
+  {
+    available: () => true,
+    fx: s => { s.signal = clamp(s.signal - 5, 0, 100); },
+  },
+  {
+    available: s => s.signal > 50,
+    fx: s => { s.customers += 3 + rnd(7); s.signal = clamp(s.signal + 6, 0, 100); s.network.peers += 5; },
+  },
+  {
+    available: s => s.launched,
+    fx: s => { /* recruiter email to Alex — handled via departure risk */ },
+  },
+  {
+    available: s => s.cash > 500,
+    fx: s => { s.cash = clamp(s.cash - 700, 0, 9999999); },
+  },
+  {
+    available: s => !s.launched,
+    fx: s => { s.signal = clamp(s.signal + 5, 0, 100); },
+  },
+  {
+    available: s => s.customers >= 5,
+    fx: s => { s.customers += 3; s.signal = clamp(s.signal + 5, 0, 100); s.network.peers += 2; },
+  },
+  {
+    available: s => s.customers >= 10,
+    fx: s => { s.signal = clamp(s.signal - 4, 0, 100); },
+  },
+  {
+    available: s => s.week > 6 && !s.launched,
+    fx: s => { s.cash = clamp(s.cash - 400, 0, 9999999); },
+  },
+];
+
+// ─────────────────────────────────────────────
+// ENGINE
+// ─────────────────────────────────────────────
+
+class Engine {
+  constructor() {
+    this.s = {
+      cash: 20000, week: 1, product: 10, customers: 0,
+      signal: 28, launched: false, deck_ready: false,
+      investor_warmth: 0,
+      incorporated: false, ip_clear: false,
+      ycApplied: false, ycAccepted: false, ycDecisionWeek: null,
+      ycNotified: false, game_over: false, game_won: false,
+      network: { peers: 12, advisors: 0, angels: 0, press: 0 },
+    };
+    this.ycWeek = 10 + rnd(8);
+
+    // Live character instances
+    this.chars = new Map([
+      ['alex',   { archetypeId: 'alex',   active: true,  morale: 80, trust: 70, focus: 'build', focusSprints: 0, flags: {} }],
+      ['priya',  { archetypeId: 'priya',  active: true,  engagement: 80, flags: {} }],
+      ['marcus', { archetypeId: 'marcus', active: true,  engagement: 50, flags: {} }],
+      ['sarah',  { archetypeId: 'sarah',  active: true,  engagement: 60, flags: {} }],
+    ]);
+    this.alexDepartureRisk = false;
+
+    this.pending = [];
+    this.current = [];
+    this.shown   = new Set();
+  }
+
+  get burnPerWeek() { return 800; }
+  get runwayWeeks() { return Math.floor(this.s.cash / this.burnPerWeek); }
+
+  get sigIdx() {
+    const v = this.s.signal;
+    if (v < 20) return 0; if (v < 40) return 1; if (v < 60) return 2;
+    if (v < 80) return 3; return 4;
+  }
+  get sigDesc() {
+    return ["Dead cold — silence.",
+      "Polite interest. Nobody's committed.",
+      "Warm — people keep asking when you launch.",
+      "Hot — inbound you can barely keep up with.",
+      "Pull — people are referring others without being asked."][this.sigIdx];
+  }
+
+  generateDemands() {
+    // Fire one silent world event
+    const worldEligible = WORLD.filter(w => w.available(this.s));
+    if (worldEligible.length > 0) worldEligible[rnd(worldEligible.length)].fx(this.s);
+
+    // Check Alex departure risk
+    const alex = this.chars.get('alex');
+    if (alex && alex.active && alex.trust < 25 && alex.morale < 25) {
+      this.alexDepartureRisk = true;
+    }
+
+    // Collect available cards from all active characters + global pool
+    const allCards = [];
+    for (const [id, char] of this.chars) {
+      if (!char.active) continue;
+      const def = CHARACTER_DEFS[id];
+      for (const card of def.cards) {
+        if (card.available(this.s, char, this)) {
+          allCards.push({ ...card, _charId: id });
+        }
+      }
+    }
+    for (const card of SITUATIONS) {
+      if (card.available(this.s, null, this)) {
+        allCards.push({ ...card, _charId: null });
+      }
+    }
+
+    const unseen = allCards.filter(d => !this.shown.has(d.id));
+    const pool   = unseen.length >= 4 ? unseen : allCards;
+
+    // Priority cards jump the queue
+    const maxPriority = this.s.week <= 8 ? 2 : 1;
+    const picked = allCards.filter(d => d.priority).slice(0, maxPriority);
+
+    // Fill remaining slots: one per category, then random
+    for (const cat of ['p', 'c', 't', 'e']) {
+      if (picked.length >= 4) break;
+      const match = pool.slice().sort(() => Math.random() - .5)
+        .find(d => d.cat === cat && !picked.includes(d));
+      if (match) picked.push(match);
+    }
+    for (const d of pool.slice().sort(() => Math.random() - .5)) {
+      if (picked.length >= 4) break;
+      if (!picked.includes(d)) picked.push(d);
+    }
+
+    this.current = picked.slice(0, 4);
+    this.current.forEach(d => this.shown.add(d.id));
+    this.current.forEach(d => { d._expiring = this.shown.has(d.id + '_seen'); });
+    return this.current;
+  }
+
+  resolveTurn(ids, optKeys = {}) {
+    const chosen  = this.current.filter(d => ids.includes(d.id));
+    const dropped = this.current.filter(d => !ids.includes(d.id));
+    const results = [];
+
+    for (const d of chosen) {
+      const char = d._charId ? this.chars.get(d._charId) : null;
+      let m;
+      if (d.options) {
+        const opt = d.options.find(o => o.key === optKeys[d.id]) || d.options[0];
+        m = opt.execute(this.s, char, this);
+      } else {
+        m = d.execute(this.s, char, this);
+      }
+      if (m) results.push(m);
+    }
+
+    for (const d of dropped) {
+      const char = d._charId ? this.chars.get(d._charId) : null;
+      if (d.dropDelay > 0 && d.dropFx) {
+        this.pending.push({
+          fireWeek: this.s.week + d.dropDelay,
+          from: d.dropFrom || (d._charId ? CHARACTER_DEFS[d._charId].name : 'System'),
+          text: d.dropMsg,
+          fx: d.dropFx,
+          charId: d._charId,
+        });
+      } else if (d.dropDelay === 0 && d.dropFx) {
+        d.dropFx(this.s, char, this);
+      }
+    }
+
+    const sprintWeeks = Math.max(...chosen.map(d => d.weeks), 1);
+    this.s.week += sprintWeeks;
+    this.s.cash -= this.burnPerWeek * sprintWeeks;
+
+    // Co-founder passive contributions (skill-weighted)
+    for (const [id, char] of this.chars) {
+      if (!char.active || !char.focus) continue;
+      const def = CHARACTER_DEFS[id];
+      if (def.type !== 'cofounder') continue;
+      const skill = (def.skills || {})[char.focus] || 1.0;
+      const base  = sprintWeeks * 2 * skill;
+      if      (char.focus === 'build')    this.s.product        = clamp(this.s.product        + base,       0, 100);
+      else if (char.focus === 'discover') this.s.signal         = clamp(this.s.signal         + base * 1.5, 0, 100);
+      else if (char.focus === 'pitch')    this.s.investor_warmth= clamp(this.s.investor_warmth+ base * 2,   0, 100);
+      char.focusSprints++;
+    }
+
+    // Trust decay + morale recovery for co-founders
+    for (const [, char] of this.chars) {
+      if (!char.active || !('trust' in char)) continue;
+      char.trust  = clamp(char.trust  - 1 * sprintWeeks, 0, 100);
+      char.morale = clamp(char.morale + 2 * sprintWeeks, 0, 100);
+    }
+
+    // Signal drifts without customer attention
+    if (!chosen.some(d => d.cat === 'c')) this.s.signal = clamp(this.s.signal - 2 * sprintWeeks, 0, 100);
+
+    // Organic customer growth
+    if (this.s.launched && this.s.signal >= 40)
+      this.s.customers += Math.floor((this.s.signal - 40) / 20) * sprintWeeks;
+
+    // Fire pending consequences
+    const fired = this.pending.filter(p => p.fireWeek <= this.s.week);
+    this.pending = this.pending.filter(p => p.fireWeek > this.s.week);
+    for (const p of fired) {
+      const char = p.charId ? this.chars.get(p.charId) : null;
+      p.fx(this.s, char, this);
+      if (p.text) results.push(`${p.from}: "${p.text}"`);
+    }
+
+    // Clamp global state
+    this.s.signal         = clamp(this.s.signal,         0, 100);
+    this.s.investor_warmth= clamp(this.s.investor_warmth,0, 100);
+    this.s.cash           = clamp(this.s.cash,           0, 9999999);
+
+    // YC
+    if (this.s.week >= this.ycWeek && !this.s.ycNotified) {
+      this.s.ycNotified = true;
+      results.push("Y Combinator: applications are open. Deadline in 2 weeks. Need product ≥ 60% and 40+ customers.");
+    }
+    if (this.s.ycApplied && !this.s.ycDecisionWeek) this.s.ycDecisionWeek = this.s.week + 3;
+    if (this.s.ycDecisionWeek && this.s.week >= this.s.ycDecisionWeek) {
+      this.s.ycDecisionWeek = null;
+      if (Math.random() < 0.18) {
+        this.s.ycAccepted = true; this.s.cash += 500000;
+        this.s.signal = clamp(this.s.signal + 25, 0, 100);
+        results.push("YC accepted! $500k added. See you at kickoff.");
+      } else {
+        results.push("YC: passing on this batch. Apply again next cycle.");
+      }
+    }
+
+    if (this.s.cash <= 0) this.s.game_over = true;
+    return { results, sprintWeeks };
+  }
+}
+
+// ─────────────────────────────────────────────
+// UI
+// ─────────────────────────────────────────────
+
+let E, sel, selOpts;
+
+function boot() {
+  E = new Engine();
+  sel = [];
+  selOpts = {};
+  document.getElementById('overlay').classList.remove('on');
+  E.generateDemands();
+  render();
+}
+
+function render() {
+  const s = E.s;
+  const mo = Math.ceil(s.week / 4);
+  document.getElementById('week-badge').textContent = `Month ${mo} · Wk ${s.week}`;
+  document.getElementById('s-cash').innerHTML = `Cash <strong>$${s.cash.toLocaleString()}</strong>`;
+  const rw = E.runwayWeeks;
+  const re = document.getElementById('s-runway');
+  re.innerHTML  = `<strong>${rw}wk</strong> runway`;
+  re.className  = 'st' + (rw <= 3 ? ' danger' : rw <= 6 ? ' warn' : '');
+  document.getElementById('s-product').innerHTML   = `Product <strong>${s.product}%</strong>`;
+  document.getElementById('s-customers').innerHTML = `Customers <strong>${s.customers}</strong>`;
+  document.getElementById('p-live').style.display  = s.launched   ? 'inline-block' : 'none';
+  document.getElementById('p-deck').style.display  = s.deck_ready ? 'inline-block' : 'none';
+
+  // Network display
+  const net = s.network;
+  const netParts = [`👥 ${net.peers}`];
+  if (net.advisors > 0) netParts.push(`🧭 ${net.advisors}`);
+  if (net.angels > 0)   netParts.push(`💰 ${net.angels}`);
+  if (net.press > 0)    netParts.push(`📰 ${net.press}`);
+  document.getElementById('s-network').innerHTML = `Network <strong>${netParts.join(' · ')}</strong>`;
+
+  // Alex status
+  const alex = E.chars.get('alex');
+  document.getElementById('alex-dot').style.background =
+    !alex || !alex.active ? '#9ca3af' :
+    alex.morale > 65 ? '#22c55e' : alex.morale > 40 ? '#f59e0b' : '#ef4444';
+  document.getElementById('alex-focus-lbl').textContent =
+    alex && alex.active
+      ? ({ build: 'building', discover: 'discovery', pitch: 'pitching' })[alex.focus]
+      : 'left';
+
+  // Gauge
+  const idx = E.sigIdx;
+  for (let i = 0; i < 5; i++) document.getElementById(`g${i}`).className = `gs${i <= idx ? ` a${i}` : ''}`;
+  document.getElementById('gauge-desc').textContent = E.sigDesc;
+
+  // Horizon
+  const items = [];
+  if (!s.launched) items.push({ t: `🚀 Launch ~${Math.max(1, Math.ceil((60 - s.product) / 8))}wk`, cls: 'hi' });
+  if (!s.ycApplied) {
+    const w = E.ycWeek - s.week;
+    items.push(w > 0 ? { t: `★ YC in ${w}wk`, cls: w <= 2 ? 'hi now' : 'hi' } : { t: '★ YC OPEN', cls: 'hi now' });
+  }
+  if (rw < 16) items.push({ t: `⚠ Runway ${rw}wk`, cls: rw <= 3 ? 'hi hot' : rw <= 6 ? 'hi soon' : 'hi' });
+  if (s.investor_warmth > 0) items.push({ t: `📈 Investor ${s.investor_warmth}%`, cls: 'hi' });
+  document.getElementById('row-horizon').innerHTML =
+    items.map((it, i) => (i ? '<span style="color:#ddd;margin:0 4px">·</span>' : '') +
+      `<span class="${it.cls}">${it.t}</span>`).join('');
+
+  renderDemands();
+
+  if (s.game_won) {
+    document.getElementById('ov-title').textContent = 'Seed round closed!';
+    document.getElementById('ov-body').textContent  = `You raised $1.2M at week ${s.week} with ${s.customers} customers.`;
+    document.getElementById('overlay').classList.add('on');
+  } else if (s.game_over) {
+    document.getElementById('ov-title').textContent = 'Out of runway.';
+    document.getElementById('ov-body').textContent  = `Made it to week ${s.week} with ${s.customers} customers. Cash hit zero.`;
+    document.getElementById('overlay').classList.add('on');
+  }
+}
+
+function renderDemands() {
+  const ulbls = ['','Routine','Important','Urgent'];
+  document.getElementById('demands-list').innerHTML = E.current.map(d => {
+    const isSel     = sel.includes(d.id);
+    const dc        = d.weeks === 2 ? 'dur two' : 'dur';
+    const exp       = d._expiring ? ' expiring' : '';
+    const chosenOpt = selOpts[d.id];
+    const fromLabel = d.from || (d._charId ? CHARACTER_DEFS[d._charId].name : 'System');
+
+    const optHtml = d.options ? `
+      <div class="dmnd-options">
+        ${d.options.map(o => `<button class="opt-btn${chosenOpt === o.key ? ' chosen' : ''}"
+          onclick="event.stopPropagation();pickOpt('${d.id}','${o.key}')">${o.label}</button>`).join('')}
+      </div>` : '';
+
+    const clickHandler = d.options ? '' : `onclick="pick('${d.id}')"`;
+    return `<div class="dmnd ${d.cat}${isSel ? ' sel' : ''}${exp}" ${clickHandler}>
+      <div class="dmnd-meta">
+        <span class="dmnd-from">${fromLabel}</span>
+        <span class="urg u${d.urgency}">${ulbls[d.urgency]}</span>
+        ${isSel ? '<span class="dmnd-check" style="color:#16a34a">&#10003;</span>' : ''}
+      </div>
+      <div class="dmnd-body">${d.body}</div>
+      ${optHtml}
+      <div class="dmnd-foot"><span class="${dc}">${d.weeks}wk sprint</span></div>
+    </div>`;
+  }).join('');
+  updateBtn();
+}
+
+function pick(id) {
+  if (E.s.game_over || E.s.game_won) return;
+  if (sel.includes(id)) {
+    sel = sel.filter(i => i !== id);
+    delete selOpts[id];
+  } else if (sel.length < 2) {
+    sel = [...sel, id];
+  }
+  renderDemands();
+}
+
+function pickOpt(id, key) {
+  if (E.s.game_over || E.s.game_won) return;
+  if (!sel.includes(id)) {
+    if (sel.length >= 2) return;
+    sel = [...sel, id];
+  }
+  selOpts[id] = key;
+  renderDemands();
+}
+
+function updateBtn() {
+  const btn = document.getElementById('btn');
+  const ctr = document.getElementById('counter');
+  const chosen = E.current.filter(d => sel.includes(d.id));
+  const needsChoice = chosen.some(d => d.options && !selOpts[d.id]);
+  if (sel.length === 2 && !needsChoice) {
+    const wks = Math.max(...chosen.map(d => d.weeks));
+    btn.disabled = false;
+    btn.textContent = `Commit — ${wks}wk sprint →`;
+    ctr.textContent = '✓ 2 of 4 selected';
+  } else {
+    btn.disabled = true;
+    btn.textContent = needsChoice ? 'Choose an option above' : 'Pick 2 to continue';
+    ctr.textContent = sel.length === 0 ? 'Pick 2 of 4' : needsChoice ? 'Choose how to handle it' : 'Pick 1 more';
+  }
+}
+
+function advance() {
+  if (sel.length !== 2 || E.s.game_over || E.s.game_won) return;
+  const { results, sprintWeeks } = E.resolveTurn(sel, selOpts);
+  sel = [];
+  selOpts = {};
+  const flash = document.getElementById('flash');
+  const lines = [`${sprintWeeks}wk passed`, ...results];
+  flash.innerHTML = lines.map(l => `<div>${l}</div>`).join('');
+  flash.classList.add('on');
+  E.generateDemands();
+  render();
+}
+
+document.getElementById('btn').addEventListener('click', advance);
+boot();
+</script>
+</body>
+</html>
