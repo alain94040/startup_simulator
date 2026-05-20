@@ -758,7 +758,7 @@ class Engine {
 
     // Check Alex departure risk
     const alex = this.chars.get('alex');
-    if (alex && alex.active && alex.trust < 15) {
+    if (alex && alex.active && (alex.trust < 15 || alex.morale < 10)) {
       this.alexDepartureRisk = true;
     }
 
@@ -864,7 +864,7 @@ class Engine {
       if (delta > 0)      char.trust = clamp(char.trust + 2 * sprintWeeks, 0, 100);
       else if (delta < 0) char.trust = clamp(char.trust - 2 * sprintWeeks, 0, 100);
       // no change if Alex had no cards in this sprint
-      char.morale = clamp(char.morale + 2 * sprintWeeks, 0, 100);
+      char.morale = clamp(char.morale + 3 * sprintWeeks, 0, 100);
     }
 
     // Signal drifts without customer attention
