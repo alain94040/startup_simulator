@@ -1,0 +1,215 @@
+// Simulation harness — runs N games per strategy, reports findings.
+
+const { Engine, CHARACTER_DEFS } = require('./engine.js');
+
+// ─── Strategy helpers ────────────────────────────────────────────────────────
+
+function pickOptions(cards, ids, strategy) {
+  const opts = {};
+  for (const id of ids) {
+    const card = cards.find(c => c.id === id);
+    if (!card || !card.options) continue;
+    const keys = card.options.map(o => o.key);
+    if (strategy === 'nice')    opts[id] = keys[0];           // always first option
+    if (strategy === 'random')  opts[id] = keys[Math.floor(Math.random() * keys.length)];
+    if (strategy === 'greedy')  opts[id] = keys[0];
+    if (strategy === 'ignore_alex') opts[id] = keys[keys.length - 1]; // worst option
+  }
+  return opts;
+}
+
+function selectCards(current, strategy) {
+  if (current.length === 0) return [];
+  const pool = [...current];
+
+  if (strategy === 'random') {
+    const shuffled = pool.sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, 2).map(c => c.id);
+  }
+
+  if (strategy === 'yc_grind') {
+    // Priority: YC cards > product > customer > external > team
+    const order = ['yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
+                   'good_enough_launch','bug_reports','feature_cluster','silent_churn',
+                   'public_complaint','power_user_quiet','reporter_deadline','hn_thread'];
+    const sorted = pool.slice().sort((a, b) => {
+      const ai = order.indexOf(a.id), bi = order.indexOf(b.id);
+      if (ai !== -1 && bi !== -1) return ai - bi;
+      if (ai !== -1) return -1;
+      if (bi !== -1) return 1;
+      // urgency then category preference p>c>e>t
+      if (b.urgency !== a.urgency) return b.urgency - a.urgency;
+      const catOrder = { p: 0, c: 1, e: 2, t: 3 };
+      return (catOrder[a.cat] || 9) - (catOrder[b.cat] || 9);
+    });
+    return sorted.slice(0, 2).map(c => c.id);
+  }
+
+  if (strategy === 'alex_first') {
+    // Always pick Alex's cards, prefer urgent ones
+    const sorted = pool.slice().sort((a, b) => {
+      const aAlex = a._charId === 'alex' ? 1 : 0;
+      const bAlex = b._charId === 'alex' ? 1 : 0;
+      if (aAlex !== bAlex) return bAlex - aAlex;
+      return b.urgency - a.urgency;
+    });
+    return sorted.slice(0, 2).map(c => c.id);
+  }
+
+  if (strategy === 'ignore_alex') {
+    // Never pick Alex's cards unless forced
+    const nonAlex = pool.filter(c => c._charId !== 'alex');
+    const alex    = pool.filter(c => c._charId === 'alex');
+    const pick    = [...nonAlex, ...alex].slice(0, 2);
+    return pick.map(c => c.id);
+  }
+
+  if (strategy === 'customer_focus') {
+    const sorted = pool.slice().sort((a, b) => {
+      const catOrder = { c: 0, p: 1, e: 2, t: 3 };
+      if (a.cat !== b.cat) return (catOrder[a.cat] || 9) - (catOrder[b.cat] || 9);
+      return b.urgency - a.urgency;
+    });
+    return sorted.slice(0, 2).map(c => c.id);
+  }
+
+  return pool.slice(0, 2).map(c => c.id);
+}
+
+// ─── Run one game ─────────────────────────────────────────────────────────────
+
+function runGame(strategy, maxWeek = 120, verbose = false) {
+  const e = new Engine();
+  const log = [];
+  let errorCount = 0;
+
+  const optStrategy = strategy === 'ignore_alex' ? 'ignore_alex' : 'nice';
+
+  for (let turn = 0; turn < 80; turn++) {
+    if (e.s.game_won || e.s.game_over) break;
+    if (e.s.week >= maxWeek) { log.push(`TIMEOUT at week ${e.s.week}`); break; }
+
+    try {
+      e.generateDemands();
+    } catch(err) {
+      log.push(`ERROR in generateDemands turn ${turn}: ${err.message}`);
+      errorCount++;
+      break;
+    }
+
+    if (e.current.length === 0) {
+      log.push(`STUCK: no cards available at week ${e.s.week}`);
+      break;
+    }
+
+    const ids  = selectCards(e.current, strategy);
+    const opts = pickOptions(e.current, ids, optStrategy);
+
+    // For YC discussions, always apply
+    for (const id of ids) {
+      if ((id === 'yc_discussion_ready' || id === 'yc_discussion_early') && !opts[id]) {
+        opts[id] = 'apply';
+      }
+      if (id === 'alex_sync_discover' && !opts[id]) opts[id] = 'discover';
+      if (id === 'alex_sync_build'    && !opts[id]) opts[id] = 'build';
+      if (id === 'alex_commitment'    && !opts[id]) opts[id] = 'accept';
+      if (id === 'equity_talk'        && !opts[id]) opts[id] = 'fair';
+    }
+
+    let results;
+    try {
+      ({ results } = e.resolveTurn(ids, opts));
+    } catch(err) {
+      log.push(`ERROR in resolveTurn turn ${turn}: ${err.message}`);
+      errorCount++;
+      break;
+    }
+
+    if (verbose && results.length > 0) log.push(`Wk${e.s.week}: ${results.join(' | ')}`);
+  }
+
+  const alex = e.chars.get('alex');
+  const activeChars = [...e.chars.entries()].filter(([,c]) => c.active).map(([id]) => id);
+
+  return {
+    won:      e.s.game_won,
+    bankrupt: e.s.game_over,
+    week:     e.s.week,
+    product:  e.s.product,
+    customers:e.s.customers,
+    signal:   e.s.signal,
+    ycApplied:  e.s.ycApplied,
+    ycAccepted: e.s.ycAccepted,
+    alexActive: alex ? alex.active : false,
+    alexMorale: alex ? alex.morale : 0,
+    alexTrust:  alex ? alex.trust  : 0,
+    activeChars,
+    errors: errorCount,
+    log,
+  };
+}
+
+// ─── Run N games per strategy ────────────────────────────────────────────────
+
+function runStrategy(name, strategy, n = 100) {
+  const results = [];
+  for (let i = 0; i < n; i++) results.push(runGame(strategy));
+
+  const wins      = results.filter(r => r.won).length;
+  const bankrupt  = results.filter(r => r.bankrupt).length;
+  const timeout   = results.filter(r => !r.won && !r.bankrupt).length;
+  const errors    = results.reduce((s, r) => s + r.errors, 0);
+  const alexLeft  = results.filter(r => !r.alexActive).length;
+  const ycApplied = results.filter(r => r.ycApplied).length;
+  const ycAccepted= results.filter(r => r.ycAccepted).length;
+
+  const avgWeek   = (results.reduce((s,r) => s+r.week, 0) / n).toFixed(1);
+  const avgCust   = (results.reduce((s,r) => s+r.customers, 0) / n).toFixed(1);
+  const priyaSeen = results.filter(r => r.activeChars.includes('priya')).length;
+  const marcusSeen= results.filter(r => r.activeChars.includes('marcus')).length;
+  const sarahSeen = results.filter(r => r.activeChars.includes('sarah')).length;
+
+  // Collect errors/stuck messages
+  const issues = [];
+  results.forEach(r => r.log.forEach(l => {
+    if (l.includes('ERROR') || l.includes('STUCK') || l.includes('TIMEOUT')) issues.push(l);
+  }));
+  const uniqueIssues = [...new Set(issues)].slice(0, 5);
+
+  return { name, n, wins, bankrupt, timeout, errors, alexLeft, ycApplied, ycAccepted,
+           avgWeek, avgCust, priyaSeen, marcusSeen, sarahSeen, uniqueIssues };
+}
+
+// ─── Report ───────────────────────────────────────────────────────────────────
+
+const strategies = [
+  ['Random',          'random'],
+  ['YC grind',        'yc_grind'],
+  ['Alex first',      'alex_first'],
+  ['Ignore Alex',     'ignore_alex'],
+  ['Customer focus',  'customer_focus'],
+];
+
+console.log('\n=== PROTOTYPE SIMULATION (100 games each) ===\n');
+
+for (const [name, strat] of strategies) {
+  const r = runStrategy(name, strat, 100);
+  console.log(`── ${r.name} ──`);
+  console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
+  console.log(`  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
+  console.log(`  Avg week: ${r.avgWeek}  Avg customers: ${r.avgCust}`);
+  console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%`);
+  if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
+  console.log();
+}
+
+// ─── Verbose trace of one YC-grind game ──────────────────────────────────────
+
+console.log('=== VERBOSE TRACE: one YC-grind game ===\n');
+const trace = runGame('yc_grind', 120, true);
+trace.log.forEach(l => console.log(' ', l));
+console.log(`\n  Result: ${trace.won ? 'WON' : trace.bankrupt ? 'BANKRUPT' : 'TIMEOUT'} at week ${trace.week}`);
+console.log(`  product=${trace.product} customers=${trace.customers} signal=${trace.signal}`);
+console.log(`  ycApplied=${trace.ycApplied} ycAccepted=${trace.ycAccepted}`);
+console.log(`  Alex morale=${trace.alexMorale} trust=${trace.alexTrust} active=${trace.alexActive}`);
+console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
