@@ -248,13 +248,14 @@ const CHARACTER_DEFS = {
         body: "wait — i demoed to my colleague today and called it a 'team productivity tool'. you've been telling people it's a 'workflow automation platform'. those are completely different products. which are we building?",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
-        execute(s, char) {
-          char.flags.vision_resolved = true;
-          s.signal = clamp(s.signal + 8, 0, 100);
-          char.morale = clamp(char.morale + 5, 0, 100);
-          char.trust = clamp(char.trust + 5, 0, 100);
-          return "2 hours on a whiteboard. Painful but clarifying. You agree now — the cleaner framing tested better.";
-        },
+        options: [
+          { label: "Go with Alex's framing", key: 'alex',
+            execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with Alex's framing. Cleaner for developers. Some earlier investor conversations are now awkward, but at least you're aligned."; } },
+          { label: 'Defend your framing', key: 'yours',
+            execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 8, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); char.trust = clamp(char.trust - 4, 0, 100); return "Alex went along with it. He's not wrong that it doesn't land with developers, but the investor story holds. Tension unresolved."; } },
+          { label: 'Run a 1-week test', key: 'test',
+            execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 14, 0, 100); char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 6, 0, 100); return "Ran 8 quick calls. Ops buyers respond to 'workflow automation'; developers respond to 'team productivity'. You have a wedge story now. Decided to lead with ops buyers."; } },
+        ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "pitched it differently again. i think we're building two different products in our heads. investors are going to notice.",
         dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 10, 0, 100); },
@@ -264,11 +265,10 @@ const CHARACTER_DEFS = {
         body: "full disclosure — i've been doing about 3 hours a day on a side project. just exploring, not competitive. didn't mention it because i didn't think it was a big deal.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 3 && s.week <= 14 && char.morale > 50,
-        execute(s, char) {
-          char.morale = clamp(char.morale + 5, 0, 100);
-          char.trust = clamp(char.trust + 5, 0, 100);
-          return "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it.";
-        },
+        options: [
+          { label: 'Ask him to pause it', key: 'pause',
+            execute(s, char) { char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 5, 0, 100); return "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it."; } },
+        ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "i've been thinking — i'm putting in more time than we agreed and progress is slow. is our commitment really equal here?",
         dropFx(s, char) { char.morale = clamp(char.morale - 20, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); },
@@ -278,10 +278,10 @@ const CHARACTER_DEFS = {
         body: "short replies for 3 days, skipped standup yesterday. you don't know if it's burnout, frustration with progress, or something personal.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week > 4 && char.morale < 65,
-        execute(s, char) {
-          char.morale = clamp(char.morale + 20, 0, 100);
-          return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week.";
-        },
+        options: [
+          { label: 'Check in with him', key: 'checkin',
+            execute(s, char) { char.morale = clamp(char.morale + 20, 0, 100); return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week."; } },
+        ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "i need some space. working from home this week to figure some things out.",
         dropFx(s, char) { char.morale = clamp(char.morale - 14, 0, 100); char.trust = clamp(char.trust - 6, 0, 100); },
@@ -291,12 +291,10 @@ const CHARACTER_DEFS = {
         body: "my friend Jamie wants to join as the first employee. smart, enthusiastic. skills overlap with mine a lot but they'd ship fast. your call though.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 4 && s.week <= 18 && s.product < 70,
-        execute(s, char) {
-          s.product = clamp(s.product + 6, 0, 100);
-          char.morale = clamp(char.morale + 8, 0, 100);
-          s.network.peers += 2;
-          return "Jamie joined. High energy, shipped 2 useful features in the first week.";
-        },
+        options: [
+          { label: 'Bring Jamie on board', key: 'hire',
+            execute(s, char) { s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale + 8, 0, 100); s.network.peers += 2; return "Jamie joined. High energy, shipped 2 useful features in the first week."; } },
+        ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "jamie went with another startup. they asked why we passed and honestly i didn't have a great answer.",
         dropFx(s, char) { char.morale = clamp(char.morale - 10, 0, 100); },
@@ -370,10 +368,10 @@ const CHARACTER_DEFS = {
         body: "a potential user just asked us to sign an NDA before they'd demo their workflow. we can't sign anything without a legal entity. also — we need a bank account. do we use Stripe Atlas or find a lawyer?",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char) => s.week <= 8 && !s.incorporated,
-        execute(s, char) {
-          s.incorporated = true;
-          return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official.";
-        },
+        options: [
+          { label: 'Stripe Atlas — fast and cheap', key: 'atlas',
+            execute(s, char) { s.incorporated = true; return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official."; } },
+        ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "that user followed up on the NDA again. we still don't have a legal entity.",
         dropFx(s, char) { s.signal = clamp(s.signal - 6, 0, 100); },
@@ -383,10 +381,10 @@ const CHARACTER_DEFS = {
         body: "something i've been meaning to raise — i wrote some early prototypes at my last job, same general problem space. if an investor or acquirer ever does diligence, could my old employer claim ownership?",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week <= 12 && !s.ip_clear,
-        execute(s, char) {
-          s.ip_clear = true;
-          return "Lawyer reviewed. Previous employer has no claim — personal time, unrelated enough. IP assignment signed. Clean.";
-        },
+        options: [
+          { label: 'Get a lawyer to review', key: 'lawyer',
+            execute(s, char) { s.ip_clear = true; s.cash -= 1500; return "Lawyer reviewed. Previous employer has no claim — personal time, unrelated enough. IP assignment signed. Clean. ($1,500)"; } },
+        ],
         dropDelay: 3, dropFrom: 'Lawyer (friend)',
         dropMsg: "heads up — looked at your previous employer's IP agreement. it's broadly written. clean this up before investor diligence.",
         dropFx(s, char) { s.signal = clamp(s.signal - 12, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100); },
@@ -413,10 +411,10 @@ const CHARACTER_DEFS = {
         body: "sent 30 cold emails this week to people in our target market. 0 replies. not even 'not interested'. is the messaging wrong, or are we targeting the wrong people?",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 12 && !s.launched && s.signal < 50 && char.focus === 'discover',
-        execute(s, char) {
-          s.signal = clamp(s.signal + 10, 0, 100);
-          return "Rewrote the cold email. New version leads with the pain, not the product. First reply came in 4 hours.";
-        },
+        options: [
+          { label: 'Rewrite the outreach', key: 'rewrite',
+            execute(s, char) { s.signal = clamp(s.signal + 10, 0, 100); return "Rewrote the cold email. New version leads with the pain, not the product. First reply came in 4 hours."; } },
+        ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "week 2 of silence. i'm starting to wonder if anyone actually has this problem badly enough.",
         dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); },
@@ -426,11 +424,10 @@ const CHARACTER_DEFS = {
         body: "talked to a stranger at a coffee shop about what we're building. they said 'oh so it's like [completely different description] but for [different market].' we both went quiet. it kind of makes more sense than our own pitch.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week <= 12 && s.signal < 55 && char.focus === 'discover',
-        execute(s, char) {
-          s.signal = clamp(s.signal + 12, 0, 100);
-          s.network.peers += 3;
-          return "Ran the new framing by 3 more people. All 3 immediately got it. Updated the positioning.";
-        },
+        options: [
+          { label: 'Test the new framing', key: 'test',
+            execute(s, char) { s.signal = clamp(s.signal + 12, 0, 100); s.network.peers += 3; return "Ran the new framing by 3 more people. All 3 immediately got it. Updated the positioning."; } },
+        ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
@@ -438,10 +435,10 @@ const CHARACTER_DEFS = {
         body: "my parents asked me again when i'm getting a real job. yours too? i keep explaining it but they don't really get it. tbh it's starting to get in my head a little.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 18 && char.morale < 80,
-        execute(s, char) {
-          char.morale = clamp(char.morale + 12, 0, 100);
-          return "Long talk. Reminded each other why you're doing this. Morale reset.";
-        },
+        options: [
+          { label: 'Remind each other why', key: 'talk',
+            execute(s, char) { char.morale = clamp(char.morale + 12, 0, 100); return "Long talk. Reminded each other why you're doing this. Morale reset."; } },
+        ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
@@ -466,11 +463,10 @@ const CHARACTER_DEFS = {
         body: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",
         urgency: 2, weeks: 2,
         available: (s, char) => s.product > 40 && s.week > 8 && char.focus === 'build',
-        execute(s, char) {
-          s.product = clamp(s.product + 12, 0, 100);
-          char.morale = clamp(char.morale + 15, 0, 100);
-          return "Architecture refactored. Faster, cleaner. Alex is energized.";
-        },
+        options: [
+          { label: 'Do the refactor', key: 'refactor',
+            execute(s, char) { s.product = clamp(s.product + 12, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); return "Architecture refactored. Faster, cleaner. Alex is energized."; } },
+        ],
         dropDelay: 4, dropFrom: 'Alex',
         dropMsg: "3 active outages this week from the tech debt i flagged. we're losing users in real time.",
         dropFx(s, char) { s.customers = clamp(s.customers - 8, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
@@ -480,11 +476,10 @@ const CHARACTER_DEFS = {
         body: "alex told me you'd ship a full integration by friday. it's wednesday. i don't see anything about this in the roadmap.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.launched && s.customers > 3,
-        execute(s, char) {
-          s.customers += 3;
-          char.morale = clamp(char.morale + 5, 0, 100);
-          return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments.";
-        },
+        options: [
+          { label: 'Ship the integration', key: 'ship',
+            execute(s, char) { s.customers += 3; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments."; } },
+        ],
         dropDelay: 1, dropFrom: 'Customer',
         dropMsg: "it's monday. still nothing. we're blocking our launch on this.",
         dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 4, 0, 9999); },
@@ -497,12 +492,10 @@ const CHARACTER_DEFS = {
         body: "got a message from an old colleague at a well-funded startup. not going anywhere — but i think we need to have an honest conversation about where this is headed for me.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char, e) => e.alexDepartureRisk && char.active,
-        execute(s, char, e) {
-          char.trust  = clamp(char.trust  + 20, 0, 100);
-          char.morale = clamp(char.morale + 15, 0, 100);
-          e.alexDepartureRisk = false;
-          return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now.";
-        },
+        options: [
+          { label: 'Have the honest conversation', key: 'talk',
+            execute(s, char, e) { char.trust = clamp(char.trust + 20, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); e.alexDepartureRisk = false; return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now."; } },
+        ],
         dropDelay: 1, dropFrom: 'Alex',
         dropMsg: "i accepted the offer. i'm sorry — i think this is right for me. i'll do a proper handoff this week.",
         dropFx(s, char, e) { char.active = false; e.alexDepartureRisk = false; },
@@ -519,11 +512,10 @@ const CHARACTER_DEFS = {
         body: "looked at your idea over the weekend. you should know: there are at least 3 companies working on this right now. one is YC-backed from 2022. you need a much sharper answer to 'why you.'",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week <= 10 && s.signal < 60,
-        execute(s, char) {
-          s.signal = clamp(s.signal + 8, 0, 100);
-          s.network.advisors++;
-          return "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor.";
-        },
+        options: [
+          { label: 'Do a competitive deep-dive', key: 'research',
+            execute(s, char) { s.signal = clamp(s.signal + 8, 0, 100); s.network.advisors++; return "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor."; } },
+        ],
         dropDelay: 2, dropFrom: 'Priya',
         dropMsg: "any progress on differentiating from the competition? investors will definitely ask.",
         dropFx(s, char) { s.signal = clamp(s.signal - 8, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 8, 0, 100); },
@@ -540,12 +532,10 @@ const CHARACTER_DEFS = {
         body: "following up — genuinely interested in what you're building. if i don't hear back by end of week i'll assume timing's off.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week > 4 && s.investor_warmth < 50 && !char.flags.intro_warm_done,
-        execute(s, char) {
-          char.flags.intro_warm_done = true;
-          s.investor_warmth = clamp(s.investor_warmth + 20, 0, 100);
-          s.network.angels++;
-          return "Great call. Marcus is following your progress.";
-        },
+        options: [
+          { label: 'Take the call', key: 'call',
+            execute(s, char) { char.flags.intro_warm_done = true; s.investor_warmth = clamp(s.investor_warmth + 20, 0, 100); s.network.angels++; return "Great call. Marcus is following your progress."; } },
+        ],
         dropDelay: 1, dropFrom: 'Marcus',
         dropMsg: "tried twice. no reply. moving on — good luck with the company.",
         dropFx(s, char) { s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100); },
@@ -555,10 +545,10 @@ const CHARACTER_DEFS = {
         body: "when you're ready to have a more formal conversation, can you send me a deck? you don't want to be scrambling to build one mid-diligence.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.deck_ready && s.signal >= 38 && s.customers >= 5,
-        execute(s, char) {
-          s.deck_ready = true;
-          return "Deck done. Story is clear. Ready when the time comes.";
-        },
+        options: [
+          { label: 'Build the deck now', key: 'build',
+            execute(s, char) { s.deck_ready = true; return "Deck done. Story is clear. Ready when the time comes."; } },
+        ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
@@ -566,10 +556,10 @@ const CHARACTER_DEFS = {
         body: "two investors want to meet this week. deck is ready, story is tight, both have context. momentum is high right now.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.deck_ready && s.signal >= 38 && s.investor_warmth < 75 && s.network.angels >= 1,
-        execute(s, char) {
-          s.investor_warmth = clamp(s.investor_warmth + 28, 0, 100);
-          return "Strong meetings. Both investors want to see your next milestone.";
-        },
+        options: [
+          { label: 'Take both meetings', key: 'meet',
+            execute(s, char) { s.investor_warmth = clamp(s.investor_warmth + 28, 0, 100); return "Strong meetings. Both investors want to see your next milestone."; } },
+        ],
         dropDelay: 2, dropFrom: 'Investor',
         dropMsg: "reached out twice. no reply. assumed timing wasn't right. moving on.",
         dropFx(s, char) { s.investor_warmth = clamp(s.investor_warmth - 20, 0, 100); },
@@ -579,6 +569,7 @@ const CHARACTER_DEFS = {
         body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about leading your seed?",
         urgency: 2, weeks: 2,
         available: (s, char) => s.investor_warmth >= 62 && s.deck_ready && s.customers >= 60 && s.product >= 40 && s.signal >= 45,
+        options: [{ label: 'Yes — let\'s pitch', key: 'pitch',
         execute(s, char, e) {
           const score = clamp(s.customers / 3, 0, 35) + clamp(s.product / 5, 0, 20)
             + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0) + (s.ycAccepted ? 20 : 0);
@@ -588,7 +579,7 @@ const CHARACTER_DEFS = {
           }
           s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100);
           return "Marcus: \"we love the vision but need more traction to lead. come back in 2 months.\"";
-        },
+        } }],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
     ],
@@ -603,13 +594,10 @@ const CHARACTER_DEFS = {
         body: "intro'd you to the head of ops at a fast-growing startup. she told me yesterday she's evaluating 2 other tools. you need to reply today.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week > 3 && !char.flags.intro_done && (s.launched || s.product >= 35),
-        execute(s, char) {
-          char.flags.intro_done = true;
-          s.customers += 5 + rnd(5);
-          s.signal = clamp(s.signal + 7, 0, 100);
-          s.network.advisors++;
-          return "Had the call. Strong fit — they signed up on the spot. Sarah is now a connector you can rely on.";
-        },
+        options: [
+          { label: 'Reply to Sarah now', key: 'reply',
+            execute(s, char) { char.flags.intro_done = true; s.customers += 5 + rnd(5); s.signal = clamp(s.signal + 7, 0, 100); s.network.advisors++; return "Had the call. Strong fit — they signed up on the spot. Sarah is now a connector you can rely on."; } },
+        ],
         dropDelay: 1, dropFrom: 'Sarah',
         dropMsg: "they went with something else. mentioned they didn't hear back in time. that one hurt.",
         dropFx(s, char) { s.signal = clamp(s.signal - 8, 0, 100); },
@@ -656,11 +644,10 @@ const SITUATIONS = [
     body: "Application deadline is this week. The questions are straightforward — what you're building, why you, what you've learned from users. Takes a focused day to do it well.",
     urgency: 3, weeks: 1, priority: true,
     available: (s, char, e) => s.ycDeciding && !s.ycApplied,
-    execute(s, char, e) {
-      s.ycDeciding = false;
-      s.ycApplied = true;
-      return "Application submitted. Decision in 3 weeks.";
-    },
+    options: [
+      { label: 'Submit the application', key: 'submit',
+        execute(s, char, e) { s.ycDeciding = false; s.ycApplied = true; return "Application submitted. Decision in 3 weeks."; } },
+    ],
     dropDelay: 1, dropFrom: 'Y Combinator',
     dropMsg: "Missed the YC deadline. The next batch opens in about 12 weeks.",
     dropFx(s, char, e) { s.ycDeciding = false; e.ycWeek = s.week + 12; },
@@ -670,7 +657,10 @@ const SITUATIONS = [
     body: "'Ask HN: Why is [your space] still so broken?' — top thread right now, 300 comments. this is your market talking openly.",
     urgency: 2, weeks: 1,
     available: (s) => !s.launched,
-    execute(s) { s.signal = clamp(s.signal + 12, 0, 100); s.customers += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; },
+    options: [
+      { label: 'Engage the thread', key: 'engage',
+        execute(s) { s.signal = clamp(s.signal + 12, 0, 100); s.customers += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; } },
+    ],
     dropDelay: 0, dropMsg: null, dropFx(s) { s.signal = clamp(s.signal - 3, 0, 100); },
   },
   {
@@ -678,7 +668,10 @@ const SITUATIONS = [
     body: "writing about startups in your space. you'd be the only founder quote. story publishes tomorrow 9am — you're out if i don't hear back tonight.",
     urgency: 3, weeks: 1,
     available: (s) => s.launched,
-    execute(s) { const n = 10 + rnd(10); s.customers += n; s.signal = clamp(s.signal + 10, 0, 100); s.network.press++; return `Story ran. ${n} signups in 24 hours.`; },
+    options: [
+      { label: 'Reply to Lena now', key: 'reply',
+        execute(s) { const n = 10 + rnd(10); s.customers += n; s.signal = clamp(s.signal + 10, 0, 100); s.network.press++; return `Story ran. ${n} signups in 24 hours.`; } },
+    ],
     dropDelay: 0, dropMsg: null, dropFx: null,
   },
   {
@@ -686,7 +679,10 @@ const SITUATIONS = [
     body: "Rivalio just came out of stealth with $3M. product looks similar to what you're building. they already have developer traction on Twitter.",
     urgency: 3, weeks: 1,
     available: (s) => s.product > 20,
-    execute(s) { s.signal = clamp(s.signal + 6, 0, 100); return "Published a direct comparison. Your niche is clearer. A few users switched from Rivalio to you."; },
+    options: [
+      { label: 'Write a comparison piece', key: 'compare',
+        execute(s) { s.signal = clamp(s.signal + 6, 0, 100); return "Published a direct comparison. Your niche is clearer. A few users switched from Rivalio to you."; } },
+    ],
     dropDelay: 2, dropFrom: 'Priya (advisor)',
     dropMsg: "Rivalio has 200 customers and is well-funded. you need a sharper answer to 'why you and not them.'",
     dropFx(s) { s.signal = clamp(s.signal - 12, 0, 100); },
@@ -696,7 +692,10 @@ const SITUATIONS = [
     body: "all three emailed within an hour. same crash, same workflow. the product is unusable for them right now.",
     urgency: 3, weeks: 1,
     available: (s) => s.launched && s.customers >= 3,
-    execute(s) { return "Fixed the crash. Users notified. Goodwill recovered."; },
+    options: [
+      { label: 'Drop everything and fix it', key: 'fix',
+        execute(s) { return "Fixed the crash. Users notified. Goodwill recovered."; } },
+    ],
     dropDelay: 1, dropFrom: 'Priya',
     dropMsg: "we cancelled. the bug never got fixed and we had a deadline. no hard feelings.",
     dropFx(s) { s.customers = clamp(s.customers - 10, 0, 9999); s.signal = clamp(s.signal - 10, 0, 100); },
@@ -706,7 +705,10 @@ const SITUATIONS = [
     body: "none of them know each other. all three asked for the exact same thing this week. that's not coincidence.",
     urgency: 2, weeks: 2,
     available: (s) => s.launched && s.customers >= 5,
-    execute(s) { s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; },
+    options: [
+      { label: 'Build the feature', key: 'build',
+        execute(s) { s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
+    ],
     dropDelay: 3, dropFrom: 'User',
     dropMsg: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",
     dropFx(s) { s.signal = clamp(s.signal - 8, 0, 100); },
@@ -716,7 +718,10 @@ const SITUATIONS = [
     body: "people who expressed interest haven't heard from you in 2 weeks. every day you wait, a few more move on.",
     urgency: 2, weeks: 1,
     available: (s) => !s.launched && s.signal > 45 && s.network.peers >= 14,
-    execute(s) { s.customers += 8; s.signal = clamp(s.signal + 8, 0, 100); return "Reached out to waitlist. 8 became active beta testers."; },
+    options: [
+      { label: 'Reach out now', key: 'reach',
+        execute(s) { s.customers += 8; s.signal = clamp(s.signal + 8, 0, 100); return "Reached out to waitlist. 8 became active beta testers."; } },
+    ],
     dropDelay: 2, dropFrom: 'Waitlist',
     dropMsg: "signed up a few weeks ago. assumed the product was dead. unsubscribed.",
     dropFx(s) { s.signal = clamp(s.signal - 10, 0, 100); },
@@ -726,7 +731,10 @@ const SITUATIONS = [
     body: "your first 3 beta users signed up, poked around for 20 minutes, and disappeared. no explanation.",
     urgency: 3, weeks: 1,
     available: (s) => s.launched && s.customers >= 3 && s.customers < 20,
-    execute(s) { s.signal = clamp(s.signal + 6, 0, 100); return "Called all 3. Found a critical onboarding gap. Fixed it. 2 came back."; },
+    options: [
+      { label: 'Call all three', key: 'call',
+        execute(s) { s.signal = clamp(s.signal + 6, 0, 100); return "Called all 3. Found a critical onboarding gap. Fixed it. 2 came back."; } },
+    ],
     dropDelay: 2, dropFrom: 'Analytics',
     dropMsg: "churn rate this month: 40%. every new signup leaves after a day.",
     dropFx(s) { s.signal = clamp(s.signal - 12, 0, 100); s.customers = clamp(s.customers - 5, 0, 9999); },
@@ -736,7 +744,10 @@ const SITUATIONS = [
     body: "'@yourproduct has been broken for 3 days and nobody responded to my support email. do not use this.' — 40 retweets and counting.",
     urgency: 3, weeks: 1,
     available: (s) => s.launched && s.customers >= 5,
-    execute(s) { s.signal = clamp(s.signal + 5, 0, 100); return "Responded publicly, fixed the issue. Turned a critic into a vocal supporter."; },
+    options: [
+      { label: 'Respond publicly', key: 'respond',
+        execute(s) { s.signal = clamp(s.signal + 5, 0, 100); return "Responded publicly, fixed the issue. Turned a critic into a vocal supporter."; } },
+    ],
     dropDelay: 1, dropFrom: 'Twitter',
     dropMsg: "tweet is at 200 retweets. a journalist screenshot it. signup rate dropped 30%.",
     dropFx(s) { s.signal = clamp(s.signal - 18, 0, 100); s.customers = clamp(s.customers - 8, 0, 9999); },
@@ -746,7 +757,10 @@ const SITUATIONS = [
     body: "he was in the product every single day for 6 weeks. then nothing for 10 days. something changed.",
     urgency: 2, weeks: 1,
     available: (s) => s.launched && s.customers >= 10,
-    execute(s) { s.signal = clamp(s.signal + 8, 0, 100); return "Called Tom. He was stuck on a new workflow. Unblocked him — he's back and grateful."; },
+    options: [
+      { label: 'Call Tom', key: 'call',
+        execute(s) { s.signal = clamp(s.signal + 8, 0, 100); return "Called Tom. He was stuck on a new workflow. Unblocked him — he's back and grateful."; } },
+    ],
     dropDelay: 2, dropFrom: 'Tom',
     dropMsg: "moved on to Rivalio. nothing personal, just works better for my workflow now.",
     dropFx(s) { s.signal = clamp(s.signal - 14, 0, 100); s.customers = clamp(s.customers - 3, 0, 9999); },
@@ -1141,8 +1155,7 @@ function renderDemands() {
           onclick="event.stopPropagation();pickOpt('${d.id}','${o.key}')">${o.label}</button>`).join('')}
       </div>` : '';
 
-    const clickHandler = d.options ? '' : `onclick="pick('${d.id}',event)"`;
-    return `<div class="dmnd ${d.cat}${isSel ? ' sel' : ''}${exp}" ${clickHandler}>
+    return `<div class="dmnd ${d.cat}${isSel ? ' sel' : ''}${exp}">
       <div class="dmnd-meta">
         <span class="dmnd-from">${fromLabel}</span>
         <span class="urg u${d.urgency}">${ulbls[d.urgency]}</span>
@@ -1170,11 +1183,16 @@ function pick(id, event) {
 
 function pickOpt(id, key) {
   if (E.s.game_over || E.s.game_won) return;
-  if (!sel.includes(id)) {
-    if (sel.length >= 2) return;
-    sel = [...sel, id];
+  if (sel.includes(id) && selOpts[id] === key) {
+    sel = sel.filter(i => i !== id);
+    delete selOpts[id];
+  } else {
+    if (!sel.includes(id)) {
+      if (sel.length >= 2) return;
+      sel = [...sel, id];
+    }
+    selOpts[id] = key;
   }
-  selOpts[id] = key;
   renderDemands();
 }
 
