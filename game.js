@@ -1,5 +1,10 @@
 // STARTUP FOUNDER GAME - Core Game Logic
 
+function formatDate(date) {
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
 class StartupGame {
   constructor() {
     this.game = {
@@ -42,6 +47,7 @@ class StartupGame {
     this.game.yc_application_submitted = false;
     this.game.pending_yc_application = null;
     this.game.pending_yc_decision_message = null;
+    this.game.yc_notice_sent = false;
   }
 
   // Expose some internal state for testing utilities
@@ -183,7 +189,9 @@ class StartupGame {
     }
     
     if (!this.game.in_incubator && !this.game.yc_application_submitted) {
-      actions.push('APPLY_YC');
+      if (this.isYCApplicationOpen()) {
+        actions.push('APPLY_YC');
+      }
       actions.push('APPLY_TECHSTARS');
     }
     
@@ -452,8 +460,9 @@ class StartupGame {
       if (this.game.yc_application_submitted) {
         return { message: 'Already applied this cycle.', type: 'info' };
       }
-      // Mark as submitted
+      // Mark as submitted and reset notice flag
       this.game.yc_application_submitted = true;
+      this.game.yc_notice_sent = false;
       const acceptance = this.calculateIncubatorAcceptance(name);
       const offer = this.generateIncubatorOffer(name);
       this.game.pending_yc_application = {
@@ -683,6 +692,135 @@ class StartupGame {
     }
   }
 
+  // ===== TASK PANEL DATA =====
+
+  getActionCards() {
+    const categoryNames = {
+      'product': 'BUILD',
+      'sales': 'GROW',
+      'team': 'TEAM',
+      'fundraising': 'FUNDRAISE',
+    };
+    const emojis = {
+      'BUILD_PRODUCT': '💻',
+      'TALK_TO_USERS': '☕',
+      'LAUNCH_PRODUCT': '🚀',
+      'GET_CUSTOMERS': '📈',
+      'FIND_COFOUNDER': '🤝',
+      'PIVOT': '🔄',
+      'APPLY_YC': '🎯',
+      'APPLY_TECHSTARS': '🌟',
+      'ASK_FRIENDS_FAMILY': '💰',
+      'PREPARE_PITCH': '📊',
+      'PITCH_ANGELS': '👼',
+      'PITCH_SEED': '💎',
+    };
+
+    const cards = { groups: [] };
+
+    const addCard = (actionName, available, reason) => {
+      const info = this.getActionInfo(actionName);
+      const card = {
+        id: actionName,
+        name: info.name,
+        time: info.time,
+        emoji: emojis[actionName] || '🎮',
+        available: true,
+        reason: null,
+        category: info.category
+      };
+      if (!available) {
+        card.available = false;
+        card.reason = reason || 'Not available';
+      }
+      let group = cards.groups.find(g => g.name === categoryNames[card.category]);
+      if (!group) {
+        group = { name: categoryNames[card.category], cards: [] };
+        cards.groups.push(group);
+      }
+      group.cards.push(card);
+    };
+
+    const hasAvailableActions = this.getAvailableActions();
+
+    addCard('BUILD_PRODUCT', true);
+    addCard('TALK_TO_USERS', true);
+
+    addCard('LAUNCH_PRODUCT', this.game.product_progress >= 60 && !this.game.product_launched, 'Product needs 60% progress');
+    addCard('GET_CUSTOMERS', this.game.product_launched, 'Product must be launched first');
+    addCard('PIVOT', this.game.customers > 0, 'Need customers first');
+
+    addCard('FIND_COFOUNDER', true);
+
+    addCard('ASK_FRIENDS_FAMILY', true);
+
+    if (!this.game.pitch_deck_ready) {
+      addCard('PREPARE_PITCH', true);
+    } else {
+      addCard('PITCH_ANGELS', true);
+      addCard('PITCH_SEED', this.game.fundraising_score >= 65, 'Fundraising score needs 65+');
+    }
+
+    if (!this.game.in_incubator && !this.game.yc_application_submitted) {
+      if (this.isYCApplicationOpen()) {
+        addCard('APPLY_YC', true);
+      } else {
+        const nextOpen = this.getNextYCOpenDate();
+        addCard('APPLY_YC', false, `Opens ${formatDate(nextOpen)}`);
+      }
+      addCard('APPLY_TECHSTARS', true);
+    }
+
+    return cards;
+  }
+
+  getBuildOptions() {
+    const options = [];
+    const techSkill = this.getTotalTechnicalSkill();
+    const baseGain = (techSkill * 2).toFixed(1);
+
+    // Always available: core product work
+    options.push({
+      id: 'BUILD_PRODUCT',
+      name: 'Core Product Work',
+      time: 2,
+      effect: `+${baseGain}% product progress`,
+      context: 'Ship features to move toward launch'
+    });
+
+    if (this.game.product_market_fit < 50) {
+      options.push({
+        id: 'BUILD_PRODUCT',
+        name: 'Fix Usability Gaps',
+        time: 2,
+        effect: '+15% market fit, +10% product',
+        context: 'Users find your product hard to use'
+      });
+    }
+
+    if (this.game.customers > 0) {
+      options.push({
+        id: 'BUILD_PRODUCT',
+        name: 'Ship Feature Users Asked For',
+        time: 2,
+        effect: '+market fit, +customer conversion',
+        context: 'Direct customer feedback drives this'
+      });
+    }
+
+    if (this.game.product_launched) {
+      options.push({
+        id: 'BUILD_PRODUCT',
+        name: 'Add Enterprise Features',
+        time: 2,
+        effect: '+revenue per customer',
+        context: 'Enterprise buyers want X, Y, Z'
+      });
+    }
+
+    return options;
+  }
+
   // --- Customer dynamics after a monthly checkpoint ---
   updateCustomerDynamics() {
     if (!this.game.product_launched || this.game.customers <= 0) {
@@ -749,9 +887,9 @@ class StartupGame {
           // Accept: store as pending incubator offer
           this.game.pending_incubator_offer = offer;
         } else {
-            // Rejection: create a simple rejection message to display
-            this.game.pending_yc_decision_message = `[REJECTED] Rejected from Y Combinator.`;
-          }
+          // Rejection: create a simple rejection message to display
+          this.game.pending_yc_decision_message = `[REJECTED] Rejected from Y Combinator.`;
+        }
         // Reset flags for next cycle
         this.game.pending_yc_application = null;
         this.game.yc_application_submitted = false;
@@ -928,6 +1066,14 @@ class StartupGame {
     const cycles = Math.floor(offset / 6) + 1;
     const nextOpenMonth = this.game.yc_application_delay_months + cycles * 6;
     return new Date(start.getFullYear(), start.getMonth() + nextOpenMonth, 1);
+  }
+
+  // Returns number of weeks until next YC application window opens (0 if currently open)
+  weeksUntilNextYCOpen() {
+    const nextOpen = this.getNextYCOpenDate();
+    const current = this.getCurrentDate();
+    const diffMs = nextOpen - current;
+    return Math.max(0, Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000)));
   }
 
   getState() {
