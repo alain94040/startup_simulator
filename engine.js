@@ -197,14 +197,14 @@ const CHARACTER_DEFS = {
         id: 'ip_concern', cat: 'e', from: 'Alex',
         body: "something i've been meaning to raise — i wrote some early prototypes at my last job, same general problem space. if an investor or acquirer ever does diligence, could my old employer claim ownership?",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.week <= 12 && !s.ip_clear,
+        available: (s, char) => s.week <= 12 && !s.ip_clear && !s.ip_concern_dismissed,
         options: [
           { label: 'Get a lawyer to review', key: 'lawyer',
             execute(s, char) { s.ip_clear = true; s.cash -= 1500; return "Lawyer reviewed. Previous employer has no claim — personal time, unrelated enough. IP assignment signed. Clean. ($1,500)"; } },
         ],
         dropDelay: 3, dropFrom: 'Lawyer (friend)',
         dropMsg: "heads up — looked at your previous employer's IP agreement. it's broadly written. clean this up before investor diligence.",
-        dropFx(s, char) { s.signal = clamp(s.signal - 12, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100); },
+        dropFx(s, char) { s.ip_concern_dismissed = true; s.signal = clamp(s.signal - 12, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100); },
       },
 
       // ── EARLY: MARKET & IDEA ─────────────────
@@ -251,7 +251,7 @@ const CHARACTER_DEFS = {
         id: 'family_doubt', cat: 't', from: 'Alex',
         body: "my parents asked me again when i'm getting a real job. yours too? i keep explaining it but they don't really get it. tbh it's starting to get in my head a little.",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 2 && s.week <= 18 && char.morale < 80,
+        available: (s, char) => s.week >= 2 && s.week <= 18 && char.morale < 50,
         options: [
           { label: 'Remind each other why', key: 'talk',
             execute(s, char) { char.morale = clamp(char.morale + 12, 0, 100); return "Long talk. Reminded each other why you're doing this. Morale reset."; } },
@@ -355,7 +355,7 @@ const CHARACTER_DEFS = {
         ],
         dropDelay: 1, dropFrom: 'Marcus',
         dropMsg: "tried twice. no reply. moving on — good luck with the company.",
-        dropFx(s, char) { s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100); },
+        dropFx(s, char) { char.flags.intro_warm_done = true; s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100); },
       },
       {
         id: 'prep_deck', cat: 'e', from: 'Marcus (angel)',
