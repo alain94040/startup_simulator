@@ -1,60 +1,116 @@
-# Testing
+# Simulations
 
-All game logic lives in `engine.js`. The simulation tools load it directly via `require('./engine.js')` — no browser needed.
+Game logic lives in `engine.js`. All simulation tools run in Node — no browser needed.
 
-## Tools
+---
 
-### `node sim_proto.js`
-Runs 100 games per strategy and reports balance metrics. Use this after any change to card logic, state formulas, or the Engine class.
+## Read a game story
 
-Output per strategy:
-- **Win / Bankrupt / Timeout %** — primary balance signal. Timeout means the game ran past week 120 without resolving.
-- **Alex left %** — how often Alex departed. Should be low (<15%) for most strategies except ones that deliberately ignore him.
-- **YC applied / accepted %** — whether the YC path is reachable.
-- **Avg week / Avg customers** — pacing indicators.
-- **Issues** — any STUCK / ERROR / TIMEOUT messages from the simulation harness itself (not game outcomes). These indicate bugs.
+The most useful command. Runs one full game and prints every sprint: what cards were offered, which were chosen, the outcome, and the state of the relationship.
 
-Strategies tested: Random, YC grind, Alex first, Ignore Alex, Customer focus.
-
-Healthy baselines (approximate):
-- Random: win ~10–20%, bankrupt ~60–75%
-- YC grind: 0% win is expected (the sim doesn't play it optimally), bankrupt ~60%
-- Alex first: ~0% win, high bankrupt (burns cash without customers)
-- Ignore Alex: high win rate but Alex leaves ~60–80% of games
-- Zero errors across all strategies
-
-### `node earlymap.js`
-Lists every available card at weeks 1, 3, and 6. Use this to verify early-game balance — specifically that weeks 1–4 aren't dominated by a single character or category.
-
-Output format:
 ```
-[P]  cat  card_id  (from)
+node sim_proto.js
 ```
-`[P]` = priority card. Cards without `[P]` fill category slots after priority cards are placed.
 
-Healthy week 1: 2–3 Alex priority cards (`t`/`e`), plus at least one `p` and one `c` card from the founder or global pool.
+Scroll past the strategy summary at the top. The story trace starts with `=== STORY TRACE ===`.
 
-### `node debug_context.js`
-Runs 10 games and flags cards that appeared in logically impossible context (e.g. a customer churn card before launch, a reporter card before the product exists). Output is grouped by issue with occurrence count and the weeks it was seen.
+Sample output:
 
-Zero output = no context violations. Any output = a card's `available()` condition is too loose and needs tightening.
+```
+  Wk 1   Month 1   ────────────────────────────────────────────────────
+  ✓  [t] Alex    "i've been thinking — i can't quit my job until we..."
+        → Accept — milestones first
+  ✓  [t] Alex    "wait — i demoed to my colleague today and called it..."
+        → Go with Alex's framing
+  ✗  [p] You     "you've been talking about this for two weeks but..."
+  ✗  [c] You     "you've been building for two weeks and haven't had..."
 
-## Writing a quick one-off simulation
+        "Alex stays part-time for now. Slower, but stable."
+        "Went with Alex's framing. Cleaner for developers."
+
+        Cash $9,500  Product 12%  Customers 0  Signal 22  Alex trust:100 morale:88
+```
+
+`✓` = chosen, `✗` = dropped. Categories: `[p]` product, `[c]` customer, `[t]` team, `[e]` external.
+
+---
+
+## Check balance across strategies
+
+The strategy summary at the top of `node sim_proto.js` runs 100 games per strategy and reports outcomes.
+
+```
+── Random ──
+  Win 14%  Bankrupt 67%  Timeout 19%  Errors 0
+  Alex left: 19%  YC applied: 12%  YC accepted: 28%
+  Avg week: 54.6  Avg customers: 78.4
+```
+
+**What to look for:**
+
+| Metric | Healthy range | Problem if... |
+|--------|--------------|---------------|
+| Errors | 0 | Any errors → bug in card logic |
+| Random win % | 10–25% | Too high → game too easy; too low → unwinnable |
+| Random Alex left % | 15–25% | Too high → morale/trust too fragile |
+| Ignore Alex departure | 90–100% | Lower → morale doesn't matter |
+| Timeout % | < 20% | High → game loops without resolving |
+
+**Strategies:**
+- **Random** — picks cards and options randomly. Baseline for a disengaged player.
+- **YC grind** — prioritises YC and product cards, neglects team. Tests the investor path.
+- **Alex first** — always picks Alex's cards. Tests the co-founder-first path.
+- **Ignore Alex** — always deprioritises Alex. Should reliably cause his departure.
+- **Customer focus** — prioritises customer cards. Tests growth-first path.
+
+---
+
+## Check what cards appear early
+
+```
+node earlymap.js
+```
+
+Lists every available card at weeks 1, 3, and 6. Use this after adding or changing a card's `available()` condition to verify it appears at the right time.
+
+```
+=== Week 1 ===
+[P] t  alex_commitment          (Alex)
+[P] t  vision_mismatch          (Alex)
+[P] e  incorporate_now          (Alex)
+    p  founder_landing          (You)
+    c  founder_first_interviews (You)
+```
+
+`[P]` = priority card (fills first slots before category balancing). A healthy week 1 has 2–3 priority cards and at least one `p` and one `c` non-priority card.
+
+---
+
+## Check for context bugs
+
+```
+node debug_context.js
+```
+
+Runs 10 games and flags cards that appeared in impossible context — e.g. a churn card before launch, a reporter card before the product exists.
+
+Zero output means no issues. Any output means a card's `available()` condition needs tightening.
+
+---
+
+## Write a one-off script
 
 ```js
 const { Engine } = require('./engine.js');
 
 const e = new Engine();
-// Optionally pre-set state:
-// e.s.week = 5;
-// e.chars.get('alex').flags.committed_fulltime = true;
+e.generateDemands();
 
 for (let turn = 0; turn < 60; turn++) {
   if (e.s.game_won || e.s.game_over) break;
   e.generateDemands();
   if (e.current.length === 0) break;
 
-  // Pick first 2 cards, choose first option on each
   const ids = e.current.slice(0, 2).map(c => c.id);
   const opts = {};
   for (const id of ids) {
@@ -65,19 +121,17 @@ for (let turn = 0; turn < 60; turn++) {
 }
 
 console.log(e.s.game_won ? 'WON' : e.s.game_over ? 'BANKRUPT' : 'TIMEOUT');
-console.log('week', e.s.week, '| cash', e.s.cash, '| customers', e.s.customers);
+console.log('week', e.s.week, 'cash', e.s.cash, 'customers', e.s.customers);
 ```
 
-## Key Engine API
+**Useful state fields:** `e.s.cash`, `e.s.week`, `e.s.product`, `e.s.customers`, `e.s.signal`, `e.s.launched`, `e.s.incorporated`, `e.s.ycApplied`, `e.s.ycAccepted`, `e.s.game_won`, `e.s.game_over`
 
+**Alex specifically:** `e.chars.get('alex')` → `{ active, morale, trust, focus, focusSprints, flags }`
+
+**Pre-set state to test a specific scenario:**
 ```js
 const e = new Engine();
-e.s                    // full game state object
-e.chars                // Map of character instances { active, morale, trust, focus, flags }
-e.generateDemands()    // populates e.current with 4 cards
-e.current              // array of active demand cards
-e.resolveTurn(ids, optKeys)  // ids: array of chosen card ids, optKeys: { cardId: optionKey }
-// returns { results: string[], sprintWeeks: number }
+e.s.week = 8;
+e.s.incorporated = true;
+e.chars.get('alex').flags.committed_fulltime = true;
 ```
-
-State fields most relevant to balance checks: `e.s.cash`, `e.s.week`, `e.s.product`, `e.s.customers`, `e.s.signal`, `e.s.launched`, `e.s.incorporated`, `e.s.ycApplied`, `e.s.ycAccepted`, `e.s.game_won`, `e.s.game_over`.

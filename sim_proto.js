@@ -116,16 +116,39 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
       if (id === 'equity_talk'        && !opts[id]) opts[id] = 'fair';
     }
 
-    let results;
+    const offeredSnapshot = verbose ? e.current.map(d => ({
+      id: d.id, cat: d.cat,
+      from: d.from || (d._charId ? CHARACTER_DEFS[d._charId].name : 'System'),
+      body: d.body,
+      chosen: ids.includes(d.id),
+      optLabel: ids.includes(d.id) && d.options ? (d.options.find(o => o.key === opts[d.id]) || d.options[0]).label : null,
+    })) : null;
+
+    const weekBefore = e.s.week;
+    let results, sprintWeeks;
     try {
-      ({ results } = e.resolveTurn(ids, opts));
+      ({ results, sprintWeeks } = e.resolveTurn(ids, opts));
     } catch(err) {
       log.push(`ERROR in resolveTurn turn ${turn}: ${err.message}`);
       errorCount++;
       break;
     }
 
-    if (verbose && results.length > 0) log.push(`Wk${e.s.week}: ${results.join(' | ')}`);
+    if (verbose) {
+      const alex = e.chars.get('alex');
+      log.push({
+        week: weekBefore,
+        offered: offeredSnapshot,
+        outcomes: results,
+        cash: e.s.cash,
+        product: Math.round(e.s.product),
+        customers: e.s.customers,
+        signal: Math.round(e.s.signal),
+        alexTrust: alex ? Math.round(alex.trust) : null,
+        alexMorale: alex ? Math.round(alex.morale) : null,
+        alexActive: alex ? alex.active : false,
+      });
+    }
   }
 
   const alex = e.chars.get('alex');
@@ -203,13 +226,52 @@ for (const [name, strat] of strategies) {
   console.log();
 }
 
-// ─── Verbose trace of one YC-grind game ──────────────────────────────────────
+// ─── Narrative trace of one YC-grind game ────────────────────────────────────
 
-console.log('=== VERBOSE TRACE: one YC-grind game ===\n');
+function printTrace(trace) {
+  const catLabel = { p: 'product', c: 'customer', t: 'team', e: 'external' };
+  const trunc = (str, n) => str.length > n ? str.slice(0, n - 1) + '…' : str;
+  const sep = '─'.repeat(72);
+
+  console.log('=== STORY TRACE: one YC-grind game ===\n');
+
+  for (const turn of trace.log) {
+    if (typeof turn === 'string') { console.log('  ' + turn); continue; }
+
+    const mo = Math.ceil(turn.week / 4);
+    console.log(`  Wk ${String(turn.week).padEnd(3)} Month ${mo}   ${sep.slice(0, 52)}`);
+
+    // Cards offered
+    for (const d of turn.offered) {
+      const marker = d.chosen ? '  ✓' : '  ✗';
+      const tag    = `[${d.cat}] ${d.from}`.padEnd(24);
+      console.log(`${marker}  ${tag}  "${trunc(d.body, 60)}"`);
+      if (d.chosen && d.optLabel) {
+        console.log(`         → ${d.optLabel}`);
+      }
+    }
+
+    // Outcomes
+    if (turn.outcomes.length) {
+      console.log();
+      for (const msg of turn.outcomes) {
+        console.log(`         "${trunc(msg, 80)}"`);
+      }
+    }
+
+    // Stats
+    const alexStr = turn.alexActive !== false
+      ? `Alex trust:${turn.alexTrust} morale:${turn.alexMorale}`
+      : 'Alex: gone';
+    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Product ${turn.product}%  Customers ${turn.customers}  Signal ${turn.signal}  ${alexStr}`);
+    console.log();
+  }
+
+  const result = trace.won ? '🏆 WON' : trace.bankrupt ? '💸 BANKRUPT' : '⏱  TIMEOUT';
+  console.log(`  ${result} — Week ${trace.week} · Product ${Math.round(trace.product)}% · Customers ${trace.customers}`);
+  console.log(`  YC: applied=${trace.ycApplied} accepted=${trace.ycAccepted}`);
+  console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
+}
+
 const trace = runGame('yc_grind', 120, true);
-trace.log.forEach(l => console.log(' ', l));
-console.log(`\n  Result: ${trace.won ? 'WON' : trace.bankrupt ? 'BANKRUPT' : 'TIMEOUT'} at week ${trace.week}`);
-console.log(`  product=${trace.product} customers=${trace.customers} signal=${trace.signal}`);
-console.log(`  ycApplied=${trace.ycApplied} ycAccepted=${trace.ycAccepted}`);
-console.log(`  Alex morale=${trace.alexMorale} trust=${trace.alexTrust} active=${trace.alexActive}`);
-console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
+printTrace(trace);
