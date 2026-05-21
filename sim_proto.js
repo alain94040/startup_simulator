@@ -240,6 +240,7 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
     market_fit: e.s.market_fit,
     customers:e.s.customers,
     signal:   e.s.signal,
+    launched:   e.s.launched,
     ycApplied:  e.s.ycApplied,
     ycAccepted: e.s.ycAccepted,
     alexActive: alex ? alex.active : false,
@@ -264,6 +265,7 @@ function runStrategy(name, strategy, n = 100) {
   const timeout   = pct(results.filter(r => !r.won && !r.bankrupt).length);
   const errors    = results.reduce((s, r) => s + r.errors, 0);
   const alexLeft  = pct(results.filter(r => !r.alexActive).length);
+  const launched  = pct(results.filter(r => r.launched).length);
   const ycApplied = pct(results.filter(r => r.ycApplied).length);
   const ycAccepted= pct(results.filter(r => r.ycAccepted).length);
 
@@ -280,7 +282,7 @@ function runStrategy(name, strategy, n = 100) {
   }));
   const uniqueIssues = [...new Set(issues)].slice(0, 5);
 
-  return { name, n, wins, bankrupt, timeout, errors, alexLeft, ycApplied, ycAccepted,
+  return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft, ycApplied, ycAccepted,
            avgWeek, avgCust, priyaSeen, marcusSeen, sarahSeen, uniqueIssues };
 }
 
@@ -302,7 +304,7 @@ for (const [name, strat] of strategies) {
   const r = runStrategy(name, strat, N);
   console.log(`── ${r.name} ──`);
   console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
-  console.log(`  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
+  console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
   console.log(`  Avg week: ${r.avgWeek}  Avg customers: ${r.avgCust}`);
   console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%`);
   if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
