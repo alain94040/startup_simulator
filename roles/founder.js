@@ -22,7 +22,7 @@
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
           { label: 'Block off this week for 5 customer interviews', key: 'interview',
-            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.customers += 5; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
+            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.customers += 5; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },

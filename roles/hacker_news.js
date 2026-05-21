@@ -11,7 +11,7 @@
         available: (s) => !s.launched && !s.hn_thread_done,
         options: [
           { label: 'Engage the thread', key: 'engage',
-            execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.customers += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; } },
+            execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); s.customers += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s) { s.hn_thread_done = true; s.signal = clamp(s.signal - 3, 0, 100); },

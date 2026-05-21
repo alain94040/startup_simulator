@@ -84,7 +84,7 @@ class Engine {
   constructor() {
     this.s = {
       cash: 10000, week: 1, product: 10, customers: 0,
-      signal: 28, launched: false, deck_ready: false,
+      signal: 28, market_fit: 0, launched: false, deck_ready: false,
       investor_warmth: 0,
       incorporated: false, ip_clear: false,
       ycDeciding: false, ycApplied: false, ycAccepted: false, ycDecisionWeek: null,
@@ -241,9 +241,15 @@ class Engine {
       const skill = (def.skills || {})[char.focus] || 1.0;
       const sideProjectMult = char.flags.side_project_active ? 0.7 : 1.0;
       const base  = sprintWeeks * 2 * skill * sideProjectMult;
-      if      (char.focus === 'build')    this.s.product        = clamp(this.s.product        + base,       0, 100);
-      else if (char.focus === 'discover') this.s.signal         = clamp(this.s.signal         + base * 1.5, 0, 100);
-      else if (char.focus === 'pitch')    this.s.investor_warmth= clamp(this.s.investor_warmth+ base * 2,   0, 100);
+      if (char.focus === 'build') {
+        const fitMult = this.s.market_fit >= 60 ? 1.3 : 1.0;
+        this.s.product = clamp(this.s.product + base * fitMult, 0, 100);
+      } else if (char.focus === 'discover') {
+        this.s.signal     = clamp(this.s.signal     + base * 1.5, 0, 100);
+        this.s.market_fit = clamp(this.s.market_fit + base,       0, 100);
+      } else if (char.focus === 'pitch') {
+        this.s.investor_warmth = clamp(this.s.investor_warmth + base * 2, 0, 100);
+      }
       char.focusSprints++;
     }
 
@@ -267,6 +273,12 @@ class Engine {
     if (this.s.launched && this.s.signal >= 40)
       this.s.customers += Math.floor((this.s.signal - 40) / 20) * sprintWeeks;
 
+    // Market fit churn: without PMF, users don't stick around post-launch
+    if (this.s.launched && this.s.market_fit < 50) {
+      const churn = Math.floor((50 - this.s.market_fit) / 10) * sprintWeeks;
+      this.s.customers = Math.max(0, this.s.customers - churn);
+    }
+
     // Fire pending consequences
     const fired = this.pending.filter(p => p.fireWeek <= this.s.week);
     this.pending = this.pending.filter(p => p.fireWeek > this.s.week);
@@ -279,6 +291,7 @@ class Engine {
 
     // Clamp global state
     this.s.signal         = clamp(this.s.signal,         0, 100);
+    this.s.market_fit     = clamp(this.s.market_fit,     0, 100);
     this.s.investor_warmth= clamp(this.s.investor_warmth,0, 100);
     this.s.cash           = clamp(this.s.cash,           0, 9999999);
 

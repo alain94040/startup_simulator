@@ -25,7 +25,7 @@
         available: (s) => s.launched && s.customers >= 5,
         options: [
           { label: 'Build the feature', key: 'build',
-            execute(s) { s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
+            execute(s) { s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
         ],
         dropDelay: 3, dropFrom: 'User',
         dropMsg: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",
@@ -38,7 +38,7 @@
         available: (s, char) => !s.launched && s.signal > 45 && s.network.peers >= 14 && !char.flags.waitlist_done,
         options: [
           { label: 'Reach out now', key: 'reach',
-            execute(s, char) { char.flags.waitlist_done = true; s.customers += 8; s.signal = clamp(s.signal + 8, 0, 100); return "Reached out to waitlist. 8 became active beta testers."; } },
+            execute(s, char) { char.flags.waitlist_done = true; s.customers += 8; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Reached out to waitlist. 8 became active beta testers."; } },
         ],
         dropDelay: 2, dropFrom: 'Waitlist',
         dropMsg: "signed up a few weeks ago. assumed the product was dead. unsubscribed.",

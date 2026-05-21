@@ -25,6 +25,7 @@ body {
 .st strong { color: #1a1a2e; font-size: 14px; }
 .st.warn strong { color: #d97706; }
 .st.danger strong { color: #dc2626; }
+.st.good strong { color: #16a34a; }
 .pill { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px; }
 .pill-live { background: #d1fae5; color: #065f46; }
 .pill-deck { background: #ede9fe; color: #5b21b6; }
@@ -52,7 +53,7 @@ body {
 
 /* ── Controls panel (left) ── */
 #pick-panel {
-  width: 210px; flex-shrink: 0; border-right: 1px solid #e0e0ea;
+  width: 250px; flex-shrink: 0; border-right: 1px solid #e0e0ea;
   background: white; padding: 14px 16px;
   display: flex; flex-direction: column; gap: 14px;
 }
@@ -184,6 +185,7 @@ body {
     <span class="st" id="s-cash">Cash <strong>$20,000</strong></span>
     <span class="st" id="s-runway"><strong>—</strong> runway</span>
     <span class="st" id="s-product">Product <strong>0%</strong></span>
+    <span class="st" id="s-mf">Fit <strong>0%</strong></span>
     <span class="st" id="s-customers">Customers <strong>0</strong></span>
     <span class="pill pill-live" id="p-live" style="display:none">LIVE</span>
     <span class="pill pill-deck" id="p-deck" style="display:none">Deck ready</span>
@@ -277,7 +279,11 @@ function render() {
   const re = document.getElementById('s-runway');
   re.innerHTML  = `<strong>${rw}wk</strong> runway`;
   re.className  = 'st' + (rw <= 3 ? ' danger' : rw <= 6 ? ' warn' : '');
-  document.getElementById('s-product').innerHTML   = `Product <strong>${s.product}%</strong>`;
+  document.getElementById('s-product').innerHTML   = `Product <strong>${Math.round(s.product)}%</strong>`;
+  const mf = Math.round(s.market_fit);
+  const mfEl = document.getElementById('s-mf');
+  mfEl.innerHTML  = `Fit <strong>${mf}%</strong>`;
+  mfEl.className  = 'st' + (s.launched && mf < 40 ? ' danger' : mf >= 60 ? ' good' : '');
   document.getElementById('s-customers').innerHTML = `Customers <strong>${s.customers}</strong>`;
   document.getElementById('p-live').style.display  = s.launched   ? 'inline-block' : 'none';
   document.getElementById('p-deck').style.display  = s.deck_ready ? 'inline-block' : 'none';

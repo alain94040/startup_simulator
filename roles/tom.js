@@ -12,7 +12,7 @@
         available: (s) => s.launched && s.customers >= 10,
         options: [
           { label: 'Call Tom', key: 'call',
-            execute(s) { s.signal = clamp(s.signal + 8, 0, 100); return "Called Tom. He was stuck on a new workflow. Unblocked him — he's back and grateful."; } },
+            execute(s) { s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Called Tom. He was stuck on a new workflow. Unblocked him — he's back and grateful. Learned something about how he actually uses the product."; } },
         ],
         dropDelay: 2, dropFrom: 'Tom',
         dropMsg: "moved on to Rivalio. nothing personal, just works better for my workflow now.",
