@@ -3,7 +3,7 @@
 
   const def = {
     id: 'priya', name: 'Priya (advisor)', type: 'advisor',
-    unlockCondition: (s) => s.week >= 4 && s.network.peers >= 14,
+    unlockCondition: (s) => s.week >= 4,
     cards: [
       {
         id: 'mentor_competitor_bomb', cat: 'c', from: 'Priya (advisor)',

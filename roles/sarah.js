@@ -4,7 +4,7 @@
 
   const def = {
     id: 'sarah', name: 'Sarah (mutual)', type: 'connector',
-    unlockCondition: (s) => s.week >= 3 && s.network.peers >= 13,
+    unlockCondition: (s) => s.week >= 3,
     cards: [
       {
         id: 'intro_expiring', cat: 'c', from: 'Sarah (mutual)',
