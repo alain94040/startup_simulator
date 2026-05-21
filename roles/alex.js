@@ -21,7 +21,7 @@
         ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "i keep getting asked about my equity stake and i don't have anything to show. this really needs to happen.",
-        dropFx(s, char) { char.morale = clamp(char.morale - 15, 0, 100); },
+        dropFx(s, char) { char.morale = clamp(char.morale - 6, 0, 100); },
       },
       {
         id: 'alex_commitment', cat: 't', from: 'Alex',
@@ -75,7 +75,7 @@
         available: (s, char) => char.flags.side_project_active && s.week <= 26,
         options: [
           { label: 'Tell him the startup needs him fully', key: 'talk',
-            execute(s, char) { char.flags.side_project_active = false; char.morale = clamp(char.morale + 8, 0, 100); char.trust = clamp(char.trust + 10, 0, 100); return "Hard conversation. Alex commits fully. He was relieved you brought it up directly."; } },
+            execute(s, char) { char.flags.side_project_active = false; char.morale = clamp(char.morale + 22, 0, 100); char.trust = clamp(char.trust + 10, 0, 100); return "Hard conversation. Alex commits fully. He was relieved you brought it up directly."; } },
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "i've decided to pursue it seriously. i'll keep helping part-time but i think we both know i'm not fully in anymore.",
