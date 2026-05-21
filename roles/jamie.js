@@ -7,13 +7,28 @@
         id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)',
         body: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear about it.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.week <= 8 && !char.flags.done,
+        available: (s, char) => s.week <= 8 && !char.flags.first_meeting_done,
         options: [
-          { label: 'Tell him about it — and ask', key: 'ask',
+          { label: 'Tell him about it', key: 'tell',
+            execute(s, char) {
+              char.flags.first_meeting_done = true;
+              char.flags.first_meeting_week = s.week;
+              return "Caught up over coffee. Told him everything. He was into it — 'this is the kind of thing I wish I'd done. keep me posted.'";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'ff_friend_ask', cat: 'e', from: 'Jamie (college friend)',
+        body: "hey — been thinking about what you told me. i want to support this somehow. can we talk again?",
+        urgency: 2, weeks: 1, priority: true,
+        available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week <= char.flags.first_meeting_week + 2,
+        options: [
+          { label: 'Ask him to invest', key: 'ask',
             execute(s, char) {
               char.flags.done = true;
-              if (Math.random() < 0.8) { s.cash += 7000; return "Jamie sent $7,000 via Venmo. 'Least I could do — you believed in me when I quit my job.'"; }
-              return "Jamie's cash is tied up right now — car loan and a wedding. 'Ask me again in 6 months.'";
+              if (Math.random() < 0.7) { s.cash += 7000; return "Jamie sent $7,000 via Venmo. 'Least I could do — you believed in me when I quit my job.'"; }
+              return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
