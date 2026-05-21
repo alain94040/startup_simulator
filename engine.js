@@ -180,17 +180,17 @@ class Engine {
 
     // Fill remaining slots: one per category, then random
     for (const cat of ['p', 'c', 't', 'e']) {
-      if (picked.length >= 4) break;
+      if (picked.length >= 6) break;
       const match = pool.slice().sort(() => Math.random() - .5)
         .find(d => d.cat === cat && !picked.includes(d));
       if (match) picked.push(match);
     }
     for (const d of pool.slice().sort(() => Math.random() - .5)) {
-      if (picked.length >= 4) break;
+      if (picked.length >= 6) break;
       if (!picked.includes(d)) picked.push(d);
     }
 
-    this.current = picked.slice(0, 4);
+    this.current = picked.slice(0, 6);
     this.current.forEach(d => this.shown.add(d.id));
     this.current.forEach(d => { d._expiring = this.shown.has(d.id + '_seen'); });
     return this.current;
