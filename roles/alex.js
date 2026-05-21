@@ -315,14 +315,14 @@
         id: 'alex_decision', cat: 't', from: 'Customer',
         body: "alex told me you'd ship a full integration by friday. it's wednesday. i don't see anything about this in the roadmap.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.launched && s.customers > 3,
+        available: (s, char) => s.launched && s.customers > 3 && !char.flags.decision_done,
         options: [
           { label: 'Ship the integration', key: 'ship',
-            execute(s, char) { s.customers += 3; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments."; } },
+            execute(s, char) { char.flags.decision_done = true; s.customers += 3; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments."; } },
         ],
         dropDelay: 1, dropFrom: 'Customer',
         dropMsg: "it's monday. still nothing. we're blocking our launch on this.",
-        dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 4, 0, 9999); },
+        dropFx(s, char) { char.flags.decision_done = true; s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 4, 0, 9999); },
       },
 
       // ── DEPARTURE ARC ────────────────────────────────────────────────────────
