@@ -13,8 +13,6 @@
         options: [
           { label: 'Book the session — $1,500', key: 'hire',
             execute(s, char) { char.flags.done = true; s.cash = clamp(s.cash - 1500, 0, 9999999); s.product = clamp(s.product - 3, 0, 100); return "45 minutes of sticky notes and a 'narrative architecture' framework. Brett's main insight: 'lean into your why.' You already knew this. He emailed his invoice immediately."; } },
-          { label: 'Pass on this one', key: 'pass',
-            execute(s, char) { char.flags.done = true; return "Declined politely. Brett replied: 'no worries — here's my newsletter.' Subscribed automatically."; } },
         ],
         dropDelay: 1, dropFrom: 'Brett',
         dropMsg: "just wanted to follow up — offer stands. a lot of founders wait too long on this.",

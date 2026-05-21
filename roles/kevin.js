@@ -13,8 +13,6 @@
         options: [
           { label: 'Hire Kevin for a week — $2,000', key: 'hire',
             execute(s, char) { char.flags.done = true; s.cash = clamp(s.cash - 2000, 0, 9999999); return "Kevin delivered a 58-slide deck titled 'Growth Architecture 2.0'. His top recommendation: post more on LinkedIn. He invoiced before the final call."; } },
-          { label: 'Not the right time', key: 'pass',
-            execute(s, char) { char.flags.done = true; return "Replied it's too early for paid growth work. Kevin: 'it's never too early for growth.' Unsubscribed."; } },
         ],
         dropDelay: 1, dropFrom: 'Kevin',
         dropMsg: "reaching out one more time — this offer won't be available much longer. founders who act early see the biggest gains.",

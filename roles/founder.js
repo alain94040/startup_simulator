@@ -26,6 +26,164 @@
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
+
+      // ── RECURRING: founder pairs with Alex ──────────────────────────────────
+      {
+        id: 'founder_codebuild', cat: 'p', from: 'You',
+        body: "alex has been heads-down for two weeks but the feature queue isn't shrinking. you can code. take this sprint and build alongside him instead of managing from the sidelines.",
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return alex && alex.active && alex.focus === 'build' && s.product < 75 && s.week >= (s.cobuild_last || 0) + 3;
+        },
+        options: [
+          { label: 'Pair up this sprint', key: 'pair',
+            execute(s, char, e) {
+              s.cobuild_last = s.week;
+              const alex = e.chars.get('alex');
+              s.product = clamp(s.product + 10, 0, 100);
+              if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
+              return "Paired up. You took the front-end, Alex handled the data layer. Shipped more in one week than the previous three combined.";
+            } },
+          { label: 'Run demos instead', key: 'demos',
+            execute(s, char, e) {
+              s.cobuild_last = s.week;
+              s.customers += 3;
+              s.signal = clamp(s.signal + 4, 0, 100);
+              return "Ran 3 demos instead. All converted. Alex kept building solo.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
+      {
+        id: 'founder_build_onboarding', cat: 'p', from: 'You',
+        body: "you mapped the onboarding flow based on where beta users keep getting stuck. it's a 3-step wizard — within your abilities to build. alex is maxed out on the backend.",
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return !s.launched && s.product >= 25 && !char.flags.onboarding_built && alex && alex.active;
+        },
+        options: [
+          { label: 'Build it yourself', key: 'build',
+            execute(s, char, e) {
+              char.flags.onboarding_built = true;
+              s.product = clamp(s.product + 8, 0, 100);
+              s.market_fit = clamp(s.market_fit + 5, 0, 100);
+              return "Built the onboarding end-to-end. First-time completion jumped. Alex could stay heads-down on the backend.";
+            } },
+          { label: 'Hand the spec to Alex', key: 'pass',
+            execute(s, char, e) {
+              char.flags.onboarding_built = true;
+              const alex = e.chars.get('alex');
+              s.product = clamp(s.product + 4, 0, 100);
+              if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
+              return "Gave Alex the spec. He'll fit it in — but his queue just got longer.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'founder_build_empty_states', cat: 'p', from: 'You',
+        body: "every screen in the product shows a blank white box when there's no data. two hours of work. new users are hitting these on their first session and assuming something is broken.",
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return !s.launched && s.product >= 35 && !char.flags.empty_states_built && alex && alex.active;
+        },
+        options: [
+          { label: 'Fix the empty states yourself', key: 'build',
+            execute(s, char) {
+              char.flags.empty_states_built = true;
+              s.product = clamp(s.product + 5, 0, 100);
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              return "Added empty states with clear CTAs to every screen. Beta users stopped asking 'is something wrong?'";
+            } },
+          { label: 'Add it to the backlog', key: 'pass',
+            execute(s, char) {
+              char.flags.empty_states_built = true;
+              return "Added to the backlog. It'll stay there a while.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'founder_build_export', cat: 'p', from: 'You',
+        body: "three beta users asked for CSV export this week. they have reporting requirements — without it they can't fully adopt the product. a few hours of work on your end.",
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return !s.launched && s.product >= 40 && s.customers >= 3 && !char.flags.export_built && alex && alex.active;
+        },
+        options: [
+          { label: 'Build the export yourself', key: 'build',
+            execute(s, char) {
+              char.flags.export_built = true;
+              s.product = clamp(s.product + 6, 0, 100);
+              s.market_fit = clamp(s.market_fit + 6, 0, 100);
+              return "CSV export shipped. All three users converted to active. One said it was the last thing blocking them.";
+            } },
+          { label: 'Ask Alex to prioritize it', key: 'pass',
+            execute(s, char, e) {
+              char.flags.export_built = true;
+              const alex = e.chars.get('alex');
+              s.product = clamp(s.product + 3, 0, 100);
+              if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
+              return "Alex added it to his sprint. Shipped two weeks later. Two of the three users had moved on.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'founder_build_demo_account', cat: 'p', from: 'You',
+        body: "every investor demo and sales call starts with a blank slate. you're spending 5 minutes of every meeting saying 'pretend this has data in it.' build a seeded demo account.",
+        urgency: 1, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return !s.launched && s.product >= 50 && !char.flags.demo_account_built && alex && alex.active;
+        },
+        options: [
+          { label: 'Build the demo environment', key: 'build',
+            execute(s, char) {
+              char.flags.demo_account_built = true;
+              s.signal = clamp(s.signal + 6, 0, 100);
+              s.investor_warmth = clamp(s.investor_warmth + 8, 0, 100);
+              return "Demo account seeded with realistic data. Next investor call, they asked 'can I sign up?' instead of 'how does this work?'";
+            } },
+          { label: 'Keep winging it', key: 'pass',
+            execute(s, char) {
+              char.flags.demo_account_built = true;
+              return "Kept winging it. Lost two investor calls to confusion in the demo.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── RECURRING: deep user research (post-launch) ──────────────────────────
+      {
+        id: 'founder_user_depth', cat: 'c', from: 'You',
+        body: "you've been shipping and selling for weeks but you're making product decisions from support tickets. you don't actually know how your users work day to day. block a week.",
+        urgency: 2, weeks: 1,
+        available: (s) => s.launched && s.customers >= 5 && s.week >= (s.user_depth_last || 0) + 4,
+        options: [
+          { label: 'Five sessions — watch them use it', key: 'deep',
+            execute(s) {
+              s.user_depth_last = s.week;
+              s.market_fit = clamp(s.market_fit + 12, 0, 100);
+              s.signal = clamp(s.signal + 6, 0, 100);
+              return "Five sessions done. Two users showed you workflows you didn't know existed. You found why 30% churn in week 2 — and fixed it immediately.";
+            } },
+          { label: 'Send a structured survey', key: 'survey',
+            execute(s) {
+              s.user_depth_last = s.week;
+              s.market_fit = clamp(s.market_fit + 5, 0, 100);
+              s.signal = clamp(s.signal + 3, 0, 100);
+              return "Survey sent. 60% response rate. Useful signal, but nothing you didn't already suspect.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
     ],
   };
 

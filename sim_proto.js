@@ -237,6 +237,7 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
     bankrupt: e.s.game_over,
     week:     e.s.week,
     product:  e.s.product,
+    market_fit: e.s.market_fit,
     customers:e.s.customers,
     signal:   e.s.signal,
     ycApplied:  e.s.ycApplied,
@@ -256,19 +257,21 @@ function runStrategy(name, strategy, n = 100) {
   const results = [];
   for (let i = 0; i < n; i++) results.push(runGame(strategy));
 
-  const wins      = results.filter(r => r.won).length;
-  const bankrupt  = results.filter(r => r.bankrupt).length;
-  const timeout   = results.filter(r => !r.won && !r.bankrupt).length;
+  const pct = count => Math.round(count / n * 100);
+
+  const wins      = pct(results.filter(r => r.won).length);
+  const bankrupt  = pct(results.filter(r => r.bankrupt).length);
+  const timeout   = pct(results.filter(r => !r.won && !r.bankrupt).length);
   const errors    = results.reduce((s, r) => s + r.errors, 0);
-  const alexLeft  = results.filter(r => !r.alexActive).length;
-  const ycApplied = results.filter(r => r.ycApplied).length;
-  const ycAccepted= results.filter(r => r.ycAccepted).length;
+  const alexLeft  = pct(results.filter(r => !r.alexActive).length);
+  const ycApplied = pct(results.filter(r => r.ycApplied).length);
+  const ycAccepted= pct(results.filter(r => r.ycAccepted).length);
 
   const avgWeek   = (results.reduce((s,r) => s+r.week, 0) / n).toFixed(1);
   const avgCust   = (results.reduce((s,r) => s+r.customers, 0) / n).toFixed(1);
-  const priyaSeen = results.filter(r => r.activeChars.includes('priya')).length;
-  const marcusSeen= results.filter(r => r.activeChars.includes('marcus')).length;
-  const sarahSeen = results.filter(r => r.activeChars.includes('sarah')).length;
+  const priyaSeen = pct(results.filter(r => r.activeChars.includes('priya')).length);
+  const marcusSeen= pct(results.filter(r => r.activeChars.includes('marcus')).length);
+  const sarahSeen = pct(results.filter(r => r.activeChars.includes('sarah')).length);
 
   // Collect errors/stuck messages
   const issues = [];
@@ -291,10 +294,12 @@ const strategies = [
   ['Customer focus',  'customer_focus'],
 ];
 
-console.log('\n=== PROTOTYPE SIMULATION (100 games each) ===\n');
+const N = parseInt(process.argv[2], 10) || 100;
+
+console.log(`\n=== PROTOTYPE SIMULATION (${N} games each) ===\n`);
 
 for (const [name, strat] of strategies) {
-  const r = runStrategy(name, strat, 100);
+  const r = runStrategy(name, strat, N);
   console.log(`── ${r.name} ──`);
   console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
   console.log(`  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
@@ -350,6 +355,31 @@ function printTrace(trace) {
   console.log(`  YC: applied=${trace.ycApplied} accepted=${trace.ycAccepted}`);
   console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
 }
+
+// ─── Check: product focus should grow market_fit ─────────────────────────────
+(function checkBuildGrowsFit() {
+  const RUNS = 30;
+  let grew = 0;
+  let totalFit = 0;
+  for (let i = 0; i < RUNS; i++) {
+    const e = new Engine();
+    const alex = e.chars.get('alex');
+    for (let turn = 0; turn < 15; turn++) {
+      if (e.s.game_won || e.s.game_over) break;
+      alex.focus = 'build';
+      e.generateDemands();
+      if (e.current.length === 0) break;
+      const ids  = selectCards(e.current, 'yc_grind');
+      const opts = pickOptions(e.current, ids, 'yc_grind');
+      e.resolveTurn(ids, opts);
+    }
+    if (e.s.market_fit > 0) grew++;
+    totalFit += e.s.market_fit;
+  }
+  const avg = (totalFit / RUNS).toFixed(1);
+  const pass = grew >= Math.ceil(RUNS * 0.5);
+  console.log(`\nCHECK build→market_fit: grew in ${grew}/${RUNS} games, avg fit=${avg}  ${pass ? 'PASS' : 'FAIL'}`);
+})();
 
 const trace = runGame('yc_grind', 120, true);
 printTrace(trace);

@@ -12,7 +12,7 @@
         available: (s, char) => s.product > 20 && !char.flags.done,
         options: [
           { label: 'Write a comparison piece', key: 'compare',
-            execute(s, char) { char.flags.done = true; s.signal = clamp(s.signal + 6, 0, 100); return "Published a direct comparison. Your niche is clearer. A few users switched from Rivalio to you."; } },
+            execute(s, char) { char.flags.done = true; s.signal = clamp(s.signal + 6, 0, 100); return "Published a direct comparison. Your niche is clearer."; } },
         ],
         dropDelay: 2, dropFrom: 'Priya (advisor)',
         dropMsg: "Rivalio has 200 customers and is well-funded. you need a sharper answer to 'why you and not them.'",

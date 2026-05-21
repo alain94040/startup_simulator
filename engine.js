@@ -201,6 +201,8 @@ class Engine {
     const dropped = this.current.filter(d => !ids.includes(d.id));
     const results = [];
 
+    const marketFitBefore = this.s.market_fit;
+
     for (const d of chosen) {
       const char = d._charId ? this.chars.get(d._charId) : null;
       let m;
@@ -211,6 +213,14 @@ class Engine {
         m = d.execute(this.s, char, this);
       }
       if (m) results.push(m);
+    }
+
+    // Significant fit gain while fit is still low means some built work is now wrong.
+    const fitDelta = this.s.market_fit - marketFitBefore;
+    if (fitDelta >= 8 && marketFitBefore < 50) {
+      const rework = Math.round(fitDelta * 0.25);
+      this.s.product = clamp(this.s.product - rework, 0, 100);
+      results.push(`Better understanding of the problem means parts of what was built no longer fit. -${rework}% product to realign.`);
     }
 
     for (const d of dropped) {
