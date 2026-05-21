@@ -145,7 +145,7 @@
         id: 'alex_sync_build', cat: 't', from: 'Alex',
         body: "i think we have enough customer feedback to act on for now. ready to get back to building?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.customers >= 5,
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2,
         options: [
           { label: 'Yes — back to building', key: 'build',
             execute(s, char) { char.focus = 'build'; char.focusSprints = 0; return "Agreed. Alex back to building."; } },
