@@ -134,6 +134,38 @@ body {
 .cal-item.hot .cal-wk { color: #dc2626; }
 .cal-item.now .cal-wk { color: #16a34a; }
 
+/* ── History log ── */
+#history-section { padding: 0 20px 32px; display: flex; flex-direction: column; gap: 8px; }
+.history-lbl {
+  font-size: 11px; color: #bbb; text-transform: uppercase; letter-spacing: .5px;
+  font-weight: 600; padding-top: 16px; border-top: 1px solid #e0e0ea; margin-bottom: 4px;
+}
+.hist-turn {
+  background: white; border-radius: 10px; border: 1px solid #e8e8f0;
+  padding: 10px 14px; display: flex; flex-direction: column; gap: 5px;
+}
+.hist-head { font-size: 11px; font-weight: 700; color: #999; letter-spacing: .2px; }
+.hist-card {
+  display: flex; gap: 6px; align-items: baseline; font-size: 12px; line-height: 1.4;
+}
+.hist-card.dropped { opacity: 0.38; }
+.hc-mark { font-weight: 700; min-width: 12px; font-size: 11px; }
+.hc-cat {
+  font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0;
+}
+.hc-cat-p { background: #e0f2fe; color: #0369a1; }
+.hc-cat-c { background: #dcfce7; color: #15803d; }
+.hc-cat-t { background: #f3e8ff; color: #7e22ce; }
+.hc-cat-e { background: #fef9c3; color: #854d0e; }
+.hc-from { font-weight: 600; color: #1a1a2e; white-space: nowrap; flex-shrink: 0; }
+.hc-body { color: #777; }
+.hc-opt  { color: #1a8754; font-style: italic; white-space: nowrap; flex-shrink: 0; }
+.hist-outcomes {
+  font-size: 11px; color: #1a8754; line-height: 1.5;
+  border-top: 1px solid #f0f0f5; padding-top: 5px; margin-top: 2px;
+}
+
 /* ── Overlay ── */
 #overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 50; align-items: center; justify-content: center; }
 #overlay.on { display: flex; }
@@ -183,6 +215,7 @@ body {
       <div id="demands-lbl">Needs your attention — pick 2</div>
       <div id="demands-list"></div>
     </div>
+    <div id="history-section"></div>
   </div>
 </div>
 
@@ -200,7 +233,7 @@ body {
 // UI
 // ─────────────────────────────────────────────
 
-let E, sel, selOpts, _mouseDownX, _mouseDownY;
+let E, sel, selOpts, gameHistory, _mouseDownX, _mouseDownY;
 
 document.addEventListener('mousedown', e => { _mouseDownX = e.clientX; _mouseDownY = e.clientY; });
 
@@ -209,6 +242,8 @@ function boot() {
   E = new Engine();
   sel = [];
   selOpts = {};
+  gameHistory = [];
+  document.getElementById('history-section').innerHTML = '';
   document.getElementById('overlay').classList.remove('on');
   E.generateDemands();
   render();
@@ -390,7 +425,24 @@ function updateBtn() {
 
 function advance() {
   if (sel.length !== 2 || E.s.game_over || E.s.game_won) return;
+
+  const snapshot = {
+    week: E.s.week,
+    offered: E.current.map(d => ({
+      id: d.id, cat: d.cat,
+      from: d.from || (d._charId ? CHARACTER_DEFS[d._charId].name : 'System'),
+      body: d.body,
+      chosen: sel.includes(d.id),
+      optLabel: sel.includes(d.id) && d.options && selOpts[d.id]
+        ? (d.options.find(o => o.key === selOpts[d.id]) || d.options[0]).label : null,
+    })),
+  };
+
   const { results, sprintWeeks } = E.resolveTurn(sel, selOpts);
+  snapshot.sprintWeeks = sprintWeeks;
+  snapshot.outcomes = results;
+  gameHistory.push(snapshot);
+
   sel = [];
   selOpts = {};
   const flash = document.getElementById('flash');
@@ -399,6 +451,37 @@ function advance() {
   flash.classList.add('on');
   E.generateDemands();
   render();
+  renderHistory();
+}
+
+function renderHistory() {
+  const trunc = (str, n) => str.length > n ? str.slice(0, n - 1) + '…' : str;
+  const catCls   = { p: 'hc-cat-p', c: 'hc-cat-c', t: 'hc-cat-t', e: 'hc-cat-e' };
+  const catLabel = { p: 'prod', c: 'cust', t: 'team', e: 'ext' };
+
+  const el = document.getElementById('history-section');
+  if (gameHistory.length === 0) { el.innerHTML = ''; return; }
+
+  el.innerHTML = '<div class="history-lbl">History</div>' +
+    [...gameHistory].reverse().map(turn => {
+      const cards = turn.offered.map(d => `
+        <div class="hist-card ${d.chosen ? '' : 'dropped'}">
+          <span class="hc-mark">${d.chosen ? '✓' : '✗'}</span>
+          <span class="hc-cat ${catCls[d.cat] || ''}">${catLabel[d.cat] || d.cat}</span>
+          <span class="hc-from">${d.from}</span>
+          <span class="hc-body">${trunc(d.body, 60)}</span>
+          ${d.optLabel ? `<span class="hc-opt">→ ${d.optLabel}</span>` : ''}
+        </div>`).join('');
+
+      const outcomes = turn.outcomes.length
+        ? `<div class="hist-outcomes">${turn.outcomes.map(o => trunc(o, 100)).join('<br>')}</div>`
+        : '';
+
+      return `<div class="hist-turn">
+        <div class="hist-head">Wk ${turn.week} &nbsp;·&nbsp; ${turn.sprintWeeks}-week sprint</div>
+        ${cards}${outcomes}
+      </div>`;
+    }).join('');
 }
 
 document.getElementById('btn').addEventListener('click', advance);
