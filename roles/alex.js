@@ -96,16 +96,16 @@
       },
       {
         id: 'friend_wants_in', cat: 't', from: 'Alex',
-        body: "my friend Jamie wants to join as the first employee. smart, enthusiastic. skills overlap with mine a lot but they'd ship fast. your call though.",
+        body: "my friend Dev wants to join as the first employee. smart, enthusiastic. skills overlap with mine a lot but they'd ship fast. your call though.",
         urgency: 2, weeks: 1,
-        available: (s, char) => s.week >= 4 && s.week <= 18 && s.product < 70 && !char.flags.jamie_resolved,
+        available: (s, char) => s.week >= 4 && s.week <= 18 && s.product < 70 && !char.flags.dev_resolved,
         options: [
-          { label: 'Bring Jamie on board', key: 'hire',
-            execute(s, char) { char.flags.jamie_resolved = true; s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale + 8, 0, 100); s.network.peers += 2; return "Jamie joined. High energy, shipped 2 useful features in the first week."; } },
+          { label: 'Bring Dev on board', key: 'hire',
+            execute(s, char) { char.flags.dev_resolved = true; s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale + 8, 0, 100); s.network.peers += 2; return "Dev joined. High energy, shipped 2 useful features in the first week."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "jamie went with another startup. they asked why we passed and honestly i didn't have a great answer.",
-        dropFx(s, char) { char.flags.jamie_resolved = true; char.morale = clamp(char.morale - 10, 0, 100); },
+        dropMsg: "dev went with another startup. they asked why we passed and honestly i didn't have a great answer.",
+        dropFx(s, char) { char.flags.dev_resolved = true; char.morale = clamp(char.morale - 10, 0, 100); },
       },
       {
         id: 'alex_equity', cat: 't', from: 'Alex',
