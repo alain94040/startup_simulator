@@ -146,7 +146,7 @@
         id: 'alex_sync_build', cat: 't', from: 'Alex',
         body: "i think we have enough customer feedback to act on for now. ready to get back to building?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2,
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && !(s.signal >= 45 && s.customers >= 15 && s.deck_ready),
         options: [
           { label: 'Yes — back to building', key: 'build',
             execute(s, char) { char.focus = 'build'; char.focusSprints = 0; return "Agreed. Alex back to building."; } },
@@ -161,7 +161,7 @@
         id: 'alex_sync_pitch', cat: 't', from: 'Alex',
         body: "our traction story is getting solid. i could start warming up investor conversations instead of coding — free you up to focus on the product. worth trying?",
         urgency: 1, weeks: 1, priority: true,
-        available: (s, char) => char.focus !== 'pitch' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 15 && s.deck_ready,
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 15 && s.deck_ready,
         options: [
           { label: 'Yes — work the pipeline', key: 'pitch',
             execute(s, char) { char.focus = 'pitch'; char.focusSprints = 0; return "Agreed. Alex working the investor pipeline."; } },
