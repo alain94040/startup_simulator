@@ -22,6 +22,7 @@
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "i keep getting asked about my equity stake and i don't have anything to show. this really needs to happen.",
         dropFx(s, char) { char.morale = clamp(char.morale - 6, 0, 100); },
+        dropCondition: (s, char) => !char.flags.equity_set,
       },
       {
         id: 'alex_commitment', cat: 't', from: 'Alex',

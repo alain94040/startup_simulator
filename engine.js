@@ -222,6 +222,7 @@ class Engine {
           text: d.dropMsg,
           fx: d.dropFx,
           charId: d._charId,
+          condition: d.dropCondition || null,
         });
       } else if (d.dropDelay === 0 && d.dropFx) {
         d.dropFx(this.s, char, this);
@@ -271,6 +272,7 @@ class Engine {
     this.pending = this.pending.filter(p => p.fireWeek > this.s.week);
     for (const p of fired) {
       const char = p.charId ? this.chars.get(p.charId) : null;
+      if (p.condition && !p.condition(this.s, char)) continue;
       p.fx(this.s, char, this);
       if (p.text) results.push(`${p.from}: "${p.text}"`);
     }
