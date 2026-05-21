@@ -131,7 +131,7 @@
         id: 'alex_sync_discover', cat: 't', from: 'Alex',
         body: "we've been heads-down building for a while without talking to anyone outside. should we shift focus to customer discovery for a sprint or two?",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 1,
+        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3 && s.market_fit < 80,
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
             execute(s, char) { char.focus = 'discover'; char.focusSprints = 0; return "Agreed. Alex on customer discovery this sprint."; } },
@@ -142,7 +142,7 @@
         id: 'alex_sync_build', cat: 't', from: 'Alex',
         body: "i think we have enough customer feedback to act on for now. ready to get back to building?",
         urgency: 1, weeks: 1,
-        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 1 && !(s.signal >= 45 && s.customers >= 15 && s.deck_ready),
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && !(s.signal >= 45 && s.customers >= 15 && s.deck_ready),
         options: [
           { label: 'Yes — back to building', key: 'build',
             execute(s, char) { char.focus = 'build'; char.focusSprints = 0; return "Agreed. Alex back to building."; } },
@@ -153,7 +153,7 @@
         id: 'alex_sync_pitch', cat: 't', from: 'Alex',
         body: "our traction story is getting solid. i think i'd create more value right now talking to investors than doing more discovery. free you up to stay focused on users. worth trying?",
         urgency: 1, weeks: 1,
-        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 1 && s.signal >= 45 && s.customers >= 15 && s.deck_ready,
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 15 && s.deck_ready,
         options: [
           { label: 'Yes — work the pipeline', key: 'pitch',
             execute(s, char) { char.focus = 'pitch'; char.focusSprints = 0; return "Agreed. Alex working the investor pipeline."; } },
