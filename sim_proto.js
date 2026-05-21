@@ -4,16 +4,94 @@ const { Engine, CHARACTER_DEFS } = require('./engine.js');
 
 // ─── Strategy helpers ────────────────────────────────────────────────────────
 
+// Preferred option key per card per strategy.
+// Cards with a single option don't need an entry — they're handled automatically.
+const CARD_PREFS = {
+  yc_grind: {
+    equity_talk:           'fair',
+    alex_commitment:       'push',
+    vision_mismatch:       'test',
+    alex_sync_discover:    'discover',
+    alex_sync_build:       'build',
+    alex_sync_pitch:       'pitch',
+    alex_equity:           'fair',
+    first_interview_shock: 'pivot',
+    pivot_insight_1:       'pivot',
+    pivot_insight_2:       'pivot',
+    good_enough_launch:    'ship',
+    yc_discussion_ready:   'apply',
+    yc_discussion_early:   'apply',
+    consultant_growth:     'hire',
+    consultant_brand:      'hire',
+  },
+  alex_first: {
+    equity_talk:           'fair',
+    alex_commitment:       'accept',
+    vision_mismatch:       'alex',
+    alex_sync_discover:    'discover',
+    alex_sync_build:       'discover',
+    alex_sync_pitch:       'pitch',
+    alex_equity:           'fair',
+    first_interview_shock: 'pivot',
+    pivot_insight_1:       'pivot',
+    pivot_insight_2:       'pivot',
+    good_enough_launch:    'ship',
+    yc_discussion_ready:   'apply',
+    yc_discussion_early:   'apply',
+    consultant_growth:     'pass',
+    consultant_brand:      'pass',
+  },
+  customer_focus: {
+    equity_talk:           'fair',
+    alex_commitment:       'accept',
+    vision_mismatch:       'test',
+    alex_sync_discover:    'discover',
+    alex_sync_build:       'discover',
+    alex_sync_pitch:       'stay',
+    alex_equity:           'fair',
+    first_interview_shock: 'pivot',
+    pivot_insight_1:       'pivot',
+    pivot_insight_2:       'pivot',
+    good_enough_launch:    'ship',
+    yc_discussion_ready:   'apply',
+    yc_discussion_early:   'skip',
+    consultant_growth:     'hire',
+    consultant_brand:      'pass',
+  },
+  ignore_alex: {
+    equity_talk:           'negotiate',
+    alex_commitment:       'push',
+    vision_mismatch:       'yours',
+    alex_sync_discover:    'build',
+    alex_sync_build:       'discover',
+    alex_sync_pitch:       'stay',
+    alex_equity:           'defer',
+    first_interview_shock: 'stay',
+    pivot_insight_1:       'stay',
+    pivot_insight_2:       'stay',
+    good_enough_launch:    'wait',
+    yc_discussion_ready:   'skip',
+    yc_discussion_early:   'skip',
+    consultant_growth:     'pass',
+    consultant_brand:      'pass',
+  },
+};
+
 function pickOptions(cards, ids, strategy) {
   const opts = {};
+  const prefs = CARD_PREFS[strategy] || {};
   for (const id of ids) {
     const card = cards.find(c => c.id === id);
     if (!card || !card.options) continue;
     const keys = card.options.map(o => o.key);
-    if (strategy === 'nice')    opts[id] = keys[0];           // always first option
-    if (strategy === 'random')  opts[id] = keys[Math.floor(Math.random() * keys.length)];
-    if (strategy === 'greedy')  opts[id] = keys[0];
-    if (strategy === 'ignore_alex') opts[id] = keys[keys.length - 1]; // worst option
+    if (keys.length === 1) { opts[id] = keys[0]; continue; }
+    if (strategy === 'random') {
+      opts[id] = keys[Math.floor(Math.random() * keys.length)];
+    } else if (prefs[id] && keys.includes(prefs[id])) {
+      opts[id] = prefs[id];
+    } else {
+      opts[id] = keys[0];
+    }
   }
   return opts;
 }
@@ -83,7 +161,7 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
   const log = [];
   let errorCount = 0;
 
-  const optStrategy = strategy === 'ignore_alex' ? 'ignore_alex' : 'nice';
+  const optStrategy = strategy;
 
   for (let turn = 0; turn < 80; turn++) {
     if (e.s.game_won || e.s.game_over) break;
