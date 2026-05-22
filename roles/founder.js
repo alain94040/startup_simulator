@@ -288,6 +288,41 @@
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
+      // ── ONE-TIME: pricing experiment (post-launch) ──────────────────────────
+      {
+        id: 'founder_pricing_experiment', cat: 'c', from: 'You',
+        body: "you have free users who open the app daily but haven't upgraded. the product is clearly useful — nobody's been asked to pay. time to test something.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.launched && s.users >= 10 && s.customers >= 1 && !char.flags.pricing_exp_done && s.week >= (s.pricing_exp_last || 0) + 4,
+        options: [
+          { label: 'Add a timed upgrade prompt', key: 'prompt',
+            execute(s, char) {
+              char.flags.pricing_exp_done = true;
+              const converted = Math.min(4, Math.max(1, Math.floor(s.users * 0.1)));
+              s.users = clamp(s.users - converted, 0, 9999);
+              s.customers += converted;
+              s.signal = clamp(s.signal - 2, 0, 100);
+              return `Prompt added. ${converted} free user${converted !== 1 ? 's' : ''} upgraded this week. A few complained about the nag. Worth it.`;
+            } },
+          { label: 'Cap the free tier at 3 seats', key: 'cap',
+            execute(s, char) {
+              char.flags.pricing_exp_done = true;
+              const converted = Math.min(5, Math.max(1, Math.floor(s.users * 0.15)));
+              const churned = Math.min(4, Math.max(0, Math.floor(s.users * 0.08)));
+              s.users = clamp(s.users - converted - churned, 0, 9999);
+              s.customers += converted;
+              s.signal = clamp(s.signal - 5, 0, 100);
+              return `Seat cap live. ${converted} upgraded, ${churned} left when the wall went up. More revenue, fewer free users.`;
+            } },
+          { label: 'Hold — grow the free tier first', key: 'hold',
+            execute(s) {
+              s.pricing_exp_last = s.week;
+              s.users += 5;
+              return "Held off. Free users keep coming. The conversion problem isn't going anywhere.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
     ],
   };
 
