@@ -142,7 +142,7 @@
         id: 'alex_sync_build', cat: 't', from: 'Alex',
         body: "i think we have enough customer feedback to act on for now. ready to get back to building?",
         urgency: 1, weeks: 1,
-        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && !(s.signal >= 45 && s.customers >= 15 && s.deck_ready),
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && !(s.signal >= 45 && s.customers >= 8 && s.deck_ready),
         options: [
           { label: 'Yes — back to building', key: 'build',
             execute(s, char) { char.focus = 'build'; char.focusSprints = 0; return "Agreed. Alex back to building."; } },
@@ -153,7 +153,7 @@
         id: 'alex_sync_pitch', cat: 't', from: 'Alex',
         body: "our traction story is getting solid. i think i'd create more value right now talking to investors than doing more discovery. free you up to stay focused on users. worth trying?",
         urgency: 1, weeks: 1,
-        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 15 && s.deck_ready,
+        available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 8 && s.deck_ready,
         options: [
           { label: 'Yes — work the pipeline', key: 'pitch',
             execute(s, char) { char.focus = 'pitch'; char.focusSprints = 0; return "Agreed. Alex working the investor pipeline."; } },
@@ -309,20 +309,20 @@
         ],
         dropDelay: 4, dropFrom: 'Alex',
         dropMsg: "3 active outages this week from the tech debt i flagged. we're losing users in real time.",
-        dropFx(s, char) { s.customers = clamp(s.customers - 8, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
+        dropFx(s, char) { s.users = clamp(s.users - 8, 0, 9999); s.customers = clamp(s.customers - 2, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
       },
       {
         id: 'alex_decision', cat: 't', from: 'Customer',
         body: "alex told me you'd ship a full integration by friday. it's wednesday. i don't see anything about this in the roadmap.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.launched && s.customers > 3 && !char.flags.decision_done,
+        available: (s, char) => s.launched && s.customers > 1 && !char.flags.decision_done,
         options: [
           { label: 'Ship the integration', key: 'ship',
-            execute(s, char) { char.flags.decision_done = true; s.customers += 3; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments."; } },
+            execute(s, char) { char.flags.decision_done = true; s.customers += 1; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments."; } },
         ],
         dropDelay: 1, dropFrom: 'Customer',
         dropMsg: "it's monday. still nothing. we're blocking our launch on this.",
-        dropFx(s, char) { char.flags.decision_done = true; s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 4, 0, 9999); },
+        dropFx(s, char) { char.flags.decision_done = true; s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 1, 0, 9999); },
       },
 
       // ── DEPARTURE ARC ────────────────────────────────────────────────────────

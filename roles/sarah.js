@@ -13,7 +13,7 @@
         available: (s, char) => s.week > 3 && !char.flags.intro_done && (s.launched || s.product >= 35),
         options: [
           { label: 'Reply to Sarah now', key: 'reply',
-            execute(s, char) { char.flags.intro_done = true; s.customers += 5 + rnd(5); s.signal = clamp(s.signal + 7, 0, 100); s.network.advisors++; return "Had the call. Strong fit — they signed up on the spot. Sarah is now a connector you can rely on."; } },
+            execute(s, char) { char.flags.intro_done = true; s.customers += 1; s.signal = clamp(s.signal + 7, 0, 100); s.network.advisors++; return "Had the call. Strong fit — they became your first paying customer on the spot. Sarah is now a connector you can rely on."; } },
         ],
         dropDelay: 1, dropFrom: 'Sarah',
         dropMsg: "they went with something else. mentioned they didn't hear back in time. that one hurt.",

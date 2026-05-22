@@ -22,7 +22,7 @@
         id: 'prep_deck', cat: 'e', from: 'Marcus (angel)',
         body: "when you're ready to have a more formal conversation, can you send me a deck? you don't want to be scrambling to build one mid-diligence.",
         urgency: 1, weeks: 1,
-        available: (s, char) => char.flags.intro_warm_done && !s.deck_ready && !char.flags.deck_asked && s.signal >= 38 && s.customers >= 5,
+        available: (s, char) => char.flags.intro_warm_done && !s.deck_ready && !char.flags.deck_asked && s.signal >= 38 && (s.customers >= 2 || s.users >= 20),
         options: [
           { label: 'Build the deck now', key: 'build',
             execute(s, char) { s.deck_ready = true; char.flags.deck_asked = true; return "Deck done. Story is clear. Ready when the time comes."; } },
@@ -38,7 +38,7 @@
         available: (s, char) => s.deck_ready && s.signal >= 38 && s.investor_warmth < 75 && s.network.angels >= 1 && !char.flags.investor_ready_done,
         options: [
           { label: 'Take both meetings', key: 'meet',
-            execute(s, char) { char.flags.investor_ready_done = true; s.investor_warmth = clamp(s.investor_warmth + 28, 0, 100); return "Strong meetings. Both investors want to see your next milestone."; } },
+            execute(s, char) { char.flags.investor_ready_done = true; s.investor_warmth = clamp(s.investor_warmth + 33, 0, 100); return "Strong meetings. Both investors want to see your next milestone."; } },
         ],
         dropDelay: 2, dropFrom: 'Investor',
         dropMsg: "reached out twice. no reply. assumed timing wasn't right. moving on.",
@@ -48,10 +48,10 @@
         id: 'seed_pitch', cat: 'e', from: 'Marcus (angel)',
         body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about me leading your round?",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 30 && s.product >= 40 && s.signal >= 45 && !s.marcusCommitted,
+        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 8 && s.product >= 40 && s.signal >= 45 && !s.marcusCommitted,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
-            const score = clamp(s.customers / 3, 0, 35) + clamp(s.product / 5, 0, 20)
+            const score = clamp(s.customers * 2, 0, 35) + clamp(s.product / 5, 0, 20)
               + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0);
             if (Math.random() < (score >= 65 ? 0.85 : score >= 50 ? 0.45 : 0.15)) {
               s.marcusCommitted = true;

@@ -42,7 +42,7 @@ const CHARACTER_DEFS = typeof require !== 'undefined'
 const WORLD = [
   {
     available: s => s.launched && s.customers > 0,
-    fx: s => { s.customers += 2 + rnd(4); s.signal = clamp(s.signal + 3, 0, 100); },
+    fx: s => { s.signal = clamp(s.signal + 3, 0, 100); },
   },
   {
     available: () => true,
@@ -50,7 +50,7 @@ const WORLD = [
   },
   {
     available: s => s.signal > 50,
-    fx: s => { s.customers += 1 + rnd(3); s.network.peers += 2; },
+    fx: s => { s.network.peers += 2; },
   },
   {
     available: s => s.launched,
@@ -66,7 +66,7 @@ const WORLD = [
   },
   {
     available: s => s.customers >= 5,
-    fx: s => { s.customers += 1; s.signal = clamp(s.signal + 2, 0, 100); s.network.peers += 1; },
+    fx: s => { s.signal = clamp(s.signal + 2, 0, 100); s.network.peers += 1; },
   },
   {
     available: s => s.customers >= 10,
@@ -85,7 +85,7 @@ const WORLD = [
 class Engine {
   constructor() {
     this.s = {
-      cash: 10000, week: 1, product: 10, customers: 0,
+      cash: 10000, week: 1, product: 10, users: 0, customers: 0, revenue: 0,
       signal: 28, market_fit: 0, launched: false, deck_ready: false,
       investor_warmth: 0,
       incorporated: false, ip_clear: false,
@@ -284,14 +284,33 @@ class Engine {
     // Signal drifts without customer attention
     if (!chosen.some(d => d.cat === 'c')) this.s.signal = clamp(this.s.signal - 2 * sprintWeeks, 0, 100);
 
-    // Organic customer growth
-    if (this.s.launched && this.s.signal >= 40)
-      this.s.customers += Math.floor((this.s.signal - 40) / 20) * sprintWeeks;
+    // Organic signups — word-of-mouth at high signal
+    if (this.s.launched && this.s.signal >= 70)
+      this.s.users += Math.floor((this.s.signal - 70) / 30) + 1;
 
-    // Market fit churn: without PMF, users don't stick around post-launch
-    if (this.s.launched && this.s.market_fit < 50) {
-      const churn = Math.floor((50 - this.s.market_fit) / 10) * sprintWeeks;
-      this.s.customers = Math.max(0, this.s.customers - churn);
+    // Free-to-paid conversion (B2B freemium: 0.5–3% per sprint based on market fit)
+    if (this.s.launched && this.s.users > 0) {
+      const rate = this.s.market_fit < 30 ? 0.005 :
+                   this.s.market_fit < 50 ? 0.01  :
+                   this.s.market_fit < 70 ? 0.02  : 0.03;
+      const raw = this.s.users * rate;
+      // Probabilistic rounding so small pools still convert
+      const converted = Math.floor(raw) + (Math.random() < (raw % 1) ? 1 : 0);
+      if (converted > 0) {
+        this.s.users = Math.max(0, this.s.users - converted);
+        this.s.customers += converted;
+      }
+    }
+
+    // Free user churn: most free users disappear without re-engagement
+    if (this.s.launched && this.s.users > 0) {
+      const churnRate = this.s.market_fit < 40 ? 0.08 : 0.04;
+      this.s.users = Math.max(0, this.s.users - Math.floor(this.s.users * churnRate));
+    }
+
+    // Paying customer churn: B2B customers are sticky; only lose one if PMF is very poor
+    if (this.s.launched && this.s.market_fit < 30 && this.s.customers > 0) {
+      this.s.customers--;
     }
 
     // Fire pending consequences
@@ -324,6 +343,9 @@ class Engine {
         results.push("YC: passing on this batch. Next window opens in ~12 weeks.");
       }
     }
+
+    // B2B revenue: $50/customer/month (~$12/customer/week)
+    this.s.revenue = this.s.customers * 50;
 
     if (this.s.cash <= 0) this.s.game_over = true;
 

@@ -11,7 +11,7 @@
         available: (s) => !s.launched && !s.hn_thread_done,
         options: [
           { label: 'Engage the thread', key: 'engage',
-            execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); s.customers += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; } },
+            execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); s.users += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s) { s.hn_thread_done = true; s.signal = clamp(s.signal - 3, 0, 100); },
@@ -40,7 +40,7 @@
         available: (s) => !s.launched && s.week >= 8 && s.week >= (s.community_reddit_last || 0) + 4,
         options: [
           { label: 'Join the conversation', key: 'engage',
-            execute(s) { s.community_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.customers += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Joined the thread as a builder, not a promoter. 2 people signed up for early access."; } },
+            execute(s) { s.community_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.users += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Joined the thread as a builder, not a promoter. 2 people signed up for early access."; } },
           { label: 'Skip it', key: 'skip',
             execute(s) { s.community_reddit_last = s.week; return "Skipped. Staying focused."; } },
         ],
@@ -69,9 +69,9 @@
         available: (s) => s.launched && s.week >= (s.community_product_hn_last || 0) + 4,
         options: [
           { label: 'Engage the thread', key: 'engage',
-            execute(s) { s.community_product_hn_last = s.week; s.signal = clamp(s.signal + 7, 0, 100); s.customers += 5; return "Responded to every comment. Thread stayed warm for 3 days. 5 signups."; } },
+            execute(s) { s.community_product_hn_last = s.week; s.signal = clamp(s.signal + 7, 0, 100); s.users += 5; return "Responded to every comment. Thread stayed warm for 3 days. 5 signups."; } },
           { label: 'Let it run', key: 'watch',
-            execute(s) { s.community_product_hn_last = s.week; s.customers += 1; return "Didn't engage. Thread faded quickly. 1 signup."; } },
+            execute(s) { s.community_product_hn_last = s.week; s.users += 1; return "Didn't engage. Thread faded quickly. 1 signup."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -82,9 +82,9 @@
         available: (s) => s.launched && s.week >= (s.community_product_reddit_last || 0) + 4,
         options: [
           { label: 'Reach out to the poster', key: 'engage',
-            execute(s) { s.community_product_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.customers += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Thanked them publicly and privately. They became a power user and wrote a short review."; } },
+            execute(s) { s.community_product_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.users += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Thanked them publicly and privately. They became a power user and wrote a short review."; } },
           { label: 'Let it ride', key: 'watch',
-            execute(s) { s.community_product_reddit_last = s.week; s.customers += 2; return "Organic momentum. 2 more signups from the thread tail."; } },
+            execute(s) { s.community_product_reddit_last = s.week; s.users += 2; return "Organic momentum. 2 more signups from the thread tail."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -96,18 +96,18 @@
         available: (s) => s.launched && s.week >= (s.community_product_slack_last || 0) + 4,
         options: [
           { label: 'Engage and answer pricing questions', key: 'engage',
-            execute(s) { s.community_product_slack_last = s.week; s.signal = clamp(s.signal + 4, 0, 100); s.customers += 2; return "Answered everything honestly. 2 signups, 1 feature request worth exploring."; } },
+            execute(s) { s.community_product_slack_last = s.week; s.signal = clamp(s.signal + 4, 0, 100); s.users += 2; return "Answered everything honestly. 2 signups, 1 feature request worth exploring."; } },
           { label: 'Let it run', key: 'watch',
-            execute(s) { s.community_product_slack_last = s.week; s.customers += 1; return "Thread ran its course. 1 signup."; } },
+            execute(s) { s.community_product_slack_last = s.week; s.users += 1; return "Thread ran its course. 1 signup."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
-        body: "YC application window just opened. Your stats qualify — 60%+ product, 40+ customers. A lot of founders in your space are applying this batch.",
+        body: "YC application window just opened. Your stats qualify — 60%+ product, 10+ paying customers. A lot of founders in your space are applying this batch.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 40,
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 10,
         options: [
           { label: 'Start writing the application', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
@@ -118,9 +118,9 @@
       },
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
-        body: "YC application window just opened. Stats aren't quite there yet — need 60% product and 40 customers. Some teams apply anyway to get partner feedback. Apply or wait for next batch?",
+        body: "YC application window just opened. Stats aren't quite there yet — need 60% product and 10 paying customers. Some teams apply anyway to get partner feedback. Apply or wait for next batch?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 40),
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 10),
         options: [
           { label: 'Start writing anyway', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },

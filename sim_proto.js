@@ -75,6 +75,46 @@ const CARD_PREFS = {
     consultant_growth:     'pass',
     consultant_brand:      'pass',
   },
+  // Angel path: build traction → warm marcus → build users → launch → convert → pitch
+  angel_path: {
+    equity_talk:              'fair',
+    alex_commitment:          'accept',
+    vision_mismatch:          'test',
+    alex_equity:              'fair',
+    first_interview_shock:    'pivot',
+    cold_silence:             'rewrite',
+    random_reframe:           'test',
+    pivot_insight_1:          'pivot',
+    pivot_insight_2:          'pivot',
+    good_enough_launch:       'ship',
+    yc_discussion_ready:      'skip',
+    yc_discussion_early:      'skip',
+    consultant_growth:        'pass',
+    consultant_brand:         'pass',
+    hn_thread:                'engage',
+    community_signal_hn:      'engage',
+    community_signal_reddit:  'engage',
+    community_signal_slack:   'engage',
+    community_product_hn:     'engage',
+    community_product_reddit: 'engage',
+    community_product_slack:  'engage',
+    silent_churn:             'call',
+    public_complaint:         'respond',
+    bug_reports:              'fix',
+    feature_cluster:          'build',
+    waitlist_cold:            'reach',
+    reporter_deadline:        'reply',
+    founder_codebuild:        'demos',
+    founder_user_depth:       'deep',
+    // investor chain — engage fully
+    investor_intro_warm:      'call',
+    fatima_intro:             'call',
+    fatima_meeting:           'meet',
+    fatima_deck:              'walk',
+    ryan_intro:               'meet',
+    ryan_checkin:             'update',
+    intro_expiring:           'reply',
+  },
   // Teach-the-lesson strategy: discover → build → engage → YC
   lean_loop: {
     equity_talk:              'fair',
@@ -196,6 +236,31 @@ function selectCards(current, strategy, state) {
     const sorted = pool.slice().sort((a, b) => {
       const catOrder = { c: 0, p: 1, e: 2, t: 3 };
       if (a.cat !== b.cat) return (catOrder[a.cat] || 9) - (catOrder[b.cat] || 9);
+      return b.urgency - a.urgency;
+    });
+    return sorted.slice(0, 2).map(c => c.id);
+  }
+
+  if (strategy === 'angel_path') {
+    const s = state || {};
+    const INVESTOR_IDS  = new Set(['investor_intro_warm','prep_deck','investor_ready','seed_pitch',
+                                   'fatima_intro','fatima_meeting','fatima_deck','fatima_commit']);
+    const ALEX_CRITICAL = new Set(['equity_talk','alex_commitment','alex_equity','vision_mismatch']);
+    // Never pick alex_sync_discover — keeps Alex in build mode so demo card stays available
+    const NEVER_PICK    = new Set(['alex_sync_discover','yc_discussion_ready','yc_discussion_early']);
+
+    const priority = c => {
+      if (NEVER_PICK.has(c.id))    return 99;
+      if (ALEX_CRITICAL.has(c.id)) return 0;
+      if (INVESTOR_IDS.has(c.id))  return 1;
+      if (c.id === 'good_enough_launch' && s.product >= 60) return 2;
+      if (c.cat === 'p') return 3;   // product cards: demos add direct paying customers
+      if (c.cat === 'c') return 4;
+      return 5 + (4 - c.urgency);
+    };
+    const sorted = pool.slice().sort((a, b) => {
+      const pa = priority(a), pb = priority(b);
+      if (pa !== pb) return pa - pb;
       return b.urgency - a.urgency;
     });
     return sorted.slice(0, 2).map(c => c.id);
@@ -419,6 +484,7 @@ const strategies = [
   ['Ignore Alex',     'ignore_alex'],
   ['Customer focus',  'customer_focus'],
   ['Lean loop',       'lean_loop'],
+  ['Angel path',      'angel_path'],
 ];
 
 // ─── Options parser ───────────────────────────────────────────────────────────

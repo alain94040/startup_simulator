@@ -22,7 +22,7 @@
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
           { label: 'Block off this week for 5 customer interviews', key: 'interview',
-            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.customers += 5; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
+            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.users += 5; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -114,7 +114,7 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.product >= 40 && s.customers >= 3 && !char.flags.export_built && alex && alex.active;
+          return !s.launched && s.product >= 40 && (s.users >= 3 || s.customers >= 1) && !char.flags.export_built && alex && alex.active;
         },
         options: [
           { label: 'Build the export yourself', key: 'build',
@@ -165,7 +165,7 @@
         id: 'founder_user_depth', cat: 'c', from: 'You',
         body: "you've been shipping and selling for weeks but you're making product decisions from support tickets. you don't actually know how your users work day to day. block a week.",
         urgency: 2, weeks: 1,
-        available: (s) => s.launched && s.customers >= 5 && s.week >= (s.user_depth_last || 0) + 4,
+        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.user_depth_last || 0) + 4,
         options: [
           { label: 'Five sessions — watch them use it', key: 'deep',
             execute(s) {
