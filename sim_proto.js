@@ -75,9 +75,45 @@ const CARD_PREFS = {
     consultant_growth:     'pass',
     consultant_brand:      'pass',
   },
+  // Teach-the-lesson strategy: discover → build → engage → YC
+  lean_loop: {
+    equity_talk:              'fair',
+    alex_commitment:          'accept',
+    vision_mismatch:          'test',
+    alex_equity:              'fair',
+    first_interview_shock:    'pivot',
+    cold_silence:             'rewrite',
+    random_reframe:           'test',
+    pivot_insight_1:          'pivot',
+    pivot_insight_2:          'pivot',
+    good_enough_launch:       'ship',
+    yc_discussion_ready:      'apply',
+    yc_discussion_early:      'apply',
+    consultant_growth:        'pass',
+    consultant_brand:         'pass',
+    hn_thread:                'engage',
+    community_signal_hn:      'engage',
+    community_signal_reddit:  'engage',
+    community_signal_slack:   'engage',
+    community_product_hn:     'engage',
+    community_product_reddit: 'engage',
+    community_product_slack:  'engage',
+    silent_churn:             'call',
+    public_complaint:         'respond',
+    power_user_quiet:         'call',
+    mentor_competitor_bomb:   'research',
+    bug_reports:              'fix',
+    feature_cluster:          'build',
+    waitlist_cold:            'reach',
+    reporter_deadline:        'reply',
+    founder_landing:          'interview',
+    founder_codebuild:        'pair',
+    founder_user_depth:       'deep',
+    // alex_sync_* resolved dynamically via state in pickOptions
+  },
 };
 
-function pickOptions(cards, ids, strategy) {
+function pickOptions(cards, ids, strategy, state) {
   const opts = {};
   const prefs = CARD_PREFS[strategy] || {};
   for (const id of ids) {
@@ -85,6 +121,13 @@ function pickOptions(cards, ids, strategy) {
     if (!card || !card.options) continue;
     const keys = card.options.map(o => o.key);
     if (keys.length === 1) { opts[id] = keys[0]; continue; }
+    // lean_loop: keep Alex in build focus so founder_codebuild stays available;
+    // shift to pitch only when ready to fundraise
+    if (strategy === 'lean_loop' && state &&
+        (id === 'alex_sync_discover' || id === 'alex_sync_build' || id === 'alex_sync_pitch')) {
+      const phase = state.product >= 80 && state.launched ? 'pitch' : 'build';
+      if (keys.includes(phase)) { opts[id] = phase; continue; }
+    }
     if (strategy === 'random') {
       opts[id] = keys[Math.floor(Math.random() * keys.length)];
     } else if (prefs[id] && keys.includes(prefs[id])) {
@@ -96,7 +139,7 @@ function pickOptions(cards, ids, strategy) {
   return opts;
 }
 
-function selectCards(current, strategy) {
+function selectCards(current, strategy, state) {
   if (current.length === 0) return [];
   const pool = [...current];
 
@@ -151,6 +194,44 @@ function selectCards(current, strategy) {
     return sorted.slice(0, 2).map(c => c.id);
   }
 
+  if (strategy === 'lean_loop') {
+    const s = state || {};
+    const fit     = s.market_fit || 0;
+    const product = s.product    || 0;
+    const CONSULTANT_IDS = new Set(['consultant_growth', 'consultant_brand']);
+    const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'seed_pitch']);
+    // Alex founding cards must never be skipped — losing Alex kills the card pool
+    const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch']);
+
+    const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id));
+    const candidates = usable.length > 0 ? usable : pool;
+
+    let catOrder;
+    if (fit < 50) {
+      // Discover phase: talk to customers, but still build alongside
+      catOrder = { c: 0, p: 1, e: 2, t: 3 };
+    } else if (product < 80) {
+      // Build phase: ship product, stay close to users
+      catOrder = { p: 0, c: 1, t: 2, e: 3 };
+    } else {
+      // Launch/YC phase: engage the world, then customers, then polish
+      catOrder = { e: 0, c: 1, p: 2, t: 3 };
+    }
+
+    const priority = c => {
+      if (ALEX_CRITICAL.has(c.id)) return 0;
+      if (YC_IDS.has(c.id))        return 1;
+      return 2 + (catOrder[c.cat] ?? 9);
+    };
+
+    const sorted = candidates.slice().sort((a, b) => {
+      const pa = priority(a), pb = priority(b);
+      if (pa !== pb) return pa - pb;
+      return b.urgency - a.urgency;
+    });
+    return sorted.slice(0, 2).map(c => c.id);
+  }
+
   return pool.slice(0, 2).map(c => c.id);
 }
 
@@ -180,8 +261,8 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
       break;
     }
 
-    const ids  = selectCards(e.current, strategy);
-    const opts = pickOptions(e.current, ids, optStrategy);
+    const ids  = selectCards(e.current, strategy, e.s);
+    const opts = pickOptions(e.current, ids, optStrategy, e.s);
 
     // For YC discussions, always apply
     for (const id of ids) {
@@ -267,11 +348,22 @@ function runStrategy(name, strategy, n = 100) {
   const errors    = results.reduce((s, r) => s + r.errors, 0);
   const alexLeft  = pct(results.filter(r => !r.alexActive).length);
   const launched  = pct(results.filter(r => r.launched).length);
-  const ycApplied = pct(results.filter(r => r.ycApplied).length);
+  // ycApplied resets to false on rejection, so use ycApplied||ycAccepted to count ever-applied
+  const ycApplied = pct(results.filter(r => r.ycApplied || r.ycAccepted).length);
   const ycAccepted= pct(results.filter(r => r.ycAccepted).length);
 
   const avgWeek   = (results.reduce((s,r) => s+r.week, 0) / n).toFixed(1);
   const avgCust   = (results.reduce((s,r) => s+r.customers, 0) / n).toFixed(1);
+
+  const avg    = arr => (arr.reduce((s, v) => s + v, 0) / n).toFixed(1);
+  const avgProduct  = avg(results.map(r => r.product));
+  const minProduct  = Math.min(...results.map(r => r.product)).toFixed(0);
+  const maxProduct  = Math.max(...results.map(r => r.product)).toFixed(0);
+  const avgFit      = avg(results.map(r => r.market_fit));
+  const minFit      = Math.min(...results.map(r => r.market_fit)).toFixed(0);
+  const maxFit      = Math.max(...results.map(r => r.market_fit)).toFixed(0);
+  const pctReachedFit50  = pct(results.filter(r => r.market_fit >= 50).length);
+  const pctReachedFit100 = pct(results.filter(r => r.market_fit >= 100).length);
   const priyaSeen = pct(results.filter(r => r.activeChars.includes('priya')).length);
   const marcusSeen= pct(results.filter(r => r.activeChars.includes('marcus')).length);
   const sarahSeen = pct(results.filter(r => r.activeChars.includes('sarah')).length);
@@ -284,7 +376,10 @@ function runStrategy(name, strategy, n = 100) {
   const uniqueIssues = [...new Set(issues)].slice(0, 5);
 
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft, ycApplied, ycAccepted,
-           avgWeek, avgCust, priyaSeen, marcusSeen, sarahSeen, uniqueIssues };
+           avgWeek, avgCust,
+           avgProduct, minProduct, maxProduct,
+           avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
+           priyaSeen, marcusSeen, sarahSeen, uniqueIssues };
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
@@ -295,6 +390,7 @@ const strategies = [
   ['Alex first',      'alex_first'],
   ['Ignore Alex',     'ignore_alex'],
   ['Customer focus',  'customer_focus'],
+  ['Lean loop',       'lean_loop'],
 ];
 
 const N = parseInt(process.argv[2], 10) || 100;
@@ -307,6 +403,8 @@ for (const [name, strat] of strategies) {
   console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
   console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
   console.log(`  Avg week: ${r.avgWeek}  Avg customers: ${r.avgCust}`);
+  console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
+  console.log(`  Fit     — avg: ${r.avgFit}%  min: ${r.minFit}%  max: ${r.maxFit}%  (fit≥50: ${r.pctReachedFit50}%  fit=100: ${r.pctReachedFit100}%)`);
   console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%`);
   if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
   console.log();
@@ -384,5 +482,5 @@ function printTrace(trace) {
   console.log(`\nCHECK build→market_fit: grew in ${grew}/${RUNS} games, avg fit=${avg}  ${pass ? 'PASS' : 'FAIL'}`);
 })();
 
-const trace = runGame('yc_grind', 120, true);
+const trace = runGame('lean_loop', 120, true);
 printTrace(trace);
