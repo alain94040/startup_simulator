@@ -107,7 +107,7 @@
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
         body: "YC application window just opened. Your stats qualify — 60%+ product, 40+ customers. A lot of founders in your space are applying this batch.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && s.product >= 60 && s.customers >= 40,
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 40,
         options: [
           { label: 'Start writing the application', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
@@ -120,7 +120,7 @@
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
         body: "YC application window just opened. Stats aren't quite there yet — need 60% product and 40 customers. Some teams apply anyway to get partner feedback. Apply or wait for next batch?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && (s.product < 60 || s.customers < 40),
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 40),
         options: [
           { label: 'Start writing anyway', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },

@@ -305,8 +305,8 @@ class Engine {
     this.s.investor_warmth= clamp(this.s.investor_warmth,0, 100);
     this.s.cash           = clamp(this.s.cash,           0, 9999999);
 
-    // YC decision
-    if (this.s.ycApplied && !this.s.ycDecisionWeek) this.s.ycDecisionWeek = this.s.week + 3;
+    // YC decision — guard against re-scheduling after acceptance
+    if (this.s.ycApplied && !this.s.ycAccepted && !this.s.ycDecisionWeek) this.s.ycDecisionWeek = this.s.week + 3;
     if (this.s.ycDecisionWeek && this.s.week >= this.s.ycDecisionWeek) {
       this.s.ycDecisionWeek = null;
       if (Math.random() < 0.18) {
