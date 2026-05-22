@@ -50,7 +50,6 @@ body {
 
 /* ── Main ── */
 #main { display: flex; flex: 1; overflow: hidden; }
-
 /* ── Controls panel (left) ── */
 #pick-panel {
   width: 250px; flex-shrink: 0; border-right: 1px solid #e0e0ea;
@@ -78,7 +77,7 @@ body {
   flex: 1; display: flex; flex-direction: column; background: #f5f5fb; overflow-y: auto;
 }
 #demands-section {
-  padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 0; min-height: 100%;
+  padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 0;
 }
 #demands-lbl {
   font-size: 11px; color: #bbb; text-transform: uppercase; letter-spacing: .5px;
@@ -440,11 +439,11 @@ function updateBtn() {
     const wks = Math.max(...chosen.map(d => d.weeks));
     btn.disabled = false;
     btn.textContent = `Commit — ${wks}wk sprint →`;
-    ctr.textContent = '✓ 2 of 4 selected';
+    ctr.textContent = `✓ 2 of ${E.current.length} selected`;
   } else {
     btn.disabled = true;
     btn.textContent = needsChoice ? 'Choose an option above' : 'Pick 2 to continue';
-    ctr.textContent = sel.length === 0 ? 'Pick 2 of 4' : needsChoice ? 'Choose how to handle it' : 'Pick 1 more';
+    ctr.textContent = sel.length === 0 ? `Pick 2 of ${E.current.length}` : needsChoice ? 'Choose how to handle it' : 'Pick 1 more';
   }
 }
 
