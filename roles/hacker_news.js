@@ -66,7 +66,7 @@
         id: 'community_product_hn', cat: 'e', from: 'Hacker News',
         body: "someone posted your product on HN. mixed reactions — a few critiques, but 5 people asking how to sign up.",
         urgency: 1, weeks: 1,
-        available: (s) => s.launched && s.week >= (s.community_product_hn_last || 0) + 4,
+        available: (s) => s.launched && s.week >= (s.community_product_hn_last || 0) + 3,
         options: [
           { label: 'Engage the thread', key: 'engage',
             execute(s) { s.community_product_hn_last = s.week; s.signal = clamp(s.signal + 7, 0, 100); s.users += 5; return "Responded to every comment. Thread stayed warm for 3 days. 5 signups."; } },
@@ -79,7 +79,7 @@
         id: 'community_product_reddit', cat: 'e', from: 'Reddit',
         body: "someone recommended your product in a thread. comment got 40 upvotes. you're showing up in searches now.",
         urgency: 1, weeks: 1,
-        available: (s) => s.launched && s.week >= (s.community_product_reddit_last || 0) + 4,
+        available: (s) => s.launched && s.week >= (s.community_product_reddit_last || 0) + 3,
         options: [
           { label: 'Reach out to the poster', key: 'engage',
             execute(s) { s.community_product_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.users += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Thanked them publicly and privately. They became a power user and wrote a short review."; } },
@@ -93,7 +93,7 @@
         id: 'community_product_slack', cat: 'e', from: 'Indie Hackers',
         body: "someone posted a 'Show IH' about your product. mostly positive. a few asking about pricing.",
         urgency: 1, weeks: 1,
-        available: (s) => s.launched && s.week >= (s.community_product_slack_last || 0) + 4,
+        available: (s) => s.launched && s.week >= (s.community_product_slack_last || 0) + 3,
         options: [
           { label: 'Engage and answer pricing questions', key: 'engage',
             execute(s) { s.community_product_slack_last = s.week; s.signal = clamp(s.signal + 4, 0, 100); s.users += 2; return "Answered everything honestly. 2 signups, 1 feature request worth exploring."; } },

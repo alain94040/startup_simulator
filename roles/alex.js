@@ -131,10 +131,10 @@
         id: 'alex_sync_discover', cat: 't', from: 'Alex',
         body: "we've been heads-down building for a while without talking to anyone outside. should we shift focus to customer discovery for a sprint or two?",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3 && s.market_fit < 80,
+        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3 && (s.market_fit < 80 || s.product < 55),
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
-            execute(s, char) { char.focus = 'discover'; char.focusSprints = 0; return "Agreed. Alex on customer discovery this sprint."; } },
+            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; return "Agreed. Alex on customer discovery this sprint."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -145,7 +145,7 @@
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && !(s.signal >= 45 && s.customers >= 8 && s.deck_ready),
         options: [
           { label: 'Yes — back to building', key: 'build',
-            execute(s, char) { char.focus = 'build'; char.focusSprints = 0; return "Agreed. Alex back to building."; } },
+            execute(s, char) { char.focus = 'build'; char.focusSprints = 1; return "Agreed. Alex back to building."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -156,7 +156,7 @@
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 8 && s.deck_ready,
         options: [
           { label: 'Yes — work the pipeline', key: 'pitch',
-            execute(s, char) { char.focus = 'pitch'; char.focusSprints = 0; return "Agreed. Alex working the investor pipeline."; } },
+            execute(s, char) { char.focus = 'pitch'; char.focusSprints = 1; return "Agreed. Alex working the investor pipeline."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },

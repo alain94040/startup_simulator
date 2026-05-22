@@ -160,6 +160,110 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
+      // ── SOLO MODE: cards that unlock when Alex leaves ────────────────────────
+      // Alex was the only one who could call a launch, drive product, and push
+      // discovery. Without him, the founder inherits those jobs — slower, harder,
+      // but still possible. Win chances are very slim.
+      {
+        id: 'founder_solo_launch', cat: 'p', from: 'You',
+        body: "alex is gone. you're the one who has to decide when to ship now. nobody is going to tell you it's ready. it's not perfect — but it works.",
+        urgency: 3, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return alex && !alex.active && s.product >= 45 && !s.launched;
+        },
+        options: [
+          { label: 'Ship it', key: 'ship',
+            execute(s) {
+              s.launched = true;
+              s.signal = clamp(s.signal + 6, 0, 100);
+              return "Launched solo. No fanfare. But it's live.";
+            } },
+          { label: 'One more week of polish', key: 'wait',
+            execute(s) {
+              s.product = clamp(s.product + 4, 0, 100);
+              return "Polished a few more things. Still not launched.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'founder_solo_build', cat: 'p', from: 'You',
+        body: "no co-founder to pair with, no one to review PRs. you're putting in double shifts to keep the product moving.",
+        urgency: 2, weeks: 2,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return alex && !alex.active && s.product < 100 && s.week >= (s.solo_build_last || 0) + 3;
+        },
+        options: [
+          { label: 'Put in the hours', key: 'build',
+            execute(s) {
+              s.solo_build_last = s.week;
+              s.product = clamp(s.product + 8, 0, 100);
+              return "Two weeks of solo heads-down. Slower without Alex but the product is moving.";
+            } },
+          { label: 'Do the minimum', key: 'min',
+            execute(s) {
+              s.solo_build_last = s.week;
+              s.product = clamp(s.product + 3, 0, 100);
+              return "Kept things barely moving. Not much progress but nothing broke.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'founder_solo_discover', cat: 'c', from: 'You',
+        body: "nobody's doing discovery anymore. you have to get out of the building yourself — reach out to 3 potential users this week.",
+        urgency: 1, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return alex && !alex.active && s.week >= (s.solo_discover_last || 0) + 3;
+        },
+        options: [
+          { label: 'Do the calls', key: 'calls',
+            execute(s) {
+              s.solo_discover_last = s.week;
+              s.signal = clamp(s.signal + 8, 0, 100);
+              s.market_fit = clamp(s.market_fit + 5, 0, 100);
+              return "Three calls done. One person asked if they could pay now. Signal is still there.";
+            } },
+          { label: 'Send a survey instead', key: 'survey',
+            execute(s) {
+              s.solo_discover_last = s.week;
+              s.signal = clamp(s.signal + 3, 0, 100);
+              return "Survey sent. Lower signal than real calls but saves time.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── RECURRING: solo growth fallback (post-launch, alex gone) ───────────────
+      {
+        id: 'founder_solo_growth', cat: 'e', from: 'You',
+        body: "nobody's coming to you. write a cold email batch, post in two communities, and follow up with people who signed up but went quiet.",
+        urgency: 1, weeks: 1,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return alex && !alex.active && s.launched && s.week >= (s.solo_growth_last || 0) + 2;
+        },
+        options: [
+          { label: 'Do the outreach', key: 'outreach',
+            execute(s) {
+              s.solo_growth_last = s.week;
+              s.users += 2;
+              s.signal = clamp(s.signal + 3, 0, 100);
+              return "Cold batch sent. 2 signups from people you messaged directly.";
+            } },
+          { label: 'Post in one community', key: 'light',
+            execute(s) {
+              s.solo_growth_last = s.week;
+              s.signal = clamp(s.signal + 2, 0, 100);
+              return "Posted an update. Small ripple. Keeps the light on.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
       // ── RECURRING: deep user research (post-launch) ──────────────────────────
       {
         id: 'founder_user_depth', cat: 'c', from: 'You',
