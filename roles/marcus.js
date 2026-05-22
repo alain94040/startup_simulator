@@ -48,7 +48,7 @@
         id: 'seed_pitch', cat: 'e', from: 'Marcus (angel)',
         body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about leading your seed?",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.investor_warmth >= 62 && s.deck_ready && s.customers >= 60 && s.product >= 40 && s.signal >= 45,
+        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 60 && s.product >= 40 && s.signal >= 45,
         options: [{ label: "Yes — let's pitch", key: 'pitch',
           execute(s, char, e) {
             const score = clamp(s.customers / 3, 0, 35) + clamp(s.product / 5, 0, 20)
