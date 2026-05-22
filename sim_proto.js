@@ -313,6 +313,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
   const e = new Engine();
   const log = [];
   let errorCount = 0;
+  let ycEverApplied = false;   // tracks ever-applied, not reset on rejection
 
   const optStrategy = strategy;
 
@@ -355,6 +356,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
       optLabel: ids.includes(d.id) && d.options ? (d.options.find(o => o.key === opts[d.id]) || d.options[0]).label : null,
     })) : null;
 
+    if (e.s.ycApplied) ycEverApplied = true;
     const weekBefore = e.s.week;
     const ycWasPending = e.s.ycApplied && !e.s.ycAccepted;
     let results, sprintWeeks;
@@ -408,7 +410,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     customers:e.s.customers,
     signal:   e.s.signal,
     launched:   e.s.launched,
-    ycApplied:        e.s.ycApplied,
+    ycApplied:        ycEverApplied,
     ycAccepted:       e.s.ycAccepted,
     marcusCommitted:  e.s.marcusCommitted,
     followerCommitted:e.s.followerCommitted,
@@ -435,8 +437,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const errors    = results.reduce((s, r) => s + r.errors, 0);
   const alexLeft  = pct(results.filter(r => !r.alexActive).length);
   const launched  = pct(results.filter(r => r.launched).length);
-  // ycApplied resets to false on rejection, so use ycApplied||ycAccepted to count ever-applied
-  const ycApplied = pct(results.filter(r => r.ycApplied || r.ycAccepted).length);
+  const ycApplied = pct(results.filter(r => r.ycApplied).length);
   const ycAccepted= pct(results.filter(r => r.ycAccepted).length);
 
   const avgWeek   = (results.reduce((s,r) => s+r.week, 0) / n).toFixed(1);
