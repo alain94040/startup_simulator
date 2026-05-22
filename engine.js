@@ -13,6 +13,8 @@ const CHARACTER_DEFS = typeof require !== 'undefined'
       alex:         require('./roles/alex.js'),
       priya:        require('./roles/priya.js'),
       marcus:       require('./roles/marcus.js'),
+      fatima:       require('./roles/fatima.js'),
+      ryan:         require('./roles/ryan.js'),
       sarah:        require('./roles/sarah.js'),
       brett:        require('./roles/brett.js'),
       kevin:        require('./roles/kevin.js'),
@@ -88,6 +90,7 @@ class Engine {
       investor_warmth: 0,
       incorporated: false, ip_clear: false,
       ycDeciding: false, ycApplied: false, ycAccepted: false, ycDecisionWeek: null,
+      marcusCommitted: false, followerCommitted: false,
       game_over: false, game_won: false,
       network: { peers: 12, advisors: 0, angels: 0, press: 0 },
     };
@@ -98,6 +101,8 @@ class Engine {
       ['alex',   { archetypeId: 'alex',   active: true,  morale: 80, trust: 90, focus: 'build', focusSprints: 0, flags: {} }],
       ['priya',  { archetypeId: 'priya',  active: false, engagement: 80, flags: {} }],
       ['marcus', { archetypeId: 'marcus', active: false, engagement: 50, flags: {} }],
+      ['fatima', { archetypeId: 'fatima', active: false, flags: {} }],
+      ['ryan',   { archetypeId: 'ryan',   active: false, flags: {} }],
       ['sarah',  { archetypeId: 'sarah',  active: false, engagement: 60, flags: {} }],
       ['brett',        { archetypeId: 'brett',        active: false, flags: {} }],
       ['kevin',        { archetypeId: 'kevin',        active: false, flags: {} }],
@@ -321,6 +326,13 @@ class Engine {
     }
 
     if (this.s.cash <= 0) this.s.game_over = true;
+
+    // Win conditions: YC acceptance OR angel round complete ($400K Marcus + $100K follower)
+    if (!this.s.game_won) {
+      if (this.s.ycAccepted) this.s.game_won = true;
+      if (this.s.marcusCommitted && this.s.followerCommitted) this.s.game_won = true;
+    }
+
     return { results, sprintWeeks };
   }
 }

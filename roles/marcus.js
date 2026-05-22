@@ -46,16 +46,17 @@
       },
       {
         id: 'seed_pitch', cat: 'e', from: 'Marcus (angel)',
-        body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about leading your seed?",
+        body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about me leading your round?",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 60 && s.product >= 40 && s.signal >= 45,
-        options: [{ label: "Yes — let's pitch", key: 'pitch',
+        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 30 && s.product >= 40 && s.signal >= 45 && !s.marcusCommitted,
+        options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
             const score = clamp(s.customers / 3, 0, 35) + clamp(s.product / 5, 0, 20)
-              + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0) + (s.ycAccepted ? 20 : 0);
-            if (Math.random() < (score >= 65 ? 0.80 : score >= 50 ? 0.45 : 0.15)) {
-              s.game_won = true;
-              return "Seed round closed!";
+              + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0);
+            if (Math.random() < (score >= 65 ? 0.85 : score >= 50 ? 0.45 : 0.15)) {
+              s.marcusCommitted = true;
+              s.cash = clamp(s.cash + 400000, 0, 9999999);
+              return "Marcus committed. $400K wired. He's leading — now fill the rest of the round.";
             }
             s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100);
             return "Marcus: \"we love the vision but need more traction to lead. come back in 2 months.\"";

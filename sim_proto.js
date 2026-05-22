@@ -109,6 +109,13 @@ const CARD_PREFS = {
     founder_landing:          'interview',
     founder_codebuild:        'pair',
     founder_user_depth:       'deep',
+    // angel cards — engage all three (player doesn't know who's who)
+    fatima_intro:             'call',
+    fatima_meeting:           'meet',
+    fatima_deck:              'walk',
+    // fatima_commit is single-option, auto-selected
+    ryan_intro:               'meet',
+    ryan_checkin:             'update',
     // alex_sync_* resolved dynamically via state in pickOptions
   },
 };
@@ -199,7 +206,7 @@ function selectCards(current, strategy, state) {
     const fit     = s.market_fit || 0;
     const product = s.product    || 0;
     const CONSULTANT_IDS = new Set(['consultant_growth', 'consultant_brand']);
-    const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'seed_pitch']);
+    const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'seed_pitch', 'fatima_commit']);
     // Alex founding cards must never be skipped — losing Alex kills the card pool
     const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch']);
 
@@ -237,7 +244,7 @@ function selectCards(current, strategy, state) {
 
 // ─── Run one game ─────────────────────────────────────────────────────────────
 
-function runGame(strategy, maxWeek = 120, verbose = false) {
+function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
   const e = new Engine();
   const log = [];
   let errorCount = 0;
@@ -284,6 +291,7 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
     })) : null;
 
     const weekBefore = e.s.week;
+    const ycWasPending = e.s.ycApplied && !e.s.ycAccepted;
     let results, sprintWeeks;
     try {
       ({ results, sprintWeeks } = e.resolveTurn(ids, opts));
@@ -291,6 +299,18 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
       log.push(`ERROR in resolveTurn turn ${turn}: ${err.message}`);
       errorCount++;
       break;
+    }
+
+    // --no-yc: intercept a fresh acceptance and revert it to a rejection
+    if (noYC && ycWasPending && e.s.ycAccepted) {
+      e.s.ycAccepted  = false;
+      e.s.ycApplied   = false;
+      e.s.game_won    = false;
+      e.s.cash        = Math.max(0, e.s.cash - 500000);
+      e.s.signal      = Math.max(0, e.s.signal - 25);
+      e.ycWeek        = e.s.week + 12;
+      const idx = results.indexOf("YC accepted! $500k added. See you at kickoff.");
+      if (idx !== -1) results[idx] = "[no-yc] YC: passing on this batch. Next window opens in ~12 weeks.";
     }
 
     if (verbose) {
@@ -323,8 +343,10 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
     customers:e.s.customers,
     signal:   e.s.signal,
     launched:   e.s.launched,
-    ycApplied:  e.s.ycApplied,
-    ycAccepted: e.s.ycAccepted,
+    ycApplied:        e.s.ycApplied,
+    ycAccepted:       e.s.ycAccepted,
+    marcusCommitted:  e.s.marcusCommitted,
+    followerCommitted:e.s.followerCommitted,
     alexActive: alex ? alex.active : false,
     alexMorale: alex ? alex.morale : 0,
     alexTrust:  alex ? alex.trust  : 0,
@@ -336,9 +358,9 @@ function runGame(strategy, maxWeek = 120, verbose = false) {
 
 // ─── Run N games per strategy ────────────────────────────────────────────────
 
-function runStrategy(name, strategy, n = 100) {
+function runStrategy(name, strategy, n = 100, noYC = false) {
   const results = [];
-  for (let i = 0; i < n; i++) results.push(runGame(strategy));
+  for (let i = 0; i < n; i++) results.push(runGame(strategy, 120, false, noYC));
 
   const pct = count => Math.round(count / n * 100);
 
@@ -364,9 +386,14 @@ function runStrategy(name, strategy, n = 100) {
   const maxFit      = Math.max(...results.map(r => r.market_fit)).toFixed(0);
   const pctReachedFit50  = pct(results.filter(r => r.market_fit >= 50).length);
   const pctReachedFit100 = pct(results.filter(r => r.market_fit >= 100).length);
-  const priyaSeen = pct(results.filter(r => r.activeChars.includes('priya')).length);
-  const marcusSeen= pct(results.filter(r => r.activeChars.includes('marcus')).length);
-  const sarahSeen = pct(results.filter(r => r.activeChars.includes('sarah')).length);
+  const marcusCommit   = pct(results.filter(r => r.marcusCommitted).length);
+  const followerCommit = pct(results.filter(r => r.followerCommitted).length);
+  const ryanEngaged    = pct(results.filter(r => r.activeChars.includes('ryan')).length);
+  const priyaSeen  = pct(results.filter(r => r.activeChars.includes('priya')).length);
+  const marcusSeen = pct(results.filter(r => r.activeChars.includes('marcus')).length);
+  const fatimaSeen = pct(results.filter(r => r.activeChars.includes('fatima')).length);
+  const ryanSeen   = pct(results.filter(r => r.activeChars.includes('ryan')).length);
+  const sarahSeen  = pct(results.filter(r => r.activeChars.includes('sarah')).length);
 
   // Collect errors/stuck messages
   const issues = [];
@@ -375,11 +402,12 @@ function runStrategy(name, strategy, n = 100) {
   }));
   const uniqueIssues = [...new Set(issues)].slice(0, 5);
 
-  return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft, ycApplied, ycAccepted,
+  return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
+           ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged,
            avgWeek, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
-           priyaSeen, marcusSeen, sarahSeen, uniqueIssues };
+           priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen, uniqueIssues };
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
@@ -393,28 +421,77 @@ const strategies = [
   ['Lean loop',       'lean_loop'],
 ];
 
-const N = parseInt(process.argv[2], 10) || 100;
-const WINNERS_FLAG = process.argv.includes('--winners');
-const WINNERS_COUNT = (() => {
-  const i = process.argv.indexOf('--winners');
-  const v = parseInt(process.argv[i + 1], 10);
-  return (!isNaN(v) && v > 0) ? v : 3;
-})();
+// ─── Options parser ───────────────────────────────────────────────────────────
 
-console.log(`\n=== PROTOTYPE SIMULATION (${N} games each) ===\n`);
+function parseArgs(argv) {
+  const args = argv.slice(2);
+  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3 };
+  const errors = [];
 
-for (const [name, strat] of strategies) {
-  const r = runStrategy(name, strat, N);
-  console.log(`── ${r.name} ──`);
-  console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
-  console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
-  console.log(`  Avg week: ${r.avgWeek}  Avg customers: ${r.avgCust}`);
-  console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
-  console.log(`  Fit     — avg: ${r.avgFit}%  min: ${r.minFit}%  max: ${r.maxFit}%  (fit≥50: ${r.pctReachedFit50}%  fit=100: ${r.pctReachedFit100}%)`);
-  console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%`);
-  if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
-  console.log();
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+
+    if (a === '--help' || a === '-h') {
+      console.log(`
+Usage: node sim_proto.js [N] [--no-yc] [--winners [K] | --all]
+
+Modes (mutually exclusive — default is summary):
+  (no flag)          Run strategy comparison across all strategies.
+  --winners [K]      Hunt for K winning lean_loop traces (default: 3).
+                     Tries up to N games.
+  --all              Print N lean_loop game traces regardless of outcome.
+
+Options:
+  N                  Number of games: samples per strategy (summary),
+                     max attempts (--winners), or traces printed (--all).
+                     Default: 100.
+  --no-yc            Block YC acceptance — forces the angel fundraising path.
+  -h, --help         Show this help.
+
+Examples:
+  node sim_proto.js                        Summary, 100 games each
+  node sim_proto.js 500                    Summary, 500 games each
+  node sim_proto.js 500 --no-yc            Summary, angel path only
+  node sim_proto.js 200 --winners          Hunt for 3 winners, up to 200 tries
+  node sim_proto.js 500 --winners 1 --no-yc  One angel-path win, up to 500 tries
+  node sim_proto.js 5 --all               Print 5 lean_loop traces
+`);
+      process.exit(0);
+    }
+
+    if (a === '--no-yc')  { opts.noYC = true; continue; }
+
+    if (a === '--winners') {
+      if (opts.mode === 'all') { errors.push('--winners and --all are mutually exclusive'); break; }
+      opts.mode = 'winners';
+      const v = parseInt(args[i + 1], 10);
+      if (!isNaN(v) && v > 0) { opts.winners = v; i++; }
+      continue;
+    }
+
+    if (a === '--all') {
+      if (opts.mode === 'winners') { errors.push('--winners and --all are mutually exclusive'); break; }
+      opts.mode = 'all';
+      continue;
+    }
+
+    if (/^\d+$/.test(a)) { opts.n = parseInt(a, 10); continue; }
+
+    errors.push(`unknown option: ${a}`);
+  }
+
+  if (errors.length) {
+    errors.forEach(e => console.error(`error: ${e}`));
+    console.error('Run with --help for usage.');
+    process.exit(1);
+  }
+
+  return opts;
 }
+
+const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT } = parseArgs(process.argv);
+const WINNERS_FLAG = mode === 'winners';
+const ALL_FLAG     = mode === 'all';
 
 // ─── Narrative trace ──────────────────────────────────────────────────────────
 
@@ -462,40 +539,16 @@ function printTrace(trace, label) {
   console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
 }
 
-// ─── Check: product focus should grow market_fit ─────────────────────────────
-(function checkBuildGrowsFit() {
-  const RUNS = 30;
-  let grew = 0;
-  let totalFit = 0;
-  for (let i = 0; i < RUNS; i++) {
-    const e = new Engine();
-    const alex = e.chars.get('alex');
-    for (let turn = 0; turn < 15; turn++) {
-      if (e.s.game_won || e.s.game_over) break;
-      alex.focus = 'build';
-      e.generateDemands();
-      if (e.current.length === 0) break;
-      const ids  = selectCards(e.current, 'yc_grind');
-      const opts = pickOptions(e.current, ids, 'yc_grind');
-      e.resolveTurn(ids, opts);
-    }
-    if (e.s.market_fit > 0) grew++;
-    totalFit += e.s.market_fit;
-  }
-  const avg = (totalFit / RUNS).toFixed(1);
-  const pass = grew >= Math.ceil(RUNS * 0.5);
-  console.log(`\nCHECK build→market_fit: grew in ${grew}/${RUNS} games, avg fit=${avg}  ${pass ? 'PASS' : 'FAIL'}`);
-})();
+// ─── Mode dispatch ────────────────────────────────────────────────────────────
 
 if (WINNERS_FLAG) {
-  // ─── Hunt for winning lean_loop games ───────────────────────────────────────
-  const MAX_ATTEMPTS = WINNERS_COUNT * 500;
+  // Hunt for winning lean_loop games — print traces only, no summary
   const winners = [];
   let attempts = 0;
 
-  process.stdout.write(`\nHunting for ${WINNERS_COUNT} winning lean_loop game(s) (up to ${MAX_ATTEMPTS} tries)…`);
-  while (winners.length < WINNERS_COUNT && attempts < MAX_ATTEMPTS) {
-    const g = runGame('lean_loop', 120, true);
+  process.stdout.write(`\nHunting for ${WINNERS_COUNT} winning lean_loop game(s)${NO_YC ? ' [YC disabled]' : ''} (up to ${N} tries)…`);
+  while (winners.length < WINNERS_COUNT && attempts < N) {
+    const g = runGame('lean_loop', 120, true, NO_YC);
     attempts++;
     if (g.won) {
       winners.push(g);
@@ -507,7 +560,54 @@ if (WINNERS_FLAG) {
   winners.forEach((w, i) =>
     printTrace(w, `lean_loop WIN #${i + 1} of ${winners.length} (attempt ~${Math.round(attempts / winners.length * (i + 1))})`)
   );
+
+} else if (ALL_FLAG) {
+  // Print N lean_loop traces regardless of outcome — no summary
+  const ycTag = NO_YC ? ' — YC disabled' : '';
+  for (let i = 0; i < N; i++) {
+    const g = runGame('lean_loop', 120, true, NO_YC);
+    printTrace(g, `lean_loop run ${i + 1}/${N}${ycTag}`);
+  }
+
 } else {
-  const trace = runGame('lean_loop', 120, true);
-  printTrace(trace, 'lean_loop (single run)');
+  // Default: strategy summary only
+  console.log(`\n=== PROTOTYPE SIMULATION (${N} games each${NO_YC ? ' — YC DISABLED' : ''}) ===\n`);
+
+  for (const [name, strat] of strategies) {
+    const r = runStrategy(name, strat, N, NO_YC);
+    console.log(`── ${r.name} ──`);
+    console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
+    console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
+    console.log(`  Marcus committed: ${r.marcusCommit}%  Follower in: ${r.followerCommit}%  Ryan engaged: ${r.ryanEngaged}%`);
+    console.log(`  Avg week: ${r.avgWeek}  Avg customers: ${r.avgCust}`);
+    console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
+    console.log(`  Fit     — avg: ${r.avgFit}%  min: ${r.minFit}%  max: ${r.maxFit}%  (fit≥50: ${r.pctReachedFit50}%  fit=100: ${r.pctReachedFit100}%)`);
+    console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%  Ryan: ${r.ryanSeen}%  Fatima: ${r.fatimaSeen}%`);
+    if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
+    console.log();
+  }
+
+  // Sanity check
+  (function checkBuildGrowsFit() {
+    const RUNS = 30;
+    let grew = 0, totalFit = 0;
+    for (let i = 0; i < RUNS; i++) {
+      const e = new Engine();
+      const alex = e.chars.get('alex');
+      for (let turn = 0; turn < 15; turn++) {
+        if (e.s.game_won || e.s.game_over) break;
+        alex.focus = 'build';
+        e.generateDemands();
+        if (e.current.length === 0) break;
+        const ids  = selectCards(e.current, 'yc_grind');
+        const opts = pickOptions(e.current, ids, 'yc_grind');
+        e.resolveTurn(ids, opts);
+      }
+      if (e.s.market_fit > 0) grew++;
+      totalFit += e.s.market_fit;
+    }
+    const avg = (totalFit / RUNS).toFixed(1);
+    const pass = grew >= Math.ceil(RUNS * 0.5);
+    console.log(`CHECK build→market_fit: grew in ${grew}/${RUNS} games, avg fit=${avg}  ${pass ? 'PASS' : 'FAIL'}`);
+  })();
 }
