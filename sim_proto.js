@@ -394,6 +394,12 @@ const strategies = [
 ];
 
 const N = parseInt(process.argv[2], 10) || 100;
+const WINNERS_FLAG = process.argv.includes('--winners');
+const WINNERS_COUNT = (() => {
+  const i = process.argv.indexOf('--winners');
+  const v = parseInt(process.argv[i + 1], 10);
+  return (!isNaN(v) && v > 0) ? v : 3;
+})();
 
 console.log(`\n=== PROTOTYPE SIMULATION (${N} games each) ===\n`);
 
@@ -410,14 +416,13 @@ for (const [name, strat] of strategies) {
   console.log();
 }
 
-// ─── Narrative trace of one YC-grind game ────────────────────────────────────
+// ─── Narrative trace ──────────────────────────────────────────────────────────
 
-function printTrace(trace) {
-  const catLabel = { p: 'product', c: 'customer', t: 'team', e: 'external' };
+function printTrace(trace, label) {
   const trunc = (str, n) => str.length > n ? str.slice(0, n - 1) + '…' : str;
   const sep = '─'.repeat(72);
 
-  console.log('=== STORY TRACE: one YC-grind game ===\n');
+  console.log(`=== STORY TRACE: ${label || 'lean_loop'} ===\n`);
 
   for (const turn of trace.log) {
     if (typeof turn === 'string') { console.log('  ' + turn); continue; }
@@ -482,5 +487,27 @@ function printTrace(trace) {
   console.log(`\nCHECK build→market_fit: grew in ${grew}/${RUNS} games, avg fit=${avg}  ${pass ? 'PASS' : 'FAIL'}`);
 })();
 
-const trace = runGame('lean_loop', 120, true);
-printTrace(trace);
+if (WINNERS_FLAG) {
+  // ─── Hunt for winning lean_loop games ───────────────────────────────────────
+  const MAX_ATTEMPTS = WINNERS_COUNT * 500;
+  const winners = [];
+  let attempts = 0;
+
+  process.stdout.write(`\nHunting for ${WINNERS_COUNT} winning lean_loop game(s) (up to ${MAX_ATTEMPTS} tries)…`);
+  while (winners.length < WINNERS_COUNT && attempts < MAX_ATTEMPTS) {
+    const g = runGame('lean_loop', 120, true);
+    attempts++;
+    if (g.won) {
+      winners.push(g);
+      process.stdout.write(` found one (attempt ${attempts})`);
+    }
+  }
+  console.log(`\nFound ${winners.length}/${WINNERS_COUNT} in ${attempts} attempts.\n`);
+
+  winners.forEach((w, i) =>
+    printTrace(w, `lean_loop WIN #${i + 1} of ${winners.length} (attempt ~${Math.round(attempts / winners.length * (i + 1))})`)
+  );
+} else {
+  const trace = runGame('lean_loop', 120, true);
+  printTrace(trace, 'lean_loop (single run)');
+}
