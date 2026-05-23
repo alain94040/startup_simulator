@@ -405,6 +405,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
         cash: e.s.cash,
         product: Math.round(e.s.product),
         fit: Math.round(e.s.market_fit),
+        users: e.s.users,
         customers: e.s.customers,
         signal: Math.round(e.s.signal),
         alexTrust: alex ? Math.round(alex.trust) : null,
@@ -615,7 +616,7 @@ function printTrace(trace, label) {
     const alexStr = turn.alexActive !== false
       ? `Alex trust:${turn.alexTrust} morale:${turn.alexMorale}`
       : 'Alex: gone';
-    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Product ${turn.product}%  Fit ${turn.fit}%  Customers ${turn.customers}  Signal ${turn.signal}  ${alexStr}`);
+    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Product ${turn.product}%  Fit ${turn.fit}%  Users ${turn.users}  Customers ${turn.customers}  Signal ${turn.signal}  ${alexStr}`);
     console.log();
   }
 
