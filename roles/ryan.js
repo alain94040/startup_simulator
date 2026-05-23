@@ -39,7 +39,7 @@
         id: 'ryan_checkin', cat: 'e', from: 'You',
         get body() { return CHECKIN_BODIES[rnd(CHECKIN_BODIES.length)]; },
         urgency: 1, weeks: 1,
-        available: (s, char) => char.flags.intro_done && s.week >= (char.flags.lastUpdateWeek || 0) + 5,
+        available: (s, char) => char.flags.intro_done && char.flags.lastUpdateWeek != null && s.week >= char.flags.lastUpdateWeek + 5,
         options: [
           { label: 'Send Ryan a quick update', key: 'update',
             execute(s, char) {
