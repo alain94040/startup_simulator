@@ -12,9 +12,9 @@
         available: (s, char) => !char.flags.intro_done,
         options: [
           { label: 'Take the call', key: 'call',
-            execute(s, char) { char.flags.intro_done = true; return "Good call. Fatima asked sharp questions about the problem space. 'Send me your deck when it's ready — I want to track this one.'"; } },
+            execute(s, char) { char.flags.intro_done = true; s.fatima_intro_week = s.week; return "Good call. Fatima asked sharp questions about the problem space. 'Send me your deck when it's ready — I want to track this one.'"; } },
           { label: 'Not right now', key: 'pass',
-            execute(s, char) { char.flags.intro_done = true; return "Declined. Fatima said to reach out when timing is better."; } },
+            execute(s, char) { char.flags.intro_done = true; s.fatima_intro_week = s.week; return "Declined. Fatima said to reach out when timing is better."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -22,13 +22,13 @@
         id: 'fatima_meeting', cat: 'e', from: 'Fatima (angel)',
         body: "been thinking about our call. love the space. can we do a deeper dive this week — i want to understand the go-to-market before i go further.",
         urgency: 2, weeks: 1,
-        available: (s, char) => char.flags.intro_done && !char.flags.meeting_done,
+        available: (s, char) => char.flags.intro_done && !char.flags.meeting_done && s.week >= (s.fatima_intro_week || 0) + 2,
         options: [
           { label: 'Set up the meeting', key: 'meet',
             execute(s, char) { char.flags.meeting_done = true; return "Strong meeting. Fatima pushed hard on distribution. 'Send me the deck and latest numbers and I'll take it from there.'"; } },
         ],
         dropDelay: 2, dropFrom: 'Fatima',
-        dropMsg: "tried to find time to reconnect. still interested — reach out when momentum picks up.",
+        dropMsg: "you went quiet after the intro — going to let you drive timing. reach out when you're ready to go deeper.",
         dropFx(s, char) { char.flags.meeting_done = true; },
       },
       {
