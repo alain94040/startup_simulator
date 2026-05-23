@@ -224,6 +224,22 @@ function selectCards(current, strategy, state) {
     return sorted.slice(0, 2).map(c => c.id);
   }
 
+  if (strategy === 'distracted') {
+    const YC_IDS = new Set(['yc_discussion_ready', 'yc_discussion_early']);
+    const alexFirst = Math.random() < 0.5;
+    const sorted = pool.slice().sort((a, b) => {
+      const aYC = YC_IDS.has(a.id) ? 1 : 0;
+      const bYC = YC_IDS.has(b.id) ? 1 : 0;
+      if (aYC !== bYC) return bYC - aYC;
+      // alexFirst: boost Alex to top; otherwise push Alex to bottom
+      const aAlex = a._charId === 'alex' ? 1 : 0;
+      const bAlex = b._charId === 'alex' ? 1 : 0;
+      if (aAlex !== bAlex) return alexFirst ? bAlex - aAlex : aAlex - bAlex;
+      return b.urgency - a.urgency;
+    });
+    return sorted.slice(0, 2).map(c => c.id);
+  }
+
   if (strategy === 'ignore_alex') {
     // Never pick Alex's cards unless forced
     const nonAlex = pool.filter(c => c._charId !== 'alex');
@@ -482,6 +498,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 
 const strategies = [
   ['Random',          'random'],
+  ['Distracted',      'distracted'],
   ['YC grind',        'yc_grind'],
   ['Alex first',      'alex_first'],
   ['Ignore Alex',     'ignore_alex'],
