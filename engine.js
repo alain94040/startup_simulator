@@ -288,6 +288,13 @@ class Engine {
     // Signal drifts without customer attention
     if (!chosen.some(d => d.cat === 'c')) this.s.signal = clamp(this.s.signal - 2 * sprintWeeks, 0, 100);
 
+    // Competitive pressure: ignored competitor erodes market fit for 4 weeks
+    if (this.s.competitor_ignored && !this.s.competitor_pressure_done) {
+      const weeksExposed = this.s.week - (this.s.competitor_launch_week || 0);
+      if (weeksExposed > 0 && weeksExposed <= 4)
+        this.s.market_fit = clamp(this.s.market_fit - sprintWeeks, 0, 100);
+    }
+
     // Organic signups — word-of-mouth at high signal
     if (this.s.launched && this.s.signal >= 70)
       this.s.users += Math.floor((this.s.signal - 70) / 30) + 1;
