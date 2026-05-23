@@ -10,7 +10,7 @@
         id: 'intro_expiring', cat: 'c', from: 'Sarah (mutual)',
         body: "intro'd you to the head of ops at a fast-growing startup. she told me yesterday she's evaluating 2 other tools. you need to reply today.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.week > 3 && !char.flags.intro_done && (s.launched || s.product >= 35),
+        available: (s, char) => s.week > 3 && !char.flags.intro_done && s.launched,
         options: [
           { label: 'Reply to Sarah now', key: 'reply',
             execute(s, char) { char.flags.intro_done = true; s.customers += 1; s.signal = clamp(s.signal + 7, 0, 100); s.network.advisors++; return "Had the call. Strong fit — they became your first paying customer on the spot. Sarah is now a connector you can rely on."; } },
