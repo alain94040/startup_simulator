@@ -4,66 +4,86 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Browser-based educational startup simulation game. Players navigate from idea to seed round ($1M+), learning trade-offs between building, selling, and fundraising. No build step, no dependencies — everything runs directly in the browser or Node.js.
+Browser-based educational startup simulation game. Players navigate from idea to seed round, learning trade-offs between building, selling, and fundraising. No build step, no dependencies — everything runs directly in the browser or Node.js.
 
 ## Commands
 
 | Action | Command |
 |--------|---------|
-| Play original UI | `open startup_game.html` |
-| Play inbox UI | `open startup_inbox_game.html` |
-| Run tests in browser | `open tests.html` |
-| Run tests in Node | `node tests.js` |
-| Run a simulation | `node simulate.js` or `node sim2.js` / `sim3.js` |
-| Run strategy comparison | `node simulate_strategies.js` |
+| Play | `open prototype.html` |
+| Run simulation | `node sim_proto.js` |
+| Simulation help | `node sim_proto.js --help` |
 
-After editing `game.js`, refresh the browser page. No compilation needed.
+After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No compilation needed.
 
 ## Architecture
 
-The codebase has two separate UIs that share one game engine:
+- **`engine.js`** — `Engine` class, pure logic, no DOM. Exports `{ Engine, CHARACTER_DEFS, WORLD }`. All game mechanics and state live here. Characters are loaded from `roles/` (Node: `require`, browser: `ROLES` global populated by `<script>` tags).
+- **`roles/*.js`** — One file per character. Each exports a definition object with `id`, `type`, `unlockCondition`, and a `cards` array. Each card has `available(s, char)`, `options[]`, and optionally `dropFx`. See any existing role for the pattern.
+- **`prototype.html`** — The active browser UI. Self-contained (inline CSS + JS). Loads `engine.js` and all `roles/*.js` via `<script>` tags.
+- **`sim_proto.js`** — Node.js simulation harness. Runs many games with fixed strategies to measure win rates and narrative behavior. This is the primary analysis and debugging tool.
+- **`tests/`** — Test directory (in progress). Currently contains `testing.md`.
 
-- **`game.js`** — `StartupGame` class, pure logic, no DOM. All mechanics, formulas, and state live here.
-- **`startup_game.html` + `ui.js` + `styles.css`** — Original UI. `ui.js` bridges DOM events to `game.js` methods.
-- **`startup_inbox_game.html`** — Newer Gmail-style inbox UI, self-contained (inline CSS + JS, no external deps). This is the actively developed version.
-- **`tests.js` + `tests.html`** — Test harness works in both browser (`<script>` tags) and Node (`require('./game.js')`). Uses a minimal `test(name, fn)` / `assert(cond, msg)` API.
-- **`simulate*.js` / `sim*.js`** — Node.js scripts that run many playthroughs with fixed strategies to measure win rates and formula balance. These are analysis/debugging tools, not production code.
+The files `startup_game.html`, `ui.js`, `styles.css`, `tests.js`, and `tests.html` are leftovers from a previous architecture and are no longer maintained.
 
-`game.js` uses `module.exports = { StartupGame }` at the bottom for Node compatibility, while also being loaded via `<script>` in the browser.
+## Simulation (`sim_proto.js`)
+
+```
+node sim_proto.js                          # Strategy comparison, 100 games each
+node sim_proto.js 500                      # Strategy comparison, 500 games each
+node sim_proto.js 500 --no-yc             # Force the angel fundraising path
+node sim_proto.js 200 --winners           # Hunt for 3 winning traces
+node sim_proto.js 500 --winners 1 --no-yc # One angel-path winning trace
+node sim_proto.js 5 --all                 # Print 5 lean_loop traces
+node sim_proto.js 5 --all --messages      # Same, with full card bodies
+```
+
+Strategies defined in `sim_proto.js`: `lean_loop`, `yc_grind`, `alex_first`, `customer_focus`, `angel_path`, `ignore_alex`.
 
 ## Key Game Mechanics
 
-**Win condition:** Raise a seed round ($1M+). **Lose condition:** Cash hits $0 (only if full-time).
+**Win conditions:**
+- YC acceptance (gives $500k + 35 fundraising score boost)
+- Two angel investors committed (`marcusCommitted && followerCommitted`)
 
-**Fundraising score formula** (capped at 100):
-```
-min(100, min(35, customers/50) + product_progress/5 + team.length*5 + incubator_bonus + fundraising_bonus + pivot_bonus)
-```
+**Lose condition:** Cash hits $0.
 
-**Seed round success:**
-```
-score >= 65 ? min(1, (score - 30) / 60) : 0
-```
-Scores below 65 always fail. The threshold means **YC (+35 bonus) is effectively the only reliable win path** — without it, the max achievable score (~48-55) falls short.
+**Starting cash:** $10,000. **Burn rate:** $500/week.
 
 **Build efficiency decay** (prevents pure-build strategies):
 ```
-efficiency = max(0.05, 0.95^(product_progress - market_fit - 10))
+efficiency = clamp(0.88^(product - market_fit - 10), 0.05, 1.0)
 ```
 Building more than 10 points ahead of market fit loses efficiency exponentially.
 
-**Talk-to-users diminishing returns:** Effectiveness drops to 0.15× above 70% market fit.
+**YC decision:** 3 weeks after application. Acceptance requires `ycApplied === true`. Gives +$500k and sets `ycAccepted`.
 
-**YC application window:** Opens 1–6 months after game start (randomized). Requires `product_progress >= 80` and `customers >= 100`. Acceptance rate 2–15%. Gives +35 fundraising score, +25 market fit, $500k at 7% equity.
+## Character System
 
-## Known Issues (from game_design_notes.md)
+Each character in `roles/` has:
+- `unlockCondition(s)` — when to activate the character (omit for always-active)
+- `cards[]` — cards this character can surface
+  - `available(s, char)` — whether the card should appear this sprint
+  - `options[]` — player choices; each has `execute(s, char, engine)` returning an outcome string
+  - `dropFx(s, char)` — side effects when the card is ignored (dropped)
 
-- YC equity test bug: `beforeFounder` is a reference, not a copy (in `tests.js`)
-- YC open date test uses wrong variable (`tests.js` line ~211)
-- Some simulation files (`simulate*.js`) have hardcoded old formulas in analysis comment sections — don't trust their inline comments for current formula values; check `game.js` and `game_design_notes.md` instead.
+**One-shot card pattern** (card should fire exactly once):
+```js
+available: (s, char) => !char.flags.done,
+execute(s, char) { char.flags.done = true; /* ... */ },
+dropFx(s, char) { char.flags.done = true; },
+```
+
+**Recurring card with cooldown:**
+```js
+available: (s, char) => char.flags.lastWeek != null && s.week >= char.flags.lastWeek + 5,
+execute(s, char) { char.flags.lastWeek = s.week; /* ... */ },
+```
+
+Use `char.flags.x != null` (not `char.flags.x || 0`) to guard "was this ever set" — the `|| 0` form conflates undefined with week 0.
 
 ## Coding Conventions
 
 - 2-space indentation, double quotes, semicolons.
-- `game.js` must stay free of DOM manipulation — all UI belongs in `ui.js` or inline in the HTML files.
-- Test names are descriptive behavioral sentences (e.g., `"Can't reach 100% product by just building repeatedly"`).
+- `engine.js` must stay free of DOM manipulation — all UI belongs in `prototype.html`.
+- Character definitions in `roles/` must work in both Node and browser (see the IIFE + `module.exports` / `ROLES.id` pattern at the bottom of each file).
