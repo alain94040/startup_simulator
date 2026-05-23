@@ -273,7 +273,7 @@ function selectCards(current, strategy, state) {
     const CONSULTANT_IDS = new Set(['consultant_growth', 'consultant_brand']);
     const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'seed_pitch', 'fatima_commit']);
     // Alex founding cards must never be skipped — losing Alex kills the card pool
-    const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch']);
+    const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
@@ -407,6 +407,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     week:     e.s.week,
     product:  e.s.product,
     market_fit: e.s.market_fit,
+    users:    e.s.users,
     customers:e.s.customers,
     signal:   e.s.signal,
     launched:   e.s.launched,
@@ -441,6 +442,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const ycAccepted= pct(results.filter(r => r.ycAccepted).length);
 
   const avgWeek   = (results.reduce((s,r) => s+r.week, 0) / n).toFixed(1);
+  const avgUsers  = (results.reduce((s,r) => s+r.users, 0) / n).toFixed(1);
   const avgCust   = (results.reduce((s,r) => s+r.customers, 0) / n).toFixed(1);
 
   const avg    = arr => (arr.reduce((s, v) => s + v, 0) / n).toFixed(1);
@@ -470,7 +472,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
            ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged,
-           avgWeek, avgCust,
+           avgWeek, avgUsers, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
            priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen, uniqueIssues };
@@ -646,7 +648,7 @@ if (WINNERS_FLAG) {
     console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
     console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
     console.log(`  Marcus committed: ${r.marcusCommit}%  Follower in: ${r.followerCommit}%  Ryan engaged: ${r.ryanEngaged}%`);
-    console.log(`  Avg week: ${r.avgWeek}  Avg customers: ${r.avgCust}`);
+    console.log(`  Avg week: ${r.avgWeek}  Avg users (free): ${r.avgUsers}  Avg customers (paying): ${r.avgCust}`);
     console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
     console.log(`  Fit     — avg: ${r.avgFit}%  min: ${r.minFit}%  max: ${r.maxFit}%  (fit≥50: ${r.pctReachedFit50}%  fit=100: ${r.pctReachedFit100}%)`);
     console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%  Ryan: ${r.ryanSeen}%  Fatima: ${r.fatimaSeen}%`);

@@ -49,9 +49,9 @@
           { label: 'Run demos instead', key: 'demos',
             execute(s, char, e) {
               s.cobuild_last = s.week;
-              s.customers += 3;
+              s.users += 3;
               s.signal = clamp(s.signal + 4, 0, 100);
-              return "Ran 3 demos instead. All converted. Alex kept building solo.";
+              return "Ran 3 demos instead. 3 people signed up for early access. Alex kept building solo.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
