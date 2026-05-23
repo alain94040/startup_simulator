@@ -166,7 +166,7 @@
         id: 'incorporate_now', cat: 'e', from: 'Alex',
         body: "a potential user just asked us to sign an NDA before they'd demo their workflow. we can't sign anything without a legal entity. also — we need a bank account. do we use Stripe Atlas or find a lawyer?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.week <= 8 && !s.incorporated,
+        available: (s, char) => s.week >= 3 && s.week <= 14 && s.product >= 20 && !s.incorporated,
         options: [
           { label: 'Stripe Atlas — fast and cheap', key: 'atlas',
             execute(s, char) { s.incorporated = true; return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official."; } },

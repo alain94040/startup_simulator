@@ -659,8 +659,10 @@ if (WINNERS_FLAG) {
   // Default: strategy summary only
   console.log(`\n=== PROTOTYPE SIMULATION (${N} games each${NO_YC ? ' — YC DISABLED' : ''}) ===\n`);
 
+  const byStrat = {};
   for (const [name, strat] of strategies) {
     const r = runStrategy(name, strat, N, NO_YC);
+    byStrat[strat] = r;
     console.log(`── ${r.name} ──`);
     console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
     console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
@@ -672,6 +674,68 @@ if (WINNERS_FLAG) {
     if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
     console.log();
   }
+
+  // ── Regression checks ──────────────────────────────────────────────────────
+  (function regressionChecks(s) {
+    const checks = [];
+    const check = (desc, pass) => checks.push({ desc, pass });
+
+    // Win rate ordering — smart strategies must beat random
+    check(`random.wins (${s.random.wins}%) < yc_grind.wins (${s.yc_grind.wins}%)`,
+          s.random.wins < s.yc_grind.wins);
+    check(`random.wins (${s.random.wins}%) < lean_loop.wins (${s.lean_loop.wins}%)`,
+          s.random.wins < s.lean_loop.wins);
+    check(`random.wins (${s.random.wins}%) < angel_path.wins (${s.angel_path.wins}%)`,
+          s.random.wins < s.angel_path.wins);
+    check(`random.launched (${s.random.launched}%) < yc_grind.launched (${s.yc_grind.launched}%)`,
+          s.random.launched < s.yc_grind.launched);
+
+    // Broken strategies must never win
+    check(`ignore_alex.wins = ${s.ignore_alex.wins}% (expected 0)`,
+          s.ignore_alex.wins === 0);
+    check(`customer_focus.wins = ${s.customer_focus.wins}% (expected 0)`,
+          s.customer_focus.wins === 0);
+
+    // Alex retention
+    check(`ignore_alex.alexLeft (${s.ignore_alex.alexLeft}%) >= 90%`,
+          s.ignore_alex.alexLeft >= 90);
+    check(`customer_focus.alexLeft (${s.customer_focus.alexLeft}%) >= 90%`,
+          s.customer_focus.alexLeft >= 90);
+    check(`alex_first.alexLeft (${s.alex_first.alexLeft}%) <= 10%`,
+          s.alex_first.alexLeft <= 10);
+    check(`lean_loop.alexLeft (${s.lean_loop.alexLeft}%) <= 10%`,
+          s.lean_loop.alexLeft <= 10);
+    check(`distracted.alexLeft (${s.distracted.alexLeft}%) > alex_first.alexLeft (${s.alex_first.alexLeft}%)`,
+          s.distracted.alexLeft > s.alex_first.alexLeft);
+
+    // YC application behaviour
+    check(`yc_grind.ycApplied (${s.yc_grind.ycApplied}%) >= 90%`,
+          s.yc_grind.ycApplied >= 90);
+    check(`lean_loop.ycApplied (${s.lean_loop.ycApplied}%) >= 90%`,
+          s.lean_loop.ycApplied >= 90);
+    check(`angel_path.ycApplied (${s.angel_path.ycApplied}%) <= 10%`,
+          s.angel_path.ycApplied <= 10);
+    check(`ignore_alex.ycApplied (${s.ignore_alex.ycApplied}%) <= 10%`,
+          s.ignore_alex.ycApplied <= 10);
+
+    // Angel path must engage Marcus
+    check(`angel_path.marcusCommit (${s.angel_path.marcusCommit}%) >= 20%`,
+          s.angel_path.marcusCommit >= 20);
+
+    // Errors — no strategy should produce runtime errors
+    const totalErrors = Object.values(s).reduce((sum, r) => sum + r.errors, 0);
+    check(`no runtime errors across all strategies (total: ${totalErrors})`,
+          totalErrors === 0);
+
+    const passed = checks.filter(c => c.pass).length;
+    const failed = checks.filter(c => !c.pass).length;
+    console.log(`── Regression checks (${passed}/${checks.length} passed) ──`);
+    for (const c of checks) {
+      console.log(`  ${c.pass ? 'PASS' : 'FAIL'}  ${c.desc}`);
+    }
+    if (failed > 0) console.log(`\n  ✗ ${failed} check${failed > 1 ? 's' : ''} FAILED`);
+    console.log();
+  })(byStrat);
 
   // Sanity check
   (function checkBuildGrowsFit() {

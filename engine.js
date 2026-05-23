@@ -294,9 +294,10 @@ class Engine {
 
     // Free-to-paid conversion (B2B freemium: 0.5–3% per sprint based on market fit)
     if (this.s.launched && this.s.users > 0) {
-      const rate = this.s.market_fit < 30 ? 0.005 :
-                   this.s.market_fit < 50 ? 0.01  :
-                   this.s.market_fit < 70 ? 0.02  : 0.03;
+      const baseRate = this.s.market_fit < 30 ? 0.005 :
+                       this.s.market_fit < 50 ? 0.01  :
+                       this.s.market_fit < 70 ? 0.02  : 0.03;
+      const rate = baseRate * (this.s.website_updated ? 1.3 : 1.0);
       const raw = this.s.users * rate;
       // Probabilistic rounding so small pools still convert
       const converted = Math.floor(raw) + (Math.random() < (raw % 1) ? 1 : 0);

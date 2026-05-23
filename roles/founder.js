@@ -289,6 +289,70 @@
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
+      // ── CHAIN: reference selling → testimonial → website social proof ────────
+      {
+        id: 'first_customer_offer', cat: 'c', from: 'You',
+        body: "you have free users showing up every day but nobody's paying yet. one of them has been in the product daily for two weeks. time to try to close the first real customer.",
+        urgency: 3, weeks: 1,
+        available: (s) => s.launched && s.users >= 3 && s.customers === 0 && !s.first_customer_offered,
+        options: [
+          { label: 'Offer free access for a testimonial', key: 'reference',
+            execute(s) {
+              s.first_customer_offered = true;
+              s.reference_customer = true;
+              s.reference_customer_week = s.week;
+              s.signal = clamp(s.signal + 8, 0, 100);
+              return "Offered 3 months free in exchange for a public testimonial. They said yes immediately. First reference customer locked in.";
+            } },
+          { label: 'Pitch them at $50/month', key: 'pitch',
+            execute(s) {
+              s.first_customer_offered = true;
+              s.users = Math.max(0, s.users - 1);
+              s.customers += 1;
+              s.signal = clamp(s.signal + 5, 0, 100);
+              return "Made the ask. They converted. First paying customer. $50/month — not much, but it's real.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'reference_checkin', cat: 'c', from: 'You',
+        body: "your reference customer has been live for 3 weeks. they're getting value — time to collect that testimonial while the experience is fresh.",
+        urgency: 2, weeks: 1,
+        available: (s) => s.reference_customer && !s.testimonial && s.week >= (s.reference_customer_week || 0) + 3,
+        options: [
+          { label: 'Schedule a call, get the full story', key: 'call',
+            execute(s) {
+              s.testimonial = true;
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              s.signal = clamp(s.signal + 6, 0, 100);
+              return "One hour call. They walked you through how they actually use it — two workflows you hadn't designed for. And a quote you can use anywhere.";
+            } },
+          { label: 'Ask over email', key: 'email',
+            execute(s) {
+              s.testimonial = true;
+              s.signal = clamp(s.signal + 3, 0, 100);
+              return "They sent a short paragraph. Honest and usable. Not as rich as a call, but it's real.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+      {
+        id: 'website_social_proof', cat: 'p', from: 'You',
+        body: "your website still leads with features and a tagline. you now have a real customer story. features tell, stories sell — time to rebuild it.",
+        urgency: 2, weeks: 1,
+        available: (s) => s.testimonial && !s.website_updated,
+        options: [
+          { label: 'Rewrite around the customer story', key: 'rebuild',
+            execute(s) {
+              s.website_updated = true;
+              s.signal = clamp(s.signal + 10, 0, 100);
+              return "Website rebuilt. Hero section is now the customer quote. Features moved to a second page. Conversion on the signup form jumped immediately.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
       // ── ONE-TIME: pricing experiment (post-launch) ──────────────────────────
       {
         id: 'founder_pricing_experiment', cat: 'c', from: 'You',
