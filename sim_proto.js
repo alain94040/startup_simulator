@@ -283,11 +283,15 @@ function selectCards(current, strategy, state) {
     // Never pick alex_sync_discover — keeps Alex in build mode so demo card stays available
     const NEVER_PICK    = new Set(['alex_sync_discover','yc_discussion_ready','yc_discussion_early']);
 
+    // Family/friend cash cards — free runway, expires early; pick them while available
+    const FAMILY_CASH = new Set(['ff_family', 'ff_family_2', 'ff_family_3', 'ff_friend', 'ff_friend_ask']);
+
     const priority = c => {
       if (NEVER_PICK.has(c.id))    return 99;
       if (ALEX_CRITICAL.has(c.id)) return 0;
       if (INVESTOR_IDS.has(c.id))  return 1;
-      if (c.id === 'good_enough_launch' && s.product >= 60) return 2;
+      if (FAMILY_CASH.has(c.id))   return 2;
+      if (c.id === 'good_enough_launch' && s.product >= 50) return 2;
       if (c.cat === 'p') return 3;   // product cards: demos add direct paying customers
       if (c.cat === 'c') return 4;
       return 5 + (4 - c.urgency);
