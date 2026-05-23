@@ -408,6 +408,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
         users: e.s.users,
         customers: e.s.customers,
         signal: Math.round(e.s.signal),
+        launched: e.s.launched,
         alexTrust: alex ? Math.round(alex.trust) : null,
         alexMorale: alex ? Math.round(alex.morale) : null,
         alexActive: alex ? alex.active : false,
@@ -512,7 +513,7 @@ const strategies = [
 
 function parseArgs(argv) {
   const args = argv.slice(2);
-  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3 };
+  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3, fullMessages: false };
   const errors = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -533,6 +534,7 @@ Options:
                      max attempts (--winners), or traces printed (--all).
                      Default: 100.
   --no-yc            Block YC acceptance — forces the angel fundraising path.
+  --messages         Print full card bodies and outcome messages without truncation.
   -h, --help         Show this help.
 
 Examples:
@@ -546,7 +548,8 @@ Examples:
       process.exit(0);
     }
 
-    if (a === '--no-yc')  { opts.noYC = true; continue; }
+    if (a === '--no-yc')     { opts.noYC = true; continue; }
+    if (a === '--messages')  { opts.fullMessages = true; continue; }
 
     if (a === '--winners') {
       if (opts.mode === 'all') { errors.push('--winners and --all are mutually exclusive'); break; }
@@ -576,14 +579,14 @@ Examples:
   return opts;
 }
 
-const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT } = parseArgs(process.argv);
+const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT, fullMessages: FULL_MESSAGES } = parseArgs(process.argv);
 const WINNERS_FLAG = mode === 'winners';
 const ALL_FLAG     = mode === 'all';
 
 // ─── Narrative trace ──────────────────────────────────────────────────────────
 
-function printTrace(trace, label) {
-  const trunc = (str, n) => str.length > n ? str.slice(0, n - 1) + '…' : str;
+function printTrace(trace, label, fullMessages = false) {
+  const trunc = fullMessages ? (str) => str : (str, n) => str.length > n ? str.slice(0, n - 1) + '…' : str;
   const sep = '─'.repeat(72);
 
   console.log(`=== STORY TRACE: ${label || 'lean_loop'} ===\n`);
@@ -616,7 +619,8 @@ function printTrace(trace, label) {
     const alexStr = turn.alexActive !== false
       ? `Alex trust:${turn.alexTrust} morale:${turn.alexMorale}`
       : 'Alex: gone';
-    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Product ${turn.product}%  Fit ${turn.fit}%  Users ${turn.users}  Customers ${turn.customers}  Signal ${turn.signal}  ${alexStr}`);
+    const launchStr = turn.launched ? 'launched' : 'pre-launch';
+    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Product ${turn.product}%  Fit ${turn.fit}%  Users ${turn.users}  Customers ${turn.customers}  Signal ${turn.signal}  ${launchStr}  ${alexStr}`);
     console.log();
   }
 
@@ -645,7 +649,7 @@ if (WINNERS_FLAG) {
   console.log(`\nFound ${winners.length}/${WINNERS_COUNT} in ${attempts} attempts.\n`);
 
   winners.forEach((w, i) =>
-    printTrace(w, `lean_loop WIN #${i + 1} of ${winners.length} (attempt ~${Math.round(attempts / winners.length * (i + 1))})`)
+    printTrace(w, `lean_loop WIN #${i + 1} of ${winners.length} (attempt ~${Math.round(attempts / winners.length * (i + 1))})`, FULL_MESSAGES)
   );
 
 } else if (ALL_FLAG) {
@@ -653,7 +657,7 @@ if (WINNERS_FLAG) {
   const ycTag = NO_YC ? ' — YC disabled' : '';
   for (let i = 0; i < N; i++) {
     const g = runGame('lean_loop', 120, true, NO_YC);
-    printTrace(g, `lean_loop run ${i + 1}/${N}${ycTag}`);
+    printTrace(g, `lean_loop run ${i + 1}/${N}${ycTag}`, FULL_MESSAGES);
   }
 
 } else {
