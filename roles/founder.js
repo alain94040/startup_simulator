@@ -42,9 +42,9 @@
             execute(s, char, e) {
               s.cobuild_last = s.week;
               const alex = e.chars.get('alex');
-              s.product = clamp(s.product + 7, 0, 100);
+              s.product = clamp(s.product + 3, 0, 100);
               if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
-              return "Paired up. You took the front-end, Alex handled the data layer. Shipped more in one week than the previous three combined.";
+              return "Paired up. You took the front-end, Alex handled the data layer. Your contribution was modest but Alex shipped faster with you there.";
             } },
           { label: 'Run demos instead', key: 'demos',
             execute(s, char, e) {
@@ -70,9 +70,9 @@
           { label: 'Build it yourself', key: 'build',
             execute(s, char, e) {
               char.flags.onboarding_built = true;
-              s.product = clamp(s.product + 8, 0, 100);
+              s.product = clamp(s.product + 3, 0, 100);
               s.market_fit = clamp(s.market_fit + 5, 0, 100);
-              return "Built the onboarding end-to-end. First-time completion jumped. Alex could stay heads-down on the backend.";
+              return "Built the onboarding end-to-end. Took longer than expected — not your strongest skill — but it shipped. Alex could stay heads-down on the backend.";
             } },
           { label: 'Hand the spec to Alex', key: 'pass',
             execute(s, char, e) {
@@ -97,9 +97,9 @@
           { label: 'Fix the empty states yourself', key: 'build',
             execute(s, char) {
               char.flags.empty_states_built = true;
-              s.product = clamp(s.product + 5, 0, 100);
+              s.product = clamp(s.product + 2, 0, 100);
               s.market_fit = clamp(s.market_fit + 4, 0, 100);
-              return "Added empty states with clear CTAs to every screen. Beta users stopped asking 'is something wrong?'";
+              return "Added empty states with clear CTAs to every screen. Small fix, big impact — beta users stopped asking 'is something wrong?'";
             } },
           { label: 'Add it to the backlog', key: 'pass',
             execute(s, char) {
@@ -121,7 +121,7 @@
           { label: 'Build the export yourself', key: 'build',
             execute(s, char) {
               char.flags.export_built = true;
-              s.product = clamp(s.product + 6, 0, 100);
+              s.product = clamp(s.product + 2, 0, 100);
               s.market_fit = clamp(s.market_fit + 6, 0, 100);
               return "CSV export shipped. All three users converted to active. One said it was the last thing blocking them.";
             } },
@@ -182,8 +182,8 @@
             } },
           { label: 'One more week of polish', key: 'wait',
             execute(s) {
-              s.product = clamp(s.product + 4, 0, 100);
-              return "Polished a few more things. Still not launched.";
+              s.product = clamp(s.product + 1, 0, 100);
+              return "Polished a few things. Still not launched.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
@@ -194,19 +194,19 @@
         urgency: 2, weeks: 2,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && !alex.active && s.product < 100 && s.week >= (s.solo_build_last || 0) + 3;
+          return alex && !alex.active && s.product < 100 && s.week >= (s.solo_build_last || 0) + 6;
         },
         options: [
           { label: 'Put in the hours', key: 'build',
             execute(s) {
               s.solo_build_last = s.week;
-              s.product = clamp(s.product + 5, 0, 100);
-              return "Two weeks of solo heads-down. Slower without Alex but the product is moving.";
+              s.product = clamp(s.product + 2, 0, 100);
+              return "Two weeks of solo heads-down. Much slower without Alex — things that used to take a day take a week. The product is barely moving.";
             } },
           { label: 'Do the minimum', key: 'min',
             execute(s) {
               s.solo_build_last = s.week;
-              s.product = clamp(s.product + 2, 0, 100);
+              s.product = clamp(s.product + 1, 0, 100);
               return "Kept things barely moving. Not much progress but nothing broke.";
             } },
         ],

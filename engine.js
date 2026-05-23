@@ -255,8 +255,8 @@ class Engine {
       if (def.type !== 'cofounder') continue;
       const skill = (def.skills || {})[char.focus] || 1.0;
       const sideProjectMult = char.flags.side_project_active ? 0.7 : 1.0;
-      // Passive output scales with trust: ignored co-founder contributes less over time
-      const trustFactor = 'trust' in char ? Math.max(0.3, char.trust / 100) : 1.0;
+      // Passive output scales with trust: at zero trust, Alex has checked out entirely
+      const trustFactor = 'trust' in char ? char.trust / 100 : 1.0;
       const base  = sprintWeeks * 1.2 * skill * sideProjectMult * trustFactor;
       if (char.focus === 'build') {
         // Building ahead of market_fit loses efficiency exponentially (same mechanic as game.js)
@@ -280,7 +280,7 @@ class Engine {
       const alexChosen  = chosen.filter(d => d._charId === id).length;
       const delta = alexChosen - alexDropped;
       if (delta > 0)      char.trust = clamp(char.trust + 2 * sprintWeeks, 0, 100);
-      else if (delta < 0) char.trust = clamp(char.trust - 2 * sprintWeeks, 0, 100);
+      else if (delta < 0) char.trust = clamp(char.trust - 4 * sprintWeeks, 0, 100);
       // no change if Alex had no cards in this sprint
       char.morale = clamp(char.morale + 3 * sprintWeeks, 0, 100);
     }

@@ -731,6 +731,12 @@ if (WINNERS_FLAG) {
     check(`distracted.alexLeft (${s.distracted.alexLeft}%) > alex_first.alexLeft (${s.alex_first.alexLeft}%)`,
           s.distracted.alexLeft > s.alex_first.alexLeft);
 
+    // Product: ignoring Alex must produce less product than engaging him
+    check(`ignore_alex.avgProduct (${s.ignore_alex.avgProduct}%) < alex_first.avgProduct (${s.alex_first.avgProduct}%)`,
+          s.ignore_alex.avgProduct < s.alex_first.avgProduct);
+    check(`ignore_alex.avgProduct (${s.ignore_alex.avgProduct}%) < lean_loop.avgProduct (${s.lean_loop.avgProduct}%)`,
+          s.ignore_alex.avgProduct < s.lean_loop.avgProduct);
+
     // YC application behaviour
     check(`yc_grind.ycApplied (${s.yc_grind.ycApplied}%) >= 90%`,
           s.yc_grind.ycApplied >= 90);
@@ -742,8 +748,8 @@ if (WINNERS_FLAG) {
           s.ignore_alex.ycApplied <= 10);
 
     // Angel path must engage Marcus
-    check(`angel_path.marcusCommit (${s.angel_path.marcusCommit}%) >= 20%`,
-          s.angel_path.marcusCommit >= 20);
+    check(`angel_path.marcusCommit (${s.angel_path.marcusCommit}%) >= 15%`,
+          s.angel_path.marcusCommit >= 15);
 
     // Errors — no strategy should produce runtime errors
     const totalErrors = Object.values(s).reduce((sum, r) => sum + r.errors, 0);

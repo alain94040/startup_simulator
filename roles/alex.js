@@ -287,7 +287,7 @@
         id: 'good_enough_launch', cat: 'p', from: 'Alex',
         body: "it's good enough. every week we wait is a week we're not learning from real users. i know it's not perfect but i think we should just ship it.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.product >= 60 && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
+        available: (s, char) => s.product >= 50 && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
         options: [
           { label: 'Ship it — launch now', key: 'ship',
             execute(s, char) { s.launched = true; s.signal = clamp(s.signal + 12, 0, 100); if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn."; return "Launched. First real users are in. Feedback starts flowing."; } },
