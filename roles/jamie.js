@@ -27,7 +27,7 @@
           { label: 'Ask him to invest', key: 'ask',
             execute(s, char) {
               char.flags.done = true;
-              if (Math.random() < 0.7) { s.cash += 7000; return "Jamie sent $7,000 via Venmo. 'Least I could do — you believed in me when I quit my job.'"; }
+              if (Math.random() < 0.7) { s.cash += 7000; return "Jamie sent $7,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'"; }
               return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
             } },
         ],
