@@ -34,14 +34,15 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && alex.active && alex.focus === 'build' && s.product < 75 && s.week >= (s.cobuild_last || 0) + 3;
+          return alex && alex.active && alex.focus === 'build' && s.product < 70
+            && s.week >= (s.cobuild_last || 0) + 4;
         },
         options: [
           { label: 'Pair up this sprint', key: 'pair',
             execute(s, char, e) {
               s.cobuild_last = s.week;
               const alex = e.chars.get('alex');
-              s.product = clamp(s.product + 10, 0, 100);
+              s.product = clamp(s.product + 7, 0, 100);
               if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
               return "Paired up. You took the front-end, Alex handled the data layer. Shipped more in one week than the previous three combined.";
             } },
@@ -199,13 +200,13 @@
           { label: 'Put in the hours', key: 'build',
             execute(s) {
               s.solo_build_last = s.week;
-              s.product = clamp(s.product + 8, 0, 100);
+              s.product = clamp(s.product + 5, 0, 100);
               return "Two weeks of solo heads-down. Slower without Alex but the product is moving.";
             } },
           { label: 'Do the minimum', key: 'min',
             execute(s) {
               s.solo_build_last = s.week;
-              s.product = clamp(s.product + 3, 0, 100);
+              s.product = clamp(s.product + 2, 0, 100);
               return "Kept things barely moving. Not much progress but nothing broke.";
             } },
         ],
@@ -269,12 +270,12 @@
         id: 'founder_user_depth', cat: 'c', from: 'You',
         body: "you've been shipping and selling for weeks but you're making product decisions from support tickets. you don't actually know how your users work day to day. block a week.",
         urgency: 2, weeks: 1,
-        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.user_depth_last || 0) + 4,
+        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.user_depth_last || 0) + 6,
         options: [
           { label: 'Five sessions — watch them use it', key: 'deep',
             execute(s) {
               s.user_depth_last = s.week;
-              s.market_fit = clamp(s.market_fit + 12, 0, 100);
+              s.market_fit = clamp(s.market_fit + 8, 0, 100);
               s.signal = clamp(s.signal + 6, 0, 100);
               return "Five sessions done. Two users showed you workflows you didn't know existed. You found why 30% churn in week 2 — and fixed it immediately.";
             } },
@@ -320,6 +321,19 @@
               s.users += 5;
               return "Held off. Free users keep coming. The conversion problem isn't going anywhere.";
             } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── FALLBACK: always available, prevents card-pool empty state ─────────────
+      {
+        id: 'founder_reflect', cat: 'e', from: 'You',
+        body: "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.",
+        urgency: 1, weeks: 1,
+        available: (s) => true,
+        options: [
+          { label: 'Review your positioning', key: 'review',
+            execute(s) { s.signal = clamp(s.signal + 2, 0, 100); return "Spent time thinking about the pitch. Small refinements. Nothing dramatic."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },

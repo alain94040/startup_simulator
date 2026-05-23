@@ -255,10 +255,14 @@ class Engine {
       if (def.type !== 'cofounder') continue;
       const skill = (def.skills || {})[char.focus] || 1.0;
       const sideProjectMult = char.flags.side_project_active ? 0.7 : 1.0;
-      const base  = sprintWeeks * 2 * skill * sideProjectMult;
+      // Passive output scales with trust: ignored co-founder contributes less over time
+      const trustFactor = 'trust' in char ? Math.max(0.3, char.trust / 100) : 1.0;
+      const base  = sprintWeeks * 1.2 * skill * sideProjectMult * trustFactor;
       if (char.focus === 'build') {
+        // Building ahead of market_fit loses efficiency exponentially (same mechanic as game.js)
+        const efficiency = clamp(Math.pow(0.88, this.s.product - this.s.market_fit - 10), 0.05, 1.0);
         const fitMult = this.s.market_fit >= 60 ? 1.3 : 1.0;
-        this.s.product = clamp(this.s.product + base * fitMult, 0, 100);
+        this.s.product = clamp(this.s.product + base * fitMult * efficiency, 0, 100);
       } else if (char.focus === 'discover') {
         this.s.signal     = clamp(this.s.signal     + base * 1.5, 0, 100);
         this.s.market_fit = clamp(this.s.market_fit + base,       0, 100);
