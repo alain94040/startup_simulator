@@ -11,7 +11,7 @@
         available: (s) => s.week <= 5 && !s.has_landing_page,
         options: [
           { label: 'Register the domain + set up a landing page', key: 'build',
-            execute(s) { s.has_landing_page = true; s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. Already have 12 email signups from people you talked to this week."; } },
+            execute(s) { s.has_landing_page = true; s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. Already have 12 email signups from people! wait actually these are just spammers."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },

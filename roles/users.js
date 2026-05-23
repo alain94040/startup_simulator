@@ -6,7 +6,7 @@
     unlockCondition: (s) => s.users >= 3 || s.customers >= 1,
     cards: [
       {
-        id: 'bug_reports', cat: 'p', from: 'Priya + 2 others',
+        id: 'bug_reports', cat: 'p', from: 'Maya + 2 others',
         body: "all three emailed within an hour. same crash, same workflow. the product is unusable for them right now.",
         urgency: 3, weeks: 1,
         available: (s) => s.launched && s.customers >= 1 && s.week >= (s.bug_reports_last || 0) + 5,
@@ -14,7 +14,7 @@
           { label: 'Drop everything and fix it', key: 'fix',
             execute(s) { s.bug_reports_last = s.week; return "Fixed the crash. Users notified. Goodwill recovered."; } },
         ],
-        dropDelay: 1, dropFrom: 'Priya',
+        dropDelay: 1, dropFrom: 'Maya',
         dropMsg: "we cancelled. the bug never got fixed and we had a deadline. no hard feelings.",
         dropFx(s) { s.bug_reports_last = s.week; s.customers = clamp(s.customers - 2, 0, 9999); s.signal = clamp(s.signal - 10, 0, 100); },
       },
