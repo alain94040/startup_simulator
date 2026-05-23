@@ -302,14 +302,14 @@
         id: 'alex_wants_rebuild', cat: 'p', from: 'Alex',
         body: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.product > 40 && s.week > 8 && char.focus === 'build' && s.week >= (s.rebuild_last || 0) + 4,
+        available: (s, char) => s.product > 40 && s.week > 8 && char.focus === 'build' && !s.alex_rebuild_done,
         options: [
           { label: 'Do the refactor', key: 'refactor',
-            execute(s, char) { s.rebuild_last = s.week; s.product = clamp(s.product + 12, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); return "Architecture refactored. Faster, cleaner. Alex is energized."; } },
+            execute(s, char) { s.alex_rebuild_done = true; s.product = clamp(s.product + 12, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); return "Architecture refactored. Faster, cleaner. Alex is energized."; } },
         ],
         dropDelay: 4, dropFrom: 'Alex',
         dropMsg: "3 active outages this week from the tech debt i flagged. we're losing users in real time.",
-        dropFx(s, char) { s.users = clamp(s.users - 8, 0, 9999); s.customers = clamp(s.customers - 2, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
+        dropFx(s, char) { s.alex_rebuild_done = true; s.users = clamp(s.users - 8, 0, 9999); s.customers = clamp(s.customers - 2, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
       },
       {
         id: 'alex_decision', cat: 't', from: 'Customer',

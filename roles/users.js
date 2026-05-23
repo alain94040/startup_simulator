@@ -83,14 +83,14 @@
         id: 'feature_cluster', cat: 'p', from: '3 users (separately)',
         body: "none of them know each other. all three asked for the exact same thing this week. that's not coincidence.",
         urgency: 2, weeks: 2,
-        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.feature_cluster_last || 0) + 5,
+        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && !s.feature_cluster_done,
         options: [
           { label: 'Build the feature', key: 'build',
-            execute(s) { s.feature_cluster_last = s.week; s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
+            execute(s) { s.feature_cluster_done = true; s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
         ],
         dropDelay: 3, dropFrom: 'User',
         dropMsg: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",
-        dropFx(s) { s.feature_cluster_last = s.week; s.signal = clamp(s.signal - 8, 0, 100); },
+        dropFx(s) { s.feature_cluster_done = true; s.signal = clamp(s.signal - 8, 0, 100); },
       },
       {
         id: 'waitlist_cold', cat: 'c', from: 'Waitlist signups',
