@@ -389,9 +389,9 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
-      // ── FALLBACK: safety valve — always available to prevent empty card pool ──
+      // ── FALLBACK: safety valve — only surfaces when no other cards are available ──
       {
-        id: 'founder_reflect', cat: 'e', from: 'You',
+        id: 'founder_reflect', cat: 'e', from: 'You', fallback: true,
         body: "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.",
         urgency: 1, weeks: 1,
         available: () => true,

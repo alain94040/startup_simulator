@@ -168,21 +168,24 @@ class Engine {
 
     // Collect available cards from all active characters + global pool
     const allCards = [];
+    const fallbackCards = [];
     for (const [id, char] of this.chars) {
       if (!char.active) continue;
       const def = CHARACTER_DEFS[id];
       for (const card of def.cards) {
         if (card.available(this.s, char, this)) {
-          allCards.push({ ...card, _charId: id });
+          (card.fallback ? fallbackCards : allCards).push({ ...card, _charId: id });
         }
       }
     }
-    const unseen = allCards.filter(d => !this.shown.has(d.id));
-    const pool   = unseen.length >= 4 ? unseen : allCards;
+    // Fallback cards only enter the pool when nothing else is available
+    const basePool = allCards.length > 0 ? allCards : fallbackCards;
+    const unseen = basePool.filter(d => !this.shown.has(d.id));
+    const pool   = unseen.length >= 4 ? unseen : basePool;
 
     // Priority cards jump the queue
     const maxPriority = this.s.week <= 8 ? 2 : 1;
-    const picked = allCards.filter(d => d.priority).slice(0, maxPriority);
+    const picked = basePool.filter(d => d.priority).slice(0, maxPriority);
 
     // Fill remaining slots: one per category, then random
     for (const cat of ['p', 'c', 't', 'e']) {
