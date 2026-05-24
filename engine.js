@@ -87,6 +87,7 @@ class Engine {
     this.s = {
       cash: 10000, week: 1, product: 10, users: 0, customers: 0, revenue: 0,
       signal: 28, market_fit: 0, launched: false, deck_ready: false,
+      has_demo: false, has_beta: false, tech_debt: 0,
       investor_warmth: 0,
       incorporated: false, ip_clear: false,
       ycDeciding: false, ycApplied: false, ycAccepted: false, ycDecisionWeek: null,

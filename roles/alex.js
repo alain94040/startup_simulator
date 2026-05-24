@@ -131,10 +131,12 @@
         id: 'alex_sync_discover', cat: 't', from: 'Alex',
         body: "we've been heads-down building for a while without talking to anyone outside. should we shift focus to customer discovery for a sprint or two?",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3 && (s.market_fit < 80 || s.product < 55),
+        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
+          && (s.market_fit < 80 || s.product < 55)
+          && s.week >= (char.flags.lastSyncToDiscover || 0) + 8,
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
-            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; return "Agreed. Alex on customer discovery this sprint."; } },
+            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; char.flags.lastSyncToDiscover = s.week; return "Agreed. Alex on customer discovery this sprint."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -284,10 +286,57 @@
 
       // ── MID: PRODUCT ────────────────────────────────────────────────────────
       {
-        id: 'good_enough_launch', cat: 'p', from: 'Alex',
-        body: "it's good enough. every week we wait is a week we're not learning from real users. i know it's not perfect but i think we should just ship it.",
+        id: 'alex_demo_ready', cat: 'p', from: 'Alex',
+        body: "the core flow works end-to-end for the first time. rough edges everywhere, but it actually does the thing. i want to put it in front of a real person before we build another feature — get a reaction while our assumptions are still easy to change.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.product >= 50 && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
+        available: (s) => s.product >= 18 && !s.has_demo && !s.launched,
+        options: [
+          { label: 'Show it rough — learn fast', key: 'rough',
+            execute(s) {
+              s.has_demo = true; s.tech_debt += 12;
+              s.users += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              return "Three contacts in a room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been trying to solve this for months.' You know what to build next.";
+            } },
+          { label: 'One sprint to polish it first', key: 'polish',
+            execute(s) {
+              s.has_demo = true; s.tech_debt += 3;
+              s.product = clamp(s.product + 6, 0, 100);
+              s.users += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); s.signal = clamp(s.signal + 4, 0, 100);
+              return "Spent the sprint cleaning up the worst rough edges. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'";
+            } },
+        ],
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "someone asked for a demo and i scheduled it for next week. we're showing what we have.",
+        dropFx(s) { s.has_demo = true; s.tech_debt += 18; s.users += 1; },
+      },
+      {
+        id: 'alex_beta_ready', cat: 'p', from: 'Alex',
+        body: "we've been showing demos but nobody's actually living with the product day to day. i think we're ready to give 5–10 people real credentials and see what breaks when we're not in the room.",
+        urgency: 3, weeks: 1,
+        available: (s) => s.has_demo && s.product >= 38 && !s.has_beta && !s.launched,
+        options: [
+          { label: 'Invite our 5 best-fit contacts', key: 'curated',
+            execute(s) {
+              s.has_beta = true;
+              s.users += 5; s.market_fit = clamp(s.market_fit + 12, 0, 100);
+              return "Invited 5 hand-picked contacts. All 5 accepted. Three used it every day. Two hit the same bug on day 3 — fixed before they could complain. One asked if they could pay now.";
+            } },
+          { label: 'Post it publicly — open beta', key: 'open',
+            execute(s) {
+              s.has_beta = true;
+              s.users += 20; s.market_fit = clamp(s.market_fit + 5, 0, 100); s.signal = clamp(s.signal + 10, 0, 100);
+              return "Posted in two Slack communities. 20 signups in 48 hours. Noisy — power users mixed with people who'll never come back. But you're seeing usage patterns you couldn't have predicted.";
+            } },
+        ],
+        dropDelay: 2, dropFrom: 'Alex',
+        dropMsg: "getting inbound requests for beta access. i'm opening it up next week.",
+        dropFx(s) { s.has_beta = true; s.users += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); },
+      },
+      {
+        id: 'good_enough_launch', cat: 'p', from: 'Alex',
+        body: "beta users have been in it for a few weeks. the feedback is real. nothing's on fire. it's as ready as it's going to be without real public traffic — let's ship it.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.product >= 50 && s.has_beta && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
         options: [
           { label: 'Ship it — launch now', key: 'ship',
             execute(s, char) { s.launched = true; s.signal = clamp(s.signal + 12, 0, 100); if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn."; return "Launched. First real users are in. Feedback starts flowing."; } },
@@ -295,14 +344,14 @@
             execute(s, char) { s.good_enough_last = s.week; s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale - 12, 0, 100); return "Polished a few more things. Alex thinks you're stalling — and he might be right."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
-        dropMsg: "another week building in a vacuum. runway is ticking and we still have zero real user feedback.",
+        dropMsg: "another week building in a vacuum. runway is ticking and real users are waiting.",
         dropFx(s, char) { s.cash = clamp(s.cash - 800, 0, 9999999); char.morale = clamp(char.morale - 10, 0, 100); },
       },
       {
         id: 'alex_wants_rebuild', cat: 'p', from: 'Alex',
         body: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.product > 40 && s.week > 8 && char.focus === 'build' && !s.alex_rebuild_done,
+        available: (s, char) => !s.alex_rebuild_done && char.focus === 'build' && ((s.product > 40 && s.week > 8) || s.tech_debt >= 20),
         options: [
           { label: 'Do the refactor', key: 'refactor',
             execute(s, char) { s.alex_rebuild_done = true; s.product = clamp(s.product + 12, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); return "Architecture refactored. Faster, cleaner. Alex is energized."; } },

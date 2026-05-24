@@ -218,7 +218,7 @@
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && !alex.active && s.week >= (s.solo_discover_last || 0) + 3;
+          return alex && !alex.active && s.week >= (s.solo_discover_last || 0) + 6;
         },
         options: [
           { label: 'Do the calls', key: 'calls',
@@ -389,12 +389,12 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
-      // ── FALLBACK: always available, prevents card-pool empty state ─────────────
+      // ── FALLBACK: safety valve — always available to prevent empty card pool ──
       {
         id: 'founder_reflect', cat: 'e', from: 'You',
         body: "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.",
         urgency: 1, weeks: 1,
-        available: (s) => true,
+        available: () => true,
         options: [
           { label: 'Review your positioning', key: 'review',
             execute(s) { s.signal = clamp(s.signal + 2, 0, 100); return "Spent time thinking about the pitch. Small refinements. Nothing dramatic."; } },

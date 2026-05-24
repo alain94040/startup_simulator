@@ -18,6 +18,8 @@ const CARD_PREFS = {
     first_interview_shock:    'pivot',
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
+    alex_demo_ready:          'polish',
+    alex_beta_ready:          'curated',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'apply',
@@ -38,6 +40,8 @@ const CARD_PREFS = {
     first_interview_shock:    'pivot',
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
+    alex_demo_ready:          'polish',
+    alex_beta_ready:          'curated',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'apply',
@@ -58,6 +62,8 @@ const CARD_PREFS = {
     first_interview_shock:    'pivot',
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
+    alex_demo_ready:          'rough',
+    alex_beta_ready:          'open',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'skip',
@@ -98,6 +104,8 @@ const CARD_PREFS = {
     random_reframe:           'test',
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
+    alex_demo_ready:          'rough',
+    alex_beta_ready:          'open',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'skip',
     yc_discussion_early:      'skip',
@@ -141,6 +149,8 @@ const CARD_PREFS = {
     random_reframe:           'test',
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
+    alex_demo_ready:          'rough',
+    alex_beta_ready:          'curated',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'apply',
@@ -216,6 +226,7 @@ function selectCards(current, strategy, state) {
   if (strategy === 'yc_grind') {
     // Priority: YC cards > product > customer > external > team
     const order = ['yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
+                   'alex_demo_ready','alex_beta_ready',
                    'good_enough_launch','bug_reports','feature_cluster','silent_churn',
                    'public_complaint','power_user_quiet','reporter_deadline','hn_thread'];
     const sorted = pool.slice().sort((a, b) => {
@@ -291,6 +302,7 @@ function selectCards(current, strategy, state) {
       if (ALEX_CRITICAL.has(c.id)) return 0;
       if (INVESTOR_IDS.has(c.id))  return 1;
       if (FAMILY_CASH.has(c.id))   return 2;
+      if (c.id === 'alex_demo_ready' || c.id === 'alex_beta_ready') return 2;
       if (c.id === 'good_enough_launch' && s.product >= 50) return 2;
       if (c.cat === 'p') return 3;   // product cards: demos add direct paying customers
       if (c.cat === 'c') return 4;
@@ -301,7 +313,9 @@ function selectCards(current, strategy, state) {
       if (pa !== pb) return pa - pb;
       return b.urgency - a.urgency;
     });
-    return sorted.slice(0, 2).map(c => c.id);
+    // Hard-exclude NEVER_PICK cards: never force them as a second pick
+    const eligible = sorted.filter(c => !NEVER_PICK.has(c.id));
+    return eligible.slice(0, 2).map(c => c.id);
   }
 
   if (strategy === 'lean_loop') {
@@ -309,7 +323,7 @@ function selectCards(current, strategy, state) {
     const fit     = s.market_fit || 0;
     const product = s.product    || 0;
     const CONSULTANT_IDS = new Set(['consultant_growth', 'consultant_brand']);
-    const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'seed_pitch', 'fatima_commit']);
+    const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'yc_discussion_early', 'seed_pitch', 'fatima_commit']);
     // Alex founding cards must never be skipped — losing Alex kills the card pool
     const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
 
@@ -350,6 +364,7 @@ function selectCards(current, strategy, state) {
 function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
   const e = new Engine();
   const log = [];
+  const cardCounts = {};   // cardId -> times offered this game
   let errorCount = 0;
   let ycEverApplied = false;   // tracks ever-applied, not reset on rejection
 
@@ -374,6 +389,12 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
 
     const ids  = selectCards(e.current, strategy, e.s);
     const opts = pickOptions(e.current, ids, optStrategy, e.s);
+
+    for (const card of e.current) {
+      const c = cardCounts[card.id] || (cardCounts[card.id] = { count: 0, weekSum: 0 });
+      c.count++;
+      c.weekSum += e.s.week;
+    }
 
     // For YC discussions, always apply
     for (const id of ids) {
@@ -461,6 +482,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     activeChars,
     errors: errorCount,
     log,
+    cardCounts,
   };
 }
 
@@ -510,12 +532,28 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   }));
   const uniqueIssues = [...new Set(issues)].slice(0, 5);
 
+  // Aggregate card repetition counts across all games
+  const countTotals = {};
+  for (const r of results) {
+    for (const [id, { count, weekSum }] of Object.entries(r.cardCounts)) {
+      if (!countTotals[id]) countTotals[id] = { total: 0, max: 0, weekSum: 0 };
+      countTotals[id].total   += count;
+      countTotals[id].weekSum += weekSum;
+      countTotals[id].max      = Math.max(countTotals[id].max, count);
+    }
+  }
+  const repetition = Object.entries(countTotals)
+    .map(([id, v]) => ({ id, avg: v.total / n, max: v.max, avgWeek: Math.round(v.weekSum / v.total) }))
+    .filter(r => r.avg >= 2)
+    .sort((a, b) => b.avg - a.avg);
+
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
            ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged,
            avgWeek, avgUsers, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
-           priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen, uniqueIssues };
+           priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen,
+           uniqueIssues, repetition };
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
@@ -650,6 +688,17 @@ function printTrace(trace, label, fullMessages = false) {
   console.log(`  ${result} — Week ${trace.week} · Product ${Math.round(trace.product)}% · Customers ${trace.customers}`);
   console.log(`  YC: applied=${trace.ycApplied} accepted=${trace.ycAccepted}`);
   console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
+
+  const reps = Object.entries(trace.cardCounts || {})
+    .filter(([, v]) => v.count > 3)
+    .sort(([, a], [, b]) => b.count - a.count);
+  if (reps.length > 0) {
+    const parts = reps.slice(0, 10).map(([id, v]) => {
+      const avgWk = Math.round(v.weekSum / v.count);
+      return `${id}×${v.count}@wk${avgWk}`;
+    });
+    console.log(`  Repeated cards (>3×): ${parts.join('  ')}`);
+  }
 }
 
 // ─── Mode dispatch ────────────────────────────────────────────────────────────
@@ -767,6 +816,44 @@ if (WINNERS_FLAG) {
       console.log(`  ${c.pass ? 'PASS' : 'FAIL'}  ${c.desc}`);
     }
     if (failed > 0) console.log(`\n  ✗ ${failed} check${failed > 1 ? 's' : ''} FAILED`);
+    console.log();
+  })(byStrat);
+
+  // ── Repetition report ──────────────────────────────────────────────────────
+  (function repetitionReport(s) {
+    // Merge repetition data: for each card, track worst avg across all strategies
+    const merged = {};
+    for (const r of Object.values(s)) {
+      for (const { id, avg, max, avgWeek } of r.repetition) {
+        if (!merged[id] || merged[id].avg < avg) merged[id] = { avg, max, avgWeek };
+      }
+    }
+    const rows = Object.entries(merged)
+      .map(([id, v]) => ({ id, ...v }))
+      .sort((a, b) => b.avg - a.avg)
+      .slice(0, 20);
+
+    if (rows.length === 0) { console.log(`── Repetition report — no cards averaging ≥2×/game ──\n`); return; }
+
+    // Cards that are intentionally high-frequency (safety valve, solo-mode fallback, etc.)
+    // — high counts are expected and not bugs.
+    const EXPECTED_FREQUENT = new Set(['founder_reflect', 'alex_sync_discover', 'founder_solo_discover']);
+    const WARN = 5, CRIT = 15;
+    const flagged = rows.filter(r => !EXPECTED_FREQUENT.has(r.id));
+    const expected = rows.filter(r => EXPECTED_FREQUENT.has(r.id));
+
+    console.log(`── Repetition report (worst avg across strategies, cards avg ≥2×/game) ──`);
+    console.log(`   ${'card'.padEnd(32)} avg/game    max  avgWk`);
+    for (const r of flagged) {
+      const flag = r.avg >= CRIT ? '  ← CRITICAL' : r.avg >= WARN ? '  ← WARN' : '';
+      console.log(`   ${r.id.padEnd(32)} ${r.avg.toFixed(1).padStart(6)}   ${String(r.max).padStart(4)}   ${String(r.avgWeek).padStart(3)}${flag}`);
+    }
+    if (expected.length > 0) {
+      console.log(`   (expected fallbacks — high counts normal in losing/stuck games)`);
+      for (const r of expected) {
+        console.log(`   ${r.id.padEnd(32)} ${r.avg.toFixed(1).padStart(6)}   ${String(r.max).padStart(4)}   ${String(r.avgWeek).padStart(3)}`);
+      }
+    }
     console.log();
   })(byStrat);
 
