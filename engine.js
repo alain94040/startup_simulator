@@ -85,7 +85,7 @@ const WORLD = [
 class Engine {
   constructor() {
     this.s = {
-      cash: 10000, week: 1, product: 10, users: 0, customers: 0, revenue: 0,
+      cash: 10000, week: 1, product: 10, waitlist: 0, users: 0, customers: 0, revenue: 0,
       signal: 28, market_fit: 0, launched: false, deck_ready: false,
       has_demo: false, has_beta: false, tech_debt: 0,
       investor_warmth: 0,
@@ -206,6 +206,7 @@ class Engine {
   }
 
   resolveTurn(ids, optKeys = {}) {
+    const wasLaunched = this.s.launched;
     const chosen  = this.current.filter(d => ids.includes(d.id));
     const dropped = this.current.filter(d => !ids.includes(d.id));
     const results = [];
@@ -297,6 +298,15 @@ class Engine {
       const weeksExposed = this.s.week - (this.s.competitor_launch_week || 0);
       if (weeksExposed > 0 && weeksExposed <= 4)
         this.s.market_fit = clamp(this.s.market_fit - sprintWeeks, 0, 100);
+    }
+
+    // Launch day: convert a fraction of the waitlist into active users, then clear it
+    if (!wasLaunched && this.s.launched && this.s.waitlist > 0) {
+      const rate = 0.25 + Math.random() * 0.15;
+      const converted = Math.max(1, Math.round(this.s.waitlist * rate));
+      this.s.users += converted;
+      this.s.waitlist = 0;
+      results.push(`${converted} people from your waitlist activated on launch day.`);
     }
 
     // Organic signups — word-of-mouth at high signal

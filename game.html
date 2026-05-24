@@ -1198,6 +1198,8 @@ body::before {
   <div class="hst"><span class="hst-lbl">Product</span><span class="hst-val" id="h-prod">10%</span></div>
   <div class="hst"><span class="hst-lbl">Fit</span><span class="hst-val" id="h-fit">0%</span></div>
   <div class="hst"><span class="hst-lbl">Signal</span><span class="hst-val" id="h-sig">28</span></div>
+  <div class="hst" id="h-wl-wrap" style="display:none"><span class="hst-lbl">Waitlist</span><span class="hst-val" id="h-wl">0</span></div>
+  <div class="hst" id="h-usr-wrap" style="display:none"><span class="hst-lbl">Users</span><span class="hst-val" id="h-usr">0</span></div>
   <div class="hst" style="border-right:none"><span class="hst-lbl">Customers</span><span class="hst-val" id="h-cust">0</span></div>
   <div id="hud-alex">
     <div id="alex-av">AL<div id="alex-ring"></div></div>
@@ -1729,6 +1731,15 @@ function renderHUD() {
   document.getElementById('h-prod').textContent  = Math.round(s.product) + '%';
   document.getElementById('h-fit').textContent   = Math.round(s.market_fit) + '%';
   document.getElementById('h-sig').textContent   = Math.round(s.signal);
+
+  const wlWrap = document.getElementById('h-wl-wrap');
+  wlWrap.style.display = (s.waitlist || 0) > 0 ? 'flex' : 'none';
+  document.getElementById('h-wl').textContent = s.waitlist || 0;
+
+  const usrWrap = document.getElementById('h-usr-wrap');
+  usrWrap.style.display = (s.users || 0) > 0 ? 'flex' : 'none';
+  document.getElementById('h-usr').textContent = s.users || 0;
+
   document.getElementById('h-cust').textContent  = s.customers;
 
   const alex = E.chars.get('alex');

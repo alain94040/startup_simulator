@@ -22,7 +22,7 @@
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
           { label: 'Block off this week for 5 customer interviews', key: 'interview',
-            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.users += 5; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
+            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.waitlist += 1; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -49,7 +49,7 @@
           { label: 'Run demos instead', key: 'demos',
             execute(s, char, e) {
               s.cobuild_last = s.week;
-              s.users += 3;
+              if (!s.launched) s.waitlist += 3; else s.users += 3;
               s.signal = clamp(s.signal + 4, 0, 100);
               return "Ran 3 demos instead. 3 people signed up for early access. Alex kept building solo.";
             } },

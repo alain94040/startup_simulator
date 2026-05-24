@@ -225,7 +225,7 @@
         available: (s, char) => s.week >= 2 && s.week <= 6 && !char.flags.mvp_scope_done,
         options: [
           { label: 'Lean version — ship in 2 weeks, learn in 3', key: 'lean',
-            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 3, 0, 100); s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Lean scope locked. Alex shipped something real in two weeks."; } },
+            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 3, 0, 100); s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Lean scope locked. Alex looks like he\'ll get something real in two weeks."; } },
           { label: 'Full scope — do it right', key: 'full',
             execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 1, 0, 100); return "Full build. More impressive on launch day — if it ships on time."; } },
         ],
@@ -240,7 +240,7 @@
           { label: 'Charge from day one — validate willingness to pay', key: 'charge',
             execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. Even $10/month proves someone cares. Sets the mindset."; } },
           { label: 'Free first — maximize early feedback', key: 'free',
-            execute(s, char) { char.flags.pricing_done = true; s.users += 2; return "Free to start. More people in the door, more feedback loops."; } },
+            execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door, more feedback loops."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
       },
@@ -391,20 +391,20 @@
           { label: 'Show it rough — learn fast', key: 'rough',
             execute(s) {
               s.has_demo = true; s.tech_debt += 12;
-              s.users += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              s.waitlist += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
               return "Three contacts in a room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been trying to solve this for months.' You know what to build next.";
             } },
           { label: 'One sprint to polish it first', key: 'polish',
             execute(s) {
               s.has_demo = true; s.tech_debt += 3;
               s.product = clamp(s.product + 6, 0, 100);
-              s.users += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); s.signal = clamp(s.signal + 4, 0, 100);
+              s.waitlist += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); s.signal = clamp(s.signal + 4, 0, 100);
               return "Spent the sprint cleaning up the worst rough edges. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'";
             } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "someone asked for a demo and i scheduled it for next week. we're showing what we have.",
-        dropFx(s) { s.has_demo = true; s.tech_debt += 18; s.users += 1; },
+        dropFx(s) { s.has_demo = true; s.tech_debt += 18; s.waitlist += 1; },
       },
       {
         id: 'alex_beta_ready', cat: 'p', from: 'Alex',
@@ -415,19 +415,19 @@
           { label: 'Invite our 5 best-fit contacts', key: 'curated',
             execute(s) {
               s.has_beta = true;
-              s.users += 5; s.market_fit = clamp(s.market_fit + 12, 0, 100);
+              s.waitlist += 5; s.market_fit = clamp(s.market_fit + 12, 0, 100);
               return "Invited 5 hand-picked contacts. All 5 accepted. Three used it every day. Two hit the same bug on day 3 — fixed before they could complain. One asked if they could pay now.";
             } },
           { label: 'Post it publicly — open beta', key: 'open',
             execute(s) {
               s.has_beta = true;
-              s.users += 20; s.market_fit = clamp(s.market_fit + 5, 0, 100); s.signal = clamp(s.signal + 10, 0, 100);
+              s.waitlist += 20; s.market_fit = clamp(s.market_fit + 5, 0, 100); s.signal = clamp(s.signal + 10, 0, 100);
               return "Posted in two Slack communities. 20 signups in 48 hours. Noisy — power users mixed with people who'll never come back. But you're seeing usage patterns you couldn't have predicted.";
             } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "getting inbound requests for beta access. i'm opening it up next week.",
-        dropFx(s) { s.has_beta = true; s.users += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); },
+        dropFx(s) { s.has_beta = true; s.waitlist += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); },
       },
       {
         id: 'good_enough_launch', cat: 'p', from: 'Alex',

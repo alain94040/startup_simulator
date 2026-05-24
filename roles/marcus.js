@@ -22,7 +22,7 @@
         id: 'prep_deck', cat: 'e', from: 'Marcus (angel)',
         body: "when you're ready to have a more formal conversation, can you send me a deck? you don't want to be scrambling to build one mid-diligence.",
         urgency: 1, weeks: 1,
-        available: (s, char) => char.flags.intro_warm_done && !s.deck_ready && !char.flags.deck_asked && s.signal >= 38 && (s.customers >= 2 || s.users >= 20),
+        available: (s, char) => char.flags.intro_warm_done && !s.deck_ready && !char.flags.deck_asked && s.signal >= 38 && (s.customers >= 2 || s.users >= 20 || s.waitlist >= 20),
         options: [
           { label: 'Build the deck now', key: 'build',
             execute(s, char) { s.deck_ready = true; char.flags.deck_asked = true; return "Deck done. Story is clear. Ready when the time comes."; } },

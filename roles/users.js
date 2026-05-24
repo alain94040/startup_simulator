@@ -3,7 +3,7 @@
 
   const def = {
     id: 'users', name: 'Users', type: 'customer',
-    unlockCondition: (s) => s.users >= 3 || s.customers >= 1,
+    unlockCondition: (s) => s.waitlist >= 5 || s.users >= 3 || s.customers >= 1,
     cards: [
       {
         id: 'bug_reports', cat: 'p', from: 'Maya + 2 others',
@@ -99,7 +99,7 @@
         available: (s, char) => !s.launched && s.signal > 45 && s.network.peers >= 14 && !char.flags.waitlist_done,
         options: [
           { label: 'Reach out now', key: 'reach',
-            execute(s, char) { char.flags.waitlist_done = true; s.users += 8; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Reached out to waitlist. 8 became active beta testers."; } },
+            execute(s, char) { char.flags.waitlist_done = true; s.waitlist += 8; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Reached out to waitlist. 8 expressed interest and joined the early access list."; } },
         ],
         dropDelay: 2, dropFrom: 'Waitlist',
         dropMsg: "signed up a few weeks ago. assumed the product was dead. unsubscribed.",

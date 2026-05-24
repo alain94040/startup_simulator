@@ -11,7 +11,7 @@
         available: (s) => !s.launched && !s.hn_thread_done,
         options: [
           { label: 'Engage the thread', key: 'engage',
-            execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.market_fit = clamp(s.market_fit + 3, 0, 100); s.users += 3; s.network.peers += 8; return "Engaged the thread authentically. 12 DMs requesting early access."; } },
+            execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.market_fit = clamp(s.market_fit + 3, 0, 100); s.waitlist += 7; s.network.peers += 8; return "Engaged the thread authentically. 7 DMs requesting early access."; } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s) { s.hn_thread_done = true; s.signal = clamp(s.signal - 3, 0, 100); },
@@ -27,7 +27,7 @@
         available: (s) => !s.launched && s.week >= 6 && s.week >= (s.community_hn_last || 0) + 5,
         options: [
           { label: 'Drop a comment', key: 'engage',
-            execute(s) { s.community_hn_last = s.week; s.signal = clamp(s.signal + 6, 0, 100); s.network.peers += 3; s.market_fit = clamp(s.market_fit + 1, 0, 100); return "Commented with a genuine take. 4 people DM'd asking when you're launching."; } },
+            execute(s) { s.community_hn_last = s.week; s.signal = clamp(s.signal + 6, 0, 100); s.waitlist += 4; s.network.peers += 3; s.market_fit = clamp(s.market_fit + 1, 0, 100); return "Commented with a genuine take. 4 people DM'd asking when you're launching."; } },
           { label: 'Read and move on', key: 'skip',
             execute(s) { s.community_hn_last = s.week; return "Read it. Nothing actionable right now."; } },
         ],
@@ -40,7 +40,7 @@
         available: (s) => !s.launched && s.week >= 8 && s.week >= (s.community_reddit_last || 0) + 5,
         options: [
           { label: 'Join the conversation', key: 'engage',
-            execute(s) { s.community_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.users += 2; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Joined the thread as a builder, not a promoter. 2 people signed up for early access."; } },
+            execute(s) { s.community_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.waitlist += 2; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Joined the thread as a builder, not a promoter. 2 people signed up for early access."; } },
           { label: 'Skip it', key: 'skip',
             execute(s) { s.community_reddit_last = s.week; return "Skipped. Staying focused."; } },
         ],
