@@ -124,7 +124,7 @@ body::before {
   pointer-events: none;
   white-space: nowrap;
   z-index: 9999;
-  animation: cashFly 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: cashFly 5.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 .cash-flyup.pos { color: #4ade80; text-shadow: 0 0 12px rgba(74,222,128,0.7); }
 .cash-flyup.neg { color: #f87171; text-shadow: 0 0 12px rgba(248,113,113,0.7); }
@@ -962,7 +962,7 @@ function fmtCash(v) {
 function animateCash(el, fromVal, toVal) {
   const delta  = toVal - fromVal;
   const isGain = delta > 0;
-  const dur    = 900;
+  const dur    = 3600;
   const steps  = 28;
   let   step   = 0;
 
@@ -996,7 +996,7 @@ function animateCash(el, fromVal, toVal) {
       setTimeout(() => {
         el.classList.remove('cash-up', 'cash-down');
         delete el.dataset.cashAnim;
-      }, 600);
+      }, 2400);
     }
   }, dur / steps);
 }
@@ -1411,6 +1411,7 @@ function nextWeek() {
   document.getElementById('hand-deltas').classList.remove('on');
   slots = [null, null]; prevSnap = null;
   E.generateDemands();
+  displayedCash = E.s.cash; // absorb silent world-event cost without animating
   isDealing = true; renderAll(); isDealing = false;
 }
 
