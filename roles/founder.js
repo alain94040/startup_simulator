@@ -10,8 +10,8 @@
         urgency: 2, weeks: 1,
         available: (s) => s.week <= 5 && !s.has_landing_page,
         options: [
-          { label: 'Register the domain + set up a landing page', key: 'build',
-            execute(s) { s.has_landing_page = true; s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. Already have 12 email signups from people! wait actually these are just spammers."; } },
+          { label: 'Register the domain + set up a landing page — $200', key: 'build',
+            execute(s) { s.has_landing_page = true; s.cash = clamp(s.cash - 200, 0, 9999999); s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. $200 out for domain, annual hosting, and a Carrd subscription. Already have 12 email signups from people! wait actually these are just spammers."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },

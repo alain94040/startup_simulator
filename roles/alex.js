@@ -128,7 +128,7 @@
 
       // ── FOCUS ALIGNMENT ──────────────────────────────────────────────────────
       {
-        id: 'alex_sync_discover', cat: 't', from: 'Alex',
+        id: 'alex_sync_discover', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "we've been heads-down building for a while without talking to anyone outside. should we shift focus to customer discovery for a sprint or two?",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
@@ -141,7 +141,7 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
-        id: 'alex_sync_build', cat: 't', from: 'Alex',
+        id: 'alex_sync_build', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "i think we have enough customer feedback to act on for now. ready to get back to building?",
         urgency: 1, weeks: 1,
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && !(s.signal >= 45 && s.customers >= 8 && s.deck_ready),
@@ -152,7 +152,7 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
-        id: 'alex_sync_pitch', cat: 't', from: 'Alex',
+        id: 'alex_sync_pitch', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "our traction story is getting solid. i think i'd create more value right now talking to investors than doing more discovery. free you up to stay focused on users. worth trying?",
         urgency: 1, weeks: 1,
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 8 && s.deck_ready,
@@ -163,15 +163,112 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
+      // ── EARLY CONVERSATIONS (weeks 1–8): founder debates, low-stakes ────────
+      {
+        id: 'early_name', cat: 'e', from: 'Alex', ignoreForTrust: true,
+        body: "we need to stop calling this 'the project.' i found three good .com domains. can we just pick one and commit?",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week <= 3 && !char.flags.name_done,
+        options: [
+          { label: 'The catchy one', key: 'catchy',
+            execute(s, char) { char.flags.name_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Name locked. Catchy, memorable, works on a t-shirt."; } },
+          { label: 'The descriptive one', key: 'descriptive',
+            execute(s, char) { char.flags.name_done = true; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Name locked. Says exactly what it does. Customers know what they're signing up for."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.name_done = true; },
+      },
+      {
+        id: 'early_tech_stack', cat: 'e', from: 'Alex', ignoreForTrust: true,
+        body: "stack question: i could ship twice as fast with what i know, but the 'right' choice is more scalable. does the stack matter to you, or just ship speed?",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week >= 1 && s.week <= 4 && !char.flags.stack_done,
+        options: [
+          { label: 'Ship speed — use what you know', key: 'fast',
+            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 4, 0, 100); return "Going with the fast stack. Alex shipping immediately."; } },
+          { label: 'Pick the scalable one', key: 'scalable',
+            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 2, 0, 100); s.tech_debt -= 5; return "Scalable stack chosen. Slower start but cleaner foundation."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.stack_done = true; },
+      },
+      {
+        id: 'early_working_style', cat: 't', from: 'Alex', ignoreForTrust: true,
+        body: "how are we working together day to day? i go heads-down for long stretches. not sure if you want standups or just ping each other when stuck.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week <= 4 && !char.flags.working_style_done,
+        options: [
+          { label: 'Daily 15-min standup', key: 'standup',
+            execute(s, char) { char.flags.working_style_done = true; char.morale = clamp(char.morale + 5, 0, 100); return "Daily standup at 9am. Keeps both of you honest."; } },
+          { label: 'Async — ping when blocked', key: 'async',
+            execute(s, char) { char.flags.working_style_done = true; return "Async by default. Fewer interruptions, more deep work."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.working_style_done = true; },
+      },
+      {
+        id: 'early_customer_target', cat: 't', from: 'Alex', ignoreForTrust: true,
+        body: "noticed we're pitching this differently every time. sometimes it's for individuals, sometimes for teams. we should probably agree before it gets confusing.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week <= 6 && !char.flags.customer_target_done,
+        options: [
+          { label: 'Individuals first — faster to close', key: 'individuals',
+            execute(s, char) { char.flags.customer_target_done = true; s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Locked in: individual users first. Shorter sales cycle, faster feedback."; } },
+          { label: 'Teams — that\'s where the revenue is', key: 'teams',
+            execute(s, char) { char.flags.customer_target_done = true; s.investor_warmth = clamp(s.investor_warmth + 4, 0, 100); return "Going after teams. Bigger deals, stronger investor story."; } },
+          { label: 'Follow the early users', key: 'open',
+            execute(s, char) { char.flags.customer_target_done = true; return "Staying flexible. Let the first users tell you who they are."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.customer_target_done = true; },
+      },
+      {
+        id: 'early_mvp_scope', cat: 't', from: 'Alex', ignoreForTrust: true,
+        body: "made two lists. one is everything we talked about shipping. the other is the smallest thing that actually proves the idea. they're pretty different.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week >= 2 && s.week <= 6 && !char.flags.mvp_scope_done,
+        options: [
+          { label: 'Lean version — ship in 2 weeks, learn in 3', key: 'lean',
+            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 3, 0, 100); s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Lean scope locked. Alex shipped something real in two weeks."; } },
+          { label: 'Full scope — do it right', key: 'full',
+            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 1, 0, 100); return "Full build. More impressive on launch day — if it ships on time."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.mvp_scope_done = true; },
+      },
+      {
+        id: 'early_pricing', cat: 't', from: 'Alex', ignoreForTrust: true,
+        body: "i keep going back and forth: do we charge from day one, or give it away until we hit some real usage threshold? what's your instinct?",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week >= 2 && s.week <= 7 && !char.flags.pricing_done,
+        options: [
+          { label: 'Charge from day one — validate willingness to pay', key: 'charge',
+            execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. Even $10/month proves someone cares. Sets the mindset."; } },
+          { label: 'Free first — maximize early feedback', key: 'free',
+            execute(s, char) { char.flags.pricing_done = true; s.users += 2; return "Free to start. More people in the door, more feedback loops."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
+      },
+      {
+        id: 'early_funding_goal', cat: 't', from: 'Alex', ignoreForTrust: true,
+        body: "serious question i've been sitting on: are we building to raise VC money, sell to a big company, or run a profitable business? i want to make sure we have the same picture.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week >= 3 && s.week <= 8 && !char.flags.funding_goal_done,
+        options: [
+          { label: 'VC route — raise, scale, exit', key: 'vc',
+            execute(s, char) { char.flags.funding_goal_done = true; s.investor_warmth = clamp(s.investor_warmth + 5, 0, 100); return "Aligned on the VC path. Changes how you talk to investors."; } },
+          { label: 'Profitable first — control our own destiny', key: 'profitable',
+            execute(s, char) { char.flags.funding_goal_done = true; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Profitable first. Every product decision gets cleaner with that bar."; } },
+          { label: 'Stay flexible for now', key: 'open',
+            execute(s, char) { char.flags.funding_goal_done = true; return "Staying flexible. Revisit when you have real traction."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.funding_goal_done = true; },
+      },
+
       // ── EARLY: ADMIN & LEGAL ────────────────────────────────────────────────
       {
         id: 'incorporate_now', cat: 'e', from: 'Alex',
         body: "a potential user just asked us to sign an NDA before they'd demo their workflow. we can't sign anything without a legal entity. also — we need a bank account. do we use Stripe Atlas or find a lawyer?",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1, priority: true, ignoreForTrust: true,
         available: (s, char) => s.week >= 3 && s.week <= 14 && s.product >= 20 && !s.incorporated,
         options: [
           { label: 'Stripe Atlas — fast and cheap', key: 'atlas',
-            execute(s, char) { s.incorporated = true; return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official."; } },
+            execute(s, char) { s.incorporated = true; s.cash = clamp(s.cash - 500, 0, 9999999); return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "that user followed up on the NDA again. we still don't have a legal entity.",
@@ -180,7 +277,7 @@
       {
         id: 'ip_concern', cat: 'e', from: 'Alex',
         body: "something i've been meaning to raise — i wrote some early prototypes at my last job, same general problem space. if an investor or acquirer ever does diligence, could my old employer claim ownership?",
-        urgency: 3, weeks: 1,
+        urgency: 3, weeks: 1, ignoreForTrust: true,
         available: (s, char) => s.week <= 12 && !s.ip_clear && !s.ip_concern_dismissed,
         options: [
           { label: 'Get a lawyer to review', key: 'lawyer',

@@ -9,7 +9,7 @@
         id: 'ff_mentor', cat: 'e', from: 'David (ex-manager)',
         body: "keeping an eye on what you're doing. would love to grab lunch — been a while. let me know when you're free.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.week <= 10 && !char.flags.first_meeting_done,
+        available: (s, char) => s.week <= 12 && !char.flags.first_meeting_done,
         options: [
           { label: 'Have lunch with David', key: 'lunch',
             execute(s, char) {
@@ -24,7 +24,7 @@
         id: 'ff_mentor_pitch', cat: 'e', from: 'David (ex-manager)',
         body: "been chewing on what you told me at lunch. want to grab coffee and go through the numbers?",
         urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week <= char.flags.first_meeting_week + 2,
+        available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week >= char.flags.first_meeting_week + 3 && s.week <= char.flags.first_meeting_week + 10,
         options: [
           { label: 'Show him the deck', key: 'pitch',
             execute(s, char) {

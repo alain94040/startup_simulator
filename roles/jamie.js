@@ -7,7 +7,7 @@
         id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)',
         body: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear about it.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.week <= 8 && !char.flags.first_meeting_done,
+        available: (s, char) => s.week <= 10 && !char.flags.first_meeting_done,
         options: [
           { label: 'Tell him about it', key: 'tell',
             execute(s, char) {
@@ -22,7 +22,7 @@
         id: 'ff_friend_ask', cat: 'e', from: 'Jamie (college friend)',
         body: "hey — been thinking about what you told me. i want to support this somehow. can we talk again?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week <= char.flags.first_meeting_week + 2,
+        available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week >= char.flags.first_meeting_week + 4 && s.week <= char.flags.first_meeting_week + 12,
         options: [
           { label: 'Ask him to invest', key: 'ask',
             execute(s, char) {

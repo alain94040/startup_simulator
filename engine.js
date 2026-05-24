@@ -280,8 +280,8 @@ class Engine {
     // Trust only drops when the co-founder's cards are ignored (dropped), not just from time passing.
     for (const [id, char] of this.chars) {
       if (!char.active || !('trust' in char)) continue;
-      const alexDropped = dropped.filter(d => d._charId === id).length;
-      const alexChosen  = chosen.filter(d => d._charId === id).length;
+      const alexDropped = dropped.filter(d => d._charId === id && !d.ignoreForTrust).length;
+      const alexChosen  = chosen.filter(d => d._charId === id && !d.ignoreForTrust).length;
       const delta = alexChosen - alexDropped;
       if (delta > 0)      char.trust = clamp(char.trust + 2 * sprintWeeks, 0, 100);
       else if (delta < 0) char.trust = clamp(char.trust - 4 * sprintWeeks, 0, 100);

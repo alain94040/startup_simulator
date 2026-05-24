@@ -295,7 +295,9 @@ function selectCards(current, strategy, state) {
     const NEVER_PICK    = new Set(['alex_sync_discover','yc_discussion_ready','yc_discussion_early']);
 
     // Family/friend cash cards — free runway, expires early; pick them while available
-    const FAMILY_CASH = new Set(['ff_family', 'ff_family_2', 'ff_family_3', 'ff_friend', 'ff_friend_ask']);
+    const FAMILY_CASH = new Set(['ff_family', 'ff_family_2', 'ff_family_3',
+                                  'ff_friend', 'ff_friend_ask',
+                                  'ff_mentor', 'ff_mentor_pitch']);
 
     const priority = c => {
       if (NEVER_PICK.has(c.id))    return 99;
@@ -571,9 +573,11 @@ const strategies = [
 
 // ─── Options parser ───────────────────────────────────────────────────────────
 
+const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','angel_path'];
+
 function parseArgs(argv) {
   const args = argv.slice(2);
-  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3, fullMessages: false };
+  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3, fullMessages: false, strategy: 'lean_loop' };
   const errors = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -581,35 +585,48 @@ function parseArgs(argv) {
 
     if (a === '--help' || a === '-h') {
       console.log(`
-Usage: node sim_proto.js [N] [--no-yc] [--winners [K] | --all]
+Usage: node sim_proto.js [N] [--no-yc] [--winners [K] | --all] [--strategy NAME]
 
 Modes (mutually exclusive — default is summary):
   (no flag)          Run strategy comparison across all strategies.
-  --winners [K]      Hunt for K winning lean_loop traces (default: 3).
-                     Tries up to N games.
-  --all              Print N lean_loop game traces regardless of outcome.
+  --winners [K]      Hunt for K winning traces (default: 3). Tries up to N games.
+  --all              Print N game traces regardless of outcome.
 
 Options:
   N                  Number of games: samples per strategy (summary),
                      max attempts (--winners), or traces printed (--all).
                      Default: 100.
+  --strategy NAME    Strategy to use for --all and --winners modes (default: lean_loop).
+                     One of: ${STRATEGY_NAMES.join(', ')}.
   --no-yc            Block YC acceptance — forces the angel fundraising path.
   --messages         Print full card bodies and outcome messages without truncation.
   -h, --help         Show this help.
 
 Examples:
-  node sim_proto.js                        Summary, 100 games each
-  node sim_proto.js 500                    Summary, 500 games each
-  node sim_proto.js 500 --no-yc            Summary, angel path only
-  node sim_proto.js 200 --winners          Hunt for 3 winners, up to 200 tries
-  node sim_proto.js 500 --winners 1 --no-yc  One angel-path win, up to 500 tries
-  node sim_proto.js 5 --all               Print 5 lean_loop traces
+  node sim_proto.js                              Summary, 100 games each
+  node sim_proto.js 500                          Summary, 500 games each
+  node sim_proto.js 500 --no-yc                  Summary, angel path only
+  node sim_proto.js 200 --winners                Hunt for 3 lean_loop winners
+  node sim_proto.js 500 --winners 1 --no-yc      One angel-path win, up to 500 tries
+  node sim_proto.js 5 --all                      Print 5 lean_loop traces
+  node sim_proto.js 5 --all --strategy angel_path  Print 5 angel_path traces
 `);
       process.exit(0);
     }
 
     if (a === '--no-yc')     { opts.noYC = true; continue; }
     if (a === '--messages')  { opts.fullMessages = true; continue; }
+
+    if (a === '--strategy') {
+      const name = args[i + 1];
+      if (!name || !STRATEGY_NAMES.includes(name)) {
+        errors.push(`--strategy requires a name: ${STRATEGY_NAMES.join(', ')}`);
+        break;
+      }
+      opts.strategy = name;
+      i++;
+      continue;
+    }
 
     if (a === '--winners') {
       if (opts.mode === 'all') { errors.push('--winners and --all are mutually exclusive'); break; }
@@ -639,7 +656,7 @@ Examples:
   return opts;
 }
 
-const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT, fullMessages: FULL_MESSAGES } = parseArgs(process.argv);
+const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT, fullMessages: FULL_MESSAGES, strategy: TRACE_STRATEGY } = parseArgs(process.argv);
 const WINNERS_FLAG = mode === 'winners';
 const ALL_FLAG     = mode === 'all';
 
@@ -704,13 +721,12 @@ function printTrace(trace, label, fullMessages = false) {
 // ─── Mode dispatch ────────────────────────────────────────────────────────────
 
 if (WINNERS_FLAG) {
-  // Hunt for winning lean_loop games — print traces only, no summary
   const winners = [];
   let attempts = 0;
 
-  process.stdout.write(`\nHunting for ${WINNERS_COUNT} winning lean_loop game(s)${NO_YC ? ' [YC disabled]' : ''} (up to ${N} tries)…`);
+  process.stdout.write(`\nHunting for ${WINNERS_COUNT} winning ${TRACE_STRATEGY} game(s)${NO_YC ? ' [YC disabled]' : ''} (up to ${N} tries)…`);
   while (winners.length < WINNERS_COUNT && attempts < N) {
-    const g = runGame('lean_loop', 120, true, NO_YC);
+    const g = runGame(TRACE_STRATEGY, 120, true, NO_YC);
     attempts++;
     if (g.won) {
       winners.push(g);
@@ -720,15 +736,14 @@ if (WINNERS_FLAG) {
   console.log(`\nFound ${winners.length}/${WINNERS_COUNT} in ${attempts} attempts.\n`);
 
   winners.forEach((w, i) =>
-    printTrace(w, `lean_loop WIN #${i + 1} of ${winners.length} (attempt ~${Math.round(attempts / winners.length * (i + 1))})`, FULL_MESSAGES)
+    printTrace(w, `${TRACE_STRATEGY} WIN #${i + 1} of ${winners.length} (attempt ~${Math.round(attempts / winners.length * (i + 1))})`, FULL_MESSAGES)
   );
 
 } else if (ALL_FLAG) {
-  // Print N lean_loop traces regardless of outcome — no summary
   const ycTag = NO_YC ? ' — YC disabled' : '';
   for (let i = 0; i < N; i++) {
-    const g = runGame('lean_loop', 120, true, NO_YC);
-    printTrace(g, `lean_loop run ${i + 1}/${N}${ycTag}`, FULL_MESSAGES);
+    const g = runGame(TRACE_STRATEGY, 120, true, NO_YC);
+    printTrace(g, `${TRACE_STRATEGY} run ${i + 1}/${N}${ycTag}`, FULL_MESSAGES);
   }
 
 } else {
