@@ -6,12 +6,12 @@
     cards: [
       {
         id: 'founder_landing', cat: 'p', from: 'You',
-        body: "you've been talking about this for two weeks but there's nowhere to point people. no domain, no landing page, no email capture. it's making conversations awkward.",
+        body: "you've been talking about this for weeks but there's nowhere to point people. no domain, no landing page, no email capture. it's making conversations awkward.",
         urgency: 2, weeks: 1,
         available: (s) => s.week <= 5 && !s.has_landing_page,
         options: [
           { label: 'Register the domain + set up a landing page — $200', key: 'build',
-            execute(s) { s.has_landing_page = true; s.cash = clamp(s.cash - 200, 0, 9999999); s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. $200 out for domain, annual hosting, and a Carrd subscription. Already have 12 email signups from people! wait actually these are just spammers."; } },
+            execute(s) { s.has_landing_page = true; s.cash = clamp(s.cash - 200, 0, 9999999); s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. $200 out for domain, annual hosting, and a Carrd subscription. Already have 12 email signups from people! wait actually these are just spammers pushing some crypto scam."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
