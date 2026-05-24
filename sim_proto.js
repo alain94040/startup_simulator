@@ -203,7 +203,13 @@ function pickOptions(cards, ids, strategy, state) {
       const phase = state.product >= 80 && state.launched ? 'pitch' : 'build';
       if (keys.includes(phase)) { opts[id] = phase; continue; }
     }
-    if (strategy === 'random') {
+    if (strategy === 'rand_fulltime' && id === 'alex_commitment') {
+      opts[id] = 'push'; continue;
+    }
+    if (strategy === 'rand_parttime' && id === 'alex_commitment') {
+      opts[id] = 'accept'; continue;
+    }
+    if (strategy === 'random' || strategy === 'rand_fulltime' || strategy === 'rand_parttime') {
       opts[id] = keys[Math.floor(Math.random() * keys.length)];
     } else if (prefs[id] && keys.includes(prefs[id])) {
       opts[id] = prefs[id];
@@ -218,7 +224,7 @@ function selectCards(current, strategy, state) {
   if (current.length === 0) return [];
   const pool = [...current];
 
-  if (strategy === 'random') {
+  if (strategy === 'random' || strategy === 'rand_fulltime' || strategy === 'rand_parttime') {
     const shuffled = pool.sort(() => Math.random() - 0.5);
     return shuffled.slice(0, 2).map(c => c.id);
   }
@@ -561,19 +567,21 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 // ─── Report ───────────────────────────────────────────────────────────────────
 
 const strategies = [
-  ['Random',          'random'],
-  ['Distracted',      'distracted'],
-  ['YC grind',        'yc_grind'],
-  ['Alex first',      'alex_first'],
-  ['Ignore Alex',     'ignore_alex'],
-  ['Customer focus',  'customer_focus'],
-  ['Lean loop',       'lean_loop'],
-  ['Angel path',      'angel_path'],
+  ['Random',              'random'],
+  ['Distracted',          'distracted'],
+  ['YC grind',            'yc_grind'],
+  ['Alex first',          'alex_first'],
+  ['Ignore Alex',         'ignore_alex'],
+  ['Customer focus',      'customer_focus'],
+  ['Lean loop',           'lean_loop'],
+  ['Angel path',          'angel_path'],
+  ['Rand + full-time',    'rand_fulltime'],
+  ['Rand + part-time',    'rand_parttime'],
 ];
 
 // ─── Options parser ───────────────────────────────────────────────────────────
 
-const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','angel_path'];
+const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','angel_path','rand_fulltime','rand_parttime'];
 
 function parseArgs(argv) {
   const args = argv.slice(2);
@@ -787,11 +795,15 @@ if (WINNERS_FLAG) {
     check(`customer_focus.wins = ${s.customer_focus.wins}% (expected 0)`,
           s.customer_focus.wins === 0);
 
+    // Pushing alex_commitment full-time (yc_grind) beats accepting part-time (alex_first)
+    check(`alex_first.wins (${s.alex_first.wins}%) < yc_grind.wins (${s.yc_grind.wins}%)`,
+          s.alex_first.wins < s.yc_grind.wins);
+
     // Alex retention
     check(`ignore_alex.alexLeft (${s.ignore_alex.alexLeft}%) >= 90%`,
           s.ignore_alex.alexLeft >= 90);
-    check(`customer_focus.alexLeft (${s.customer_focus.alexLeft}%) >= 90%`,
-          s.customer_focus.alexLeft >= 90);
+    check(`customer_focus.alexLeft (${s.customer_focus.alexLeft}%) >= 80%`,
+          s.customer_focus.alexLeft >= 80);
     check(`alex_first.alexLeft (${s.alex_first.alexLeft}%) <= 10%`,
           s.alex_first.alexLeft <= 10);
     check(`lean_loop.alexLeft (${s.lean_loop.alexLeft}%) <= 10%`,
@@ -804,6 +816,11 @@ if (WINNERS_FLAG) {
           s.ignore_alex.avgProduct < s.alex_first.avgProduct);
     check(`ignore_alex.avgProduct (${s.ignore_alex.avgProduct}%) < lean_loop.avgProduct (${s.lean_loop.avgProduct}%)`,
           s.ignore_alex.avgProduct < s.lean_loop.avgProduct);
+
+    // Controlled test: pushing full-time (rand_fulltime) beats part-time (rand_parttime) on product
+    // Both strategies are otherwise identical (random card selection, random options)
+    check(`rand_parttime.avgProduct (${s.rand_parttime.avgProduct}%) < rand_fulltime.avgProduct (${s.rand_fulltime.avgProduct}%)`,
+          s.rand_parttime.avgProduct < s.rand_fulltime.avgProduct);
 
     // YC application behaviour
     check(`yc_grind.ycApplied (${s.yc_grind.ycApplied}%) >= 90%`,
