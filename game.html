@@ -884,7 +884,7 @@ body::before {
 
 /* ── History Pile ───────────────────────────────────────── */
 #pile-btn {
-  display: none;
+  display: flex;
   align-items: center;
   gap: 9px;
   background: none;
@@ -895,7 +895,6 @@ body::before {
   transition: background 0.15s;
   flex-shrink: 0;
 }
-#pile-btn.has-cards { display: flex; }
 #pile-btn:hover { background: var(--surface3); }
 
 #pile-stack {
@@ -1209,7 +1208,7 @@ const INTRO_SLIDES = [
   {
     step: 'The Goal',
     heading: 'One shot. Make it count.',
-    text: 'You need to raise to survive. Raise $500K from YC or an angel before the money runs out. Build, sell, and don\'t ignore Alex.',
+    text: 'You need to raise to survive. Raise $500K from YC or an angel before the money runs out. Build, get traction, and don\'t ignore Alex.',
     last: true,
   },
 ];
@@ -1331,7 +1330,6 @@ function boot() {
   document.getElementById('end-overlay').classList.remove('on');
   document.getElementById('deal-btn').classList.remove('on');
   document.getElementById('hand-deltas').classList.remove('on');
-  document.getElementById('pile-btn').classList.remove('has-cards');
   document.getElementById('pile-count-val').textContent = '0';
   E.generateDemands();
   isDealing = true; renderAll(); isDealing = false;
@@ -1363,7 +1361,6 @@ function updatePileCount() {
   const n = gameLog.length;
   document.getElementById('pile-count-val').textContent = n;
   if (n > 0) {
-    document.getElementById('pile-btn').classList.add('has-cards');
     const stack = document.getElementById('pile-stack');
     stack.classList.remove('pile-pop');
     void stack.offsetWidth;
@@ -1372,7 +1369,6 @@ function updatePileCount() {
 }
 
 function openLog() {
-  if (!gameLog.length) return;
   renderLog();
   document.getElementById('log-overlay').classList.add('on');
 }
