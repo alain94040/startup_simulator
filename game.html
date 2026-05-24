@@ -795,6 +795,93 @@ body::before {
   color: white; cursor: pointer;
 }
 
+/* ── Intro Overlay ──────────────────────────────────────── */
+#intro-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.96);
+  backdrop-filter: blur(12px);
+  z-index: 300;
+  align-items: center; justify-content: center;
+}
+#intro-overlay.on { display: flex; }
+
+#intro-card {
+  width: 420px; max-width: 92vw;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
+  animation: introCardIn 0.4s cubic-bezier(0.34,1.5,0.64,1) forwards;
+}
+@keyframes introCardIn {
+  from { opacity: 0; transform: scale(0.88) translateY(30px); }
+  to   { opacity: 1; transform: none; }
+}
+.intro-card-exit {
+  animation: introCardOut 0.28s ease-in forwards !important;
+}
+@keyframes introCardOut {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scale(0.92) translateY(-20px); }
+}
+
+#intro-stripe {
+  height: 6px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
+}
+
+#intro-body { padding: 32px 36px 28px; }
+#intro-step {
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 6px;
+  font-family: 'DM Mono', monospace;
+}
+#intro-heading {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px; font-weight: 800;
+  color: white; margin-bottom: 14px; line-height: 1.2;
+}
+#intro-text {
+  font-family: 'Instrument Serif', serif;
+  font-size: 16px; color: var(--dim2);
+  line-height: 1.7; margin-bottom: 32px;
+}
+#intro-footer {
+  display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+}
+#intro-dots { display: flex; gap: 6px; align-items: center; }
+.intro-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--surface3); border: 1px solid var(--border2);
+  transition: background 0.2s, transform 0.2s;
+}
+.intro-dot.active {
+  background: #8b5cf6; transform: scale(1.3); border-color: transparent;
+}
+#intro-skip {
+  font-size: 11px; color: var(--dim);
+  background: none; border: none; cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  text-decoration: underline; padding: 0;
+  transition: color 0.15s;
+}
+#intro-skip:hover { color: var(--dim2); }
+#intro-next {
+  padding: 11px 26px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none; border-radius: 10px;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 800;
+  color: white; cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+#intro-next:hover { opacity: 0.9; }
+#intro-next:active { transform: scale(0.97); }
+
 /* ── Mobile (portrait) ──────────────────────────────────── */
 @media (max-width: 600px) {
   /* Hand: horizontal scroll strip */
@@ -887,7 +974,26 @@ body::before {
 <div id="end-overlay">
   <div id="end-title"></div>
   <div id="end-sub"></div>
-  <button id="end-btn" onclick="boot()">Play Again</button>
+  <button id="end-btn" onclick="introIdx=0;introRender();document.getElementById('intro-overlay').classList.add('on')">Play Again</button>
+</div>
+
+<!-- ── Intro ──────────────────────────────────────────────── -->
+<div id="intro-overlay" class="on">
+  <div id="intro-card">
+    <div id="intro-stripe"></div>
+    <div id="intro-body">
+      <div id="intro-step"></div>
+      <div id="intro-heading"></div>
+      <div id="intro-text"></div>
+      <div id="intro-footer">
+        <div id="intro-dots"></div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <button id="intro-skip" onclick="startGame()">skip</button>
+          <button id="intro-next" onclick="introNext()">Continue →</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script>const ROLES = {};</script>
@@ -964,6 +1070,64 @@ const committedIds  = () => slots.filter(s => s?.optKey).map(s => s.cardId);
 const activeSlotIdx = () => slots.findIndex(s => s && !s.optKey);  // has card, no option yet
 const emptySlotIdx  = () => slots.findIndex(s => s === null);
 const allCommitted  = () => slots.every(s => s?.optKey);
+
+// ─────────────────────────────────────────────────────────
+// Intro sequence
+// ─────────────────────────────────────────────────────────
+const INTRO_SLIDES = [
+  {
+    step: 'The Beginning',
+    heading: 'You and Alex have been friends since college.',
+    text: 'He\'s the engineer. You\'re the business brain. You\'ve talked about starting something for years. Last month, you finally said: let\'s actually do it.',
+  },
+  {
+    step: 'The Idea',
+    heading: 'You spotted a real gap.',
+    text: 'B2B teams are drowning in a problem no one\'s built a proper tool for yet. You\'ve seen it firsthand. You know who\'s feeling the pain. You think you can fix it.',
+  },
+  {
+    step: 'The Stakes',
+    heading: 'You\'ve got $10,000 between you.',
+    text: 'At $500 a week in burn, that\'s 20 weeks before it\'s over. Every decision costs time. Not every card needs a reply — but some do.',
+  },
+  {
+    step: 'The Goal',
+    heading: 'One shot. Make it count.',
+    text: 'You need to raise to survive. Get into YC and walk away with $500K. Or close two angel investors before the money runs out. Ship, sell, and don\'t ignore Alex.',
+    last: true,
+  },
+];
+
+let introIdx = 0;
+
+function introRender() {
+  const slide = INTRO_SLIDES[introIdx];
+  document.getElementById('intro-step').textContent = slide.step;
+  document.getElementById('intro-heading').textContent = slide.heading;
+  document.getElementById('intro-text').textContent = slide.text;
+  document.getElementById('intro-next').textContent = slide.last ? 'Start building →' : 'Continue →';
+
+  const dots = document.getElementById('intro-dots');
+  dots.innerHTML = INTRO_SLIDES.map((_, i) =>
+    `<div class="intro-dot${i === introIdx ? ' active' : ''}"></div>`
+  ).join('');
+}
+
+function introNext() {
+  if (introIdx >= INTRO_SLIDES.length - 1) { startGame(); return; }
+  const card = document.getElementById('intro-card');
+  card.classList.add('intro-card-exit');
+  card.addEventListener('animationend', () => {
+    card.classList.remove('intro-card-exit');
+    introIdx++;
+    introRender();
+  }, { once: true });
+}
+
+function startGame() {
+  document.getElementById('intro-overlay').classList.remove('on');
+  boot();
+}
 
 // ─────────────────────────────────────────────────────────
 // Boot
@@ -1467,7 +1631,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-boot();
+introRender();
 </script>
 </body>
 </html>
