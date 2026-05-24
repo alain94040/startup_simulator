@@ -996,7 +996,46 @@ body::before {
   </div>
 </div>
 
-<script>const ROLES = {};</script>
+<script>
+const ROLES = {};
+// Intro data lives here so it renders before role scripts load
+const INTRO_SLIDES = [
+  {
+    step: 'The Beginning',
+    heading: 'You and Alex have been friends since college.',
+    text: 'He\'s the engineer. You\'re the brain. You\'ve talked about starting something for years. Last month, you finally said: let\'s actually do it.',
+  },
+  {
+    step: 'The Idea',
+    heading: 'You spotted a real gap.',
+    text: 'B2B teams are drowning in a problem no one\'s built a proper tool for yet. You\'ve seen it firsthand. You know who\'s feeling the pain. You think you can fix it.',
+  },
+  {
+    step: 'The Stakes',
+    heading: 'You\'ve got $10,000 between you.',
+    text: 'At $500 a week in burn, that\'s 20 weeks before it\'s over. Every decision costs time. You can\'t do everything — you need to focus on what matters.',
+  },
+  {
+    step: 'The Goal',
+    heading: 'One shot. Make it count.',
+    text: 'You need to raise to survive. Raise $500K from YC or an angel before the money runs out. Build, sell, and don\'t ignore Alex.',
+    last: true,
+  },
+];
+let introIdx = 0;
+function introRender() {
+  const slide = INTRO_SLIDES[introIdx];
+  document.getElementById('intro-step').textContent = slide.step;
+  document.getElementById('intro-heading').textContent = slide.heading;
+  document.getElementById('intro-text').textContent = slide.text;
+  document.getElementById('intro-next').textContent = slide.last ? 'Start building →' : 'Continue →';
+  const dots = document.getElementById('intro-dots');
+  dots.innerHTML = INTRO_SLIDES.map((_, i) =>
+    `<div class="intro-dot${i === introIdx ? ' active' : ''}"></div>`
+  ).join('');
+}
+introRender(); // populate immediately, before any other scripts load
+</script>
 <script src="roles/alex.js"></script>
 <script src="roles/priya.js"></script>
 <script src="roles/marcus.js"></script>
@@ -1074,45 +1113,6 @@ const allCommitted  = () => slots.every(s => s?.optKey);
 // ─────────────────────────────────────────────────────────
 // Intro sequence
 // ─────────────────────────────────────────────────────────
-const INTRO_SLIDES = [
-  {
-    step: 'The Beginning',
-    heading: 'You and Alex have been friends since college.',
-    text: 'He\'s the engineer. You\'re the business brain. You\'ve talked about starting something for years. Last month, you finally said: let\'s actually do it.',
-  },
-  {
-    step: 'The Idea',
-    heading: 'You spotted a real gap.',
-    text: 'B2B teams are drowning in a problem no one\'s built a proper tool for yet. You\'ve seen it firsthand. You know who\'s feeling the pain. You think you can fix it.',
-  },
-  {
-    step: 'The Stakes',
-    heading: 'You\'ve got $10,000 between you.',
-    text: 'At $500 a week in burn, that\'s 20 weeks before it\'s over. Every decision costs time. Not every card needs a reply — but some do.',
-  },
-  {
-    step: 'The Goal',
-    heading: 'One shot. Make it count.',
-    text: 'You need to raise to survive. Get into YC and walk away with $500K. Or close two angel investors before the money runs out. Ship, sell, and don\'t ignore Alex.',
-    last: true,
-  },
-];
-
-let introIdx = 0;
-
-function introRender() {
-  const slide = INTRO_SLIDES[introIdx];
-  document.getElementById('intro-step').textContent = slide.step;
-  document.getElementById('intro-heading').textContent = slide.heading;
-  document.getElementById('intro-text').textContent = slide.text;
-  document.getElementById('intro-next').textContent = slide.last ? 'Start building →' : 'Continue →';
-
-  const dots = document.getElementById('intro-dots');
-  dots.innerHTML = INTRO_SLIDES.map((_, i) =>
-    `<div class="intro-dot${i === introIdx ? ' active' : ''}"></div>`
-  ).join('');
-}
-
 function introNext() {
   if (introIdx >= INTRO_SLIDES.length - 1) { startGame(); return; }
   const card = document.getElementById('intro-card');
@@ -1631,7 +1631,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-introRender();
+// intro already rendered by the early script block above
 </script>
 </body>
 </html>
