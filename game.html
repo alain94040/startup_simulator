@@ -629,17 +629,12 @@ body::before {
   font-family: 'Syne', sans-serif;
   font-size: 12px; font-weight: 700;
   color: #0f0f1e;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .hcard-role { font-size: 10px; color: #999; margin-top: 1px; }
 .hcard-preview {
   font-family: 'Instrument Serif', serif;
-  font-size: 12px; color: #444;
+  font-size: 14px; color: #444;
   line-height: 1.5;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
   flex: 1;
 }
 
@@ -1125,7 +1120,7 @@ function renderSlot(idx) {
           ${urgHtml}
         </div>
       </div>
-      <div class="sc-body">"${card.body.length > 110 ? card.body.slice(0,110)+'…' : card.body}"</div>
+      <div class="sc-body">"${card.body}"</div>
       <div class="sc-committed">
         <span class="sc-committed-check">✓</span>
         <span class="sc-committed-label">${label}</span>
@@ -1192,7 +1187,7 @@ function renderHand() {
     if (isLocked)   cls += ' locked';
 
     const urgCls = card.urgency === 3 ? 'urg-3' : card.urgency === 2 ? 'urg-2' : 'urg-1';
-    const preview = card.body.length > 120 ? card.body.slice(0,120)+'…' : card.body;
+    const preview = card.body;
 
     return `<div class="${cls}" onclick="selectCard('${card.id}')">
       <div class="hcard-stripe" style="background:${cat.color}"></div>
