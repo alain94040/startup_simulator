@@ -274,35 +274,29 @@ body::before {
 }
 
 /* ── Result strip (below flipped slots) ─────────────────── */
-#result-strip {
+#deal-btn {
   display: none;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  padding: 18px 0 4px;
-  width: 100%;
-  animation: stripIn 0.4s ease forwards;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white; border: none;
+  padding: 7px 20px; border-radius: 8px;
+  font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 800;
+  cursor: pointer; transition: opacity 0.15s;
+  white-space: nowrap;
 }
-#result-strip.on { display: flex; }
+#deal-btn.on { display: block; }
+#deal-btn:hover { opacity: 0.85; }
+
+#hand-deltas {
+  display: none;
+  gap: 6px; flex-wrap: wrap;
+}
+#hand-deltas.on { display: flex; }
+
 @keyframes stripIn {
   from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: none; }
 }
-#result-deltas { display: flex; gap: 7px; flex-wrap: wrap; justify-content: center; }
-#result-extra {
-  font-size: 11px; color: var(--dim2);
-  max-width: 680px; text-align: center; line-height: 1.65;
-}
-#result-next-btn {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white; border: none;
-  padding: 10px 32px; border-radius: 10px;
-  font-family: 'Syne', sans-serif;
-  font-size: 13px; font-weight: 800;
-  cursor: pointer; transition: opacity 0.15s;
-  margin-top: 2px;
-}
-#result-next-btn:hover { opacity: 0.9; }
 
 .slot-close-btn {
   position: absolute; top: 10px; right: 10px; z-index: 5;
@@ -809,11 +803,6 @@ body::before {
       <div class="slot" id="slot-0"></div>
       <div class="slot" id="slot-1"></div>
     </div>
-    <div id="result-strip">
-      <div id="result-deltas"></div>
-      <div id="result-extra"></div>
-      <button id="result-next-btn">Start Week 2 →</button>
-    </div>
   </div>
 </div>
 
@@ -821,6 +810,8 @@ body::before {
 <div id="hand-area">
   <div id="hand-top">
     <span class="hand-lbl">Your Hand</span>
+    <div id="hand-deltas"></div>
+    <button id="deal-btn" onclick="nextWeek()">Deal cards →</button>
     <span id="plays-left"><span id="plays-n">2</span> plays remaining</span>
   </div>
   <div id="hand-cards"></div>
@@ -919,7 +910,11 @@ const slottedIds    = () => slots.filter(Boolean).map(s => s.cardId);
 const committedIds  = () => slots.filter(s => s?.optKey).map(s => s.cardId);
 const activeSlotIdx = () => slots.findIndex(s => s && !s.optKey);  // has card, no option yet
 const emptySlotIdx  = () => slots.findIndex(s => s === null);
-const allCommitted  = () => slots.every(s => s?.optKey);
+// Week resolves when ≥1 slot committed and no slot is in-progress (slotted but no option chosen)
+const allCommitted  = () => {
+  const filled = slots.filter(Boolean);
+  return filled.length > 0 && filled.every(s => s.optKey);
+};
 
 // ─────────────────────────────────────────────────────────
 // Boot
@@ -928,7 +923,8 @@ function boot() {
   E = new Engine();
   slots = [null, null]; prevSnap = null;
   document.getElementById('end-overlay').classList.remove('on');
-  document.getElementById('result-strip').classList.remove('on');
+  document.getElementById('deal-btn').classList.remove('on');
+  document.getElementById('hand-deltas').classList.remove('on');
   E.generateDemands();
   isDealing = true; renderAll(); isDealing = false;
 }
@@ -1216,14 +1212,16 @@ function endWeek() {
 
   const { results, sprintWeeks } = E.resolveTurn(actedIds, optMap);
 
-  // Flip slot 0, then slot 1 (staggered), then reveal strip
+  // Flip committed slots; slot 1 may be empty if player only used one action
   flipSlot(0, buildBack(0, results[0]));
-  setTimeout(() => flipSlot(1, buildBack(1, results[1])), 320);
-  setTimeout(() => showResultStrip(results, sprintWeeks), 1050);
+  const slot1Committed = slots[1]?.optKey;
+  setTimeout(() => { if (slot1Committed) flipSlot(1, buildBack(1, results[1])); }, 320);
+  const stripDelay = slot1Committed ? 1050 : 700;
+  setTimeout(() => showResultStrip(results, sprintWeeks), stripDelay);
 }
 
 // ─────────────────────────────────────────────────────────
-// Result strip (replaces summary overlay for normal turns)
+// Show deal button + stat deltas in the hand area
 // ─────────────────────────────────────────────────────────
 function showResultStrip(results, sprintWeeks) {
   const s   = prevSnap;
@@ -1238,27 +1236,22 @@ function showResultStrip(results, sprintWeeks) {
     { lbl:'Users',   d: cur.users      - s.users,      str: v => fmtD(v, true) },
   ].filter(x => Math.abs(x.d) >= 1);
 
-  document.getElementById('result-deltas').innerHTML =
+  document.getElementById('hand-deltas').innerHTML =
     deltas.map(x => `<span class="delta ${x.d>=0?'d-pos':'d-neg'}">${x.lbl} ${x.str(x.d)}</span>`).join('');
+  document.getElementById('hand-deltas').classList.add('on');
 
-  // Extra results (pending fires, drop messages) beyond the two primary outcomes
-  const extra = results.slice(2);
-  document.getElementById('result-extra').innerHTML =
-    extra.length ? extra.map(r => `<div>${r}</div>`).join('') : '';
-
-  const btn = document.getElementById('result-next-btn');
+  const btn = document.getElementById('deal-btn');
   if (cur.game_won) {
     btn.textContent = '🎉 See Results';
-    btn.onclick = () => { document.getElementById('result-strip').classList.remove('on'); showEnd(true); };
+    btn.onclick = () => showEnd(true);
   } else if (cur.game_over) {
     btn.textContent = '💀 See Results';
-    btn.onclick = () => { document.getElementById('result-strip').classList.remove('on'); showEnd(false); };
+    btn.onclick = () => showEnd(false);
   } else {
-    btn.textContent = `Start Week ${cur.week} →`;
+    btn.textContent = `Deal Week ${cur.week} →`;
     btn.onclick = nextWeek;
   }
-
-  document.getElementById('result-strip').classList.add('on');
+  btn.classList.add('on');
 }
 
 // ─────────────────────────────────────────────────────────
@@ -1329,7 +1322,8 @@ function showSummary(results, sprintWeeks) {
 }
 
 function nextWeek() {
-  document.getElementById('result-strip').classList.remove('on');
+  document.getElementById('deal-btn').classList.remove('on');
+  document.getElementById('hand-deltas').classList.remove('on');
   slots = [null, null]; prevSnap = null;
   E.generateDemands();
   isDealing = true; renderAll(); isDealing = false;
