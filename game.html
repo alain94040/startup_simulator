@@ -882,6 +882,172 @@ body::before {
 #intro-next:hover { opacity: 0.9; }
 #intro-next:active { transform: scale(0.97); }
 
+/* ── History Pile ───────────────────────────────────────── */
+#pile-btn {
+  display: none;
+  align-items: center;
+  gap: 9px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 10px 4px 4px;
+  border-radius: 10px;
+  transition: background 0.15s;
+  flex-shrink: 0;
+}
+#pile-btn.has-cards { display: flex; }
+#pile-btn:hover { background: var(--surface3); }
+
+#pile-stack {
+  position: relative;
+  width: 34px; height: 46px;
+  flex-shrink: 0;
+}
+.pile-c {
+  position: absolute;
+  width: 26px; height: 37px;
+  border-radius: 5px;
+  border: 1px solid var(--border2);
+}
+.pile-c1 { background: var(--surface3); transform: rotate(-5deg) translate(-3px, 4px); z-index: 1; }
+.pile-c2 { background: var(--surface2); transform: rotate(-1deg) translate(0px, 2px);  z-index: 2; }
+.pile-c3 { background: #1a1a30;         transform: rotate(3deg)  translate(4px, 0px);  z-index: 3; overflow: hidden; }
+.pile-c3::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+}
+
+#pile-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
+#pile-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--dim); font-family: 'DM Mono', monospace;
+}
+#pile-count-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 15px; font-weight: 800;
+  color: var(--dim2); line-height: 1;
+}
+
+@keyframes pilePop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+.pile-pop { animation: pilePop 0.38s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* ── Log Overlay ────────────────────────────────────────── */
+#log-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(6px);
+  z-index: 120;
+  align-items: center; justify-content: center;
+}
+#log-overlay.on { display: flex; }
+
+#log-box {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  width: 520px; max-width: 94vw;
+  max-height: 82vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+  animation: summaryIn 0.3s cubic-bezier(0.34,1.5,0.64,1) forwards;
+}
+
+#log-header {
+  padding: 22px 26px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between;
+  flex-shrink: 0;
+}
+#log-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 20px; font-weight: 800; color: white;
+}
+#log-subtitle { font-size: 11px; color: var(--dim); margin-top: 3px; }
+#log-close-btn {
+  background: var(--surface3); border: 1px solid var(--border2);
+  width: 30px; height: 30px; border-radius: 50%;
+  font-size: 12px; color: var(--dim2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+#log-close-btn:hover { background: var(--surface); color: var(--text); }
+
+#log-scroll {
+  overflow-y: auto; flex: 1;
+  padding: 16px 26px 24px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--surface3) transparent;
+}
+
+.log-week { margin-bottom: 22px; }
+.log-week-label {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: var(--dim); font-family: 'DM Mono', monospace;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 10px;
+}
+
+.log-entry {
+  display: flex; gap: 11px; align-items: flex-start;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.log-entry:last-child { border-bottom: none; }
+
+.log-av {
+  width: 30px; height: 30px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800;
+  flex-shrink: 0; margin-top: 1px;
+}
+.log-right { flex: 1; min-width: 0; }
+.log-top { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; flex-wrap: wrap; }
+.log-from {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px; font-weight: 700; color: var(--text);
+}
+.log-cat {
+  font-size: 8px; font-weight: 700;
+  padding: 2px 6px; border-radius: 8px;
+  text-transform: uppercase; letter-spacing: 0.4px;
+  font-family: 'DM Mono', monospace;
+}
+.log-body {
+  font-family: 'Instrument Serif', serif;
+  font-style: italic; font-size: 13px;
+  color: var(--dim2); line-height: 1.5;
+  margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.log-action {
+  font-size: 11px; display: flex; gap: 5px; align-items: flex-start;
+  font-family: 'DM Mono', monospace;
+}
+.log-acted   { color: var(--good); }
+.log-dropped { color: var(--danger); }
+.log-passed  { color: var(--dim); }
+.log-act-icon { flex-shrink: 0; margin-top: 1px; }
+.log-outcome {
+  margin-top: 4px;
+  font-size: 12px; color: var(--dim2);
+  line-height: 1.5; padding-left: 14px;
+}
+#log-empty {
+  text-align: center; padding: 48px 20px;
+  color: var(--dim); font-size: 13px; line-height: 1.7;
+}
+
 /* ── Mobile (portrait) ──────────────────────────────────── */
 @media (max-width: 600px) {
   /* Hand: horizontal scroll strip */
@@ -948,6 +1114,17 @@ body::before {
 <!-- ── Hand ─────────────────────────────────────────────── -->
 <div id="hand-area">
   <div id="hand-top">
+    <button id="pile-btn" onclick="openLog()">
+      <div id="pile-stack">
+        <div class="pile-c pile-c1"></div>
+        <div class="pile-c pile-c2"></div>
+        <div class="pile-c pile-c3"></div>
+      </div>
+      <div id="pile-meta">
+        <span id="pile-label">History</span>
+        <span id="pile-count-val">0</span>
+      </div>
+    </button>
     <span class="hand-lbl">Your Hand</span>
     <div id="hand-deltas"></div>
     <button id="deal-btn" onclick="nextWeek()">Deal cards →</button>
@@ -975,6 +1152,20 @@ body::before {
   <div id="end-title"></div>
   <div id="end-sub"></div>
   <button id="end-btn" onclick="introIdx=0;introRender();document.getElementById('intro-overlay').classList.add('on')">Play Again</button>
+</div>
+
+<!-- ── Game Log Overlay ──────────────────────────────────── -->
+<div id="log-overlay" onclick="if(event.target===this)closeLog()">
+  <div id="log-box">
+    <div id="log-header">
+      <div>
+        <div id="log-title">Game Log</div>
+        <div id="log-subtitle">Your story so far</div>
+      </div>
+      <button id="log-close-btn" onclick="closeLog()">✕</button>
+    </div>
+    <div id="log-scroll"></div>
+  </div>
 </div>
 
 <!-- ── Intro ──────────────────────────────────────────────── -->
@@ -1103,6 +1294,7 @@ let slots       = [null, null];
 let prevSnap    = null;
 let isDealing   = false;
 let displayedCash = null; // last cash value shown in HUD (for delta detection)
+let gameLog     = []; // { week, from, charId, cat, body, action, outcome, dropped }
 
 const slottedIds    = () => slots.filter(Boolean).map(s => s.cardId);
 const committedIds  = () => slots.filter(s => s?.optKey).map(s => s.cardId);
@@ -1135,11 +1327,106 @@ function startGame() {
 function boot() {
   E = new Engine();
   slots = [null, null]; prevSnap = null; displayedCash = null;
+  gameLog = [];
   document.getElementById('end-overlay').classList.remove('on');
   document.getElementById('deal-btn').classList.remove('on');
   document.getElementById('hand-deltas').classList.remove('on');
+  document.getElementById('pile-btn').classList.remove('has-cards');
+  document.getElementById('pile-count-val').textContent = '0';
   E.generateDemands();
   isDealing = true; renderAll(); isDealing = false;
+}
+
+// ─────────────────────────────────────────────────────────
+// History / Game Log
+// ─────────────────────────────────────────────────────────
+function logWeek(cards, actedIds, optMap, results, engineOrder) {
+  const week = prevSnap.week;
+  cards.forEach(card => {
+    const actIdx = engineOrder.indexOf(card.id);
+    const acted  = actIdx !== -1;
+    const chosen = card.options?.find(o => o.key === optMap[card.id]);
+    gameLog.push({
+      week,
+      from:    card.from || CHARACTER_DEFS[card._charId]?.name || '?',
+      charId:  card._charId,
+      cat:     card.cat,
+      body:    card.body,
+      action:  acted ? (chosen?.label || 'Acted on this') : null,
+      outcome: acted ? (results[actIdx] || null) : null,
+      dropped: !acted && !!card._expiring,
+    });
+  });
+}
+
+function updatePileCount() {
+  const n = gameLog.length;
+  document.getElementById('pile-count-val').textContent = n;
+  if (n > 0) {
+    document.getElementById('pile-btn').classList.add('has-cards');
+    const stack = document.getElementById('pile-stack');
+    stack.classList.remove('pile-pop');
+    void stack.offsetWidth;
+    stack.classList.add('pile-pop');
+  }
+}
+
+function openLog() {
+  if (!gameLog.length) return;
+  renderLog();
+  document.getElementById('log-overlay').classList.add('on');
+}
+
+function closeLog() {
+  document.getElementById('log-overlay').classList.remove('on');
+}
+
+function renderLog() {
+  const scroll = document.getElementById('log-scroll');
+  if (!gameLog.length) {
+    scroll.innerHTML = `<div id="log-empty">No history yet.<br>Resolve a week to start building your story.</div>`;
+    return;
+  }
+
+  const byWeek = {};
+  for (const e of gameLog) {
+    if (!byWeek[e.week]) byWeek[e.week] = [];
+    byWeek[e.week].push(e);
+  }
+  const weeks = Object.keys(byWeek).map(Number).sort((a, b) => a - b);
+
+  let html = '';
+  for (const w of weeks) {
+    html += `<div class="log-week"><div class="log-week-label">Week ${w}</div>`;
+    for (const e of byWeek[w]) {
+      const meta = CM[e.charId] || { i:'?', bg:'#374151', c:'#d1d5db' };
+      const cat  = CAT[e.cat]  || CAT.e;
+      let actionHtml;
+      if (e.action) {
+        actionHtml = `<div class="log-action log-acted"><span class="log-act-icon">✓</span>${e.action}</div>`
+          + (e.outcome ? `<div class="log-outcome">${e.outcome}</div>` : '');
+      } else if (e.dropped) {
+        actionHtml = `<div class="log-action log-dropped"><span class="log-act-icon">✗</span>Ignored — expired</div>`;
+      } else {
+        actionHtml = `<div class="log-action log-passed"><span class="log-act-icon">—</span>Not responded to</div>`;
+      }
+      html += `<div class="log-entry">
+        <div class="log-av" style="background:${meta.bg};color:${meta.c}">${meta.i}</div>
+        <div class="log-right">
+          <div class="log-top">
+            <span class="log-from">${e.from}</span>
+            <span class="log-cat" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
+          </div>
+          <div class="log-body">${e.body}</div>
+          ${actionHtml}
+        </div>
+      </div>`;
+    }
+    html += `</div>`;
+  }
+
+  scroll.innerHTML = html;
+  scroll.scrollTop = scroll.scrollHeight;
 }
 
 function renderAll() { renderHUD(); renderHand(); renderSlots(); }
@@ -1481,11 +1768,14 @@ function endWeek() {
 
   // resolveTurn processes chosen cards in E.current order, not slot order.
   // Record that order now so we can map results[i] → correct slot after the call.
+  const currentCards = [...E.current]; // snapshot before engine mutates state
   const engineOrder = E.current
     .filter(d => actedIds.includes(d.id))
     .map(d => d.id);
 
   const { results, sprintWeeks } = E.resolveTurn(actedIds, optMap);
+  logWeek(currentCards, actedIds, optMap, results, engineOrder);
+  updatePileCount();
   renderHUD(); // triggers cash animation immediately as cards flip
 
   // Look up each slot's result by its position in the engine's processing order
@@ -1623,9 +1913,12 @@ function showEnd(won) {
 // Wire + Start
 // ─────────────────────────────────────────────────────────
 
-// Keyboard: Escape returns active (uncommitted) card to hand
+// Keyboard: Escape closes log or returns active card to hand
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
+    if (document.getElementById('log-overlay').classList.contains('on')) {
+      closeLog(); return;
+    }
     const idx = activeSlotIdx();
     if (idx !== -1) closeSlot(idx);
   }
