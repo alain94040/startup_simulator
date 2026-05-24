@@ -30,8 +30,8 @@
   --warn:   #f59e0b;
   --good:   #22c55e;
 
-  --card-w: 142px;
-  --card-h: 200px;
+  --card-w: 162px;
+  --card-h: 238px;
 }
 
 html, body {
@@ -112,6 +112,28 @@ body::before {
 .hst-val.warn   { color: var(--warn); }
 .hst-val.danger { color: var(--danger); }
 .hst-val.good   { color: var(--good); }
+
+/* Cash animation */
+.hst-val.cash-up   { color: #4ade80; transition: color 0.15s; }
+.hst-val.cash-down { color: #f87171; transition: color 0.15s; }
+
+.cash-flyup {
+  position: fixed;
+  font-family: 'Syne', sans-serif;
+  font-size: 13px; font-weight: 800;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 9999;
+  animation: cashFly 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.cash-flyup.pos { color: #4ade80; text-shadow: 0 0 12px rgba(74,222,128,0.7); }
+.cash-flyup.neg { color: #f87171; text-shadow: 0 0 12px rgba(248,113,113,0.7); }
+@keyframes cashFly {
+  0%   { opacity: 0;   transform: translateY(0px)   scale(0.8); }
+  15%  { opacity: 1;   transform: translateY(-6px)  scale(1.1); }
+  60%  { opacity: 1;   transform: translateY(-28px) scale(1);   }
+  100% { opacity: 0;   transform: translateY(-52px) scale(0.9); }
+}
 
 /* Alex status */
 #hud-alex {
@@ -597,25 +619,25 @@ body::before {
   display: flex; align-items: center; gap: 7px;
 }
 .hcard-av {
-  width: 28px; height: 28px; border-radius: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 800;
+  font-size: 10px; font-weight: 800;
   flex-shrink: 0;
 }
 .hcard-sender { flex: 1; overflow: hidden; }
 .hcard-from {
   font-family: 'Syne', sans-serif;
-  font-size: 11px; font-weight: 700;
+  font-size: 12px; font-weight: 700;
   color: #0f0f1e;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.hcard-role { font-size: 9px; color: #999; margin-top: 1px; }
+.hcard-role { font-size: 10px; color: #999; margin-top: 1px; }
 .hcard-preview {
   font-family: 'Instrument Serif', serif;
-  font-size: 11px; color: #444;
-  line-height: 1.45;
+  font-size: 12px; color: #444;
+  line-height: 1.5;
   display: -webkit-box;
-  -webkit-line-clamp: 4;
+  -webkit-line-clamp: 5;
   -webkit-box-orient: vertical;
   overflow: hidden;
   flex: 1;
@@ -628,7 +650,7 @@ body::before {
   flex-shrink: 0;
 }
 .hcard-cat-badge {
-  font-size: 8px; font-weight: 700;
+  font-size: 9px; font-weight: 700;
   padding: 2px 7px; border-radius: 10px;
   text-transform: uppercase; letter-spacing: 0.4px;
   font-family: 'DM Mono', monospace;
@@ -902,26 +924,23 @@ const ULBL = ['','Routine','Important','Urgent'];
 let E;
 // slots[0] and slots[1]: null = empty, or { cardId, optKey }
 // optKey null = slotted but uncommitted; string = committed
-let slots    = [null, null];
-let prevSnap = null;
-let isDealing = false;
+let slots       = [null, null];
+let prevSnap    = null;
+let isDealing   = false;
+let displayedCash = null; // last cash value shown in HUD (for delta detection)
 
 const slottedIds    = () => slots.filter(Boolean).map(s => s.cardId);
 const committedIds  = () => slots.filter(s => s?.optKey).map(s => s.cardId);
 const activeSlotIdx = () => slots.findIndex(s => s && !s.optKey);  // has card, no option yet
 const emptySlotIdx  = () => slots.findIndex(s => s === null);
-// Week resolves when ≥1 slot committed and no slot is in-progress (slotted but no option chosen)
-const allCommitted  = () => {
-  const filled = slots.filter(Boolean);
-  return filled.length > 0 && filled.every(s => s.optKey);
-};
+const allCommitted  = () => slots.every(s => s?.optKey);
 
 // ─────────────────────────────────────────────────────────
 // Boot
 // ─────────────────────────────────────────────────────────
 function boot() {
   E = new Engine();
-  slots = [null, null]; prevSnap = null;
+  slots = [null, null]; prevSnap = null; displayedCash = null;
   document.getElementById('end-overlay').classList.remove('on');
   document.getElementById('deal-btn').classList.remove('on');
   document.getElementById('hand-deltas').classList.remove('on');
@@ -932,6 +951,57 @@ function boot() {
 function renderAll() { renderHUD(); renderHand(); renderSlots(); }
 
 // ─────────────────────────────────────────────────────────
+// Cash animation helpers
+// ─────────────────────────────────────────────────────────
+function fmtCash(v) {
+  return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
+       : v >= 1000 ? '$' + Math.round(v/1000) + 'k'
+       : '$' + v;
+}
+
+function animateCash(el, fromVal, toVal) {
+  const delta  = toVal - fromVal;
+  const isGain = delta > 0;
+  const dur    = 900;
+  const steps  = 28;
+  let   step   = 0;
+
+  // Fly-up chip — append first, then measure width for accurate centering
+  const rect = el.getBoundingClientRect();
+  const chip = document.createElement('div');
+  chip.className = 'cash-flyup ' + (isGain ? 'pos' : 'neg');
+  chip.textContent = (isGain ? '+' : '') + fmtCash(delta);
+  chip.style.visibility = 'hidden'; // hide until positioned
+  chip.style.top = (rect.top - 4) + 'px';
+  chip.style.left = '0px';
+  document.body.appendChild(chip);
+  const chipW = chip.getBoundingClientRect().width;
+  chip.style.left = (rect.left + rect.width / 2 - chipW / 2) + 'px';
+  chip.style.visibility = '';
+  chip.addEventListener('animationend', () => chip.remove());
+
+  // Color flash — set class directly so className overwrite below preserves it
+  el.dataset.cashAnim = isGain ? 'up' : 'down';
+  el.classList.add(isGain ? 'cash-up' : 'cash-down');
+
+  // Counter tween (ease-out)
+  const iv = setInterval(() => {
+    step++;
+    const t    = step / steps;
+    const ease = 1 - Math.pow(1 - t, 3);
+    el.textContent = fmtCash(Math.round(fromVal + delta * ease));
+    if (step >= steps) {
+      clearInterval(iv);
+      el.textContent = fmtCash(toVal);
+      setTimeout(() => {
+        el.classList.remove('cash-up', 'cash-down');
+        delete el.dataset.cashAnim;
+      }, 600);
+    }
+  }, dur / steps);
+}
+
+// ─────────────────────────────────────────────────────────
 // HUD
 // ─────────────────────────────────────────────────────────
 function renderHUD() {
@@ -939,12 +1009,17 @@ function renderHUD() {
   const mo = Math.ceil(s.week / 4);
   document.getElementById('hud-week').textContent = `WK ${s.week} · M${mo}`;
 
-  const fmt = v => v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
-                 : v >= 1000 ? '$' + Math.round(v/1000) + 'k'
-                 : '$' + v;
   const cash = document.getElementById('h-cash');
-  cash.textContent = fmt(s.cash);
-  cash.className   = 'hst-val' + (s.cash < 3000 ? ' danger' : s.cash < 7000 ? ' warn' : '');
+  if (displayedCash !== null && displayedCash !== s.cash) {
+    animateCash(cash, displayedCash, s.cash);
+  } else {
+    cash.textContent = fmtCash(s.cash);
+  }
+  displayedCash = s.cash;
+  const cashState = s.cash < 3000 ? ' danger' : s.cash < 7000 ? ' warn' : '';
+  const cashAnim  = cash.dataset.cashAnim === 'up' ? ' cash-up'
+                  : cash.dataset.cashAnim === 'down' ? ' cash-down' : '';
+  cash.className  = 'hst-val' + cashState + cashAnim;
 
   const rw = E.runwayWeeks;
   const rwe = document.getElementById('h-rwy');
@@ -1082,7 +1157,7 @@ function renderHand() {
     if (isLocked)   cls += ' locked';
 
     const urgCls = card.urgency === 3 ? 'urg-3' : card.urgency === 2 ? 'urg-2' : 'urg-1';
-    const preview = card.body.length > 80 ? card.body.slice(0,80)+'…' : card.body;
+    const preview = card.body.length > 120 ? card.body.slice(0,120)+'…' : card.body;
 
     return `<div class="${cls}" onclick="selectCard('${card.id}')">
       <div class="hcard-stripe" style="background:${cat.color}"></div>
@@ -1210,12 +1285,22 @@ function endWeek() {
     if (slot?.optKey && slot.optKey !== '__act__') optMap[slot.cardId] = slot.optKey;
   }
 
+  // resolveTurn processes chosen cards in E.current order, not slot order.
+  // Record that order now so we can map results[i] → correct slot after the call.
+  const engineOrder = E.current
+    .filter(d => actedIds.includes(d.id))
+    .map(d => d.id);
+
   const { results, sprintWeeks } = E.resolveTurn(actedIds, optMap);
+  renderHUD(); // triggers cash animation immediately as cards flip
+
+  // Look up each slot's result by its position in the engine's processing order
+  const resultFor = id => results[engineOrder.indexOf(id)];
 
   // Flip committed slots; slot 1 may be empty if player only used one action
-  flipSlot(0, buildBack(0, results[0]));
+  flipSlot(0, buildBack(0, resultFor(slots[0].cardId)));
   const slot1Committed = slots[1]?.optKey;
-  setTimeout(() => { if (slot1Committed) flipSlot(1, buildBack(1, results[1])); }, 320);
+  setTimeout(() => { if (slot1Committed) flipSlot(1, buildBack(1, resultFor(slots[1].cardId))); }, 320);
   const stripDelay = slot1Committed ? 1050 : 700;
   setTimeout(() => showResultStrip(results, sprintWeeks), stripDelay);
 }
