@@ -1047,6 +1047,111 @@ body::before {
   color: var(--dim); font-size: 13px; line-height: 1.7;
 }
 
+/* ── Milestone Toast ─────────────────────────────────────── */
+#milestone-toast {
+  position: fixed; inset: 0; z-index: 990;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+  transition: background 0.3s;
+}
+#milestone-toast.on {
+  pointer-events: auto;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+}
+
+#milestone-card {
+  display: none;
+  flex-direction: column; align-items: center; text-align: center;
+  padding: 44px 52px 38px;
+  background: radial-gradient(ellipse at 50% 0%, #1c1c48, #09090f);
+  border: 1px solid rgba(255,255,255,0.11);
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 1px rgba(139,92,246,0.25),
+    0 0 80px rgba(99,102,241,0.2),
+    0 40px 120px rgba(0,0,0,0.9);
+  max-width: 380px; width: 90vw;
+  position: relative; overflow: hidden;
+}
+#milestone-card.on {
+  display: flex;
+  animation: msIn 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+#milestone-card.out { animation: msOut 0.3s ease-in forwards !important; }
+
+@keyframes msIn {
+  from { opacity: 0; transform: scale(0.62) translateY(28px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes msOut {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scale(0.87) translateY(-18px); }
+}
+
+/* inner radial glow */
+#ms-glow {
+  position: absolute; inset: 0; border-radius: 28px;
+  background: radial-gradient(ellipse at 50% -20%, rgba(139,92,246,0.18) 0%, transparent 65%);
+  pointer-events: none;
+  animation: msGlowPulse 2.2s ease-in-out infinite;
+}
+@keyframes msGlowPulse {
+  0%,100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+#ms-emoji {
+  font-size: 66px; line-height: 1; display: block;
+  margin-bottom: 16px; position: relative; z-index: 1;
+  filter: drop-shadow(0 4px 20px rgba(255,255,255,0.22));
+  animation: msEmojiIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s backwards;
+}
+@keyframes msEmojiIn {
+  from { transform: scale(0.15) rotate(-30deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+#ms-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: #8b5cf6;
+  margin-bottom: 8px; font-family: 'DM Mono', monospace;
+  position: relative; z-index: 1;
+  animation: msFadeUp 0.38s ease 0.27s backwards;
+}
+#ms-title {
+  font-family: 'Syne', sans-serif; font-size: 28px; font-weight: 800;
+  color: white; margin-bottom: 10px; line-height: 1.15;
+  position: relative; z-index: 1;
+  animation: msFadeUp 0.38s ease 0.34s backwards;
+}
+#ms-sub {
+  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-size: 15px; color: rgba(190,190,230,0.85); line-height: 1.65;
+  position: relative; z-index: 1;
+  animation: msFadeUp 0.38s ease 0.42s backwards;
+}
+#ms-hint {
+  margin-top: 22px; font-size: 10px; color: rgba(255,255,255,0.2);
+  font-family: 'DM Mono', monospace; letter-spacing: 0.5px;
+  position: relative; z-index: 1;
+  animation: msFadeUp 0.38s ease 0.52s backwards;
+}
+@keyframes msFadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ms-particle {
+  position: fixed; pointer-events: none; z-index: 1000;
+  border-radius: 2px;
+  animation: msParticle var(--dur) cubic-bezier(0.15,0.8,0.3,1) var(--delay) forwards;
+}
+@keyframes msParticle {
+  0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(0deg); }
+  60%  { opacity: 0.8; }
+  100% { opacity: 0; transform: translate(var(--tx),var(--ty)) scale(0.05) rotate(var(--rot)); }
+}
+
 /* ── Mobile (portrait) ──────────────────────────────────── */
 @media (max-width: 600px) {
   /* Hand: horizontal scroll strip */
@@ -1164,6 +1269,18 @@ body::before {
       <button id="log-close-btn" onclick="closeLog()">✕</button>
     </div>
     <div id="log-scroll"></div>
+  </div>
+</div>
+
+<!-- ── Milestone Toast ───────────────────────────────────── -->
+<div id="milestone-toast">
+  <div id="milestone-card">
+    <div id="ms-glow"></div>
+    <span id="ms-emoji">🎉</span>
+    <div id="ms-label">MILESTONE</div>
+    <div id="ms-title">First User!</div>
+    <div id="ms-sub">Someone actually tried your product.</div>
+    <div id="ms-hint">tap anywhere to continue</div>
   </div>
 </div>
 
@@ -1302,6 +1419,110 @@ const emptySlotIdx  = () => slots.findIndex(s => s === null);
 const allCommitted  = () => slots.every(s => s?.optKey);
 
 // ─────────────────────────────────────────────────────────
+// Milestones
+// ─────────────────────────────────────────────────────────
+const MS_CFG = {
+  moneyRaised: {
+    emoji: '💸', label: 'FIRST MONEY IN',
+    title: 'Cash is coming in.',
+    sub: 'Someone put real money behind your idea. This changes things.',
+    colors: ['#4ade80','#fbbf24','#86efac','#fde68a','#a3e635','#ffffff'],
+  },
+  firstUser: {
+    emoji: '🎉', label: 'FIRST USER',
+    title: 'You have a user.',
+    sub: 'A real person chose to try your product. Now make them love it.',
+    colors: ['#818cf8','#a78bfa','#c084fc','#60a5fa','#e879f9','#ffffff'],
+  },
+  firstCustomer: {
+    emoji: '🤑', label: 'FIRST PAYING CUSTOMER',
+    title: 'They paid.',
+    sub: "A stranger gave you money for something you built. That's revenue.",
+    colors: ['#4ade80','#22d3ee','#fbbf24','#34d399','#a3e635','#ffffff'],
+  },
+};
+
+let milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
+let msQueue    = [];
+let msShowing  = false;
+
+function checkMilestones(prev, cur) {
+  if (!milestones.moneyRaised && cur.cash > prev.cash) {
+    milestones.moneyRaised = true; msQueue.push('moneyRaised');
+  }
+  if (!milestones.firstUser && prev.users === 0 && cur.users > 0) {
+    milestones.firstUser = true; msQueue.push('firstUser');
+  }
+  if (!milestones.firstCustomer && prev.customers === 0 && cur.customers > 0) {
+    milestones.firstCustomer = true; msQueue.push('firstCustomer');
+  }
+  drainMsQueue();
+}
+
+function drainMsQueue() {
+  if (msShowing || !msQueue.length) return;
+  showMilestone(MS_CFG[msQueue.shift()]);
+}
+
+function showMilestone(cfg) {
+  msShowing = true;
+  const toast = document.getElementById('milestone-toast');
+  const card  = document.getElementById('milestone-card');
+  document.getElementById('ms-emoji').textContent = cfg.emoji;
+  document.getElementById('ms-label').textContent = cfg.label;
+  document.getElementById('ms-title').textContent = cfg.title;
+  document.getElementById('ms-sub').textContent   = cfg.sub;
+
+  card.classList.remove('out', 'on');
+  void card.offsetWidth;
+  toast.classList.add('on');
+  card.classList.add('on');
+
+  spawnMsParticles(cfg.colors);
+
+  const dismiss = () => {
+    toast.onclick = null;
+    card.classList.add('out');
+    card.addEventListener('animationend', () => {
+      card.classList.remove('on', 'out');
+      toast.classList.remove('on');
+      msShowing = false;
+      drainMsQueue();
+    }, { once: true });
+  };
+  toast.onclick = dismiss;
+  setTimeout(dismiss, 3200);
+}
+
+function spawnMsParticles(colors) {
+  const cx = window.innerWidth  / 2;
+  const cy = window.innerHeight / 2;
+  const count = 48;
+  for (let i = 0; i < count; i++) {
+    const p   = document.createElement('div');
+    const ang = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+    const dist = 80 + Math.random() * 280;
+    const size = 4 + Math.random() * 8;
+    const isRect = Math.random() < 0.45;
+    p.className = 'ms-particle';
+    p.style.cssText = [
+      `left:${cx}px`, `top:${cy}px`,
+      `width:${isRect ? size * 0.5 : size}px`,
+      `height:${isRect ? size * 2 : size}px`,
+      `border-radius:${isRect ? '2px' : '50%'}`,
+      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
+      `--tx:${(Math.cos(ang) * dist).toFixed(1)}px`,
+      `--ty:${(Math.sin(ang) * dist - Math.random() * 60).toFixed(1)}px`,
+      `--rot:${Math.floor(Math.random() * 720 - 360)}deg`,
+      `--dur:${(0.75 + Math.random() * 0.7).toFixed(2)}s`,
+      `--delay:${(Math.random() * 0.12).toFixed(3)}s`,
+    ].join(';');
+    document.body.appendChild(p);
+    p.addEventListener('animationend', () => p.remove());
+  }
+}
+
+// ─────────────────────────────────────────────────────────
 // Intro sequence
 // ─────────────────────────────────────────────────────────
 function introNext() {
@@ -1327,6 +1548,8 @@ function boot() {
   E = new Engine();
   slots = [null, null]; prevSnap = null; displayedCash = null;
   gameLog = [];
+  milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
+  msQueue = []; msShowing = false;
   document.getElementById('end-overlay').classList.remove('on');
   document.getElementById('deal-btn').classList.remove('on');
   document.getElementById('hand-deltas').classList.remove('on');
@@ -1817,6 +2040,8 @@ function showResultStrip(results, sprintWeeks) {
     btn.onclick = nextWeek;
   }
   btn.classList.add('on');
+
+  setTimeout(() => checkMilestones(s, cur), 500);
 }
 
 // ─────────────────────────────────────────────────────────
