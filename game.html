@@ -1801,7 +1801,7 @@ function renderLogFilters() {
   const seen = new Map();
   for (const e of gameLog) {
     if (e.charId && !seen.has(e.charId))
-      seen.set(e.charId, CHARACTER_DEFS[e.charId]?.name || e.from);
+      seen.set(e.charId, (CHARACTER_DEFS[e.charId]?.name || e.from).replace(/\s*\(.*?\)/, '').trim());
   }
   if (!seen.size) { bar.innerHTML = ''; return; }
 
