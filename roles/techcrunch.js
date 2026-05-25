@@ -11,7 +11,7 @@
         urgency: 3, weeks: 1,
         available: (s, char) => s.product > 20 && !char.flags.done,
         options: [
-          { label: 'Study what they built (2 weeks)', key: 'study',
+          { label: 'Study what they built', key: 'study',
             execute(s, char, e) {
               char.flags.done = true;
               s.competitor_launch_week = s.week;
