@@ -31,9 +31,9 @@
         available: (s, char) => s.week <= 5 && !char.flags.commitment_resolved,
         options: [
           { label: 'Accept — milestones first', key: 'accept',
-            execute(s, char) { char.flags.commitment_resolved = true; char.morale = clamp(char.morale - 5, 0, 100); s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
+            execute(s, char) { char.flags.commitment_resolved = true; s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
           { label: 'Push for full commitment', key: 'push',
-            execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 25, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); s.product = clamp(s.product + 4, 0, 100); return "Alex agreed to go full-time. He's not happy about the pressure. Watch his mood."; } },
+            execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); s.product = clamp(s.product + 4, 0, 100); return "Alex agreed to go full-time. He's not happy about the pressure. Watch his mood."; } },
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?",

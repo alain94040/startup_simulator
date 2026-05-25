@@ -159,8 +159,9 @@ body::before {
   border: 2px solid var(--good);
   transition: border-color 0.6s;
 }
-#alex-lbl { font-size: 11px; color: var(--dim2); }
+#alex-lbl { font-size: 11px; color: var(--dim2); line-height: 1.4; }
 #alex-lbl strong { color: var(--text); font-weight: 500; }
+#alex-sub { display: block; font-size: 10px; color: var(--dim2); font-variant-numeric: tabular-nums; }
 
 /* ── Stage ──────────────────────────────────────────────── */
 #stage {
@@ -1203,7 +1204,7 @@ body::before {
   <div class="hst" style="border-right:none"><span class="hst-lbl">Customers</span><span class="hst-val" id="h-cust">0</span></div>
   <div id="hud-alex">
     <div id="alex-av">AL<div id="alex-ring"></div></div>
-    <div id="alex-lbl">Alex — <strong id="alex-st">building</strong></div>
+    <div id="alex-lbl">Alex — <strong id="alex-st">building</strong><span id="alex-sub"></span></div>
   </div>
 </div>
 
@@ -1747,10 +1748,12 @@ function renderHUD() {
   if (!alex || !alex.active) {
     ring.style.borderColor = '#374151';
     document.getElementById('alex-st').textContent = 'gone';
+    document.getElementById('alex-sub').textContent = '';
   } else {
     ring.style.borderColor = alex.morale > 65 ? '#22c55e' : alex.morale > 35 ? '#f59e0b' : '#ef4444';
     const fl = { build:'building', discover:'discovery', pitch:'pitching' };
-    document.getElementById('alex-st').textContent = `${fl[alex.focus]||alex.focus} · ${alex.trust}%`;
+    document.getElementById('alex-st').textContent = `${fl[alex.focus]||alex.focus}`;
+    document.getElementById('alex-sub').textContent = `T:${alex.trust} · M:${Math.round(alex.morale)}`;
   }
 }
 
