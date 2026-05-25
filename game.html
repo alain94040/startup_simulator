@@ -981,6 +981,30 @@ body::before {
 }
 #log-close-btn:hover { background: var(--surface); color: var(--text); }
 
+#log-filters {
+  padding: 10px 26px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+}
+#log-filters:empty { display: none; }
+.lf-pill {
+  display: flex; align-items: center; gap: 5px;
+  padding: 3px 10px 3px 5px;
+  border-radius: 20px; cursor: pointer;
+  border: 1px solid var(--border2);
+  background: none;
+  font-size: 11px; font-family: 'DM Mono', monospace; color: var(--dim2);
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.lf-pill:hover { border-color: rgba(255,255,255,0.22); color: var(--text); }
+.lf-pill.active { background: var(--surface3); border-color: rgba(255,255,255,0.3); color: var(--text); }
+.lf-av {
+  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 7px; font-weight: 800;
+}
+
 #log-scroll {
   overflow-y: auto; flex: 1;
   padding: 16px 26px 24px;
@@ -1354,6 +1378,7 @@ body::before {
       </div>
       <button id="log-close-btn" onclick="closeLog()">✕</button>
     </div>
+    <div id="log-filters"></div>
     <div id="log-scroll"></div>
   </div>
 </div>
@@ -1512,6 +1537,7 @@ let isDealing   = false;
 let displayedCash = null; // last cash value shown in HUD (for delta detection)
 let gameLog     = []; // { week, from, charId, cat, body, action, outcome, dropped }
 let cashLedger  = []; // { week, sprintWeeks, transactions, balanceAfter }
+let logFilter   = null; // charId string or null (= all)
 
 const slottedIds    = () => slots.filter(Boolean).map(s => s.cardId);
 const committedIds  = () => slots.filter(s => s?.optKey).map(s => s.cardId);
@@ -1712,7 +1738,7 @@ function startGame() {
 function boot() {
   E = new Engine();
   slots = [null, null]; prevSnap = null; displayedCash = null;
-  gameLog = []; cashLedger = [];
+  gameLog = []; cashLedger = []; logFilter = null;
   milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
   msQueue = []; msShowing = false;
   document.getElementById('end-overlay').classList.remove('on');
@@ -1757,8 +1783,36 @@ function updatePileCount() {
 }
 
 function openLog() {
+  renderLogFilters();
   renderLog();
   document.getElementById('log-overlay').classList.add('on');
+}
+
+function setLogFilter(charId) {
+  logFilter = charId;
+  renderLogFilters();
+  renderLog();
+  document.getElementById('log-scroll').scrollTop = 0;
+}
+
+function renderLogFilters() {
+  const bar = document.getElementById('log-filters');
+  // Collect unique chars in appearance order
+  const seen = new Map();
+  for (const e of gameLog) {
+    if (e.charId && !seen.has(e.charId)) seen.set(e.charId, e.from);
+  }
+  if (!seen.size) { bar.innerHTML = ''; return; }
+
+  const allPill = `<button class="lf-pill${logFilter === null ? ' active' : ''}" onclick="setLogFilter(null)">All</button>`;
+  const charPills = [...seen.entries()].map(([charId, name]) => {
+    const meta   = CM[charId] || { i:'?', bg:'#374151', c:'#d1d5db' };
+    const active = logFilter === charId;
+    return `<button class="lf-pill${active ? ' active' : ''}" onclick="setLogFilter('${charId}')">
+      <span class="lf-av" style="background:${meta.bg};color:${meta.c}">${meta.i}</span>${name}
+    </button>`;
+  }).join('');
+  bar.innerHTML = allPill + charPills;
 }
 
 function closeLog() {
@@ -1767,13 +1821,15 @@ function closeLog() {
 
 function renderLog() {
   const scroll = document.getElementById('log-scroll');
-  if (!gameLog.length) {
-    scroll.innerHTML = `<div id="log-empty">No history yet.<br>Resolve a week to start building your story.</div>`;
+  const entries = logFilter ? gameLog.filter(e => e.charId === logFilter) : gameLog;
+  if (!entries.length) {
+    const msg = logFilter ? 'No entries for this character yet.' : 'No history yet.<br>Resolve a week to start building your story.';
+    scroll.innerHTML = `<div id="log-empty">${msg}</div>`;
     return;
   }
 
   const byWeek = {};
-  for (const e of gameLog) {
+  for (const e of entries) {
     if (!byWeek[e.week]) byWeek[e.week] = [];
     byWeek[e.week].push(e);
   }
