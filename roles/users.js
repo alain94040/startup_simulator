@@ -99,7 +99,7 @@
         available: (s, char) => !s.launched && s.signal > 45 && s.network.peers >= 14 && !char.flags.waitlist_done,
         options: [
           { label: 'Reach out now', key: 'reach',
-            execute(s, char) { char.flags.waitlist_done = true; s.waitlist += 8; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Reached out to waitlist. 8 expressed interest and joined the early access list."; } },
+            execute(s, char) { char.flags.waitlist_done = true; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Reached out to waitlist. Good feedback — people are still excited, want to know when you're launching."; } },
         ],
         dropDelay: 2, dropFrom: 'Waitlist',
         dropMsg: "signed up a few weeks ago. assumed the product was dead. unsubscribed.",
