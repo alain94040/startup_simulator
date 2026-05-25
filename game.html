@@ -1142,6 +1142,89 @@ body::before {
   to   { opacity: 1; transform: none; }
 }
 
+/* ── Bank Overlay ────────────────────────────────────────── */
+#bank-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.82); backdrop-filter: blur(6px);
+  z-index: 120; align-items: center; justify-content: center;
+}
+#bank-overlay.on { display: flex; }
+#bank-box {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 20px; width: 520px; max-width: 94vw; max-height: 82vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
+  animation: summaryIn 0.3s cubic-bezier(0.34,1.5,0.64,1) forwards;
+}
+#bank-header {
+  padding: 22px 26px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
+}
+#bank-title { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: white; }
+#bank-subtitle { font-size: 11px; color: var(--dim); margin-top: 3px; }
+#bank-close-btn {
+  background: var(--surface3); border: 1px solid var(--border2);
+  width: 30px; height: 30px; border-radius: 50%; font-size: 12px; color: var(--dim2);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s, color 0.15s; flex-shrink: 0;
+}
+#bank-close-btn:hover { background: var(--surface); color: var(--text); }
+#bank-scroll {
+  overflow-y: auto; flex: 1; padding: 16px 26px 24px;
+  scrollbar-width: thin; scrollbar-color: var(--surface3) transparent;
+}
+.bank-opening {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 18px;
+}
+.bank-opening-lbl { font-size: 11px; color: var(--dim2); font-family: 'DM Mono', monospace; }
+.bank-opening-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: white; }
+.bank-sprint { margin-bottom: 18px; }
+.bank-sprint-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--dim); font-family: 'DM Mono', monospace;
+  padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
+}
+.bank-row {
+  display: flex; align-items: flex-start; padding: 8px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.03); gap: 10px;
+}
+.bank-row:last-of-type { border-bottom: none; }
+.bank-row-icon { font-size: 13px; width: 20px; flex-shrink: 0; padding-top: 1px; text-align: center; }
+.bank-row-desc { flex: 1; min-width: 0; }
+.bank-row-lbl { font-size: 12px; color: var(--text); line-height: 1.3; }
+.bank-row-note {
+  display: block; margin-top: 3px; font-size: 11px; color: var(--dim);
+  font-family: 'Instrument Serif', serif; font-style: italic; line-height: 1.4;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.bank-row-amt {
+  font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700;
+  white-space: nowrap; padding-top: 1px; flex-shrink: 0;
+}
+.bank-amt-neg { color: var(--danger); }
+.bank-amt-pos { color: var(--good); }
+.bank-balance {
+  display: flex; justify-content: flex-end; align-items: center;
+  gap: 8px; padding: 6px 0 2px;
+}
+.bank-bal-lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--dim); font-family: 'DM Mono', monospace;
+}
+.bank-bal-val {
+  font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.bank-bal-ok { color: var(--text); }
+.bank-bal-warn { color: var(--warn); }
+.bank-bal-danger { color: var(--danger); }
+/* Cash stat clickable hint */
+#cash-hst { cursor: pointer; border-radius: 8px; transition: background 0.15s; padding: 0 6px; margin: 0 -6px; }
+#cash-hst:hover { background: var(--surface3); }
+#cash-hst .hst-lbl { color: #8b5cf6; }
+#cash-hst #h-cash { text-decoration: underline solid rgba(139,92,246,0.55); text-underline-offset: 3px; }
+
 .ms-particle {
   position: fixed; pointer-events: none; z-index: 1000;
   border-radius: 2px;
@@ -1194,7 +1277,7 @@ body::before {
 <!-- ── HUD ──────────────────────────────────────────────── -->
 <div id="hud">
   <div id="hud-week">WEEK 1 · M1</div>
-  <div class="hst"><span class="hst-lbl">Cash</span><span class="hst-val" id="h-cash">$10k</span></div>
+  <div class="hst" id="cash-hst" onclick="openBank()" title="View bank statement"><span class="hst-lbl">Cash <span style="font-size:9px;color:#8b5cf6">↗</span></span><span class="hst-val" id="h-cash">$10k</span></div>
   <div class="hst"><span class="hst-lbl">Runway</span><span class="hst-val" id="h-rwy">20wk</span></div>
   <div class="hst"><span class="hst-lbl">Product</span><span class="hst-val" id="h-prod">10%</span></div>
   <div class="hst"><span class="hst-lbl">Fit</span><span class="hst-val" id="h-fit">0%</span></div>
@@ -1272,6 +1355,20 @@ body::before {
       <button id="log-close-btn" onclick="closeLog()">✕</button>
     </div>
     <div id="log-scroll"></div>
+  </div>
+</div>
+
+<!-- ── Bank Account Overlay ──────────────────────────────── -->
+<div id="bank-overlay" onclick="if(event.target===this)closeBank()">
+  <div id="bank-box">
+    <div id="bank-header">
+      <div>
+        <div id="bank-title">Bank Account</div>
+        <div id="bank-subtitle">Where the money went</div>
+      </div>
+      <button id="bank-close-btn" onclick="closeBank()">✕</button>
+    </div>
+    <div id="bank-scroll"></div>
   </div>
 </div>
 
@@ -1414,6 +1511,7 @@ let prevSnap    = null;
 let isDealing   = false;
 let displayedCash = null; // last cash value shown in HUD (for delta detection)
 let gameLog     = []; // { week, from, charId, cat, body, action, outcome, dropped }
+let cashLedger  = []; // { week, sprintWeeks, transactions, balanceAfter }
 
 const slottedIds    = () => slots.filter(Boolean).map(s => s.cardId);
 const committedIds  = () => slots.filter(s => s?.optKey).map(s => s.cardId);
@@ -1448,6 +1546,70 @@ const MS_CFG = {
 let milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
 let msQueue    = [];
 let msShowing  = false;
+
+// ─────────────────────────────────────────────────────────
+// Bank Account
+// ─────────────────────────────────────────────────────────
+function openBank() {
+  renderBank();
+  document.getElementById('bank-overlay').classList.add('on');
+}
+function closeBank() {
+  document.getElementById('bank-overlay').classList.remove('on');
+}
+function renderBank() {
+  const curCash = E ? E.s.cash : 10000;
+  const isLow   = curCash < 3000;
+  document.getElementById('bank-subtitle').innerHTML =
+    `Balance: <span style="font-weight:700;color:${isLow ? 'var(--danger)' : 'var(--good)'}">$${curCash.toLocaleString()}</span>`;
+
+  const scroll = document.getElementById('bank-scroll');
+  if (!cashLedger.length) {
+    scroll.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--dim);font-size:13px;line-height:1.7">No transactions yet.<br>Resolve a week to see your finances.</div>`;
+    return;
+  }
+
+  const ICON = { burn: '🔥', income: '📈', expense: '💸' };
+  let html = `<div class="bank-opening">
+    <span class="bank-opening-lbl">Opening balance — Week 1</span>
+    <span class="bank-opening-val">$10,000</span>
+  </div>`;
+
+  for (const e of cashLedger) {
+    const wkLabel = e.sprintWeeks === 1
+      ? `Week ${e.week}`
+      : `Weeks ${e.week}–${e.week + e.sprintWeeks - 1}`;
+    const balCls = e.balanceAfter < 3000 ? 'bank-bal-danger'
+                 : e.balanceAfter < 6000 ? 'bank-bal-warn' : 'bank-bal-ok';
+
+    const rows = e.transactions.map(tx => {
+      const icon  = ICON[tx.type] || (tx.delta > 0 ? '📈' : '💸');
+      const amt   = tx.delta > 0
+        ? `<span class="bank-row-amt bank-amt-pos">+$${tx.delta.toLocaleString()}</span>`
+        : `<span class="bank-row-amt bank-amt-neg">−$${Math.abs(tx.delta).toLocaleString()}</span>`;
+      const note  = tx.note ? `<span class="bank-row-note">${tx.note}</span>` : '';
+      const label = tx.label ? tx.label.replace(/</g, '&lt;') : '—';
+      const trunc = label.length > 72 ? label.slice(0, 72) + '…' : label;
+      return `<div class="bank-row">
+        <span class="bank-row-icon">${icon}</span>
+        <span class="bank-row-desc"><span class="bank-row-lbl">${trunc}</span>${note}</span>
+        ${amt}
+      </div>`;
+    }).join('');
+
+    html += `<div class="bank-sprint">
+      <div class="bank-sprint-lbl">${wkLabel}</div>
+      ${rows}
+      <div class="bank-balance">
+        <span class="bank-bal-lbl">balance</span>
+        <span class="bank-bal-val ${balCls}">$${e.balanceAfter.toLocaleString()}</span>
+      </div>
+    </div>`;
+  }
+
+  scroll.innerHTML = html;
+  scroll.scrollTop = scroll.scrollHeight;
+}
 
 function checkMilestones(prev, cur) {
   if (!milestones.moneyRaised && cur.cash > prev.cash) {
@@ -1550,7 +1712,7 @@ function startGame() {
 function boot() {
   E = new Engine();
   slots = [null, null]; prevSnap = null; displayedCash = null;
-  gameLog = [];
+  gameLog = []; cashLedger = [];
   milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
   msQueue = []; msShowing = false;
   document.getElementById('end-overlay').classList.remove('on');
@@ -1658,7 +1820,7 @@ function renderAll() { renderHUD(); renderHand(); renderSlots(); }
 // ─────────────────────────────────────────────────────────
 function fmtCash(v) {
   return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
-       : v >= 1000 ? '$' + Math.round(v/1000) + 'k'
+       : v >= 1000 ? '$' + (v/1000).toFixed(1) + 'k'
        : '$' + v;
 }
 
@@ -2006,7 +2168,8 @@ function endWeek() {
     .filter(d => actedIds.includes(d.id))
     .map(d => d.id);
 
-  const { results, sprintWeeks } = E.resolveTurn(actedIds, optMap);
+  const { results, sprintWeeks, transactions } = E.resolveTurn(actedIds, optMap);
+  cashLedger.push({ week: prevSnap.week, sprintWeeks, transactions, balanceAfter: E.s.cash });
   logWeek(currentCards, actedIds, optMap, results, engineOrder);
   updatePileCount();
   renderHUD(); // triggers cash animation immediately as cards flip
@@ -2151,9 +2314,8 @@ function showEnd(won) {
 // Keyboard: Escape closes log or returns active card to hand
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
-    if (document.getElementById('log-overlay').classList.contains('on')) {
-      closeLog(); return;
-    }
+    if (document.getElementById('bank-overlay').classList.contains('on')) { closeBank(); return; }
+    if (document.getElementById('log-overlay').classList.contains('on'))  { closeLog();  return; }
     const idx = activeSlotIdx();
     if (idx !== -1) closeSlot(idx);
   }

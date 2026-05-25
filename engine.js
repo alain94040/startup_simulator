@@ -210,11 +210,13 @@ class Engine {
     const chosen  = this.current.filter(d => ids.includes(d.id));
     const dropped = this.current.filter(d => !ids.includes(d.id));
     const results = [];
+    const transactions = [];
 
     const marketFitBefore = this.s.market_fit;
 
     for (const d of chosen) {
       const char = d._charId ? this.chars.get(d._charId) : null;
+      const cashBefore = this.s.cash;
       let m;
       if (d.options) {
         const opt = d.options.find(o => o.key === optKeys[d.id]) || d.options[0];
@@ -223,6 +225,8 @@ class Engine {
         m = d.execute(this.s, char, this);
       }
       if (m) results.push(m);
+      const cashDelta = this.s.cash - cashBefore;
+      if (cashDelta !== 0) transactions.push({ label: m, delta: cashDelta, type: cashDelta > 0 ? 'income' : 'expense' });
     }
 
     // Significant fit gain while fit is still low means some built work is now wrong.
@@ -245,13 +249,20 @@ class Engine {
           condition: d.dropCondition || null,
         });
       } else if (d.dropDelay === 0 && d.dropFx) {
+        const cashBefore = this.s.cash;
         d.dropFx(this.s, char, this);
+        const cashDelta = this.s.cash - cashBefore;
+        if (cashDelta !== 0) {
+          const from = d._charId ? CHARACTER_DEFS[d._charId].name : 'System';
+          transactions.push({ label: `${from} — ignored`, delta: cashDelta, type: 'expense' });
+        }
       }
     }
 
     const sprintWeeks = Math.max(...chosen.map(d => d.weeks), 1);
     this.s.week += sprintWeeks;
     this.s.cash -= this.burnPerWeek * sprintWeeks;
+    transactions.push({ label: 'Team & ops', note: `${sprintWeeks}-wk sprint · $${this.burnPerWeek}/wk`, delta: -(this.burnPerWeek * sprintWeeks), type: 'burn' });
 
     // Co-founder passive contributions (skill-weighted)
     for (const [id, char] of this.chars) {
@@ -345,7 +356,10 @@ class Engine {
     for (const p of fired) {
       const char = p.charId ? this.chars.get(p.charId) : null;
       if (p.condition && !p.condition(this.s, char)) continue;
+      const cashBefore = this.s.cash;
       p.fx(this.s, char, this);
+      const cashDelta = this.s.cash - cashBefore;
+      if (cashDelta !== 0) transactions.push({ label: p.text || `${p.from} — consequence`, delta: cashDelta, type: cashDelta > 0 ? 'income' : 'expense' });
       if (p.text) results.push(`${p.from}: "${p.text}"`);
     }
 
@@ -361,6 +375,7 @@ class Engine {
       this.s.ycDecisionWeek = null;
       if (Math.random() < 0.18) {
         this.s.ycAccepted = true; this.s.cash += 500000;
+        transactions.push({ label: 'YC accepted — $500k investment', delta: 500000, type: 'income' });
         this.s.signal = clamp(this.s.signal + 25, 0, 100);
         results.push("YC accepted! $500k added. See you at kickoff.");
       } else {
@@ -381,7 +396,7 @@ class Engine {
       if (this.s.marcusCommitted && this.s.followerCommitted) this.s.game_won = true;
     }
 
-    return { results, sprintWeeks };
+    return { results, sprintWeeks, transactions };
   }
 }
 
