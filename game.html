@@ -1800,7 +1800,8 @@ function renderLogFilters() {
   // Collect unique chars in appearance order
   const seen = new Map();
   for (const e of gameLog) {
-    if (e.charId && !seen.has(e.charId)) seen.set(e.charId, e.from);
+    if (e.charId && !seen.has(e.charId))
+      seen.set(e.charId, CHARACTER_DEFS[e.charId]?.name || e.from);
   }
   if (!seen.size) { bar.innerHTML = ''; return; }
 
