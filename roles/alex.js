@@ -7,6 +7,32 @@
     skills: { build: 1.2, discover: 0.7, pitch: 0.5 },
     cards: [
 
+      // ── WEEK 1 ONBOARDING (only 2 cards shown on week 1) ────────────────────
+      {
+        id: 'start_prototype', cat: 'p', from: 'You',
+        body: "you've been talking about this idea long enough. time to build something real. you pull up Alex's calendar and block a week.",
+        urgency: 3, weeks: 1, priority: true,
+        available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
+        options: [
+          { label: 'Tell Alex to start building', key: 'build',
+            execute(s, char) { char.flags.prototype_kicked = true; s.product = clamp(s.product + 8, 0, 100); return "Exciting. Alex thinks he\'ll get a demo going soon."; } },
+        ],
+        dropFx(s, char) { char.flags.prototype_kicked = true; },
+      },
+      {
+        id: 'incorporate_week1', cat: 'e', from: 'Alex',
+        body: "before we do anything else — we need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
+        urgency: 3, weeks: 1, priority: true, ignoreForTrust: true,
+        available: (s, char) => s.week === 1 && !s.incorporated,
+        options: [
+          { label: 'Incorporate via Stripe Atlas — $500', key: 'atlas',
+            execute(s, char) { s.incorporated = true; s.cash = clamp(s.cash - 500, 0, 9999999); return "Delaware C-corp registered. EIN assigned, bank account open. $500 gone — you're officially a company."; } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "we still don't have a legal entity. can't split equity or sign anything without one.",
+        dropFx(s, char) { char.morale = clamp(char.morale - 4, 0, 100); },
+      },
+
       // ── EARLY: RELATIONSHIP ──────────────────────────────────────────────────
       {
         id: 'equity_talk', cat: 't', from: 'Alex',
@@ -28,7 +54,7 @@
         id: 'alex_commitment', cat: 't', from: 'Alex',
         body: "i've been thinking — i can't quit my job until we have some real traction. evenings and weekends for now. that should be enough to get to launch, right?",
         urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.week <= 5 && !char.flags.commitment_resolved,
+        available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.commitment_resolved,
         options: [
           { label: 'Accept — milestones first', key: 'accept',
             execute(s, char) { char.flags.commitment_resolved = true; s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
@@ -43,7 +69,7 @@
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "wait — i demoed to my colleague today and called it a 'team productivity tool'. you've been telling people it's a 'workflow automation platform'. those are completely different products. which are we building?",
         urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
+        available: (s, char) => s.week >= 2 && s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
         options: [
           { label: "Go with Alex's framing", key: 'alex',
             execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with Alex's framing. Cleaner for developers. Some earlier investor conversations are now awkward, but at least you're aligned."; } },

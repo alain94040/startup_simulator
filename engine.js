@@ -199,7 +199,7 @@ class Engine {
       if (!picked.includes(d)) picked.push(d);
     }
 
-    this.current = picked.slice(0, 6);
+    this.current = picked.slice(0, this.s.week === 1 ? 2 : 6);
     this.current.forEach(d => this.shown.add(d.id));
     this.current.forEach(d => { d._expiring = this.shown.has(d.id + '_seen'); });
     return this.current;
