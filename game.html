@@ -296,6 +296,97 @@ body::before {
   flex: 1;
 }
 
+/* ── Guru popup (full-screen moment, like milestone) ────── */
+#guru-toast {
+  position: fixed; inset: 0; z-index: 991;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+#guru-toast.on { pointer-events: auto; }
+
+#guru-card {
+  display: none;
+  flex-direction: column; align-items: center; text-align: center;
+  padding: 38px 48px 32px;
+  background: radial-gradient(ellipse at 50% 0%, #201a10, #09090f);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 28px;
+  box-shadow:
+    0 0 0 1px rgba(234,179,8,0.2),
+    0 0 70px rgba(234,179,8,0.08),
+    0 40px 120px rgba(0,0,0,0.9);
+  max-width: 400px; width: 90vw;
+  position: relative; overflow: hidden;
+}
+#guru-card.on {
+  display: flex;
+  animation: guruCardIn 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+#guru-card.out { animation: guruCardOut 0.28s ease-in forwards !important; }
+
+@keyframes guruCardIn {
+  from { opacity: 0; transform: scale(0.7) translateY(24px); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes guruCardOut {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scale(0.9) translateY(-14px); }
+}
+
+#guru-glow {
+  position: absolute; inset: 0; border-radius: 28px;
+  background: radial-gradient(ellipse at 50% -10%, rgba(234,179,8,0.15) 0%, transparent 60%);
+  pointer-events: none;
+  animation: guruGlowPulse 2s ease-in-out infinite;
+}
+@keyframes guruGlowPulse {
+  0%,100% { opacity: 0.5; } 50% { opacity: 1; }
+}
+
+#guru-emoji {
+  font-size: 52px; line-height: 1; display: block;
+  margin-bottom: 14px; position: relative; z-index: 1;
+  filter: drop-shadow(0 4px 16px rgba(234,179,8,0.4));
+  animation: guruEmojiIn 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.08s backwards;
+}
+@keyframes guruEmojiIn {
+  from { transform: scale(0.1) rotate(-20deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+#guru-label {
+  font-size: 9px; font-weight: 700; letter-spacing: 3px;
+  text-transform: uppercase; color: #ca8a04;
+  margin-bottom: 6px; font-family: 'DM Mono', monospace;
+  position: relative; z-index: 1;
+  animation: guruFadeUp 0.35s ease 0.22s backwards;
+}
+#guru-quote {
+  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-size: 15px; color: rgba(255,240,180,0.82); line-height: 1.65;
+  position: relative; z-index: 1;
+  animation: guruFadeUp 0.35s ease 0.38s backwards;
+}
+#guru-link {
+  display: inline-block; margin-top: 14px;
+  font-size: 11px; color: rgba(202,138,4,0.7);
+  text-decoration: underline; text-underline-offset: 3px;
+  position: relative; z-index: 1;
+  animation: guruFadeUp 0.35s ease 0.46s backwards;
+  transition: color 0.15s;
+}
+#guru-link:hover { color: #ca8a04; }
+#guru-hint {
+  margin-top: 20px; font-size: 10px; color: rgba(255,255,255,0.18);
+  font-family: 'DM Mono', monospace; letter-spacing: 0.5px;
+  position: relative; z-index: 1;
+  animation: guruFadeUp 0.35s ease 0.54s backwards;
+}
+@keyframes guruFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* ── Result strip (below flipped slots) ─────────────────── */
 #deal-btn {
   display: none;
@@ -1384,6 +1475,17 @@ body::before {
   </div>
 </div>
 
+<div id="guru-toast">
+  <div id="guru-card">
+    <div id="guru-glow"></div>
+    <span id="guru-emoji">📖</span>
+    <div id="guru-label">GURU SAYS</div>
+    <div id="guru-quote">"…"</div>
+    <a id="guru-link" href="#" target="_blank" rel="noopener">Essay →</a>
+    <div id="guru-hint">tap anywhere to continue</div>
+  </div>
+</div>
+
 <!-- ── Intro ──────────────────────────────────────────────── -->
 <div id="intro-overlay" class="on">
   <div id="intro-card">
@@ -1685,6 +1787,60 @@ function spawnMsParticles(colors) {
     document.body.appendChild(p);
     p.addEventListener('animationend', () => p.remove());
   }
+}
+
+// ─────────────────────────────────────────────────────────
+// Guru reactions
+// ─────────────────────────────────────────────────────────
+
+const GURU_REACTIONS = {
+  'founder_first_interviews:interview': {
+    mood: 'pleased', name: 'Paul Graham',
+    emoji: '📖',
+    label: 'PAUL GRAHAM APPROVES',
+    quote: 'The most common unscalable thing founders have to do at the start is to recruit users manually.',
+    essay: 'Do Things That Don\'t Scale',
+    url: 'https://paulgraham.com/ds.html',
+  },
+};
+
+const GURU_MOOD_LABEL = { pleased: 'APPROVES', cautious: 'HAS A NOTE', concerned: 'DISAGREES' };
+
+function checkGuruReaction(slots) {
+  for (const slot of slots) {
+    if (!slot?.optKey) continue;
+    const rx = GURU_REACTIONS[`${slot.cardId}:${slot.optKey}`];
+    if (rx) return rx;
+  }
+  return null;
+}
+
+function showGuruReaction(rx) {
+  const toast = document.getElementById('guru-toast');
+  const card  = document.getElementById('guru-card');
+  document.getElementById('guru-emoji').textContent  = rx.emoji || '📖';
+  document.getElementById('guru-label').textContent  = `${rx.name.toUpperCase()} ${GURU_MOOD_LABEL[rx.mood] || 'SAYS'}`;
+  document.getElementById('guru-quote').textContent  = `"${rx.quote}"`;
+  const link = document.getElementById('guru-link');
+  link.textContent = rx.essay + ' →';
+  link.href = rx.url;
+
+  card.classList.remove('out', 'on');
+  void card.offsetWidth;
+  toast.classList.add('on');
+  card.classList.add('on');
+
+  const dismiss = (e) => {
+    if (e?.target === link) return; // let link clicks through
+    toast.onclick = null;
+    card.classList.add('out');
+    card.addEventListener('animationend', () => {
+      card.classList.remove('on', 'out');
+      toast.classList.remove('on');
+    }, { once: true });
+  };
+  toast.onclick = dismiss;
+  setTimeout(dismiss, 5500);
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2183,6 +2339,10 @@ function endWeek() {
   setTimeout(() => { if (slot1Committed) flipSlot(1, buildBack(1, resultFor(slots[1].cardId))); }, 320);
   const stripDelay = slot1Committed ? 1050 : 700;
   setTimeout(() => showResultStrip(results, sprintWeeks), stripDelay);
+
+  // Fire guru popup after cards have flipped and player has read the outcome
+  const guruRx = checkGuruReaction(slots);
+  if (guruRx) setTimeout(() => showGuruReaction(guruRx), stripDelay + 800);
 }
 
 // ─────────────────────────────────────────────────────────
