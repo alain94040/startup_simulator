@@ -36,7 +36,7 @@
       // ── EARLY: RELATIONSHIP ──────────────────────────────────────────────────
       {
         id: 'equity_talk', cat: 't', from: 'Alex',
-        body: "hey — can we actually write down the equity split? i told my girlfriend i own half the company and she asked me to show her something official. also want to make sure we agree before it gets complicated.",
+        body: "can we write down the equity split? told my girlfriend i own half and she asked to see something official. let's get this done before it gets complicated.",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char) => s.incorporated && s.week <= 12 && !char.flags.equity_set,
         options: [
@@ -52,7 +52,7 @@
       },
       {
         id: 'alex_commitment', cat: 't', from: 'Alex',
-        body: "i've been thinking — i can't quit my job until we have some real traction. evenings and weekends for now. that should be enough to get to launch, right?",
+        body: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.commitment_resolved,
         options: [
@@ -67,7 +67,7 @@
       },
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
-        body: "wait — i demoed to my colleague today and called it a 'team productivity tool'. you've been telling people it's a 'workflow automation platform'. those are completely different products. which are we building?",
+        body: "i called it 'team productivity'. you've been saying 'workflow automation'. those are different products. which are we actually building?",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week >= 2 && s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
         options: [
@@ -84,7 +84,7 @@
       },
       {
         id: 'alex_side_project', cat: 't', from: 'Alex',
-        body: "full disclosure — i've been doing about 3 hours a day on a side project. just exploring, not competitive. didn't mention it because i didn't think it was a big deal.",
+        body: "full disclosure — about 3 hours a day on a side project. just exploring, not competitive. didn't mention it, didn't think it was a big deal.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 3 && s.week <= 14 && char.morale > 50 && !char.flags.committed_fulltime && !char.flags.side_project_resolved && !char.flags.side_project_active,
         options: [
@@ -97,7 +97,7 @@
       },
       {
         id: 'alex_side_project_escalation', cat: 't', from: 'Alex',
-        body: "i know we talked about this before, but i've been putting more into it — probably 15 hours a week now. i think i need to be honest with you about where my head is at.",
+        body: "i know we talked about this, but i've been putting more in — probably 15 hours a week. i need to be honest about where my head is at.",
         urgency: 3, weeks: 1,
         available: (s, char) => char.flags.side_project_active && s.week <= 26,
         options: [
@@ -123,7 +123,7 @@
       },
       {
         id: 'friend_wants_in', cat: 't', from: 'Alex',
-        body: "my friend Dev wants to join as the first employee. smart, enthusiastic. skills overlap with mine a lot but they'd ship fast. your call though.",
+        body: "my friend Dev wants to join as the first employee. smart, enthusiastic, would ship fast. skills overlap with mine a lot. your call.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 4 && s.week <= 18 && s.product < 70 && !char.flags.dev_resolved,
         options: [
@@ -155,7 +155,7 @@
       // ── FOCUS ALIGNMENT ──────────────────────────────────────────────────────
       {
         id: 'alex_sync_discover', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "we've been heads-down building for a while without talking to anyone outside. should we shift focus to customer discovery for a sprint or two?",
+        body: "we've been heads-down building without talking to anyone outside. should we shift to customer discovery for a sprint or two?",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
           && (s.market_fit < 80 || s.product < 55)
@@ -179,7 +179,7 @@
       },
       {
         id: 'alex_sync_pitch', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "our traction story is getting solid. i think i'd create more value right now talking to investors than doing more discovery. free you up to stay focused on users. worth trying?",
+        body: "traction story is solid. i'd create more value pitching investors right now than doing more discovery. frees you up to stay on users. worth trying?",
         urgency: 1, weeks: 1,
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.signal >= 45 && s.customers >= 8 && s.deck_ready,
         options: [
@@ -205,7 +205,7 @@
       },
       {
         id: 'early_tech_stack', cat: 'e', from: 'Alex', ignoreForTrust: true,
-        body: "stack question: i could ship twice as fast with what i know, but the 'right' choice is more scalable. does the stack matter to you, or just ship speed?",
+        body: "stack question: i could ship twice as fast with what i know, but the 'right' choice scales better. stack or ship speed?",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 1 && s.week <= 4 && !char.flags.stack_done,
         options: [
@@ -218,7 +218,7 @@
       },
       {
         id: 'early_working_style', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "how are we working together day to day? i go heads-down for long stretches. not sure if you want standups or just ping each other when stuck.",
+        body: "how are we working day to day? i go heads-down for long stretches. want standups, or just ping each other when stuck?",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week <= 4 && !char.flags.working_style_done,
         options: [
@@ -231,7 +231,7 @@
       },
       {
         id: 'early_customer_target', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "noticed we're pitching this differently every time. sometimes it's for individuals, sometimes for teams. we should probably agree before it gets confusing.",
+        body: "we're pitching this differently every time — individuals one day, teams the next. we should agree before it gets confusing.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week <= 6 && !char.flags.customer_target_done,
         options: [
@@ -246,7 +246,7 @@
       },
       {
         id: 'early_mvp_scope', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "made two lists. one is everything we talked about shipping. the other is the smallest thing that actually proves the idea. they're pretty different.",
+        body: "made two lists: everything we talked about shipping, and the smallest thing that proves the idea. they're pretty different.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 6 && !char.flags.mvp_scope_done,
         options: [
@@ -272,7 +272,7 @@
       },
       {
         id: 'early_funding_goal', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "serious question i've been sitting on: are we building to raise VC money, sell to a big company, or run a profitable business? i want to make sure we have the same picture.",
+        body: "been sitting on this: are we building to raise VC, sell to a big company, or run a profitable business? we need to be on the same page.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 3 && s.week <= 8 && !char.flags.funding_goal_done,
         options: [
@@ -289,7 +289,7 @@
       // ── EARLY: ADMIN & LEGAL ────────────────────────────────────────────────
       {
         id: 'incorporate_now', cat: 'e', from: 'Alex',
-        body: "a potential user just asked us to sign an NDA before they'd demo their workflow. we can't sign anything without a legal entity. also — we need a bank account. do we use Stripe Atlas or find a lawyer?",
+        body: "a potential user asked us to sign an NDA. we can't without a legal entity. also need a bank account. stripe atlas or find a lawyer?",
         urgency: 2, weeks: 1, priority: true, ignoreForTrust: true,
         available: (s, char) => s.week >= 3 && s.week <= 14 && s.product >= 12 && !s.incorporated,
         options: [
@@ -302,7 +302,7 @@
       },
       {
         id: 'ip_concern', cat: 'e', from: 'Alex',
-        body: "something i've been meaning to raise — i wrote some early prototypes at my last job, same general problem space. if an investor or acquirer ever does diligence, could my old employer claim ownership?",
+        body: "been meaning to raise this: wrote prototypes at my last job, same space. could my old employer claim ownership if we go through diligence?",
         urgency: 3, weeks: 1, ignoreForTrust: true,
         available: (s, char) => s.week <= 12 && !s.ip_clear && !s.ip_concern_dismissed,
         options: [
@@ -317,7 +317,7 @@
       // ── EARLY: MARKET & IDEA ────────────────────────────────────────────────
       {
         id: 'first_interview_shock', cat: 'c', from: 'Alex',
-        body: "just got off a customer interview. they said the real problem isn't what we're solving — it's actually the step before it. they'd pay $200/month for that. we might be building the wrong thing.",
+        body: "just got off a customer interview. the real problem is the step before ours — they'd pay $200/month for that. we might be building the wrong thing.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week <= 8 && s.product < 40 && char.focus === 'discover' && !char.flags.interview_shock_resolved,
         options: [
@@ -332,7 +332,7 @@
       },
       {
         id: 'cold_silence', cat: 'c', from: 'Alex',
-        body: "sent 30 cold emails this week to people in our target market. 0 replies. not even 'not interested'. is the messaging wrong, or are we targeting the wrong people?",
+        body: "sent 30 cold emails to target market. 0 replies — not even 'not interested'. is the messaging wrong, or are we targeting the wrong people?",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 12 && !s.launched && s.signal < 50 && char.focus === 'discover' && !char.flags.cold_silence_resolved,
         options: [
@@ -345,7 +345,7 @@
       },
       {
         id: 'random_reframe', cat: 'c', from: 'Alex',
-        body: "talked to a stranger at a coffee shop about what we're building. they said 'oh so it's like [completely different description] but for [different market].' we both went quiet. it kind of makes more sense than our own pitch.",
+        body: "talked to a stranger about what we're building. they reframed it completely — different product, different market. we both went quiet. it kind of makes more sense than our own pitch.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week <= 12 && s.signal < 55 && char.focus === 'discover' && !char.flags.reframe_resolved,
         options: [
@@ -356,7 +356,7 @@
       },
       {
         id: 'pivot_insight_1', cat: 'c', from: 'Alex',
-        body: "been talking to users all week and something keeps coming up. they describe a different workflow than what we assumed. i think we've been solving the wrong part of the problem.",
+        body: "been talking to users all week and something keeps coming up. they describe a different workflow than we assumed. we've been solving the wrong part.",
         urgency: 3, weeks: 1,
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.market_fit >= 8 && !char.flags.pivot1,
         options: [
@@ -371,7 +371,7 @@
       },
       {
         id: 'pivot_insight_2', cat: 'c', from: 'Alex',
-        body: "second round of user interviews done. consistent feedback — they want depth on one thing, not breadth. our current scope is too wide and they're not seeing the core value.",
+        body: "second round of interviews done. consistent: they want depth on one thing, not breadth. scope's too wide — they're not seeing the core value.",
         urgency: 3, weeks: 1,
         available: (s, char) => char.flags.pivot1 && char.focus === 'discover' && char.focusSprints >= 2 && s.market_fit >= 35 && !char.flags.pivot2,
         options: [
@@ -386,7 +386,7 @@
       },
       {
         id: 'pmf_lock', cat: 'c', from: 'Alex',
-        body: "three users described exactly the same workflow gap unprompted this week. i've never seen that before. i think we finally know what we need to build.",
+        body: "three users described the same workflow gap unprompted this week. never seen that before. i think we finally know what to build.",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.pivot2 && char.focus === 'discover' && char.focusSprints >= 2 && s.market_fit >= 55 && !char.flags.pmf_locked,
         options: [
@@ -397,7 +397,7 @@
       },
       {
         id: 'family_doubt', cat: 't', from: 'Alex',
-        body: "my parents asked me again when i'm getting a real job. yours too? i keep explaining it but they don't really get it. tbh it's starting to get in my head a little.",
+        body: "my parents asked again when i'm getting a real job. yours too? i keep explaining but they don't really get it. tbh it's getting in my head.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 18 && char.morale < 50 && !char.flags.family_doubt_resolved,
         options: [
@@ -410,7 +410,7 @@
       // ── MID: PRODUCT ────────────────────────────────────────────────────────
       {
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
-        body: "the core flow works end-to-end for the first time. rough edges everywhere, but it actually does the thing. i want to put it in front of a real person before we build another feature — get a reaction while our assumptions are still easy to change.",
+        body: "the core flow works end-to-end for the first time. rough, but it does the thing. i want a real reaction before we build another feature.",
         urgency: 3, weeks: 1,
         available: (s) => s.product >= 18 && !s.has_demo && !s.launched,
         options: [
@@ -434,7 +434,7 @@
       },
       {
         id: 'alex_beta_ready', cat: 'p', from: 'Alex',
-        body: "we've been showing demos but nobody's actually living with the product day to day. i think we're ready to give 5–10 people real credentials and see what breaks when we're not in the room.",
+        body: "we've shown demos but nobody's actually living with it. give 5–10 people real credentials and see what breaks when we're not in the room.",
         urgency: 3, weeks: 1,
         available: (s) => s.has_demo && s.product >= 38 && !s.has_beta && !s.launched,
         options: [
@@ -457,7 +457,7 @@
       },
       {
         id: 'good_enough_launch', cat: 'p', from: 'Alex',
-        body: "beta users have been in it for a few weeks. the feedback is real. nothing's on fire. it's as ready as it's going to be without real public traffic — let's ship it.",
+        body: "beta users have been in it for weeks. feedback is real, nothing's on fire. as ready as it'll get without public traffic — let's ship it.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.product >= 50 && s.has_beta && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
         options: [
@@ -500,7 +500,7 @@
       // ── DEPARTURE ARC ────────────────────────────────────────────────────────
       {
         id: 'alex_leaving_threat', cat: 't', from: 'Alex',
-        body: "got a message from an old colleague at a well-funded startup. not going anywhere — but i think we need to have an honest conversation about where this is headed for me.",
+        body: "got a message from an old colleague at a well-funded startup. not going anywhere — but we need an honest conversation about where this is headed.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char, e) => e.alexDepartureRisk && char.active,
         options: [

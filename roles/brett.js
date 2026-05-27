@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'consultant_brand', cat: 'e', from: 'Brett (brand strategist)',
-        body: "just found you on crunchbase — congrats on the incorporation. i've worked with a dozen early-stage startups and i can immediately see your positioning is muddled. a one-day workshop would tighten the story significantly. $1,500, i work directly with founders.",
+        body: "found you on crunchbase. your positioning looks muddled — i can see it straight away. one-day workshop to tighten the story, $1,500. i work directly with founders.",
         urgency: 1, weeks: 1,
         available: (s, char) => !char.flags.done,
         options: [

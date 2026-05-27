@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'consultant_growth', cat: 'e', from: 'Kevin (growth consultant)',
-        body: "saw your HN post — love what you're building. quick look at your funnel and i can already see 3 places you're leaving growth on the table. i do week-long growth audits for early-stage companies, $2,000 flat. guarantee 3× signups in 30 days.",
+        body: "saw your HN post. quick look at your funnel and i can see 3 places you're leaving growth on the table. week-long audit, $2,000 flat. guarantee 3× signups in 30 days.",
         urgency: 1, weeks: 1,
         available: (s, char) => !char.flags.done,
         options: [

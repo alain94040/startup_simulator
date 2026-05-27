@@ -8,7 +8,7 @@
     cards: [
       {
         id: 'reporter_deadline', cat: 'e', from: 'Lena (TechMedia)',
-        body: "writing about startups in your space. you'd be the only founder quote. story publishes tomorrow 9am — you're out if i don't hear back tonight.",
+        body: "writing about startups in your space — you'd be the only founder quote. story runs tomorrow 9am. you're out if i don't hear back tonight.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.launched && !char.flags.done,
         options: [

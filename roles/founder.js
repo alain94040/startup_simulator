@@ -6,7 +6,7 @@
     cards: [
       {
         id: 'founder_landing', cat: 'p', from: 'You',
-        body: "you've been talking about this for weeks but there's nowhere to point people. no domain, no landing page, no email capture. it's making conversations awkward.",
+        body: "you've been talking about this for weeks with nowhere to point people. no domain, no landing page, no email capture. it's awkward.",
         urgency: 2, weeks: 1,
         available: (s) => s.week <= 5 && !s.has_landing_page,
         options: [
@@ -17,7 +17,7 @@
       },
       {
         id: 'founder_first_interviews', cat: 'c', from: 'You',
-        body: "you've been building for two weeks and haven't had a single structured conversation with a real potential customer. everything you're building is a guess.",
+        body: "you've been building for two weeks without a single structured customer conversation. everything you're building is a guess.",
         urgency: 2, weeks: 1,
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
@@ -30,7 +30,7 @@
       // ── RECURRING: founder pairs with Alex ──────────────────────────────────
       {
         id: 'founder_codebuild', cat: 'p', from: 'You',
-        body: "alex has been heads-down for two weeks but the feature queue isn't shrinking. you can code. take this sprint and build alongside him instead of managing from the sidelines.",
+        body: "alex has been heads-down for two weeks but the queue isn't shrinking. you can code — take this sprint and build alongside him.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -60,7 +60,7 @@
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
       {
         id: 'founder_build_onboarding', cat: 'p', from: 'You',
-        body: "you mapped the onboarding flow based on where beta users keep getting stuck. it's a 3-step wizard — within your abilities to build. alex is maxed out on the backend.",
+        body: "you mapped onboarding based on where beta users get stuck. it's a 3-step wizard, within your abilities to build. alex is maxed on the backend.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -87,7 +87,7 @@
       },
       {
         id: 'founder_build_empty_states', cat: 'p', from: 'You',
-        body: "every screen in the product shows a blank white box when there's no data. two hours of work. new users are hitting these on their first session and assuming something is broken.",
+        body: "every screen shows a blank box when there's no data. two hours of work. new users hit these on their first session and assume something's broken.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -111,7 +111,7 @@
       },
       {
         id: 'founder_build_export', cat: 'p', from: 'You',
-        body: "three beta users asked for CSV export this week. they have reporting requirements — without it they can't fully adopt the product. a few hours of work on your end.",
+        body: "three beta users asked for CSV export. they have reporting requirements — without it they can't fully adopt. a few hours of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -138,7 +138,7 @@
       },
       {
         id: 'founder_build_demo_account', cat: 'p', from: 'You',
-        body: "every investor demo and sales call starts with a blank slate. you're spending 5 minutes of every meeting saying 'pretend this has data in it.' build a seeded demo account.",
+        body: "every investor demo starts with a blank slate. you spend 5 minutes saying 'pretend this has data.' build a seeded demo account.",
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -268,7 +268,7 @@
       // ── RECURRING: deep user research (post-launch) ──────────────────────────
       {
         id: 'founder_user_depth', cat: 'c', from: 'You',
-        body: "you've been shipping and selling for weeks but you're making product decisions from support tickets. you don't actually know how your users work day to day. block a week.",
+        body: "you've been shipping and selling for weeks but making decisions from support tickets. you don't know how your users work day to day. block a week.",
         urgency: 2, weeks: 1,
         available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.user_depth_last || 0) + 6,
         options: [
@@ -292,7 +292,7 @@
       // ── CHAIN: reference selling → testimonial → website social proof ────────
       {
         id: 'first_customer_offer', cat: 'c', from: 'You',
-        body: "you have free users showing up every day but nobody's paying yet. one of them has been in the product daily for two weeks. time to try to close the first real customer.",
+        body: "free users show up every day but nobody's paying. one has been in the product daily for two weeks. time to close the first real customer.",
         urgency: 3, weeks: 1,
         available: (s) => s.launched && s.users >= 3 && s.customers === 0 && !s.first_customer_offered,
         options: [
@@ -356,7 +356,7 @@
       // ── ONE-TIME: pricing experiment (post-launch) ──────────────────────────
       {
         id: 'founder_pricing_experiment', cat: 'c', from: 'You',
-        body: "you have free users who open the app daily but haven't upgraded. the product is clearly useful — nobody's been asked to pay. time to test something.",
+        body: "free users open the app daily but haven't upgraded. the product is clearly useful — nobody's been asked to pay. time to test.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.launched && s.users >= 10 && s.customers >= 1 && !char.flags.pricing_exp_done && s.week >= (s.pricing_exp_last || 0) + 4,
         options: [
