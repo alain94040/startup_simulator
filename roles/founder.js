@@ -29,7 +29,7 @@
 
       // ── RECURRING: founder pairs with Alex ──────────────────────────────────
       {
-        id: 'founder_codebuild', cat: 'p', from: 'You',
+        id: 'founder_codebuild', cat: 'p', from: 'You', _cofounderEngagement: 'alex',
         body: "alex has been heads-down for two weeks but the queue isn't shrinking. you can code — take this sprint and build alongside him.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {

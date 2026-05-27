@@ -238,11 +238,13 @@ class Engine {
       results.push(`Better understanding of the problem means parts of what was built no longer fit. -${rework}% product to realign.`);
     }
 
+    const sprintWeeks = Math.max(...chosen.map(d => d.weeks), 1);
+
     for (const d of dropped) {
       const char = d._charId ? this.chars.get(d._charId) : null;
       if (d.dropDelay > 0 && d.dropFx) {
         this.pending.push({
-          fireWeek: this.s.week + d.dropDelay,
+          fireWeek: this.s.week + d.dropDelay + (d.dropDelay === 1 ? sprintWeeks : 0),
           from: d.dropFrom || (d._charId ? CHARACTER_DEFS[d._charId].name : 'System'),
           text: d.dropMsg,
           fx: d.dropFx,
@@ -259,8 +261,6 @@ class Engine {
         }
       }
     }
-
-    const sprintWeeks = Math.max(...chosen.map(d => d.weeks), 1);
     this.s.week += sprintWeeks;
     this.s.cash -= this.burnPerWeek * sprintWeeks;
     transactions.push({ label: 'Team & ops', note: `${sprintWeeks}-wk sprint · $${this.burnPerWeek}/wk`, delta: -(this.burnPerWeek * sprintWeeks), type: 'burn' });
@@ -294,7 +294,7 @@ class Engine {
     for (const [id, char] of this.chars) {
       if (!char.active || !('trust' in char)) continue;
       const alexDropped = dropped.filter(d => d._charId === id && !d.ignoreForTrust).length;
-      const alexChosen  = chosen.filter(d => d._charId === id && !d.ignoreForTrust).length;
+      const alexChosen  = chosen.filter(d => (!d.ignoreForTrust) && (d._charId === id || d._cofounderEngagement === id)).length;
       const delta = alexChosen - alexDropped;
       if (delta > 0)      char.trust = clamp(char.trust + 2 * sprintWeeks, 0, 100);
       else if (delta < 0) char.trust = clamp(char.trust - 4 * sprintWeeks, 0, 100);

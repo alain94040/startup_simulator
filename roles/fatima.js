@@ -51,7 +51,12 @@
         available: (s, char) => char.flags.deck_done && s.marcusCommitted && !char.flags.committed,
         options: [
           { label: 'Yes — welcome aboard', key: 'welcome',
-            execute(s, char) {
+            execute(s, char, e) {
+              const alexGone = e && !(e.chars.get('alex')?.active ?? true);
+              if (alexGone && Math.random() < 0.70) {
+                char.flags.committed = true;
+                return "Fatima: \"i need to pass. losing your technical co-founder this late is a real red flag — i can't get comfortable with the execution risk.\"";
+              }
               char.flags.committed = true;
               s.followerCommitted = true;
               s.cash = clamp(s.cash + 100000, 0, 9999999);

@@ -51,15 +51,19 @@
         available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.product >= 40 && s.signal >= 45 && !s.marcusCommitted,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
+            const alexGone = e && !(e.chars.get('alex')?.active ?? true);
             const score = clamp(s.customers * 2, 0, 35) + clamp(s.product / 5, 0, 20)
               + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0);
-            if (Math.random() < (score >= 65 ? 0.85 : score >= 50 ? 0.55 : 0.15)) {
+            const baseP = score >= 65 ? 0.85 : score >= 50 ? 0.55 : 0.15;
+            if (Math.random() < (alexGone ? baseP * 0.25 : baseP)) {
               s.marcusCommitted = true;
               s.cash = clamp(s.cash + 400000, 0, 9999999);
               return "Marcus committed. $400K wired. He's leading — now fill the rest of the round.";
             }
             s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100);
-            return "Marcus: \"we love the vision but need more traction to lead. come back in 2 months.\"";
+            return alexGone
+              ? "Marcus: \"i heard alex left. i need to see a complete technical team before i can lead a round.\""
+              : "Marcus: \"we love the vision but need more traction to lead. come back in 2 months.\"";
           } }],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
