@@ -373,6 +373,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
   const e = new Engine();
   const log = [];
   const cardCounts = {};   // cardId -> times offered this game
+  const handSizes  = [];   // {week, size} per turn
   let errorCount = 0;
   let ycEverApplied = false;   // tracks ever-applied, not reset on rejection
 
@@ -394,6 +395,8 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
       log.push(`STUCK: no cards available at week ${e.s.week}`);
       break;
     }
+
+    handSizes.push({ week: e.s.week, size: e.current.length });
 
     const ids  = selectCards(e.current, strategy, e.s);
     const opts = pickOptions(e.current, ids, optStrategy, e.s);
@@ -491,6 +494,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     errors: errorCount,
     log,
     cardCounts,
+    handSizes,
   };
 }
 
@@ -555,13 +559,31 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
     .filter(r => r.avg >= 2)
     .sort((a, b) => b.avg - a.avg);
 
+  // Aggregate hand sizes by week
+  const weekBuckets = {};
+  for (const r of results) {
+    for (const { week, size } of r.handSizes) {
+      if (!weekBuckets[week]) weekBuckets[week] = [];
+      weekBuckets[week].push(size);
+    }
+  }
+  const weeklyHandSizes = Object.entries(weekBuckets)
+    .map(([w, sizes]) => ({
+      week: +w,
+      avg:    +(sizes.reduce((a, b) => a + b, 0) / sizes.length).toFixed(2),
+      min:    Math.min(...sizes),
+      pctLow: +(sizes.filter(s => s < 4).length / sizes.length * 100).toFixed(0),
+      games:  sizes.length,
+    }))
+    .sort((a, b) => a.week - b.week);
+
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
            ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged,
            avgWeek, avgUsers, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
            priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen,
-           uniqueIssues, repetition };
+           uniqueIssues, repetition, weeklyHandSizes };
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
@@ -887,6 +909,30 @@ if (WINNERS_FLAG) {
       }
     }
     console.log();
+  })(byStrat);
+
+  // ── Card availability distribution ────────────────────────────────────────
+  (function cardDistribution(s) {
+    const strats = Object.values(s);
+    const maxWeek = Math.max(...strats.flatMap(r => r.weeklyHandSizes.map(w => w.week)));
+    const SHOW_UP_TO = Math.min(maxWeek, 24);
+
+    // Short labels for column headers
+    const labels = strats.map(r => r.name.slice(0, 6).padEnd(6));
+    console.log(`── Card availability: avg hand size per week (max 6) ──`);
+    console.log(`   Wk  ` + labels.join('  '));
+
+    for (let wk = 1; wk <= SHOW_UP_TO; wk++) {
+      const cells = strats.map(r => {
+        const entry = r.weeklyHandSizes.find(e => e.week === wk);
+        if (!entry || entry.games < Math.max(1, r.n * 0.05)) return '  --  ';
+        const val = entry.avg.toFixed(1);
+        const flag = entry.pctLow >= 50 ? '!' : entry.pctLow >= 20 ? '~' : ' ';
+        return (flag + val).padStart(5) + ' ';
+      });
+      console.log(`  ${String(wk).padStart(2)}  ${cells.join(' ')}`);
+    }
+    console.log(`   (! = >50% of turns had <4 cards  ~ = >20%)\n`);
   })(byStrat);
 
   // Sanity check
