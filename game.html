@@ -1391,6 +1391,21 @@ body::before {
   to   { opacity: 1; transform: none; }
 }
 
+/* ── Danger milestone variant (Alex departure, etc.) ─────── */
+#milestone-card.danger {
+  background: radial-gradient(ellipse at 50% 0%, #2a0f0f, #09090f);
+  box-shadow:
+    0 0 0 1px rgba(239,68,68,0.3),
+    0 0 80px rgba(220,38,38,0.18),
+    0 40px 120px rgba(0,0,0,0.9);
+}
+#milestone-card.danger #ms-glow {
+  background: radial-gradient(ellipse at 50% -20%, rgba(239,68,68,0.22) 0%, transparent 65%);
+}
+#milestone-card.danger #ms-label { color: #ef4444; }
+#milestone-card.danger #ms-sub   { color: rgba(230,180,180,0.8); }
+#milestone-card.danger #ms-hint  { color: rgba(255,255,255,0.25); }
+
 /* ── Bank Overlay ────────────────────────────────────────── */
 #bank-overlay {
   display: none; position: fixed; inset: 0;
@@ -1793,6 +1808,12 @@ const allCommitted  = () => slots.every(s => s?.optKey);
 // Milestones
 // ─────────────────────────────────────────────────────────
 const MS_CFG = {
+  alexGone: {
+    emoji: '🚪', label: 'CO-FOUNDER GONE',
+    title: 'Alex just left.',
+    sub: "He took another offer. You're building alone now — every technical decision just got harder.",
+    danger: true,
+  },
   moneyRaised: {
     emoji: '💸', label: 'FIRST MONEY IN',
     title: 'Cash is coming in.',
@@ -1813,7 +1834,7 @@ const MS_CFG = {
   },
 };
 
-let milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
+let milestones = { alexGone: false, moneyRaised: false, firstUser: false, firstCustomer: false };
 let msQueue    = [];
 let msShowing  = false;
 
@@ -1882,6 +1903,9 @@ function renderBank() {
 }
 
 function checkMilestones(prev, cur) {
+  if (!milestones.alexGone && prev.alexActive && !(E.chars.get('alex')?.active ?? true)) {
+    milestones.alexGone = true; msQueue.push('alexGone');
+  }
   if (!milestones.moneyRaised && cur.cash > prev.cash) {
     milestones.moneyRaised = true; msQueue.push('moneyRaised');
   }
@@ -1908,25 +1932,26 @@ function showMilestone(cfg) {
   document.getElementById('ms-title').textContent = cfg.title;
   document.getElementById('ms-sub').textContent   = cfg.sub;
 
-  card.classList.remove('out', 'on');
+  card.classList.remove('out', 'on', 'danger');
+  if (cfg.danger) card.classList.add('danger');
   void card.offsetWidth;
   toast.classList.add('on');
   card.classList.add('on');
 
-  spawnMsParticles(cfg.colors);
+  if (!cfg.danger) spawnMsParticles(cfg.colors);
 
   const dismiss = () => {
     toast.onclick = null;
     card.classList.add('out');
     card.addEventListener('animationend', () => {
-      card.classList.remove('on', 'out');
+      card.classList.remove('on', 'out', 'danger');
       toast.classList.remove('on');
       msShowing = false;
       drainMsQueue();
     }, { once: true });
   };
   toast.onclick = dismiss;
-  setTimeout(dismiss, 3200);
+  if (!cfg.danger) setTimeout(dismiss, 3200);
 }
 
 function spawnMsParticles(colors) {
@@ -2040,7 +2065,7 @@ function boot() {
   E = new Engine();
   slots = [null, null]; prevSnap = null; displayedCash = null;
   gameLog = []; cashLedger = []; logFilter = null;
-  milestones = { moneyRaised: false, firstUser: false, firstCustomer: false };
+  milestones = { alexGone: false, moneyRaised: false, firstUser: false, firstCustomer: false };
   msQueue = []; msShowing = false;
   document.getElementById('end-overlay').classList.remove('on');
   document.getElementById('deal-btn').classList.remove('on');
@@ -2529,6 +2554,7 @@ function endWeek() {
   prevSnap = {
     cash: E.s.cash, product: E.s.product, market_fit: E.s.market_fit,
     signal: E.s.signal, users: E.s.users, customers: E.s.customers, week: E.s.week,
+    alexActive: E.chars.get('alex')?.active ?? true,
   };
 
   const actedIds = committedIds();
