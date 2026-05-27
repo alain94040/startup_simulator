@@ -105,7 +105,7 @@
 
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
-        body: "YC application window just opened. Your stats qualify — 60%+ product, 10+ paying customers. A lot of founders in your space are applying this batch.",
+        body: "YC applications just opened. Your stats qualify — 60%+ product, 10+ paying customers. A lot of founders in your space are applying.",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 10,
         options: [
@@ -118,7 +118,7 @@
       },
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
-        body: "YC application window just opened. Stats aren't quite there yet — need 60% product and 10 paying customers. Some teams apply anyway to get partner feedback. Apply or wait for next batch?",
+        body: "YC applications just opened. Stats aren't quite there — need 60% product, 10 paying customers. Some apply anyway for partner feedback. Apply or wait?",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 10),
         options: [

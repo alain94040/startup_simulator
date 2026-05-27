@@ -32,7 +32,7 @@
       },
       {
         id: 'ff_family_2', cat: 'e', from: 'Mom',
-        body: "hey again — haven't heard back! dad keeps asking me how things are going. we're following along as best we can. seriously, if there's anything we can do to help, we want to.",
+        body: "hey, still haven't heard back. dad keeps asking how things are going. if there's anything we can do to help, we really want to.",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char) => s.week <= 8 && !char.flags.done && char.flags.shown_1 && !char.flags.shown_2,
         options: [ askOption, introOption ],
@@ -41,7 +41,7 @@
       },
       {
         id: 'ff_family_3', cat: 'e', from: 'Mom',
-        body: "okay so dad actually looked up your company and has been reading everything. he wants to put some money in if you'll let him. i know it might feel a little weird, but he's really proud.",
+        body: "dad looked up your company and has been reading everything. he wants to put some money in if you'll let him. might feel weird — but he's really proud.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week <= 10 && !char.flags.done && char.flags.shown_2,
         options: [

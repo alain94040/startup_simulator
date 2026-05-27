@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'mentor_competitor_bomb', cat: 'c', from: 'Priya (advisor)',
-        body: "looked at your idea over the weekend. you should know: there are at least 3 companies working on this right now. one is YC-backed from 2022. you need a much sharper answer to 'why you.'",
+        body: "looked at your idea over the weekend. you should know: 3 companies are working on this right now, one YC-backed from 2022. you need a sharper answer to 'why you.'",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week <= 10 && s.signal < 60 && !char.flags.competitor_resolved,
         options: [

@@ -46,7 +46,7 @@
       },
       {
         id: 'fatima_commit', cat: 'e', from: 'Fatima (angel)',
-        body: "i've completed my diligence. the metrics are where i need them and i've got conviction on the space. i'd like to put in $100K — are you still filling the round?",
+        body: "i've completed my diligence. metrics are where i need them, conviction is there. i'd like to put in $100K — are you still filling the round?",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => char.flags.deck_done && s.marcusCommitted && !char.flags.committed,
         options: [
