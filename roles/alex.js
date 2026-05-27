@@ -15,7 +15,7 @@
         available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
         options: [
           { label: 'Tell Alex to start building', key: 'build',
-            execute(s, char) { char.flags.prototype_kicked = true; s.product = clamp(s.product + 8, 0, 100); return "Exciting. Alex thinks he\'ll get a demo going soon."; } },
+            execute(s, char) { char.flags.prototype_kicked = true; s.product = clamp(s.product + 10, 0, 100); return "Exciting. Alex thinks he'll get a demo going soon."; } },
         ],
         dropFx(s, char) { char.flags.prototype_kicked = true; },
       },
@@ -261,7 +261,7 @@
         id: 'early_pricing', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "i keep going back and forth: do we charge from day one, or give it away until we hit some real usage threshold? what's your instinct?",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 2 && s.week <= 7 && !char.flags.pricing_done,
+        available: (s, char) => s.week >= 4 && s.week <= 8 && !char.flags.pricing_done,
         options: [
           { label: 'Charge from day one — validate willingness to pay', key: 'charge',
             execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. Even $10/month proves someone cares. Sets the mindset."; } },
@@ -412,7 +412,7 @@
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
         body: "the core flow works end-to-end for the first time. rough, but it does the thing. i want a real reaction before we build another feature.",
         urgency: 3, weeks: 1,
-        available: (s) => s.product >= 18 && !s.has_demo && !s.launched,
+        available: (s) => s.productPhase === "proto" && s.product >= 18 && !s.has_demo && !s.launched,
         options: [
           { label: 'Show it rough — learn fast', key: 'rough',
             execute(s) {
@@ -436,7 +436,7 @@
         id: 'alex_beta_ready', cat: 'p', from: 'Alex',
         body: "we've shown demos but nobody's actually living with it. give 5–10 people real credentials and see what breaks when we're not in the room.",
         urgency: 3, weeks: 1,
-        available: (s) => s.has_demo && s.product >= 38 && !s.has_beta && !s.launched,
+        available: (s) => s.productPhase === "proto" && s.has_demo && s.product >= 38 && !s.has_beta && !s.launched,
         options: [
           { label: 'Invite our 5 best-fit contacts', key: 'curated',
             execute(s) {
@@ -456,10 +456,32 @@
         dropFx(s) { s.has_beta = true; s.waitlist += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); },
       },
       {
+        id: 'proto_to_product', cat: 'p', from: 'Alex',
+        body: "the demo held together long enough to learn what we needed. but we both know it's duct tape. real users will break it in a week. i want to build this properly.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.productPhase === "proto" && s.has_beta && s.product >= 40
+          && !char.flags.rebuild_triggered && s.week >= (char.flags.rebuild_last || 0) + 4,
+        options: [
+          { label: "Let's build it for real", key: 'commit',
+            execute(s, char) {
+              char.flags.rebuild_triggered = true;
+              s.productPhase = "product";
+              s.product = 30;
+              return "Keeping what worked, scrapping the rest. We know the core flow — now we build it properly.";
+            } },
+          { label: 'Not yet — keep polishing the demo', key: 'delay',
+            execute(s, char) {
+              char.flags.rebuild_last = s.week;
+              return "Still things to learn from the demo. Alex nods, but you can tell he's ready to move on.";
+            } },
+        ],
+        dropFx(s, char) { char.flags.rebuild_last = s.week; },
+      },
+      {
         id: 'good_enough_launch', cat: 'p', from: 'Alex',
         body: "beta users have been in it for weeks. feedback is real, nothing's on fire. as ready as it'll get without public traffic — let's ship it.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.product >= 50 && s.has_beta && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
+        available: (s, char) => s.productPhase === "product" && s.product >= 50 && s.has_beta && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
         options: [
           { label: 'Ship it — launch now', key: 'ship',
             execute(s, char) { s.launched = true; s.signal = clamp(s.signal + 12, 0, 100); if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn."; return "Launched. First real users are in. Feedback starts flowing."; } },

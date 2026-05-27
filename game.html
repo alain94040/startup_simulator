@@ -1415,7 +1415,7 @@ body::before {
   <div id="hud-week">WEEK 1 · M1</div>
   <div class="hst" id="cash-hst" onclick="openBank()" title="View bank statement"><span class="hst-lbl">Cash <span style="font-size:9px;color:#8b5cf6">↗</span></span><span class="hst-val" id="h-cash">$10k</span></div>
   <div class="hst"><span class="hst-lbl">Runway</span><span class="hst-val" id="h-rwy">20wk</span></div>
-  <div class="hst"><span class="hst-lbl">Product</span><span class="hst-val" id="h-prod">10%</span></div>
+  <div class="hst"><span class="hst-lbl" id="h-prod-lbl">Proto</span><span class="hst-val" id="h-prod">nothing yet</span></div>
   <div class="hst"><span class="hst-lbl">Fit</span><span class="hst-val" id="h-fit">0%</span></div>
   <div class="hst"><span class="hst-lbl">Signal</span><span class="hst-val" id="h-sig">28</span></div>
   <div class="hst" id="h-wl-wrap" style="display:none"><span class="hst-lbl">Waitlist</span><span class="hst-val" id="h-wl">0</span></div>
@@ -2046,6 +2046,23 @@ function renderAll() { renderHUD(); renderHand(); renderSlots(); }
 // ─────────────────────────────────────────────────────────
 // Cash animation helpers
 // ─────────────────────────────────────────────────────────
+function productLabel(s) {
+  const v = s.product;
+  if ((s.productPhase || "proto") === "proto") {
+    if (v < 20) return "nothing yet";
+    if (v < 40) return "duct tape";
+    if (v < 60) return "smoke & mirrors";
+    if (v < 80) return "showable";
+    return "demo ready";
+  } else {
+    if (v < 20) return "blank slate";
+    if (v < 40) return "taking shape";
+    if (v < 60) return "coming together";
+    if (v < 80) return "almost solid";
+    return "ready";
+  }
+}
+
 function fmtCash(v) {
   return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
        : v >= 1000 ? '$' + (v/1000).toFixed(1) + 'k'
@@ -2119,7 +2136,8 @@ function renderHUD() {
   rwe.textContent = rw + 'wk';
   rwe.className   = 'hst-val' + (rw <= 3 ? ' danger' : rw <= 6 ? ' warn' : '');
 
-  document.getElementById('h-prod').textContent  = Math.round(s.product) + '%';
+  document.getElementById('h-prod-lbl').textContent = (s.productPhase || "proto") === "proto" ? "Proto" : "Product";
+  document.getElementById('h-prod').textContent = productLabel(s);
   document.getElementById('h-fit').textContent   = Math.round(s.market_fit) + '%';
   document.getElementById('h-sig').textContent   = Math.round(s.signal);
 
@@ -2427,7 +2445,7 @@ function showResultStrip(results, sprintWeeks) {
   const fmtD = (v, isInt) => (v >= 0 ? '+' : '') + (isInt ? Math.round(v) : v);
   const deltas = [
     { lbl:'Cash',    d: cur.cash       - s.cash,       str: v => (v>=0?'+$':'-$')+Math.abs(Math.round(v/100)*100).toLocaleString() },
-    { lbl:'Product', d: cur.product    - s.product,    str: v => fmtD(Math.round(v))+'%' },
+    { lbl:(cur.productPhase||'proto')==='proto'?'Proto':'Product', d: cur.product - s.product, str: v => fmtD(Math.round(v))+'%' },
     { lbl:'Fit',     d: cur.market_fit - s.market_fit, str: v => fmtD(Math.round(v))+'%' },
     { lbl:'Signal',  d: cur.signal     - s.signal,     str: v => fmtD(Math.round(v)) },
     { lbl:'Users',   d: cur.users      - s.users,      str: v => fmtD(v, true) },
@@ -2490,7 +2508,7 @@ function showSummary(results, sprintWeeks) {
   // Deltas
   const deltas = [
     { lbl:'Cash',    d: s.cash - prev.cash,        fmt: v => (v>=0?'+':'')+Math.round(v/100)*100 },
-    { lbl:'Product', d: s.product - prev.product,  fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
+    { lbl:(s.productPhase||'proto')==='proto'?'Proto':'Product', d: s.product - prev.product, fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
     { lbl:'Fit',     d: s.market_fit - prev.market_fit, fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
     { lbl:'Signal',  d: s.signal - prev.signal,    fmt: v => (v>=0?'+':'')+Math.round(v) },
     { lbl:'Users',   d: s.users - prev.users,      fmt: v => (v>=0?'+':'')+v },

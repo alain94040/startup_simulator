@@ -85,8 +85,9 @@ const WORLD = [
 class Engine {
   constructor() {
     this.s = {
-      cash: 10000, week: 1, product: 10, waitlist: 0, users: 0, customers: 0, revenue: 0,
+      cash: 10000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
       signal: 28, market_fit: 0, launched: false, deck_ready: false,
+      productPhase: "proto",
       has_demo: false, has_beta: false, tech_debt: 0,
       investor_warmth: 0,
       incorporated: false, ip_clear: false,
