@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Startup — Play Your Hand</title>
+<title>Startup: All In</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Space+Grotesk:wght@600;700&family=Spectral:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
 <style>
@@ -796,6 +796,119 @@ body::before {
   color: white; cursor: pointer;
 }
 
+/* ── Splash Screen ──────────────────────────────────────── */
+#splash-overlay {
+  display: flex;
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 400;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+  transition: opacity 0.5s ease;
+}
+#splash-overlay.hiding {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.splash-tagline {
+  font-family: 'Spectral', Georgia, serif;
+  font-size: clamp(18px, 3vw, 22px);
+  font-style: italic;
+  color: var(--dim2);
+  line-height: 1.5;
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: splashIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s both;
+}
+.splash-tagline strong {
+  color: var(--text);
+  font-style: normal;
+  font-weight: 500;
+}
+
+.splash-divider {
+  width: 48px; height: 1px;
+  background: var(--border2);
+  margin: 0 auto 28px;
+  opacity: 0;
+  animation: splashIn 0.5s ease 0.35s both;
+}
+
+.splash-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 10px;
+  opacity: 0;
+  animation: splashIn 0.5s ease 0.45s both;
+}
+
+.splash-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(48px, 9vw, 78px);
+  font-weight: 800;
+  letter-spacing: -3px;
+  line-height: 0.95;
+  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 45%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: splashIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.55s both;
+}
+
+.splash-body {
+  font-family: 'Spectral', Georgia, serif;
+  font-size: clamp(14px, 2vw, 16px);
+  color: var(--dim2);
+  line-height: 1.75;
+  max-width: 400px;
+  margin-bottom: 24px;
+  opacity: 0;
+  animation: splashIn 0.6s ease 0.75s both;
+}
+
+.splash-stats {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--dim);
+  margin-bottom: 40px;
+  opacity: 0;
+  animation: splashIn 0.5s ease 0.9s both;
+}
+
+#splash-btn {
+  padding: 14px 48px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  border: none; border-radius: 12px;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 15px; font-weight: 800;
+  color: white; cursor: pointer;
+  box-shadow: 0 0 48px rgba(99,102,241,0.35);
+  opacity: 0;
+  animation: splashIn 0.6s cubic-bezier(0.34,1.5,0.64,1) 1.05s both;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+#splash-btn:hover {
+  transform: scale(1.03);
+  box-shadow: 0 0 64px rgba(139,92,246,0.5);
+}
+#splash-btn:active { transform: scale(0.97); }
+
+@keyframes splashIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
 /* ── Intro Overlay ──────────────────────────────────────── */
 #intro-overlay {
   display: none;
@@ -1410,6 +1523,16 @@ body::before {
 </div>
 
 <!-- ── Intro ──────────────────────────────────────────────── -->
+<div id="splash-overlay">
+  <p class="splash-tagline"><strong>Every founder thinks they're ready.</strong><br>Most aren't.</p>
+  <div class="splash-divider"></div>
+  <div class="splash-eyebrow">A founder's card game</div>
+  <h1 class="splash-title">Startup: All In</h1>
+  <p class="splash-body">A card game built from real stories by hundreds of silicon valley tech founders. Navigate co‑founders, investors, and burnout — and find out if you've got what it takes to start a startup.</p>
+  <div class="splash-stats">20 weeks &middot; 1 shot</div>
+  <button id="splash-btn" onclick="hideSplash()">Start Playing →</button>
+</div>
+
 <div id="intro-overlay" class="on">
   <div id="intro-card">
     <div id="intro-stripe"></div>
@@ -1430,6 +1553,13 @@ body::before {
 
 <script>
 const ROLES = {};
+
+function hideSplash() {
+  const el = document.getElementById('splash-overlay');
+  el.classList.add('hiding');
+  el.addEventListener('transitionend', () => el.remove(), { once: true });
+}
+
 // Intro data lives here so it renders before role scripts load
 const INTRO_SLIDES = [
   {
