@@ -374,6 +374,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
   const log = [];
   const cardCounts = {};   // cardId -> times offered this game
   const handSizes  = [];   // {week, size} per turn
+  const moraleSnaps = [];  // {week, morale, trust} snapshot at start of each turn
   let errorCount = 0;
   let ycEverApplied = false;   // tracks ever-applied, not reset on rejection
 
@@ -397,6 +398,11 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     }
 
     handSizes.push({ week: e.s.week, size: e.current.length });
+
+    const alexNow = e.chars.get('alex');
+    if (alexNow && alexNow.active) {
+      moraleSnaps.push({ week: e.s.week, morale: Math.round(alexNow.morale), trust: Math.round(alexNow.trust) });
+    }
 
     const ids  = selectCards(e.current, strategy, e.s);
     const opts = pickOptions(e.current, ids, optStrategy, e.s);
@@ -495,6 +501,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     log,
     cardCounts,
     handSizes,
+    moraleSnaps,
   };
 }
 
@@ -577,13 +584,30 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
     }))
     .sort((a, b) => a.week - b.week);
 
+  // Alex morale at specific weeks: for each game, find the snap closest to targetWeek
+  function avgMoraleAt(week) {
+    const vals = [];
+    for (const r of results) {
+      let best = null, bestDist = Infinity;
+      for (const s of r.moraleSnaps) {
+        const d = Math.abs(s.week - week);
+        if (d < bestDist) { bestDist = d; best = s; }
+      }
+      if (best && bestDist <= 2) vals.push(best.morale);
+    }
+    return vals.length > 0 ? Math.round(vals.reduce((a, b) => a + b) / vals.length) : null;
+  }
+  const avgMoraleWk3  = avgMoraleAt(3);
+  const avgMoraleWk10 = avgMoraleAt(10);
+
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
            ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged,
            avgWeek, avgUsers, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
            priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen,
-           uniqueIssues, repetition, weeklyHandSizes };
+           uniqueIssues, repetition, weeklyHandSizes,
+           avgMoraleWk3, avgMoraleWk10 };
 }
 
 // ─── Report ───────────────────────────────────────────────────────────────────
@@ -792,6 +816,8 @@ if (WINNERS_FLAG) {
     console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
     console.log(`  Fit     — avg: ${r.avgFit}%  min: ${r.minFit}%  max: ${r.maxFit}%  (fit≥50: ${r.pctReachedFit50}%  fit=100: ${r.pctReachedFit100}%)`);
     console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%  Ryan: ${r.ryanSeen}%  Fatima: ${r.fatimaSeen}%`);
+    if (r.avgMoraleWk3 !== null || r.avgMoraleWk10 !== null)
+      console.log(`  Alex morale — wk3 avg: ${r.avgMoraleWk3 ?? 'n/a'}  wk10 avg: ${r.avgMoraleWk10 ?? 'n/a'}`);
     if (r.uniqueIssues.length > 0) console.log(`  Issues: ${r.uniqueIssues.join(' | ')}`);
     console.log();
   }
@@ -857,6 +883,16 @@ if (WINNERS_FLAG) {
     // Angel path must engage Marcus
     check(`angel_path.marcusCommit (${s.angel_path.marcusCommit}%) >= 15%`,
           s.angel_path.marcusCommit >= 15);
+
+    // Alex morale: ignoring him must cause morale to crash, engaging must keep it healthy
+    check(`ignore_alex.avgMoraleWk3 (${s.ignore_alex.avgMoraleWk3}) > 70 — starts high before consequences hit`,
+          (s.ignore_alex.avgMoraleWk3 ?? 0) > 70);
+    check(`ignore_alex.avgMoraleWk10 (${s.ignore_alex.avgMoraleWk10}) < 15 — crashed near departure threshold`,
+          (s.ignore_alex.avgMoraleWk10 ?? 100) < 15);
+    check(`ignore_alex morale declining: wk3 (${s.ignore_alex.avgMoraleWk3}) > wk10 (${s.ignore_alex.avgMoraleWk10})`,
+          (s.ignore_alex.avgMoraleWk3 ?? 0) > (s.ignore_alex.avgMoraleWk10 ?? 100));
+    check(`alex_first.avgMoraleWk10 (${s.alex_first.avgMoraleWk10}) > 50 — engagement keeps morale healthy`,
+          (s.alex_first.avgMoraleWk10 ?? 0) > 50);
 
     // Errors — no strategy should produce runtime errors
     const totalErrors = Object.values(s).reduce((sum, r) => sum + r.errors, 0);
