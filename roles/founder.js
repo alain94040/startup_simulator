@@ -161,6 +161,36 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
+      // ── ONE-TIME: meetup → introduces Priya ─────────────────────────────────
+      {
+        id: 'founder_meetup', cat: 'e', from: 'You',
+        body: (s, char) => (s.week >= 8 && char.flags.meetup_seen)
+          ? "the meetup you skipped last month is back. same crowd, same venue. you told yourself you'd go next time."
+          : "there's a meetup on your topic this week — a dozen people building in the same space. you haven't been to one of these in months.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => {
+          if (char.flags.meetup_done || char.flags.meetup_over) return false;
+          if (s.week >= 8 && s.week <= 11) return true;
+          return s.week >= 2 && s.week <= 6;
+        },
+        options: [
+          { label: 'Go to the meetup', key: 'go',
+            execute(s, char) {
+              char.flags.meetup_done = true;
+              s.met_priya = true;
+              s.met_priya_week = s.week;
+              s.signal = clamp(s.signal + 4, 0, 100);
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              return "Good crowd. You talked to a few people building adjacent things. Had a long conversation with Priya — she's done this before, has relevant operator experience, and seemed genuinely interested in what you're working on.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          if (s.week < 8) char.flags.meetup_seen = true;
+          if (s.week >= 11) char.flags.meetup_over = true;
+        },
+      },
+
       // ── SOLO MODE: cards that unlock when Alex leaves ────────────────────────
       // Alex was the only one who could call a launch, drive product, and push
       // discovery. Without him, the founder inherits those jobs — slower, harder,

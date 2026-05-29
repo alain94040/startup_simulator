@@ -326,16 +326,17 @@ function selectCards(current, strategy, state) {
     return eligible.slice(0, 2).map(c => c.id);
   }
 
-  if (strategy === 'lean_loop') {
+  if (strategy === 'lean_loop' || strategy === 'ignore_meetup') {
     const s = state || {};
     const fit     = s.market_fit || 0;
     const product = s.product    || 0;
     const CONSULTANT_IDS = new Set(['consultant_growth', 'consultant_brand']);
+    const MEETUP_IDS     = strategy === 'ignore_meetup' ? new Set(['founder_meetup']) : new Set();
     const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'yc_discussion_early', 'seed_pitch', 'fatima_commit']);
     // Alex founding cards must never be skipped — losing Alex kills the card pool
     const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
 
-    const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id));
+    const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
 
     let catOrder;
@@ -369,7 +370,7 @@ function selectCards(current, strategy, state) {
 
 // ─── Run one game ─────────────────────────────────────────────────────────────
 
-function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
+function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOverrides = {}) {
   const e = new Engine();
   const log = [];
   const cardCounts = {};   // cardId -> times offered this game
@@ -404,7 +405,13 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
       moraleSnaps.push({ week: e.s.week, morale: Math.round(alexNow.morale), trust: Math.round(alexNow.trust) });
     }
 
-    const ids  = selectCards(e.current, strategy, e.s);
+    let ids = selectCards(e.current, strategy, e.s);
+    for (const [cardId, action] of Object.entries(cardOverrides)) {
+      if (action === 'force_pick' && e.current.some(c => c.id === cardId) && !ids.includes(cardId))
+        ids.push(cardId);
+      else if (action === 'force_drop')
+        ids = ids.filter(id => id !== cardId);
+    }
     const opts = pickOptions(e.current, ids, optStrategy, e.s);
 
     for (const card of e.current) {
@@ -497,6 +504,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false) {
     alexMorale: alex ? alex.morale : 0,
     alexTrust:  alex ? alex.trust  : 0,
     activeChars,
+    metPriya: e.s.met_priya || false,
     errors: errorCount,
     log,
     cardCounts,
@@ -612,6 +620,8 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 
 // ─── Report ───────────────────────────────────────────────────────────────────
 
+CARD_PREFS.ignore_meetup = CARD_PREFS.lean_loop;
+
 const strategies = [
   ['Random',              'random'],
   ['Distracted',          'distracted'],
@@ -620,6 +630,7 @@ const strategies = [
   ['Ignore Alex',         'ignore_alex'],
   ['Customer focus',      'customer_focus'],
   ['Lean loop',           'lean_loop'],
+  ['Ignore meetup',       'ignore_meetup'],
   ['Angel path',          'angel_path'],
   ['Rand + full-time',    'rand_fulltime'],
   ['Rand + part-time',    'rand_parttime'],
@@ -627,7 +638,7 @@ const strategies = [
 
 // ─── Options parser ───────────────────────────────────────────────────────────
 
-const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','angel_path','rand_fulltime','rand_parttime'];
+const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','ignore_meetup','angel_path','rand_fulltime','rand_parttime'];
 
 function parseArgs(argv) {
   const args = argv.slice(2);
@@ -894,6 +905,12 @@ if (WINNERS_FLAG) {
     check(`alex_first.avgMoraleWk10 (${s.alex_first.avgMoraleWk10}) > 50 — engagement keeps morale healthy`,
           (s.alex_first.avgMoraleWk10 ?? 0) > 50);
 
+    // Meetup: skipping it must suppress Priya; win rates should stay comparable
+    check(`ignore_meetup.priyaSeen = ${s.ignore_meetup.priyaSeen}% (expected 0)`,
+          s.ignore_meetup.priyaSeen === 0);
+    check(`ignore_meetup.wins (${s.ignore_meetup.wins}%) within 15pts of lean_loop.wins (${s.lean_loop.wins}%)`,
+          Math.abs(s.ignore_meetup.wins - s.lean_loop.wins) <= 15);
+
     // Errors — no strategy should produce runtime errors
     const totalErrors = Object.values(s).reduce((sum, r) => sum + r.errors, 0);
     check(`no runtime errors across all strategies (total: ${totalErrors})`,
@@ -993,5 +1010,41 @@ if (WINNERS_FLAG) {
     const avg = (totalFit / RUNS).toFixed(1);
     const pass = grew >= Math.ceil(RUNS * 0.5);
     console.log(`CHECK build→market_fit: grew in ${grew}/${RUNS} games, avg fit=${avg}  ${pass ? 'PASS' : 'FAIL'}`);
+  })();
+
+  // ── Meetup impact: attend vs skip ────────────────────────────────────────────
+  (function checkMeetupImpact() {
+    const RUNS = 200;
+    const attend = [], skip = [];
+    for (let i = 0; i < RUNS; i++) {
+      attend.push(runGame('lean_loop', 120, false, false, { founder_meetup: 'force_pick' }));
+      skip.push(  runGame('lean_loop', 120, false, false, { founder_meetup: 'force_drop' }));
+    }
+
+    const pct = (arr, fn) => Math.round(arr.filter(fn).length / arr.length * 100);
+    const avg = (arr, fn) => (arr.reduce((s, r) => s + fn(r), 0) / arr.length).toFixed(1);
+
+    const rows = [
+      ['Win rate',      pct(attend, r => r.won),                          pct(skip, r => r.won)],
+      ['Bankrupt',      pct(attend, r => r.bankrupt),                     pct(skip, r => r.bankrupt)],
+      ['Priya active',  pct(attend, r => r.activeChars.includes('priya')),pct(skip, r => r.activeChars.includes('priya'))],
+      ['Avg signal',    avg(attend, r => r.signal),                       avg(skip, r => r.signal)],
+      ['Avg market fit',avg(attend, r => r.market_fit),                   avg(skip, r => r.market_fit)],
+      ['Avg week',      avg(attend, r => r.week),                         avg(skip, r => r.week)],
+    ];
+
+    console.log(`\nCHECK meetup impact (lean_loop, ${RUNS} games each)`);
+    console.log(`  ${''.padEnd(18)} attend    skip`);
+    for (const [label, a, s] of rows) {
+      const fmt = v => typeof v === 'number' ? v + '%' : v;
+      console.log(`  ${label.padEnd(18)} ${fmt(a).padStart(6)}  ${fmt(s).padStart(6)}`);
+    }
+
+    const priyaWithAttend = pct(attend, r => r.activeChars.includes('priya'));
+    const priyaWithSkip   = pct(skip,   r => r.activeChars.includes('priya'));
+    const p1 = priyaWithAttend > 50;
+    const p2 = priyaWithSkip === 0;
+    console.log(`  Priya unlock rate >50% when attended: ${p1 ? 'PASS' : 'FAIL'}  (${priyaWithAttend}%)`);
+    console.log(`  Priya never unlocks when skipped:     ${p2 ? 'PASS' : 'FAIL'}  (${priyaWithSkip}%)`);
   })();
 }

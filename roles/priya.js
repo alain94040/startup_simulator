@@ -3,7 +3,7 @@
 
   const def = {
     id: 'priya', name: 'Priya (advisor)', type: 'advisor',
-    unlockCondition: (s) => s.week >= 4,
+    unlockCondition: (s) => s.met_priya === true && s.week >= s.met_priya_week + 2,
     cards: [
       {
         id: 'mentor_competitor_bomb', cat: 'c', from: 'Priya (advisor)',

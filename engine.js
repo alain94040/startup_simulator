@@ -175,7 +175,9 @@ class Engine {
       const def = CHARACTER_DEFS[id];
       for (const card of def.cards) {
         if (card.available(this.s, char, this)) {
-          (card.fallback ? fallbackCards : allCards).push({ ...card, _charId: id });
+          const resolved = { ...card, _charId: id };
+          if (typeof resolved.body === 'function') resolved.body = resolved.body(this.s, char);
+          (card.fallback ? fallbackCards : allCards).push(resolved);
         }
       }
     }
