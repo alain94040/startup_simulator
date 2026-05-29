@@ -358,7 +358,8 @@ class Engine {
     this.pending = this.pending.filter(p => p.fireWeek > this.s.week);
     for (const p of fired) {
       const char = p.charId ? this.chars.get(p.charId) : null;
-      if (p.condition && !p.condition(this.s, char)) continue;
+      if (char && !char.active) continue;
+      if (p.condition && !p.condition(this.s, char)) { p.fx(this.s, char, this); continue; }
       const cashBefore = this.s.cash;
       p.fx(this.s, char, this);
       const cashDelta = this.s.cash - cashBefore;

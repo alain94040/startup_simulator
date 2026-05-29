@@ -53,7 +53,7 @@
               return "Back to building. Their noise is real but so is your roadmap. Alex saw the article and went quiet for a day.";
             } },
         ],
-        dropDelay: 2, dropFrom: 'Priya (advisor)',
+        dropDelay: 2, dropFrom: 'Market signal',
         dropMsg: "Rivalio has 200 customers and is well-funded. you need a sharper answer to 'why you and not them.'",
         dropFx(s, char) {
           char.flags.done = true;

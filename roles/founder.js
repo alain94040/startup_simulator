@@ -30,7 +30,7 @@
       // ── RECURRING: founder pairs with Alex ──────────────────────────────────
       {
         id: 'founder_codebuild', cat: 'p', from: 'You', _cofounderEngagement: 'alex',
-        body: "alex has been heads-down for two weeks but the queue isn't shrinking. you can code — take this sprint and build alongside him.",
+        body: "alex has been heads-down but the queue isn't shrinking. you can code — take this sprint and build alongside him.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -54,7 +54,8 @@
               return "Ran 3 demos instead. 3 people signed up for early access. Alex kept building solo.";
             } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { s.cobuild_last = s.week; },
       },
 
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
@@ -164,8 +165,8 @@
       // ── ONE-TIME: meetup → introduces Priya ─────────────────────────────────
       {
         id: 'founder_meetup', cat: 'e', from: 'You',
-        body: (s, char) => (s.week >= 8 && char.flags.meetup_seen)
-          ? "the meetup you skipped last month is back. same crowd, same venue. you told yourself you'd go next time."
+        body: (s, char) => s.week >= 8
+          ? "the monthly meetup for your space is happening this week. same community, different conversations."
           : "there's a meetup on your topic this week — a dozen people building in the same space. you haven't been to one of these in months.",
         urgency: 1, weeks: 1,
         available: (s, char) => {
@@ -186,7 +187,6 @@
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char) {
-          if (s.week < 8) char.flags.meetup_seen = true;
           if (s.week >= 11) char.flags.meetup_over = true;
         },
       },

@@ -63,7 +63,7 @@
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?",
-        dropFx(s, char) { char.morale = clamp(char.morale - 14, 0, 100); },
+        dropFx(s, char) { char.morale = clamp(char.morale - 14, 0, 100); s.alex_offer_week = s.week; },
       },
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
@@ -157,14 +157,15 @@
         id: 'alex_sync_discover', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "we've been heads-down building without talking to anyone outside. should we shift to customer discovery for a sprint or two?",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
+        available: (s, char) => !s.launched && s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
           && (s.market_fit < 80 || s.product < 55)
           && s.week >= (char.flags.lastSyncToDiscover || 0) + 8,
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
             execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; char.flags.lastSyncToDiscover = s.week; return "Agreed. Alex on customer discovery this sprint."; } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.lastSyncToDiscover = s.week; },
       },
       {
         id: 'alex_sync_build', cat: 't', from: 'Alex', ignoreForTrust: true,
@@ -381,7 +382,7 @@
             execute(s, char) { char.flags.pivot2 = true; s.market_fit = clamp(s.market_fit + 8, 0, 100); return "Decided to ship the broader scope. Market fit isn't perfect but you're moving."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "still not seeing the retention signal. we're building for the wrong customer.",
+        dropMsg: "still not hearing the right signal from users. i think we're talking to the wrong people.",
         dropFx(s, char) { char.flags.pivot2 = true; s.market_fit = clamp(s.market_fit - 8, 0, 100); s.signal = clamp(s.signal - 5, 0, 100); },
       },
       {
@@ -531,6 +532,7 @@
         ],
         dropDelay: 1, dropFrom: 'Alex',
         dropMsg: "i accepted the offer. i'm sorry — i think this is right for me. i'll do a proper handoff this week.",
+        dropCondition: (s) => s.alex_offer_week != null && s.alex_offer_week < s.week,
         dropFx(s, char, e) { char.active = false; e.alexDepartureRisk = false; },
       },
     ],

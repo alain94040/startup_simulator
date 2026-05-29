@@ -112,9 +112,15 @@ const CARD_PREFS = {
     consultant_growth:        'pass',
     consultant_brand:         'pass',
     hn_thread:                'engage',
-    community_signal_hn:      'engage',
-    community_signal_reddit:  'engage',
-    community_signal_slack:   'engage',
+    community_signal_hn_1:    'engage',
+    community_signal_hn_2:    'engage',
+    community_signal_hn_3:    'engage',
+    community_signal_reddit_1:'engage',
+    community_signal_reddit_2:'engage',
+    community_signal_reddit_3:'engage',
+    community_signal_slack_1: 'engage',
+    community_signal_slack_2: 'engage',
+    community_signal_slack_3: 'engage',
     community_product_hn:     'engage',
     community_product_reddit: 'engage',
     community_product_slack:  'engage',
@@ -157,9 +163,15 @@ const CARD_PREFS = {
     consultant_growth:        'pass',
     consultant_brand:         'pass',
     hn_thread:                'engage',
-    community_signal_hn:      'engage',
-    community_signal_reddit:  'engage',
-    community_signal_slack:   'engage',
+    community_signal_hn_1:    'engage',
+    community_signal_hn_2:    'engage',
+    community_signal_hn_3:    'engage',
+    community_signal_reddit_1:'engage',
+    community_signal_reddit_2:'engage',
+    community_signal_reddit_3:'engage',
+    community_signal_slack_1: 'engage',
+    community_signal_slack_2: 'engage',
+    community_signal_slack_3: 'engage',
     community_product_hn:     'engage',
     community_product_reddit: 'engage',
     community_product_slack:  'engage',
@@ -362,7 +374,7 @@ function selectCards(current, strategy, state) {
       if (pa !== pb) return pa - pb;
       return b.urgency - a.urgency;
     });
-    return sorted.slice(0, 2).map(c => c.id);
+    return sorted.filter(c => !MEETUP_IDS.has(c.id)).slice(0, 2).map(c => c.id);
   }
 
   return pool.slice(0, 2).map(c => c.id);
@@ -396,6 +408,15 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     if (e.current.length === 0) {
       log.push(`STUCK: no cards available at week ${e.s.week}`);
       break;
+    }
+
+    const seenIds = new Set();
+    for (const card of e.current) {
+      if (seenIds.has(card.id)) {
+        log.push(`DUPLICATE_CARD: ${card.id} appeared twice in hand at week ${e.s.week}`);
+        errorCount++;
+      }
+      seenIds.add(card.id);
     }
 
     handSizes.push({ week: e.s.week, size: e.current.length });
@@ -442,6 +463,8 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     if (e.s.ycApplied) ycEverApplied = true;
     const weekBefore = e.s.week;
     const ycWasPending = e.s.ycApplied && !e.s.ycAccepted;
+    const alexChar = e.chars.get('alex');
+    const alexAlreadyGone = alexChar && !alexChar.active;
     let results, sprintWeeks;
     try {
       ({ results, sprintWeeks } = e.resolveTurn(ids, opts));
@@ -449,6 +472,16 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
       log.push(`ERROR in resolveTurn turn ${turn}: ${err.message}`);
       errorCount++;
       break;
+    }
+
+    // Ghost check: Alex pending messages must not fire after he has left
+    if (alexAlreadyGone) {
+      for (const msg of results) {
+        if (/^Alex: "/.test(msg)) {
+          log.push(`ALEX_GHOST: "${msg.slice(0, 80)}" at week ${weekBefore}`);
+          errorCount++;
+        }
+      }
     }
 
     // --no-yc: intercept a fresh acceptance and revert it to a rejection

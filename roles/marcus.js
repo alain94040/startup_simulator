@@ -16,6 +16,7 @@
         ],
         dropDelay: 1, dropFrom: 'Marcus',
         dropMsg: "tried twice. no reply. moving on — good luck with the company.",
+        dropCondition: (s, char) => !char.flags.intro_warm_done,
         dropFx(s, char) { char.flags.intro_warm_done = true; s.investor_warmth = clamp(s.investor_warmth - 15, 0, 100); },
       },
       {

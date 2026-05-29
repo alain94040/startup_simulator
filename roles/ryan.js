@@ -47,9 +47,10 @@
               return CHECKIN_REPLIES[rnd(CHECKIN_REPLIES.length)];
             } },
           { label: 'Skip it this week', key: 'skip',
-            execute(s, char) { return "Left it for another time."; } },
+            execute(s, char) { char.flags.lastUpdateWeek = s.week; return "Left it for another time."; } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.lastUpdateWeek = s.week; },
       },
     ],
   };

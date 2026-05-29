@@ -29,6 +29,7 @@
         ],
         dropDelay: 2, dropFrom: 'Fatima',
         dropMsg: "you went quiet after the intro — going to let you drive timing. reach out when you're ready to go deeper.",
+        dropCondition: (s, char) => !char.flags.meeting_done,
         dropFx(s, char) { char.flags.meeting_done = true; },
       },
       {
@@ -42,6 +43,7 @@
         ],
         dropDelay: 3, dropFrom: 'Fatima',
         dropMsg: "still working through my diligence process. will be in touch.",
+        dropCondition: (s, char) => !char.flags.deck_done,
         dropFx(s, char) { char.flags.deck_done = true; },
       },
       {
