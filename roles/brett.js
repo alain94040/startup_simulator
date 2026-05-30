@@ -16,6 +16,7 @@
         ],
         dropDelay: 1, dropFrom: 'Brett',
         dropMsg: "just wanted to follow up — offer stands. a lot of founders wait too long on this.",
+        dropCancel: (s, char) => char.flags.done,
         dropFx(s, char) { char.flags.done = true; },
       },
     ],

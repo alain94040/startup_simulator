@@ -16,6 +16,7 @@
         ],
         dropDelay: 1, dropFrom: 'Kevin',
         dropMsg: "reaching out one more time — this offer won't be available much longer. founders who act early see the biggest gains.",
+        dropCancel: (s, char) => char.flags.done,
         dropFx(s, char) { char.flags.done = true; },
       },
     ],

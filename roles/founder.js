@@ -17,7 +17,7 @@
       },
       {
         id: 'founder_first_interviews', cat: 'c', from: 'You',
-        body: "you've been building for two weeks without a single structured customer conversation. everything you're building is a guess.",
+        body: "you've been building without a single structured customer conversation. everything you're building is a guess.",
         urgency: 2, weeks: 1,
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
@@ -30,7 +30,14 @@
       // ── RECURRING: founder pairs with Alex ──────────────────────────────────
       {
         id: 'founder_codebuild', cat: 'p', from: 'You', _cofounderEngagement: 'alex',
-        body: "alex has been heads-down but the queue isn't shrinking. you can code — take this sprint and build alongside him.",
+        body: (s, char, engine) => {
+          const timesPaired = engine.history.filter(h => h.chosen.includes('founder_codebuild')).length;
+          if (timesPaired === 0)
+            return "alex has been heads-down but the queue isn't shrinking. you can code — take this sprint and build alongside him.";
+          if (timesPaired < 3)
+            return "same situation as last time — queue still isn't moving fast enough. you could jump in again.";
+          return "the queue's never fully empty. at some point pairing stops being a one-off and becomes the default way you ship.";
+        },
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -422,7 +429,11 @@
       // ── FALLBACK: safety valve — only surfaces when no other cards are available ──
       {
         id: 'founder_reflect', cat: 'e', from: 'You', fallback: true,
-        body: "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.",
+        body: (s) => {
+          if (s.cash < 3000) return "runway is nearly gone. whatever you focus on this sprint, it has to matter.";
+          if (s.cash < 7000) return "a quieter stretch — but the runway is shrinking. no fires right now, but don't mistake that for safety.";
+          return "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.";
+        },
         urgency: 1, weeks: 1,
         available: () => true,
         options: [

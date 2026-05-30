@@ -872,6 +872,8 @@ if (WINNERS_FLAG) {
     const check = (desc, pass) => checks.push({ desc, pass });
 
     // Win rate ordering — smart strategies must beat random
+    check(`random.wins (${s.random.wins}%) < 5%`,
+          s.random.wins < 5);
     check(`random.wins (${s.random.wins}%) < yc_grind.wins (${s.yc_grind.wins}%)`,
           s.random.wins < s.yc_grind.wins);
     check(`random.wins (${s.random.wins}%) < lean_loop.wins (${s.lean_loop.wins}%)`,

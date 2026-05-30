@@ -6,8 +6,10 @@
     unlockCondition: (s) => s.waitlist >= 5 || s.users >= 3 || s.customers >= 1,
     cards: [
       {
-        id: 'bug_reports', cat: 'p', from: 'Maya + 2 others',
-        body: "all three emailed within an hour. same crash, same workflow. the product is unusable for them right now.",
+        id: 'bug_reports', cat: 'p', from: 'Users',
+        body: (s) => s.bug_reports_last
+          ? "another crash report — different users, same broken workflow. something in this path is still not stable."
+          : "all three emailed within an hour. same crash, same workflow. the product is unusable for them right now.",
         urgency: 3, weeks: 1,
         available: (s) => s.launched && s.customers >= 1 && s.week >= (s.bug_reports_last || 0) + 5,
         options: [

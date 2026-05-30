@@ -160,7 +160,8 @@
           { label: 'Let it run', key: 'watch',
             execute(s) { s.community_product_hn_last = s.week; s.users += 1; return "Didn't engage. Thread faded quickly. 1 signup."; } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { s.community_product_hn_last = s.week; },
       },
       {
         id: 'community_product_reddit', cat: 'e', from: 'Reddit',
@@ -173,7 +174,8 @@
           { label: 'Let it ride', key: 'watch',
             execute(s) { s.community_product_reddit_last = s.week; s.users += 2; return "Organic momentum. 2 more signups from the thread tail."; } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { s.community_product_reddit_last = s.week; },
       },
 
       {
@@ -187,7 +189,8 @@
           { label: 'Let it run', key: 'watch',
             execute(s) { s.community_product_slack_last = s.week; s.users += 1; return "Thread ran its course. 1 signup."; } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { s.community_product_slack_last = s.week; },
       },
 
       {
@@ -197,7 +200,7 @@
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 10,
         options: [
           { label: 'Start writing the application', key: 'apply',
-            execute(s, char, e) { s.ycDeciding = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
+            execute(s, char, e) { s.ycDeciding = true; s.ycQualified = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
           { label: 'Skip this batch', key: 'skip',
             execute(s, char, e) { e.ycWeek += 12; return "Decided to skip this batch. Next one opens in ~12 weeks."; } },
         ],
@@ -210,7 +213,7 @@
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 10),
         options: [
           { label: 'Start writing anyway', key: 'apply',
-            execute(s, char, e) { s.ycDeciding = true; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },
+            execute(s, char, e) { s.ycDeciding = true; s.ycQualified = false; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },
           { label: 'Wait for next batch', key: 'skip',
             execute(s, char, e) { e.ycWeek += 12; return "Waiting for next batch. More time to hit the numbers. Next window in ~12 weeks."; } },
         ],

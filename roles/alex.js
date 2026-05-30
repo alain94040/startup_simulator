@@ -63,7 +63,8 @@
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?",
-        dropFx(s, char) { char.morale = clamp(char.morale - 14, 0, 100); s.alex_offer_week = s.week; },
+        dropCancel: (s, char) => char.flags.committed_fulltime || char.flags.offer_msg_sent,
+        dropFx(s, char) { char.flags.offer_msg_sent = true; char.morale = clamp(char.morale - 14, 0, 100); s.alex_offer_week = s.week; },
       },
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
@@ -156,14 +157,21 @@
       // ── FOCUS ALIGNMENT ──────────────────────────────────────────────────────
       {
         id: 'alex_sync_discover', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "we've been heads-down building without talking to anyone outside. should we shift to customer discovery for a sprint or two?",
+        body: (s, char) => {
+          if (!char.flags.discoveryEverAgreed)
+            return "we've been heads-down building without talking to anyone outside. should we shift to customer discovery for a sprint or two?";
+          const weeksAgo = s.week - (char.flags.lastDiscoveryWeek || 0);
+          return weeksAgo >= 12
+            ? `it's been ${weeksAgo} weeks since we last did discovery. things shift — worth a sprint to check if we're still solving the right problem?`
+            : "we're back in build mode. it's only been a few weeks since we last talked to customers, but the queue keeps growing. do another round or keep building?";
+        },
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
           && (s.market_fit < 80 || s.product < 55)
           && s.week >= (char.flags.lastSyncToDiscover || 0) + 8,
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
-            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; char.flags.lastSyncToDiscover = s.week; return "Agreed. Alex on customer discovery this sprint."; } },
+            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; char.flags.lastSyncToDiscover = s.week; char.flags.discoveryEverAgreed = true; char.flags.lastDiscoveryWeek = s.week; return "Agreed. Alex on customer discovery this sprint."; } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char) { char.flags.lastSyncToDiscover = s.week; },
@@ -384,6 +392,7 @@
         ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "still not hearing the right signal from users. i think we're talking to the wrong people.",
+        dropCancel: (s, char) => char.flags.pivot2 || char.flags.pmf_locked,
         dropFx(s, char) { char.flags.pivot2 = true; s.market_fit = clamp(s.market_fit - 8, 0, 100); s.signal = clamp(s.signal - 5, 0, 100); },
       },
       {
@@ -532,8 +541,7 @@
             execute(s, char, e) { char.trust = clamp(char.trust + 20, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); e.alexDepartureRisk = false; return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
-        dropMsg: "i accepted the offer. i'm sorry — i think this is right for me. i'll do a proper handoff this week.",
-        dropCondition: (s) => s.alex_offer_week != null && s.alex_offer_week < s.week,
+        dropMsg: "i've decided to take the other opportunity. i'm sorry — i'll do a proper handoff this week.",
         dropFx(s, char, e) { char.active = false; e.alexDepartureRisk = false; },
       },
     ],

@@ -199,7 +199,7 @@ class Engine {
       for (const card of def.cards) {
         if (card.available(this.s, char, this)) {
           const resolved = { ...card, _charId: id };
-          if (typeof resolved.body === 'function') resolved.body = resolved.body(this.s, char);
+          if (typeof resolved.body === 'function') resolved.body = resolved.body(this.s, char, this);
           (card.fallback ? fallbackCards : allCards).push(resolved);
         }
       }
@@ -412,7 +412,7 @@ class Engine {
     if (this.s.ycApplied && !this.s.ycAccepted && !this.s.ycDecisionWeek) this.s.ycDecisionWeek = this.s.week + 3;
     if (this.s.ycDecisionWeek && this.s.week >= this.s.ycDecisionWeek) {
       this.s.ycDecisionWeek = null;
-      if (Math.random() < 0.18) {
+      if (Math.random() < (this.s.ycQualified ? 0.18 : 0.04)) {
         this.s.ycAccepted = true; this.s.cash += 500000;
         transactions.push({ label: 'YC accepted — $500k investment', delta: 500000, type: 'income' });
         this.s.signal = clamp(this.s.signal + 25, 0, 100);
