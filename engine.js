@@ -130,6 +130,29 @@ class Engine {
     this.pending = [];
     this.current = [];
     this.shown   = new Set();
+
+    // Proposal A: sprint history — one record per resolved turn
+    this.history = [];
+
+    // Proposal C: event bus — populated from onEvents in role definitions
+    this._eventHandlers = {};
+    for (const [id, def] of Object.entries(CHARACTER_DEFS)) {
+      if (!def.onEvents) continue;
+      for (const [event, fn] of Object.entries(def.onEvents)) {
+        if (!this._eventHandlers[event]) this._eventHandlers[event] = [];
+        this._eventHandlers[event].push({ charId: id, fn });
+      }
+    }
+  }
+
+  // Proposal C: emit a named event to all registered handlers
+  _emit(event) {
+    const handlers = this._eventHandlers[event] || [];
+    for (const { charId, fn } of handlers) {
+      const char = this.chars.get(charId);
+      if (!char) continue;
+      fn(this.s, char, this);
+    }
   }
 
   get burnPerWeek() { return 500; }
@@ -210,6 +233,15 @@ class Engine {
 
   resolveTurn(ids, optKeys = {}) {
     const wasLaunched = this.s.launched;
+    const sprintWeek  = this.s.week;
+
+    // Snapshot state for Proposal C event detection (compare after resolution)
+    const wasAlexActive       = this.chars.get('alex')?.active ?? false;
+    const preMarcusCommitted  = this.s.marcusCommitted;
+    const preFollowerCommitted = this.s.followerCommitted;
+    const preYCAccepted       = this.s.ycAccepted;
+    const preYCApplied        = this.s.ycApplied;
+
     const chosen  = this.current.filter(d => ids.includes(d.id));
     const dropped = this.current.filter(d => !ids.includes(d.id));
     const results = [];
@@ -251,7 +283,8 @@ class Engine {
           text: d.dropMsg,
           fx: d.dropFx,
           charId: d._charId,
-          condition: d.dropCondition || null,
+          condition: d.dropCondition || null,  // show only if condition is true (skip both if false)
+          cancel:    d.dropCancel    || null,  // Proposal B: explicit cancel — skip both if true
         });
       } else if (d.dropDelay === 0 && d.dropFx) {
         const cashBefore = this.s.cash;
@@ -359,7 +392,9 @@ class Engine {
     for (const p of fired) {
       const char = p.charId ? this.chars.get(p.charId) : null;
       if (char && !char.active) continue;
-      if (p.condition && !p.condition(this.s, char)) { p.fx(this.s, char, this); continue; }
+      // Proposal B: dropCancel — explicit cancel; dropCondition — guard; both skip text AND fx
+      if (p.cancel    && p.cancel(this.s, char))    continue;
+      if (p.condition && !p.condition(this.s, char)) continue;
       const cashBefore = this.s.cash;
       p.fx(this.s, char, this);
       const cashDelta = this.s.cash - cashBefore;
@@ -399,6 +434,21 @@ class Engine {
       if (this.s.ycAccepted) this.s.game_won = true;
       if (this.s.marcusCommitted && this.s.followerCommitted) this.s.game_won = true;
     }
+
+    // Proposal A: record sprint in history (after full resolution)
+    this.history.push({
+      week:    sprintWeek,
+      chosen:  chosen.map(d => d.id),
+      dropped: dropped.map(d => d.id),
+    });
+
+    // Proposal C: emit events for major state transitions
+    if (!wasLaunched && this.s.launched)                               this._emit('launch');
+    if (wasAlexActive && !(this.chars.get('alex')?.active ?? false))   this._emit('alex.departed');
+    if (!preMarcusCommitted   && this.s.marcusCommitted)               this._emit('marcus.committed');
+    if (!preFollowerCommitted && this.s.followerCommitted)             this._emit('follower.committed');
+    if (!preYCAccepted && this.s.ycAccepted)                           this._emit('yc.accepted');
+    if (preYCApplied && !this.s.ycApplied && !this.s.ycAccepted)      this._emit('yc.rejected');
 
     return { results, sprintWeeks, transactions };
   }
