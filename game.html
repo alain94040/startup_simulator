@@ -2324,7 +2324,7 @@ function selectCard(id) {
 
   slots[idx] = { cardId: id, optKey: null };
   renderHand();
-  renderSlots();
+  renderSlot(idx);
 }
 
 // Return a slotted (uncommitted) card to hand
@@ -2333,7 +2333,7 @@ function closeSlot(idx) {
   if (!slot || slot.optKey) return; // committed cards can't be returned
   slots[idx] = null;
   renderHand();
-  renderSlots();
+  renderSlot(idx);
 }
 
 function playCard(id, optKey, slotIdx) {
@@ -2341,7 +2341,7 @@ function playCard(id, optKey, slotIdx) {
   if (!slot || slot.cardId !== id || slot.optKey) return;
   slot.optKey = optKey ?? '__act__';
   renderHand();
-  renderSlots();
+  renderSlot(slotIdx);
   if (allCommitted()) setTimeout(endWeek, 650);
 }
 
