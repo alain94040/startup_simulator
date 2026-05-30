@@ -106,6 +106,7 @@
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "i've decided to pursue it seriously. i'll keep helping part-time but i think we both know i'm not fully in anymore.",
+        dropCancel: (s, char) => !char.flags.side_project_active,
         dropFx(s, char) { char.flags.side_project_active = false; char.morale = clamp(char.morale - 30, 0, 100); char.trust = clamp(char.trust - 25, 0, 100); },
       },
       {
