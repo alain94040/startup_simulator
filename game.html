@@ -716,6 +716,81 @@ body::before {
   to   { opacity: 1; }
 }
 
+.hcard.discarding {
+  animation: cardDiscard 0.28s ease-in forwards;
+  pointer-events: none;
+}
+@keyframes cardDiscard {
+  0%   { opacity: 1; transform: rotate(0deg) translateY(0) scale(1); }
+  40%  { opacity: 0.7; }
+  100% { opacity: 0; transform: rotate(var(--discard-rot, -5deg)) translateY(56px) scale(0.86); }
+}
+
+/* ── How-to-play overlay ────────────────────────────────── */
+#htp-overlay {
+  display: none;
+  position: fixed;
+  top: 50px; /* below HUD */
+  left: 0; right: 0; bottom: 0;
+  z-index: 80;
+  background: rgba(8, 8, 18, 0.68);
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 0;
+}
+#htp-overlay.on { display: flex; }
+#htp-overlay.out { animation: htpOut 0.22s ease-in forwards; }
+@keyframes htpOut {
+  to { opacity: 0; }
+}
+#htp-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 26px 28px 22px;
+  max-width: 480px;
+  width: calc(100% - 48px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: htpIn 0.38s cubic-bezier(0.34,1.4,0.64,1) forwards;
+}
+@keyframes htpIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+#htp-eyebrow {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #8b5cf6;
+  margin-bottom: 10px;
+}
+#htp-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 800;
+  color: white;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+#htp-body {
+  font-size: 13px;
+  color: var(--dim2);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+#htp-ok {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: opacity 0.15s;
+}
+#htp-ok:hover { opacity: 0.88; }
+
 /* Card stripe */
 .hcard-stripe { height: 5px; flex-shrink: 0; }
 
@@ -1107,6 +1182,7 @@ body::before {
 }
 #intro-next:hover { opacity: 0.9; }
 #intro-next:active { transform: scale(0.97); }
+
 
 /* ── History Pile ───────────────────────────────────────── */
 #pile-btn {
@@ -1591,6 +1667,16 @@ body::before {
   </div>
 </div>
 
+<!-- ── How-to-play overlay ──────────────────────────────── -->
+<div id="htp-overlay">
+  <div id="htp-panel">
+    <div id="htp-eyebrow">How to play</div>
+    <div id="htp-heading">6 cards. You can only pick 2.</div>
+    <div id="htp-body">Running a startup is hard. There are so many things to chase - but only focus keeps you alive.<br><br>Every week you'll see up to 6 cards. You can only pick 2. Drop the wrong one and you might never get funded...</div>
+    <button id="htp-ok" onclick="dismissHTP()">Got it, let's go →</button>
+  </div>
+</div>
+
 <!-- ── Summary ───────────────────────────────────────────── -->
 <div id="summary-overlay">
   <div id="summary-box">
@@ -2061,6 +2147,18 @@ function startGame() {
 }
 
 // ─────────────────────────────────────────────────────────
+// How-to-play overlay
+// ─────────────────────────────────────────────────────────
+let htpSeen = false;
+
+function dismissHTP() {
+  htpSeen = true;
+  const el = document.getElementById('htp-overlay');
+  el.classList.add('out');
+  el.addEventListener('animationend', () => el.classList.remove('on', 'out'), { once: true });
+}
+
+// ─────────────────────────────────────────────────────────
 // Boot
 // ─────────────────────────────────────────────────────────
 function boot() {
@@ -2075,6 +2173,7 @@ function boot() {
   document.getElementById('pile-count-val').textContent = '0';
   E.generateDemands();
   isDealing = true; renderAll(); isDealing = false;
+  if (!htpSeen) document.getElementById('htp-overlay').classList.add('on');
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2475,7 +2574,7 @@ function selectCard(id) {
 
   slots[idx] = { cardId: id, optKey: null };
   renderHand();
-  renderSlots();
+  renderSlot(idx);
 }
 
 // Return a slotted (uncommitted) card to hand
@@ -2484,7 +2583,7 @@ function closeSlot(idx) {
   if (!slot || slot.optKey) return; // committed cards can't be returned
   slots[idx] = null;
   renderHand();
-  renderSlots();
+  renderSlot(idx);
 }
 
 function playCard(id, optKey, slotIdx) {
@@ -2492,7 +2591,7 @@ function playCard(id, optKey, slotIdx) {
   if (!slot || slot.cardId !== id || slot.optKey) return;
   slot.optKey = optKey ?? '__act__';
   renderHand();
-  renderSlots();
+  renderSlot(slotIdx);
   if (allCommitted()) setTimeout(endWeek, 650);
 }
 
@@ -2699,10 +2798,22 @@ function showSummary(results, sprintWeeks) {
 function nextWeek() {
   document.getElementById('deal-btn').classList.remove('on');
   document.getElementById('hand-deltas').classList.remove('on');
-  slots = [null, null]; prevSnap = null;
-  E.generateDemands();
-  displayedCash = E.s.cash; // absorb silent world-event cost without animating
-  isDealing = true; renderAll(); isDealing = false;
+
+  const rots = [-6, 5, -4, 7, -5, 4];
+  const toDiscard = Array.from(document.querySelectorAll('.hcard:not(.played)'));
+  toDiscard.forEach((el, i) => {
+    el.style.setProperty('--discard-rot', rots[i % rots.length] + 'deg');
+    el.style.animationDelay = (i * 38) + 'ms';
+    el.classList.add('discarding');
+  });
+
+  const wait = toDiscard.length ? 280 + (toDiscard.length - 1) * 38 : 0;
+  setTimeout(() => {
+    slots = [null, null]; prevSnap = null;
+    E.generateDemands();
+    displayedCash = E.s.cash; // absorb silent world-event cost without animating
+    isDealing = true; renderAll(); isDealing = false;
+  }, wait);
 }
 
 function showEnd(won) {
