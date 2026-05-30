@@ -614,6 +614,71 @@ body::before {
   100% { opacity: 0; transform: rotate(var(--discard-rot, -5deg)) translateY(56px) scale(0.86); }
 }
 
+/* ── How-to-play overlay ────────────────────────────────── */
+#htp-overlay {
+  display: none;
+  position: fixed;
+  top: 50px; /* below HUD */
+  left: 0; right: 0; bottom: 0;
+  z-index: 80;
+  background: rgba(8, 8, 18, 0.68);
+  align-items: center;
+  justify-content: center;
+  padding-bottom: 0;
+}
+#htp-overlay.on { display: flex; }
+#htp-overlay.out { animation: htpOut 0.22s ease-in forwards; }
+@keyframes htpOut {
+  to { opacity: 0; }
+}
+#htp-panel {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  padding: 26px 28px 22px;
+  max-width: 480px;
+  width: calc(100% - 48px);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+  animation: htpIn 0.38s cubic-bezier(0.34,1.4,0.64,1) forwards;
+}
+@keyframes htpIn {
+  from { opacity: 0; transform: translateY(28px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+#htp-eyebrow {
+  font-size: 9px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  color: #8b5cf6;
+  margin-bottom: 10px;
+}
+#htp-heading {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 20px; font-weight: 800;
+  color: white;
+  margin-bottom: 12px;
+  line-height: 1.25;
+}
+#htp-body {
+  font-size: 13px;
+  color: var(--dim2);
+  line-height: 1.65;
+  margin-bottom: 20px;
+}
+#htp-ok {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: opacity 0.15s;
+}
+#htp-ok:hover { opacity: 0.88; }
+
 /* Card stripe */
 .hcard-stripe { height: 5px; flex-shrink: 0; }
 
@@ -1006,37 +1071,6 @@ body::before {
 #intro-next:hover { opacity: 0.9; }
 #intro-next:active { transform: scale(0.97); }
 
-#intro-visual {
-  display: none;
-  flex-direction: column;
-  gap: 6px;
-  margin-bottom: 20px;
-}
-#intro-visual.on { display: flex; }
-.intro-mini-row { display: flex; gap: 7px; justify-content: center; }
-.intro-mini-card {
-  width: 44px; height: 58px;
-  border-radius: 6px;
-  border: 1.5px solid var(--border2);
-  background: var(--surface3);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 16px; opacity: 0.22;
-  transition: opacity 0.2s;
-}
-.intro-mini-card.chosen {
-  border-color: #8b5cf6;
-  background: rgba(139,92,246,0.13);
-  opacity: 1;
-  box-shadow: 0 0 14px rgba(139,92,246,0.28);
-}
-.intro-mini-label {
-  width: 44px; text-align: center;
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 1.2px; text-transform: uppercase;
-  font-family: 'DM Mono', monospace;
-}
-.intro-mini-label.chosen { color: #8b5cf6; }
-.intro-mini-label.dropped { color: var(--dim); }
 
 /* ── History Pile ───────────────────────────────────────── */
 #pile-btn {
@@ -1505,6 +1539,16 @@ body::before {
   </div>
 </div>
 
+<!-- ── How-to-play overlay ──────────────────────────────── -->
+<div id="htp-overlay">
+  <div id="htp-panel">
+    <div id="htp-eyebrow">How to play</div>
+    <div id="htp-heading">6 cards. You can only pick 2.</div>
+    <div id="htp-body">Running a startup is hard. There are so many things to chase - but only focus keeps you alive.<br><br>Every week you'll see up to 6 cards. You can only pick 2. Drop the wrong one and you might never get funded...</div>
+    <button id="htp-ok" onclick="dismissHTP()">Got it, let's go →</button>
+  </div>
+</div>
+
 <!-- ── Summary ───────────────────────────────────────────── -->
 <div id="summary-overlay">
   <div id="summary-box">
@@ -1581,7 +1625,6 @@ body::before {
     <div id="intro-body">
       <div id="intro-step"></div>
       <div id="intro-heading"></div>
-      <div id="intro-visual"></div>
       <div id="intro-text"></div>
       <div id="intro-footer">
         <div id="intro-dots"></div>
@@ -1624,12 +1667,6 @@ const INTRO_SLIDES = [
     step: 'The Goal',
     heading: 'One shot. Make it count.',
     text: 'You need to raise to survive. Raise $500K from YC or an angel before the money runs out. Build, get traction, and don\'t ignore Alex.',
-  },
-  {
-    step: 'How to Play',
-    heading: '6 cards. Pick 2. Let go of the rest.',
-    visual: true,
-    text: 'Every week get up to 6 cards and pick 2. The others get dropped. Running a startup is a sprint - you don\'t have time to chase after everything, you need to focus.',
     last: true,
   },
 ];
@@ -1640,22 +1677,6 @@ function introRender() {
   document.getElementById('intro-heading').textContent = slide.heading;
   document.getElementById('intro-text').textContent = slide.text;
   document.getElementById('intro-next').textContent = slide.last ? 'Start building →' : 'Continue →';
-  const vis = document.getElementById('intro-visual');
-  if (slide.visual) {
-    const cards = [0,1,2,3,4,5].map(i =>
-      `<div class="intro-mini-card${i < 2 ? ' chosen' : ''}">` +
-      (i < 2 ? '✓' : '×') + '</div>'
-    ).join('');
-    const labels = [0,1,2,3,4,5].map(i =>
-      `<span class="intro-mini-label${i < 2 ? ' chosen' : ' dropped'}">` +
-      (i < 2 ? 'pick' : 'drop') + '</span>'
-    ).join('');
-    vis.innerHTML = `<div class="intro-mini-row">${cards}</div><div class="intro-mini-row">${labels}</div>`;
-    vis.classList.add('on');
-  } else {
-    vis.classList.remove('on');
-    vis.innerHTML = '';
-  }
   const dots = document.getElementById('intro-dots');
   dots.innerHTML = INTRO_SLIDES.map((_, i) =>
     `<div class="intro-dot${i === introIdx ? ' active' : ''}"></div>`
@@ -1928,6 +1949,18 @@ function startGame() {
 }
 
 // ─────────────────────────────────────────────────────────
+// How-to-play overlay
+// ─────────────────────────────────────────────────────────
+let htpSeen = false;
+
+function dismissHTP() {
+  htpSeen = true;
+  const el = document.getElementById('htp-overlay');
+  el.classList.add('out');
+  el.addEventListener('animationend', () => el.classList.remove('on', 'out'), { once: true });
+}
+
+// ─────────────────────────────────────────────────────────
 // Boot
 // ─────────────────────────────────────────────────────────
 function boot() {
@@ -1942,6 +1975,7 @@ function boot() {
   document.getElementById('pile-count-val').textContent = '0';
   E.generateDemands();
   isDealing = true; renderAll(); isDealing = false;
+  if (!htpSeen) document.getElementById('htp-overlay').classList.add('on');
 }
 
 // ─────────────────────────────────────────────────────────
