@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'silent_churn', cat: 'c', from: 'Analytics',
-        body: "free users are signing up, poking around for 20 minutes, and disappearing. no explanation.",
+        body: "free users are signing up, swiping through profiles for 20 minutes, and disappearing. they match with someone but never send a message. no explanation.",
         urgency: 3, weeks: 1,
         available: (s) => s.launched && s.users >= 3 && s.users < 30 && s.week >= (s.silent_churn_last || 0) + 8,
         options: [

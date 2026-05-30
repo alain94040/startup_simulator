@@ -10,12 +10,12 @@
       // ── WEEK 1 ONBOARDING (only 2 cards shown on week 1) ────────────────────
       {
         id: 'start_prototype', cat: 'p', from: 'You',
-        body: "you've been talking about this idea long enough. time to build something real. you pull up Alex's calendar and block a week.",
+        body: "you've been talking about this idea long enough. time to build something real. you pull up Alex's calendar and block a week — profiles, matching, and a way to message. that's the core.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
         options: [
           { label: 'Tell Alex to start building', key: 'build',
-            execute(s, char) { char.flags.prototype_kicked = true; s.product = clamp(s.product + 10, 0, 100); return "Exciting. Alex thinks he'll get a demo going soon."; } },
+            execute(s, char) { char.flags.prototype_kicked = true; s.product = clamp(s.product + 10, 0, 100); return "Exciting. Profiles, matching, and basic messaging — Alex thinks he'll get a rough demo going in a week or two."; } },
         ],
         dropFx(s, char) { char.flags.prototype_kicked = true; },
       },
@@ -68,19 +68,19 @@
       },
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
-        body: "i called it 'team productivity'. you've been saying 'workflow automation'. those are different products. which are we actually building?",
+        body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week >= 2 && s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
         options: [
-          { label: "Go with Alex's framing", key: 'alex',
-            execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with Alex's framing. Cleaner for developers. Some earlier investor conversations are now awkward, but at least you're aligned."; } },
-          { label: 'Defend your framing', key: 'yours',
-            execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 8, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); char.trust = clamp(char.trust - 4, 0, 100); return "Alex went along with it. He's not wrong that it doesn't land with developers, but the investor story holds. Tension unresolved."; } },
-          { label: 'Run a 1-week test', key: 'test',
-            execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 14, 0, 100); s.market_fit = clamp(s.market_fit + 8, 0, 100); char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 6, 0, 100); return "Ran 8 quick calls. Ops buyers respond to 'workflow automation'; developers respond to 'team productivity'. You have a wedge story now. Decided to lead with ops buyers."; } },
+          { label: "Go with Alex's framing — casual dating", key: 'alex',
+            execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with casual dating. Broader market, easier to explain. Some earlier conversations about 'serious matches' are now awkward, but at least you're aligned."; } },
+          { label: 'Defend your framing — serious relationships', key: 'yours',
+            execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 8, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); char.trust = clamp(char.trust - 4, 0, 100); return "Alex went along with it. He thinks the casual market is bigger, but the investor story is cleaner. Tension unresolved."; } },
+          { label: 'Run a 1-week test with real users', key: 'test',
+            execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 14, 0, 100); s.market_fit = clamp(s.market_fit + 8, 0, 100); char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 6, 0, 100); return "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "pitched it differently again. i think we're building two different products in our heads. investors are going to notice.",
+        dropMsg: "pitched it as a casual app again. someone in the audience asked me directly which it is. i didn't have a good answer. investors are going to notice.",
         dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 10, 0, 100); },
       },
       {
@@ -241,16 +241,16 @@
       },
       {
         id: 'early_customer_target', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "we're pitching this differently every time — individuals one day, teams the next. we should agree before it gets confusing.",
+        body: "we keep switching who we're talking to — sometimes we pitch to young singles, sometimes to divorced 30-somethings. we should agree before it gets confusing.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week <= 6 && !char.flags.customer_target_done,
         options: [
-          { label: 'Individuals first — faster to close', key: 'individuals',
-            execute(s, char) { char.flags.customer_target_done = true; s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Locked in: individual users first. Shorter sales cycle, faster feedback."; } },
-          { label: 'Teams — that\'s where the revenue is', key: 'teams',
-            execute(s, char) { char.flags.customer_target_done = true; s.investor_warmth = clamp(s.investor_warmth + 4, 0, 100); return "Going after teams. Bigger deals, stronger investor story."; } },
+          { label: 'Young singles — bigger market, easier to reach', key: 'individuals',
+            execute(s, char) { char.flags.customer_target_done = true; s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Locked in: 25-35 year olds tired of swiping. Bigger pool, faster feedback."; } },
+          { label: 'Relationship-seekers — that\'s where the revenue is', key: 'teams',
+            execute(s, char) { char.flags.customer_target_done = true; s.investor_warmth = clamp(s.investor_warmth + 4, 0, 100); return "Going after people who are seriously looking. Higher willingness to pay, stronger retention story."; } },
           { label: 'Follow the early users', key: 'open',
-            execute(s, char) { char.flags.customer_target_done = true; return "Staying flexible. Let the first users tell you who they are."; } },
+            execute(s, char) { char.flags.customer_target_done = true; return "Staying flexible. Let the first signups tell you who they are."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.customer_target_done = true; },
       },
@@ -299,7 +299,7 @@
       // ── EARLY: ADMIN & LEGAL ────────────────────────────────────────────────
       {
         id: 'incorporate_now', cat: 'e', from: 'Alex',
-        body: "a potential user asked us to sign an NDA. we can't without a legal entity. also need a bank account. stripe atlas or find a lawyer?",
+        body: "an advisor we're trying to bring on officially asked us to sign an NDA first. we can't without a legal entity. also need a bank account. stripe atlas or find a lawyer?",
         urgency: 2, weeks: 1, priority: true, ignoreForTrust: true,
         available: (s, char) => s.week >= 3 && s.week <= 14 && s.product >= 12 && !s.incorporated,
         options: [
@@ -312,7 +312,7 @@
       },
       {
         id: 'ip_concern', cat: 'e', from: 'Alex',
-        body: "been meaning to raise this: wrote prototypes at my last job, same space. could my old employer claim ownership if we go through diligence?",
+        body: "been meaning to raise this: at my last job i built early prototypes of a recommendation engine — similar ML concepts to what we're using for matching. could my old employer claim ownership if we go through investor diligence?",
         urgency: 3, weeks: 1, ignoreForTrust: true,
         available: (s, char) => s.week <= 12 && !s.ip_clear && !s.ip_concern_dismissed,
         options: [
@@ -327,35 +327,35 @@
       // ── EARLY: MARKET & IDEA ────────────────────────────────────────────────
       {
         id: 'first_interview_shock', cat: 'c', from: 'Alex',
-        body: "just got off a customer interview. the real problem is the step before ours — they'd pay $200/month for that. we might be building the wrong thing.",
+        body: "just got off a customer interview. the real frustration isn't finding matches — it's that conversations go nowhere. they matched with 20 people last month and went on zero dates. they'd pay $200/month for something that actually got them to a date.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week <= 8 && s.product < 40 && char.focus === 'discover' && !char.flags.interview_shock_resolved,
         options: [
-          { label: 'Pivot — investigate upstream', key: 'pivot',
-            execute(s, char) { char.flags.interview_shock_resolved = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 14, 0, 100); return "Pivoted focus. Three more interviews confirmed it. Some earlier work won't carry over."; } },
+          { label: 'Pivot — focus on getting people to dates', key: 'pivot',
+            execute(s, char) { char.flags.interview_shock_resolved = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 14, 0, 100); return "Pivoted focus to conversation quality and date-booking. Three more interviews confirmed it. Some earlier work won't carry over."; } },
           { label: 'Stay the course', key: 'stay',
             execute(s, char) { char.flags.interview_shock_resolved = true; s.signal = clamp(s.signal + 5, 0, 100); s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Filed it away. Not ready to pivot on one data point. Logged it for later."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "had 2 more interviews. same thing — everyone says the problem is upstream. we need to talk.",
+        dropMsg: "had 2 more interviews. same thing — people are matching but never going on dates. we're solving the wrong problem.",
         dropFx(s, char) { char.flags.interview_shock_resolved = true; s.signal = clamp(s.signal - 15, 0, 100); },
       },
       {
         id: 'cold_silence', cat: 'c', from: 'Alex',
-        body: "sent 30 cold emails to target market. 0 replies — not even 'not interested'. is the messaging wrong, or are we targeting the wrong people?",
+        body: "posted in 5 subreddits and messaged 30 people who complained about dating apps. 0 real responses — not even 'not interested.' is the message wrong, or are we targeting the wrong people?",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 12 && !s.launched && s.signal < 50 && char.focus === 'discover' && !char.flags.cold_silence_resolved,
         options: [
           { label: 'Rewrite the outreach', key: 'rewrite',
-            execute(s, char) { char.flags.cold_silence_resolved = true; s.signal = clamp(s.signal + 10, 0, 100); s.market_fit = clamp(s.market_fit + 6, 0, 100); return "Rewrote the cold email. New version leads with the pain, not the product. First reply came in 4 hours."; } },
+            execute(s, char) { char.flags.cold_silence_resolved = true; s.signal = clamp(s.signal + 10, 0, 100); s.market_fit = clamp(s.market_fit + 6, 0, 100); return "Rewrote the outreach. New version leads with the pain — 'you've matched with dozens of people and gone on zero dates' — not the product. First reply came in 4 hours."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "week 2 of silence. i'm starting to wonder if anyone actually has this problem badly enough.",
+        dropMsg: "week 2 of silence. i'm starting to wonder if the people who complain about dating apps actually want anything different.",
         dropFx(s, char) { char.flags.cold_silence_resolved = true; s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); },
       },
       {
         id: 'random_reframe', cat: 'c', from: 'Alex',
-        body: "talked to a stranger about what we're building. they reframed it completely — different product, different market. we both went quiet. it kind of makes more sense than our own pitch.",
+        body: "talked to a stranger at a coffee shop about what we're building. they reframed it completely — 'sounds less like a dating app, more like a vetting tool.' different pitch, different product. we both went quiet. it kind of makes more sense.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week <= 12 && s.signal < 55 && char.focus === 'discover' && !char.flags.reframe_resolved,
         options: [
@@ -366,12 +366,12 @@
       },
       {
         id: 'pivot_insight_1', cat: 'c', from: 'Alex',
-        body: "been talking to users all week and something keeps coming up. they describe a different workflow than we assumed. we've been solving the wrong part.",
+        body: "been talking to users all week and something keeps coming up. they're not frustrated by matching — they're frustrated that matches go nowhere. we've been solving the wrong part.",
         urgency: 3, weeks: 1,
         available: (s, char) => char.focus === 'discover' && char.focusSprints >= 2 && s.market_fit >= 8 && !char.flags.pivot1,
         options: [
           { label: 'Pivot — rethink the approach', key: 'pivot',
-            execute(s, char) { char.flags.pivot1 = true; s.market_fit = clamp(s.market_fit + 25, 0, 100); s.signal = clamp(s.signal + 8, 0, 100); return "Rethought the approach. Found the real problem. Signal improved immediately."; } },
+            execute(s, char) { char.flags.pivot1 = true; s.market_fit = clamp(s.market_fit + 25, 0, 100); s.signal = clamp(s.signal + 8, 0, 100); return "Rethought the approach. The real problem is conversation quality, not match quantity. Signal improved immediately."; } },
           { label: 'Stay the course', key: 'stay',
             execute(s, char) { char.flags.pivot1 = true; s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Stayed the course. Alex logged the feedback but we're not changing direction yet."; } },
         ],
@@ -397,7 +397,7 @@
       },
       {
         id: 'pmf_lock', cat: 'c', from: 'Alex',
-        body: "three users described the same workflow gap unprompted this week. never seen that before. i think we finally know what to build.",
+        body: "three users said the exact same thing unprompted this week: 'i actually went on a date because of this.' never seen that before. i think we finally know what to build.",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.pivot2 && char.focus === 'discover' && char.focusSprints >= 2 && s.market_fit >= 55 && !char.flags.pmf_locked,
         options: [
@@ -421,7 +421,7 @@
       // ── MID: PRODUCT ────────────────────────────────────────────────────────
       {
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
-        body: "the core flow works end-to-end for the first time. rough, but it does the thing. i want a real reaction before we build another feature.",
+        body: "the core flow works end-to-end for the first time. you can create a profile, get a match, and send a message. rough, but it does the thing. i want a real reaction before we build anything else.",
         urgency: 3, weeks: 1,
         available: (s) => s.productPhase === "proto" && s.product >= 18 && !s.has_demo && !s.launched,
         options: [
@@ -429,7 +429,7 @@
             execute(s) {
               s.has_demo = true; s.tech_debt += 12;
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
-              return "Three contacts in a room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been trying to solve this for months.' You know what to build next.";
+              return "Three contacts in the room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been on every app and none of them work like this.' You know what to build next.";
             } },
           { label: 'One sprint to polish it first', key: 'polish',
             execute(s) {
@@ -518,15 +518,15 @@
       },
       {
         id: 'alex_decision', cat: 't', from: 'Customer',
-        body: "alex told me you'd ship a full integration by friday. it's wednesday. i don't see anything about this in the roadmap.",
+        body: "alex told me you'd add photo verification by end of week. it's wednesday. there's nothing about this in the roadmap.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.launched && s.customers > 1 && !char.flags.decision_done,
         options: [
-          { label: 'Ship the integration', key: 'ship',
-            execute(s, char) { char.flags.decision_done = true; s.customers += 1; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled off the integration. Customer delighted. Set boundaries with Alex about commitments."; } },
+          { label: 'Ship photo verification by Friday', key: 'ship',
+            execute(s, char) { char.flags.decision_done = true; s.customers += 1; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled it off. User upgraded immediately. Set clear boundaries with Alex about making commitments without checking first."; } },
         ],
-        dropDelay: 1, dropFrom: 'Customer',
-        dropMsg: "it's monday. still nothing. we're blocking our launch on this.",
+        dropDelay: 1, dropFrom: 'User',
+        dropMsg: "it's monday. still nothing. i'm going to try flare instead.",
         dropFx(s, char) { char.flags.decision_done = true; s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 1, 0, 9999); },
       },
 

@@ -6,7 +6,7 @@
     cards: [
       {
         id: 'founder_landing', cat: 'p', from: 'You',
-        body: "you've been talking about this for weeks with nowhere to point people. no domain, no landing page, no email capture. it's awkward.",
+        body: "you keep telling people you're building a dating app for people sick of swiping — but you have nowhere to point them. no domain, no landing page, no email capture.",
         urgency: 2, weeks: 1,
         available: (s) => s.week <= 5 && !s.has_landing_page,
         options: [
@@ -17,12 +17,12 @@
       },
       {
         id: 'founder_first_interviews', cat: 'c', from: 'You',
-        body: "you've been building without a single structured customer conversation. everything you're building is a guess.",
+        body: "you've been building without a single structured conversation with someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
         urgency: 2, weeks: 1,
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
           { label: 'Block off this week for 5 customer interviews', key: 'interview',
-            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.waitlist += 1; return "5 calls done. Two insights you didn't expect. One interviewee asked if they could pay you now. Signal much clearer."; } },
+            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.waitlist += 1; return "5 calls done. Two insights you didn't expect. One person said they'd pay right now if it existed. Signal much clearer."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
@@ -51,7 +51,7 @@
               const alex = e.chars.get('alex');
               s.product = clamp(s.product + 3, 0, 100);
               if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
-              return "Paired up. You took the front-end, Alex handled the data layer. Your contribution was modest but Alex shipped faster with you there.";
+              return "Paired up. You worked on the profiles UI, Alex handled the matching algorithm. Your contribution was modest but Alex shipped faster with you there.";
             } },
           { label: 'Run demos instead', key: 'demos',
             execute(s, char, e) {
@@ -68,7 +68,7 @@
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
       {
         id: 'founder_build_onboarding', cat: 'p', from: 'You',
-        body: "you mapped onboarding based on where beta users get stuck. it's a 3-step wizard, within your abilities to build. alex is maxed on the backend.",
+        body: "you mapped onboarding based on where beta users get stuck — most drop off during profile setup. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -95,7 +95,7 @@
       },
       {
         id: 'founder_build_empty_states', cat: 'p', from: 'You',
-        body: "every screen shows a blank box when there's no data. two hours of work. new users hit these on their first session and assume something's broken.",
+        body: "new users hit empty screens on their first session — an empty matches tab, an empty inbox — and assume the app is broken. two hours of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -107,7 +107,7 @@
               char.flags.empty_states_built = true;
               s.product = clamp(s.product + 2, 0, 100);
               s.market_fit = clamp(s.market_fit + 4, 0, 100);
-              return "Added empty states with clear CTAs to every screen. Small fix, big impact — beta users stopped asking 'is something wrong?'";
+              return "Added helpful empty states to every screen. Small fix, big impact — beta users stopped asking 'is the app broken?'";
             } },
           { label: 'Add it to the backlog', key: 'pass',
             execute(s, char) {
@@ -119,19 +119,19 @@
       },
       {
         id: 'founder_build_export', cat: 'p', from: 'You',
-        body: "three beta users asked for CSV export. they have reporting requirements — without it they can't fully adopt. a few hours of work.",
+        body: "four beta users have messaged asking about photo verification. they're hesitant to upgrade without knowing their matches are real. a few days of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
           return !s.launched && s.product >= 40 && (s.users >= 3 || s.customers >= 1) && !char.flags.export_built && alex && alex.active;
         },
         options: [
-          { label: 'Build the export yourself', key: 'build',
+          { label: 'Build photo verification yourself', key: 'build',
             execute(s, char) {
               char.flags.export_built = true;
               s.product = clamp(s.product + 2, 0, 100);
               s.market_fit = clamp(s.market_fit + 6, 0, 100);
-              return "CSV export shipped. All three users converted to active. One said it was the last thing blocking them.";
+              return "Photo verification shipped. All four users upgraded. One said it was the only thing holding them back.";
             } },
           { label: 'Ask Alex to prioritize it', key: 'pass',
             execute(s, char, e) {
@@ -139,14 +139,14 @@
               const alex = e.chars.get('alex');
               s.product = clamp(s.product + 3, 0, 100);
               if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
-              return "Alex added it to his sprint. Shipped two weeks later. Two of the three users had moved on.";
+              return "Alex added it to his sprint. Shipped two weeks later. Two of the four users had moved on.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
         id: 'founder_build_demo_account', cat: 'p', from: 'You',
-        body: "every investor demo starts with a blank slate. you spend 5 minutes saying 'pretend this has data.' build a seeded demo account.",
+        body: "every investor demo starts with two blank profiles and zero matches. you spend 5 minutes saying 'imagine this has real users.' build a seeded demo account.",
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -158,7 +158,7 @@
               char.flags.demo_account_built = true;
               s.signal = clamp(s.signal + 6, 0, 100);
               s.investor_warmth = clamp(s.investor_warmth + 8, 0, 100);
-              return "Demo account seeded with realistic data. Next investor call, they asked 'can I sign up?' instead of 'how does this work?'";
+              return "Demo account seeded with realistic profiles, matches, and messages. Next investor call, they asked 'can I sign up?' instead of 'how does this work?'";
             } },
           { label: 'Keep winging it', key: 'pass',
             execute(s, char) {
@@ -173,8 +173,8 @@
       {
         id: 'founder_meetup', cat: 'e', from: 'You',
         body: (s, char) => s.week >= 8
-          ? "the monthly meetup for your space is happening this week. same community, different conversations."
-          : "there's a meetup on your topic this week — a dozen people building in the same space. you haven't been to one of these in months.",
+          ? "the monthly founder meetup for consumer social and dating apps is this week. same community, different conversations."
+          : "there's a meetup for founders building in the consumer social and relationships space — a dozen people building adjacent things. you haven't been to one of these in months.",
         urgency: 1, weeks: 1,
         available: (s, char) => {
           if (char.flags.meetup_done || char.flags.meetup_over) return false;
@@ -189,7 +189,7 @@
               s.met_priya_week = s.week;
               s.signal = clamp(s.signal + 4, 0, 100);
               s.market_fit = clamp(s.market_fit + 3, 0, 100);
-              return "Good crowd. You talked to a few people building adjacent things. Had a long conversation with Priya — she's done this before, has relevant operator experience, and seemed genuinely interested in what you're working on.";
+              return "Good crowd. You talked to a few people building in adjacent spaces. Had a long conversation with Priya — she launched a consumer app a few years ago, has strong opinions on retention, and seemed genuinely interested in what you're working on.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -251,7 +251,7 @@
       },
       {
         id: 'founder_solo_discover', cat: 'c', from: 'You',
-        body: "nobody's doing discovery anymore. you have to get out of the building yourself — reach out to 3 potential users this week.",
+        body: "nobody's doing discovery anymore. you have to reach out yourself — message 3 people who've given up on dating apps and ask what would bring them back.",
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -278,7 +278,7 @@
       // ── RECURRING: solo growth fallback (post-launch, alex gone) ───────────────
       {
         id: 'founder_solo_growth', cat: 'e', from: 'You',
-        body: "nobody's coming to you. write a cold email batch, post in two communities, and follow up with people who signed up but went quiet.",
+        body: "nobody's coming to you. post in two communities where single people actually talk, and follow up with people who signed up but went quiet.",
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -305,7 +305,7 @@
       // ── RECURRING: deep user research (post-launch) ──────────────────────────
       {
         id: 'founder_user_depth', cat: 'c', from: 'You',
-        body: "you've been shipping and selling for weeks but making decisions from support tickets. you don't know how your users work day to day. block a week.",
+        body: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on kindred — are they going on dates? are they happy with their matches?",
         urgency: 2, weeks: 1,
         available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.user_depth_last || 0) + 6,
         options: [
@@ -314,7 +314,7 @@
               s.user_depth_last = s.week;
               s.market_fit = clamp(s.market_fit + 8, 0, 100);
               s.signal = clamp(s.signal + 6, 0, 100);
-              return "Five sessions done. Two users showed you workflows you didn't know existed. You found why 30% churn in week 2 — and fixed it immediately.";
+              return "Five sessions done. Two users showed you patterns you didn't expect — they message matches in bursts, then go silent for days. You found why 30% churn in week 2 and fixed it immediately.";
             } },
           { label: 'Send a structured survey', key: 'survey',
             execute(s) {
@@ -329,7 +329,7 @@
       // ── CHAIN: reference selling → testimonial → website social proof ────────
       {
         id: 'first_customer_offer', cat: 'c', from: 'You',
-        body: "free users show up every day but nobody's paying. one has been in the product daily for two weeks. time to close the first real customer.",
+        body: "free users show up every day but nobody's paying. one person has been swiping through profiles every single day for two weeks. time to convert the first subscriber.",
         urgency: 3, weeks: 1,
         available: (s) => s.launched && s.users >= 3 && s.customers === 0 && !s.first_customer_offered,
         options: [
@@ -341,20 +341,20 @@
               s.signal = clamp(s.signal + 8, 0, 100);
               return "Offered 3 months free in exchange for a public testimonial. They said yes immediately. First reference customer locked in.";
             } },
-          { label: 'Pitch them at $50/month', key: 'pitch',
+          { label: 'Pitch them at $49/month', key: 'pitch',
             execute(s) {
               s.first_customer_offered = true;
               s.users = Math.max(0, s.users - 1);
               s.customers += 1;
               s.signal = clamp(s.signal + 5, 0, 100);
-              return "Made the ask. They converted. First paying customer. $50/month — not much, but it's real.";
+              return "Made the ask. They converted. First paying subscriber. $49/month — not much, but it's real.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
         id: 'reference_checkin', cat: 'c', from: 'You',
-        body: "your reference customer has been live for 3 weeks. they're getting value — time to collect that testimonial while the experience is fresh.",
+        body: "your reference subscriber has been on kindred for 3 weeks. they've been on two dates. time to collect that testimonial while the experience is fresh.",
         urgency: 2, weeks: 1,
         available: (s) => s.reference_customer && !s.testimonial && s.week >= (s.reference_customer_week || 0) + 3,
         options: [
@@ -363,7 +363,7 @@
               s.testimonial = true;
               s.market_fit = clamp(s.market_fit + 3, 0, 100);
               s.signal = clamp(s.signal + 6, 0, 100);
-              return "One hour call. They walked you through how they actually use it — two workflows you hadn't designed for. And a quote you can use anywhere.";
+              return "One hour call. They walked you through what actually leads to a date on kindred — two patterns you hadn't designed around. And a quote you can use anywhere.";
             } },
           { label: 'Ask over email', key: 'email',
             execute(s) {
@@ -376,7 +376,7 @@
       },
       {
         id: 'website_social_proof', cat: 'p', from: 'You',
-        body: "your website still leads with features and a tagline. you now have a real customer story. features tell, stories sell — time to rebuild it.",
+        body: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of kindred. features tell, stories sell.",
         urgency: 2, weeks: 1,
         available: (s) => s.testimonial && !s.website_updated,
         options: [
@@ -393,7 +393,7 @@
       // ── ONE-TIME: pricing experiment (post-launch) ──────────────────────────
       {
         id: 'founder_pricing_experiment', cat: 'c', from: 'You',
-        body: "free users open the app daily but haven't upgraded. the product is clearly useful — nobody's been asked to pay. time to test.",
+        body: "free users open the app every day, swipe, and match — but haven't upgraded. the product clearly works. nobody's been asked to pay. time to test.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.launched && s.users >= 10 && s.customers >= 1 && !char.flags.pricing_exp_done && s.week >= (s.pricing_exp_last || 0) + 4,
         options: [

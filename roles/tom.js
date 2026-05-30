@@ -7,16 +7,22 @@
     cards: [
       {
         id: 'power_user_quiet', cat: 'c', from: 'Tom (your top user)',
-        body: "he was in the product every single day for 6 weeks. then nothing for 10 days. something changed.",
+        body: "he was in the app every single day for 6 weeks — swiping, matching, messaging. then nothing for 10 days. something changed.",
         urgency: 2, weeks: 1,
         available: (s) => s.launched && s.customers >= 10 && s.week >= (s.power_user_quiet_last || 0) + 6,
         options: [
           { label: 'Call Tom', key: 'call',
-            execute(s) { s.power_user_quiet_last = s.week; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Called Tom. He was stuck on a new workflow. Unblocked him — he's back and grateful. Learned something about how he actually uses the product."; } },
+            execute(s) {
+              s.power_user_quiet_last = s.week;
+              s.customers = clamp(s.customers - 1, 0, 9999);
+              s.signal = clamp(s.signal + 16, 0, 100);
+              s.market_fit = clamp(s.market_fit + 10, 0, 100);
+              return "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.";
+            } },
         ],
         dropDelay: 2, dropFrom: 'Tom',
-        dropMsg: "moved on to Rivalio. nothing personal, just works better for my workflow now.",
-        dropFx(s) { s.power_user_quiet_last = s.week; s.signal = clamp(s.signal - 14, 0, 100); s.customers = clamp(s.customers - 3, 0, 9999); },
+        dropMsg: "deactivated my account. — Tom",
+        dropFx(s) { s.power_user_quiet_last = s.week; s.signal = clamp(s.signal - 8, 0, 100); s.customers = clamp(s.customers - 1, 0, 9999); },
       },
     ],
   };

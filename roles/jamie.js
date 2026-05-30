@@ -5,7 +5,7 @@
     cards: [
       {
         id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)',
-        body: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear about it.",
+        body: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear — a dating app, seriously?",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char) => s.week <= 10 && !char.flags.first_meeting_done,
         options: [
@@ -13,7 +13,7 @@
             execute(s, char) {
               char.flags.first_meeting_done = true;
               char.flags.first_meeting_week = s.week;
-              return "Caught up over coffee. Told him everything. He was into it — 'this is the kind of thing I wish I'd done. keep me posted.'";
+              return "Caught up over coffee. Told him everything. He was into it — 'a dating app that actually works? I need to try this.' You put him on the beta list.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,

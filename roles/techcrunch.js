@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'competitor_launch', cat: 'e', from: 'TechCrunch',
-        body: "Rivalio just came out of stealth with $3M. product looks similar to what you're building. they already have developer traction on Twitter.",
+        body: "Flare just came out of stealth with $3M. same space — serious relationships, same price point. they already have 5,000 users from a TikTok campaign.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.product > 20 && !char.flags.done,
         options: [
@@ -20,7 +20,7 @@
               s.signal = clamp(s.signal + 4, 0, 100);
               const alex = e.chars.get('alex');
               if (alex && alex.active) alex.morale = clamp(alex.morale - 3, 0, 100);
-              return "Spent 2 weeks mapping their product. They went broad — enterprise features, heavy onboarding. Your niche is the gap they skipped. Alex helped with the analysis.";
+              return "Spent 2 weeks mapping their product. They went broad — swiping, video dates, lots of noise. Your niche is the gap they skipped. Alex helped with the analysis.";
             } },
           { label: 'Write a comparison piece', key: 'compare',
             execute(s, char, e) {
@@ -41,7 +41,7 @@
               s.signal = clamp(s.signal - 5, 0, 100);
               const alex = e.chars.get('alex');
               if (alex && alex.active) alex.morale = clamp(alex.morale - 10, 0, 100);
-              return "Shipped fast. But you're building for their customers now, not yours. Alex is frustrated. Twitter called you a Rivalio clone.";
+              return "Shipped fast. But you're building for their users now, not yours. Alex is frustrated. Twitter called you a Flare clone.";
             } },
           { label: 'Ignore it — stay on roadmap', key: 'ignore',
             execute(s, char, e) {
@@ -54,7 +54,7 @@
             } },
         ],
         dropDelay: 2, dropFrom: 'Market signal',
-        dropMsg: "Rivalio has 200 customers and is well-funded. you need a sharper answer to 'why you and not them.'",
+        dropMsg: "Flare has 10,000 users and is well-funded. you need a sharper answer to 'why kindred and not them.'",
         dropFx(s, char) {
           char.flags.done = true;
           s.competitor_launch_week = s.week;
@@ -65,7 +65,7 @@
 
       {
         id: 'competitor_growing', cat: 'e', from: 'TechCrunch',
-        body: "Rivalio hit 1,000 users. two of your beta users emailed this week asking if you're planning to match their new export feature.",
+        body: "Flare hit 10,000 users. two of your subscribers emailed asking if you're planning to add video dates — the feature Flare just launched.",
         urgency: 3, weeks: 1,
         available: (s) => s.competitor_ignored && !s.competitor_pressure_done
           && s.week >= (s.competitor_launch_week || 0) + 3,
@@ -75,24 +75,24 @@
               s.competitor_pressure_done = true;
               s.market_fit = clamp(s.market_fit + 6, 0, 100);
               s.signal = clamp(s.signal + 4, 0, 100);
-              return "Called 5 users. Most still prefer your approach. Two want the feature — but for a different reason than you assumed. Now you know what to build next.";
+              return "Called 5 subscribers. Most still prefer your approach. Two want video dates — but for a different reason than you assumed. Now you know what to build next.";
             } },
-          { label: 'Offer existing users a discount to stay', key: 'discount',
+          { label: 'Offer existing subscribers a discount to stay', key: 'discount',
             execute(s) {
               s.competitor_pressure_done = true;
               s.customers = clamp(s.customers + 1, 0, 9999);
               s.cash = clamp(s.cash - 500, 0, 9999999);
-              return "Gave 3 accounts 20% off. Bought loyalty — not ideal, but stopped the bleeding. The feature question didn't go away.";
+              return "Gave 3 subscribers 20% off. Bought loyalty — not ideal, but stopped the bleeding. The feature question didn't go away.";
             } },
           { label: 'Keep building, ignore the noise', key: 'ignore',
             execute(s) {
               s.competitor_pressure_done = true;
               s.market_fit = clamp(s.market_fit - 5, 0, 100);
-              return "Stayed the course. Lost two beta users to Rivalio. The remaining users are still with you — for now.";
+              return "Stayed the course. Lost two subscribers to Flare. The remaining users are still with you — for now.";
             } },
         ],
         dropDelay: 2, dropFrom: 'User',
-        dropMsg: "we've been evaluating Rivalio. going to give them a try — nothing personal.",
+        dropMsg: "we've been evaluating Flare. going to give them a try — nothing personal.",
         dropFx(s) {
           s.competitor_pressure_done = true;
           s.market_fit = clamp(s.market_fit - 8, 0, 100);
@@ -103,7 +103,7 @@
 
       {
         id: 'investor_moat_question', cat: 'e', from: 'Investor',
-        body: "an investor you're pitching asks directly: 'Rivalio raised $3M in your space last month. why do you win?'",
+        body: "an investor you're pitching asks directly: 'Flare raised $3M and has 10,000 users. why does kindred win?'",
         urgency: 2, weeks: 1,
         available: (s) => s.deck_ready && s.competitor_launch_week && !s.moat_answered,
         options: [

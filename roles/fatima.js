@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'fatima_intro', cat: 'e', from: 'Fatima (angel)',
-        body: "heard good things about what you're building from a few people in the network. would love a quick intro call this week.",
+        body: "heard good things about kindred from a few people in the network. would love a quick intro call this week.",
         urgency: 2, weeks: 1,
         available: (s, char) => !char.flags.intro_done,
         options: [
@@ -20,7 +20,7 @@
       },
       {
         id: 'fatima_meeting', cat: 'e', from: 'Fatima (angel)',
-        body: "been thinking about our call. love the space. can we do a deeper dive this week — i want to understand the go-to-market before i go further.",
+        body: "been thinking about our call. love the space — dating apps with real retention are rare. can we do a deeper dive this week? i want to understand the go-to-market before i go further.",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.intro_done && !char.flags.meeting_done && s.week >= (s.fatima_intro_week || 0) + 2,
         options: [

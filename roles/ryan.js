@@ -2,10 +2,10 @@
   const rnd = n => Math.floor(Math.random() * n);
 
   const CHECKIN_BODIES = [
-    "it's been a few weeks since you last touched base with Ryan. a short update keeps you top of mind.",
+    "it's been a few weeks since you last touched base with Ryan. a short update on subscriber growth keeps you top of mind.",
     "you haven't sent Ryan anything in a while. investors go cold if you don't keep them warm.",
-    "Ryan seemed genuinely interested. worth spending 20 minutes on a quick progress note.",
-    "it's been over a month. a brief update — what's shipped, what's working — could be worth it.",
+    "Ryan seemed genuinely interested in the dating app space. worth spending 20 minutes on a quick progress note.",
+    "it's been over a month. a brief update — new subscribers, dates that happened, what's working — could be worth it.",
   ];
   const CHECKIN_REPLIES = [
     "Ryan: 'this is great, exactly what I like to see. keep the updates coming.'",
@@ -20,7 +20,7 @@
     cards: [
       {
         id: 'ryan_intro', cat: 'e', from: 'Ryan (angel)',
-        body: "heard about you through the network. love what you're building in this space. would love to grab coffee and hear more.",
+        body: "heard about you through the network. love what you're building in the dating space. would love to grab coffee and hear more.",
         urgency: 2, weeks: 1,
         available: (s, char) => !char.flags.intro_done,
         options: [

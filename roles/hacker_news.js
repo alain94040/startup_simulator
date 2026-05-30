@@ -6,7 +6,7 @@
     cards: [
       {
         id: 'hn_thread', cat: 'e', from: 'Hacker News',
-        body: "'Ask HN: Why is [your space] still so broken?' — top thread right now, 300 comments. this is your market talking openly.",
+        body: "'Ask HN: Why are dating apps still so bad in 2026?' — top thread right now, 300 comments. this is your market talking openly.",
         urgency: 2, weeks: 1,
         available: (s) => !s.launched && !s.hn_thread_done,
         options: [
@@ -19,7 +19,7 @@
       // ── SEQUENCE: pre-launch HN signal (3 one-shot cards) ───────────────────
       {
         id: 'community_signal_hn_1', cat: 'e', from: 'Hacker News',
-        body: "there's an Ask HN thread about the problem you're solving. 200 comments. the top answer is a spreadsheet workaround from 2019.",
+        body: "there's an Ask HN thread about what's broken with dating apps. 200 comments. the top answer is a shared Google spreadsheet where people manually track matches across apps. it has 50,000 views.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 6 && (char.flags.hn_stage || 0) === 0,
         options: [
@@ -33,7 +33,7 @@
       },
       {
         id: 'community_signal_hn_2', cat: 'e', from: 'Hacker News',
-        body: "another HN thread in your space, bigger this time. people are explicitly asking for a product — not another workaround.",
+        body: "another HN thread about dating apps, bigger this time. people are explicitly asking for something that actually helps — not another swipe interface.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && char.flags.hn_stage === 1 && s.week >= (char.flags.hn_stage_week || 0) + 5,
         options: [
@@ -47,7 +47,7 @@
       },
       {
         id: 'community_signal_hn_3', cat: 'e', from: 'Hacker News',
-        body: "someone posted your exact problem as an HN thread. it hit the front page. three comments specifically mention wanting a real product.",
+        body: "someone posted your exact frustration as an HN thread. it hit the front page. three comments specifically mention wanting a real product, not 'tinder but slightly different.'",
         urgency: 2, weeks: 1,
         available: (s, char) => !s.launched && char.flags.hn_stage === 2 && s.week >= (char.flags.hn_stage_week || 0) + 5,
         options: [
@@ -63,7 +63,7 @@
       // ── SEQUENCE: pre-launch Reddit signal (3 one-shot cards) ───────────────
       {
         id: 'community_signal_reddit_1', cat: 'e', from: 'Reddit',
-        body: "r/[yourspace] — top post this week: 'what tools do you actually use for this?' 200 comments, mostly complaints about existing options.",
+        body: "r/datingapps — top post this week: 'what apps do you actually use and why?' 200 comments, mostly complaints about ghosting and time-wasters.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 8 && (char.flags.reddit_stage || 0) === 0,
         options: [
@@ -77,7 +77,7 @@
       },
       {
         id: 'community_signal_reddit_2', cat: 'e', from: 'Reddit',
-        body: "a reddit thread dissecting why the last three startups in your space all failed. the pattern is uncomfortably familiar.",
+        body: "a reddit thread analyzing why the last three 'anti-Tinder' startups all failed. the pattern is uncomfortably familiar.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && char.flags.reddit_stage === 1 && s.week >= (char.flags.reddit_stage_week || 0) + 5,
         options: [
@@ -91,7 +91,7 @@
       },
       {
         id: 'community_signal_reddit_3', cat: 'e', from: 'Reddit',
-        body: "someone posted your landing page on reddit without asking. 40 upvotes. people in the comments are asking when it launches.",
+        body: "someone posted your landing page on r/datingapps without asking. 40 upvotes. people in the comments are asking when it launches.",
         urgency: 2, weeks: 1,
         available: (s, char) => !s.launched && char.flags.reddit_stage === 2 && s.week >= (char.flags.reddit_stage_week || 0) + 5,
         options: [
@@ -107,7 +107,7 @@
       // ── SEQUENCE: pre-launch Indie Hackers signal (3 one-shot cards) ─────────
       {
         id: 'community_signal_slack_1', cat: 'e', from: 'Indie Hackers',
-        body: "a thread on Indie Hackers asking 'how are you validating before you build?' — half the comments describe your exact problem.",
+        body: "a thread on Indie Hackers: 'how do you validate a consumer social app before you build?' — half the comments describe the exact frustration kindred is trying to solve.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 10 && (char.flags.ih_stage || 0) === 0,
         options: [
@@ -121,7 +121,7 @@
       },
       {
         id: 'community_signal_slack_2', cat: 'e', from: 'Indie Hackers',
-        body: "an indie hacker just published a post-mortem for a startup that tried your exact idea. failed in month 8. you read every word.",
+        body: "an indie hacker just published a post-mortem for a dating app that tried your exact angle. failed in month 8. you read every word.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && char.flags.ih_stage === 1 && s.week >= (char.flags.ih_stage_week || 0) + 5,
         options: [
@@ -135,7 +135,7 @@
       },
       {
         id: 'community_signal_slack_3', cat: 'e', from: 'Indie Hackers',
-        body: "indie hackers build-in-public thread for your space. five founders posting weekly updates. your waitlist is half the size of the least active one.",
+        body: "indie hackers build-in-public thread for consumer social apps. five founders posting weekly updates. your waitlist is half the size of the least active one.",
         urgency: 2, weeks: 1,
         available: (s, char) => !s.launched && char.flags.ih_stage === 2 && s.week >= (char.flags.ih_stage_week || 0) + 5,
         options: [
@@ -195,7 +195,7 @@
 
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
-        body: "YC applications just opened. Your stats qualify — 60%+ product, 10+ paying customers. A lot of founders in your space are applying.",
+        body: "YC applications just opened. Your stats qualify — 60%+ product, 10+ paying subscribers. A lot of founders in the consumer social space are applying.",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 10,
         options: [
@@ -208,7 +208,7 @@
       },
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
-        body: "YC applications just opened. Stats aren't quite there — need 60% product, 10 paying customers. Some apply anyway for partner feedback. Apply or wait?",
+        body: "YC applications just opened. Stats aren't quite there — need 60% product, 10 paying subscribers. Some apply anyway for partner feedback. Apply or wait?",
         urgency: 2, weeks: 1, priority: true,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 10),
         options: [

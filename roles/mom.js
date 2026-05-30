@@ -41,7 +41,7 @@
       },
       {
         id: 'ff_family_3', cat: 'e', from: 'Mom',
-        body: "dad looked up your company and has been reading everything. he wants to put some money in if you'll let him. might feel weird — but he's really proud.",
+        body: "dad looked up kindred and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird — but he's really proud.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week <= 10 && !char.flags.done && char.flags.shown_2,
         options: [

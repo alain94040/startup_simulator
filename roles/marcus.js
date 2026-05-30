@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'investor_intro_warm', cat: 'e', from: 'Marcus (angel)',
-        body: "genuinely interested in what you're building. if i don't hear back by end of week i'll assume timing's off.",
+        body: "genuinely interested in what you're building in the dating space. if i don't hear back by end of week i'll assume timing's off.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week > 4 && s.investor_warmth < 50 && !char.flags.intro_warm_done,
         options: [

@@ -15,7 +15,7 @@
             execute(s, char) {
               char.flags.first_meeting_done = true;
               char.flags.first_meeting_week = s.week;
-              return "Good lunch. David asked sharp questions about the market. 'Send me something concrete this week and let's go deeper.'";
+              return "Good lunch. David asked sharp questions about the dating app space. 'Send me something concrete this week — what makes people actually stay?'";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,

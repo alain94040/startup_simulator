@@ -5,7 +5,7 @@
     cards: [
       {
         id: 'yc_apply', cat: 'e', from: 'Y Combinator',
-        body: "Application deadline is this week. What you're building, why you, what you've learned from users. Takes a focused day to do well.",
+        body: "Application deadline is this week. What you're building in the dating space, why you, what you've learned from subscribers. Takes a focused day to do well.",
         urgency: 3, weeks: 1, priority: true,
         available: (s) => s.ycDeciding && !s.ycApplied,
         options: [

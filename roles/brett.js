@@ -7,7 +7,7 @@
     cards: [
       {
         id: 'consultant_brand', cat: 'e', from: 'Brett (brand strategist)',
-        body: "found you on crunchbase. your positioning looks muddled — i can see it straight away. one-day workshop to tighten the story, $1,500. i work directly with founders.",
+        body: "found you on crunchbase. you're using the same language as tinder and bumble — 'find your match.' i can't tell you apart in 10 seconds. one-day workshop to fix that, $1,500. i work directly with founders.",
         urgency: 1, weeks: 1,
         available: (s, char) => !char.flags.done,
         options: [
