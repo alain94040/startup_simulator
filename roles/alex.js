@@ -202,27 +202,27 @@
       // ── EARLY CONVERSATIONS (weeks 1–8): founder debates, low-stakes ────────
       {
         id: 'early_name', cat: 'e', from: 'Alex', ignoreForTrust: true,
-        body: "we need to stop calling this 'the project.' i found three good .com domains. can we just pick one and commit?",
+        body: "we need to stop calling this 'the project.' found three good domains: one sounds romantic, one sounds clean and abstract, one is a made-up word. pick one.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week <= 3 && !char.flags.name_done,
         options: [
-          { label: 'The catchy one', key: 'catchy',
-            execute(s, char) { char.flags.name_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Name locked. Catchy, memorable, works on a t-shirt."; } },
-          { label: 'The descriptive one', key: 'descriptive',
-            execute(s, char) { char.flags.name_done = true; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Name locked. Says exactly what it does. Customers know what they're signing up for."; } },
+          { label: 'The romantic one', key: 'catchy',
+            execute(s, char) { char.flags.name_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Name locked. Memorable, a little warm in exactly the right way. People immediately know what it's for."; } },
+          { label: 'The clean, abstract one', key: 'descriptive',
+            execute(s, char) { char.flags.name_done = true; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Name locked. Distinctive, hard to confuse with anything else. Grows on people once they try it."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.name_done = true; },
       },
       {
         id: 'early_tech_stack', cat: 'e', from: 'Alex', ignoreForTrust: true,
-        body: "stack question: i could ship twice as fast with what i know, but the 'right' choice scales better. stack or ship speed?",
+        body: "the matching algorithm is fine for 100 users. at 10,000 it'll fall apart. i can build it to scale properly — takes twice as long. or i ship something that works now and we fix it when it matters.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 1 && s.week <= 4 && !char.flags.stack_done,
         options: [
-          { label: 'Ship speed — use what you know', key: 'fast',
-            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 4, 0, 100); return "Going with the fast stack. Alex shipping immediately."; } },
-          { label: 'Pick the scalable one', key: 'scalable',
-            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 2, 0, 100); s.tech_debt -= 5; return "Scalable stack chosen. Slower start but cleaner foundation."; } },
+          { label: 'Ship now — fix the algorithm later', key: 'fast',
+            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 4, 0, 100); return "Shipping with the fast version. Alex moving immediately. The 10,000-user problem is a good problem to have."; } },
+          { label: 'Build it to scale from the start', key: 'scalable',
+            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 2, 0, 100); s.tech_debt -= 5; return "Slower start, cleaner foundation. Alex is happy — he hates rewriting things."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.stack_done = true; },
       },
@@ -256,27 +256,27 @@
       },
       {
         id: 'early_mvp_scope', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "made two lists: everything we talked about shipping, and the smallest thing that proves the idea. they're pretty different.",
+        body: "lean version: profiles, basic matching, and a way to message — no algorithm, no photo verification, nothing fancy. full version: algorithm, photo uploads, read receipts, notifications, the whole thing. i need to know which one.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 6 && !char.flags.mvp_scope_done,
         options: [
-          { label: 'Lean version — ship in 2 weeks, learn in 3', key: 'lean',
-            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 3, 0, 100); s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Lean scope locked. Alex looks like he\'ll get something real in two weeks."; } },
-          { label: 'Full scope — do it right', key: 'full',
-            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 1, 0, 100); return "Full build. More impressive on launch day — if it ships on time."; } },
+          { label: 'Lean — profiles, matching, messaging. nothing else.', key: 'lean',
+            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 3, 0, 100); s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Lean scope locked. If someone uses a dating app with no algorithm and placeholder photos, they definitely want what we're building."; } },
+          { label: 'Full scope — ship it properly the first time', key: 'full',
+            execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 1, 0, 100); return "Full build. Will feel polished on launch day. If you ever ship."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.mvp_scope_done = true; },
       },
       {
         id: 'early_pricing', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "i keep going back and forth: do we charge from day one, or give it away until we hit some real usage threshold? what's your instinct?",
+        body: "nobody pays for a dating app with 20 users in it — they need to believe matches exist before they hand over money. but charging early filters out the tire-kickers. what do we do?",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 4 && s.week <= 8 && !char.flags.pricing_done,
         options: [
-          { label: 'Charge from day one — validate willingness to pay', key: 'charge',
-            execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. Even $10/month proves someone cares. Sets the mindset."; } },
-          { label: 'Free first — maximize early feedback', key: 'free',
-            execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door, more feedback loops."; } },
+          { label: 'Charge from day one — find the true believers', key: 'charge',
+            execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. You'll get 10 serious subscribers instead of 100 who open it once. If they pay before there are many matches, they really want this."; } },
+          { label: 'Free until we have real critical mass', key: 'free',
+            execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door. The cold start problem is real — you need enough singles before anyone finds a match worth paying for."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
       },
@@ -445,21 +445,21 @@
       },
       {
         id: 'alex_beta_ready', cat: 'p', from: 'Alex',
-        body: "we've shown demos but nobody's actually living with it. give 5–10 people real credentials and see what breaks when we're not in the room.",
+        body: "we've shown demos but nobody's actually dating on it. give real singles actual accounts and let them loose — we need to know if matches happen and if people message each other.",
         urgency: 3, weeks: 1,
         available: (s) => s.productPhase === "proto" && s.has_demo && s.product >= 38 && !s.has_beta && !s.launched,
         options: [
-          { label: 'Invite our 5 best-fit contacts', key: 'curated',
+          { label: 'Invite 10 hand-picked singles', key: 'curated',
             execute(s) {
               s.has_beta = true;
               s.waitlist += 5; s.market_fit = clamp(s.market_fit + 12, 0, 100);
-              return "Invited 5 hand-picked contacts. All 5 accepted. Three used it every day. Two hit the same bug on day 3 — fixed before they could complain. One asked if they could pay now.";
+              return "Invited 10 contacts — making sure we had a real mix of people. Eight signed up. Three matched with each other on day one. Two hit the same bug on day 3 — fixed before they could complain. One asked if they could pay now.";
             } },
-          { label: 'Post it publicly — open beta', key: 'open',
+          { label: 'Post it in two singles communities', key: 'open',
             execute(s) {
               s.has_beta = true;
               s.waitlist += 20; s.market_fit = clamp(s.market_fit + 5, 0, 100); s.signal = clamp(s.signal + 10, 0, 100);
-              return "Posted in two Slack communities. 20 signups in 48 hours. Noisy — power users mixed with people who'll never come back. But you're seeing usage patterns you couldn't have predicted.";
+              return "Posted in r/datingapps and a singles Facebook group. 20 signups in 48 hours. Chaotic — some people signed up just to see what it is. But you're seeing match patterns you couldn't have predicted.";
             } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
