@@ -212,19 +212,6 @@
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.stack_done = true; },
       },
       {
-        id: 'early_working_style', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "how are we working day to day? i go heads-down for long stretches. want standups, or just ping each other when stuck?",
-        urgency: 1, weeks: 1,
-        available: (s, char) => s.week <= 4 && !char.flags.working_style_done,
-        options: [
-          { label: 'Daily 15-min standup', key: 'standup',
-            execute(s, char) { char.flags.working_style_done = true; char.morale = clamp(char.morale + 5, 0, 100); return "Daily standup at 9am. Keeps both of you honest."; } },
-          { label: 'Async — ping when blocked', key: 'async',
-            execute(s, char) { char.flags.working_style_done = true; return "Async by default. Fewer interruptions, more deep work."; } },
-        ],
-        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.working_style_done = true; },
-      },
-      {
         id: 'early_customer_target', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "we keep switching who we're talking to — sometimes we pitch to young singles, sometimes to divorced 30-somethings. we should agree before it gets confusing.",
         urgency: 1, weeks: 1,
@@ -251,19 +238,6 @@
             execute(s, char) { char.flags.mvp_scope_done = true; s.product = clamp(s.product + 1, 0, 100); return "Full build. Will feel polished on launch day. If you ever ship."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.mvp_scope_done = true; },
-      },
-      {
-        id: 'early_pricing', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "nobody pays for a dating app with 20 users in it — they need to believe matches exist before they hand over money. but charging early filters out the tire-kickers. what do we do?",
-        urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 4 && s.week <= 8 && !char.flags.pricing_done,
-        options: [
-          { label: 'Charge from day one — find the true believers', key: 'charge',
-            execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. You'll get 10 serious subscribers instead of 100 who open it once. If they pay before there are many matches, they really want this."; } },
-          { label: 'Free until we have real critical mass', key: 'free',
-            execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door. The cold start problem is real — you need enough singles before anyone finds a match worth paying for."; } },
-        ],
-        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
       },
       {
         id: 'early_funding_goal', cat: 't', from: 'Alex', ignoreForTrust: true,

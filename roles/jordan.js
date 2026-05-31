@@ -219,6 +219,34 @@
         dropFx(s, char) { char.flags.ios_sprint_count = (char.flags.ios_sprint_count || 0) + 1; },
       },
 
+      // ── EARLY CONVERSATIONS ──────────────────────────────────────────────────
+      {
+        id: 'early_working_style', cat: 't', from: 'Jordan', ignoreForTrust: true,
+        body: "i'm still at my day job so my hours are weird. do we want a quick daily check-in so you know when i'm available? or just async and ping me when you need something?",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week <= 4 && !char.flags.working_style_done,
+        options: [
+          { label: 'Daily 15-min standup', key: 'standup',
+            execute(s, char) { char.flags.working_style_done = true; char.morale = clamp(char.morale + 5, 0, 100); return "Daily standup at 9am. Keeps both of you honest."; } },
+          { label: 'Async — ping when blocked', key: 'async',
+            execute(s, char) { char.flags.working_style_done = true; return "Async by default. Fewer interruptions, more deep work."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.working_style_done = true; },
+      },
+      {
+        id: 'early_pricing', cat: 't', from: 'Jordan', ignoreForTrust: true,
+        body: "thinking about the iOS onboarding flow — do we charge from day one, or free until we have real critical mass? nobody pays for a dating app with 20 users in it, but charging early filters out the tire-kickers.",
+        urgency: 1, weeks: 1,
+        available: (s, char) => s.week >= 4 && s.week <= 8 && !char.flags.pricing_done,
+        options: [
+          { label: 'Charge from day one — find the true believers', key: 'charge',
+            execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. You'll get 10 serious subscribers instead of 100 who open it once. If they pay before there are many matches, they really want this."; } },
+          { label: 'Free until we have real critical mass', key: 'free',
+            execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door. The cold start problem is real — you need enough singles before anyone finds a match worth paying for."; } },
+        ],
+        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
+      },
+
       // ── DRIFT PHASE ──────────────────────────────────────────────────────────
       {
         id: 'jordan_drift_start', cat: 't', from: 'Alex',
