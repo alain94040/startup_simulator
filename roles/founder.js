@@ -36,7 +36,12 @@
             return "alex has been heads-down but the queue isn't shrinking. you can code — take this sprint and build alongside him.";
           if (timesPaired < 3)
             return "same situation as last time — queue still isn't moving fast enough. you could jump in again.";
-          return "the queue's never fully empty. at some point pairing stops being a one-off and becomes the default way you ship.";
+          const extras = [
+            "the queue's never fully empty. at some point pairing stops being a one-off and becomes the default way you ship.",
+            "matching algorithm is getting slower as the user base grows. alex flagged it — not urgent yet, but a focused sprint together would close it.",
+            "photo upload pipeline is still flaky for some devices. alex has it on the list but it keeps sliding. worth a sprint.",
+          ];
+          return extras[(timesPaired - 3) % extras.length];
         },
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
@@ -432,7 +437,12 @@
         body: (s) => {
           if (s.cash < 3000) return "runway is nearly gone. whatever you focus on this sprint, it has to matter.";
           if (s.cash < 7000) return "a quieter stretch — but the runway is shrinking. no fires right now, but don't mistake that for safety.";
-          return "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.";
+          const quietVariants = [
+            "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.",
+            "no crises this week. good moment to look at match-to-date conversion — the number most dating app founders ignore until it's too late.",
+            "things are quiet. worth a sprint looking at what your most active users actually do in the app — not what they say they want.",
+          ];
+          return quietVariants[Math.floor(s.week / 4) % quietVariants.length];
         },
         urgency: 1, weeks: 1,
         available: () => true,

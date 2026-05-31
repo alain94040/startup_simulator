@@ -56,10 +56,10 @@
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.commitment_resolved,
         options: [
-          { label: 'Accept — milestones first', key: 'accept',
+          { label: "Agree — he'll go full-time once we have traction", key: 'accept',
             execute(s, char) { char.flags.commitment_resolved = true; s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
-          { label: 'Push for full commitment', key: 'push',
-            execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); s.product = clamp(s.product + 4, 0, 100); return "Alex agreed to go full-time. He's not happy about the pressure. Watch his mood."; } },
+          { label: 'Push him — we need full commitment now', key: 'push',
+            execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); s.product = clamp(s.product + 4, 0, 100); return "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood."; } },
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?",
@@ -70,7 +70,7 @@
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
         urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.week >= 2 && s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
+        available: (s, char) => s.week >= 4 && s.week <= 10 && s.product < 50 && !char.flags.vision_resolved,
         options: [
           { label: "Go with Alex's framing — casual dating", key: 'alex',
             execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with casual dating. Broader market, easier to explain. Some earlier conversations about 'serious matches' are now awkward, but at least you're aligned."; } },
@@ -85,7 +85,7 @@
       },
       {
         id: 'alex_side_project', cat: 't', from: 'Alex',
-        body: "full disclosure — about 3 hours a day on a side project. just exploring, not competitive. didn't mention it, didn't think it was a big deal.",
+        body: "full disclosure — i've been putting 3 hours a day into a side project. didn't mention it earlier and i should have. i wanted you to hear it from me before it became a problem.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 3 && s.week <= 14 && char.morale > 50 && !char.flags.committed_fulltime && !char.flags.side_project_resolved && !char.flags.side_project_active,
         options: [
@@ -167,7 +167,7 @@
         },
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
-          && (s.market_fit < 80 || s.product < 55)
+          && (s.market_fit < 80 && s.product < 55)
           && s.week >= (char.flags.lastSyncToDiscover || 0) + 8,
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
@@ -282,16 +282,16 @@
       },
       {
         id: 'early_funding_goal', cat: 't', from: 'Alex', ignoreForTrust: true,
-        body: "been sitting on this: are we building to raise VC, sell to a big company, or run a profitable business? we need to be on the same page.",
+        body: "been sitting on this: dating apps go one of three ways — VC-backed and scale fast (Hinge, Bumble), get acquired by Match Group, or build a quiet profitable subscription business. which are we aiming for? changes everything about how we make decisions.",
         urgency: 1, weeks: 1,
         available: (s, char) => s.week >= 3 && s.week <= 8 && !char.flags.funding_goal_done,
         options: [
-          { label: 'VC route — raise, scale, exit', key: 'vc',
-            execute(s, char) { char.flags.funding_goal_done = true; s.investor_warmth = clamp(s.investor_warmth + 5, 0, 100); return "Aligned on the VC path. Changes how you talk to investors."; } },
-          { label: 'Profitable first — control our own destiny', key: 'profitable',
-            execute(s, char) { char.flags.funding_goal_done = true; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Profitable first. Every product decision gets cleaner with that bar."; } },
-          { label: 'Stay flexible for now', key: 'open',
-            execute(s, char) { char.flags.funding_goal_done = true; return "Staying flexible. Revisit when you have real traction."; } },
+          { label: 'VC route — raise, grow fast, aim for IPO or acquisition', key: 'vc',
+            execute(s, char) { char.flags.funding_goal_done = true; s.investor_warmth = clamp(s.investor_warmth + 5, 0, 100); return "Aligned on the VC path. Every conversation with investors gets sharper when you know what you're building toward."; } },
+          { label: 'Profitable first — build a real business, no VC needed', key: 'profitable',
+            execute(s, char) { char.flags.funding_goal_done = true; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Profitable first. Every product decision gets cleaner when the bar is 'do people pay for this', not 'can we raise on this'."; } },
+          { label: 'Stay flexible — let traction tell us', key: 'open',
+            execute(s, char) { char.flags.funding_goal_done = true; return "Staying flexible. Revisit when you have enough users to know what kind of company you actually are."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.funding_goal_done = true; },
       },
@@ -312,7 +312,7 @@
       },
       {
         id: 'ip_concern', cat: 'e', from: 'Alex',
-        body: "been meaning to raise this: at my last job i built early prototypes of a recommendation engine — similar ML concepts to what we're using for matching. could my old employer claim ownership if we go through investor diligence?",
+        body: "been meaning to raise this: at my last job i built early prototypes of a recommendation engine — similar ML concepts to what we're using for matching. if an investor's lawyer finds this in diligence, they can kill the deal. we need to clean it up now.",
         urgency: 3, weeks: 1, ignoreForTrust: true,
         available: (s, char) => s.week <= 12 && !s.ip_clear && !s.ip_concern_dismissed,
         options: [
