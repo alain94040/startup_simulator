@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Jordan Arc — iOS to Cap Table</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0b0b0f;
+    color: #d0d0e0;
+    padding: 48px 32px 100px;
+  }
+  h1 { text-align:center; font-size:13px; color:#444; letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; }
+  .subtitle { text-align:center; font-size:11px; color:#333; margin-bottom:48px; font-family:monospace; }
+
+  .timeline { display:flex; flex-direction:column; max-width:960px; margin:0 auto; }
+  .trow { display:flex; gap:0; align-items:flex-start; }
+  .week-col { width:100px; flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; padding-right:18px; padding-top:18px; }
+  .week-label { font-size:10px; color:#444; font-family:monospace; text-align:right; line-height:1.5; }
+  .week-label.wk-green  { color:#166534; }
+  .week-label.wk-amber  { color:#92400e; }
+  .week-label.wk-red    { color:#7f1d1d; }
+  .week-label.wk-orange { color:#9a3412; }
+  .week-label.wk-teal   { color:#0f4c47; }
+
+  .rail-col { width:24px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; }
+  .rail-dot { width:10px; height:10px; border-radius:50%; background:#2a2a3c; border:2px solid #3a3a5c; margin-top:21px; flex-shrink:0; z-index:1; }
+  .rail-dot-green  { background:#052e16; border-color:#166534; }
+  .rail-dot-amber  { background:#1c0f00; border-color:#92400e; }
+  .rail-dot-red    { background:#1a0505; border-color:#7f1d1d; }
+  .rail-dot-orange { background:#1c0800; border-color:#9a3412; }
+  .rail-dot-teal   { background:#021a18; border-color:#0f4c47; }
+  .rail-dot-faint  { background:#111; border-color:#222; }
+  .rail-line { width:2px; background:#1e1e2a; flex:1; min-height:24px; }
+  .rail-line-green  { background:#0a2010; }
+  .rail-line-amber  { background:#1c1005; }
+  .rail-line-red    { background:#180808; }
+  .rail-line-orange { background:#1a0a00; }
+  .rail-line-teal   { background:#041510; }
+  .content-col { flex:1; padding:12px 0 12px 18px; }
+
+  /* Phase tags */
+  .phase-tag {
+    font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    padding:3px 10px; border-radius:3px;
+  }
+  .phase-tag-green  { background:#052e16; color:#4ade80; border:1px solid #166534; }
+  .phase-tag-amber  { background:#1c0f00; color:#fbbf24; border:1px solid #92400e; }
+  .phase-tag-red    { background:#1a0505; color:#fca5a5; border:1px solid #7f1d1d; }
+  .phase-tag-orange { background:#1c0800; color:#fb923c; border:1px solid #9a3412; }
+  .phase-tag-teal   { background:#021a18; color:#2dd4bf; border:1px solid #0f4c47; }
+  .phase-note { font-size:10px; color:#3a3a50; font-family:monospace; }
+
+  /* Cards */
+  .card { background:#13131d; border:1px solid #262636; border-radius:10px; padding:14px 18px; }
+  .card-green  { background:#071408; border-color:#1a4020; }
+  .card-amber  { background:#160c04; border-color:#3a2010; }
+  .card-red    { background:#160608; border-color:#4a1820; }
+  .card-orange { background:#180a04; border-color:#4a2010; }
+  .card-teal   { background:#051514; border-color:#0a3530; }
+
+  .card-hdr { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .av { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+  .av-j  { background:#4c1d95; color:#c4b5fd; }
+  .av-a  { background:#1e3a5f; color:#93c5fd; }
+  .card-who { font-size:11px; color:#777; text-transform:uppercase; letter-spacing:.05em; }
+  .card-id  { font-family:monospace; font-size:10px; color:#383848; margin-left:auto; }
+  .card-body { font-size:13px; color:#a8a8c0; line-height:1.6; font-style:italic; margin-bottom:12px; }
+  .aside { font-style:normal; font-size:11px; color:#555; display:block; margin-top:5px; }
+
+  /* Options */
+  .opts { display:flex; gap:8px; flex-wrap:wrap; }
+  .opt { display:flex; align-items:center; gap:6px; padding:5px 11px; border-radius:6px; font-size:12px; border:1px solid; }
+  .opt-k { font-family:monospace; font-size:10px; opacity:.5; }
+  .opt-neutral { background:#111122; border-color:#2a2a50; color:#8888cc; }
+  .opt-green   { background:#0b1a0b; border-color:#1a4a1a; color:#6ee7b7; }
+  .opt-yellow  { background:#1a1508; border-color:#4a3810; color:#fcd34d; }
+  .opt-red     { background:#1a0808; border-color:#4a1818; color:#fca5a5; }
+  .opt-orange  { background:#1a0c04; border-color:#4a2810; color:#fb923c; }
+
+  /* Drop warning */
+  .drop { margin-top:10px; padding:7px 12px; background:#161009; border:1px solid #362010; border-radius:6px; font-size:11px; color:#c97840; display:flex; align-items:baseline; gap:8px; line-height:1.5; }
+  .drop-critical { background:#160408; border-color:#4a1010; color:#f87171; }
+
+  /* Sub-outcomes */
+  .sub-outcomes { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .sub-out { flex:1; min-width:140px; padding:6px 10px; border-radius:6px; border:1px solid; font-size:11px; line-height:1.6; }
+  .sub-out-key { font-family:monospace; font-size:10px; opacity:.5; display:block; margin-bottom:2px; }
+  .sub-green  { background:#0a1a0a; border-color:#1a5a1a; color:#6ee7b7; }
+  .sub-yellow { background:#1a1208; border-color:#584010; color:#fbbf24; }
+  .sub-red    { background:#1a0808; border-color:#5a1818; color:#fca5a5; }
+  .sub-orange { background:#1a0c04; border-color:#4a2810; color:#fb923c; }
+  .sub-teal   { background:#041a18; border-color:#0a4038; color:#2dd4bf; }
+
+  /* Variants */
+  .variants { margin-top:10px; padding:8px 12px; background:#0f0f18; border:1px solid #222232; border-radius:6px; }
+  .variants-label { font-size:9px; color:#444; text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px; }
+  .variant { font-size:11px; color:#6060a0; font-style:italic; margin-bottom:4px; line-height:1.5; }
+  .variant:last-child { margin-bottom:0; }
+
+  /* iOS fork callouts */
+  .fork-pair { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .fork-callout { flex:1; min-width:200px; padding:8px 12px; border-radius:6px; font-size:11px; line-height:1.6; border:1px solid; }
+  .fork-callout-green { background:#051408; border-color:#1a5020; color:#4ade80; }
+  .fork-callout-amber { background:#160c04; border-color:#4a2810; color:#fbbf24; }
+
+  /* Conditional block */
+  .cond-label { font-size:9px; font-family:monospace; color:#3a3a50; text-transform:uppercase; letter-spacing:.1em; padding:4px 10px 2px; }
+
+  /* Outcome blocks */
+  .outcome-pair { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; }
+  .outcome-block { flex:1; min-width:200px; border-radius:8px; padding:12px 16px; border:1px solid; font-size:11px; line-height:1.7; }
+  .ob-red   { background:#160608; border-color:#5a1820; }
+  .ob-green { background:#071408; border-color:#185028; }
+  .ob-label { font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; display:block; }
+  .ob-label-red   { color:#fca5a5; }
+  .ob-label-green { color:#6ee7b7; }
+  .ob-detail { color:#666; }
+  .ob-detail b { color:#888; font-weight:600; }
+  .ob-detail .flag { color:#ef4444; }
+  .ob-detail .ok   { color:#22c55e; }
+
+  .note { font-size:11px; color:#383848; font-style:italic; margin-top:8px; }
+  .merge-note { font-size:10px; color:#383838; font-family:monospace; text-align:center; padding:6px 0; }
+
+  /* Context strip */
+  .context-strip { max-width:960px; margin:0 auto 32px; padding:12px 20px; background:#100c06; border:1px solid #2a1e08; border-radius:8px; font-size:11px; color:#80703a; line-height:1.7; }
+  .context-strip b { color:#a08840; }
+  .context-strip a { color:#a08840; }
+
+  /* Flag pill */
+  .flag-pill { display:inline-block; font-family:monospace; font-size:10px; padding:1px 7px; border-radius:10px; margin:0 2px; }
+  .fp-set  { background:#0a2a0a; color:#4ade80; border:1px solid #1a5020; }
+  .fp-clr  { background:#0a1a2a; color:#60a5fa; border:1px solid #1a3a5a; }
+  .fp-stay { background:#2a1a0a; color:#fbbf24; border:1px solid #5a3010; }
+</style>
+</head>
+<body>
+
+<h1>Jordan Arc — iOS Delivery · Drift · Confrontation · Cap Table</h1>
+<div class="subtitle">jordan.js · 8 cards · weeks 3–22+ · passive build contribution stops at drift</div>
+
+<div class="context-strip">
+  <b>Context:</b> Equity is already signed (<a href="equity_arc.html">see equity_arc.html</a>). Jordan holds her split — 20%, 25%, or 33% — fully vested, no cliff, no vesting schedule.
+  She contributes passively via <code style="font-size:10px">skills: { build: 0.7 }</code> alongside Alex (<code style="font-size:10px">skills: { build: 1.2 }</code>).
+  She is part-time and will always refuse to go full-time. The question is when that becomes a crisis — and whether the cap table gets cleaned before investors look at it.
+</div>
+
+<div class="timeline">
+
+  <!-- ─── PHASE 1: iOS CONTRIBUTION ──────────────────────────────────────── -->
+  <div class="trow" style="margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-green">Phase 1 — iOS Contribution</span>
+      <span class="phase-note" style="margin-left:10px">weeks 3–7 · jordan_active = true · jordan_drifting = false</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-green">Weeks 3–7<br>up to 2×</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-green"></div><div class="rail-line rail-line-green"></div></div>
+    <div class="content-col">
+      <div class="card card-green">
+        <div class="card-hdr">
+          <div class="av av-j">JO</div>
+          <div class="card-who" style="color:#86efac">Jordan</div>
+          <div class="card-id">jordan_ios_sprint · cat p · up to 2×</div>
+        </div>
+        <div class="card-body">
+          <div style="margin-bottom:5px">"got photo uploads working on iOS. push notifications are mostly behaving now. a few rough edges but it moves."</div>
+          <div style="color:#5a5a80; font-style:italic">"updated the matching view on iOS. a bit faster now. not quite on par with the web version yet."</div>
+          <span class="aside">available: jordan_active &amp;&amp; !jordan_drifting &amp;&amp; week ≥ 3 &amp;&amp; ios_sprint_count &lt; 2</span>
+        </div>
+        <div class="opts">
+          <div class="opt opt-green"><span class="opt-k">[ack]</span> Good — keep the momentum
+            &nbsp;·&nbsp; product +5 &nbsp;·&nbsp; signal +3
+            &nbsp;·&nbsp; <span style="font-family:monospace;font-size:10px">if count = 2 → ios_unblocked = true</span>
+          </div>
+        </div>
+        <div class="drop"><span>⚠</span> If dropped: ios_sprint_count++ silently — but <b>ios_unblocked is NOT set</b>. Must be played (not just received) for iOS to be considered done.</div>
+
+        <div class="fork-pair">
+          <div class="fork-callout fork-callout-green">
+            <b>✓ Both sprints played before drift</b><br>
+            <span class="flag-pill fp-set">ios_unblocked = true</span><br>
+            Launch blocker condition <code style="font-size:10px">&amp;&amp; !ios_unblocked</code> fails — it never fires.<br>
+            Confrontation still arrives at week 20 via timeout.
+          </div>
+          <div class="fork-callout fork-callout-amber">
+            <b>⚠ Drift starts before 2nd sprint played</b><br>
+            <span class="flag-pill fp-stay">ios_unblocked = false</span><br>
+            Launch blocker fires when product ≥ 50 + has_beta.<br>
+            iOS was never finished.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PHASE 2: DRIFT ─────────────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:24px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-amber">Phase 2 — Drift</span>
+      <span class="phase-note" style="margin-left:10px">week 8+ · char.focus = null · passive product contribution stops</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-amber">Week 8+<br>one-shot</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-amber"></div><div class="rail-line rail-line-amber"></div></div>
+    <div class="content-col">
+      <div class="card card-amber">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">jordan_drift_start · cat t</div>
+        </div>
+        <div class="card-body">
+          "jordan's been slower this week. said she's swamped at work. i covered the iOS push — took me two days. not complaining, just flagging it."
+          <span class="aside">sets jordan_drifting = true · char.focus = null (passive build contribution stops)</span>
+        </div>
+        <div class="sub-outcomes">
+          <div class="sub-out sub-yellow">
+            <span class="sub-out-key">[talk]</span> Talk to Jordan directly
+            <br>Alex −5 morale
+            <br><span style="color:#555">"Said it's temporary. You're not sure."</span>
+          </div>
+          <div class="sub-out sub-red">
+            <span class="sub-out-key">[cover]</span> Alex can cover for now
+            <br>Alex −10 morale
+            <br><span style="color:#555">"The iOS backlog keeps growing."</span>
+          </div>
+        </div>
+        <div class="drop"><span>⚠</span> If dropped: jordan_drifting = true · char.focus = null · Alex −8 morale</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trow"><div class="week-col"></div><div class="rail-col"><div class="rail-line rail-line-amber" style="min-height:12px"></div></div><div class="content-col"></div></div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-amber">Weeks 10+<br>every 2 wks<br>no limit</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-amber"></div><div class="rail-line rail-line-amber"></div></div>
+    <div class="content-col">
+      <div class="card card-amber">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">jordan_drag · cat t · recurring</div>
+        </div>
+        <div class="card-body">
+          Rotates through 3 variants — fires while jordan_drifting &amp;&amp; !jordan_resolved, cooldown: 2 weeks.
+        </div>
+        <div class="variants">
+          <div class="variants-label">Variants</div>
+          <div class="variant">"pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday."</div>
+          <div class="variant">"spent half a sprint on iOS debt jordan left. not blocking us, but it's slowing me down."</div>
+          <div class="variant">"user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. waiting on her."</div>
+        </div>
+        <div class="sub-outcomes" style="margin-top:10px">
+          <div class="sub-out sub-yellow"><span class="sub-out-key">[ack]</span> Noted · Alex −4 morale</div>
+          <div class="sub-out sub-red"><span class="sub-out-key">[dropped]</span> Alex −6 morale</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trow"><div class="week-col"></div><div class="rail-col"><div class="rail-line rail-line-amber" style="min-height:12px"></div></div><div class="content-col"></div></div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-amber">Week 10+<br>one-shot</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-amber"></div><div class="rail-line rail-line-amber"></div></div>
+    <div class="content-col">
+      <div class="card card-amber">
+        <div class="card-hdr">
+          <div class="av av-j">JO</div>
+          <div class="card-who" style="color:#c4b5fd">Jordan</div>
+          <div class="card-id">jordan_fulltime_ask · cat t</div>
+        </div>
+        <div class="card-body">
+          "had a direct conversation with jordan about going full-time. she was apologetic but firm: 'i can't leave my job right now — i need the salary. i'll carve out more hours, i promise.' she hasn't."
+        </div>
+        <div class="sub-outcomes">
+          <div class="sub-out sub-yellow">
+            <span class="sub-out-key">[accept]</span> Accept her answer — she stays part-time
+            <br>Alex −5 morale
+            <br><span style="color:#555">"Alex hears the outcome. He knows you know it too."</span>
+          </div>
+          <div class="sub-out sub-orange">
+            <span class="sub-out-key">[pressure]</span> Tell her this is a dealbreaker
+            <br><span class="flag-pill fp-set">jordan_confrontation_triggered = true</span> · Alex +5 morale
+            <br><span style="color:#555">→ confrontation fires next sprint</span>
+          </div>
+        </div>
+        <div class="drop"><span>⚠</span> If dropped: fulltime_ask_done = true · no other effect</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PHASE 3: LAUNCH BLOCKER ────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:24px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-red">Phase 3 — Launch Blocker</span>
+      <span class="phase-note" style="margin-left:10px">conditional · skipped entirely if ios_unblocked = true</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-red">Wk ~15–25<br>variable<br>one-shot</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-red"></div><div class="rail-line rail-line-red"></div></div>
+    <div class="content-col">
+      <div class="cond-label">available: jordan_drifting &amp;&amp; !jordan_resolved &amp;&amp; product ≥ 50 &amp;&amp; has_beta &amp;&amp; !launched &amp;&amp; !ios_unblocked · priority</div>
+      <div class="card card-red">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">jordan_launch_blocker · cat p · priority</div>
+        </div>
+        <div class="card-body">
+          "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening."
+        </div>
+        <div class="sub-outcomes">
+          <div class="sub-out sub-orange">
+            <span class="sub-out-key">[web_only]</span> Launch web-only — fix iOS later
+            <br><span class="flag-pill fp-set">launched = true</span> · signal −10
+            <br><span style="color:#555">"A dating app without iOS is a real handicap."</span>
+          </div>
+          <div class="sub-out sub-yellow">
+            <span class="sub-out-key">[wait]</span> Give Jordan two more weeks
+            <br>Alex −8 morale · available once only
+            <br><span style="color:#555">Card re-fires next sprint without this option.</span>
+          </div>
+          <div class="sub-out sub-teal">
+            <span class="sub-out-key">[confront]</span> Confront Jordan — this has to be resolved
+            <br><span class="flag-pill fp-set">jordan_confrontation_triggered = true</span>
+            <br><span style="color:#555">→ confrontation fires next sprint</span>
+          </div>
+        </div>
+        <div class="drop"><span>⚠</span> If dropped: launched = true · signal −15 (worse than web_only)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PHASE 4: CONFRONTATION ─────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:24px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-orange">Phase 4 — Confrontation</span>
+      <span class="phase-note" style="margin-left:10px">priority · fires when triggered OR week ≥ defer_until (default 20)</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-orange">Week 20+<br>or triggered<br>deferrable</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-orange"></div><div class="rail-line rail-line-orange"></div></div>
+    <div class="content-col">
+      <div class="cond-label">available: jordan_drifting &amp;&amp; !jordan_resolved &amp;&amp; !confrontation_done &amp;&amp; (triggered || week ≥ defer_until) · priority</div>
+      <div class="card card-orange">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">jordan_confrontation · cat t · priority</div>
+        </div>
+        <div class="card-body">
+          "i need to say something. jordan's been part-time for two months. i'm covering her work and mine. she has <b style="color:#d8a080">[20% / 25% / 33%]</b> of the company and i don't think she's earning it anymore. we need to have the conversation."
+          <span class="aside">percentage from char.flags.equity_proposal — 40/40/20 → 20%, 50/25/25 → 25%, 33/33/33 → 33%</span>
+        </div>
+        <div class="sub-outcomes">
+          <div class="sub-out sub-teal">
+            <span class="sub-out-key">[fire]</span> Have the conversation — let Jordan go
+            <br><span class="flag-pill fp-set">jordan_resolved = true</span> · Alex +10 morale · +8 trust
+            <br><span style="color:#555">"Hard conversation. Jordan wasn't surprised. Her [X]% is still on the cap table."</span>
+          </div>
+          <div class="sub-out sub-red">
+            <span class="sub-out-key">[defer]</span> One more sprint to turn it around
+            <br>defer_until = week + 4 · Alex −8 morale · card fires again in 4 weeks
+            <br><span style="color:#555">"Alex went quiet. You both know how this ends."</span>
+          </div>
+        </div>
+        <div class="drop drop-critical"><span>✖</span> If dropped: confrontation_done = true · Jordan stays on the team. Alex morale → 0 · trust −25. He quits next sprint. Only the player can fire Jordan.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PHASE 5: CAP TABLE ─────────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:24px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-teal">Phase 5 — Cap Table</span>
+      <span class="phase-note" style="margin-left:10px">fires immediately after jordan_resolved · priority · one-shot</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-teal">Week ~21<br>one-shot</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-teal"></div><div class="rail-line rail-line-teal"></div></div>
+    <div class="content-col">
+      <div class="cond-label">available: jordan_resolved &amp;&amp; jordan_cleanup_needed &amp;&amp; !cap_table_done · priority</div>
+      <div class="card card-teal">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">jordan_cap_table · cat e · priority</div>
+        </div>
+        <div class="card-body">
+          "jordan's <b style="color:#80d0c8">[20% / 25% / 33%]</b> is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up."
+        </div>
+        <div class="sub-outcomes">
+          <div class="sub-out sub-teal">
+            <span class="sub-out-key">[lawyer]</span> Hire a lawyer — $2,000
+            <br><span class="flag-pill fp-clr">jordan_cleanup_needed = false</span> · cash −$2,000
+            <br><span style="color:#555">"Jordan signed for a nominal amount. Cap table clean."</span>
+          </div>
+          <div class="sub-out sub-red">
+            <span class="sub-out-key">[defer]</span> Can't afford it right now
+            <br><span class="flag-pill fp-stay">jordan_cleanup_needed stays true</span>
+            <br><span style="color:#555">"Every investor who looks will ask about Jordan's stake."</span>
+          </div>
+        </div>
+        <div class="drop"><span>⚠</span> If dropped: cap_table_done = true · jordan_cleanup_needed stays true (same as defer)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── INVESTOR CONSEQUENCE ─────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:24px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag" style="background:#161009; color:#c97840; border:1px solid #4a2810;">Investor Consequence</span>
+      <span class="phase-note" style="margin-left:10px">check: jordan_resolved &amp;&amp; jordan_cleanup_needed in seed_pitch and fatima_commit</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label" style="color:#4a2810">—</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-faint"></div></div>
+    <div class="content-col" style="padding-top:16px">
+      <div class="outcome-pair">
+
+        <div class="outcome-block ob-red">
+          <span class="ob-label ob-label-red">Cap table dirty · jordan_cleanup_needed = true</span>
+          <div class="ob-detail">
+            <b>Marcus</b> (seed_pitch):<br>
+            <span class="flag">investor_warmth −10 · marcusCommitted not set · no $400K</span><br>
+            "one flag — there's a [X]% stake with no vesting schedule. who is that? we'd need that cleaned up before i can lead a round."<br>
+            Card can fire again if warmth stays ≥ 50, but each attempt costs −10 warmth.<br>
+            <br>
+            <b>Fatima</b> (fatima_commit):<br>
+            <span class="flag">committed flag set · followerCommitted not set · $0 wired · permanently blocked</span><br>
+            "my diligence flagged the cap table — no vesting terms. let me know when it's resolved."<br>
+            Fatima cannot be re-triggered. <b>Angel round impossible.</b>
+          </div>
+        </div>
+
+        <div class="outcome-block ob-green">
+          <span class="ob-label ob-label-green">Cap table clean · jordan_cleanup_needed = false</span>
+          <div class="ob-detail">
+            <b>Marcus</b> (seed_pitch): proceeds normally.<br>
+            Commit probability: customers · product · investor_warmth · signal.<br>
+            <span class="ok">marcusCommitted = true · +$400K if successful.</span><br>
+            <br>
+            <b>Fatima</b> (fatima_commit): proceeds normally.<br>
+            <span class="ok">followerCommitted = true · +$100K</span><br>
+            <br>
+            <b>Angel round can close.</b> Both committed → game won.
+          </div>
+        </div>
+
+      </div>
+
+      <div style="margin-top:12px; padding:10px 16px; background:#0f0c06; border:1px solid #2a1e08; border-radius:6px; font-size:11px; color:#80703a; line-height:1.7;">
+        <b style="color:#a08840">YC path:</b> YC does not check jordan_cleanup_needed. A dirty cap table only blocks the angel round.
+        YC investors see the deal memo before diligence — the equity issue surfaces later, after acceptance.
+      </div>
+
+    </div>
+  </div>
+
+  <div style="height:40px"></div>
+
+</div>
+</body>
+</html>
