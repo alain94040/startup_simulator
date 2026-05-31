@@ -19,14 +19,16 @@
               char.flags.prototype_kicked = true;
               s.product = clamp(s.product + 10, 0, 100);
               s.jordan_active = true;
+              s.activities_cut = true;
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.ios_update_done = true;
-              return "Alex is on profiles and matching. Jordan's on the iOS build. You're building a company.";
+              return "Alex is on profiles and matching. Jordan's on the iOS build. Activity planning goes on the backlog — that's a second product. You're building the core first.";
             } },
         ],
         dropFx(s, char, e) {
           char.flags.prototype_kicked = true;
           s.jordan_active = true;
+          s.activities_cut = true;
           const jordan = e && e.chars && e.chars.get('jordan');
           if (jordan) jordan.flags.ios_update_done = true;
         },
@@ -448,6 +450,88 @@
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "getting inbound requests for beta access. i'm opening it up next week.",
         dropFx(s) { s.has_beta = true; s.waitlist += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100); },
+      },
+      {
+        id: 'activity_pivot', cat: 'p', from: 'Alex',
+        body: (s, char) => {
+          const d = char.flags.pivot_dismissed || 0;
+          if (d === 0)
+            return "went through beta signups. a few people mentioned wanting something to do with a match — not just chat. 'is there a way to find something to actually do?' could be noise. flagging it.";
+          if (d === 1)
+            return "keep seeing it. five separate users now, all saying some version of 'i matched, then had no idea where to go.' they want something to do, not just someone to talk to. i think this is real.";
+          return "been thinking about this for a few weeks. we built matching. the problem they actually have isn't finding someone — it's having somewhere to go. we cut the activities layer to ship the MVP and i think we cut the wrong thing.";
+        },
+        urgency: 2, weeks: 2,
+        available: (s, char) => s.activities_cut && s.has_beta && !char.flags.activity_pivot_done
+          && !s.launched && s.week >= (char.flags.pivot_next_week || 0),
+        options: [
+          { label: 'Pivot — rebuild around activities before launch', key: 'pivot',
+            execute(s, char) {
+              char.flags.activity_pivot_done = true;
+              s.activities_pivot = true;
+              s.cash = clamp(s.cash - 2000, 0, 9999999);
+              s.market_fit = clamp(s.market_fit + 15, 0, 100);
+              char.morale = clamp(char.morale + 8, 0, 100);
+              return "Three extra weeks, $2k in burn. Rebuilt the product around activity-first matching. Alex's energy shifted — he was waiting for you to see it too.";
+            } },
+          { label: 'Ship what we have — add activities post-launch', key: 'defer',
+            execute(s, char) {
+              char.flags.activity_pivot_done = true;
+              s.pivot_deferred = true;
+              return "Shipped as planned. Adding features to a growing product is harder than adding them to one nobody's using yet — but runway is real.";
+            } },
+          { label: "Disagree — matching is the product", key: 'stay',
+            execute(s, char) {
+              char.flags.activity_pivot_done = true;
+              char.morale = clamp(char.morale - 8, 0, 100);
+              return "Pushed back. Alex dropped it. Three users asked the same question, and that question isn't going away.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          char.flags.pivot_dismissed = (char.flags.pivot_dismissed || 0) + 1;
+          char.flags.pivot_next_week = s.week + 3;
+        },
+      },
+      {
+        id: 'bad_retention', cat: 'p', from: 'Alex',
+        body: "week two post-launch. signups are coming in but nobody's coming back. ran a quick survey — eight out of ten say the same thing: 'i matched with someone but then what?' they don't know what to do with a match. the retention curve is flat.",
+        urgency: 3, weeks: 1, priority: true,
+        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
+          && !char.flags.bad_retention_seen && s.week >= 12,
+        options: [
+          { label: 'Add activity features now — two-sprint fix', key: 'fix',
+            execute(s, char) {
+              char.flags.bad_retention_seen = true;
+              s.activities_pivot = true;
+              s.cash = clamp(s.cash - 3000, 0, 9999999);
+              s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              char.morale = clamp(char.morale + 3, 0, 100);
+              return "Two sprints to retrofit activities post-launch. More expensive and disruptive than doing it before. Users who stayed are responding.";
+            } },
+          { label: "Run user calls — figure out what they actually need", key: 'calls',
+            execute(s, char) {
+              char.flags.bad_retention_seen = true;
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              char.morale = clamp(char.morale - 3, 0, 100);
+              return "12 user calls this week. Every single one mentioned not knowing what to do after a match. The path forward is clear — it's just late.";
+            } },
+          { label: "Stay course — improve matching quality", key: 'stay',
+            execute(s, char) {
+              char.flags.bad_retention_seen = true;
+              s.market_fit = clamp(s.market_fit - 20, 0, 100);
+              s.signal = clamp(s.signal - 20, 0, 100);
+              char.morale = clamp(char.morale - 15, 0, 100);
+              return "Decided the problem is matching quality. Users keep churning. Alex thinks this is the wrong call but goes along with it.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          char.flags.bad_retention_seen = true;
+          s.market_fit = clamp(s.market_fit - 25, 0, 100);
+          s.signal = clamp(s.signal - 25, 0, 100);
+          char.morale = clamp(char.morale - 15, 0, 100);
+        },
       },
       {
         id: 'proto_to_product', cat: 'p', from: 'Alex',

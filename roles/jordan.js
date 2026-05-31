@@ -387,9 +387,9 @@
         dropDelay: 0, dropMsg: null,
         dropFx(s, char, e) {
           char.flags.confrontation_done = true;
-          s.jordan_resolved = true;
+          // Jordan stays — only the player can fire her. Alex can't take it anymore.
           const alex = e && e.chars && e.chars.get('alex');
-          if (alex) alex.morale = clamp(alex.morale - 12, 0, 100);
+          if (alex) { alex.morale = 0; alex.trust = clamp(alex.trust - 25, 0, 100); }
         },
       },
 

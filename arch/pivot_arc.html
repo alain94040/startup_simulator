@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pivot Arc — The De-scoped Activities Feature</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0b0b0f;
+    color: #d0d0e0;
+    padding: 48px 32px 100px;
+  }
+  h1 { text-align:center; font-size:13px; color:#444; letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; }
+  .subtitle { text-align:center; font-size:11px; color:#333; margin-bottom:48px; font-family:monospace; }
+
+  .timeline { display:flex; flex-direction:column; max-width:960px; margin:0 auto; }
+  .trow { display:flex; gap:0; align-items:flex-start; }
+  .week-col { width:100px; flex-shrink:0; display:flex; flex-direction:column; align-items:flex-end; padding-right:18px; padding-top:18px; }
+  .week-label { font-size:10px; color:#444; font-family:monospace; text-align:right; line-height:1.5; }
+  .week-label.wk-faint  { color:#333; }
+  .week-label.wk-amber  { color:#92400e; }
+  .week-label.wk-red    { color:#7f1d1d; }
+
+  .rail-col { width:24px; flex-shrink:0; display:flex; flex-direction:column; align-items:center; }
+  .rail-dot { width:10px; height:10px; border-radius:50%; background:#2a2a3c; border:2px solid #3a3a5c; margin-top:21px; flex-shrink:0; z-index:1; }
+  .rail-dot-faint  { background:#141418; border-color:#282830; }
+  .rail-dot-amber  { background:#1c0f00; border-color:#92400e; }
+  .rail-dot-red    { background:#1a0505; border-color:#7f1d1d; }
+  .rail-line { width:2px; background:#1e1e2a; flex:1; min-height:24px; }
+  .rail-line-faint  { background:#161618; }
+  .rail-line-amber  { background:#1c1005; }
+  .rail-line-red    { background:#180808; }
+  .content-col { flex:1; padding:12px 0 12px 18px; }
+
+  /* Phase tags */
+  .phase-tag {
+    font-size:9px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    padding:3px 10px; border-radius:3px;
+  }
+  .phase-tag-faint  { background:#141418; color:#555; border:1px solid #282830; }
+  .phase-tag-amber  { background:#1c0f00; color:#fbbf24; border:1px solid #92400e; }
+  .phase-tag-red    { background:#1a0505; color:#fca5a5; border:1px solid #7f1d1d; }
+  .phase-note { font-size:10px; color:#3a3a50; font-family:monospace; }
+
+  /* Cards */
+  .card { background:#13131d; border:1px solid #262636; border-radius:10px; padding:14px 18px; }
+  .card-faint  { background:#111116; border-color:#202028; }
+  .card-amber  { background:#160c04; border-color:#3a2010; }
+  .card-red    { background:#160608; border-color:#4a1820; }
+
+  .card-hdr { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+  .av { width:28px; height:28px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; flex-shrink:0; }
+  .av-a   { background:#1e3a5f; color:#93c5fd; }
+  .av-you { background:#2a1e3a; color:#c4b5fd; }
+  .card-who { font-size:11px; color:#777; text-transform:uppercase; letter-spacing:.05em; }
+  .card-id  { font-family:monospace; font-size:10px; color:#383848; margin-left:auto; }
+  .card-body { font-size:13px; color:#a8a8c0; line-height:1.6; font-style:italic; margin-bottom:12px; }
+  .aside { font-style:normal; font-size:11px; color:#555; display:block; margin-top:5px; }
+
+  /* Variant blocks */
+  .variants { margin-bottom:10px; }
+  .variant-row { display:flex; gap:8px; align-items:baseline; margin-bottom:5px; font-size:12px; }
+  .variant-label { font-family:monospace; font-size:10px; color:#555; white-space:nowrap; padding:2px 8px; border-radius:4px; border:1px solid #252525; background:#111; }
+  .variant-body  { color:#888; font-style:italic; line-height:1.5; }
+
+  /* Sub-outcomes */
+  .sub-outcomes { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+  .sub-out { flex:1; min-width:160px; padding:8px 12px; border-radius:6px; border:1px solid; font-size:11px; line-height:1.6; }
+  .sub-out-key { font-family:monospace; font-size:10px; opacity:.5; display:block; margin-bottom:3px; }
+  .sub-green  { background:#0a1a0a; border-color:#1a5a1a; color:#6ee7b7; }
+  .sub-yellow { background:#1a1208; border-color:#584010; color:#fbbf24; }
+  .sub-red    { background:#1a0808; border-color:#5a1818; color:#fca5a5; }
+
+  /* Drop warning */
+  .drop { margin-top:10px; padding:7px 12px; background:#161009; border:1px solid #362010; border-radius:6px; font-size:11px; color:#c97840; display:flex; align-items:baseline; gap:8px; line-height:1.5; }
+  .drop-critical { background:#160408; border-color:#4a1010; color:#f87171; }
+
+  /* Cond label */
+  .cond-label { font-size:9px; font-family:monospace; color:#3a3a50; text-transform:uppercase; letter-spacing:.1em; padding:4px 10px 2px; }
+
+  /* Flag pill */
+  .flag-pill { display:inline-block; font-family:monospace; font-size:10px; padding:1px 7px; border-radius:10px; margin:0 2px; }
+  .fp-set  { background:#0a2a0a; color:#4ade80; border:1px solid #1a5020; }
+  .fp-stay { background:#2a1a0a; color:#fbbf24; border:1px solid #5a3010; }
+  .fp-inc  { background:#1a0a2a; color:#c4b5fd; border:1px solid #3a1a5a; }
+
+  /* Outcome grid */
+  .outcome-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-top:12px; }
+  .outcome-block { border-radius:8px; padding:12px 14px; border:1px solid; font-size:11px; line-height:1.7; }
+  .ob-green  { background:#071408; border-color:#185028; }
+  .ob-yellow { background:#160e04; border-color:#4a3010; }
+  .ob-red    { background:#160608; border-color:#5a1820; }
+  .ob-label { font-size:9px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; margin-bottom:6px; display:block; }
+  .ob-label-green  { color:#6ee7b7; }
+  .ob-label-yellow { color:#fbbf24; }
+  .ob-label-red    { color:#fca5a5; }
+  .ob-detail { color:#666; line-height:1.7; }
+  .ob-detail b { color:#888; font-weight:600; }
+  .ok   { color:#22c55e; }
+  .warn { color:#f59e0b; }
+  .bad  { color:#ef4444; }
+
+  /* Context strip */
+  .context-strip { max-width:960px; margin:0 auto 32px; padding:12px 20px; background:#100c06; border:1px solid #2a1e08; border-radius:8px; font-size:11px; color:#80703a; line-height:1.7; }
+  .context-strip b { color:#a08840; }
+
+  /* Narrative note */
+  .narrative-note { margin-top:14px; padding:10px 14px; background:#0f0c06; border:1px solid #2a1e08; border-radius:6px; font-size:11px; color:#80703a; line-height:1.7; }
+  .narrative-note b { color:#a08840; }
+
+  /* Inline badge */
+  .badge { display:inline-block; font-family:monospace; font-size:10px; padding:1px 8px; border-radius:4px; background:#1a1208; color:#fbbf24; border:1px solid #4a3010; }
+
+  /* Escalation arrow */
+  .escalation-arrow { text-align:center; font-size:10px; color:#3a2a08; padding:4px 0; font-family:monospace; }
+</style>
+</head>
+<body>
+
+<h1>Pivot Arc — The De-scoped Activities Feature</h1>
+<div class="subtitle">alex.js · 2 new cards · activities_cut set at prototype start · escalating hints · post-launch consequence</div>
+
+<div class="context-strip">
+  <b>Context:</b> The activities/events layer is cut automatically at prototype kickoff to hit the 4-week MVP timeline.
+  No player choice — it's a constraint written into <code style="font-size:10px">start_prototype</code>'s outcome text.
+  <span class="badge">activities_cut = true</span> is set in both execute() and dropFx().
+  During beta, Alex notices a pattern and surfaces it — once softly, then more directly. If the player ignores all the hints and launches,
+  a post-launch retention crisis fires as a separate card. Only then is the damage irreversible.
+</div>
+
+<div class="timeline">
+
+  <!-- ─── PHASE 1: THE CUT ─────────────────────────────────────────────────── -->
+  <div class="trow" style="margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-faint">Phase 1 — The Cut</span>
+      <span class="phase-note" style="margin-left:10px">week 1 · automatic · no player choice</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-faint">Week 1<br>automatic</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-faint"></div><div class="rail-line rail-line-faint"></div></div>
+    <div class="content-col">
+      <div class="card card-faint">
+        <div class="card-hdr">
+          <div class="av av-you">YOU</div>
+          <div class="card-who">You</div>
+          <div class="card-id">start_prototype · execute() outcome updated</div>
+        </div>
+        <div class="card-body">
+          "Alex is on profiles and matching. Jordan's on the iOS build. Activity planning goes on the backlog — that's a second product. You're building the core first."
+          <span class="aside">One line added to the existing execute() return string. No new card. The cut is backstory — implied by the constraints of building a 4-week MVP with two part-time co-founders.</span>
+        </div>
+        <div style="margin-top:8px; display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <span style="font-size:11px; color:#444;">Side effect:</span>
+          <span class="flag-pill fp-set">activities_cut = true</span>
+          <span style="font-size:11px; color:#333;">set in execute() and dropFx()</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PHASE 2: ESCALATING BETA SIGNAL ──────────────────────────────────── -->
+  <div class="trow" style="margin-top:28px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-amber">Phase 2 — Beta Signal (Escalating)</span>
+      <span class="phase-note" style="margin-left:10px">weeks 10–14 · one card, resurfaces every 3 weeks if dropped · stops at launch</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-amber">Weeks 10+<br>resurfaces<br>every 3 wks<br>urgency 2</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-amber"></div><div class="rail-line rail-line-amber"></div></div>
+    <div class="content-col">
+      <div class="cond-label">available: activities_cut &amp;&amp; has_beta &amp;&amp; !activity_pivot_done &amp;&amp; !launched &amp;&amp; week ≥ pivot_next_week</div>
+      <div class="card card-amber">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">activity_pivot · cat p · weeks 2</div>
+        </div>
+
+        <div class="card-body" style="margin-bottom:8px;">
+          Body escalates with each dismissal — same card, different text.
+        </div>
+
+        <div class="variants">
+          <div class="variant-row">
+            <span class="variant-label">drop 0</span>
+            <span class="variant-body">"went through beta signups. a few people mentioned wanting something to do with a match — not just chat. 'is there a way to find something to actually do?' could be noise. flagging it."</span>
+          </div>
+          <div class="escalation-arrow">↓ dropped → pivot_dismissed++ · pivot_next_week = week+3</div>
+          <div class="variant-row">
+            <span class="variant-label">drop 1</span>
+            <span class="variant-body">"keep seeing it. five separate users now, all saying some version of 'i matched, then had no idea where to go.' they want something to do, not just someone to talk to. i think this is real."</span>
+          </div>
+          <div class="escalation-arrow">↓ dropped again → pivot_dismissed++ · pivot_next_week = week+3</div>
+          <div class="variant-row">
+            <span class="variant-label">drop 2+</span>
+            <span class="variant-body">"been thinking about this for a few weeks. we built matching. the problem they actually have isn't finding someone — it's having somewhere to go. we cut the activities layer to ship the MVP and i think we cut the wrong thing."</span>
+          </div>
+        </div>
+
+        <div class="sub-outcomes">
+          <div class="sub-out sub-green">
+            <span class="sub-out-key">[pivot]</span> Rebuild around activities before launch
+            <br><span class="flag-pill fp-set">activities_pivot = true</span>
+            <br>cash −$2,000 · market_fit +15 · Alex +8 morale
+            <br><span style="color:#555">"Three extra weeks, $2k in burn. Alex was waiting for you to see it too."</span>
+          </div>
+          <div class="sub-out sub-yellow">
+            <span class="sub-out-key">[defer]</span> Ship now — add activities post-launch
+            <br><span class="flag-pill fp-set">pivot_deferred = true</span> · no stat change
+            <br><span style="color:#555">"Adding features to a growing product is harder than to one nobody's using yet."</span>
+          </div>
+          <div class="sub-out sub-red">
+            <span class="sub-out-key">[stay]</span> Disagree — matching is the product
+            <br>Alex −8 morale · no flags
+            <br><span style="color:#555">"Pushed back. Alex dropped it. That question isn't going away."</span>
+          </div>
+        </div>
+
+        <div class="drop"><span>⚠</span> If dropped: <span class="flag-pill fp-inc">pivot_dismissed++</span> &nbsp;·&nbsp; pivot_next_week = week+3 &nbsp;·&nbsp; card resurfaces in 3 weeks with escalated text &nbsp;·&nbsp; <b>activity_pivot_done is NOT set</b></div>
+        <div style="margin-top:6px; font-size:10px; color:#3a3a50; font-family:monospace; padding:0 4px;">Card disappears naturally when launched = true — the window to act closes.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── PHASE 3: BAD RETENTION ────────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:28px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag phase-tag-red">Phase 3 — Bad Retention</span>
+      <span class="phase-note" style="margin-left:10px">fires post-launch if no pivot · priority · one-shot · the consequence</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-red">Wk ~14+<br>post-launch<br>priority</div></div>
+    <div class="rail-col"><div class="rail-dot rail-dot-red"></div><div class="rail-line rail-line-red"></div></div>
+    <div class="content-col">
+      <div class="cond-label">available: launched &amp;&amp; activities_cut &amp;&amp; !activities_pivot &amp;&amp; !bad_retention_seen &amp;&amp; week ≥ 12 · priority</div>
+      <div class="card card-red">
+        <div class="card-hdr">
+          <div class="av av-a">AL</div>
+          <div class="card-who" style="color:#93c5fd">Alex</div>
+          <div class="card-id">bad_retention · cat p · priority</div>
+        </div>
+        <div class="card-body">
+          "week two post-launch. signups are coming in but nobody's coming back. ran a quick survey — eight out of ten say the same thing: 'i matched with someone but then what?' they don't know what to do with a match. the retention curve is flat."
+          <span class="aside">Fires regardless of whether the player previously played [defer] or [stay] on activity_pivot — both land here if activities weren't actually added.</span>
+        </div>
+
+        <div class="sub-outcomes">
+          <div class="sub-out sub-green" style="border-color:#2a5a1a">
+            <span class="sub-out-key">[fix]</span> Add activity features now — two-sprint fix
+            <br><span class="flag-pill fp-set">activities_pivot = true</span> &nbsp;·&nbsp; cash −$3,000 · market_fit +8 · Alex +3 morale
+            <br><span style="color:#555">"More expensive than doing it before launch. Users who stayed are responding."</span>
+          </div>
+          <div class="sub-out sub-yellow">
+            <span class="sub-out-key">[calls]</span> Run user calls — figure out what they need
+            <br>market_fit +4 · Alex −3 morale
+            <br><span style="color:#555">"12 calls. Every one mentioned not knowing what to do after a match. Clear — just late."</span>
+          </div>
+          <div class="sub-out sub-red">
+            <span class="sub-out-key">[stay]</span> Stay course — improve matching quality
+            <br>market_fit −8 · signal −10 · Alex −8 morale
+            <br><span style="color:#555">"Decided the problem is matching quality. Users keep churning."</span>
+          </div>
+        </div>
+
+        <div class="drop drop-critical"><span>✖</span> If dropped: market_fit −12 · signal −15 · Alex −8 morale &nbsp;·&nbsp; <b>irreversible</b> — no further recovery card</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── OUTCOME COMPARISON ─────────────────────────────────────────────── -->
+  <div class="trow" style="margin-top:28px; margin-bottom:4px">
+    <div class="week-col"></div><div class="rail-col"></div>
+    <div class="content-col">
+      <span class="phase-tag" style="background:#111; color:#555; border:1px solid #2a2a30;">Downstream effect</span>
+      <span class="phase-note" style="margin-left:10px">cumulative outcome by path taken</span>
+    </div>
+  </div>
+
+  <div class="trow">
+    <div class="week-col"><div class="week-label wk-faint">—</div></div>
+    <div class="rail-col"><div class="rail-dot" style="background:#141418; border-color:#282830"></div></div>
+    <div class="content-col" style="padding-top:16px">
+
+      <div class="outcome-grid">
+
+        <div class="outcome-block ob-green">
+          <span class="ob-label ob-label-green">Pivot before launch · [pivot]</span>
+          <div class="ob-detail">
+            <span class="ok">market_fit +15</span> before launch<br>
+            cash −$2,000 · 3-week delay<br>
+            <span class="ok">bad_retention never fires</span><br>
+            Alex morale bonus<br>
+            <span class="ok">Strongest market_fit ceiling</span>
+          </div>
+        </div>
+
+        <div class="outcome-block ob-yellow">
+          <span class="ob-label ob-label-yellow">Defer or ignore hints</span>
+          <div class="ob-detail">
+            Launch on time · no pre-launch bonus<br>
+            <span class="warn">bad_retention fires post-launch</span><br>
+            Best recovery: [fix] → activities_pivot = true, market_fit +8, cash −$3k (more expensive than pre-launch)<br>
+            <span class="warn">More costly, less benefit</span>
+          </div>
+        </div>
+
+        <div class="outcome-block ob-red">
+          <span class="ob-label ob-label-red">Refuse + ignore bad_retention</span>
+          <div class="ob-detail">
+            <span class="bad">market_fit −12 to −20</span> post-launch<br>
+            <span class="bad">signal −10 to −15</span><br>
+            <span class="bad">Alex morale −8 to −16</span><br>
+            Investors see poor retention signal<br>
+            <span class="bad">Angel round becomes unreachable</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="narrative-note">
+        <b>Why the arc works:</b> The cut was never a bad decision — shipping lean is right. The arc teaches that users tell you what you missed, and the window to act cheaply is narrow: after beta, before launch. Post-launch fixes cost 50% more and fight existing user expectations. Dropping every hint is a passive choice to not pivot — the bad_retention card makes that passive choice visible and consequential.
+      </div>
+
+    </div>
+  </div>
+
+  <div style="height:40px"></div>
+
+</div>
+</body>
+</html>

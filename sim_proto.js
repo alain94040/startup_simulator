@@ -291,7 +291,7 @@ function selectCards(current, strategy, state) {
 
   if (strategy === 'yc_grind') {
     // Priority: YC cards > product > customer > external > team
-    const order = ['yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
+    const order = ['jordan_confrontation','yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
                    'alex_demo_ready','alex_beta_ready',
                    'good_enough_launch','bug_reports','feature_cluster','silent_churn',
                    'public_complaint','power_user_quiet','reporter_deadline','hn_thread'];
@@ -309,8 +309,12 @@ function selectCards(current, strategy, state) {
   }
 
   if (strategy === 'alex_first') {
+    const ALEX_CRITICAL = new Set(['jordan_confrontation']);
     // Always pick Alex's cards, prefer urgent ones
     const sorted = pool.slice().sort((a, b) => {
+      const aCrit = ALEX_CRITICAL.has(a.id) ? 1 : 0;
+      const bCrit = ALEX_CRITICAL.has(b.id) ? 1 : 0;
+      if (aCrit !== bCrit) return bCrit - aCrit;
       const aAlex = a._charId === 'alex' ? 1 : 0;
       const bAlex = b._charId === 'alex' ? 1 : 0;
       if (aAlex !== bAlex) return bAlex - aAlex;
@@ -352,11 +356,11 @@ function selectCards(current, strategy, state) {
     return sorted.slice(0, 2).map(c => c.id);
   }
 
-  if (strategy === 'angel_path' || strategy === 'skip_cap_table_angel') {
+  if (strategy === 'angel_path' || strategy === 'skip_cap_table_angel' || strategy === 'no_pivot') {
     const s = state || {};
     const INVESTOR_IDS  = new Set(['investor_intro_warm','prep_deck','investor_ready','seed_pitch',
                                    'fatima_intro','fatima_meeting','fatima_deck','fatima_commit']);
-    const ALEX_CRITICAL = new Set(['alex_commitment','alex_equity','vision_mismatch']);
+    const ALEX_CRITICAL = new Set(['alex_commitment','alex_equity','vision_mismatch','jordan_confrontation']);
     // Never pick alex_sync_discover — keeps Alex in build mode so demo card stays available
     const NEVER_PICK    = new Set(['alex_sync_discover','yc_discussion_ready','yc_discussion_early']);
 
@@ -398,7 +402,7 @@ function selectCards(current, strategy, state) {
     const JORDAN_FORCED  = strategy === 'keep_jordan'
       ? new Set(['jordan_confrontation', 'jordan_fulltime_ask'])
       : new Set();
-    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
+    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
@@ -588,7 +592,8 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     alexActive: alex ? alex.active : false,
     alexMorale: alex ? alex.morale : 0,
     alexTrust:  alex ? alex.trust  : 0,
-    jordanResolved: e.s.jordan_resolved || false,
+    jordanResolved:    e.s.jordan_resolved    || false,
+    activitiesPivoted: e.s.activities_pivot   || false,
     activeChars,
     metPriya: e.s.met_priya || false,
     errors: errorCount,
@@ -629,9 +634,10 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const maxFit      = Math.max(...results.map(r => r.market_fit)).toFixed(0);
   const pctReachedFit50  = pct(results.filter(r => r.market_fit >= 50).length);
   const pctReachedFit100 = pct(results.filter(r => r.market_fit >= 100).length);
-  const marcusCommit    = pct(results.filter(r => r.marcusCommitted).length);
-  const followerCommit  = pct(results.filter(r => r.followerCommitted).length);
-  const jordanResolved  = pct(results.filter(r => r.jordanResolved).length);
+  const marcusCommit       = pct(results.filter(r => r.marcusCommitted).length);
+  const followerCommit     = pct(results.filter(r => r.followerCommitted).length);
+  const jordanResolved     = pct(results.filter(r => r.jordanResolved).length);
+  const activitiesPivoted  = pct(results.filter(r => r.activitiesPivoted).length);
   const ryanEngaged    = pct(results.filter(r => r.activeChars.includes('ryan')).length);
   const priyaSeen  = pct(results.filter(r => r.activeChars.includes('priya')).length);
   const marcusSeen = pct(results.filter(r => r.activeChars.includes('marcus')).length);
@@ -696,7 +702,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const avgMoraleWk10 = avgMoraleAt(10);
 
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
-           ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged, jordanResolved,
+           ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged, jordanResolved, activitiesPivoted,
            avgWeek, avgUsers, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
@@ -708,6 +714,11 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 // ─── Report ───────────────────────────────────────────────────────────────────
 
 CARD_PREFS.ignore_meetup = CARD_PREFS.lean_loop;
+CARD_PREFS.no_pivot = {
+  ...CARD_PREFS.angel_path,
+  activity_pivot: 'stay',
+  bad_retention:  'stay',
+};
 CARD_PREFS.keep_jordan = {
   ...CARD_PREFS.lean_loop,
   jordan_fulltime_ask:  'accept',
@@ -734,11 +745,12 @@ const strategies = [
   ['Rand + part-time',    'rand_parttime'],
   ['Keep Jordan',         'keep_jordan'],
   ['Skip cap table',      'skip_cap_table_angel'],
+  ['No pivot',            'no_pivot'],
 ];
 
 // ─── Options parser ───────────────────────────────────────────────────────────
 
-const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','ignore_meetup','angel_path','rand_fulltime','rand_parttime','keep_jordan','skip_cap_table_angel'];
+const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','ignore_meetup','angel_path','rand_fulltime','rand_parttime','keep_jordan','skip_cap_table_angel','no_pivot'];
 
 function parseArgs(argv) {
   const args = argv.slice(2);
@@ -921,7 +933,7 @@ if (WINNERS_FLAG) {
     byStrat[strat] = r;
     console.log(`── ${r.name} ──`);
     console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
-    console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  Jordan resolved: ${r.jordanResolved}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
+    console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  Jordan resolved: ${r.jordanResolved}%  Activities pivoted: ${r.activitiesPivoted}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
     console.log(`  Marcus committed: ${r.marcusCommit}%  Follower in: ${r.followerCommit}%  Ryan engaged: ${r.ryanEngaged}%`);
     console.log(`  Avg week: ${r.avgWeek}  Avg users (free): ${r.avgUsers}  Avg customers (paying): ${r.avgCust}`);
     console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
@@ -1024,6 +1036,14 @@ if (WINNERS_FLAG) {
           s.angel_path.jordanResolved >= 90);
     check(`keep_jordan.launched (${s.keep_jordan.launched}%) < lean_loop.launched/2 (${Math.floor(s.lean_loop.launched / 2)}%) — unresolved Jordan collapses execution`,
           s.keep_jordan.launched < s.lean_loop.launched / 2);
+
+    // Pivot arc: pivoting must improve outcomes; refusing must hurt
+    check(`lean_loop.activitiesPivoted (${s.lean_loop.activitiesPivoted}%) >= 80% — lean strategy follows user signal`,
+          s.lean_loop.activitiesPivoted >= 80);
+    check(`no_pivot.activitiesPivoted (${s.no_pivot.activitiesPivoted}%) === 0 — strategy explicitly refuses`,
+          s.no_pivot.activitiesPivoted === 0);
+    check(`no_pivot.wins (${s.no_pivot.wins}%) < angel_path.wins (${s.angel_path.wins}%) — ignoring user signal kills angel-path traction`,
+          s.no_pivot.wins < s.angel_path.wins);
 
     // Errors — no strategy should produce runtime errors
     const totalErrors = Object.values(s).reduce((sum, r) => sum + r.errors, 0);
