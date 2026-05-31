@@ -101,7 +101,7 @@ class Engine {
 
     // Live character instances
     this.chars = new Map([
-      ['jordan', { archetypeId: 'jordan', active: true,  flags: {} }],
+      ['jordan', { archetypeId: 'jordan', active: true,  focus: 'build', flags: {} }],
       ['alex',   { archetypeId: 'alex',   active: true,  morale: 80, trust: 90, focus: 'build', focusSprints: 0, flags: {} }],
       ['priya',  { archetypeId: 'priya',  active: false, engagement: 80, flags: {} }],
       ['marcus', { archetypeId: 'marcus', active: false, engagement: 50, flags: {} }],

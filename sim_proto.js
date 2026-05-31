@@ -352,7 +352,7 @@ function selectCards(current, strategy, state) {
     return sorted.slice(0, 2).map(c => c.id);
   }
 
-  if (strategy === 'angel_path') {
+  if (strategy === 'angel_path' || strategy === 'skip_cap_table_angel') {
     const s = state || {};
     const INVESTOR_IDS  = new Set(['investor_intro_warm','prep_deck','investor_ready','seed_pitch',
                                    'fatima_intro','fatima_meeting','fatima_deck','fatima_commit']);
@@ -387,7 +387,7 @@ function selectCards(current, strategy, state) {
     return eligible.slice(0, 2).map(c => c.id);
   }
 
-  if (strategy === 'lean_loop' || strategy === 'ignore_meetup') {
+  if (strategy === 'lean_loop' || strategy === 'ignore_meetup' || strategy === 'keep_jordan') {
     const s = state || {};
     const fit     = s.market_fit || 0;
     const product = s.product    || 0;
@@ -395,6 +395,9 @@ function selectCards(current, strategy, state) {
     const MEETUP_IDS     = strategy === 'ignore_meetup' ? new Set(['founder_meetup']) : new Set();
     const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'yc_discussion_early', 'seed_pitch', 'fatima_commit']);
     // Alex founding cards must never be skipped — losing Alex kills the card pool
+    const JORDAN_FORCED  = strategy === 'keep_jordan'
+      ? new Set(['jordan_confrontation', 'jordan_fulltime_ask'])
+      : new Set();
     const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
@@ -413,8 +416,8 @@ function selectCards(current, strategy, state) {
     }
 
     const priority = c => {
-      if (ALEX_CRITICAL.has(c.id)) return 0;
-      if (YC_IDS.has(c.id))        return 1;
+      if (ALEX_CRITICAL.has(c.id) || JORDAN_FORCED.has(c.id)) return 0;
+      if (YC_IDS.has(c.id))                                    return 1;
       return 2 + (catOrder[c.cat] ?? 9);
     };
 
@@ -585,6 +588,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     alexActive: alex ? alex.active : false,
     alexMorale: alex ? alex.morale : 0,
     alexTrust:  alex ? alex.trust  : 0,
+    jordanResolved: e.s.jordan_resolved || false,
     activeChars,
     metPriya: e.s.met_priya || false,
     errors: errorCount,
@@ -625,8 +629,9 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const maxFit      = Math.max(...results.map(r => r.market_fit)).toFixed(0);
   const pctReachedFit50  = pct(results.filter(r => r.market_fit >= 50).length);
   const pctReachedFit100 = pct(results.filter(r => r.market_fit >= 100).length);
-  const marcusCommit   = pct(results.filter(r => r.marcusCommitted).length);
-  const followerCommit = pct(results.filter(r => r.followerCommitted).length);
+  const marcusCommit    = pct(results.filter(r => r.marcusCommitted).length);
+  const followerCommit  = pct(results.filter(r => r.followerCommitted).length);
+  const jordanResolved  = pct(results.filter(r => r.jordanResolved).length);
   const ryanEngaged    = pct(results.filter(r => r.activeChars.includes('ryan')).length);
   const priyaSeen  = pct(results.filter(r => r.activeChars.includes('priya')).length);
   const marcusSeen = pct(results.filter(r => r.activeChars.includes('marcus')).length);
@@ -691,7 +696,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const avgMoraleWk10 = avgMoraleAt(10);
 
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
-           ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged,
+           ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged, jordanResolved,
            avgWeek, avgUsers, avgCust,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
@@ -703,6 +708,17 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 // ─── Report ───────────────────────────────────────────────────────────────────
 
 CARD_PREFS.ignore_meetup = CARD_PREFS.lean_loop;
+CARD_PREFS.keep_jordan = {
+  ...CARD_PREFS.lean_loop,
+  jordan_fulltime_ask:  'accept',
+  jordan_launch_blocker:'web_only',
+  jordan_confrontation: 'defer',
+  jordan_cap_table:     'defer',
+};
+CARD_PREFS.skip_cap_table_angel = {
+  ...CARD_PREFS.angel_path,
+  jordan_cap_table: 'defer',
+};
 
 const strategies = [
   ['Random',              'random'],
@@ -716,11 +732,13 @@ const strategies = [
   ['Angel path',          'angel_path'],
   ['Rand + full-time',    'rand_fulltime'],
   ['Rand + part-time',    'rand_parttime'],
+  ['Keep Jordan',         'keep_jordan'],
+  ['Skip cap table',      'skip_cap_table_angel'],
 ];
 
 // ─── Options parser ───────────────────────────────────────────────────────────
 
-const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','ignore_meetup','angel_path','rand_fulltime','rand_parttime'];
+const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_alex','customer_focus','lean_loop','ignore_meetup','angel_path','rand_fulltime','rand_parttime','keep_jordan','skip_cap_table_angel'];
 
 function parseArgs(argv) {
   const args = argv.slice(2);
@@ -903,7 +921,7 @@ if (WINNERS_FLAG) {
     byStrat[strat] = r;
     console.log(`── ${r.name} ──`);
     console.log(`  Win ${r.wins}%  Bankrupt ${r.bankrupt}%  Timeout ${r.timeout}%  Errors ${r.errors}`);
-    console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
+    console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  Jordan resolved: ${r.jordanResolved}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
     console.log(`  Marcus committed: ${r.marcusCommit}%  Follower in: ${r.followerCommit}%  Ryan engaged: ${r.ryanEngaged}%`);
     console.log(`  Avg week: ${r.avgWeek}  Avg users (free): ${r.avgUsers}  Avg customers (paying): ${r.avgCust}`);
     console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
@@ -994,6 +1012,18 @@ if (WINNERS_FLAG) {
           s.ignore_meetup.priyaSeen === 0);
     check(`ignore_meetup.wins (${s.ignore_meetup.wins}%) within 15pts of lean_loop.wins (${s.lean_loop.wins}%)`,
           Math.abs(s.ignore_meetup.wins - s.lean_loop.wins) <= 15);
+
+    // Jordan arc: not resolving Jordan collapses execution; cap table blocks angel round
+    check(`skip_cap_table_angel.wins (${s.skip_cap_table_angel.wins}%) < 5% — dirty cap table blocks angel round`,
+          s.skip_cap_table_angel.wins < 5);
+    check(`keep_jordan.jordanResolved = ${s.keep_jordan.jordanResolved}% (expected 0) — strategy never fires Jordan`,
+          s.keep_jordan.jordanResolved === 0);
+    check(`lean_loop.jordanResolved (${s.lean_loop.jordanResolved}%) >= 80%`,
+          s.lean_loop.jordanResolved >= 80);
+    check(`angel_path.jordanResolved (${s.angel_path.jordanResolved}%) >= 90%`,
+          s.angel_path.jordanResolved >= 90);
+    check(`keep_jordan.launched (${s.keep_jordan.launched}%) < lean_loop.launched/2 (${Math.floor(s.lean_loop.launched / 2)}%) — unresolved Jordan collapses execution`,
+          s.keep_jordan.launched < s.lean_loop.launched / 2);
 
     // Errors — no strategy should produce runtime errors
     const totalErrors = Object.values(s).reduce((sum, r) => sum + r.errors, 0);

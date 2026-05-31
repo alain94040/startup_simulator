@@ -3,6 +3,7 @@
 
   const def = {
     id: 'jordan', name: 'Jordan', type: 'cofounder',
+    skills: { build: 0.7 },
     cards: [
 
       // ── EQUITY ARC: 4 cards, 3 weeks ─────────────────────────────────────────
@@ -22,7 +23,7 @@
               return "On the agenda. Good that someone brought it up.";
             } },
         ],
-        dropDelay: 0, dropMsg: null,
+        dropDelay: 2, dropMsg: null,
         dropFx(s, char) { char.flags.equity_mention_done = true; },
       },
 
@@ -210,6 +211,7 @@
               char.flags.ios_sprint_count = (char.flags.ios_sprint_count || 0) + 1;
               s.product = clamp(s.product + 5, 0, 100);
               s.signal = clamp(s.signal + 3, 0, 100);
+              if ((char.flags.ios_sprint_count) >= 2) s.ios_unblocked = true;
               return "iOS is ahead of schedule. Users on mobile are converting better than web.";
             } },
         ],
@@ -229,6 +231,7 @@
             execute(s, char, e) {
               char.flags.drift_start_done = true;
               s.jordan_drifting = true;
+              char.focus = null;
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale - 5, 0, 100);
               return "Jordan was apologetic. Said it's temporary. You're not sure.";
@@ -237,6 +240,7 @@
             execute(s, char, e) {
               char.flags.drift_start_done = true;
               s.jordan_drifting = true;
+              char.focus = null;
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
               return "Alex nodded. He'll cover it. The iOS backlog keeps growing.";
@@ -246,6 +250,7 @@
         dropFx(s, char, e) {
           char.flags.drift_start_done = true;
           s.jordan_drifting = true;
+          char.focus = null;
           const alex = e && e.chars && e.chars.get('alex');
           if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
         },
@@ -282,13 +287,40 @@
         },
       },
 
+      // ── FULL-TIME ASK ────────────────────────────────────────────────────────
+      {
+        id: 'jordan_fulltime_ask', cat: 't', from: 'Jordan',
+        body: "had a direct conversation with jordan about going full-time. she was apologetic but firm: 'i can't leave my job right now — i need the salary. i'll carve out more hours, i promise.' she hasn't.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.fulltime_ask_done && s.week >= 10,
+        options: [
+          { label: 'Accept her answer — she stays part-time', key: 'accept',
+            execute(s, char, e) {
+              char.flags.fulltime_ask_done = true;
+              const alex = e.chars.get('alex');
+              if (alex) alex.morale = clamp(alex.morale - 5, 0, 100);
+              return "Jordan's staying part-time. Alex heard the outcome. He's covering her work — and now he knows you know it too.";
+            } },
+          { label: 'Tell her this is a dealbreaker', key: 'pressure',
+            execute(s, char, e) {
+              char.flags.fulltime_ask_done = true;
+              s.jordan_confrontation_triggered = true;
+              const alex = e.chars.get('alex');
+              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
+              return "Jordan went quiet. Said she'd think about it. She didn't change. The situation will need to be resolved.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.fulltime_ask_done = true; },
+      },
+
       // ── LAUNCH BLOCKER ───────────────────────────────────────────────────────
       {
         id: 'jordan_launch_blocker', cat: 'p', from: 'Alex',
         body: "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.launch_blocker_done
-          && s.product >= 50 && s.has_beta && !s.launched,
+          && s.product >= 50 && s.has_beta && !s.launched && !s.ios_unblocked,
         options: [
           { label: 'Launch web-only — fix iOS later', key: 'web_only',
             execute(s, char) {
