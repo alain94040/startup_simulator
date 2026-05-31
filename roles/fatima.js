@@ -54,6 +54,10 @@
         options: [
           { label: 'Yes — welcome aboard', key: 'welcome',
             execute(s, char, e) {
+              if (s.jordan_resolved && s.jordan_cleanup_needed) {
+                char.flags.committed = true;
+                return "Fatima: \"my diligence flagged the cap table — there's a 20% stake with no vesting terms. that needs to be cleaned up before i can wire anything. let me know when it's resolved.\"";
+              }
               const alexGone = e && !(e.chars.get('alex')?.active ?? true);
               if (alexGone && Math.random() < 0.70) {
                 char.flags.committed = true;

@@ -1781,23 +1781,23 @@ function hideSplash() {
 const INTRO_SLIDES = [
   {
     step: 'The Beginning',
-    heading: 'You and Alex have been friends since college.',
-    text: 'He\'s the engineer. You\'re the brain. You\'ve talked about starting something for years. Last month, you finally said: let\'s actually do it.',
+    heading: 'Three of you. One idea. Six months of talking.',
+    text: 'You, Alex, and Jordan have been circling this for a while. Alex is the backend engineer. Jordan offered to handle the iOS version. You\'re the one who finally said: enough talking — let\'s actually do this.',
   },
   {
     step: 'The Idea',
-    heading: 'You spotted a real gap.',
-    text: 'Dating apps are broken and everyone knows it. You\'ve been there — swiping for months, going on zero dates. You think you can build something actually worth paying for.',
+    heading: 'Dating apps are broken and everyone knows it.',
+    text: 'You\'ve all been there — swiping for months, going on zero dates. Matches that go nowhere. You think you can build something actually worth paying for. The question is whether you can prove it before the money runs out.',
   },
   {
     step: 'The Stakes',
-    heading: 'You\'ve got $10,000 between you.',
-    text: 'At $500 a week in burn, that\'s 20 weeks before it\'s over. Every decision costs time. You can\'t do everything — you need to focus on what matters.',
+    heading: 'You\'ve got $10,000 and a team that isn\'t fully in yet.',
+    text: 'Alex quit his job last month. Jordan is still at hers — helping nights and weekends for now. At $500 a week in burn, you have 20 weeks. Not everyone starts a company the same way. That gap will matter.',
   },
   {
     step: 'The Goal',
     heading: 'One shot. Make it count.',
-    text: 'You need to raise to survive. Raise $500K from YC or an angel before the money runs out. Build, get traction, and don\'t ignore Alex.',
+    text: 'Raise $500K from YC or an angel before the money runs out. Build, get traction, keep the team aligned. The hardest decisions won\'t be about the product.',
     last: true,
   },
 ];
@@ -1815,6 +1815,7 @@ function introRender() {
 }
 introRender(); // populate immediately, before any other scripts load
 </script>
+<script src="roles/jordan.js"></script>
 <script src="roles/alex.js"></script>
 <script src="roles/priya.js"></script>
 <script src="roles/marcus.js"></script>
@@ -1841,6 +1842,7 @@ introRender(); // populate immediately, before any other scripts load
 // Character + Category metadata
 // ─────────────────────────────────────────────────────────
 const CM = {
+  jordan:      { i:'JO', bg:'#4c1d95', c:'#c4b5fd', r:'Co-founder' },
   alex:        { i:'AL', bg:'#4c1d95', c:'#c4b5fd', r:'Co-founder' },
   priya:       { i:'PR', bg:'#064e3b', c:'#6ee7b7', r:'Advisor' },
   marcus:      { i:'MA', bg:'#78350f', c:'#fcd34d', r:'Angel' },

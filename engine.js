@@ -10,6 +10,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 const CHARACTER_DEFS = typeof require !== 'undefined'
   ? {
+      jordan:       require('./roles/jordan.js'),
       alex:         require('./roles/alex.js'),
       priya:        require('./roles/priya.js'),
       marcus:       require('./roles/marcus.js'),
@@ -100,6 +101,7 @@ class Engine {
 
     // Live character instances
     this.chars = new Map([
+      ['jordan', { archetypeId: 'jordan', active: true,  flags: {} }],
       ['alex',   { archetypeId: 'alex',   active: true,  morale: 80, trust: 90, focus: 'build', focusSprints: 0, flags: {} }],
       ['priya',  { archetypeId: 'priya',  active: false, engagement: 80, flags: {} }],
       ['marcus', { archetypeId: 'marcus', active: false, engagement: 50, flags: {} }],

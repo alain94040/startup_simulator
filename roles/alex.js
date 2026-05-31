@@ -10,18 +10,30 @@
       // ── WEEK 1 ONBOARDING (only 2 cards shown on week 1) ────────────────────
       {
         id: 'start_prototype', cat: 'p', from: 'You',
-        body: "you've been talking about this idea long enough. time to build something real. you pull up Alex's calendar and block a week — profiles, matching, and a way to message. that's the core.",
+        body: "three of you in the same room for the first time since you decided to do this for real. time to stop talking. alex is ready on the backend. jordan's offered to take the iOS side. one word from you and this becomes real.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
         options: [
-          { label: 'Tell Alex to start building', key: 'build',
-            execute(s, char) { char.flags.prototype_kicked = true; s.product = clamp(s.product + 10, 0, 100); return "Exciting. Profiles, matching, and basic messaging — Alex thinks he'll get a rough demo going in a week or two."; } },
+          { label: "Game on — everyone start building", key: 'build',
+            execute(s, char, e) {
+              char.flags.prototype_kicked = true;
+              s.product = clamp(s.product + 10, 0, 100);
+              s.jordan_active = true;
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.ios_update_done = true;
+              return "Alex is on profiles and matching. Jordan's on the iOS build. You're building a company.";
+            } },
         ],
-        dropFx(s, char) { char.flags.prototype_kicked = true; },
+        dropFx(s, char, e) {
+          char.flags.prototype_kicked = true;
+          s.jordan_active = true;
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) jordan.flags.ios_update_done = true;
+        },
       },
       {
         id: 'incorporate_week1', cat: 'e', from: 'Alex',
-        body: "before we do anything else — we need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
+        body: "before we do anything else — all three of us need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
         urgency: 3, weeks: 1, priority: true, ignoreForTrust: true,
         available: (s, char) => s.week === 1 && !s.incorporated,
         options: [
@@ -38,7 +50,7 @@
         id: 'equity_talk', cat: 't', from: 'Alex',
         body: "can we write down the equity split? told my girlfriend i own half and she asked to see something official. let's get this done before it gets complicated.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.incorporated && s.week <= 12 && !char.flags.equity_set,
+        available: (s, char) => s.incorporated && s.week <= 12 && !char.flags.equity_set && !s.jordan_equity,
         options: [
           { label: 'Agree — 50/50', key: 'fair',
             execute(s, char) { char.flags.equity_set = true; char.morale = clamp(char.morale + 10, 0, 100); char.trust = clamp(char.trust + 8, 0, 100); return "50/50 agreed. 4-year vesting, 1-year cliff. Both sides signed. Feels solid."; } },
@@ -122,19 +134,6 @@
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "i need some space. working from home this week to figure some things out.",
         dropFx(s, char) { char.morale = clamp(char.morale - 14, 0, 100); char.trust = clamp(char.trust - 6, 0, 100); },
-      },
-      {
-        id: 'friend_wants_in', cat: 't', from: 'Alex',
-        body: "my friend Dev wants to join as the first employee. smart, enthusiastic, would ship fast. skills overlap with mine a lot. your call.",
-        urgency: 2, weeks: 1,
-        available: (s, char) => s.week >= 4 && s.week <= 18 && s.product < 70 && !char.flags.dev_resolved,
-        options: [
-          { label: 'Bring Dev on board', key: 'hire',
-            execute(s, char) { char.flags.dev_resolved = true; s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale + 8, 0, 100); s.network.peers += 2; return "Dev joined. High energy, shipped 2 useful features in the first week."; } },
-        ],
-        dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "dev went with another startup. they asked why we passed and honestly i didn't have a great answer.",
-        dropFx(s, char) { char.flags.dev_resolved = true; char.morale = clamp(char.morale - 10, 0, 100); },
       },
       {
         id: 'alex_equity', cat: 't', from: 'Alex',
@@ -492,7 +491,7 @@
         id: 'good_enough_launch', cat: 'p', from: 'Alex',
         body: "beta users have been in it for weeks. feedback is real, nothing's on fire. as ready as it'll get without public traffic — let's ship it.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.productPhase === "product" && s.product >= 50 && s.has_beta && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4,
+        available: (s, char) => s.productPhase === "product" && s.product >= 50 && s.has_beta && !s.launched && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4 && !(s.jordan_drifting && !s.jordan_resolved),
         options: [
           { label: 'Ship it — launch now', key: 'ship',
             execute(s, char) { s.launched = true; s.signal = clamp(s.signal + 12, 0, 100); if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn."; return "Launched. First real users are in. Feedback starts flowing."; } },

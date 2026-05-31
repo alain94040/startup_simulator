@@ -52,6 +52,10 @@
         available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.product >= 40 && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
+            if (s.jordan_resolved && s.jordan_cleanup_needed) {
+              s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100);
+              return "Marcus: \"one flag before we go further — there's a 20% stake on the cap table with no vesting schedule. who is that and why do they still own a fifth of the company? we'd need that cleaned up before i can lead a round.\"";
+            }
             const alexGone = e && !(e.chars.get('alex')?.active ?? true);
             const score = clamp(s.customers * 2, 0, 35) + clamp(s.product / 5, 0, 20)
               + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0);
