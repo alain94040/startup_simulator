@@ -368,6 +368,7 @@ function selectCards(current, strategy, state) {
     const priority = c => {
       if (NEVER_PICK.has(c.id))    return 99;
       if (ALEX_CRITICAL.has(c.id)) return 0;
+      if (c.id === 'jordan_cap_table') return 0; // must clean before any investor pitch
       if (INVESTOR_IDS.has(c.id))  return 1;
       if (FAMILY_CASH.has(c.id))   return 2;
       if (c.id === 'alex_demo_ready' || c.id === 'alex_beta_ready') return 2;

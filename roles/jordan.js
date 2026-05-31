@@ -67,7 +67,7 @@
       {
         id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
         body: "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '33/33/33' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: "You're right — 40/40/20", key: 'cave_40',
@@ -98,7 +98,7 @@
       {
         id: 'jordan_equity_counter_jordan', cat: 't', from: 'Jordan',
         body: "alex told me about the 40/40/20. we're both writing code — he gets twice what i get? i'm building the whole iOS side. equal thirds is fair. why do i get less?",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '40/40/20' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: 'Equal thirds — fair point', key: 'cave_33',
@@ -123,7 +123,7 @@
       {
         id: 'jordan_equity_counter_both', cat: 't', from: 'Jordan & Alex',
         body: "heard back from both. alex: 'i should be equal to you — i'm doing as much as you are.' jordan: 'alex and i are both writing code. 25% each feels low.'",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '50/25/25' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: "Give Alex what he wants — 40/40/20", key: 'cave_alex',
@@ -368,7 +368,7 @@
           const pct = char.flags.equity_proposal === '33/33/33' ? '33%' : char.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
           return `jordan's ${pct} is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.`;
         },
-        urgency: 2, weeks: 1,
+        urgency: 2, weeks: 1, priority: true,
         available: (s, char) => s.jordan_resolved && s.jordan_cleanup_needed && !char.flags.cap_table_done,
         options: [
           { label: 'Hire a lawyer — $2,000', key: 'lawyer',

@@ -91,3 +91,4 @@ Use `char.flags.x != null` (not `char.flags.x || 0`) to guard "was this ever set
 ## Instructions
 
 Do not change the thresholds in sim_proto.js when a test fails.
+When running regressions, use sim_proto.js with a count of 1000.
