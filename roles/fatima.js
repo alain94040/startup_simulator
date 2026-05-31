@@ -56,7 +56,9 @@
             execute(s, char, e) {
               if (s.jordan_resolved && s.jordan_cleanup_needed) {
                 char.flags.committed = true;
-                return "Fatima: \"my diligence flagged the cap table — there's a 20% stake with no vesting terms. that needs to be cleaned up before i can wire anything. let me know when it's resolved.\"";
+                const jordan = e && e.chars && e.chars.get('jordan');
+                const jPct = jordan && jordan.flags.equity_proposal === '33/33/33' ? '33%' : jordan && jordan.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
+                return `Fatima: "my diligence flagged the cap table — there's a ${jPct} stake with no vesting terms. that needs to be cleaned up before i can wire anything. let me know when it's resolved."`;
               }
               const alexGone = e && !(e.chars.get('alex')?.active ?? true);
               if (alexGone && Math.random() < 0.70) {

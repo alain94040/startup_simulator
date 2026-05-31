@@ -87,3 +87,7 @@ Use `char.flags.x != null` (not `char.flags.x || 0`) to guard "was this ever set
 - 2-space indentation, double quotes, semicolons.
 - `engine.js` must stay free of DOM manipulation — all UI belongs in `prototype.html`.
 - Character definitions in `roles/` must work in both Node and browser (see the IIFE + `module.exports` / `ROLES.id` pattern at the bottom of each file).
+
+## Instructions
+
+Do not change the thresholds in sim_proto.js when a test fails.

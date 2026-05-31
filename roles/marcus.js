@@ -54,7 +54,9 @@
           execute(s, char, e) {
             if (s.jordan_resolved && s.jordan_cleanup_needed) {
               s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100);
-              return "Marcus: \"one flag before we go further — there's a 20% stake on the cap table with no vesting schedule. who is that and why do they still own a fifth of the company? we'd need that cleaned up before i can lead a round.\"";
+              const jordan = e && e.chars && e.chars.get('jordan');
+              const jPct = jordan && jordan.flags.equity_proposal === '33/33/33' ? '33%' : jordan && jordan.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
+              return `Marcus: "one flag before we go further — there's a ${jPct} stake on the cap table with no vesting schedule. who is that and why do they still own that much of the company? we'd need that cleaned up before i can lead a round."`;
             }
             const alexGone = e && !(e.chars.get('alex')?.active ?? true);
             const score = clamp(s.customers * 2, 0, 35) + clamp(s.product / 5, 0, 20)

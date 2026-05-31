@@ -8,7 +8,15 @@ const { Engine, CHARACTER_DEFS } = require('./engine.js');
 // Cards with a single option don't need an entry — they're handled automatically.
 const CARD_PREFS = {
   yc_grind: {
-    equity_talk:              'fair',
+    jordan_equity_mention:         'open',
+    jordan_equity_alex:            'propose_50',
+    jordan_equity_counter_alex:    'cave_40',
+    jordan_equity_counter_jordan:  'hold_40',
+    jordan_equity_counter_both:    'hold_50',
+    jordan_drift_start:       'talk',
+    jordan_launch_blocker:    'confront',
+    jordan_confrontation:     'fire',
+    jordan_cap_table:         'lawyer',
     alex_commitment:          'push',
     vision_mismatch:          'test',
     alex_sync_discover:       'discover',
@@ -30,7 +38,15 @@ const CARD_PREFS = {
     investor_moat_question:   'niche',
   },
   alex_first: {
-    equity_talk:              'fair',
+    jordan_equity_mention:         'open',
+    jordan_equity_alex:            'propose_40',
+    jordan_equity_counter_alex:    'cave_40',
+    jordan_equity_counter_jordan:  'hold_40',
+    jordan_equity_counter_both:    'cave_alex',
+    jordan_drift_start:       'talk',
+    jordan_launch_blocker:    'confront',
+    jordan_confrontation:     'fire',
+    jordan_cap_table:         'lawyer',
     alex_commitment:          'accept',
     vision_mismatch:          'alex',
     alex_sync_discover:       'discover',
@@ -52,7 +68,15 @@ const CARD_PREFS = {
     investor_moat_question:   'niche',
   },
   customer_focus: {
-    equity_talk:              'fair',
+    jordan_equity_mention:         'open',
+    jordan_equity_alex:            'propose_33',
+    jordan_equity_counter_alex:    'hold_33',
+    jordan_equity_counter_jordan:  'cave_33',
+    jordan_equity_counter_both:    'cave_jordan',
+    jordan_drift_start:       'cover',
+    jordan_launch_blocker:    'wait',
+    jordan_confrontation:     'defer',
+    jordan_cap_table:         'defer',
     alex_commitment:          'accept',
     vision_mismatch:          'test',
     alex_sync_discover:       'discover',
@@ -74,7 +98,15 @@ const CARD_PREFS = {
     investor_moat_question:   'niche',
   },
   ignore_alex: {
-    equity_talk:              'negotiate',
+    jordan_equity_mention:         'open',
+    jordan_equity_alex:            'propose_33',
+    jordan_equity_counter_alex:    'hold_33',
+    jordan_equity_counter_jordan:  'cave_33',
+    jordan_equity_counter_both:    'cave_jordan',
+    jordan_drift_start:       'cover',
+    jordan_launch_blocker:    'wait',
+    jordan_confrontation:     'defer',
+    jordan_cap_table:         'defer',
     alex_commitment:          'push',
     vision_mismatch:          'yours',
     alex_sync_discover:       'build',
@@ -95,7 +127,15 @@ const CARD_PREFS = {
   },
   // Angel path: build traction → warm marcus → build users → launch → convert → pitch
   angel_path: {
-    equity_talk:              'fair',
+    jordan_equity_mention:         'open',
+    jordan_equity_alex:            'propose_40',
+    jordan_equity_counter_alex:    'cave_40',
+    jordan_equity_counter_jordan:  'hold_40',
+    jordan_equity_counter_both:    'cave_alex',
+    jordan_drift_start:       'talk',
+    jordan_launch_blocker:    'confront',
+    jordan_confrontation:     'fire',
+    jordan_cap_table:         'lawyer',
     alex_commitment:          'accept',
     vision_mismatch:          'test',
     alex_equity:              'fair',
@@ -146,7 +186,15 @@ const CARD_PREFS = {
   },
   // Teach-the-lesson strategy: discover → build → engage → YC
   lean_loop: {
-    equity_talk:              'fair',
+    jordan_equity_mention:         'open',
+    jordan_equity_alex:            'propose_40',
+    jordan_equity_counter_alex:    'cave_40',
+    jordan_equity_counter_jordan:  'hold_40',
+    jordan_equity_counter_both:    'cave_alex',
+    jordan_drift_start:       'talk',
+    jordan_launch_blocker:    'confront',
+    jordan_confrontation:     'fire',
+    jordan_cap_table:         'lawyer',
     alex_commitment:          'accept',
     vision_mismatch:          'test',
     alex_equity:              'fair',
@@ -308,7 +356,7 @@ function selectCards(current, strategy, state) {
     const s = state || {};
     const INVESTOR_IDS  = new Set(['investor_intro_warm','prep_deck','investor_ready','seed_pitch',
                                    'fatima_intro','fatima_meeting','fatima_deck','fatima_commit']);
-    const ALEX_CRITICAL = new Set(['equity_talk','alex_commitment','alex_equity','vision_mismatch']);
+    const ALEX_CRITICAL = new Set(['alex_commitment','alex_equity','vision_mismatch']);
     // Never pick alex_sync_discover — keeps Alex in build mode so demo card stays available
     const NEVER_PICK    = new Set(['alex_sync_discover','yc_discussion_ready','yc_discussion_early']);
 
@@ -346,7 +394,7 @@ function selectCards(current, strategy, state) {
     const MEETUP_IDS     = strategy === 'ignore_meetup' ? new Set(['founder_meetup']) : new Set();
     const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'yc_discussion_early', 'seed_pitch', 'fatima_commit']);
     // Alex founding cards must never be skipped — losing Alex kills the card pool
-    const ALEX_CRITICAL  = new Set(['equity_talk', 'alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
+    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
@@ -449,7 +497,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
       if (id === 'alex_sync_discover' && !opts[id]) opts[id] = 'discover';
       if (id === 'alex_sync_build'    && !opts[id]) opts[id] = 'build';
       if (id === 'alex_commitment'    && !opts[id]) opts[id] = 'accept';
-      if (id === 'equity_talk'        && !opts[id]) opts[id] = 'fair';
+
     }
 
     const offeredSnapshot = verbose ? e.current.map(d => ({

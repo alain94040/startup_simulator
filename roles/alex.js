@@ -47,22 +47,6 @@
 
       // ── EARLY: RELATIONSHIP ──────────────────────────────────────────────────
       {
-        id: 'equity_talk', cat: 't', from: 'Alex',
-        body: "can we write down the equity split? told my girlfriend i own half and she asked to see something official. let's get this done before it gets complicated.",
-        urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.incorporated && s.week <= 12 && !char.flags.equity_set && !s.jordan_equity,
-        options: [
-          { label: 'Agree — 50/50', key: 'fair',
-            execute(s, char) { char.flags.equity_set = true; char.morale = clamp(char.morale + 10, 0, 100); char.trust = clamp(char.trust + 8, 0, 100); return "50/50 agreed. 4-year vesting, 1-year cliff. Both sides signed. Feels solid."; } },
-          { label: 'Push for 60/40', key: 'negotiate',
-            execute(s, char) { char.flags.equity_set = true; char.morale = clamp(char.morale - 12, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); return "After a long conversation, Alex accepted 60/40. He agreed, but wasn't thrilled. Watch his mood."; } },
-        ],
-        dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "i keep getting asked about my equity stake and i don't have anything to show. this really needs to happen.",
-        dropFx(s, char) { char.morale = clamp(char.morale - 6, 0, 100); },
-        dropCondition: (s, char) => !char.flags.equity_set,
-      },
-      {
         id: 'alex_commitment', cat: 't', from: 'Alex',
         body: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
         urgency: 3, weeks: 1, priority: true,
