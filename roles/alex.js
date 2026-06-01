@@ -5,20 +5,19 @@
   // ── Roadmap item helpers ──────────────────────────────────────────────────
   function expandItems(s, plan) {
     if (!s.items) return;
-    s.items.matching     = { status: 'todo', quality: null, assignee: 'alex'   };
-    s.items.ios_matching = { status: 'todo', quality: null, assignee: 'jordan' };
-    s.items.beta         = { status: 'todo', quality: null, assignee: null     };
+    s.items.beta = { status: 'todo', quality: null, assignee: null };
     if (plan === 'full') {
-      s.items.sprint_social = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_algo   = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_mono   = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_adv    = { status: 'todo', quality: null, assignee: null };
+      s.items.sprint_social     = { status: 'todo', quality: null, assignee: null };
+      s.items.sprint_algo       = { status: 'todo', quality: null, assignee: null };
+      s.items.sprint_mono       = { status: 'todo', quality: null, assignee: null };
+      s.items.sprint_adv_social = { status: 'todo', quality: null, assignee: null };
+      s.items.sprint_adv_video  = { status: 'todo', quality: null, assignee: null };
     }
   }
 
   function allSprintsResolved(s) {
     if (!s.items) return true;
-    const keys = ['sprint_social', 'sprint_algo', 'sprint_mono', 'sprint_adv'];
+    const keys = ['sprint_social', 'sprint_algo', 'sprint_mono', 'sprint_adv_social', 'sprint_adv_video'];
     return keys.every(k => !s.items[k] || s.items[k].status === 'done' || s.items[k].status === 'deferred');
   }
 
@@ -45,8 +44,10 @@
               s.jordan_active = true;
               s.activities_cut = true;
               s.items = {
-                backend_api: { status: 'active', quality: null, assignee: 'alex'   },
-                ios_core:    { status: 'active', quality: null, assignee: 'jordan' },
+                matching_algo: { status: 'active', quality: null, assignee: 'alex'   },
+                api_design:    { status: 'todo',   quality: null, assignee: 'alex'   },
+                ios_ui:        { status: 'active', quality: null, assignee: 'jordan' },
+                ios_server:    { status: 'todo',   quality: null, assignee: 'jordan' },
               };
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.ios_update_done = true;
@@ -58,8 +59,10 @@
           s.jordan_active = true;
           s.activities_cut = true;
           s.items = {
-            backend_api: { status: 'active', quality: null, assignee: 'alex'   },
-            ios_core:    { status: 'active', quality: null, assignee: 'jordan' },
+            matching_algo: { status: 'active', quality: null, assignee: 'alex'   },
+            api_design:    { status: 'todo',   quality: null, assignee: 'alex'   },
+            ios_ui:        { status: 'active', quality: null, assignee: 'jordan' },
+            ios_server:    { status: 'todo',   quality: null, assignee: 'jordan' },
           };
           const jordan = e && e.chars && e.chars.get('jordan');
           if (jordan) jordan.flags.ios_update_done = true;
@@ -83,7 +86,7 @@
       {
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
         body: "jordan and i should align before we go too deep. we could spec the whole product — activity layer, recommendations, the full vision. or scope to what we actually need to test the hypothesis.",
-        urgency: 2, weeks: 2,
+        urgency: 2, weeks: 2, priority: true,
         available: (s, char) => char.flags.prototype_kicked && !char.flags.plan_done && s.week >= 2 && s.week <= 5,
         options: [
           { label: "Full product spec — let's know what we're building", key: 'full',
@@ -107,8 +110,7 @@
               return "No plan, just action. No shared picture of what done looks like.";
             } },
         ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char) { char.flags.plan_done = true; s.dev_plan = 'sprint'; },
+        dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
       // ── EARLY: RELATIONSHIP ──────────────────────────────────────────────────
@@ -282,7 +284,7 @@
         id: 'early_tech_stack', cat: 'e', from: 'Alex', ignoreForTrust: true,
         body: "the matching algorithm is fine for 100 users. at 10,000 it'll fall apart. i can build it to scale properly — takes twice as long. or i ship something that works now and we fix it when it matters.",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week >= 1 && s.week <= 4 && !char.flags.stack_done,
+        available: (s, char) => s.dev_plan != null && s.week <= 6 && !char.flags.stack_done,
         options: [
           { label: 'Ship now — fix the algorithm later', key: 'fast',
             execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 4, 0, 100); return "Shipping with the fast version. Alex moving immediately. The 10,000-user problem is a good problem to have."; } },
@@ -449,26 +451,25 @@
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
         body: "profiles and matching work end-to-end for the first time. create an account, get matched, send a message. that's the core hypothesis. want to put it in front of real people?",
         urgency: 3, weeks: 1,
-        available: (s) => s.week >= 5 && s.items?.backend_api?.status === 'active' && !s.launched,
+        available: (s) => s.week >= 5 && s.items?.matching_algo?.status === 'active' && !s.launched,
         options: [
           { label: 'Show it rough — learn fast', key: 'rough',
             execute(s) {
               s.has_demo = true; s.tech_debt += 12;
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
               if (s.items) {
-                s.items.backend_api.status = 'done'; s.items.backend_api.quality = 'rough';
-                if (s.items.matching) s.items.matching.status = 'active';
+                s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'rough';
+                if (s.items.api_design) s.items.api_design.status = 'active';
               }
               return "Three contacts in the room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been on every app and none of them work like this.' You know what to build next.";
             } },
           { label: 'One sprint to polish it first', key: 'polish',
             execute(s) {
               s.has_demo = true; s.tech_debt += 3;
-              s.product = clamp(s.product + 6, 0, 100);
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); s.signal = clamp(s.signal + 4, 0, 100);
               if (s.items) {
-                s.items.backend_api.status = 'done'; s.items.backend_api.quality = 'solid';
-                if (s.items.matching) s.items.matching.status = 'active';
+                s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'solid';
+                if (s.items.api_design) s.items.api_design.status = 'active';
               }
               return "Spent the sprint cleaning up the worst rough edges. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'";
             } },
@@ -478,8 +479,8 @@
         dropFx(s) {
           s.has_demo = true; s.tech_debt += 18; s.waitlist += 1;
           if (s.items) {
-            s.items.backend_api.status = 'done'; s.items.backend_api.quality = 'rough';
-            if (s.items.matching) s.items.matching.status = 'active';
+            s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'rough';
+            if (s.items.api_design) s.items.api_design.status = 'active';
           }
         },
       },
@@ -543,7 +544,7 @@
       },
       {
         id: 'sprint_algo', cat: 'p', from: 'Alex',
-        body: "recommendation algorithm v2 and profile verification. better match quality and trust signals. on the roadmap — build before beta or defer?",
+        body: "profile verification — photo check, linked accounts, basic trust signals. reduces fake profiles. on the roadmap — build before beta or defer?",
         urgency: 2, weeks: 2,
         available: (s) => s.dev_plan === 'full' && s.items?.sprint_algo?.status === 'todo' && sprintResolved(s, 'sprint_social'),
         options: [
@@ -551,13 +552,13 @@
             execute(s) {
               s.items.sprint_algo.status = 'done'; s.items.sprint_algo.quality = 'solid';
               s.cash = clamp(s.cash - 1200, 0, 9999999); s.market_fit = clamp(s.market_fit + 6, 0, 100);
-              return "Algorithm v2 and verification shipped. Match quality noticeably better in early tests.";
+              return "Profile verification shipped. Photo checks and linked accounts live. Fake profile reports dropped.";
             } },
           { label: 'Build lean versions', key: 'lean',
             execute(s) {
               s.items.sprint_algo.status = 'done'; s.items.sprint_algo.quality = 'rough';
               s.tech_debt += 6;
-              return "Basic versions shipped. Improvements are real but limited.";
+              return "Basic verification shipped. Photo check only — no linked accounts. Trust signals are there but thin.";
             } },
           { label: 'Defer to v2', key: 'defer',
             execute(s) {
@@ -596,31 +597,58 @@
         dropFx(s) { if (s.items?.sprint_mono) s.items.sprint_mono.status = 'deferred'; },
       },
       {
-        id: 'sprint_adv', cat: 'p', from: 'Alex',
-        body: "friend-of-friend discovery and in-app video calls. the ambitious stuff from the original spec. build now or ship without?",
+        id: 'sprint_adv_social', cat: 'p', from: 'Alex',
+        body: "friend-of-friend discovery — surface matches through mutual connections. adds a trust layer. on the original spec. build now or defer?",
         urgency: 2, weeks: 2,
-        available: (s) => s.dev_plan === 'full' && s.items?.sprint_adv?.status === 'todo' && sprintResolved(s, 'sprint_mono'),
+        available: (s) => s.dev_plan === 'full' && s.items?.sprint_adv_social?.status === 'todo' && sprintResolved(s, 'sprint_mono'),
         options: [
-          { label: 'Build both', key: 'build',
+          { label: 'Build it', key: 'build',
             execute(s) {
-              s.items.sprint_adv.status = 'done'; s.items.sprint_adv.quality = 'solid';
-              s.cash = clamp(s.cash - 1500, 0, 9999999); s.market_fit = clamp(s.market_fit + 4, 0, 100);
-              return "Social graph and video calls shipped. Big features — differentiated product.";
+              s.items.sprint_adv_social.status = 'done'; s.items.sprint_adv_social.quality = 'solid';
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              return "Social graph shipped. Mutual-connection matches converting at twice the rate.";
             } },
-          { label: 'Build lean versions', key: 'lean',
+          { label: 'Build a lean version', key: 'lean',
             execute(s) {
-              s.items.sprint_adv.status = 'done'; s.items.sprint_adv.quality = 'rough';
-              s.tech_debt += 8;
-              return "Basic versions shipped. Video is shaky, discovery is limited. But it's in.";
+              s.items.sprint_adv_social.status = 'done'; s.items.sprint_adv_social.quality = 'rough';
+              s.tech_debt += 5;
+              return "Basic version in. Discovery is limited to one degree out. Good enough to test the hypothesis.";
             } },
-          { label: 'Defer — ship without', key: 'defer',
+          { label: 'Defer', key: 'defer',
             execute(s) {
-              s.items.sprint_adv.status = 'deferred';
-              return "Deferred. These are v2 features. Focus on the core.";
+              s.items.sprint_adv_social.status = 'deferred';
+              return "Deferred. Core product ships without it.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s) { if (s.items?.sprint_adv) s.items.sprint_adv.status = 'deferred'; },
+        dropFx(s) { if (s.items?.sprint_adv_social) s.items.sprint_adv_social.status = 'deferred'; },
+      },
+      {
+        id: 'sprint_adv_video', cat: 'p', from: 'Alex',
+        body: "in-app video dates. biggest ask from beta users. also the most complex thing left on the roadmap. build it or tell people to use FaceTime?",
+        urgency: 2, weeks: 2,
+        available: (s) => s.dev_plan === 'full' && s.items?.sprint_adv_video?.status === 'todo' && sprintResolved(s, 'sprint_adv_social'),
+        options: [
+          { label: 'Build it', key: 'build',
+            execute(s) {
+              s.items.sprint_adv_video.status = 'done'; s.items.sprint_adv_video.quality = 'solid';
+              s.cash = clamp(s.cash - 2000, 0, 9999999); s.market_fit = clamp(s.market_fit + 5, 0, 100);
+              return "Video dates shipped. Took longer and cost more than planned. Users love it.";
+            } },
+          { label: 'Build a lean version', key: 'lean',
+            execute(s) {
+              s.items.sprint_adv_video.status = 'done'; s.items.sprint_adv_video.quality = 'rough';
+              s.cash = clamp(s.cash - 800, 0, 9999999); s.tech_debt += 10;
+              return "Basic video in. Drops occasionally, no recording. Users complained, then kept using it anyway.";
+            } },
+          { label: 'Defer — tell them to use FaceTime', key: 'defer',
+            execute(s) {
+              s.items.sprint_adv_video.status = 'deferred';
+              return "Deferred. You'll revisit after funding.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { if (s.items?.sprint_adv_video) s.items.sprint_adv_video.status = 'deferred'; },
       },
       {
         id: 'activity_pivot', cat: 'p', from: 'Alex',
@@ -754,11 +782,22 @@
         available: (s, char) => !s.alex_rebuild_done && char.focus === 'build' && (s.has_demo || s.tech_debt >= 20),
         options: [
           { label: 'Do the refactor', key: 'refactor',
-            execute(s, char) { s.alex_rebuild_done = true; s.product = clamp(s.product + 12, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); return "Architecture refactored. Faster, cleaner. Alex is energized."; } },
+            execute(s, char) {
+              s.alex_rebuild_done = true;
+              char.morale = clamp(char.morale + 15, 0, 100);
+              if (s.items?.api_design) { s.items.api_design.status = 'done'; s.items.api_design.quality = 'solid'; }
+              return "Architecture refactored. Faster, cleaner. Alex is energized.";
+            } },
         ],
         dropDelay: 4, dropFrom: 'Alex',
         dropMsg: "3 active outages this week from the tech debt i flagged. we're losing users in real time.",
-        dropFx(s, char) { s.alex_rebuild_done = true; s.users = clamp(s.users - 8, 0, 9999); s.customers = clamp(s.customers - 2, 0, 9999); char.morale = clamp(char.morale - 20, 0, 100); },
+        dropFx(s, char) {
+          s.alex_rebuild_done = true;
+          s.users = clamp(s.users - 8, 0, 9999);
+          s.customers = clamp(s.customers - 2, 0, 9999);
+          char.morale = clamp(char.morale - 20, 0, 100);
+          if (s.items?.api_design) { s.items.api_design.status = 'done'; s.items.api_design.quality = 'rough'; }
+        },
       },
       {
         id: 'alex_decision', cat: 't', from: 'Customer',

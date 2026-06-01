@@ -425,7 +425,7 @@ function selectCards(current, strategy, state) {
     return eligible.slice(0, 2).map(c => c.id);
   }
 
-  if (strategy === 'lean_loop' || strategy === 'ignore_meetup' || strategy === 'keep_jordan') {
+  if (strategy === 'lean_loop' || strategy === 'ignore_meetup' || strategy === 'keep_jordan' || strategy === 'plan_lean' || strategy === 'plan_full') {
     const s = state || {};
     const fit     = s.market_fit || 0;
     const product = s.product    || 0;
@@ -751,6 +751,8 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 // ─── Report ───────────────────────────────────────────────────────────────────
 
 CARD_PREFS.ignore_meetup = CARD_PREFS.lean_loop;
+CARD_PREFS.plan_lean = { ...CARD_PREFS.lean_loop, dev_planning_session: 'lean' };
+CARD_PREFS.plan_full = { ...CARD_PREFS.lean_loop, dev_planning_session: 'full' };
 CARD_PREFS.no_pivot = {
   ...CARD_PREFS.angel_path,
   activity_pivot: 'stay',
@@ -1221,6 +1223,53 @@ if (WINNERS_FLAG) {
     const p2 = priyaWithSkip === 0;
     console.log(`  Priya unlock rate >50% when attended: ${p1 ? 'PASS' : 'FAIL'}  (${priyaWithAttend}%)`);
     console.log(`  Priya never unlocks when skipped:     ${p2 ? 'PASS' : 'FAIL'}  (${priyaWithSkip}%)`);
+  })();
+
+  // ── Planning strategy impact: lean vs full vs no planning ───────────────────
+  (() => {
+    const RUNS = 200;
+    const lean = [], full = [], none = [];
+    for (let i = 0; i < RUNS; i++) {
+      lean.push(runGame('plan_lean', 120, false, false));
+      full.push(runGame('plan_full', 120, false, false));
+      none.push(runGame('lean_loop', 120, false, false, { dev_planning_session: 'force_drop' }));
+    }
+
+    const pct = (arr, fn) => Math.round(arr.filter(fn).length / arr.length * 100);
+    const avg = (arr, fn) => (arr.reduce((s, r) => s + fn(r), 0) / arr.length).toFixed(1);
+
+    const rows = [
+      ['Win rate',      pct(lean, r => r.won),                     pct(full, r => r.won),                     pct(none, r => r.won)],
+      ['Bankrupt',      pct(lean, r => r.bankrupt),                pct(full, r => r.bankrupt),                pct(none, r => r.bankrupt)],
+      ['Plan=lean',     pct(lean, r => r.devPlan === 'lean'),      pct(full, r => r.devPlan === 'lean'),      pct(none, r => r.devPlan === 'lean')],
+      ['Plan=full',     pct(lean, r => r.devPlan === 'full'),      pct(full, r => r.devPlan === 'full'),      pct(none, r => r.devPlan === 'full')],
+      ['No plan',       pct(lean, r => r.devPlan == null),         pct(full, r => r.devPlan == null),         pct(none, r => r.devPlan == null)],
+      ['Alex active',   pct(lean, r => r.alexActive),              pct(full, r => r.alexActive),              pct(none, r => r.alexActive)],
+      ['Launched',      pct(lean, r => r.launched),                pct(full, r => r.launched),                pct(none, r => r.launched)],
+      ['Avg product',   avg(lean, r => r.product),                 avg(full, r => r.product),                 avg(none, r => r.product)],
+      ['Avg fit',       avg(lean, r => r.market_fit),              avg(full, r => r.market_fit),              avg(none, r => r.market_fit)],
+      ['Avg customers', avg(lean, r => r.customers),               avg(full, r => r.customers),               avg(none, r => r.customers)],
+      ['Avg week',      avg(lean, r => r.week),                    avg(full, r => r.week),                    avg(none, r => r.week)],
+    ];
+
+    console.log(`\nCHECK planning strategy impact (${RUNS} games each, base: lean_loop)`);
+    console.log(`  ${''.padEnd(16)} lean      full      none`);
+    for (const [label, a, b, c] of rows) {
+      const fmt = v => (typeof v === 'number' ? v + '%' : v).padStart(6);
+      console.log(`  ${label.padEnd(16)} ${fmt(a)}    ${fmt(b)}    ${fmt(c)}`);
+    }
+
+    const leanWins = pct(lean, r => r.won);
+    const fullWins = pct(full, r => r.won);
+    const noneWins = pct(none, r => r.won);
+    const noneNoPlan = pct(none, r => r.devPlan == null);
+
+    const p1 = leanWins > fullWins;
+    const p2 = leanWins > noneWins;
+    const p3 = noneNoPlan >= 80;
+    console.log(`  lean wins more than full:   ${p1 ? 'PASS' : 'FAIL'}  (lean ${leanWins}% vs full ${fullWins}%)`);
+    console.log(`  lean wins more than none:   ${p2 ? 'PASS' : 'FAIL'}  (lean ${leanWins}% vs none ${noneWins}%)`);
+    console.log(`  force_drop leaves no plan:  ${p3 ? 'PASS' : 'FAIL'}  (${noneNoPlan}% have no dev_plan)`);
   })();
 
   // jordan_drag ignored → morale crash → alex_leaving_threat ignored → Alex departs

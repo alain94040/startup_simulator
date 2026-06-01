@@ -203,8 +203,8 @@
       {
         id: 'jordan_ios_sprint', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.ios_sprint_count || 0) === 0
-          ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to get matching and messaging on par with web."
-          : "ios matching view, messaging, notifications — feature parity with web. ready to open it up.",
+          ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to wire up the backend — matching, messaging, notifications through the API."
+          : "iOS connected to the backend — matching, messaging, notifications all live. same experience as web. ready to open it up.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.jordan_active && !s.jordan_drifting && s.week >= 3
           && (char.flags.ios_sprint_count || 0) < 2,
@@ -217,14 +217,13 @@
               if (char.flags.ios_sprint_count >= 2) {
                 s.ios_unblocked = true;
                 if (s.items) {
-                  if (s.items.ios_core) s.items.ios_core.status = 'done';
-                  if (s.items.ios_matching) { s.items.ios_matching.status = 'done'; s.items.ios_matching.quality = 'solid'; }
+                  if (s.items.ios_server) { s.items.ios_server.status = 'done'; s.items.ios_server.quality = 'solid'; }
                 }
                 return "iOS feature complete. Matching, messaging, notifications — same experience as web. Ready to open it up.";
               }
               if (s.items) {
-                if (s.items.ios_core) { s.items.ios_core.status = 'done'; s.items.ios_core.quality = 'solid'; }
-                if (s.items.ios_matching) s.items.ios_matching.status = 'active';
+                if (s.items.ios_ui) { s.items.ios_ui.status = 'done'; s.items.ios_ui.quality = 'solid'; }
+                if (s.items.ios_server) s.items.ios_server.status = 'active';
               }
               return "First iOS sprint done. Profile screen, photo uploads, navigation are working. One more sprint for feature parity with web.";
             } },

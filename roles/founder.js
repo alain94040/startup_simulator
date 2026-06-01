@@ -108,11 +108,16 @@
         },
         options: [
           { label: 'Fix the empty states yourself', key: 'build',
-            execute(s, char) {
+            execute(s, char, e) {
               char.flags.empty_states_built = true;
-              s.product = clamp(s.product + 2, 0, 100);
               s.market_fit = clamp(s.market_fit + 4, 0, 100);
-              return "Added helpful empty states to every screen. Small fix, big impact — beta users stopped asking 'is the app broken?'";
+              const alex = e.chars.get('alex');
+              const jordan = e.chars.get('jordan');
+              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
+              if (jordan) jordan.morale = clamp(jordan.morale + 5, 0, 100);
+              return s.has_beta || s.users > 0
+                ? "Added helpful empty states to every screen. Small fix, big impact — beta users stopped asking 'is the app broken?'"
+                : "Added helpful empty states to every screen. Ready before anyone hits them.";
             } },
           { label: 'Add it to the backlog', key: 'pass',
             execute(s, char) {
