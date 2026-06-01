@@ -59,6 +59,7 @@
         dropDelay: 0, dropMsg: null,
         dropFx(s, char, e) {
           char.flags.equity_proposal = '33/33/33';
+          char.flags.equity_skipped = true;
           const alex = e && e.chars && e.chars.get('alex');
           if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
         },
@@ -67,7 +68,9 @@
       // Week 3a: Alex counters (only if proposal is 33/33/33)
       {
         id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
-        body: "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.",
+        body: (s, char) => char.flags.equity_skipped
+          ? "you didn't respond to jordan. been thinking about it anyway — she's still at her job, i'm all-in. equal thirds means i get the same as someone who's not putting in the same."
+          : "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '33/33/33' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
