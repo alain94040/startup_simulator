@@ -13,6 +13,7 @@ const CARD_PREFS = {
     jordan_equity_counter_alex:    'cave_40',
     jordan_equity_counter_jordan:  'hold_40',
     jordan_equity_counter_both:    'hold_50',
+    jordan_drag:              'talk',
     jordan_drift_start:       'talk',
     jordan_launch_blocker:    'confront',
     jordan_confrontation:     'fire',
@@ -43,6 +44,7 @@ const CARD_PREFS = {
     jordan_equity_counter_alex:    'cave_40',
     jordan_equity_counter_jordan:  'hold_40',
     jordan_equity_counter_both:    'cave_alex',
+    jordan_drag:              'talk',
     jordan_drift_start:       'talk',
     jordan_launch_blocker:    'confront',
     jordan_confrontation:     'fire',
@@ -132,6 +134,7 @@ const CARD_PREFS = {
     jordan_equity_counter_alex:    'cave_40',
     jordan_equity_counter_jordan:  'hold_40',
     jordan_equity_counter_both:    'cave_alex',
+    jordan_drag:              'talk',
     jordan_drift_start:       'talk',
     jordan_launch_blocker:    'confront',
     jordan_confrontation:     'fire',
@@ -191,6 +194,7 @@ const CARD_PREFS = {
     jordan_equity_counter_alex:    'cave_40',
     jordan_equity_counter_jordan:  'hold_40',
     jordan_equity_counter_both:    'cave_alex',
+    jordan_drag:              'talk',
     jordan_drift_start:       'talk',
     jordan_launch_blocker:    'confront',
     jordan_confrontation:     'fire',
@@ -1180,5 +1184,20 @@ if (WINNERS_FLAG) {
     const p2 = priyaWithSkip === 0;
     console.log(`  Priya unlock rate >50% when attended: ${p1 ? 'PASS' : 'FAIL'}  (${priyaWithAttend}%)`);
     console.log(`  Priya never unlocks when skipped:     ${p2 ? 'PASS' : 'FAIL'}  (${priyaWithSkip}%)`);
+  })();
+
+  // jordan_drag ignored (+ confrontation dropped) → Alex departs
+  (() => {
+    const RUNS = 200;
+    const ignored = [];
+    for (let i = 0; i < RUNS; i++) {
+      ignored.push(runGame('lean_loop', 120, false, false,
+        { jordan_drag: 'force_drop', jordan_confrontation: 'force_drop' }));
+    }
+    const pct = (arr, fn) => Math.round(arr.filter(fn).length / arr.length * 100);
+    const alexLeftPct = pct(ignored, r => !r.alexActive);
+    const pass = alexLeftPct >= 80;
+    console.log(`\nCHECK jordan_drag + confrontation ignored → Alex departs (lean_loop, ${RUNS} games)`);
+    console.log(`  Alex left when Jordan signals ignored: ${pass ? 'PASS' : 'FAIL'}  (${alexLeftPct}%)`);
   })();
 }

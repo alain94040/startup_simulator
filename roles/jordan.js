@@ -288,33 +288,37 @@
       },
       {
         id: 'jordan_drag', cat: 't', from: 'Alex',
-        body: (s, char) => {
-          const variants = [
-            "pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday.",
-            "spent half a sprint on iOS debt jordan left. not blocking us, but it's slowing me down.",
-            "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. waiting on her.",
-          ];
-          return variants[(char.flags.drag_count || 0) % variants.length];
-        },
+        body: (s, char) => (char.flags.drag_count || 0) === 0
+          ? "pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday. i've covered it, but this is the second time this sprint."
+          : "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. i've been waiting two days. this can't keep going.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.jordan_drifting && !s.jordan_resolved
-          && s.week >= (char.flags.drag_last || 0) + 2,
+          && char.flags.drag_count < 2
+          && s.week >= (char.flags.drag_last || 0) + 4,
         options: [
-          { label: 'Noted', key: 'ack',
+          { label: 'Talk to Jordan directly', key: 'talk',
             execute(s, char, e) {
               char.flags.drag_count = (char.flags.drag_count || 0) + 1;
               char.flags.drag_last = s.week;
+              s.jordan_confrontation_triggered = true;
               const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 4, 0, 100);
-              return "Alex absorbed it. The problem isn't going away.";
+              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
+              return "Sat down with Jordan. She heard the weight of it. Alex noticed you followed up — the real conversation is coming.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char, e) {
-          char.flags.drag_count = (char.flags.drag_count || 0) + 1;
+          const count = (char.flags.drag_count || 0) + 1;
+          char.flags.drag_count = count;
           char.flags.drag_last = s.week;
           const alex = e && e.chars && e.chars.get('alex');
-          if (alex) alex.morale = clamp(alex.morale - 6, 0, 100);
+          if (count >= 2) {
+            // Second warning ignored — Alex is at breaking point
+            if (alex) { alex.morale = 5; alex.trust = clamp(alex.trust - 20, 0, 100); }
+            s.jordan_confrontation_triggered = true;
+          } else {
+            if (alex) alex.morale = clamp(alex.morale - 12, 0, 100);
+          }
         },
       },
 
