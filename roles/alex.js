@@ -90,8 +90,7 @@
           { label: 'Ask him to pause it', key: 'pause',
             execute(s, char) { char.flags.side_project_resolved = true; char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 5, 0, 100); return "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it."; } },
         ],
-        dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "i've been thinking — i'm putting in more time than we agreed and progress is slow. is our commitment really equal here?",
+        dropDelay: 0, dropMsg: null,
         dropFx(s, char) { char.flags.side_project_resolved = true; char.flags.side_project_active = true; char.morale = clamp(char.morale - 20, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); },
       },
       {
@@ -103,23 +102,40 @@
           { label: 'Tell him the startup needs him fully', key: 'talk',
             execute(s, char) { char.flags.side_project_active = false; char.morale = clamp(char.morale + 22, 0, 100); char.trust = clamp(char.trust + 10, 0, 100); return "Hard conversation. Alex commits fully. He was relieved you brought it up directly."; } },
         ],
-        dropDelay: 3, dropFrom: 'Alex',
-        dropMsg: "i've decided to pursue it seriously. i'll keep helping part-time but i think we both know i'm not fully in anymore.",
-        dropCancel: (s, char) => !char.flags.side_project_active,
-        dropFx(s, char) { char.flags.side_project_active = false; char.morale = clamp(char.morale - 30, 0, 100); char.trust = clamp(char.trust - 25, 0, 100); },
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.side_project_active = false; // set immediately so card can't re-fire
+          char.morale = clamp(char.morale - 30, 0, 100);
+          char.trust  = clamp(char.trust  - 25, 0, 100);
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 3, from: 'Alex', charId: 'alex',
+            text: "i've decided to pursue it seriously. i'll keep helping part-time but i think we both know i'm not fully in anymore.",
+            fx() {},
+            cancel: (st, ch) => !ch || !ch.active || !!ch.flags.departure_resolved,
+          });
+        },
       },
       {
         id: 'alex_quiet', cat: 't', from: 'Alex',
         body: "short replies for 3 days, skipped standup yesterday. you don't know if it's burnout, frustration with progress, or something personal.",
         urgency: 2, weeks: 1,
-        available: (s, char) => s.week > 4 && char.morale < 40,
+        available: (s, char) => s.week > 4 && char.morale < 40 && s.week >= (char.flags.last_quiet || 0) + 4,
         options: [
           { label: 'Check in with him', key: 'checkin',
-            execute(s, char) { char.morale = clamp(char.morale + 20, 0, 100); return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week."; } },
+            execute(s, char) { char.flags.last_quiet = s.week; char.morale = clamp(char.morale + 20, 0, 100); return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week."; } },
         ],
-        dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "i need some space. working from home this week to figure some things out.",
-        dropFx(s, char) { char.morale = clamp(char.morale - 14, 0, 100); char.trust = clamp(char.trust - 6, 0, 100); },
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.last_quiet = s.week; // set immediately so cooldown blocks re-fire
+          char.morale = clamp(char.morale - 14, 0, 100);
+          char.trust  = clamp(char.trust  - 6,  0, 100);
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+            text: "i need some space. working from home this week to figure some things out.",
+            fx() {},
+            cancel: (st, ch) => !ch || ch.morale >= 40,
+          });
+        },
       },
       {
         id: 'alex_equity', cat: 't', from: 'Alex',
@@ -579,7 +595,7 @@
         available: (s, char, e) => e.alexDepartureRisk && char.active,
         options: [
           { label: 'Have the honest conversation', key: 'talk',
-            execute(s, char, e) { char.trust = clamp(char.trust + 20, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); e.alexDepartureRisk = false; return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now."; } },
+            execute(s, char, e) { char.trust = clamp(char.trust + 20, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); char.flags.departure_resolved = true; e.alexDepartureRisk = false; return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
         dropMsg: "i've decided to take the other opportunity. i'm sorry — i'll do a proper handoff this week.",
