@@ -293,7 +293,7 @@
           : "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. i've been waiting two days. this can't keep going.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.jordan_drifting && !s.jordan_resolved
-          && char.flags.drag_count < 2
+          && (char.flags.drag_count || 0) < 2
           && s.week >= (char.flags.drag_last || 0) + 4,
         options: [
           { label: 'Talk to Jordan directly', key: 'talk',

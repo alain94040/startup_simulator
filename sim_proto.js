@@ -1186,18 +1186,18 @@ if (WINNERS_FLAG) {
     console.log(`  Priya never unlocks when skipped:     ${p2 ? 'PASS' : 'FAIL'}  (${priyaWithSkip}%)`);
   })();
 
-  // jordan_drag ignored (+ confrontation dropped) → Alex departs
+  // jordan_drag ignored → morale crash → alex_leaving_threat ignored → Alex departs
   (() => {
     const RUNS = 200;
     const ignored = [];
     for (let i = 0; i < RUNS; i++) {
       ignored.push(runGame('lean_loop', 120, false, false,
-        { jordan_drag: 'force_drop', jordan_confrontation: 'force_drop' }));
+        { jordan_drag: 'force_drop', jordan_confrontation: 'force_drop', alex_leaving_threat: 'force_drop' }));
     }
     const pct = (arr, fn) => Math.round(arr.filter(fn).length / arr.length * 100);
     const alexLeftPct = pct(ignored, r => !r.alexActive);
     const pass = alexLeftPct >= 80;
-    console.log(`\nCHECK jordan_drag + confrontation ignored → Alex departs (lean_loop, ${RUNS} games)`);
-    console.log(`  Alex left when Jordan signals ignored: ${pass ? 'PASS' : 'FAIL'}  (${alexLeftPct}%)`);
+    console.log(`\nCHECK jordan_drag ignored → Alex departs (lean_loop, ${RUNS} games)`);
+    console.log(`  Alex left when Jordan warnings ignored: ${pass ? 'PASS' : 'FAIL'}  (${alexLeftPct}%)`);
   })();
 }
