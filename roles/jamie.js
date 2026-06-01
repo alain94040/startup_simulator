@@ -1,7 +1,7 @@
 (function () {
   const def = {
     id: 'jamie', name: 'Jamie (college friend)', type: 'family',
-    unlockCondition: (s) => s.week >= 2,
+    unlockCondition: (s) => s.week >= 3,
     cards: [
       {
         id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)',

@@ -3,7 +3,7 @@
 
   const def = {
     id: 'david', name: 'David (ex-manager)', type: 'family',
-    unlockCondition: (s) => s.week >= 3,
+    unlockCondition: (s) => s.week >= 7 && s.product >= 15,
     cards: [
       {
         id: 'ff_mentor', cat: 'e', from: 'David (ex-manager)',
