@@ -96,6 +96,8 @@ class Engine {
       marcusCommitted: false, followerCommitted: false,
       game_over: false, game_won: false,
       network: { peers: 12, advisors: 0, angels: 0, press: 0 },
+      items: null,
+      dev_plan: null,
     };
     this.ycWeek = 10 + rnd(8);
 
@@ -313,10 +315,7 @@ class Engine {
       const trustFactor = 'trust' in char ? char.trust / 100 : 1.0;
       const base  = sprintWeeks * 1.2 * skill * sideProjectMult * trustFactor;
       if (char.focus === 'build') {
-        // Building ahead of market_fit loses efficiency exponentially (same mechanic as game.js)
-        const efficiency = clamp(Math.pow(0.88, this.s.product - this.s.market_fit - 10), 0.05, 1.0);
-        const fitMult = this.s.market_fit >= 60 ? 1.3 : 1.0;
-        this.s.product = clamp(this.s.product + base * fitMult * efficiency, 0, 100);
+        // Product now grows only via card plays — no passive increment here
       } else if (char.focus === 'discover') {
         this.s.signal     = clamp(this.s.signal     + base * 1.5, 0, 100);
         this.s.market_fit = clamp(this.s.market_fit + base,       0, 100);

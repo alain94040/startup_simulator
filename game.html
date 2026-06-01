@@ -113,6 +113,78 @@ body::before {
 .hst-val.danger { color: var(--danger); }
 .hst-val.good   { color: var(--good); }
 
+/* Team button */
+#team-btn {
+  margin-left: auto; display: flex; align-items: center; gap: 8px;
+  padding: 5px 10px 5px 14px; border-left: 1px solid var(--border);
+  background: none; border-top: none; border-right: none; border-bottom: none;
+  cursor: pointer; flex-shrink: 0;
+}
+#team-btn:hover .team-btn-lbl { color: var(--text); }
+#team-avs { display: flex; }
+.tbtn-av {
+  width: 26px; height: 26px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; position: relative; flex-shrink: 0;
+}
+.tbtn-av + .tbtn-av { margin-left: -6px; }
+.tbtn-ring {
+  position: absolute; inset: -2px; border-radius: 50%;
+  border: 2px solid #374151; transition: border-color 0.4s;
+}
+.team-btn-lbl { font-size: 11px; font-weight: 600; color: var(--dim2); }
+#team-caret { font-size: 9px; color: var(--dim); transition: transform 0.2s; }
+#team-drop.open ~ * #team-caret,
+#team-btn.open #team-caret { transform: rotate(180deg); }
+
+/* Team dropdown */
+#team-drop {
+  display: none; position: absolute; top: 100%; right: 0; z-index: 200;
+  background: #0c0c1a; border: 1px solid #252540; border-radius: 8px;
+  padding: 10px 12px; min-width: 215px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  font-family: monospace; font-size: 11px;
+}
+#team-drop.open { display: block; }
+.td-member { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
+.td-member + .td-member { border-top: 1px solid #1a1a2e; }
+.td-av {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 800; position: relative; flex-shrink: 0;
+}
+.td-ring {
+  position: absolute; inset: -2px; border-radius: 50%;
+  border: 2px solid #374151; transition: border-color 0.4s;
+}
+.td-info { flex: 1; min-width: 0; }
+.td-name { font-size: 11px; color: var(--dim2); }
+.td-name strong { color: var(--text); font-weight: 500; }
+.td-stats { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: 1px; }
+.td-sep { border-top: 1px solid #1e1e32; margin: 8px 0; }
+
+/* Dev map (inside team dropdown) */
+.dm-hdr {
+  font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: #778;
+  border-bottom: 1px solid #1e1e32; padding-bottom: 5px; margin-bottom: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.dm-badge { font-size: 8px; padding: 1px 6px; border-radius: 3px; }
+.dm-badge-lean   { background: #0a2010; color: #4ade80; border: 1px solid #1a4a28; }
+.dm-badge-full   { background: #1e2a50; color: #60a5fa; border: 1px solid #2a3a70; }
+.dm-badge-sprint { background: #1a1a28; color: #666;    border: 1px solid #2a2a40; }
+.dm-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.dm-indent { padding-left: 12px; border-left: 1px solid #252540; margin-left: 6px; }
+.dm-ico { width: 14px; text-align: center; font-size: 10px; flex-shrink: 0; }
+.dm-lbl { flex: 1; }
+.dm-av  { font-size: 7px; font-weight: 700; width: 20px; height: 20px; border-radius: 50%;
+           display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.dm-done   .dm-ico { color: #4ade80; } .dm-done   .dm-lbl { color: #6ee7b7; }
+.dm-done.dm-rough .dm-ico { color: #d97706; } .dm-done.dm-rough .dm-lbl { color: #d97706; }
+.dm-active .dm-ico { color: #60a5fa; } .dm-active .dm-lbl { color: #93c5fd; font-weight: 500; }
+.dm-todo   .dm-ico { color: #4a4a80; } .dm-todo   .dm-lbl { color: #8080b8; }
+.dm-defer  .dm-ico { color: #404060; } .dm-defer  .dm-lbl { color: #606080; font-style: italic; }
+
 /* Cash animation */
 .hst-val.cash-up   { color: #4ade80; transition: color 0.15s; }
 .hst-val.cash-down { color: #f87171; transition: color 0.15s; }
@@ -135,33 +207,6 @@ body::before {
   100% { opacity: 0;   transform: translateY(-52px) scale(0.9); }
 }
 
-/* Alex status */
-#hud-alex {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-left: 16px;
-  border-left: 1px solid var(--border);
-}
-#alex-av {
-  width: 30px; height: 30px;
-  border-radius: 50%;
-  background: #4c1d95;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 800; color: #c4b5fd;
-  position: relative;
-  flex-shrink: 0;
-}
-#alex-ring {
-  position: absolute; inset: -2px;
-  border-radius: 50%;
-  border: 2px solid var(--good);
-  transition: border-color 0.6s;
-}
-#alex-lbl { font-size: 11px; color: var(--dim2); line-height: 1.4; }
-#alex-lbl strong { color: var(--text); font-weight: 500; }
-#alex-sub { display: block; font-size: 10px; color: var(--dim2); font-variant-numeric: tabular-nums; }
 
 /* ── Stage ──────────────────────────────────────────────── */
 #stage {
@@ -837,6 +882,11 @@ body::before {
   padding: 2px 7px; border-radius: 10px;
   text-transform: uppercase; letter-spacing: 0.4px;
   font-family: 'DM Mono', monospace;
+}
+.hcard-dbg-id {
+  font-size: 8px; font-family: 'DM Mono', monospace;
+  color: #404060; flex: 1; text-align: center; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis;
 }
 .hcard-urg {
   width: 7px; height: 7px; border-radius: 50%;
@@ -1619,15 +1669,23 @@ body::before {
   <div id="hud-week">WEEK 1 · M1</div>
   <div class="hst" id="cash-hst" onclick="openBank()" title="View bank statement"><span class="hst-lbl">Cash <span style="font-size:9px;color:#8b5cf6">↗</span></span><span class="hst-val" id="h-cash">$10k</span></div>
   <div class="hst"><span class="hst-lbl">Runway</span><span class="hst-val" id="h-rwy">20wk</span></div>
-  <div class="hst"><span class="hst-lbl" id="h-prod-lbl">Proto</span><span class="hst-val" id="h-prod">nothing yet</span></div>
+  <div class="hst" id="h-yc-wrap"><span class="hst-lbl">YC</span><span class="hst-val" id="h-yc">—</span></div>
+  <div class="hst"><span class="hst-lbl" id="h-prod-lbl">Build</span><span class="hst-val" id="h-prod">—</span></div>
   <div class="hst"><span class="hst-lbl">Fit</span><span class="hst-val" id="h-fit">0%</span></div>
   <div class="hst"><span class="hst-lbl">Signal</span><span class="hst-val" id="h-sig">28</span></div>
   <div class="hst" id="h-wl-wrap" style="display:none"><span class="hst-lbl">Waitlist</span><span class="hst-val" id="h-wl">0</span></div>
   <div class="hst" id="h-usr-wrap" style="display:none"><span class="hst-lbl">Users</span><span class="hst-val" id="h-usr">0</span></div>
   <div class="hst" style="border-right:none"><span class="hst-lbl">Customers</span><span class="hst-val" id="h-cust">0</span></div>
-  <div id="hud-alex">
-    <div id="alex-av">AL<div id="alex-ring"></div></div>
-    <div id="alex-lbl">Alex — <strong id="alex-st">building</strong><span id="alex-sub"></span></div>
+  <button id="team-btn" onclick="toggleTeamDrop()">
+    <div id="team-avs">
+      <div class="tbtn-av" id="tbtn-al" style="background:#1e3a5f;color:#93c5fd">AL<div class="tbtn-ring" id="tbtn-al-ring"></div></div>
+      <div class="tbtn-av" id="tbtn-jo" style="background:#4c1d95;color:#c4b5fd;display:none">JO<div class="tbtn-ring" id="tbtn-jo-ring"></div></div>
+    </div>
+    <span class="team-btn-lbl">Team</span><span id="team-caret">▾</span>
+  </button>
+  <div id="team-drop">
+    <div id="td-members"></div>
+    <div id="td-roadmap"></div>
   </div>
 </div>
 
@@ -2321,6 +2379,36 @@ function productLabel(s) {
   }
 }
 
+function itemStatusLabel(s) {
+  if (!s || !s.items) return '—';
+  const order = ['backend_api','ios_core','matching','ios_matching','sprint_social','sprint_algo','sprint_mono','sprint_adv','beta'];
+  const active = order.find(k => s.items[k] && s.items[k].status === 'active');
+  if (active) {
+    const lbls = { backend_api:'backend', ios_core:'iOS', matching:'matching', ios_matching:'iOS·match',
+                   sprint_social:'social', sprint_algo:'algorithm', sprint_mono:'premium', sprint_adv:'advanced', beta:'beta' };
+    return lbls[active] || active;
+  }
+  if (s.launched) return 'live';
+  const allDone = order.filter(k => s.items[k]).every(k => s.items[k].status === 'done');
+  return allDone ? 'ready' : '—';
+}
+
+function toggleTeamDrop() {
+  const drop = document.getElementById('team-drop');
+  const caret = document.getElementById('team-caret');
+  const open = drop.classList.toggle('open');
+  caret.style.transform = open ? 'rotate(180deg)' : '';
+}
+
+document.addEventListener('click', e => {
+  const btn  = document.getElementById('team-btn');
+  const drop = document.getElementById('team-drop');
+  if (drop && drop.classList.contains('open') && !btn.contains(e.target) && !drop.contains(e.target)) {
+    drop.classList.remove('open');
+    document.getElementById('team-caret').style.transform = '';
+  }
+});
+
 function fmtCash(v) {
   return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
        : v >= 1000 ? '$' + (v/1000).toFixed(1) + 'k'
@@ -2394,8 +2482,21 @@ function renderHUD() {
   rwe.textContent = rw + 'wk';
   rwe.className   = 'hst-val' + (rw <= 3 ? ' danger' : rw <= 6 ? ' warn' : '');
 
-  document.getElementById('h-prod-lbl').textContent = (s.productPhase || "proto") === "proto" ? "Proto" : "Product";
-  document.getElementById('h-prod').textContent = productLabel(s);
+  document.getElementById('h-prod-lbl').textContent = 'Build';
+  document.getElementById('h-prod').textContent = itemStatusLabel(s);
+
+  const ycEl = document.getElementById('h-yc');
+  if (s.ycAccepted) {
+    ycEl.textContent = '✓ accepted'; ycEl.className = 'hst-val';
+  } else if (s.ycApplied && s.ycDecisionWeek) {
+    ycEl.textContent = `decision wk ${s.ycDecisionWeek}`; ycEl.className = 'hst-val';
+  } else if (!s.ycApplied && E.ycWeek && s.week > E.ycWeek + 3) {
+    ycEl.textContent = `next wk ${E.ycWeek}`; ycEl.className = 'hst-val warn';
+  } else if (E.ycWeek) {
+    ycEl.textContent = `opens wk ${E.ycWeek}`; ycEl.className = 'hst-val';
+  } else {
+    ycEl.textContent = '—'; ycEl.className = 'hst-val';
+  }
   document.getElementById('h-fit').textContent   = Math.round(s.market_fit) + '%';
   document.getElementById('h-sig').textContent   = Math.round(s.signal);
 
@@ -2409,18 +2510,88 @@ function renderHUD() {
 
   document.getElementById('h-cust').textContent  = s.customers;
 
-  const alex = E.chars.get('alex');
-  const ring = document.getElementById('alex-ring');
-  if (!alex || !alex.active) {
-    ring.style.borderColor = '#374151';
-    document.getElementById('alex-st').textContent = 'gone';
-    document.getElementById('alex-sub').textContent = '';
-  } else {
-    ring.style.borderColor = alex.morale > 65 ? '#22c55e' : alex.morale > 35 ? '#f59e0b' : '#ef4444';
-    const fl = { build:'building', discover:'discovery', pitch:'pitching' };
-    document.getElementById('alex-st').textContent = `${fl[alex.focus]||alex.focus}`;
-    document.getElementById('alex-sub').textContent = `T:${alex.trust} · M:${Math.round(alex.morale)}`;
+  renderTeamDrop();
+}
+
+function moraleColor(m) {
+  return m > 65 ? '#22c55e' : m > 35 ? '#f59e0b' : '#ef4444';
+}
+
+function renderTeamDrop() {
+  const s = E.s;
+  const fl = { build: 'building', discover: 'discovery', pitch: 'pitching' };
+  const members = [
+    { id: 'alex',   initials: 'AL', bg: '#1e3a5f', c: '#93c5fd', label: 'Alex',   btnId: 'tbtn-al', ringId: 'tbtn-al-ring' },
+    { id: 'jordan', initials: 'JO', bg: '#4c1d95', c: '#c4b5fd', label: 'Jordan', btnId: 'tbtn-jo', ringId: 'tbtn-jo-ring' },
+  ];
+
+  let membersHtml = '';
+  for (const m of members) {
+    const char = E.chars.get(m.id);
+    const btnAv  = document.getElementById(m.btnId);
+    const btnRng = document.getElementById(m.ringId);
+    if (!char || !char.active) {
+      if (btnAv) btnAv.style.display = 'none';
+      continue;
+    }
+    if (btnAv) { btnAv.style.display = 'flex'; }
+    const rc = moraleColor(char.morale);
+    if (btnRng) btnRng.style.borderColor = rc;
+    const focus  = fl[char.focus] || char.focus || '—';
+    membersHtml += `<div class="td-member">
+      <div class="td-av" style="background:${m.bg};color:${m.c}">${m.initials}<div class="td-ring" style="border-color:${rc}"></div></div>
+      <div class="td-info">
+        <div class="td-name">${m.label} — <strong>${focus}</strong></div>
+        <div class="td-stats">T:${char.trust} · M:${Math.round(char.morale)}</div>
+      </div>
+    </div>`;
   }
+  document.getElementById('td-members').innerHTML = membersHtml;
+
+  // Roadmap section
+  const roadmap = document.getElementById('td-roadmap');
+  if (!s.items) { roadmap.innerHTML = ''; return; }
+
+  const expanded = !!s.items.matching;
+  const plan = s.dev_plan;
+  const ITEM_META = {
+    backend_api:   { lbl: expanded ? 'Backend API'   : 'Backend', av: 'AL' },
+    sprint_social: { lbl: 'Social + push',                        av: '—', indent: true },
+    sprint_algo:   { lbl: 'Algorithm + verif',                    av: '—', indent: true },
+    matching:      { lbl: 'Matching algorithm',                   av: 'AL' },
+    ios_core:      { lbl: expanded ? 'iOS core' : 'iOS',         av: 'JO' },
+    ios_matching:  { lbl: 'iOS matching',                         av: 'JO' },
+    sprint_mono:   { lbl: 'Premium subscription',                 av: '—' },
+    sprint_adv:    { lbl: 'Social graph + video',                 av: '—' },
+    beta:          { lbl: 'Beta',                                 av: 'AL' },
+  };
+  const AV_STYLE = {
+    AL: 'background:#1e3a5f;color:#93c5fd',
+    JO: 'background:#4c1d95;color:#c4b5fd',
+    '—': 'background:#1e1e2a;color:#778',
+  };
+  const ORDER_PRE  = ['backend_api', 'ios_core'];
+  const ORDER_LEAN = ['backend_api', 'matching', 'ios_core', 'ios_matching', 'beta'];
+  const ORDER_FULL = ['backend_api', 'sprint_social', 'sprint_algo', 'matching', 'ios_core', 'ios_matching', 'sprint_mono', 'sprint_adv', 'beta'];
+  const order = !expanded ? ORDER_PRE : (plan === 'full' ? ORDER_FULL : ORDER_LEAN);
+  const badgeCls = { lean: 'dm-badge-lean', full: 'dm-badge-full', sprint: 'dm-badge-sprint' };
+
+  let html = `<div class="td-sep"></div><div class="dm-hdr">${expanded ? 'Roadmap' : 'Build'}<span class="dm-badge ${badgeCls[plan] || 'dm-badge-sprint'}">${plan || '—'}</span></div>`;
+  for (const key of order) {
+    const item = s.items[key];
+    if (!item) continue;
+    const meta = ITEM_META[key] || { lbl: key, av: '—' };
+    const st   = item.status;
+    const icon = st === 'done' ? '✓' : st === 'active' ? '⬤' : st === 'deferred' ? '–' : '☐';
+    let cls = 'dm-item';
+    if (st === 'done')     cls += item.quality === 'rough' ? ' dm-done dm-rough' : ' dm-done';
+    else if (st === 'active')   cls += ' dm-active';
+    else if (st === 'deferred') cls += ' dm-defer';
+    else                        cls += ' dm-todo';
+    if (meta.indent) cls += ' dm-indent';
+    html += `<div class="${cls}"><span class="dm-ico">${icon}</span><span class="dm-lbl">${meta.lbl}</span><span class="dm-av" style="${AV_STYLE[meta.av] || AV_STYLE['—']}">${meta.av}</span></div>`;
+  }
+  roadmap.innerHTML = html;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -2553,6 +2724,7 @@ function renderHand() {
       </div>
       <div class="hcard-foot">
         <span class="hcard-cat-badge" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
+        <span class="hcard-dbg-id">${card.id}</span>
         <span class="hcard-urg ${urgCls}"></span>
       </div>
       <div class="hcard-noplays">Slots<br>full</div>

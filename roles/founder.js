@@ -77,7 +77,7 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.product >= 25 && !char.flags.onboarding_built && alex && alex.active;
+          return !s.launched && s.has_demo && !char.flags.onboarding_built && alex && alex.active;
         },
         options: [
           { label: 'Build it yourself', key: 'build',
@@ -104,7 +104,7 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.product >= 35 && !char.flags.empty_states_built && alex && alex.active;
+          return !s.launched && s.has_demo && !char.flags.empty_states_built && alex && alex.active;
         },
         options: [
           { label: 'Fix the empty states yourself', key: 'build',
@@ -128,7 +128,7 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.product >= 40 && (s.users >= 3 || s.customers >= 1) && !char.flags.export_built && alex && alex.active;
+          return !s.launched && s.has_demo && (s.users >= 3 || s.customers >= 1) && !char.flags.export_built && alex && alex.active;
         },
         options: [
           { label: 'Build photo verification yourself', key: 'build',
@@ -155,7 +155,7 @@
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.product >= 50 && !char.flags.demo_account_built && alex && alex.active;
+          return !s.launched && s.has_beta && !char.flags.demo_account_built && alex && alex.active;
         },
         options: [
           { label: 'Build the demo environment', key: 'build',
@@ -213,7 +213,7 @@
         urgency: 3, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && !alex.active && s.product >= 45 && !s.launched;
+          return alex && !alex.active && s.has_demo && !s.launched;
         },
         options: [
           { label: 'Ship it', key: 'ship',

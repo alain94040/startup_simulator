@@ -203,8 +203,8 @@
       {
         id: 'jordan_ios_sprint', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.ios_sprint_count || 0) === 0
-          ? "got photo uploads working on iOS. push notifications are mostly behaving now. a few rough edges but it moves."
-          : "updated the matching view on iOS. a bit faster now. not quite on par with the web version yet.",
+          ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to get matching and messaging on par with web."
+          : "ios matching view, messaging, notifications — feature parity with web. ready to open it up.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.jordan_active && !s.jordan_drifting && s.week >= 3
           && (char.flags.ios_sprint_count || 0) < 2,
@@ -214,8 +214,19 @@
               char.flags.ios_sprint_count = (char.flags.ios_sprint_count || 0) + 1;
               s.product = clamp(s.product + 5, 0, 100);
               s.signal = clamp(s.signal + 3, 0, 100);
-              if ((char.flags.ios_sprint_count) >= 2) s.ios_unblocked = true;
-              return "iOS is ahead of schedule. Users on mobile are converting better than web.";
+              if (char.flags.ios_sprint_count >= 2) {
+                s.ios_unblocked = true;
+                if (s.items) {
+                  if (s.items.ios_core) s.items.ios_core.status = 'done';
+                  if (s.items.ios_matching) { s.items.ios_matching.status = 'done'; s.items.ios_matching.quality = 'solid'; }
+                }
+                return "iOS feature complete. Matching, messaging, notifications — same experience as web. Ready to open it up.";
+              }
+              if (s.items) {
+                if (s.items.ios_core) { s.items.ios_core.status = 'done'; s.items.ios_core.quality = 'solid'; }
+                if (s.items.ios_matching) s.items.ios_matching.status = 'active';
+              }
+              return "First iOS sprint done. Profile screen, photo uploads, navigation are working. One more sprint for feature parity with web.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -355,7 +366,7 @@
         body: "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.launch_blocker_done
-          && s.product >= 50 && s.has_beta && !s.launched && !s.ios_unblocked,
+          && s.has_beta && !s.launched && !s.ios_unblocked,
         options: [
           { label: 'Launch web-only — fix iOS later', key: 'web_only',
             execute(s, char) {

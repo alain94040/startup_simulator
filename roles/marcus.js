@@ -49,7 +49,7 @@
         id: 'seed_pitch', cat: 'e', from: 'Marcus (angel)',
         body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about me leading your round?",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.product >= 40 && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
+        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.has_beta && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
             if (s.jordan_resolved && s.jordan_cleanup_needed) {
