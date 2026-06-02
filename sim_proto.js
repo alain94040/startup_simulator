@@ -469,6 +469,32 @@ function selectCards(current, strategy, state) {
   return pool.slice(0, 2).map(c => c.id);
 }
 
+// ─── Roadmap helpers ──────────────────────────────────────────────────────────
+
+const ROADMAP_SHORT = {
+  matching_algo: 'match', api_design: 'api', arch_refactor: 'refactor',
+  plans_matching: 'plans', ios_ui: 'ios', ios_server: 'srv', beta: 'beta',
+  sprint_social: 'social', sprint_algo: 'algo', sprint_mono: 'mono',
+  sprint_adv_social: 'adv_s', sprint_adv_video: 'adv_v', plans_ui: 'plans_ui',
+};
+
+function roadmapScore(items) {
+  if (!items) return 0;
+  return Object.values(items).filter(v => v.status === 'done' && v.quality === 'solid').length;
+}
+
+function roadmapStr(items, full = false) {
+  if (!items) return '—';
+  const parts = [];
+  for (const [k, v] of Object.entries(items)) {
+    const s = full ? k : (ROADMAP_SHORT[k] || k);
+    if (v.status === 'done')        parts.push(full ? `${s} (${v.quality === 'solid' ? 'done' : 'done~'})` : `${s}${v.quality === 'solid' ? '✓' : '~'}`);
+    else if (v.status === 'active') parts.push(full ? `${s} (in progress)` : `${s}…`);
+    else if (full && v.status === 'todo') parts.push(`${s} (todo)`);
+  }
+  return parts.length ? (full ? parts.join('\n           ') : parts.join(' ')) : '—';
+}
+
 // ─── Run one game ─────────────────────────────────────────────────────────────
 
 function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOverrides = {}) {
@@ -592,7 +618,8 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
         offered: offeredSnapshot,
         outcomes: results,
         cash: e.s.cash,
-        product: Math.round(e.s.product),
+        roadmap:     roadmapStr(e.s.items),
+        roadmapFull: roadmapStr(e.s.items, true),
         fit: Math.round(e.s.market_fit),
         users: e.s.users,
         customers: e.s.customers,
@@ -608,16 +635,10 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
   const alex = e.chars.get('alex');
   const activeChars = [...e.chars.entries()].filter(([,c]) => c.active).map(([id]) => id);
 
-  function roadmapScore(items) {
-    if (!items) return 0;
-    return Object.values(items).filter(v => v.status === 'done' && v.quality === 'solid').length;
-  }
-
   return {
     won:      e.s.game_won,
     bankrupt: e.s.game_over,
     week:     e.s.week,
-    product:  e.s.product,
     roadmap:  roadmapScore(e.s.items),
     market_fit: e.s.market_fit,
     users:    e.s.users,
@@ -667,9 +688,6 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 
   const avg    = arr => (arr.reduce((s, v) => s + v, 0) / n).toFixed(1);
   const avgRoadmap  = avg(results.map(r => r.roadmap));
-  const avgProduct  = avg(results.map(r => r.product));
-  const minProduct  = Math.min(...results.map(r => r.product)).toFixed(0);
-  const maxProduct  = Math.max(...results.map(r => r.product)).toFixed(0);
   const avgFit      = avg(results.map(r => r.market_fit));
   const minFit      = Math.min(...results.map(r => r.market_fit)).toFixed(0);
   const maxFit      = Math.max(...results.map(r => r.market_fit)).toFixed(0);
@@ -747,7 +765,6 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
            ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged, jordanResolved, activitiesPivoted, devPlanLean, devPlanFull,
            avgWeek, avgUsers, avgCust, avgRoadmap,
-           avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
            priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen,
            uniqueIssues, repetition, weeklyHandSizes,
@@ -919,12 +936,14 @@ function printTrace(trace, label, fullMessages = false) {
       ? `Alex trust:${turn.alexTrust} morale:${turn.alexMorale}`
       : 'Alex: gone';
     const launchStr = turn.launched ? 'launched' : 'pre-launch';
-    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Product ${turn.product}%  Fit ${turn.fit}%  Users ${turn.users}  Customers ${turn.customers}  Signal ${turn.signal}  ${launchStr}  ${alexStr}`);
+    console.log(`\n         Cash $${turn.cash.toLocaleString()}  Fit ${turn.fit}%  Users ${turn.users}  Customers ${turn.customers}  Signal ${turn.signal}  ${launchStr}  ${alexStr}`);
+    const rm = fullMessages ? turn.roadmapFull : turn.roadmap;
+    if (rm && rm !== '—') console.log(`         Roadmap: ${rm}`);
     console.log();
   }
 
   const result = trace.won ? '🏆 WON' : trace.bankrupt ? '💸 BANKRUPT' : '⏱  TIMEOUT';
-  console.log(`  ${result} — Week ${trace.week} · Product ${Math.round(trace.product)}% · Customers ${trace.customers}`);
+  console.log(`  ${result} — Week ${trace.week} · Roadmap: ${trace.roadmap} solid · Customers ${trace.customers}`);
   console.log(`  YC: applied=${trace.ycApplied} accepted=${trace.ycAccepted}`);
   console.log(`  Active chars: ${trace.activeChars.join(', ')}`);
 
@@ -981,7 +1000,7 @@ if (WINNERS_FLAG) {
     console.log(`  Launched: ${r.launched}%  Alex left: ${r.alexLeft}%  Jordan resolved: ${r.jordanResolved}%  Activities pivoted: ${r.activitiesPivoted}%  YC applied: ${r.ycApplied}%  YC accepted: ${r.ycAccepted}%`);
     console.log(`  Marcus committed: ${r.marcusCommit}%  Follower in: ${r.followerCommit}%  Ryan engaged: ${r.ryanEngaged}%`);
     console.log(`  Avg week: ${r.avgWeek}  Avg users (free): ${r.avgUsers}  Avg customers (paying): ${r.avgCust}`);
-    console.log(`  Product — avg: ${r.avgProduct}%  min: ${r.minProduct}%  max: ${r.maxProduct}%`);
+    console.log(`  Roadmap — avg solid items: ${r.avgRoadmap}`);
     console.log(`  Fit     — avg: ${r.avgFit}%  min: ${r.minFit}%  max: ${r.maxFit}%  (fit≥50: ${r.pctReachedFit50}%  fit=100: ${r.pctReachedFit100}%)`);
     console.log(`  Characters unlocked — Priya: ${r.priyaSeen}%  Sarah: ${r.sarahSeen}%  Marcus: ${r.marcusSeen}%  Ryan: ${r.ryanSeen}%  Fatima: ${r.fatimaSeen}%`);
     if (r.avgMoraleWk3 !== null || r.avgMoraleWk10 !== null)
