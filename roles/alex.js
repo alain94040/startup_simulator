@@ -799,9 +799,11 @@
           { label: 'Do the refactor', key: 'refactor',
             execute(s, char) {
               s.alex_rebuild_done = true;
-              char.morale = clamp(char.morale + 15, 0, 100);
-              if (s.items?.api_design) { s.items.api_design.status = 'done'; s.items.api_design.quality = 'solid'; }
-              return "Architecture refactored. Faster, cleaner. Alex is energized.";
+              char.morale = clamp(char.morale + 10, 0, 100);
+              if (s.items?.api_design) { s.items.api_design.status = 'active'; s.items.api_design.quality = null; }
+              if (s.items) { s.items.arch_refactor = { status: 'active', quality: null, assignee: 'alex' }; }
+              s.arch_refactor_wk = s.week + 2;
+              return "Alex is heads-down. He's rebuilding the API layer from scratch — 2 weeks, nothing else gets done.";
             } },
         ],
         dropDelay: 4, dropFrom: 'Alex',
@@ -812,6 +814,27 @@
           s.customers = clamp(s.customers - 2, 0, 9999);
           char.morale = clamp(char.morale - 20, 0, 100);
           if (s.items?.api_design) { s.items.api_design.status = 'done'; s.items.api_design.quality = 'rough'; }
+        },
+      },
+      {
+        id: 'arch_refactor_done', cat: 't', from: 'Alex',
+        body: "refactor's done. rebuilt the api layer from scratch — clean, fast, and can scale past 10k users without touching it again.",
+        urgency: 3, weeks: 1,
+        available: (s) => s.arch_refactor_wk && s.week >= s.arch_refactor_wk && s.items?.arch_refactor?.status === 'active',
+        options: [
+          { label: 'Review the new architecture', key: 'review',
+            execute(s, char) {
+              if (s.items?.api_design) { s.items.api_design.status = 'done'; s.items.api_design.quality = 'solid'; }
+              if (s.items?.arch_refactor) { s.items.arch_refactor.status = 'done'; s.items.arch_refactor.quality = 'solid'; }
+              char.trust = clamp(char.trust + 5, 0, 100);
+              char.morale = clamp(char.morale + 5, 0, 100);
+              return "Walked through the new codebase with Alex. Clean separation, well-documented. He seemed proud of this one.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) {
+          if (s.items?.api_design) { s.items.api_design.status = 'done'; s.items.api_design.quality = 'solid'; }
+          if (s.items?.arch_refactor) { s.items.arch_refactor.status = 'done'; s.items.arch_refactor.quality = 'solid'; }
         },
       },
       {

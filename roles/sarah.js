@@ -10,7 +10,7 @@
         id: 'intro_expiring', cat: 'c', from: 'Sarah (mutual)',
         body: "sarah runs a 'singles in SF' facebook group — 18,000 members, weekly events, huge trust in the community. she heard about kindred from a mutual and wants to explore promoting it to her members. she's also talking to flare. you have until friday.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.week > 3 && !char.flags.intro_done && s.launched,
+        available: (s, char) => s.week > 3 && !char.flags.intro_done && s.launched && s.activities_pivot,
         options: [
           { label: 'Meet with Sarah now', key: 'reply',
             execute(s, char) { char.flags.intro_done = true; s.users += 12; s.signal = clamp(s.signal + 7, 0, 100); s.network.advisors++; return "Met with Sarah. She liked the product and agreed to feature kindred in her next event. 12 signups in the first week. She's now a connector you can rely on."; } },

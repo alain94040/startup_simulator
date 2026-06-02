@@ -2628,6 +2628,7 @@ function renderTeamDrop() {
     _hdr_backend:      { header: true, lbl: 'Backend' },
     matching_algo:     { lbl: 'Matching algorithm',  av: 'AL', indent: true },
     api_design:        { lbl: 'API design',           av: 'AL', indent: true },
+    arch_refactor:     { lbl: 'Arch refactor',        av: 'AL', indent: true },
     sprint_social:     { lbl: 'Social + push',        av: '—',  indent: true },
     sprint_algo:       { lbl: 'Profile verification', av: '—',  indent: true },
     plans_matching:    { lbl: 'Plans matching',       av: 'AL', indent: true },
@@ -2646,8 +2647,8 @@ function renderTeamDrop() {
     '—': 'background:#1e1e2a;color:#778',
   };
   const ORDER_PRE  = ['_hdr_backend','_hdr_ios'];
-  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','plans_matching','_hdr_ios','ios_ui','ios_server','plans_ui','beta'];
-  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','sprint_social','sprint_algo','plans_matching','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','plans_ui','beta'];
+  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','arch_refactor','plans_matching','_hdr_ios','ios_ui','ios_server','plans_ui','beta'];
+  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','arch_refactor','sprint_social','sprint_algo','plans_matching','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','plans_ui','beta'];
   const order = !expanded ? ORDER_PRE : (plan === 'full' ? ORDER_FULL : ORDER_LEAN);
   const badgeCls = { lean: 'dm-badge-lean', full: 'dm-badge-full', sprint: 'dm-badge-sprint' };
 
