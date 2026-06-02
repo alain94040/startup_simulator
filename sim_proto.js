@@ -471,28 +471,24 @@ function selectCards(current, strategy, state) {
 
 // ─── Roadmap helpers ──────────────────────────────────────────────────────────
 
-const ROADMAP_SHORT = {
-  matching_algo: 'match', api_design: 'api', arch_refactor: 'refactor',
-  plans_matching: 'plans', ios_ui: 'ios', ios_server: 'srv', beta: 'beta',
-  sprint_social: 'social', sprint_algo: 'algo', sprint_mono: 'mono',
-  sprint_adv_social: 'adv_s', sprint_adv_video: 'adv_v', plans_ui: 'plans_ui',
-};
 
 function roadmapScore(items) {
   if (!items) return 0;
   return Object.values(items).filter(v => v.status === 'done' && v.quality === 'solid').length;
 }
 
-function roadmapStr(items, full = false) {
+function roadmapStr(items) {
   if (!items) return '—';
   const parts = [];
   for (const [k, v] of Object.entries(items)) {
-    const s = full ? k : (ROADMAP_SHORT[k] || k);
-    if (v.status === 'done')        parts.push(full ? `${s} (${v.quality === 'solid' ? 'done' : 'done~'})` : `${s}${v.quality === 'solid' ? '✓' : '~'}`);
-    else if (v.status === 'active') parts.push(full ? `${s} (in progress)` : `${s}…`);
-    else if (full && v.status === 'todo') parts.push(`${s} (todo)`);
+    if (v.status === 'obsolete') continue;
+    const label = v.status === 'done' ? 'done'
+      : v.status === 'active'   ? 'in progress'
+      : v.status === 'deferred' ? 'deferred'
+      : 'not started';
+    parts.push(`${k} (${label})`);
   }
-  return parts.length ? (full ? parts.join('\n           ') : parts.join(' ')) : '—';
+  return parts.length ? parts.join('  ') : '—';
 }
 
 // ─── Run one game ─────────────────────────────────────────────────────────────
@@ -618,8 +614,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
         offered: offeredSnapshot,
         outcomes: results,
         cash: e.s.cash,
-        roadmap:     roadmapStr(e.s.items),
-        roadmapFull: roadmapStr(e.s.items, true),
+        roadmap: roadmapStr(e.s.items),
         fit: Math.round(e.s.market_fit),
         users: e.s.users,
         customers: e.s.customers,
@@ -937,8 +932,7 @@ function printTrace(trace, label, fullMessages = false) {
       : 'Alex: gone';
     const launchStr = turn.launched ? 'launched' : 'pre-launch';
     console.log(`\n         Cash $${turn.cash.toLocaleString()}  Fit ${turn.fit}%  Users ${turn.users}  Customers ${turn.customers}  Signal ${turn.signal}  ${launchStr}  ${alexStr}`);
-    const rm = fullMessages ? turn.roadmapFull : turn.roadmap;
-    if (rm && rm !== '—') console.log(`         Roadmap: ${rm}`);
+    if (turn.roadmap !== '—') console.log(`         Roadmap: ${turn.roadmap}`);
     console.log();
   }
 
