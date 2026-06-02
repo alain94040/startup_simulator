@@ -160,7 +160,10 @@ body::before {
 .td-info { flex: 1; min-width: 0; }
 .td-name { font-size: 11px; color: var(--dim2); }
 .td-name strong { color: var(--text); font-weight: 500; }
+.td-name strong.st-warn { color: #f59e0b; }
+.td-name strong.st-gone { color: #4b5563; font-style: italic; font-weight: 400; }
 .td-stats { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: 1px; }
+.td-member.is-gone { opacity: 0.45; }
 .td-sep { border-top: 1px solid #1e1e32; margin: 8px 0; }
 
 /* Dev map (inside team dropdown) */
@@ -189,6 +192,7 @@ body::before {
 .dm-step-dot.st-active      { background: #3b82f6; box-shadow: 0 0 7px rgba(59,130,246,0.7); }
 .dm-step-dot.st-todo        { background: transparent; border: 2px solid #2a2a40; }
 .dm-step-dot.st-defer       { background: transparent; border: 2px solid #1e1e30; }
+.dm-step-dot.st-obsolete    { background: transparent; border: 2px solid #4a2028; }
 .dm-step-line { width: 2px; background: #1e2030; flex: 1; min-height: 6px; margin-top: 3px; }
 .dm-step-body { flex: 1; display: flex; align-items: center; gap: 6px; padding-bottom: 7px; }
 .dm-step-lbl { flex: 1; font-size: 11px; }
@@ -197,6 +201,7 @@ body::before {
 .dm-step-lbl.st-active { color: #93c5fd; font-weight: 500; }
 .dm-step-lbl.st-todo   { color: #4a5080; }
 .dm-step-lbl.st-defer  { color: #404060; font-style: italic; text-decoration: line-through; }
+.dm-step-lbl.st-obsolete { color: #5c3040; font-style: italic; text-decoration: line-through; }
 .dm-step-who { font-size: 7px; font-weight: 800; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
 
 /* Cash animation */
@@ -1163,6 +1168,42 @@ body::before {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: none; }
 }
+
+/* ── Debug bar ──────────────────────────────────────────── */
+#debug-bar {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,0,0,0.82);
+  border: 1px solid #7c3a0a;
+  border-radius: 6px;
+  padding: 5px 9px;
+  pointer-events: all;
+}
+#debug-lbl {
+  font-size: 9px;
+  color: #f97316;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  margin-right: 3px;
+}
+#debug-bar button {
+  font-size: 10px;
+  padding: 3px 9px;
+  background: #111;
+  border: 1px solid #333;
+  color: #aaa;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+}
+#debug-bar button:hover { background: #222; color: #fff; border-color: #f97316; }
+#debug-bar button:active { transform: scale(0.95); }
 
 /* ── Intro Overlay ──────────────────────────────────────── */
 #intro-overlay {
@@ -2398,16 +2439,17 @@ function productLabel(s) {
 
 function itemStatusLabel(s) {
   if (!s || !s.items) return '—';
-  const order = ['matching_algo','api_design','ios_ui','ios_server','sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video','beta'];
+  const order = ['matching_algo','api_design','ios_ui','ios_server','sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video','activities_layer','beta'];
   const active = order.find(k => s.items[k] && s.items[k].status === 'active');
   if (active) {
     const lbls = { matching_algo:'matching', api_design:'API', ios_ui:'iOS UI', ios_server:'backend integration',
                    sprint_social:'social', sprint_algo:'verification', sprint_mono:'premium',
-                   sprint_adv_social:'social graph', sprint_adv_video:'video dates', beta:'beta' };
+                   sprint_adv_social:'social graph', sprint_adv_video:'video dates',
+                   activities_layer:'activities', beta:'beta' };
     return lbls[active] || active;
   }
   if (s.launched) return 'live';
-  const allDone = order.filter(k => s.items[k]).every(k => s.items[k].status === 'done');
+  const allDone = order.filter(k => s.items[k]).every(k => ['done','deferred','obsolete'].includes(s.items[k].status));
   return allDone ? 'ready' : '—';
 }
 
@@ -2546,18 +2588,46 @@ function renderTeamDrop() {
     const char = E.chars.get(m.id);
     const btnAv  = document.getElementById(m.btnId);
     const btnRng = document.getElementById(m.ringId);
-    if (!char || !char.active) {
+
+    const isGone = (m.id === 'jordan' && s.jordan_resolved) || (char && !char.active);
+    if (isGone) {
       if (btnAv) btnAv.style.display = 'none';
+      const reason = (m.id === 'jordan') ? 'let go' : 'departed';
+      membersHtml += `<div class="td-member is-gone">
+        <div class="td-av" style="background:#16161f;color:#333">${m.initials}</div>
+        <div class="td-info">
+          <div class="td-name">${m.label} — <strong class="st-gone">${reason}</strong></div>
+          <div class="td-stats">off the team</div>
+        </div>
+      </div>`;
       continue;
     }
-    if (btnAv) { btnAv.style.display = 'flex'; }
+
+    if (!char || !char.active) { if (btnAv) btnAv.style.display = 'none'; continue; }
+    if (btnAv) btnAv.style.display = 'flex';
     const rc = moraleColor(char.morale);
     if (btnRng) btnRng.style.borderColor = rc;
-    const focus  = !s.items ? 'waiting on you' : (fl[char.focus] || char.focus || '—');
+
+    // Status label — surface disconnection states before falling back to focus
+    let focus, statusCls = '';
+    if (m.id === 'jordan' && s.jordan_drifting) {
+      focus = 'going quiet'; statusCls = 'st-warn';
+    } else if (m.id === 'alex' && E.alexDepartureRisk) {
+      focus = 'pulling away'; statusCls = 'st-warn';
+    } else if (char.morale < 25) {
+      focus = 'disengaged'; statusCls = 'st-warn';
+    } else if (char.morale < 40) {
+      focus = 'distant'; statusCls = 'st-warn';
+    } else if (!s.items) {
+      focus = 'waiting on you';
+    } else {
+      focus = fl[char.focus] || char.focus || '—';
+    }
+
     membersHtml += `<div class="td-member">
       <div class="td-av" style="background:${m.bg};color:${m.c}">${m.initials}<div class="td-ring" style="border-color:${rc}"></div></div>
       <div class="td-info">
-        <div class="td-name">${m.label} — <strong>${focus}</strong></div>
+        <div class="td-name">${m.label} — <strong class="${statusCls}">${focus}</strong></div>
         <div class="td-stats">T:${char.trust} · M:${Math.round(char.morale)}</div>
       </div>
     </div>`;
@@ -2571,18 +2641,20 @@ function renderTeamDrop() {
   const expanded = !!s.items.beta;
   const plan = s.dev_plan;
   const ITEM_META = {
-    _hdr_backend:  { header: true, lbl: 'Backend' },
-    matching_algo: { lbl: 'Matching algorithm', av: 'AL', indent: true },
-    api_design:    { lbl: 'API design',          av: 'AL', indent: true },
-    sprint_social: { lbl: 'Social + push',       av: '—',  indent: true },
-    sprint_algo:   { lbl: 'Profile verification', av: '—',  indent: true },
-    _hdr_ios:      { header: true, lbl: 'iOS app' },
-    ios_ui:        { lbl: 'UI design',           av: 'JO', indent: true },
-    ios_server:    { lbl: 'Backend integration',  av: 'JO', indent: true },
-    sprint_mono:   { lbl: 'Premium subscription',av: '—',  indent: true },
-    sprint_adv_social: { lbl: 'Social graph',    av: '—',  indent: true },
-    sprint_adv_video:  { lbl: 'Video dates',     av: '—',  indent: true },
-    beta:          { lbl: 'Beta',                av: 'AL' },
+    _hdr_backend:      { header: true, lbl: 'Backend' },
+    matching_algo:     { lbl: 'Matching algorithm',  av: 'AL', indent: true },
+    api_design:        { lbl: 'API design',           av: 'AL', indent: true },
+    sprint_social:     { lbl: 'Social + push',        av: '—',  indent: true },
+    sprint_algo:       { lbl: 'Profile verification', av: '—',  indent: true },
+    _hdr_ios:          { header: true, lbl: 'iOS app' },
+    ios_ui:            { lbl: 'UI design',            av: 'JO', indent: true },
+    ios_server:        { lbl: 'Backend integration',  av: 'JO', indent: true },
+    sprint_mono:       { lbl: 'Premium subscription', av: '—',  indent: true },
+    sprint_adv_social: { lbl: 'Social graph',         av: '—',  indent: true },
+    sprint_adv_video:  { lbl: 'Video dates',          av: '—',  indent: true },
+    _hdr_activities:   { header: true, lbl: 'Activities' },
+    activities_layer:  { lbl: 'Activities layer',     av: 'AL', indent: true },
+    beta:              { lbl: 'Beta',                 av: 'AL' },
   };
   const AV_STYLE = {
     AL: 'background:#1e3a5f;color:#93c5fd',
@@ -2590,8 +2662,8 @@ function renderTeamDrop() {
     '—': 'background:#1e1e2a;color:#778',
   };
   const ORDER_PRE  = ['_hdr_backend','_hdr_ios'];
-  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','_hdr_ios','ios_ui','ios_server','beta'];
-  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','sprint_social','sprint_algo','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','beta'];
+  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','_hdr_ios','ios_ui','ios_server','_hdr_activities','activities_layer','beta'];
+  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','sprint_social','sprint_algo','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','_hdr_activities','activities_layer','beta'];
   const order = !expanded ? ORDER_PRE : (plan === 'full' ? ORDER_FULL : ORDER_LEAN);
   const badgeCls = { lean: 'dm-badge-lean', full: 'dm-badge-full', sprint: 'dm-badge-sprint' };
 
@@ -2608,13 +2680,17 @@ function renderTeamDrop() {
   for (const key of order) {
     const meta = ITEM_META[key];
     if (!meta) continue;
-    if (meta.header) { html += `<div class="dm-grp">${meta.lbl}</div>`; continue; }
+    if (meta.header) {
+      if (key === '_hdr_activities' && !s.items.activities_layer) continue;
+      html += `<div class="dm-grp">${meta.lbl}</div>`; continue;
+    }
     const item = s.items[key];
     if (!item) continue;
     const st      = item.status;
     const rough   = item.quality === 'rough';
-    const dotCls  = `dm-step-dot st-${st === 'done' ? 'done' : st === 'active' ? 'active' : st === 'deferred' ? 'defer' : 'todo'}${rough ? ' rough' : ''}`;
-    const lblCls  = `dm-step-lbl st-${st === 'done' ? 'done' : st === 'active' ? 'active' : st === 'deferred' ? 'defer' : 'todo'}${rough ? ' rough' : ''}`;
+    const stCls   = st === 'done' ? 'done' : st === 'active' ? 'active' : st === 'deferred' ? 'defer' : st === 'obsolete' ? 'obsolete' : 'todo';
+    const dotCls  = `dm-step-dot st-${stCls}${rough ? ' rough' : ''}`;
+    const lblCls  = `dm-step-lbl st-${stCls}${rough ? ' rough' : ''}`;
     const line    = showLine.has(key) ? '<div class="dm-step-line"></div>' : '';
     const whoHtml = st === 'active' && meta.av !== '—'
       ? `<span class="dm-step-who" style="${AV_STYLE[meta.av]}">${meta.av}</span>` : '';
@@ -3048,6 +3124,69 @@ document.addEventListener('keydown', e => {
 });
 
 // intro already rendered by the early script block above
+
+// ─────────────────────────────────────────────────────────
+// Debug skip
+// ─────────────────────────────────────────────────────────
+const DBG_PREFS = {
+  dev_planning_session: 'lean',
+  alex_commitment:      'accept',
+  start_prototype:      'build',
+  incorporate_week1:    'atlas',
+};
+
+function debugSkipTo(targetWeek) {
+  // Dismiss all overlays
+  ['intro-overlay','htp-overlay','summary-overlay','end-overlay','log-overlay','bank-overlay'].forEach(id => {
+    document.getElementById(id)?.classList.remove('on');
+  });
+
+  // Fresh game state (mirrors boot() without the overlay logic)
+  E = new Engine();
+  slots = [null, null]; prevSnap = null; displayedCash = null;
+  gameLog = []; cashLedger = []; logFilter = null;
+  milestones = { alexGone: false, moneyRaised: false, firstUser: false, firstCustomer: false };
+  msQueue = []; msShowing = false;
+  document.getElementById('end-overlay').classList.remove('on');
+  document.getElementById('deal-btn').classList.remove('on');
+  document.getElementById('hand-deltas').classList.remove('on');
+  document.getElementById('pile-count-val').textContent = '0';
+  E.generateDemands();
+
+  // Auto-advance turns until target week, logging each one
+  while (E.s.week < targetWeek && !E.s.game_over && !E.s.game_won) {
+    const allCards  = [...(E.current || [])];
+    const playable  = allCards.filter(c => c.options?.length > 0);
+    const acted     = playable.slice(0, 2);
+    const actedIds  = acted.map(c => c.id);
+    const optMap    = {};
+    for (const c of acted) {
+      const preferred = DBG_PREFS[c.id] && c.options.find(o => o.key === DBG_PREFS[c.id]);
+      optMap[c.id] = preferred ? preferred.key : c.options[0].key;
+    }
+    const engineOrder = allCards.filter(d => actedIds.includes(d.id)).map(d => d.id);
+    prevSnap = { week: E.s.week };
+    const { results, sprintWeeks, transactions } = E.resolveTurn(actedIds, optMap);
+    cashLedger.push({ week: prevSnap.week, sprintWeeks, transactions, balanceAfter: E.s.cash });
+    logWeek(allCards, actedIds, optMap, results, engineOrder);
+    E.generateDemands();
+  }
+  prevSnap = null;
+  updatePileCount();
+
+  displayedCash = E.s.cash;
+  isDealing = true; renderAll(); isDealing = false;
+}
 </script>
+
+<!-- ── Debug bar ──────────────────────────────────────────── -->
+<div id="debug-bar">
+  <span id="debug-lbl">⚡ skip to</span>
+  <button onclick="debugSkipTo(8)">Wk 8 · beta</button>
+  <button onclick="debugSkipTo(14)">Wk 14 · launch</button>
+  <button onclick="debugSkipTo(20)">Wk 20 · investors</button>
+  <button onclick="debugSkipTo(28)">Wk 28 · late game</button>
+</div>
+
 </body>
 </html>
