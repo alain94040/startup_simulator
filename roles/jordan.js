@@ -212,7 +212,6 @@
           { label: 'Good — keep the momentum', key: 'ack',
             execute(s, char) {
               char.flags.ios_sprint_count = (char.flags.ios_sprint_count || 0) + 1;
-              s.product = clamp(s.product + 5, 0, 100);
               s.signal = clamp(s.signal + 3, 0, 100);
               if (char.flags.ios_sprint_count >= 2) {
                 s.ios_unblocked = true;
@@ -412,7 +411,14 @@
             execute(s, char, e) {
               char.flags.confrontation_done = true;
               s.jordan_resolved = true;
+              s.jordan_cleanup_needed = true; // always needs legal review on departure
               const alex = e.chars.get('alex');
+              if (!s.jordan_equity) {
+                // Equity was never formally signed — Alex sees the same dysfunction
+                if (alex) { alex.morale = clamp(alex.morale - 30, 0, 100); alex.trust = clamp(alex.trust - 25, 0, 100); }
+                e.alexDepartureRisk = true;
+                return "Hard conversation. Jordan left. Then Alex pulled you aside: 'we never actually signed anything. no equity split, no vesting. what are we even building here?' he looked serious.";
+              }
               if (alex) {
                 alex.morale = clamp(alex.morale + 10, 0, 100);
                 alex.trust = clamp(alex.trust + 8, 0, 100);

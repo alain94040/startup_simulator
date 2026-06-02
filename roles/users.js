@@ -72,7 +72,6 @@
           { label: 'Build a lightweight version for everyone', key: 'negotiate',
             execute(s, char) {
               char.flags.custom_request_done = true;
-              s.product = clamp(s.product + 6, 0, 100);
               s.market_fit = clamp(s.market_fit + 4, 0, 100);
               return "Proposed a 60-second video hello instead of full video calls — low friction, easy to build. They agreed. Took 2 weeks but 5 other subscribers turned it on immediately.";
             } },
@@ -88,7 +87,7 @@
         available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && !s.feature_cluster_done,
         options: [
           { label: 'Build the feature', key: 'build',
-            execute(s) { s.feature_cluster_done = true; s.signal = clamp(s.signal + 10, 0, 100); s.product = clamp(s.product + 8, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
+            execute(s) { s.feature_cluster_done = true; s.signal = clamp(s.signal + 10, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
         ],
         dropDelay: 3, dropFrom: 'User',
         dropMsg: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",

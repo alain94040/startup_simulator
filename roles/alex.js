@@ -18,7 +18,21 @@
   function allSprintsResolved(s) {
     if (!s.items) return true;
     const keys = ['sprint_social', 'sprint_algo', 'sprint_mono', 'sprint_adv_social', 'sprint_adv_video'];
-    return keys.every(k => !s.items[k] || s.items[k].status === 'done' || s.items[k].status === 'deferred');
+    return keys.every(k => !s.items[k] || s.items[k].status === 'done' || s.items[k].status === 'deferred' || s.items[k].status === 'obsolete');
+  }
+
+  function applyActivitiesPivot(s) {
+    if (!s.items) return;
+    // Cross out the items built for profile-based matching
+    if (s.items.matching_algo) s.items.matching_algo.status = 'obsolete';
+    if (s.items.ios_ui)        s.items.ios_ui.status        = 'obsolete';
+    // Full-plan sprint items are also superseded
+    ['sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video'].forEach(k => {
+      if (s.items[k] && s.items[k].status === 'todo') s.items[k].status = 'obsolete';
+    });
+    // Add plans-first replacements
+    s.items.plans_matching = { status: 'active', quality: null, assignee: 'alex'   };
+    s.items.plans_ui       = { status: 'todo',   quality: null, assignee: 'jordan' };
   }
 
   function sprintResolved(s, key) {
@@ -40,7 +54,6 @@
           { label: "Game on — everyone start building", key: 'build',
             execute(s, char, e) {
               char.flags.prototype_kicked = true;
-              s.product = clamp(s.product + 10, 0, 100);
               s.jordan_active = true;
               s.activities_cut = true;
               s.items = {
@@ -123,7 +136,7 @@
           { label: "Agree — he'll go full-time once we have traction", key: 'accept',
             execute(s, char) { char.flags.commitment_resolved = true; s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
           { label: 'Push him — we need full commitment now', key: 'push',
-            execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); s.product = clamp(s.product + 4, 0, 100); return "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood."; } },
+            execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); return "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood."; } },
         ],
         dropDelay: 3, dropFrom: 'Alex',
         dropMsg: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?",
@@ -287,9 +300,9 @@
         available: (s, char) => s.dev_plan != null && s.week <= 6 && !char.flags.stack_done,
         options: [
           { label: 'Ship now — fix the algorithm later', key: 'fast',
-            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 4, 0, 100); return "Shipping with the fast version. Alex moving immediately. The 10,000-user problem is a good problem to have."; } },
+            execute(s, char) { char.flags.stack_done = true; return "Shipping with the fast version. Alex moving immediately. The 10,000-user problem is a good problem to have."; } },
           { label: 'Build it to scale from the start', key: 'scalable',
-            execute(s, char) { char.flags.stack_done = true; s.product = clamp(s.product + 2, 0, 100); s.tech_debt -= 5; return "Slower start, cleaner foundation. Alex is happy — he hates rewriting things."; } },
+            execute(s, char) { char.flags.stack_done = true; s.tech_debt -= 5; return "Slower start, cleaner foundation. Alex is happy — he hates rewriting things."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.stack_done = true; },
       },
@@ -329,7 +342,7 @@
         id: 'incorporate_now', cat: 'e', from: 'Alex',
         body: "an advisor we're trying to bring on officially asked us to sign an NDA first. we can't without a legal entity. also need a bank account. stripe atlas or find a lawyer?",
         urgency: 2, weeks: 1, priority: true, ignoreForTrust: true,
-        available: (s, char) => s.week >= 3 && s.week <= 14 && s.product >= 12 && !s.incorporated,
+        available: (s, char) => s.week >= 3 && s.week <= 14 && s.items != null && !s.incorporated,
         options: [
           { label: 'Stripe Atlas — fast and cheap', key: 'atlas',
             execute(s, char) { s.incorporated = true; s.cash = clamp(s.cash - 500, 0, 9999999); return "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account open. Feels official."; } },
@@ -671,6 +684,7 @@
               s.cash = clamp(s.cash - 2000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 15, 0, 100);
               char.morale = clamp(char.morale + 8, 0, 100);
+              applyActivitiesPivot(s);
               return "Three extra weeks, $2k in burn. Rebuilt the product around activity-first matching. Alex's energy shifted — he was waiting for you to see it too.";
             } },
           { label: 'Ship what we have — add activities post-launch', key: 'defer',
@@ -706,6 +720,7 @@
               s.cash = clamp(s.cash - 3000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 8, 0, 100);
               char.morale = clamp(char.morale + 3, 0, 100);
+              applyActivitiesPivot(s);
               return "Two sprints to retrofit activities post-launch. More expensive and disruptive than doing it before. Users who stayed are responding.";
             } },
           { label: "Run user calls — figure out what they actually need", key: 'calls',
@@ -769,7 +784,7 @@
               return "Launched. First real users are in. Feedback starts flowing.";
             } },
           { label: 'Two more weeks', key: 'wait',
-            execute(s, char) { s.good_enough_last = s.week; s.product = clamp(s.product + 6, 0, 100); char.morale = clamp(char.morale - 12, 0, 100); return "Polished a few more things. Alex thinks you're stalling — and he might be right."; } },
+            execute(s, char) { s.good_enough_last = s.week; char.morale = clamp(char.morale - 12, 0, 100); return "Polished a few more things. Alex thinks you're stalling — and he might be right."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
         dropMsg: "another week building in a vacuum. runway is ticking and real users are waiting.",

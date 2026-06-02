@@ -161,9 +161,10 @@ body::before {
 .td-name { font-size: 11px; color: var(--dim2); }
 .td-name strong { color: var(--text); font-weight: 500; }
 .td-name strong.st-warn { color: #f59e0b; }
-.td-name strong.st-gone { color: #4b5563; font-style: italic; font-weight: 400; }
+.td-name strong.st-gone { color: #6b7280; font-style: italic; font-weight: 400; }
 .td-stats { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: 1px; }
-.td-member.is-gone { opacity: 0.45; }
+.td-member.is-gone { opacity: 0.7; }
+.td-member.is-gone .td-stats { color: #6b7280; }
 .td-sep { border-top: 1px solid #1e1e32; margin: 8px 0; }
 
 /* Dev map (inside team dropdown) */
@@ -176,6 +177,7 @@ body::before {
 .dm-badge-lean   { background: #0a2010; color: #4ade80; border: 1px solid #1a4a28; }
 .dm-badge-full   { background: #1e2a50; color: #60a5fa; border: 1px solid #2a3a70; }
 .dm-badge-sprint { background: #1a1a28; color: #666;    border: 1px solid #2a2a40; }
+.dm-badge-pivot  { background: #2a1500; color: #fb923c; border: 1px solid #7c3a0a; }
 .dm-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
 .dm-indent { padding-left: 12px; border-left: 1px solid #252540; margin-left: 6px; }
 .dm-grp { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: #9ca3af; padding: 6px 0 2px; }
@@ -184,24 +186,22 @@ body::before {
 .dm-step { display: flex; gap: 8px; }
 .dm-step-track { display: flex; flex-direction: column; align-items: center; width: 12px; flex-shrink: 0; }
 .dm-step-dot {
-  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 3px;
-  transition: box-shadow 0.3s;
+  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px; font-weight: 700; line-height: 1;
 }
-.dm-step-dot.st-done        { background: #22c55e; }
-.dm-step-dot.st-done.rough  { background: #d97706; }
-.dm-step-dot.st-active      { background: #3b82f6; box-shadow: 0 0 7px rgba(59,130,246,0.7); }
-.dm-step-dot.st-todo        { background: transparent; border: 2px solid #2a2a40; }
-.dm-step-dot.st-defer       { background: transparent; border: 2px solid #1e1e30; }
-.dm-step-dot.st-obsolete    { background: transparent; border: 2px solid #4a2028; }
+.dm-step-dot.st-done     { color: #22c55e; }
+.dm-step-dot.st-active   { border: 2px solid #1e3a5f; border-top-color: #3b82f6; animation: dm-spin 0.8s linear infinite; }
+.dm-step-dot.st-obsolete { border: 2px solid #7a3a4a; }
+@keyframes dm-spin { to { transform: rotate(360deg); } }
 .dm-step-line { width: 2px; background: #1e2030; flex: 1; min-height: 6px; margin-top: 3px; }
 .dm-step-body { flex: 1; display: flex; align-items: center; gap: 6px; padding-bottom: 7px; }
 .dm-step-lbl { flex: 1; font-size: 11px; }
-.dm-step-lbl.st-done   { color: #6ee7b7; }
-.dm-step-lbl.st-done.rough { color: #d97706; }
-.dm-step-lbl.st-active { color: #93c5fd; font-weight: 500; }
-.dm-step-lbl.st-todo   { color: #4a5080; }
-.dm-step-lbl.st-defer  { color: #404060; font-style: italic; text-decoration: line-through; }
-.dm-step-lbl.st-obsolete { color: #5c3040; font-style: italic; text-decoration: line-through; }
+.dm-step-lbl.st-done     { color: #6ee7b7; }
+.dm-step-lbl.st-active   { color: #93c5fd; font-weight: 500; }
+.dm-step-lbl.st-todo     { color: #4a5080; }
+.dm-step-lbl.st-defer    { color: #404060; font-style: italic; text-decoration: line-through; }
+.dm-step-lbl.st-obsolete { color: #b06070; font-style: italic; text-decoration: line-through; }
 .dm-step-who { font-size: 7px; font-weight: 800; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
 
 /* Cash animation */
@@ -2420,32 +2420,16 @@ function renderAll() { renderHUD(); renderHand(); renderSlots(); }
 // ─────────────────────────────────────────────────────────
 // Cash animation helpers
 // ─────────────────────────────────────────────────────────
-function productLabel(s) {
-  const v = s.product;
-  if ((s.productPhase || "proto") === "proto") {
-    if (v < 20) return "nothing yet";
-    if (v < 40) return "duct tape";
-    if (v < 60) return "smoke & mirrors";
-    if (v < 80) return "showable";
-    return "demo ready";
-  } else {
-    if (v < 20) return "blank slate";
-    if (v < 40) return "taking shape";
-    if (v < 60) return "coming together";
-    if (v < 80) return "almost solid";
-    return "ready";
-  }
-}
 
 function itemStatusLabel(s) {
   if (!s || !s.items) return '—';
-  const order = ['matching_algo','api_design','ios_ui','ios_server','sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video','activities_layer','beta'];
+  const order = ['matching_algo','api_design','ios_ui','ios_server','sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video','plans_matching','plans_ui','beta'];
   const active = order.find(k => s.items[k] && s.items[k].status === 'active');
   if (active) {
     const lbls = { matching_algo:'matching', api_design:'API', ios_ui:'iOS UI', ios_server:'backend integration',
                    sprint_social:'social', sprint_algo:'verification', sprint_mono:'premium',
                    sprint_adv_social:'social graph', sprint_adv_video:'video dates',
-                   activities_layer:'activities', beta:'beta' };
+                   plans_matching:'plans matching', plans_ui:'plans UI', beta:'beta' };
     return lbls[active] || active;
   }
   if (s.launched) return 'live';
@@ -2646,14 +2630,14 @@ function renderTeamDrop() {
     api_design:        { lbl: 'API design',           av: 'AL', indent: true },
     sprint_social:     { lbl: 'Social + push',        av: '—',  indent: true },
     sprint_algo:       { lbl: 'Profile verification', av: '—',  indent: true },
+    plans_matching:    { lbl: 'Plans matching',       av: 'AL', indent: true },
     _hdr_ios:          { header: true, lbl: 'iOS app' },
     ios_ui:            { lbl: 'UI design',            av: 'JO', indent: true },
     ios_server:        { lbl: 'Backend integration',  av: 'JO', indent: true },
     sprint_mono:       { lbl: 'Premium subscription', av: '—',  indent: true },
     sprint_adv_social: { lbl: 'Social graph',         av: '—',  indent: true },
     sprint_adv_video:  { lbl: 'Video dates',          av: '—',  indent: true },
-    _hdr_activities:   { header: true, lbl: 'Activities' },
-    activities_layer:  { lbl: 'Activities layer',     av: 'AL', indent: true },
+    plans_ui:          { lbl: 'Plans UI',             av: 'JO', indent: true },
     beta:              { lbl: 'Beta',                 av: 'AL' },
   };
   const AV_STYLE = {
@@ -2662,8 +2646,8 @@ function renderTeamDrop() {
     '—': 'background:#1e1e2a;color:#778',
   };
   const ORDER_PRE  = ['_hdr_backend','_hdr_ios'];
-  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','_hdr_ios','ios_ui','ios_server','_hdr_activities','activities_layer','beta'];
-  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','sprint_social','sprint_algo','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','_hdr_activities','activities_layer','beta'];
+  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','plans_matching','_hdr_ios','ios_ui','ios_server','plans_ui','beta'];
+  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','sprint_social','sprint_algo','plans_matching','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','plans_ui','beta'];
   const order = !expanded ? ORDER_PRE : (plan === 'full' ? ORDER_FULL : ORDER_LEAN);
   const badgeCls = { lean: 'dm-badge-lean', full: 'dm-badge-full', sprint: 'dm-badge-sprint' };
 
@@ -2676,26 +2660,24 @@ function renderTeamDrop() {
     }
   }
 
-  let html = `<div class="td-sep"></div><div class="dm-hdr">${expanded ? 'Roadmap' : 'Build'}<span class="dm-badge ${badgeCls[plan] || 'dm-badge-sprint'}">${plan || '—'}</span></div>`;
+  const pivotBadge = s.activities_pivot ? `<span class="dm-badge dm-badge-pivot">pivoted</span>` : '';
+  let html = `<div class="td-sep"></div><div class="dm-hdr">${expanded ? 'Roadmap' : 'Build'}<span class="dm-badge ${badgeCls[plan] || 'dm-badge-sprint'}">${plan || '—'}</span>${pivotBadge}</div>`;
   for (const key of order) {
     const meta = ITEM_META[key];
     if (!meta) continue;
-    if (meta.header) {
-      if (key === '_hdr_activities' && !s.items.activities_layer) continue;
-      html += `<div class="dm-grp">${meta.lbl}</div>`; continue;
-    }
+    if (meta.header) { html += `<div class="dm-grp">${meta.lbl}</div>`; continue; }
     const item = s.items[key];
     if (!item) continue;
-    const st      = item.status;
-    const rough   = item.quality === 'rough';
-    const stCls   = st === 'done' ? 'done' : st === 'active' ? 'active' : st === 'deferred' ? 'defer' : st === 'obsolete' ? 'obsolete' : 'todo';
-    const dotCls  = `dm-step-dot st-${stCls}${rough ? ' rough' : ''}`;
-    const lblCls  = `dm-step-lbl st-${stCls}${rough ? ' rough' : ''}`;
+    const st     = item.status;
+    const stCls  = st === 'done' ? 'done' : st === 'active' ? 'active' : st === 'deferred' ? 'defer' : st === 'obsolete' ? 'obsolete' : 'todo';
+    const dotCls = `dm-step-dot st-${stCls}`;
+    const lblCls = `dm-step-lbl st-${stCls}`;
+    const dotContent = st === 'done' ? '✓' : '';
     const line    = showLine.has(key) ? '<div class="dm-step-line"></div>' : '';
     const whoHtml = st === 'active' && meta.av !== '—'
       ? `<span class="dm-step-who" style="${AV_STYLE[meta.av]}">${meta.av}</span>` : '';
     html += `<div class="dm-step">
-      <div class="dm-step-track"><div class="${dotCls}"></div>${line}</div>
+      <div class="dm-step-track"><div class="${dotCls}">${dotContent}</div>${line}</div>
       <div class="dm-step-body"><span class="${lblCls}">${meta.lbl}</span>${whoHtml}</div>
     </div>`;
   }
@@ -2936,7 +2918,7 @@ function endWeek() {
   if (E.s.game_over || E.s.game_won) return;
 
   prevSnap = {
-    cash: E.s.cash, product: E.s.product, market_fit: E.s.market_fit,
+    cash: E.s.cash, market_fit: E.s.market_fit,
     signal: E.s.signal, users: E.s.users, customers: E.s.customers, week: E.s.week,
     alexActive: E.chars.get('alex')?.active ?? true,
   };
@@ -2984,11 +2966,10 @@ function showResultStrip(results, sprintWeeks) {
 
   const fmtD = (v, isInt) => (v >= 0 ? '+' : '') + (isInt ? Math.round(v) : v);
   const deltas = [
-    { lbl:'Cash',    d: cur.cash       - s.cash,       str: v => (v>=0?'+$':'-$')+Math.abs(Math.round(v/100)*100).toLocaleString() },
-    { lbl:(cur.productPhase||'proto')==='proto'?'Proto':'Product', d: cur.product - s.product, str: v => fmtD(Math.round(v))+'%' },
-    { lbl:'Fit',     d: cur.market_fit - s.market_fit, str: v => fmtD(Math.round(v))+'%' },
-    { lbl:'Signal',  d: cur.signal     - s.signal,     str: v => fmtD(Math.round(v)) },
-    { lbl:'Users',   d: cur.users      - s.users,      str: v => fmtD(v, true) },
+    { lbl:'Cash',   d: cur.cash       - s.cash,       str: v => (v>=0?'+$':'-$')+Math.abs(Math.round(v/100)*100).toLocaleString() },
+    { lbl:'Fit',    d: cur.market_fit - s.market_fit, str: v => fmtD(Math.round(v))+'%' },
+    { lbl:'Signal', d: cur.signal     - s.signal,     str: v => fmtD(Math.round(v)) },
+    { lbl:'Users',  d: cur.users      - s.users,      str: v => fmtD(v, true) },
   ].filter(x => Math.abs(x.d) >= 1);
 
   document.getElementById('hand-deltas').innerHTML =
@@ -3047,11 +3028,10 @@ function showSummary(results, sprintWeeks) {
 
   // Deltas
   const deltas = [
-    { lbl:'Cash',    d: s.cash - prev.cash,        fmt: v => (v>=0?'+':'')+Math.round(v/100)*100 },
-    { lbl:(s.productPhase||'proto')==='proto'?'Proto':'Product', d: s.product - prev.product, fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
-    { lbl:'Fit',     d: s.market_fit - prev.market_fit, fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
-    { lbl:'Signal',  d: s.signal - prev.signal,    fmt: v => (v>=0?'+':'')+Math.round(v) },
-    { lbl:'Users',   d: s.users - prev.users,      fmt: v => (v>=0?'+':'')+v },
+    { lbl:'Cash',   d: s.cash - prev.cash,            fmt: v => (v>=0?'+':'')+Math.round(v/100)*100 },
+    { lbl:'Fit',    d: s.market_fit - prev.market_fit, fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
+    { lbl:'Signal', d: s.signal - prev.signal,         fmt: v => (v>=0?'+':'')+Math.round(v) },
+    { lbl:'Users',  d: s.users - prev.users,           fmt: v => (v>=0?'+':'')+v },
   ].filter(d => Math.abs(d.d) >= 1);
 
   document.getElementById('sum-deltas').innerHTML = deltas.map(d =>
@@ -3135,6 +3115,32 @@ const DBG_PREFS = {
   incorporate_week1:    'atlas',
 };
 
+// Mirrors lean_loop selectCards from sim_proto.js: critical first, then
+// product/customer by phase, then urgency descending.
+function debugSelectCards(hand, s) {
+  const CRITICAL = new Set([
+    'start_prototype','incorporate_week1','dev_planning_session',
+    'alex_commitment','alex_equity','vision_mismatch','jordan_confrontation',
+    'alex_demo_ready','alex_beta_ready','good_enough_launch',
+    'jordan_confrontation','activity_pivot','bad_retention',
+  ]);
+  const fit = s.market_fit || 0;
+  let catOrder;
+  if (fit < 50)      catOrder = { c: 0, p: 1, e: 2, t: 3 };
+  else if (!s.launched) catOrder = { p: 0, c: 1, t: 2, e: 3 };
+  else               catOrder = { e: 0, c: 1, p: 2, t: 3 };
+
+  const rank = c => {
+    if (CRITICAL.has(c.id)) return 0;
+    return 1 + (catOrder[c.cat] ?? 9);
+  };
+  const playable = hand.filter(c => c.options?.length > 0);
+  return playable.slice().sort((a, b) => {
+    const d = rank(a) - rank(b);
+    return d !== 0 ? d : (b.urgency || 0) - (a.urgency || 0);
+  }).slice(0, 2);
+}
+
 function debugSkipTo(targetWeek) {
   // Dismiss all overlays
   ['intro-overlay','htp-overlay','summary-overlay','end-overlay','log-overlay','bank-overlay'].forEach(id => {
@@ -3156,8 +3162,7 @@ function debugSkipTo(targetWeek) {
   // Auto-advance turns until target week, logging each one
   while (E.s.week < targetWeek && !E.s.game_over && !E.s.game_won) {
     const allCards  = [...(E.current || [])];
-    const playable  = allCards.filter(c => c.options?.length > 0);
-    const acted     = playable.slice(0, 2);
+    const acted     = debugSelectCards(allCards, E.s);
     const actedIds  = acted.map(c => c.id);
     const optMap    = {};
     for (const c of acted) {

@@ -268,14 +268,6 @@ class Engine {
       if (cashDelta !== 0) transactions.push({ label: m, delta: cashDelta, type: cashDelta > 0 ? 'income' : 'expense' });
     }
 
-    // Significant fit gain while fit is still low means some built work is now wrong.
-    const fitDelta = this.s.market_fit - marketFitBefore;
-    if (fitDelta >= 8 && marketFitBefore < 50) {
-      const rework = Math.round(fitDelta * 0.25);
-      this.s.product = clamp(this.s.product - rework, 0, 100);
-      results.push(`Better understanding of the problem means parts of what was built no longer fit. -${rework}% product to realign.`);
-    }
-
     const sprintWeeks = Math.max(...chosen.map(d => d.weeks), 1);
 
     for (const d of dropped) {

@@ -46,7 +46,7 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && alex.active && alex.focus === 'build' && s.product < 70
+          return alex && alex.active && alex.focus === 'build' && !s.has_beta
             && s.week >= (s.cobuild_last || 0) + 4;
         },
         options: [
@@ -54,7 +54,6 @@
             execute(s, char, e) {
               s.cobuild_last = s.week;
               const alex = e.chars.get('alex');
-              s.product = clamp(s.product + 3, 0, 100);
               if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
               return "Paired up. You worked on the profiles UI, Alex handled the matching algorithm. Your contribution was modest but Alex shipped faster with you there.";
             } },
@@ -83,7 +82,6 @@
           { label: 'Build it yourself', key: 'build',
             execute(s, char, e) {
               char.flags.onboarding_built = true;
-              s.product = clamp(s.product + 3, 0, 100);
               s.market_fit = clamp(s.market_fit + 5, 0, 100);
               return "Built the onboarding end-to-end. Took longer than expected — not your strongest skill — but it shipped. Alex could stay heads-down on the backend.";
             } },
@@ -91,7 +89,6 @@
             execute(s, char, e) {
               char.flags.onboarding_built = true;
               const alex = e.chars.get('alex');
-              s.product = clamp(s.product + 4, 0, 100);
               if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
               return "Gave Alex the spec. He'll fit it in — but his queue just got longer.";
             } },
@@ -139,7 +136,6 @@
           { label: 'Build photo verification yourself', key: 'build',
             execute(s, char) {
               char.flags.export_built = true;
-              s.product = clamp(s.product + 2, 0, 100);
               s.market_fit = clamp(s.market_fit + 6, 0, 100);
               return "Photo verification shipped. All four users upgraded. One said it was the only thing holding them back.";
             } },
@@ -147,7 +143,6 @@
             execute(s, char, e) {
               char.flags.export_built = true;
               const alex = e.chars.get('alex');
-              s.product = clamp(s.product + 3, 0, 100);
               if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
               return "Alex added it to his sprint. Shipped two weeks later. Two of the four users had moved on.";
             } },
@@ -229,7 +224,6 @@
             } },
           { label: 'One more week of polish', key: 'wait',
             execute(s) {
-              s.product = clamp(s.product + 1, 0, 100);
               return "Polished a few things. Still not launched.";
             } },
         ],
@@ -241,19 +235,18 @@
         urgency: 2, weeks: 2,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && !alex.active && s.product < 100 && s.week >= (s.solo_build_last || 0) + 6;
+          return alex && !alex.active && s.week >= (s.solo_build_last || 0) + 6;
         },
         options: [
           { label: 'Put in the hours', key: 'build',
             execute(s) {
               s.solo_build_last = s.week;
-              s.product = clamp(s.product + 2, 0, 100);
+              s.market_fit = clamp(s.market_fit + 2, 0, 100);
               return "Two weeks of solo heads-down. Much slower without Alex — things that used to take a day take a week. The product is barely moving.";
             } },
           { label: 'Do the minimum', key: 'min',
             execute(s) {
               s.solo_build_last = s.week;
-              s.product = clamp(s.product + 1, 0, 100);
               return "Kept things barely moving. Not much progress but nothing broke.";
             } },
         ],

@@ -195,9 +195,9 @@
 
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
-        body: "YC applications just opened. Your stats qualify — 60%+ product, 10+ paying subscribers. A lot of founders in the consumer social space are applying.",
+        body: "YC applications just opened. Your stats qualify — live product, 10+ paying subscribers. A lot of founders in the consumer social space are applying.",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.product >= 60 && s.customers >= 10,
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.launched && s.customers >= 10,
         options: [
           { label: 'Start writing the application', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; s.ycQualified = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
@@ -208,9 +208,9 @@
       },
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
-        body: "YC applications just opened. Stats aren't quite there — need 60% product, 10 paying subscribers. Some apply anyway for partner feedback. Apply or wait?",
+        body: "YC applications just opened. Stats aren't quite there yet — not launched or fewer than 10 paying subscribers. Some apply anyway for partner feedback. Apply or wait?",
         urgency: 2, weeks: 1, priority: true,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (s.product < 60 || s.customers < 10),
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (!s.launched || s.customers < 10),
         options: [
           { label: 'Start writing anyway', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; s.ycQualified = false; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },

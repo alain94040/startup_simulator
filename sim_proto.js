@@ -101,7 +101,7 @@ const CARD_PREFS = {
     alex_demo_ready:          'rough',
     alex_beta_ready:          'open',
     good_enough_launch:       'ship',
-    yc_discussion_ready:      'apply',
+    yc_discussion_ready:      'skip',
     yc_discussion_early:      'skip',
     consultant_growth:        'hire',
     consultant_brand:         'pass',
@@ -427,8 +427,7 @@ function selectCards(current, strategy, state) {
 
   if (strategy === 'lean_loop' || strategy === 'ignore_meetup' || strategy === 'keep_jordan' || strategy === 'plan_lean' || strategy === 'plan_full') {
     const s = state || {};
-    const fit     = s.market_fit || 0;
-    const product = s.product    || 0;
+    const fit = s.market_fit || 0;
     const CONSULTANT_IDS = new Set(['consultant_growth', 'consultant_brand']);
     const MEETUP_IDS     = strategy === 'ignore_meetup' ? new Set(['founder_meetup']) : new Set();
     const YC_IDS         = new Set(['yc_apply', 'yc_discussion_ready', 'yc_discussion_early', 'seed_pitch', 'fatima_commit']);
@@ -436,7 +435,7 @@ function selectCards(current, strategy, state) {
     const JORDAN_FORCED  = strategy === 'keep_jordan'
       ? new Set(['jordan_confrontation', 'jordan_fulltime_ask'])
       : new Set();
-    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation', 'dev_planning_session']);
+    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation', 'dev_planning_session', 'activity_pivot']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
@@ -445,7 +444,7 @@ function selectCards(current, strategy, state) {
     if (fit < 50) {
       // Discover phase: talk to customers, but still build alongside
       catOrder = { c: 0, p: 1, e: 2, t: 3 };
-    } else if (product < 80) {
+    } else if (!s.launched) {
       // Build phase: ship product, stay close to users
       catOrder = { p: 0, c: 1, t: 2, e: 3 };
     } else {
@@ -609,11 +608,17 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
   const alex = e.chars.get('alex');
   const activeChars = [...e.chars.entries()].filter(([,c]) => c.active).map(([id]) => id);
 
+  function roadmapScore(items) {
+    if (!items) return 0;
+    return Object.values(items).filter(v => v.status === 'done' && v.quality === 'solid').length;
+  }
+
   return {
     won:      e.s.game_won,
     bankrupt: e.s.game_over,
     week:     e.s.week,
     product:  e.s.product,
+    roadmap:  roadmapScore(e.s.items),
     market_fit: e.s.market_fit,
     users:    e.s.users,
     customers:e.s.customers,
@@ -661,6 +666,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
   const avgCust   = (results.reduce((s,r) => s+r.customers, 0) / n).toFixed(1);
 
   const avg    = arr => (arr.reduce((s, v) => s + v, 0) / n).toFixed(1);
+  const avgRoadmap  = avg(results.map(r => r.roadmap));
   const avgProduct  = avg(results.map(r => r.product));
   const minProduct  = Math.min(...results.map(r => r.product)).toFixed(0);
   const maxProduct  = Math.max(...results.map(r => r.product)).toFixed(0);
@@ -740,7 +746,7 @@ function runStrategy(name, strategy, n = 100, noYC = false) {
 
   return { name, n, wins, bankrupt, timeout, errors, launched, alexLeft,
            ycApplied, ycAccepted, marcusCommit, followerCommit, ryanEngaged, jordanResolved, activitiesPivoted, devPlanLean, devPlanFull,
-           avgWeek, avgUsers, avgCust,
+           avgWeek, avgUsers, avgCust, avgRoadmap,
            avgProduct, minProduct, maxProduct,
            avgFit, minFit, maxFit, pctReachedFit50, pctReachedFit100,
            priyaSeen, marcusSeen, fatimaSeen, ryanSeen, sarahSeen,
@@ -1023,16 +1029,15 @@ if (WINNERS_FLAG) {
     check(`distracted.alexLeft (${s.distracted.alexLeft}%) > alex_first.alexLeft (${s.alex_first.alexLeft}%)`,
           s.distracted.alexLeft > s.alex_first.alexLeft);
 
-    // Product: ignoring Alex should not produce dramatically more product than engaging him
-    check(`ignore_alex.avgProduct (${s.ignore_alex.avgProduct}%) not much higher than alex_first.avgProduct (${s.alex_first.avgProduct}%)`,
-          parseFloat(s.ignore_alex.avgProduct) <= parseFloat(s.alex_first.avgProduct) + 15);
-    check(`ignore_alex.avgProduct (${s.ignore_alex.avgProduct}%) < lean_loop.avgProduct (${s.lean_loop.avgProduct}%)`,
-          s.ignore_alex.avgProduct < s.lean_loop.avgProduct);
+    // Ignoring Alex must produce fewer roadmap items completed than actively engaging him
+    check(`ignore_alex.avgRoadmap (${s.ignore_alex.avgRoadmap}) < alex_first.avgRoadmap (${s.alex_first.avgRoadmap})`,
+          parseFloat(s.ignore_alex.avgRoadmap) < parseFloat(s.alex_first.avgRoadmap));
+    check(`ignore_alex.avgRoadmap (${s.ignore_alex.avgRoadmap}) < lean_loop.avgRoadmap (${s.lean_loop.avgRoadmap})`,
+          parseFloat(s.ignore_alex.avgRoadmap) < parseFloat(s.lean_loop.avgRoadmap));
 
-    // Controlled test: pushing full-time (rand_fulltime) beats part-time (rand_parttime) on product
-    // Both strategies are otherwise identical (random card selection, random options)
-    check(`rand_parttime.avgProduct (${s.rand_parttime.avgProduct}%) < rand_fulltime.avgProduct (${s.rand_fulltime.avgProduct}%)`,
-          s.rand_parttime.avgProduct < s.rand_fulltime.avgProduct);
+    // Controlled test: full-time commitment (rand_fulltime) reduces Alex departure vs part-time (rand_parttime)
+    check(`rand_parttime.alexLeft (${s.rand_parttime.alexLeft}%) >= rand_fulltime.alexLeft (${s.rand_fulltime.alexLeft}%)`,
+          s.rand_parttime.alexLeft >= s.rand_fulltime.alexLeft);
 
     // YC application behaviour
     check(`yc_grind.ycApplied (${s.yc_grind.ycApplied}%) >= 90%`,
@@ -1227,7 +1232,7 @@ if (WINNERS_FLAG) {
 
   // ── Planning strategy impact: lean vs full vs no planning ───────────────────
   (() => {
-    const RUNS = 200;
+    const RUNS = 500;
     const lean = [], full = [], none = [];
     for (let i = 0; i < RUNS; i++) {
       lean.push(runGame('plan_lean', 120, false, false));

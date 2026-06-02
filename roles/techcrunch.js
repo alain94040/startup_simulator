@@ -3,13 +3,13 @@
 
   const def = {
     id: 'techcrunch', name: 'TechCrunch', type: 'press',
-    unlockCondition: (s) => s.product > 15,
+    unlockCondition: (s) => s.items != null,
     cards: [
       {
         id: 'competitor_launch', cat: 'e', from: 'TechCrunch',
         body: "Flare just came out of stealth with $3M. same space — serious relationships, same price point. they already have 5,000 users from a TikTok campaign.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.product > 20 && !char.flags.done,
+        available: (s, char) => s.has_demo && !char.flags.done,
         options: [
           { label: 'Study what they built', key: 'study',
             execute(s, char, e) {
@@ -36,7 +36,6 @@
               char.flags.done = true;
               s.competitor_launch_week = s.week;
               s.copied_competitor = true;
-              s.product = clamp(s.product + 4, 0, 100);
               s.market_fit = clamp(s.market_fit - 8, 0, 100);
               s.signal = clamp(s.signal - 5, 0, 100);
               const alex = e.chars.get('alex');

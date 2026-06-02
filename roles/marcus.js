@@ -52,14 +52,15 @@
         available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.has_beta && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
-            if (s.jordan_resolved && s.jordan_cleanup_needed) {
+            if (s.jordan_cleanup_needed) {
               s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100);
               const jordan = e && e.chars && e.chars.get('jordan');
               const jPct = jordan && jordan.flags.equity_proposal === '33/33/33' ? '33%' : jordan && jordan.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
               return `Marcus: "one flag before we go further — there's a ${jPct} stake on the cap table with no vesting schedule. who is that and why do they still own that much of the company? we'd need that cleaned up before i can lead a round."`;
             }
             const alexGone = e && !(e.chars.get('alex')?.active ?? true);
-            const score = clamp(s.customers * 2, 0, 35) + clamp(s.product / 5, 0, 20)
+            const productPts = s.launched ? 20 : s.has_beta ? 12 : s.has_demo ? 6 : 0;
+            const score = clamp(s.customers * 2, 0, 35) + productPts
               + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0);
             const baseP = score >= 65 ? 0.85 : score >= 50 ? 0.55 : 0.15;
             if (Math.random() < (alexGone ? baseP * 0.25 : baseP)) {
