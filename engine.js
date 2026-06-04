@@ -307,7 +307,10 @@ class Engine {
       const trustFactor = 'trust' in char ? char.trust / 100 : 1.0;
       const base  = sprintWeeks * 1.2 * skill * sideProjectMult * trustFactor;
       if (char.focus === 'build') {
-        // Product now grows only via card plays — no passive increment here
+        // Full-time cofounders build at 1×; part-time at 0.5×. Trust decay (from ignored cards)
+        // already feeds into trustFactor above, so distracted founders accumulate effort slower.
+        const ptMult = id === 'alex' ? (char.flags.committed_fulltime ? 1.0 : 0.5) : 1.0;
+        char.buildEffort = (char.buildEffort || 0) + base * ptMult;
       } else if (char.focus === 'discover') {
         this.s.signal     = clamp(this.s.signal     + base * 1.5, 0, 100);
         this.s.market_fit = clamp(this.s.market_fit + base,       0, 100);

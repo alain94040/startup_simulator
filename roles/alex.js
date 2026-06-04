@@ -464,7 +464,7 @@
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
         body: "profiles and matching work end-to-end for the first time. create an account, get matched, send a message. that's the core hypothesis. want to put it in front of real people?",
         urgency: 3, weeks: 1,
-        available: (s) => s.week >= 5 && s.items?.matching_algo?.status === 'active' && !s.launched,
+        available: (s, char) => (char.buildEffort || 0) >= 4 && s.items?.matching_algo?.status === 'active' && !s.launched,
         options: [
           { label: 'Show it rough — learn fast', key: 'rough',
             execute(s) {
@@ -802,7 +802,7 @@
               char.morale = clamp(char.morale + 10, 0, 100);
               if (s.items?.api_design) { s.items.api_design.status = 'active'; s.items.api_design.quality = null; }
               if (s.items) { s.items.arch_refactor = { status: 'active', quality: null, assignee: 'alex' }; }
-              s.arch_refactor_wk = s.week + 2;
+              s.arch_refactor_effort_target = (char.buildEffort || 0) + 2.0;
               return "Alex is heads-down. He's rebuilding the API layer from scratch — 2 weeks, nothing else gets done.";
             } },
         ],
@@ -820,7 +820,7 @@
         id: 'arch_refactor_done', cat: 't', from: 'Alex',
         body: "refactor's done. rebuilt the api layer from scratch — clean, fast, and can scale past 10k users without touching it again.",
         urgency: 3, weeks: 1,
-        available: (s) => s.arch_refactor_wk && s.week >= s.arch_refactor_wk && s.items?.arch_refactor?.status === 'active',
+        available: (s, char) => s.arch_refactor_effort_target != null && (char.buildEffort || 0) >= s.arch_refactor_effort_target && s.items?.arch_refactor?.status === 'active',
         options: [
           { label: 'Review the new architecture', key: 'review',
             execute(s, char) {

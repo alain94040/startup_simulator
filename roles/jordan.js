@@ -206,8 +206,11 @@
           ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to wire up the backend — matching, messaging, notifications through the API."
           : "iOS connected to the backend — matching, messaging, notifications all live. same experience as web. ready to open it up.",
         urgency: 2, weeks: 1,
-        available: (s, char) => s.jordan_active && !s.jordan_drifting && s.week >= 3
-          && (char.flags.ios_sprint_count || 0) < 2,
+        available: (s, char) => {
+          const count = char.flags.ios_sprint_count || 0;
+          return s.jordan_active && !s.jordan_drifting && count < 2
+            && (char.buildEffort || 0) >= (count === 0 ? 2 : 5);
+        },
         options: [
           { label: 'Good — keep the momentum', key: 'ack',
             execute(s, char) {

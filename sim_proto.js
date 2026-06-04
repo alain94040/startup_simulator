@@ -54,7 +54,7 @@ const CARD_PREFS = {
     jordan_launch_blocker:    'confront',
     jordan_confrontation:     'fire',
     jordan_cap_table:         'lawyer',
-    alex_commitment:          'accept',
+    alex_commitment:          'push',
     vision_mismatch:          'alex',
     alex_sync_discover:       'discover',
     alex_sync_build:          'discover',
@@ -1288,6 +1288,37 @@ if (WINNERS_FLAG) {
     console.log(`  lean wins more than full:   ${p1 ? 'PASS' : 'FAIL'}  (lean ${leanWins}% vs full ${fullWins}%)`);
     console.log(`  lean wins more than none:   ${p2 ? 'PASS' : 'FAIL'}  (lean ${leanWins}% vs none ${noneWins}%)`);
     console.log(`  force_drop leaves no plan:  ${p3 ? 'PASS' : 'FAIL'}  (${noneNoPlan}% have no dev_plan)`);
+  })();
+
+  // part-time Alex → demo fires later than full-time
+  (() => {
+    const RUNS = 300;
+
+    function avgDemoWeek(commitmentKey) {
+      const weeks = [];
+      for (let i = 0; i < RUNS; i++) {
+        const e = new Engine();
+        for (let turn = 0; turn < 35 && !e.s.has_demo && !e.s.game_over && e.s.week <= 22; turn++) {
+          e.generateDemands();
+          if (e.current.length === 0) break;
+          const ids = selectCards(e.current, 'lean_loop', e.s);
+          const opts = pickOptions(e.current, ids, 'lean_loop', e.s);
+          if (e.current.some(c => c.id === 'alex_commitment')) {
+            if (!ids.includes('alex_commitment')) ids.push('alex_commitment');
+            opts['alex_commitment'] = commitmentKey;
+          }
+          const weekBefore = e.s.week;
+          e.resolveTurn(ids, opts);
+          if (e.s.has_demo) { weeks.push(weekBefore); break; }
+        }
+      }
+      return weeks.length ? (weeks.reduce((a, b) => a + b) / weeks.length).toFixed(1) : '—';
+    }
+
+    const ftWeek = avgDemoWeek('push');   // full-time
+    const ptWeek = avgDemoWeek('accept'); // part-time
+    const pass = parseFloat(ptWeek) >= parseFloat(ftWeek) + 3;
+    console.log(`\nCHECK part-time slows product: demo week avg — full-time: ${ftWeek}  part-time: ${ptWeek}  ${pass ? 'PASS' : 'FAIL'}`);
   })();
 
   // jordan_drag ignored → morale crash → alex_leaving_threat ignored → Alex departs
