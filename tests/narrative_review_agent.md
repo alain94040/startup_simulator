@@ -10,7 +10,6 @@ The player is a founder taking a startup from idea to seed round. Each sprint (u
 
 **Key stats shown at the end of each sprint:**
 - `Cash` — starts at $10k, burns $500/week
-- `Product` — 0–100%, built by Alex
 - `Fit` (market_fit) — 0–100%, built through discovery
 - `Users` — free users (post-launch)
 - `Customers` — paying customers (post-launch)
@@ -59,6 +58,9 @@ Delayed messages are formatted as `CharacterName: "text in double quotes"`.
 - **Common issue**: Alex's delayed messages (queued before his departure) used to fire after he left. This is now fixed in the engine, but watch for regressions.
 - **Another issue**: Alex has cards that fire based on his `focus` (build vs. discover). Cards about "should we shift to discovery" (`alex_sync_discover`) should NOT fire post-launch — by that point the question is moot. Check for this card appearing when `launched=true`.
 - **Language watch**: Alex's discovery cards say "we've been heads-down building without talking to anyone outside" — this is wrong post-launch when the company has users and customers. Flag any sprint where this card appears after launch.
+
+### Jordan (co-founder)
+- works with Alex on development at first, is under-performing, player is given clues. Hard to win unless the player fires Jordan and cleans up the equity table
 
 ### Priya (advisor)
 - **Unlocks only after the player attends a meetup** (the `founder_meetup` card, available weeks 2–6 and 8–11). Until then she must not appear.
