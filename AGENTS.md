@@ -1,45 +1,41 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-The repository lives flat in the root – no module system or build step is used.
+## Project Structure
+
 ```
-├─ game.js            # Core game logic
-├─ startup_game.html  # Main UI for playing the game
-├─ tests.html         # Test harness and definitions
-├─ styles.css         # UI styles
-├─ game_summary.md    # High‑level walkthrough
-├─ game_js_patch.txt  # Historical patches for the JS logic
-└─ readme.md
+├─ engine.js           # Engine class — pure game logic, no DOM
+├─ roles/              # One file per character (alex.js, jordan.js, priya.js, …)
+├─ game.html           # Active browser UI (inline CSS + JS, loads engine + roles)
+├─ sim_proto.js        # Node.js simulation harness — primary analysis tool
+├─ earlymap.js         # Gantt-style card availability map for weeks 1–8
+├─ treemap.js          # Static progression dependency tree
+├─ test_card_balance.js # Card balance regression tests
+└─ tests/              # testing.md, narrative_review_agent.md
 ```
-All source lives in the repository root.
 
-## Build, Test, and Development Commands
-| Action | Command | What it does |
-|--------|---------|--------------|
-| Open UI | `open startup_game.html` | Launches the interactive game in the default browser |
-| Run tests | `open tests.html` | Executes the bundled test harness and displays a pass/fail summary |
-After editing `game.js` or `styles.css`, simply refresh the page.
+No build step. No dependencies. Everything runs directly in the browser or Node.js.
 
-## Coding Style & Naming Conventions
-* 2‑space indentation, consistent semicolons.
-* Classes: `PascalCase` (e.g., `StartupGame`).
-* Functions / methods: `camelCase`.
-* Constants: `UPPER_SNAKE_CASE` (rare in this repo).
-* Strings: double quotes (`"`).
-* Linting: run `eslint --env browser` if a linter is added.
+## Commands
 
-## Testing Guidelines
-The tests live in `tests.html` and use a simple harness providing `test(name, fn)` and `assert(cond, msg)`.
-* Test names should be descriptive, e.g., *"Launch product before funding"*.
-* Run tests by opening `tests.html` in a browser; results appear automatically.
+| Action | Command |
+|--------|---------|
+| Play | `open game.html` |
+| Run simulation | `node sim_proto.js 1000` |
+| Card map | `node earlymap.js` |
+| Progression tree | `node treemap.js` |
+| Card balance tests | `node test_card_balance.js` |
 
-## Commit & Pull Request Guidelines
-* Commit messages: one‑line imperative, no emoji, e.g., `Add player score tracking`.
-* PRs: include a brief description, link to an issue if applicable, and screenshots for visual changes.
-* Checklist: tests pass, UI loads correctly, and lint passes (if a linter is in use).
+## Coding Style
 
-## Security & Configuration Tips
-* The game runs entirely in the browser; no server or external dependencies.
-* Tests and the UI can be opened from any local file system without network access.
-* If the repo is extended to include a backend, CI will need `npm install && npm test`.
+- 2-space indentation, double quotes, semicolons.
+- `engine.js` must stay free of DOM manipulation.
+- `roles/*.js` must use the IIFE + `module.exports` / `ROLES.id` dual-export pattern.
 
+## Testing
+
+Run `node sim_proto.js 1000` for regression testing. Do not change thresholds when a test fails — investigate the logic instead.
+
+## Commit Guidelines
+
+- One-line imperative commit messages, no emoji.
+- No force-pushes to main.
