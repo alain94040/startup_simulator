@@ -310,18 +310,23 @@
         id: 'founder_user_depth', cat: 'c', from: 'You',
         body: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on kindred — are they going on dates? are they happy with their matches?",
         urgency: 2, weeks: 1,
-        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2) && s.week >= (s.user_depth_last || 0) + 6,
+        available: (s) => s.launched && (s.users >= 5 || s.customers >= 2)
+          && (s.user_depth_count || 0) < 2 && s.week >= (s.user_depth_last || 0) + 6,
         options: [
           { label: 'Five sessions — watch them use it', key: 'deep',
             execute(s) {
               s.user_depth_last = s.week;
+              s.user_depth_count = (s.user_depth_count || 0) + 1;
               s.market_fit = clamp(s.market_fit + 8, 0, 100);
               s.signal = clamp(s.signal + 6, 0, 100);
-              return "Five sessions done. Two users showed you patterns you didn't expect — they message matches in bursts, then go silent for days. You found why 30% churn in week 2 and fixed it immediately.";
+              if (s.user_depth_count === 1)
+                return "Five sessions done. Two users showed you patterns you didn't expect — they message matches in bursts, then go silent for days. You found why 30% churn in week 2 and fixed it immediately.";
+              return "Five sessions done. Same burst-then-silence pattern, but this time you found where drop-off happens later in the conversation — users who don't get a reply within 48 hours almost never come back. Adjusted the nudge timing.";
             } },
           { label: 'Send a structured survey', key: 'survey',
             execute(s) {
               s.user_depth_last = s.week;
+              s.user_depth_count = (s.user_depth_count || 0) + 1;
               s.market_fit = clamp(s.market_fit + 5, 0, 100);
               s.signal = clamp(s.signal + 3, 0, 100);
               return "Survey sent. 60% response rate. Useful signal, but nothing you didn't already suspect.";

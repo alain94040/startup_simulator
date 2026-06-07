@@ -16,9 +16,17 @@
           { label: 'Drop everything and fix it', key: 'fix',
             execute(s) { s.bug_reports_last = s.week; return "Fixed the crash. Users notified. Goodwill recovered."; } },
         ],
-        dropDelay: 1, dropFrom: 'Subscriber',
-        dropMsg: "we cancelled. the bug never got fixed and we had a deadline. no hard feelings.",
-        dropFx(s) { s.bug_reports_last = s.week; s.customers = clamp(s.customers - 2, 0, 9999); s.signal = clamp(s.signal - 10, 0, 100); },
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          s.bug_reports_last = s.week;
+          s.customers = clamp(s.customers - 2, 0, 9999);
+          s.signal = clamp(s.signal - 10, 0, 100);
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 1, from: 'Subscriber',
+            text: "we cancelled. the bug never got fixed and we had a deadline. no hard feelings.",
+            fx() {},
+          });
+        },
       },
       {
         id: 'churn_interview', cat: 'c', from: 'Customer',
@@ -89,9 +97,16 @@
           { label: 'Build the feature', key: 'build',
             execute(s) { s.feature_cluster_done = true; s.signal = clamp(s.signal + 10, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Built the feature. All 3 users loved it. Two immediately referred a colleague."; } },
         ],
-        dropDelay: 3, dropFrom: 'User',
-        dropMsg: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",
-        dropFx(s) { s.feature_cluster_done = true; s.signal = clamp(s.signal - 8, 0, 100); },
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          s.feature_cluster_done = true;
+          s.signal = clamp(s.signal - 8, 0, 100);
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 3, from: 'User',
+            text: "asked about this feature weeks ago. still nothing. starting to wonder if you're listening.",
+            fx() {},
+          });
+        },
       },
       {
         id: 'waitlist_cold', cat: 'c', from: 'Waitlist signups',

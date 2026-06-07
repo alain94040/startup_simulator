@@ -95,7 +95,7 @@
                 if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
               });
               s.items.plans_matching = { status: "active", quality: null, assignee: "alex"   };
-              s.items.plans_ui       = { status: "todo",   quality: null, assignee: "jordan" };
+              s.items.plans_ui       = { status: "todo",   quality: null, assignee: s.jordan_resolved ? null : "jordan" };
             }
           } else {
             s.pivot_deferred = true;

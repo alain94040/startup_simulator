@@ -67,7 +67,7 @@
         body: "Flare hit 10,000 users. two of your subscribers emailed asking if you're planning to add video dates — the feature Flare just launched.",
         urgency: 3, weeks: 1,
         available: (s) => s.competitor_ignored && !s.competitor_pressure_done
-          && s.week >= (s.competitor_launch_week || 0) + 3,
+          && s.customers >= 1 && s.week >= (s.competitor_launch_week || 0) + 3,
         options: [
           { label: 'Do user calls — understand what they actually need', key: 'calls',
             execute(s) {

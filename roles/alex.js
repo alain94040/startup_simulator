@@ -220,10 +220,10 @@
         id: 'alex_equity', cat: 't', from: 'Alex',
         body: "third time this month. 'i'm not sure the current split reflects what i'm actually contributing.' getting harder to deflect.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.week >= 16 && char.morale < 55,
+        available: (s, char) => s.week >= 16 && char.morale < 55 && !char.flags.equity_resolved,
         options: [
           { label: 'Revise fairly', key: 'fair',
-            execute(s, char) { char.morale = clamp(char.morale + 30, 0, 100); char.trust = clamp(char.trust + 15, 0, 100); return "Revised the split. Both sides signed. Relationship back on solid ground."; } },
+            execute(s, char) { char.flags.equity_resolved = true; char.morale = clamp(char.morale + 30, 0, 100); char.trust = clamp(char.trust + 15, 0, 100); return "Revised the split. Both sides signed. Relationship back on solid ground."; } },
           { label: 'Bargain hard', key: 'hard',
             execute(s, char) { char.morale = clamp(char.morale + 8, 0, 100); return "Pushed back hard. Alex accepted for now but isn't happy — expect this again."; } },
           { label: 'Defer it', key: 'defer',
@@ -850,6 +850,7 @@
         ],
         dropDelay: 4, dropFrom: 'Alex',
         dropMsg: "3 active outages this week from the tech debt i flagged. we're losing users in real time.",
+        dropCancel: (s) => !s.launched,
         dropFx(s, char) {
           s.alex_rebuild_done = true;
           s.users = clamp(s.users - 8, 0, 9999);
@@ -888,9 +889,17 @@
           { label: 'Ship photo verification by Friday', key: 'ship',
             execute(s, char) { char.flags.decision_done = true; s.customers += 1; char.morale = clamp(char.morale + 5, 0, 100); return "Pulled it off. User upgraded immediately. Set clear boundaries with Alex about making commitments without checking first."; } },
         ],
-        dropDelay: 1, dropFrom: 'User',
-        dropMsg: "it's monday. still nothing. i'm going to try flare instead.",
-        dropFx(s, char) { char.flags.decision_done = true; s.signal = clamp(s.signal - 10, 0, 100); s.customers = clamp(s.customers - 1, 0, 9999); },
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.decision_done = true;
+          s.signal = clamp(s.signal - 10, 0, 100);
+          s.customers = clamp(s.customers - 1, 0, 9999);
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 1, from: 'User',
+            text: "it's monday. still nothing. i'm going to try flare instead.",
+            fx() {},
+          });
+        },
       },
 
       // ── DEPARTURE ARC ────────────────────────────────────────────────────────

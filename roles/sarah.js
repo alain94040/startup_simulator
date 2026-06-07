@@ -17,7 +17,7 @@
         ],
         dropDelay: 1, dropFrom: 'Sarah',
         dropMsg: "went with flare — they got back to me faster. let me know if you want to revisit.",
-        dropFx(s, char) { s.signal = clamp(s.signal - 8, 0, 100); },
+        dropFx(s, char) { char.flags.intro_done = true; s.signal = clamp(s.signal - 8, 0, 100); },
       },
     ],
   };
