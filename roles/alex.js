@@ -32,7 +32,7 @@
     });
     // Add plans-first replacements
     s.items.plans_matching = { status: 'active', quality: null, assignee: 'alex'   };
-    s.items.plans_ui       = { status: 'todo',   quality: null, assignee: 'jordan' };
+    s.items.plans_ui       = { status: 'todo',   quality: null, assignee: s.jordan_resolved ? null : 'jordan' };
   }
 
   function sprintResolved(s, key) {
@@ -456,7 +456,8 @@
           { label: 'Remind each other why', key: 'talk',
             execute(s, char) { char.flags.family_doubt_resolved = true; char.morale = clamp(char.morale + 12, 0, 100); return "Long talk. Reminded each other why you're doing this. Morale reset."; } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.family_doubt_resolved = true; },
       },
 
       // ── MID: PRODUCT ────────────────────────────────────────────────────────
@@ -663,47 +664,88 @@
         dropDelay: 0, dropMsg: null,
         dropFx(s) { if (s.items?.sprint_adv_video) s.items.sprint_adv_video.status = 'deferred'; },
       },
+      // ── PIVOT DISCUSSION (card 2 of 3: Alex pushes back on Jordan's flag) ──────
       {
-        id: 'activity_pivot', cat: 'p', from: 'Alex',
-        body: (s, char) => {
-          const d = char.flags.pivot_dismissed || 0;
-          if (d === 0)
-            return "went through beta signups. a few people mentioned wanting something to do with a match — not just chat. 'is there a way to find something to actually do?' could be noise. flagging it.";
-          if (d === 1)
-            return "keep seeing it. five separate users now, all saying some version of 'i matched, then had no idea where to go.' they want something to do, not just someone to talk to. i think this is real.";
-          return "been thinking about this for a few weeks. we built matching. the problem they actually have isn't finding someone — it's having somewhere to go. we cut the activities layer to ship the MVP and i think we cut the wrong thing.";
+        id: 'pivot_alex_pushback', cat: 'p', from: 'Alex',
+        body: (s) => {
+          const base = "heard what jordan flagged. i disagree. we cut activities for a reason — scope creep is what kills startups at our stage. we built a strong matching engine. users always want more features. three people saying 'i don't know what to do' doesn't mean we rip up the product right before we're ready to ship.";
+          return s.met_priya
+            ? base + " priya pushed back on me — she said she's seen this kind of signal get ignored before. i respect her, but she didn't build this."
+            : base;
         },
-        urgency: 2, weeks: 2,
-        available: (s, char) => s.activities_cut && s.has_beta && !char.flags.activity_pivot_done
-          && !s.launched && s.week >= (char.flags.pivot_next_week || 0),
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const jordan = e.chars.get("jordan");
+          return jordan && jordan.flags.pivot_open_done && !char.flags.pivot_direction_set
+            && s.activities_cut && !s.jordan_resolved && s.week <= 22;
+        },
         options: [
-          { label: 'Pivot — rebuild around activities before launch', key: 'pivot',
+          { label: "Alex is right — ship what we have, add activities post-launch", key: "ship",
+            execute(s, char, e) {
+              char.flags.pivot_direction = "ship";
+              char.flags.pivot_direction_set = true;
+              s.pivot_direction_game = "ship";
+              char.morale = clamp(char.morale + 6, 0, 100);
+              const jordan = e.chars.get("jordan");
+              if (jordan) jordan.morale = clamp(jordan.morale - 5, 0, 100);
+              if (!s.met_priya) {
+                s.pivot_resolved_flag = true;
+                s.pivot_deferred = true;
+              }
+              return "Alex looked relieved. Jordan went quiet — she's not sure you're right, but she'll build the release checklist.";
+            } },
+          { label: "The signal is real — I think we should pivot", key: "pivot",
             execute(s, char) {
-              char.flags.activity_pivot_done = true;
+              char.flags.pivot_direction = "pivot";
+              char.flags.pivot_direction_set = true;
+              s.pivot_direction_game = "pivot";
+              char.morale = clamp(char.morale - 8, 0, 100);
+              return "Alex went quiet. 'Okay. It's your call.' He doesn't agree.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.pivot_direction = "ship";
+          char.flags.pivot_direction_set = true;
+          s.pivot_direction_game = "ship";
+          const jordan = e && e.chars && e.chars.get("jordan");
+          if (jordan) jordan.morale = clamp(jordan.morale - 5, 0, 100);
+          if (!s.met_priya) { s.pivot_resolved_flag = true; s.pivot_deferred = true; }
+        },
+      },
+      // ── PIVOT DISCUSSION (card 3 of 3: Alex counter, no-Priya pivot path) ────
+      {
+        id: 'pivot_counter_alex', cat: 'p', from: 'Alex',
+        body: "i still think you're wrong. we built the right product — the matching engine is solid. i'll build whatever you decide. but i want it on the record: we're adding scope we already said no to.",
+        urgency: 2, weeks: 1,
+        available: (s, char) => char.flags.pivot_direction === "pivot" && !s.pivot_resolved_flag
+          && !s.met_priya && s.week <= 22,
+        options: [
+          { label: "I've made the call — we pivot", key: "confirm",
+            execute(s, char, e) {
+              s.pivot_resolved_flag = true;
               s.activities_pivot = true;
               s.cash = clamp(s.cash - 2000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 15, 0, 100);
-              char.morale = clamp(char.morale + 8, 0, 100);
+              char.morale = clamp(char.morale - 10, 0, 100);
+              const jordan = e.chars.get("jordan");
+              if (jordan) jordan.morale = clamp(jordan.morale + 5, 0, 100);
               applyActivitiesPivot(s);
-              return "Three extra weeks, $2k in burn. Rebuilt the product around activity-first matching. Alex's energy shifted — he was waiting for you to see it too.";
+              return "Alex went quiet. 'Okay.' Three weeks. $2k. Rebuilding around activities.";
             } },
-          { label: 'Ship what we have — add activities post-launch', key: 'defer',
+          { label: "You're right — we ship as planned", key: "reverse",
             execute(s, char) {
-              char.flags.activity_pivot_done = true;
+              s.pivot_resolved_flag = true;
               s.pivot_deferred = true;
-              return "Shipped as planned. Adding features to a growing product is harder than adding them to one nobody's using yet — but runway is real.";
-            } },
-          { label: "Disagree — matching is the product", key: 'stay',
-            execute(s, char) {
-              char.flags.activity_pivot_done = true;
-              char.morale = clamp(char.morale - 8, 0, 100);
-              return "Pushed back. Alex dropped it. Three users asked the same question, and that question isn't going away.";
+              char.morale = clamp(char.morale + 5, 0, 100);
+              return "Alex seemed relieved. Shipping as planned.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char) {
-          char.flags.pivot_dismissed = (char.flags.pivot_dismissed || 0) + 1;
-          char.flags.pivot_next_week = s.week + 3;
+          s.pivot_resolved_flag = true;
+          s.pivot_deferred = true;
+          char.morale = clamp(char.morale + 5, 0, 100);
         },
       },
       {

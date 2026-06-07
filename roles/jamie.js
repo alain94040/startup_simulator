@@ -31,7 +31,8 @@
               return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
             } },
         ],
-        dropDelay: 0, dropMsg: null, dropFx: null,
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.done = true; },
       },
     ],
   };

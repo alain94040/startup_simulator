@@ -262,6 +262,31 @@
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
       },
 
+      // ── PIVOT DISCUSSION (card 1 of 3: Jordan surfaces the user signal) ────────
+      {
+        id: 'pivot_open', cat: 'p', from: 'Jordan',
+        body: (s, char) => (char.flags.pivot_dismissed || 0) >= 2
+          ? "this has come up four separate times now. i'm not saying we pivot — i'm saying we need to have the conversation."
+          : "been going through beta feedback threads. three users independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
+        urgency: (s, char) => (char.flags.pivot_dismissed || 0) >= 2 ? 3 : 2,
+        weeks: 1,
+        available: (s, char) => s.activities_cut && s.has_beta && s.market_fit >= 5
+          && s.jordan_active && !s.jordan_resolved && !s.launched
+          && !char.flags.pivot_open_done && s.week >= (char.flags.pivot_open_wait || 0),
+        options: [
+          { label: "Good flag — let's talk through it", key: "open",
+            execute(s, char) {
+              char.flags.pivot_open_done = true;
+              return "On the agenda. Good that someone flagged it before launch.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          char.flags.pivot_dismissed = (char.flags.pivot_dismissed || 0) + 1;
+          char.flags.pivot_open_wait = s.week + 3;
+        },
+      },
+
       // ── DRIFT PHASE ──────────────────────────────────────────────────────────
       {
         id: 'jordan_drift_start', cat: 't', from: 'Alex',
@@ -325,9 +350,14 @@
           char.flags.drag_last = s.week;
           const alex = e && e.chars && e.chars.get('alex');
           if (count >= 2) {
-            // Second warning ignored — Alex is at breaking point
             if (alex) { alex.morale = 5; alex.trust = clamp(alex.trust - 20, 0, 100); }
             s.jordan_confrontation_triggered = true;
+            // Surface the breaking point so the player understands the morale crash
+            if (e && e.pending) e.pending.push({
+              fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
+              text: "you've been aware of the jordan situation for weeks. i've been covering for her and saying nothing. it's been affecting me more than i let on.",
+              fx() {},
+            });
           } else {
             if (alex) alex.morale = clamp(alex.morale - 12, 0, 100);
           }
@@ -415,6 +445,27 @@
               char.flags.confrontation_done = true;
               s.jordan_resolved = true;
               s.jordan_cleanup_needed = true; // always needs legal review on departure
+              // Reassign Jordan's open roadmap items
+              if (s.items) {
+                if (s.items.ios_server && s.items.ios_server.status !== 'done' && s.items.ios_server.status !== 'obsolete') {
+                  s.items.ios_server.assignee = 'alex';
+                  e.pending.push({
+                    fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+                    text: "picked up jordan's ios backend integration. took a few days to orient in her code but it's running.",
+                    fx(st) {
+                      if (st.items?.ios_server) { st.items.ios_server.status = 'done'; st.items.ios_server.quality = 'solid'; }
+                      st.ios_unblocked = true;
+                    },
+                    cancel: (st) => !!st.ios_unblocked,
+                  });
+                }
+                if (s.items.ios_ui && s.items.ios_ui.status !== 'done' && s.items.ios_ui.status !== 'obsolete') {
+                  s.items.ios_ui.assignee = 'alex';
+                }
+                if (s.items.plans_ui && s.items.plans_ui.status !== 'done' && s.items.plans_ui.status !== 'obsolete') {
+                  s.items.plans_ui.assignee = null;
+                }
+              }
               const alex = e.chars.get('alex');
               if (!s.jordan_equity) {
                 // Equity was never formally signed — Alex sees the same dysfunction
