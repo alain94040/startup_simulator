@@ -20,7 +20,10 @@
               s.signal = clamp(s.signal + 4, 0, 100);
               const alex = e.chars.get('alex');
               if (alex && alex.active) alex.morale = clamp(alex.morale - 3, 0, 100);
-              return "Spent 2 weeks mapping their product. They went broad — swiping, video dates, lots of noise. Your niche is the gap they skipped. Alex helped with the analysis.";
+              const alexActive = e.chars.get('alex')?.active;
+              return alexActive
+                ? "Spent 2 weeks mapping their product. They went broad — swiping, video dates, lots of noise. Your niche is the gap they skipped. Alex helped with the analysis."
+                : "Spent 2 weeks mapping their product. They went broad — swiping, video dates, lots of noise. Your niche is the gap they skipped.";
             } },
           { label: 'Write a comparison piece', key: 'compare',
             execute(s, char, e) {

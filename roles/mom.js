@@ -5,7 +5,7 @@
     label: "Ask if they'd put money in", key: 'ask',
     execute(s, char) {
       char.flags.done = true;
-      if (Math.random() < 0.9) { s.cash += 8000; return "Mom called back. They're in for $8,000. It hits different when it's family money."; }
+      if (Math.random() < 0.9) { s.cash += 5000; return "Mom called back. They're in for $5,000. It hits different when it's family money."; }
       return "They'd love to help but timing is bad — stretched with the house right now.";
     },
   };
@@ -48,7 +48,7 @@
           { label: 'Let them invest', key: 'ask',
             execute(s, char) {
               char.flags.done = true;
-              if (Math.random() < 0.9) { s.cash += 8000; return "Mom called back. They're in for $8,000. It hits different when it's family money."; }
+              if (Math.random() < 0.9) { s.cash += 5000; return "Mom called back. They're in for $5,000. It hits different when it's family money."; }
               return "They'd love to help but timing is bad — stretched with the house right now.";
             } },
           introOption,

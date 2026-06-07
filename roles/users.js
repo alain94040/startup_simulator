@@ -68,7 +68,10 @@
               s.market_fit = clamp(s.market_fit - 5, 0, 100);
               const alex = e.chars.get('alex');
               if (alex && alex.active) alex.morale = clamp(alex.morale - 8, 0, 100);
-              return "Built it. They doubled their plan. Alex spent 3 weeks on video infrastructure — it works, but it's really built around one person's workflow.";
+              const alexActive = e.chars.get('alex')?.active;
+              return alexActive
+                ? "Built it. They doubled their plan. Alex spent 3 weeks on video infrastructure — it works, but it's really built around one person's workflow."
+                : "Built it. They doubled their plan. Took 3 weeks of engineering time — it works, but it's really built around one person's workflow.";
             } },
           { label: 'Decline — stay on roadmap', key: 'decline',
             execute(s, char) {

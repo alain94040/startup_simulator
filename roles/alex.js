@@ -158,7 +158,7 @@
         ],
         dropDelay: 2, dropFrom: 'Alex',
         dropMsg: "pitched it as a casual app again. someone in the audience asked me directly which it is. i didn't have a good answer. investors are going to notice.",
-        dropFx(s, char) { s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 10, 0, 100); },
+        dropFx(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal - 10, 0, 100); char.morale = clamp(char.morale - 10, 0, 100); },
       },
       {
         id: 'alex_side_project', cat: 't', from: 'Alex',
