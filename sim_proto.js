@@ -211,6 +211,10 @@ const CARD_PREFS = {
     sprint_algo:              'defer',
     sprint_mono:              'defer',
     sprint_adv:               'defer',
+    // pivot arc — angel path trusts Alex, doesn't pivot on advice
+    pivot_open:               'open',
+    pivot_alex_pushback:      'ship',
+    pivot_priya_verdict:      'ship',
   },
   // Teach-the-lesson strategy: discover → build → engage → YC
   lean_loop: {
@@ -256,6 +260,10 @@ const CARD_PREFS = {
     public_complaint:         'respond',
     power_user_quiet:         'call',
     mentor_competitor_bomb:   'research',
+    pivot_open:               'open',
+    pivot_alex_pushback:      'pivot',
+    pivot_counter_alex:       'confirm',
+    pivot_priya_verdict:      'go',
     bug_reports:              'fix',
     feature_cluster:          'build',
     waitlist_cold:            'reach',
@@ -435,7 +443,7 @@ function selectCards(current, strategy, state) {
     const JORDAN_FORCED  = strategy === 'keep_jordan'
       ? new Set(['jordan_confrontation', 'jordan_fulltime_ask'])
       : new Set();
-    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation', 'dev_planning_session', 'activity_pivot']);
+    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation', 'dev_planning_session', 'pivot_open', 'pivot_alex_pushback', 'pivot_counter_alex', 'pivot_priya_verdict', 'bad_retention']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
@@ -773,8 +781,10 @@ CARD_PREFS.plan_lean = { ...CARD_PREFS.lean_loop, dev_planning_session: 'lean' }
 CARD_PREFS.plan_full = { ...CARD_PREFS.lean_loop, dev_planning_session: 'full' };
 CARD_PREFS.no_pivot = {
   ...CARD_PREFS.angel_path,
-  activity_pivot: 'stay',
-  bad_retention:  'stay',
+  pivot_open:          'open',
+  pivot_alex_pushback: 'ship',
+  pivot_priya_verdict: 'ship',
+  bad_retention:       'stay',
 };
 CARD_PREFS.keep_jordan = {
   ...CARD_PREFS.lean_loop,
