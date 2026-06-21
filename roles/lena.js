@@ -3,7 +3,18 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'lena', name: 'Lena (TechMedia)', type: 'press',
+    id: 'lena', type: 'press',
+
+    slice: [
+      "reporter_deadline",
+    ],
+
+    role: "Tech journalist",
+    name: "Lena",  // chat display name
+    intro: "hi — i'm a reporter covering the consumer dating space. might want to feature you in an upcoming piece.",
+    voice: {
+      "reporter_deadline|reply": "Replied to Lena's deadline. Story ran the next morning."
+    },
     unlockCondition: (s) => s.launched,
     cards: [
       {

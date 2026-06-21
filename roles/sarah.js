@@ -3,7 +3,18 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'sarah', name: 'Sarah (mutual)', type: 'connector',
+    id: 'sarah', type: 'connector',
+
+    slice: [
+      "intro_expiring",
+    ],
+
+    role: "Community leader",
+    name: "Sarah",  // chat display name
+    intro: "hey — heard about kindred from a mutual friend. i run a singles community in SF and i think there could be a fit.",
+    voice: {
+      "intro_expiring|reply": "Met with Sarah — she runs a singles community of 18,000 members. She liked the product and agreed to feature kindred at her next event. 12 signups in the first week."
+    },
     unlockCondition: (s) => s.week >= 3,
     cards: [
       {

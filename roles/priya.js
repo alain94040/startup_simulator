@@ -2,7 +2,22 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'priya', name: 'Priya (advisor)', type: 'advisor',
+    id: 'priya', type: 'advisor',
+
+    slice: [
+      "mentor_competitor_bomb",
+      "pivot_priya_verdict",
+    ],
+
+    role: "Advisor",
+    name: "Priya",  // chat display name
+    intro: "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute.",
+    voice: {
+      "mentor_competitor_bomb|research": "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's our wedge. Priya's officially advising now.",
+      "pivot_priya_verdict|pivot": "Called Alex. 'I've made the decision — we're pivoting.' He went quiet, then: 'okay.' Three weeks, $2k. We're rebuilding around activities.",
+      "pivot_priya_verdict|ship": "Decided to ship as planned. Alex was relieved. Priya said 'okay — watch your week-two retention closely.' I'll remember that.",
+      "pivot_priya_verdict|go": "Three weeks. $2k. Alex built it without comment. The product shifted underneath us — and it feels right."
+    },
     unlockCondition: (s) => s.met_priya === true && s.week >= s.met_priya_week + 2,
     cards: [
       {

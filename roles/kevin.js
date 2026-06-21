@@ -2,7 +2,18 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'kevin', name: 'Kevin (growth consultant)', type: 'consultant',
+    id: 'kevin', type: 'consultant',
+
+    slice: [
+      "consultant_growth",
+    ],
+
+    role: "Growth consultant",
+    name: "Kevin",  // chat display name
+    intro: "saw your HN post. i do growth audits for consumer startups — think i can help.",
+    voice: {
+      "consultant_growth|hire": "Hired Kevin for a growth audit. Got a 58-slide deck titled 'Growth Architecture 2.0.' Top recommendation: post more on LinkedIn. $2,000."
+    },
     unlockCondition: (s) => s.launched && s.customers >= 3,
     cards: [
       {

@@ -3,6 +3,16 @@
 
   const def = {
     id: 'analytics', name: 'Analytics', type: 'system',
+
+    slice: [
+      "silent_churn",
+    ],
+
+    role: "Product data",
+    intro: "enough data to start seeing patterns.",
+    voice: {
+      "silent_churn|call": "Called all 3 silent users. Found a critical onboarding gap. Fixed it. 2 came back."
+    },
     unlockCondition: (s) => s.launched && (s.users >= 3 || s.customers >= 1),
     cards: [
       {

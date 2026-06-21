@@ -2,7 +2,24 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'marcus', name: 'Marcus (angel)', type: 'investor',
+    id: 'marcus', type: 'investor',
+
+    slice: [
+      "investor_intro_warm",
+      "prep_deck",
+      "investor_ready",
+      "seed_pitch",
+    ],
+
+    role: "Angel investor",
+    name: "Marcus",  // chat display name
+    intro: "heard about kindred through the network. genuinely curious about what you're building in the dating space — would love to connect when you have a minute.",
+    voice: {
+      "investor_intro_warm|call": "Great call with Marcus. He's following our progress now.",
+      "prep_deck|build": "Built the investor deck. Story is clear, numbers are real. Ready when the time comes.",
+      "investor_ready|meet": "Took both investor meetings. Strong — both want to see our next milestone.",
+      "seed_pitch|pitch": "Had the formal conversation with Marcus about leading our round."
+    },
     unlockCondition: (s) => s.week >= 6 && s.network.advisors >= 1,
     cards: [
       {
@@ -33,7 +50,7 @@
         dropFx(s, char) { char.flags.deck_asked = true; s.investor_warmth = clamp(s.investor_warmth - 25, 0, 100); },
       },
       {
-        id: 'investor_ready', cat: 'e', from: 'Marcus (angel)',
+        id: 'investor_ready', priority: 2, cat: 'e', from: 'Marcus (angel)',
         body: "two investors want to meet this week. deck is ready, story is tight, both have context. momentum is high right now.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.deck_ready && s.signal >= 38 && s.investor_warmth < 75 && s.network.angels >= 1 && !char.flags.investor_ready_done && !char.flags.intro_moved_on,

@@ -3,6 +3,35 @@
 
   const def = {
     id: 'jordan', name: 'Jordan', type: 'cofounder',
+
+    slice: [
+      "jordan_equity_mention",
+      "jordan_equity_counter_jordan",
+      "jordan_equity_counter_both",
+      "early_working_style",
+      "early_pricing",
+      "jordan_ios_sprint",
+      "pivot_open",
+      "jordan_fulltime_ask",
+    ],
+
+    role: "Co-founder · iOS",
+    voice: {
+      "jordan_equity_mention|open": "Jordan brought up equity before it gets weird. Put it on the agenda — glad someone said it out loud.",
+      "jordan_equity_counter_jordan|cave_33": "Jordan was right — two people writing code shouldn't be split so unevenly. Went back to equal thirds. She was relieved; Alex went quiet when he heard.",
+      "jordan_equity_counter_jordan|hold_40": "Held 40/40/20 — Jordan's not full-time and the split reflects that. She went quiet. 'Fine. I'll show you what 20% of work looks like.'",
+      "jordan_equity_counter_both|cave_alex": "Gave Alex what he wanted — 40/40/20. Jordan has less than she hoped, but she accepted it.",
+      "jordan_equity_counter_both|cave_jordan": "Gave Jordan equal thirds. Alex went quiet, and I gave up my majority — but it felt fair.",
+      "jordan_equity_counter_both|hold_50": "Held 50/25/25 — I run this company. Both accepted it. Alex was terse, Jordan just said 'okay.' The tension didn't disappear.",
+      "early_working_style|standup": "Set a daily 15-minute standup at 9am with Jordan. Keeps us both honest while she's still juggling her day job.",
+      "early_working_style|async": "Decided to work async with Jordan — ping when blocked. Fewer interruptions, more deep work.",
+      "early_pricing|charge": "Decided to charge from day one. Ten serious subscribers beat a hundred who open it once. If they pay before there are many matches, they really want this.",
+      "early_pricing|free": "Decided to stay free until we have critical mass. More people in the door — the cold-start problem is real, and nobody finds a match worth paying for in an empty app.",
+      "jordan_ios_sprint|ack": "Jordan's iOS sprint is done. Good momentum — keep it rolling.",
+      "pivot_open|open": "Jordan flagged something in the beta feedback: users keep saying 'I matched, but then what?' Put it on the agenda.",
+      "jordan_fulltime_ask|accept": "Accepted Jordan's answer — she stays part-time. Alex heard and he's covering her work.",
+      "jordan_fulltime_ask|pressure": "Told Jordan this is a dealbreaker. She said she'd think about it. She didn't change."
+    },
     skills: { build: 0.7 },
     cards: [
 
@@ -33,7 +62,7 @@
 
       // Week 3b: Jordan counters (only if proposal is 40/40/20)
       {
-        id: 'jordan_equity_counter_jordan', cat: 't', from: 'Jordan',
+        id: 'jordan_equity_counter_jordan', priority: 2, cat: 't', from: 'Jordan',
         body: "alex told me about the 40/40/20. we're both writing code — he gets twice what i get? i'm building the whole iOS side. equal thirds is fair. why do i get less?",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '40/40/20' && !char.flags.equity_counter_done && s.week <= 10,
@@ -58,7 +87,7 @@
 
       // Week 3c: Both counter (only if proposal is 50/25/25)
       {
-        id: 'jordan_equity_counter_both', cat: 't', from: 'Jordan & Alex',
+        id: 'jordan_equity_counter_both', priority: 2, cat: 't', from: 'Jordan & Alex',
         body: "heard back from both. alex: 'i should be equal to you — i'm doing as much as you are.' jordan: 'alex and i are both writing code. 25% each feels low.'",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '50/25/25' && !char.flags.equity_counter_done && s.week <= 10,
@@ -105,7 +134,7 @@
           if (split === '50/25/25') return "three-way call. 50/25/25 on the table. jordan accepted — at least she's equal to alex. alex signed without comment. nobody mentioned vesting schedules.";
           return "three-way call. 40/40/20 agreed. alex seemed satisfied. jordan signed — said she'd prove she's worth more than 20%. nobody set up vesting schedules.";
         },
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char) => char.flags.equity_counter_done && !s.jordan_equity && s.week <= 12,
         options: [
           { label: 'Sign the agreement', key: 'sign',
@@ -134,7 +163,7 @@
 
       // ── CONTRIBUTION PHASE ───────────────────────────────────────────────────
       {
-        id: 'jordan_ios_sprint', cat: 'p', from: 'Jordan',
+        id: 'jordan_ios_sprint', priority: 2, cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.ios_sprint_count || 0) === 0
           ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to wire up the backend — matching, messaging, notifications through the API."
           : "iOS connected to the backend — matching, messaging, notifications all live. same experience as web. ready to open it up.",
@@ -220,83 +249,6 @@
         },
       },
 
-      // ── DRIFT PHASE ──────────────────────────────────────────────────────────
-      {
-        id: 'jordan_drift_start', cat: 't', from: 'Alex',
-        body: "jordan's been slower this week. said she's swamped at work. i covered the iOS push — took me two days. not complaining, just flagging it.",
-        urgency: 2, weeks: 1,
-        available: (s, char) => s.jordan_active && !s.jordan_drifting && s.week >= 8
-          && !char.flags.drift_start_done,
-        options: [
-          { label: 'Talk to Jordan directly', key: 'talk',
-            execute(s, char, e) {
-              char.flags.drift_start_done = true;
-              s.jordan_drifting = true;
-              char.focus = null;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 5, 0, 100);
-              return "Jordan was apologetic. Said it's temporary. You're not sure.";
-            } },
-          { label: 'Alex can cover for now', key: 'cover',
-            execute(s, char, e) {
-              char.flags.drift_start_done = true;
-              s.jordan_drifting = true;
-              char.focus = null;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
-              return "Alex nodded. He'll cover it. The iOS backlog keeps growing.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          char.flags.drift_start_done = true;
-          s.jordan_drifting = true;
-          char.focus = null;
-          const alex = e && e.chars && e.chars.get('alex');
-          if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-        },
-      },
-      {
-        id: 'jordan_drag', cat: 't', from: 'Alex',
-        body: (s, char) => (char.flags.drag_count || 0) === 0
-          ? "pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday. i've covered it, but this is the second time this sprint."
-          : "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. i've been waiting two days. this can't keep going.",
-        urgency: 2, weeks: 1,
-        available: (s, char) => s.jordan_drifting && !s.jordan_resolved
-          && (char.flags.drag_count || 0) < 2
-          && s.week >= (char.flags.drag_last || 0) + 4,
-        options: [
-          { label: 'Talk to Jordan directly', key: 'talk',
-            execute(s, char, e) {
-              char.flags.drag_count = (char.flags.drag_count || 0) + 1;
-              char.flags.drag_last = s.week;
-              s.jordan_confrontation_triggered = true;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
-              return "Sat down with Jordan. She heard the weight of it. Alex noticed you followed up — the real conversation is coming.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          const count = (char.flags.drag_count || 0) + 1;
-          char.flags.drag_count = count;
-          char.flags.drag_last = s.week;
-          const alex = e && e.chars && e.chars.get('alex');
-          if (count >= 2) {
-            if (alex) { alex.morale = 5; alex.trust = clamp(alex.trust - 20, 0, 100); }
-            s.jordan_confrontation_triggered = true;
-            // Surface the breaking point so the player understands the morale crash
-            if (e && e.pending) e.pending.push({
-              fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
-              text: "you've been aware of the jordan situation for weeks. i've been covering for her and saying nothing. it's been affecting me more than i let on.",
-              fx() {},
-            });
-          } else {
-            if (alex) alex.morale = clamp(alex.morale - 12, 0, 100);
-          }
-        },
-      },
-
       // ── FULL-TIME ASK ────────────────────────────────────────────────────────
       {
         id: 'jordan_fulltime_ask', cat: 't', from: 'Jordan',
@@ -324,139 +276,6 @@
         dropFx(s, char) { char.flags.fulltime_ask_done = true; },
       },
 
-      // ── LAUNCH BLOCKER ───────────────────────────────────────────────────────
-      {
-        id: 'jordan_launch_blocker', cat: 'p', from: 'Alex',
-        body: "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening.",
-        urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.launch_blocker_done
-          && s.has_beta && !s.launched && !s.ios_unblocked,
-        options: [
-          { label: 'Launch web-only — fix iOS later', key: 'web_only',
-            execute(s, char) {
-              char.flags.launch_blocker_done = true;
-              s.launched = true;
-              s.signal = clamp(s.signal - 10, 0, 100);
-              return "Launched. Web-only. A dating app without iOS is a real handicap — early retention will show it.";
-            } },
-          { label: 'Give Jordan two more weeks', key: 'wait',
-            execute(s, char, e) {
-              char.flags.launch_blocker_wait = (char.flags.launch_blocker_wait || 0) + 1;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-              return "Alex wasn't happy. Jordan said she'd prioritize it. The clock is running.";
-            },
-            available: (s, char) => (char.flags.launch_blocker_wait || 0) < 1 },
-          { label: 'Confront Jordan — this has to be resolved', key: 'confront',
-            execute(s, char) {
-              char.flags.launch_blocker_done = true;
-              s.jordan_confrontation_triggered = true;
-              return "Agreed. This conversation is overdue.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char) {
-          char.flags.launch_blocker_done = true;
-          s.launched = true;
-          s.signal = clamp(s.signal - 15, 0, 100);
-        },
-      },
-
-      // ── CONFRONTATION ────────────────────────────────────────────────────────
-      {
-        id: 'jordan_confrontation', cat: 't', from: 'Alex',
-        body: (s, char) => {
-          const pct = char.flags.equity_proposal === '33/33/33' ? '33%' : char.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
-          return `i need to say something. jordan's been part-time for two months. i'm covering her work and mine. she has ${pct} of the company and i don't think she's earning it anymore. we need to have the conversation.`;
-        },
-        urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.confrontation_done
-          && (s.jordan_confrontation_triggered || s.week >= (s.jordan_confrontation_defer_until || 20)),
-        options: [
-          { label: 'Have the conversation — let Jordan go', key: 'fire',
-            execute(s, char, e) {
-              char.flags.confrontation_done = true;
-              s.jordan_resolved = true;
-              s.jordan_cleanup_needed = true; // always needs legal review on departure
-              // Reassign Jordan's open roadmap items
-              if (s.items) {
-                if (s.items.ios_server && s.items.ios_server.status !== 'done' && s.items.ios_server.status !== 'obsolete') {
-                  s.items.ios_server.assignee = 'alex';
-                  e.pending.push({
-                    fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
-                    text: "picked up jordan's ios backend integration. took a few days to orient in her code but it's running.",
-                    fx(st) {
-                      if (st.items?.ios_server) { st.items.ios_server.status = 'done'; st.items.ios_server.quality = 'solid'; }
-                      st.ios_unblocked = true;
-                    },
-                    cancel: (st) => !!st.ios_unblocked,
-                  });
-                }
-                if (s.items.ios_ui && s.items.ios_ui.status !== 'done' && s.items.ios_ui.status !== 'obsolete') {
-                  s.items.ios_ui.assignee = 'alex';
-                }
-                if (s.items.plans_ui && s.items.plans_ui.status !== 'done' && s.items.plans_ui.status !== 'obsolete') {
-                  s.items.plans_ui.assignee = null;
-                }
-              }
-              const alex = e.chars.get('alex');
-              if (!s.jordan_equity) {
-                // Equity was never formally signed — Alex sees the same dysfunction
-                if (alex) { alex.morale = clamp(alex.morale - 30, 0, 100); alex.trust = clamp(alex.trust - 25, 0, 100); }
-                e.alexDepartureRisk = true;
-                return "Hard conversation. Jordan left. Then Alex pulled you aside: 'we never actually signed anything. no equity split, no vesting. what are we even building here?' he looked serious.";
-              }
-              if (alex) {
-                alex.morale = clamp(alex.morale + 10, 0, 100);
-                alex.trust = clamp(alex.trust + 8, 0, 100);
-              }
-              const pct = char.flags.equity_proposal === '33/33/33' ? '33%' : char.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
-              return `Hard conversation. Jordan wasn't surprised — she knew it wasn't working. She's off the team. Her ${pct} is still on the cap table.`;
-            } },
-          { label: 'One more sprint to turn it around', key: 'defer',
-            execute(s, char, e) {
-              s.jordan_confrontation_triggered = false;
-              s.jordan_confrontation_defer_until = s.week + 4;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-              return "Alex went quiet. Jordan will try again. You both know how this ends.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          char.flags.confrontation_done = true;
-          // Jordan stays — only the player can fire her. Alex can't take it anymore.
-          const alex = e && e.chars && e.chars.get('alex');
-          if (alex) { alex.morale = 0; alex.trust = clamp(alex.trust - 25, 0, 100); }
-        },
-      },
-
-      // ── CAP TABLE CLEANUP ────────────────────────────────────────────────────
-      {
-        id: 'jordan_cap_table', cat: 'e', from: 'Alex',
-        body: (s, char) => {
-          const pct = char.flags.equity_proposal === '33/33/33' ? '33%' : char.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
-          return `jordan's ${pct} is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.`;
-        },
-        urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => s.jordan_resolved && s.jordan_cleanup_needed && !char.flags.cap_table_done,
-        options: [
-          { label: 'Hire a lawyer — $2,000', key: 'lawyer',
-            execute(s, char) {
-              char.flags.cap_table_done = true;
-              s.jordan_cleanup_needed = false;
-              s.cash = clamp(s.cash - 2000, 0, 9999999);
-              return "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.";
-            } },
-          { label: "Can't afford it right now", key: 'defer',
-            execute(s, char) {
-              char.flags.cap_table_done = true;
-              return "Left it for now. Every investor who looks at the cap table will ask about Jordan's stake.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char) { char.flags.cap_table_done = true; },
-      },
 
     ],
   };

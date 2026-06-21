@@ -2,7 +2,28 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'techcrunch', name: 'TechCrunch', type: 'press',
+    id: 'techcrunch', type: 'press',
+
+    slice: [
+      "competitor_launch",
+      "competitor_growing",
+      "investor_moat_question",
+    ],
+
+    role: "Industry news",
+    name: "Market",  // chat display name
+    voice: {
+      "competitor_launch|study": "Spent 2 weeks mapping Flare's product. They went broad — swiping, video dates, lots of noise. Our niche is the gap they skipped.",
+      "competitor_launch|compare": "Published a direct comparison with Flare. Our niche is clearer now. Alex is rattled but focused.",
+      "competitor_launch|copy": "Copied Flare's best features. Shipped fast — but we're building for their users now, not ours. Alex is frustrated.",
+      "competitor_launch|ignore": "Ignored Flare's launch and stayed on our roadmap. Their noise is real but so is our plan.",
+      "competitor_growing|calls": "Called 5 subscribers. Most still prefer our approach. Two want video dates — for a different reason than I assumed. Now I know what to build next.",
+      "competitor_growing|discount": "Offered existing subscribers a discount to stay. Bought loyalty — not ideal, but stopped the bleeding.",
+      "competitor_growing|ignore": "Kept building, ignored the Flare noise. Lost two subscribers. The remaining users are still with us — for now.",
+      "investor_moat_question|niche": "Answered the moat question directly — explained the niche Flare ignored.",
+      "investor_moat_question|speed": "Told the investor we're moving faster and closer to customers. Plausible but he wanted more.",
+      "investor_moat_question|deflect": "Tried to pivot to traction instead of answering the Flare question. The investor noticed."
+    },
     unlockCondition: (s) => s.items != null,
     cards: [
       {

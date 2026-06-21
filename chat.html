@@ -328,7 +328,33 @@
   <script>
   (function(){
     const engine = new ChatEngine();
-    const META = window.CHAT_META;
+    // Avatar styling is pure presentation and lives in the UI; names/roles come
+    // from the role defs via engine.conversations().
+    const STYLE = {
+      alex:        { color:"#0b84ff", initials:"A"  },
+      jordan:      { color:"#34c759", initials:"J"  },
+      priya:       { color:"#af52de", initials:"P"  },
+      marcus:      { color:"#ff9500", initials:"M"  },
+      fatima:      { color:"#ff6482", initials:"F"  },
+      ryan:        { color:"#5ac8fa", initials:"R"  },
+      sarah:       { color:"#ff2d55", initials:"S"  },
+      brett:       { color:"#8e8e93", initials:"B"  },
+      kevin:       { color:"#8e8e93", initials:"K"  },
+      mom:         { color:"#ffcc02", initials:"👩" },
+      jamie:       { color:"#64d2ff", initials:"Ja" },
+      david:       { color:"#30b0c7", initials:"D"  },
+      hacker_news: { color:"#ff6600", initials:"📰" },
+      yc:          { color:"#f26522", initials:"Y"  },
+      lena:        { color:"#bf5af2", initials:"L"  },
+      techcrunch:  { color:"#00c853", initials:"📊" },
+      users:       { color:"#007aff", initials:"👥" },
+      analytics:   { color:"#5856d6", initials:"📈" },
+      twitter:     { color:"#1da1f2", initials:"𝕏"  },
+      tom:         { color:"#34c759", initials:"T"  },
+      founder:     { color:"#8e8e93", initials:"Me" },
+    };
+    const styleFor = id => STYLE[id] || { color:"#8e8e93", initials:"?" };
+    const convFor  = id => engine.conversations().find(c => c.id === id);
     let active = "alex";
     const shown = {};
     for (const id of engine.order) shown[id] = 0;
@@ -363,8 +389,9 @@
       $("convs").innerHTML = convs.map(c=>{
         const unanswered = shown[c.id] < engine.threads[c.id].length;
         const dot = (c.hasAction || unanswered) ? '<span class="badge"></span>' : '';
+        const st = styleFor(c.id);
         return `<div class="conv ${c.id===active?'active':''}" data-id="${c.id}">
-          <div class="avatar" style="background:${c.color}">${c.initials}</div>
+          <div class="avatar" style="background:${st.color}">${st.initials}</div>
           <div class="conv-body">
             <div class="conv-top"><span class="conv-name">${c.name}</span>${dot}</div>
             <div class="conv-prev">${c.empty?'<i>no messages yet</i>':escapeHtml(c.preview)}</div>
@@ -378,11 +405,12 @@
 
     // ── chat header ───────────────────────────────────────
     function renderHead(){
-      const m = META[active];
-      if (!m) return;
+      const c = convFor(active);
+      if (!c) return;
+      const st = styleFor(active);
       $("chatHead").innerHTML =
-        `<div class="avatar" style="background:${m.color}">${m.initials}</div>
-         <div><div class="nm">${m.name}</div><div class="rl">${m.role}</div></div>`;
+        `<div class="avatar" style="background:${st.color}">${st.initials}</div>
+         <div><div class="nm">${c.name}</div><div class="rl">${c.role}</div></div>`;
     }
 
     // ── build one message element ─────────────────────────
@@ -408,7 +436,7 @@
       wrap.appendChild(d);
       if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
       // Inline action buttons for founder prompts that are still surfaced
-      if (e.type === "incoming" && e.cardId && engine.surfaced.has(e.cardId)){
+      if (e.type === "incoming" && e.cardId && engine.isOpen(e.cardId)){
         const opts = engine.options(e.cardId);
         if (opts.length){
           const btns = document.createElement("div");
@@ -459,7 +487,7 @@
       const groups = box.querySelectorAll(".journal-actions");
       for (const g of groups){
         const cid = g.dataset.cardId;
-        if (!engine.surfaced.has(cid)){
+        if (!engine.isOpen(cid)){
           g.remove(); continue;
         }
         const spent = engine.actionsLeft <= 0;
@@ -608,7 +636,7 @@
     function renderComposer(){
       const c = $("composer");
       const s = engine.stats();
-      const cardId = engine._openCardId(active);
+      const cardId = engine.openCardId(active);
 
       if (revealing){ c.className="composer"; c.innerHTML = `<div class="empty-state">…</div>`; return; }
 

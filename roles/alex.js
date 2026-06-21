@@ -41,6 +41,151 @@
 
   const def = {
     id: 'alex', name: 'Alex', type: 'cofounder',
+
+    slice: [
+      "start_prototype",
+      "incorporate_week1",
+      "dev_planning_session",
+      "alex_commitment",
+      "early_name",
+      "early_tech_stack",
+      "early_customer_target",
+      "early_funding_goal",
+      "vision_mismatch",
+      "jordan_equity_alex",
+      "jordan_equity_counter_alex",
+      "alex_side_project",
+      "alex_side_project_escalation",
+      "alex_quiet",
+      "alex_equity",
+      "alex_sync_discover",
+      "alex_sync_build",
+      "alex_sync_pitch",
+      "alex_demo_ready",
+      "alex_beta_ready",
+      "sprint_social",
+      "sprint_algo",
+      "sprint_mono",
+      "sprint_adv_social",
+      "sprint_adv_video",
+      "pivot_alex_pushback",
+      "pivot_counter_alex",
+      "bad_retention",
+      "proto_to_product",
+      "good_enough_launch",
+      "alex_wants_rebuild",
+      "arch_refactor_done",
+      "alex_decision",
+      "alex_leaving_threat",
+      "incorporate_now",
+      "ip_concern",
+      "first_interview_shock",
+      "cold_silence",
+      "random_reframe",
+      "pivot_insight_1",
+      "pivot_insight_2",
+      "pmf_lock",
+      "family_doubt",
+      "jordan_drift_start",
+      "jordan_drag",
+      "jordan_launch_blocker",
+      "jordan_confrontation",
+      "jordan_cap_table",
+    ],
+
+    role: "Co-founder · CTO",
+    voice: {
+      "start_prototype|build": "Told the team to start building today. Alex took profiles and matching, Jordan's on iOS, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.",
+      "incorporate_week1|atlas": "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
+      "dev_planning_session|full": "We spec'd the whole thing — three hours, the whiteboard packed with twenty-plus items. Jordan's thrilled. Alex thinks it's too much, and part of me suspects he's right.",
+      "dev_planning_session|lean": "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
+      "dev_planning_session|sprint": "Skipped planning. We're just going to build and figure it out as we go. No shared picture of what 'done' looks like — which nags at me a little.",
+      "alex_commitment|accept": "Agreed Alex stays part-time for now — evenings and weekends. Slower, but he won't resent it. We set a milestone to revisit once we have traction.",
+      "alex_commitment|push": "Pushed Alex to go full-time. He said yes, but I could tell he wasn't ready. I'll need to watch how he's doing.",
+      "early_name|catchy": "Locked the name. Warm and memorable — people get what it's for the second they hear it.",
+      "early_name|descriptive": "Locked the name. Clean and distinctive, hard to confuse with anything else. It grows on people once they try it.",
+      "early_tech_stack|fast": "Decided to ship the fast version of the matching algorithm and fix scale later. The 10,000-user problem is a good problem to have.",
+      "early_tech_stack|scalable": "Decided to build the matching engine to scale from the start. Slower, but a cleaner foundation — and Alex hates rewriting things.",
+      "early_customer_target|individuals": "Settled on who we're for: 25–35, tired of swiping. Bigger pool, faster feedback.",
+      "early_customer_target|teams": "Settled on relationship-seekers — people seriously looking. Higher willingness to pay, a stronger retention story.",
+      "early_customer_target|open": "Decided to stay flexible on who we're for and let the first signups tell us who they are.",
+      "early_funding_goal|vc": "We aligned on the VC path — raise, grow fast, aim big. Every investor conversation gets sharper now that we know what we're building toward.",
+      "early_funding_goal|profitable": "We agreed to aim for profitable first — a real business, no VC required. Every product call gets cleaner when the bar is 'do people pay for this.'",
+      "early_funding_goal|open": "Left the funding question open. We'll revisit once we have enough users to know what kind of company we actually are.",
+      "vision_mismatch|alex": "Conceded the framing to Alex — we're 'casual dating done right.' Broader market, easier to explain. A few old 'serious matches' conversations are awkward now, but at least we're aligned.",
+      "vision_mismatch|yours": "Held the line on serious relationships. Alex went along with it — he still thinks casual is bigger, but the investor story is cleaner. The tension isn't really gone.",
+      "vision_mismatch|test": "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
+      "jordan_equity_alex|propose_33": "Proposed equal thirds — Jordan found the space and brought us together, Alex builds, I run it. We're all essential. Alex went quiet; he expected more for being all-in.",
+      "jordan_equity_alex|propose_40": "Proposed 40/40/20 — Alex and I are all in, Jordan's still at her job. Alex was happy. Jordan hasn't heard yet.",
+      "jordan_equity_alex|propose_50": "Took 50 for myself, 25 each for Alex and Jordan. Alex went quiet for a moment, then said okay. I'll be hearing from both of them.",
+      "jordan_equity_counter_alex|cave_40": "Alex pushed back, and he had a point — he's full-time, Jordan isn't. Moved to 40/40/20. He appreciated it.",
+      "jordan_equity_counter_alex|hold_33": "Alex pushed for more, but I held equal thirds. Everyone's essential. He didn't agree — but he dropped it.",
+      "alex_side_project|pause": "Appreciated the honesty. Asked him to pause the side project until we hit a milestone. He agreed — relationship's stronger for it.",
+      "alex_side_project_escalation|talk": "Had a hard conversation. Alex committed fully — said he was relieved I brought it up directly.",
+      "alex_quiet|checkin": "Noticed Alex had gone quiet. Checked in. Honest conversation — he's exhausted. Adjusted expectations for the week.",
+      "alex_equity|fair": "Revised the equity split. Both sides signed. Relationship's back on solid ground.",
+      "alex_equity|hard": "Pushed back hard on the equity ask. Alex accepted for now but he's not happy — this is coming back.",
+      "alex_equity|defer": "Kicked the equity discussion down the road. Alex grudgingly agreed, but the tension's building.",
+      "alex_sync_discover|discover": "Agreed to shift Alex to customer discovery this sprint. Time to talk to real people again.",
+      "alex_sync_build|build": "Alex back to building. Enough feedback for now — time to act on what we learned.",
+      "alex_sync_pitch|pitch": "Alex is working the investor pipeline. Traction story is solid enough to pitch.",
+      "alex_demo_ready|rough": "Showed the demo rough. Three contacts in the room — two hit bugs, but one leaned forward: 'Show me that again.' We know what to build next.",
+      "alex_demo_ready|polish": "Spent a sprint polishing before showing anyone. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'",
+      "alex_beta_ready|curated": "Invited 10 hand-picked singles for the beta. Eight signed up. Three matched on day one. One asked if they could pay now.",
+      "alex_beta_ready|open": "Posted in two singles communities. 20 signups in 48 hours. Chaotic — but we're seeing match patterns we couldn't have predicted.",
+      "sprint_social|build": "Built the activity layer and push notifications properly. Real re-engagement driver in the product now.",
+      "sprint_social|lean": "Shipped stripped-down versions of the social features. Works, but we'll need to revisit.",
+      "sprint_social|defer": "Deferred the social layer to v2. Staying lean for now.",
+      "sprint_algo|build": "Profile verification shipped — photo checks and linked accounts. Fake profile reports dropped immediately.",
+      "sprint_algo|lean": "Basic verification only — photo check, no linked accounts. Trust signals are thin but there.",
+      "sprint_algo|defer": "Deferred verification. Staying focused on core.",
+      "sprint_mono|build": "Premium subscription is live. No paying users yet, but the infrastructure's there.",
+      "sprint_mono|lean": "Basic paywall shipped. Will need work before serious monetization.",
+      "sprint_mono|defer": "Deferred monetization. Smart — validate retention before building a paywall.",
+      "sprint_adv_social|build": "Social graph shipped. Mutual-connection matches converting at twice the rate of cold ones.",
+      "sprint_adv_social|lean": "Basic social discovery in — limited to one degree out. Good enough to test the hypothesis.",
+      "sprint_adv_social|defer": "Deferred social discovery. Core product ships without it.",
+      "sprint_adv_video|build": "Video dates shipped. Took longer and cost more than planned. Users love it.",
+      "sprint_adv_video|lean": "Basic video in. Drops occasionally, no recording. Users complained, then kept using it anyway.",
+      "sprint_adv_video|defer": "Deferred video dates — told users to use FaceTime. We'll revisit after funding.",
+      "pivot_alex_pushback|ship": "Sided with Alex — we ship what we have, add activities post-launch. Alex looked relieved. Jordan went quiet.",
+      "pivot_alex_pushback|pivot": "Told Alex the signal is real — we should pivot. He went quiet. 'Okay. It's your call.' He doesn't agree.",
+      "pivot_counter_alex|confirm": "Confirmed the pivot over Alex's objection. Three weeks, $2k. We're rebuilding around activities.",
+      "pivot_counter_alex|reverse": "Changed my mind — shipping as planned. Alex seemed relieved.",
+      "bad_retention|fix": "Retrofitted activity features post-launch. More expensive and disruptive than doing it pre-launch, but users who stayed are responding.",
+      "bad_retention|calls": "Did 12 user calls this week. Every single one mentioned not knowing what to do after matching. The path forward is clear — just late.",
+      "bad_retention|stay": "Decided the problem was matching quality, not the post-match experience. Users keep churning. I think Alex is right that this was the wrong call.",
+      "proto_to_product|commit": "Keeping what worked from the demo, scrapping the rest. We know the core flow — now we build it properly.",
+      "proto_to_product|delay": "Not ready to rebuild yet — still learning from the demo. Alex nods, but I can tell he wants to move on.",
+      "good_enough_launch|ship": "Launched. First real users are in. Feedback starts flowing.",
+      "good_enough_launch|wait": "Polished a few more things instead of launching. Alex thinks I'm stalling — and he might be right.",
+      "alex_wants_rebuild|refactor": "Gave Alex two weeks to rebuild the API layer from scratch. Nothing else gets done — but if he's right, it'll save us months later.",
+      "arch_refactor_done|review": "Walked through the new codebase with Alex. Clean separation, well-documented. He seemed proud of this one.",
+      "alex_decision|ship": "Pulled off photo verification by Friday. User upgraded immediately. Set clear boundaries with Alex about making commitments without asking first.",
+      "alex_leaving_threat|talk": "Long, honest conversation with Alex. He's staying. Things need to improve — but we're aligned now.",
+      "incorporate_now|atlas": "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account. Feels official.",
+      "ip_concern|lawyer": "Lawyer reviewed Alex's previous employer IP agreement. Personal time, unrelated enough — no claim. IP assignment signed. Clean. $1,500.",
+      "first_interview_shock|pivot": "Pivoted focus to conversation quality and date-booking. Three more interviews confirmed it. Some earlier work won't carry over.",
+      "first_interview_shock|stay": "Filed the customer insight away. Not ready to pivot on one data point.",
+      "cold_silence|rewrite": "Rewrote the outreach. New version leads with the pain — 'you've matched with dozens of people and gone on zero dates.' First reply came in 4 hours.",
+      "random_reframe|test": "Ran the 'vetting tool' framing by 3 more people. All 3 immediately got it. Updated the positioning.",
+      "pivot_insight_1|pivot": "Rethought the approach. The real problem is conversation quality, not match quantity. Signal improved immediately.",
+      "pivot_insight_1|stay": "Logged the feedback but staying the course for now. Alex isn't convinced either.",
+      "pivot_insight_2|pivot": "Narrowed scope significantly. Less ambitious but far more right. Three users asked for exactly this.",
+      "pivot_insight_2|stay": "Decided to ship the broader scope. Market fit isn't perfect but we're moving.",
+      "pmf_lock|lock": "Locked in. Three users said the same thing unprompted this week: 'I actually went on a date because of this.' This is the product. Now build it right.",
+      "family_doubt|talk": "Long talk with Alex about family pressure. Reminded each other why we're doing this. Morale reset.",
+      "jordan_drift_start|talk": "Talked to Jordan directly about slowing down. She was apologetic, said it's temporary. I'm not sure.",
+      "jordan_drift_start|cover": "Let Alex cover for Jordan. He nodded, but his backlog just got longer.",
+      "jordan_drag|talk": "Sat down with Jordan. She heard the weight of it. Alex noticed I followed up.",
+      "jordan_launch_blocker|web_only": "Launched web-only. A dating app without iOS is a real handicap — early retention will show it.",
+      "jordan_launch_blocker|wait": "Gave Jordan two more weeks. Alex wasn't happy. The clock is running.",
+      "jordan_launch_blocker|confront": "Decided to confront Jordan about the launch blocker. This conversation is overdue.",
+      "jordan_confrontation|fire": "Hard conversation. Jordan wasn't surprised — she knew it wasn't working. She's off the team.",
+      "jordan_confrontation|defer": "Gave Jordan one more sprint. Alex went quiet. We both know how this ends.",
+      "jordan_cap_table|lawyer": "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
+      "jordan_cap_table|defer": "Can't afford cap table cleanup right now. Every investor who looks will ask about Jordan's stake."
+    },
     skills: { build: 1.2, discover: 0.7, pitch: 0.5 },
     cards: [
 
@@ -48,7 +193,7 @@
       {
         id: 'start_prototype', cat: 'p', from: 'Alex',
         body: "three of us in the same room for the first time since we decided to do this for real. time to stop talking. i'm ready on the backend. jordan's offered to take the iOS side. one word from you and this becomes real.",
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
         options: [
           { label: "Game on — everyone start building", key: 'build',
@@ -85,7 +230,7 @@
       {
         id: 'incorporate_week1', cat: 'e', from: 'Alex',
         body: "before we do anything else — all three of us need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
-        urgency: 3, weeks: 1, priority: true, ignoreForTrust: true,
+        urgency: 3, weeks: 1, priority: 1, ignoreForTrust: true,
         available: (s, char) => s.week <= 3 && char.flags.prototype_kicked && !s.incorporated,
         options: [
           { label: 'Incorporate via Stripe Atlas — $500', key: 'atlas',
@@ -135,7 +280,7 @@
       {
         id: 'alex_commitment', cat: 't', from: 'Alex',
         body: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char) => s.week >= 2 && s.week <= 5 && char.flags.plan_done && !char.flags.commitment_resolved,
         options: [
           { label: 'Agree — part-time for now', key: 'accept',
@@ -154,7 +299,7 @@
       {
         id: 'jordan_equity_alex', cat: 't', from: 'Alex',
         body: "jordan wants equal thirds. i've been thinking — she's still at her job, i'm treating this as my main thing. you and i are doing the same amount. i think 40/40/20 is fair. what are you thinking?",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1, priority: 3,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_proposal && s.week <= 8;
@@ -194,7 +339,7 @@
       },
       // Alex counters if you picked equal thirds
       {
-        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
+        id: 'jordan_equity_counter_alex', priority: 2, cat: 't', from: 'Alex',
         body: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return (jordan && jordan.flags.equity_skipped)
@@ -235,7 +380,7 @@
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_beta && char.flags.commitment_resolved && !char.flags.vision_resolved,
         options: [
           { label: "Go with casual dating", key: 'alex',
@@ -437,7 +582,7 @@
       {
         id: 'incorporate_now', cat: 'e', from: 'Alex',
         body: "an advisor we're trying to bring on officially asked us to sign an NDA first. we can't without a legal entity. also need a bank account. stripe atlas or find a lawyer?",
-        urgency: 2, weeks: 1, priority: true, ignoreForTrust: true,
+        urgency: 2, weeks: 1, priority: 1, ignoreForTrust: true,
         available: (s, char) => s.week >= 3 && s.week <= 14 && s.items != null && !s.incorporated,
         options: [
           { label: 'Stripe Atlas — fast and cheap', key: 'atlas',
@@ -847,7 +992,7 @@
       {
         id: 'bad_retention', cat: 'p', from: 'Alex',
         body: "week two post-launch. signups are coming in but nobody's coming back. ran a quick survey — eight out of ten say the same thing: 'i matched with someone but then what?' they don't know what to do with a match. the retention curve is flat.",
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
           && !char.flags.bad_retention_seen && s.week >= 12,
         options: [
@@ -956,7 +1101,7 @@
         },
       },
       {
-        id: 'arch_refactor_done', cat: 't', from: 'Alex',
+        id: 'arch_refactor_done', priority: 2, cat: 't', from: 'Alex',
         body: "refactor's done. rebuilt the api layer from scratch — clean, fast, and can scale past 10k users without touching it again.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.arch_refactor_effort_target != null && (char.buildEffort || 0) >= s.arch_refactor_effort_target && s.items?.arch_refactor?.status === 'active',
@@ -1002,7 +1147,7 @@
       {
         id: 'alex_leaving_threat', cat: 't', from: 'Alex',
         body: "got a message from an old colleague at a well-funded startup. not going anywhere — but we need an honest conversation about where this is headed.",
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char, e) => e.alexDepartureRisk && char.active,
         options: [
           { label: 'Have the honest conversation', key: 'talk',
@@ -1011,6 +1156,222 @@
         dropDelay: 1, dropFrom: 'Alex',
         dropMsg: "i've decided to take the other opportunity. i'm sorry — i'll do a proper handoff this week.",
         dropFx(s, char, e) { char.active = false; e.alexDepartureRisk = false; },
+      },
+
+      // ── JORDAN ARC (Alex texts you about Jordan; logic reads Jordan's state) ──
+      // These live on Alex's thread but track Jordan via e.chars.get('jordan').
+      {
+        id: 'jordan_drift_start', cat: 't', from: 'Alex',
+        body: "jordan's been slower this week. said she's swamped at work. i covered the iOS push — took me two days. not complaining, just flagging it.",
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          return s.jordan_active && !s.jordan_drifting && s.week >= 8 && !j.flags.drift_start_done;
+        },
+        options: [
+          { label: 'Talk to Jordan directly', key: 'talk',
+            execute(s, char, e) {
+              const j = e.chars.get('jordan');
+              j.flags.drift_start_done = true;
+              s.jordan_drifting = true;
+              j.focus = null;
+              char.morale = clamp(char.morale - 5, 0, 100);
+              return "Jordan was apologetic. Said it's temporary. You're not sure.";
+            } },
+          { label: 'Alex can cover for now', key: 'cover',
+            execute(s, char, e) {
+              const j = e.chars.get('jordan');
+              j.flags.drift_start_done = true;
+              s.jordan_drifting = true;
+              j.focus = null;
+              char.morale = clamp(char.morale - 10, 0, 100);
+              return "Alex nodded. He'll cover it. The iOS backlog keeps growing.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const j = e.chars.get('jordan');
+          j.flags.drift_start_done = true;
+          s.jordan_drifting = true;
+          j.focus = null;
+          char.morale = clamp(char.morale - 8, 0, 100);
+        },
+      },
+      {
+        id: 'jordan_drag', cat: 't', from: 'Alex',
+        body: (s, char, e) => ((e.chars.get('jordan').flags.drag_count || 0) === 0)
+          ? "pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday. i've covered it, but this is the second time this sprint."
+          : "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. i've been waiting two days. this can't keep going.",
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          return s.jordan_drifting && !s.jordan_resolved
+            && (j.flags.drag_count || 0) < 2
+            && s.week >= (j.flags.drag_last || 0) + 4;
+        },
+        options: [
+          { label: 'Talk to Jordan directly', key: 'talk',
+            execute(s, char, e) {
+              const j = e.chars.get('jordan');
+              j.flags.drag_count = (j.flags.drag_count || 0) + 1;
+              j.flags.drag_last = s.week;
+              s.jordan_confrontation_triggered = true;
+              char.morale = clamp(char.morale + 5, 0, 100);
+              return "Sat down with Jordan. She heard the weight of it. Alex noticed you followed up — the real conversation is coming.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const j = e.chars.get('jordan');
+          const count = (j.flags.drag_count || 0) + 1;
+          j.flags.drag_count = count;
+          j.flags.drag_last = s.week;
+          if (count >= 2) {
+            char.morale = 5; char.trust = clamp(char.trust - 20, 0, 100);
+            s.jordan_confrontation_triggered = true;
+            if (e && e.pending) e.pending.push({
+              fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
+              text: "you've been aware of the jordan situation for weeks. i've been covering for her and saying nothing. it's been affecting me more than i let on.",
+              fx() {},
+            });
+          } else {
+            char.morale = clamp(char.morale - 12, 0, 100);
+          }
+        },
+      },
+      {
+        id: 'jordan_launch_blocker', cat: 'p', from: 'Alex',
+        body: "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening.",
+        urgency: 3, weeks: 1, priority: 2,
+        available: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          return s.jordan_drifting && !s.jordan_resolved && !j.flags.launch_blocker_done
+            && s.has_beta && !s.launched && !s.ios_unblocked;
+        },
+        options: [
+          { label: 'Launch web-only — fix iOS later', key: 'web_only',
+            execute(s, char, e) {
+              e.chars.get('jordan').flags.launch_blocker_done = true;
+              s.launched = true;
+              s.signal = clamp(s.signal - 10, 0, 100);
+              return "Launched. Web-only. A dating app without iOS is a real handicap — early retention will show it.";
+            } },
+          { label: 'Give Jordan two more weeks', key: 'wait',
+            execute(s, char, e) {
+              const j = e.chars.get('jordan');
+              j.flags.launch_blocker_wait = (j.flags.launch_blocker_wait || 0) + 1;
+              char.morale = clamp(char.morale - 8, 0, 100);
+              return "Alex wasn't happy. Jordan said she'd prioritize it. The clock is running.";
+            },
+            available: (s, char, e) => (e.chars.get('jordan').flags.launch_blocker_wait || 0) < 1 },
+          { label: 'Confront Jordan — this has to be resolved', key: 'confront',
+            execute(s, char, e) {
+              e.chars.get('jordan').flags.launch_blocker_done = true;
+              s.jordan_confrontation_triggered = true;
+              return "Agreed. This conversation is overdue.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          e.chars.get('jordan').flags.launch_blocker_done = true;
+          s.launched = true;
+          s.signal = clamp(s.signal - 15, 0, 100);
+        },
+      },
+      {
+        id: 'jordan_confrontation', cat: 't', from: 'Alex',
+        body: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          const pct = j.flags.equity_proposal === '33/33/33' ? '33%' : j.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
+          return `i need to say something. jordan's been part-time for two months. i'm covering her work and mine. she has ${pct} of the company and i don't think she's earning it anymore. we need to have the conversation.`;
+        },
+        urgency: 3, weeks: 1, priority: 2,
+        available: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          return s.jordan_drifting && !s.jordan_resolved && !j.flags.confrontation_done
+            && (s.jordan_confrontation_triggered || s.week >= (s.jordan_confrontation_defer_until || 20));
+        },
+        options: [
+          { label: 'Have the conversation — let Jordan go', key: 'fire',
+            execute(s, char, e) {
+              const j = e.chars.get('jordan');
+              j.flags.confrontation_done = true;
+              s.jordan_resolved = true;
+              s.jordan_cleanup_needed = true; // always needs legal review on departure
+              if (s.items) {
+                if (s.items.ios_server && s.items.ios_server.status !== 'done' && s.items.ios_server.status !== 'obsolete') {
+                  s.items.ios_server.assignee = 'alex';
+                  e.pending.push({
+                    fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+                    text: "picked up jordan's ios backend integration. took a few days to orient in her code but it's running.",
+                    fx(st) {
+                      if (st.items?.ios_server) { st.items.ios_server.status = 'done'; st.items.ios_server.quality = 'solid'; }
+                      st.ios_unblocked = true;
+                    },
+                    cancel: (st) => !!st.ios_unblocked,
+                  });
+                }
+                if (s.items.ios_ui && s.items.ios_ui.status !== 'done' && s.items.ios_ui.status !== 'obsolete') {
+                  s.items.ios_ui.assignee = 'alex';
+                }
+                if (s.items.plans_ui && s.items.plans_ui.status !== 'done' && s.items.plans_ui.status !== 'obsolete') {
+                  s.items.plans_ui.assignee = null;
+                }
+              }
+              if (!s.jordan_equity) {
+                // Equity was never formally signed — Alex sees the same dysfunction
+                char.morale = clamp(char.morale - 30, 0, 100); char.trust = clamp(char.trust - 25, 0, 100);
+                e.alexDepartureRisk = true;
+                return "Hard conversation. Jordan left. Then Alex pulled you aside: 'we never actually signed anything. no equity split, no vesting. what are we even building here?' he looked serious.";
+              }
+              char.morale = clamp(char.morale + 10, 0, 100);
+              char.trust = clamp(char.trust + 8, 0, 100);
+              const pct = j.flags.equity_proposal === '33/33/33' ? '33%' : j.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
+              return `Hard conversation. Jordan wasn't surprised — she knew it wasn't working. She's off the team. Her ${pct} is still on the cap table.`;
+            } },
+          { label: 'One more sprint to turn it around', key: 'defer',
+            execute(s, char, e) {
+              s.jordan_confrontation_triggered = false;
+              s.jordan_confrontation_defer_until = s.week + 4;
+              char.morale = clamp(char.morale - 8, 0, 100);
+              return "Alex went quiet. Jordan will try again. You both know how this ends.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          e.chars.get('jordan').flags.confrontation_done = true;
+          // Jordan stays — only the player can fire her. Alex can't take it anymore.
+          char.morale = 0; char.trust = clamp(char.trust - 25, 0, 100);
+        },
+      },
+      {
+        id: 'jordan_cap_table', cat: 'e', from: 'Alex',
+        body: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          const pct = j.flags.equity_proposal === '33/33/33' ? '33%' : j.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
+          return `jordan's ${pct} is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.`;
+        },
+        urgency: 2, weeks: 1, priority: 2,
+        available: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          return s.jordan_resolved && s.jordan_cleanup_needed && !j.flags.cap_table_done;
+        },
+        options: [
+          { label: 'Hire a lawyer — $2,000', key: 'lawyer',
+            execute(s, char, e) {
+              e.chars.get('jordan').flags.cap_table_done = true;
+              s.jordan_cleanup_needed = false;
+              s.cash = clamp(s.cash - 2000, 0, 9999999);
+              return "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.";
+            } },
+          { label: "Can't afford it right now", key: 'defer',
+            execute(s, char, e) {
+              e.chars.get('jordan').flags.cap_table_done = true;
+              return "Left it for now. Every investor who looks at the cap table will ask about Jordan's stake.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) { e.chars.get('jordan').flags.cap_table_done = true; },
       },
     ],
   };

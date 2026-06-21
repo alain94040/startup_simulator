@@ -2,7 +2,59 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'hacker_news', name: 'Hacker News', type: 'platform',
+    id: 'hacker_news', type: 'platform',
+
+    slice: [
+      "hn_thread",
+      "community_signal_hn_1",
+      "community_signal_hn_2",
+      "community_signal_hn_3",
+      "community_signal_reddit_1",
+      "community_signal_reddit_2",
+      "community_signal_reddit_3",
+      "community_signal_slack_1",
+      "community_signal_slack_2",
+      "community_signal_slack_3",
+      "community_product_hn",
+      "community_product_reddit",
+      "community_product_slack",
+      "yc_discussion_ready",
+      "yc_discussion_early",
+    ],
+
+    role: "Communities",
+    name: "HN / Reddit",  // chat display name
+    voice: {
+      "hn_thread|engage": "Engaged the HN thread authentically. 7 DMs requesting early access.",
+      "community_signal_hn_1|engage": "Commented on the HN thread with a genuine take. 4 people DM'd asking when we're launching.",
+      "community_signal_hn_1|skip": "Read the HN thread. Nothing actionable right now.",
+      "community_signal_hn_2|engage": "Left a detailed reply on the HN thread. Two people asked to be notified at launch — one is a former PM at a big company.",
+      "community_signal_hn_2|skip": "Didn't engage the HN thread. Kept building.",
+      "community_signal_hn_3|engage": "Shared the waitlist link on HN. 8 signups from the thread. One person asked to beta test.",
+      "community_signal_hn_3|skip": "Watched the HN thread from the sidelines. Three potential users moved on.",
+      "community_signal_reddit_1|engage": "Joined the Reddit conversation as a builder. 2 people signed up for early access.",
+      "community_signal_reddit_1|skip": "Skipped the Reddit thread. Staying focused.",
+      "community_signal_reddit_2|engage": "Added my take on why anti-Tinder startups keep failing. 12 upvotes, 3 private follow-ups.",
+      "community_signal_reddit_2|skip": "Took notes from the Reddit thread. Three failure modes to avoid.",
+      "community_signal_reddit_3|engage": "Jumped into the Reddit thread as the founder. Thread stayed warm for two days. 7 signups.",
+      "community_signal_reddit_3|watch": "Let the Reddit thread run on its own. 3 signups without lifting a finger.",
+      "community_signal_slack_1|engage": "Posted an honest update on Indie Hackers. 5 people followed up with their own experiences.",
+      "community_signal_slack_1|skip": "Skipped the Indie Hackers thread. Head down this week.",
+      "community_signal_slack_2|engage": "Replied to the dating app post-mortem on Indie Hackers with what we're doing differently. The author DM'd me.",
+      "community_signal_slack_2|skip": "Took notes from the IH post-mortem. Three failure modes to avoid.",
+      "community_signal_slack_3|engage": "Started posting weekly updates on Indie Hackers. 6 new subscribers in 48 hours. Two founders reached out.",
+      "community_signal_slack_3|skip": "Stayed quiet on Indie Hackers. The gap with other builders is widening.",
+      "community_product_hn|engage": "Responded to every comment on the HN post about us. Thread stayed warm for 3 days. 5 signups.",
+      "community_product_hn|watch": "Let the HN post run. Thread faded quickly. 1 signup.",
+      "community_product_reddit|engage": "Thanked the Reddit poster publicly and privately. They became a power user and wrote a short review.",
+      "community_product_reddit|watch": "Let the Reddit post ride. 2 more signups from the thread tail.",
+      "community_product_slack|engage": "Answered pricing questions on the IH post honestly. 2 signups, 1 feature request worth exploring.",
+      "community_product_slack|watch": "Let the IH post run. 1 signup.",
+      "yc_discussion_ready|apply": "Committed to this YC batch. Deadline is next sprint — time to write the application.",
+      "yc_discussion_ready|skip": "Decided to skip this YC batch. Next one opens in ~12 weeks.",
+      "yc_discussion_early|apply": "Going for YC anyway — a long shot, but the partner feedback alone is worth it.",
+      "yc_discussion_early|skip": "Waiting for the next YC batch. More time to hit the numbers."
+    },
     cards: [
       {
         id: 'hn_thread', cat: 'e', from: 'Hacker News',
@@ -196,7 +248,7 @@
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
         body: "YC applications just opened. Your stats qualify — live product, 10+ paying subscribers. A lot of founders in the consumer social space are applying.",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1, priority: 1,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.launched && s.customers >= 10,
         options: [
           { label: 'Start writing the application', key: 'apply',
@@ -209,7 +261,7 @@
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
         body: "YC applications just opened. Stats aren't quite there yet — not launched or fewer than 10 paying subscribers. Some apply anyway for partner feedback. Apply or wait?",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1, priority: 1,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (!s.launched || s.customers < 10),
         options: [
           { label: 'Start writing anyway', key: 'apply',

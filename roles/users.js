@@ -3,6 +3,28 @@
 
   const def = {
     id: 'users', name: 'Users', type: 'customer',
+
+    slice: [
+      "bug_reports",
+      "churn_interview",
+      "feature_request_custom",
+      "feature_cluster",
+      "waitlist_cold",
+    ],
+
+    role: "Your customers",
+    intro: "you have real users now. they're going to start talking.",
+    voice: {
+      "bug_reports|fix": "Dropped everything and fixed the crash. Users notified. Goodwill recovered.",
+      "churn_interview|call": "Called the churned subscriber. They left because Flare launched video dates — the one thing they'd been asking for. Now I know exactly what to build next.",
+      "churn_interview|email": "Emailed the churned subscriber. One paragraph back. Less than a call, more than nothing.",
+      "churn_interview|ignore": "Let the churned subscriber go. I'll never know why they left.",
+      "feature_request_custom|build": "Built video dates for our power user. They doubled their plan — but it's really built around one person's workflow.",
+      "feature_request_custom|decline": "Declined the video dates request. They churned. The clarity on what NOT to build was worth it.",
+      "feature_request_custom|negotiate": "Proposed a 60-second video hello instead of full video calls. Low friction, easy to build. 5 other subscribers turned it on immediately.",
+      "feature_cluster|build": "Built the feature three users independently asked for. All 3 loved it. Two immediately referred a friend.",
+      "waitlist_cold|reach": "Reached out to the waitlist. Good feedback — people are still excited, want to know when we're launching."
+    },
     unlockCondition: (s) => s.waitlist >= 5 || s.users >= 3 || s.customers >= 1,
     cards: [
       {

@@ -1,12 +1,25 @@
 (function () {
   const def = {
-    id: 'jamie', name: 'Jamie (college friend)', type: 'family',
+    id: 'jamie', type: 'family',
+
+    slice: [
+      "ff_friend",
+      "ff_friend_ask",
+    ],
+
+    role: "College friend",
+    name: "Jamie",  // chat display name
+    intro: "yo! heard you actually quit to do this for real. wild. coffee?",
+    voice: {
+      "ff_friend|tell": "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the beta list.",
+      "ff_friend_ask|ask": "Asked Jamie to invest. He wants to support this."
+    },
     unlockCondition: (s) => s.week >= 3,
     cards: [
       {
         id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)',
         body: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear — a dating app, seriously?",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1, priority: 1,
         available: (s, char) => s.week <= 10 && !char.flags.first_meeting_done,
         options: [
           { label: 'Tell him about it', key: 'tell',
@@ -21,7 +34,7 @@
       {
         id: 'ff_friend_ask', cat: 'e', from: 'Jamie (college friend)',
         body: "hey — been thinking about what you told me. i want to support this somehow. can we talk again?",
-        urgency: 2, weeks: 1, priority: true,
+        urgency: 2, weeks: 1, priority: 1,
         available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week >= char.flags.first_meeting_week + 4 && s.week <= char.flags.first_meeting_week + 12,
         options: [
           { label: 'Ask him to invest', key: 'ask',

@@ -21,7 +21,19 @@
   ];
 
   const def = {
-    id: 'ryan', name: 'Ryan (angel)', type: 'investor',
+    id: 'ryan', type: 'investor',
+
+    slice: [
+      "ryan_intro",
+    ],
+
+    role: "Angel investor",
+    name: "Ryan",  // chat display name
+    intro: "heard about you through the network. love what you're building in the dating space — would love to grab coffee.",
+    voice: {
+      "ryan_intro|meet": "Great coffee with Ryan. Sharp questions, genuinely excited. He wants to stay close as things develop.",
+      "ryan_intro|pass": "Declined Ryan's coffee invite. He said to reach out when timing's better."
+    },
     unlockCondition: (s) => s.week >= 8 && s.network.advisors >= 1,
     cards: [
       {

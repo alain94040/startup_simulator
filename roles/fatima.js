@@ -2,7 +2,25 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'fatima', name: 'Fatima (angel)', type: 'investor',
+    id: 'fatima', type: 'investor',
+
+    slice: [
+      "fatima_intro",
+      "fatima_meeting",
+      "fatima_deck",
+      "fatima_commit",
+    ],
+
+    role: "Angel investor",
+    name: "Fatima",  // chat display name
+    intro: "a few people i trust have mentioned kindred. i invest in consumer social — would love to hear more.",
+    voice: {
+      "fatima_intro|call": "Good call with Fatima. Sharp questions about the problem space. She asked for the deck when it's ready.",
+      "fatima_intro|pass": "Declined Fatima's call. She said to reach out when timing is better.",
+      "fatima_meeting|meet": "Strong meeting with Fatima. She pushed hard on distribution, then asked for the deck and latest numbers.",
+      "fatima_deck|walk": "Walked Fatima through the unit economics and TAM. She said the story is tight — completing diligence now.",
+      "fatima_commit|welcome": "Fatima committed. Her diligence is done."
+    },
     unlockCondition: (s) => s.week >= 8 && s.network.advisors >= 1,
     cards: [
       {
@@ -19,7 +37,7 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
-        id: 'fatima_meeting', cat: 'e', from: 'Fatima (angel)',
+        id: 'fatima_meeting', priority: 2, cat: 'e', from: 'Fatima (angel)',
         body: "been thinking about our call. love the space — dating apps with real retention are rare. can we do a deeper dive this week? i want to understand the go-to-market before i go further.",
         urgency: 2, weeks: 1,
         available: (s, char) => char.flags.intro_done && !char.flags.meeting_done && s.week >= (s.fatima_intro_week || 0) + 2,
@@ -33,7 +51,7 @@
         dropFx(s, char) { char.flags.meeting_done = true; },
       },
       {
-        id: 'fatima_deck', cat: 'e', from: 'Fatima (angel)',
+        id: 'fatima_deck', priority: 2, cat: 'e', from: 'Fatima (angel)',
         body: "strong deck. a few follow-up questions on unit economics and TAM. once i have those i can take it to my next step.",
         urgency: 1, weeks: 1,
         available: (s, char) => char.flags.meeting_done && s.deck_ready && !char.flags.deck_done,
@@ -49,7 +67,7 @@
       {
         id: 'fatima_commit', cat: 'e', from: 'Fatima (angel)',
         body: "i've completed my diligence. metrics are where i need them, conviction is there. i'd like to put in $100K — are you still filling the round?",
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 2,
         available: (s, char) => char.flags.deck_done && s.marcusCommitted && !char.flags.committed,
         options: [
           { label: 'Yes — welcome aboard', key: 'welcome',

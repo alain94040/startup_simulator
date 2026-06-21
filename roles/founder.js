@@ -3,6 +3,77 @@
 
   const def = {
     id: 'founder', name: 'You', type: 'founder',
+
+    slice: [
+      "founder_landing",
+      "founder_first_interviews",
+      "equity_signing",
+      "founder_meetup",
+      "founder_codebuild",
+      "founder_build_onboarding",
+      "founder_build_empty_states",
+      "founder_build_export",
+      "founder_build_demo_account",
+      "founder_solo_launch",
+      "founder_solo_build",
+      "founder_solo_discover",
+      "founder_solo_growth",
+      "founder_user_depth",
+      "first_customer_offer",
+      "reference_checkin",
+      "website_social_proof",
+      "founder_pricing_experiment",
+      "founder_reflect",
+    ],
+
+    role: "Founder · Journal",
+    milestones: [
+      { key: "building", cls: "green", label: "We're Building", test: (s, c) => !!(c.alex.flags.prototype_kicked) },
+      { key: "incorporated", cls: "blue", label: "Incorporated", test: (s) => !!s.incorporated },
+      { key: "equity", cls: "red", label: "Equity Signed", test: (s) => !!s.jordan_equity },
+      { key: "demo", cls: "green", label: "First Demo", test: (s) => !!s.has_demo },
+      { key: "beta", cls: "green", label: "Beta Live", test: (s) => !!s.has_beta },
+      { key: "launched", cls: "green", label: "Launched", test: (s) => !!s.launched },
+      { key: "firstcust", cls: "blue", label: "First Customer", test: (s) => s.customers >= 1 },
+      { key: "marcus", cls: "blue", label: "Lead Investor", test: (s) => !!s.marcusCommitted },
+      { key: "funded", cls: "red", label: "Round Closed", test: (s) => !!s.followerCommitted },
+      { key: "yc", cls: "red", label: "YC Accepted", test: (s) => !!s.ycAccepted },
+    ],
+    voice: {
+      "equity_signing|sign": "We signed the founder agreement. The split's locked in. Nobody set up vesting schedules — it felt unnecessary between friends. I hope that's not something I regret.",
+      "founder_landing|build": "Registered the domain and put up a simple landing page — $200 for the domain, hosting, and Carrd. Already got twelve 'signups'… all crypto spam. Still, we exist online now.",
+      "founder_first_interviews|interview": "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
+      "founder_meetup|go": "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on retention, and seemed genuinely curious about what we're building.",
+      "founder_reflect|review": "Quiet week. Sharpened the pitch — small refinements, nothing dramatic. Sometimes that's the work.",
+      "founder_codebuild|pair": "Paired up with Alex this sprint. My contribution was modest but Alex shipped faster with me there.",
+      "founder_codebuild|demos": "Ran 3 demos instead of pairing with Alex. 3 people signed up for early access.",
+      "founder_build_onboarding|build": "Built the onboarding end-to-end myself. Took longer than expected — not my strongest skill — but it shipped.",
+      "founder_build_onboarding|pass": "Handed the onboarding spec to Alex. He'll fit it in — but his queue just got longer.",
+      "founder_build_empty_states|build": "Added helpful empty states to every screen. Small fix, big impact.",
+      "founder_build_empty_states|pass": "Added empty states to the backlog. It'll stay there a while.",
+      "founder_build_export|build": "Photo verification shipped. All four users who asked about it upgraded.",
+      "founder_build_export|pass": "Asked Alex to prioritize photo verification. He'll ship it — but two weeks later, two of the four users had moved on.",
+      "founder_build_demo_account|build": "Seeded the demo account with realistic profiles. Next investor call, they asked 'can I sign up?' instead of 'how does this work?'",
+      "founder_build_demo_account|pass": "Kept winging investor demos. Lost two calls to confusion.",
+      "founder_solo_launch|ship": "Launched solo. No fanfare. But it's live.",
+      "founder_solo_launch|wait": "Polished a few things. Still not launched.",
+      "founder_solo_build|build": "Two weeks of solo heads-down. Much slower without Alex — things that took a day take a week now.",
+      "founder_solo_build|min": "Kept things barely moving. Not much progress but nothing broke.",
+      "founder_solo_discover|calls": "Three calls done on my own. One person asked if they could pay now. Signal is still there.",
+      "founder_solo_discover|survey": "Sent a survey instead of doing calls. Lower signal but saves time.",
+      "founder_solo_growth|outreach": "Cold batch sent. 2 signups from people I messaged directly.",
+      "founder_solo_growth|light": "Posted an update in one community. Small ripple. Keeps the light on.",
+      "founder_user_depth|deep": "Five user sessions done. Found patterns I didn't expect.",
+      "founder_user_depth|survey": "Sent a structured survey. 60% response rate. Useful signal, but nothing I didn't already suspect.",
+      "first_customer_offer|reference": "Offered 3 months free for a testimonial. They said yes immediately. First reference customer locked in.",
+      "first_customer_offer|pitch": "Pitched them at $49/month. They converted. First paying subscriber. Not much, but it's real.",
+      "reference_checkin|call": "One hour call with the reference customer. They've been on two dates from kindred. Got a quote I can use anywhere.",
+      "reference_checkin|email": "Asked the reference customer for a testimonial over email. Short paragraph back — honest and usable.",
+      "website_social_proof|rebuild": "Rebuilt the website around the customer story. Hero section is now the customer quote. Conversion jumped immediately.",
+      "founder_pricing_experiment|prompt": "Added an upgrade prompt. A few users complained about the nag — but some converted. Worth it.",
+      "founder_pricing_experiment|cap": "Capped the free tier at 3 seats. More revenue, fewer free users.",
+      "founder_pricing_experiment|hold": "Held off on pricing. Free users keep coming. The conversion problem isn't going anywhere."
+    },
     cards: [
       {
         id: 'founder_landing', cat: 'p', from: 'You',
@@ -37,7 +108,7 @@
           if (split === '50/25/25') return "three-way call. 50/25/25 on the table. jordan accepted — at least she's equal to alex. alex signed without comment. nobody mentioned vesting schedules.";
           return "three-way call. 40/40/20 agreed. alex seemed satisfied. jordan signed — said she'd prove she's worth more than 20%. nobody set up vesting schedules.";
         },
-        urgency: 3, weeks: 1, priority: true,
+        urgency: 3, weeks: 1, priority: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return jordan && jordan.flags.equity_counter_done && !s.jordan_equity && s.week <= 12;

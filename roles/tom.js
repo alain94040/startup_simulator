@@ -2,7 +2,18 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'tom', name: 'Tom (your top user)', type: 'customer',
+    id: 'tom', type: 'customer',
+
+    slice: [
+      "power_user_quiet",
+    ],
+
+    role: "Power user",
+    name: "Tom",  // chat display name
+    intro: "your most active subscriber just went quiet.",
+    voice: {
+      "power_user_quiet|call": "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had."
+    },
     unlockCondition: (s) => s.launched && s.customers >= 10,
     cards: [
       {

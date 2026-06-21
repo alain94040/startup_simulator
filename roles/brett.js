@@ -2,7 +2,18 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'brett', name: 'Brett (brand strategist)', type: 'consultant',
+    id: 'brett', type: 'consultant',
+
+    slice: [
+      "consultant_brand",
+    ],
+
+    role: "Brand consultant",
+    name: "Brett",  // chat display name
+    intro: "found you on crunchbase. i work with early-stage founders on positioning — dropping you a line.",
+    voice: {
+      "consultant_brand|hire": "Hired Brett for a brand workshop. 45 minutes of sticky notes and a 'narrative architecture' framework. His main insight: 'lean into your why.' I already knew this. $1,500."
+    },
     unlockCondition: (s) => s.incorporated && s.hn_thread_done && s.week >= 4,
     cards: [
       {

@@ -3,6 +3,16 @@
 
   const def = {
     id: 'twitter', name: 'Twitter', type: 'platform',
+
+    slice: [
+      "public_complaint",
+    ],
+
+    role: "Social media",
+    intro: "people are talking about kindred on social media.",
+    voice: {
+      "public_complaint|respond": "Responded publicly to the Twitter complaint, fixed the duplicate match bug. The user deleted the tweet and posted an apology."
+    },
     unlockCondition: (s) => s.launched && (s.users >= 10 || s.customers >= 2),
     cards: [
       {
