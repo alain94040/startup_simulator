@@ -373,10 +373,11 @@
         this.act1Complete = true;
       }
 
-      // A choice can immediately open the next beat in the same arc (e.g. the
-      // equity proposal unlocking a counter). Surface it now so the thread
-      // stays live, but it still costs a future action to answer.
-      this._surfaceFollowups();
+      // Surface any follow-ups that just became available for OTHER characters
+      // (e.g. answering Jordan's equity mention unlocks Alex's proposal).
+      // The same character never gets a new message mid-week — that would feel
+      // like an instant double-text. They wait for the next week.
+      this._surfaceFollowups(entry.charId);
 
       this._checkStamps();
 
@@ -403,9 +404,12 @@
     }
 
     // After an action, reveal any newly-available follow-ups for characters that
-    // no longer have an open prompt — without advancing the week.
-    _surfaceFollowups() {
+    // no longer have an open prompt — without advancing the week. Skip the
+    // character the player just talked to: same-person follow-ups wait for the
+    // next week so they don't feel like an instant double-text.
+    _surfaceFollowups(skipCharId) {
       for (const charId of this.order) {
+        if (charId === skipCharId) continue;
         const char = this.chars.get(charId);
         if (!char || !char.active || this._hasOpenFor(charId)) continue;
         const available = this._sliceCards(charId).filter(def => def.available(this.s, char, this));

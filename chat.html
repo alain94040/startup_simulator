@@ -57,7 +57,8 @@
   .endweek:disabled{opacity:.4;cursor:default;transform:none}
 
   /* ── main split ──────────────────────────────────────── */
-  .main{flex:1;display:flex;gap:14px;min-height:0}
+  .main{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+  .top-row{flex:1;display:flex;gap:14px;min-height:0}
   .rail{
     width:268px;flex:none;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
     overflow:hidden;display:flex;flex-direction:column;
@@ -120,7 +121,31 @@
   .typing i{width:7px;height:7px;border-radius:50%;background:#b6b6bb;animation:blink 1.2s infinite}
   .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 
-  /* ── journal: the player's private record, styled as paper ─────────── */
+  /* ── journal panel: always visible at the bottom ──────────────────── */
+  .journal-panel{
+    flex:none; height:220px; min-height:120px;
+    background:var(--panel); border-radius:16px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .journal-head{
+    display:flex; align-items:center; gap:10px; padding:10px 18px;
+    border-bottom:1px solid var(--line); flex:none;
+  }
+  .journal-head .jh-icon{ font-size:18px }
+  .journal-head .jh-title{ font-weight:600; font-size:14px }
+  .journal-head .jh-sub{ font-size:11px; color:var(--muted) }
+  .journal-scroll{
+    flex:1; overflow-y:auto; gap:0;
+    background-color:var(--paper);
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 33px, var(--rule) 33px, var(--rule) 34px),
+      linear-gradient(90deg, transparent 0 50px, var(--margin) 50px 52px, transparent 52px);
+    background-attachment:local;
+    padding:16px 30px 16px 70px;
+    display:flex; flex-direction:column;
+  }
+
+  /* keep the old .thread.journal-mode for if someone opens the tab directly */
   .thread.journal-mode{
     gap:0;
     background-color:var(--paper);
@@ -130,43 +155,55 @@
     background-attachment:local;
     padding:26px 30px 16px 70px;
   }
-  .journal-mode .journal-entry{
+  .journal-mode .journal-entry, .journal-scroll .journal-entry{
     font-family:var(--hand); color:var(--jink);
     font-size:17px; line-height:34px; margin:0 0 6px; white-space:pre-wrap;
     animation:inkin .5s ease both;
   }
-  .journal-mode .journal-entry.is-outcome{ color:#5a513f; }
-  .journal-mode .journal-choice{
+  .journal-mode .journal-entry.is-outcome, .journal-scroll .journal-entry.is-outcome{ color:#5a513f; }
+  .journal-mode .journal-choice, .journal-scroll .journal-choice{
     font-family:var(--hand); color:var(--jink-blue);
     font-size:17px; line-height:34px; margin:0 0 6px; animation:inkin .45s ease both;
   }
-  .journal-mode .journal-source{
+  .journal-mode .journal-source, .journal-scroll .journal-source{
     display:block; font-family:-apple-system,sans-serif; font-size:10px; line-height:1;
     letter-spacing:.6px; text-transform:uppercase; color:#bca978; margin:-2px 0 8px;
   }
   /* week number written into the red margin gutter, beside the entry */
-  .journal-mode .journal-date{ position:relative; align-self:stretch; min-height:26px; margin:22px 0 0; }
-  .journal-mode .journal-date:first-child{ margin-top:4px; }
-  .journal-mode .journal-date .num{
+  .journal-mode .journal-date, .journal-scroll .journal-date{ position:relative; align-self:stretch; min-height:26px; margin:22px 0 0; }
+  .journal-mode .journal-date:first-child, .journal-scroll .journal-date:first-child{ margin-top:4px; }
+  .journal-mode .journal-date .num, .journal-scroll .journal-date .num{
     position:absolute; left:-66px; top:2px; width:44px; text-align:right;
     font-family:var(--hand); color:#b5654a; line-height:1;
   }
-  .journal-mode .journal-date .num b{ display:block; font-size:19px; font-weight:700; }
-  .journal-mode .journal-date .num i{
+  .journal-mode .journal-date .num b, .journal-scroll .journal-date .num b{ display:block; font-size:19px; font-weight:700; }
+  .journal-mode .journal-date .num i, .journal-scroll .journal-date .num i{
     display:block; font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase;
     font-style:normal; color:#c9a98f; margin-top:3px;
   }
   /* milestone rubber stamp */
-  .journal-mode .journal-stamp{
+  .journal-mode .journal-stamp, .journal-scroll .journal-stamp{
     align-self:flex-start; margin:12px 0 16px; padding:5px 15px;
     border:3px double currentColor; border-radius:6px;
     font-family:"Arial Black",Impact,sans-serif; font-weight:800; font-size:14px;
     letter-spacing:2px; text-transform:uppercase; opacity:.78;
     transform:rotate(-7deg); animation:stampin .4s cubic-bezier(.2,1.5,.4,1) both;
   }
-  .journal-mode .journal-stamp.green{ color:#2e8b57 }
-  .journal-mode .journal-stamp.blue{ color:#2a5db0 }
-  .journal-mode .journal-stamp.red{ color:#c0392b }
+  .journal-mode .journal-stamp.green, .journal-scroll .journal-stamp.green{ color:#2e8b57 }
+  .journal-mode .journal-stamp.blue, .journal-scroll .journal-stamp.blue{ color:#2a5db0 }
+  .journal-mode .journal-stamp.red, .journal-scroll .journal-stamp.red{ color:#c0392b }
+  /* inline action buttons inside journal entries */
+  .journal-actions{
+    display:flex; flex-direction:column; gap:7px; margin:4px 0 14px;
+    animation:inkin .4s ease both;
+  }
+  .journal-btn{
+    text-align:left; border:1.5px solid #d8c39c; background:#fefcf2; color:#5b4a24;
+    padding:8px 14px; border-radius:10px; cursor:pointer;
+    font:14px var(--hand); line-height:1.35; transition:.13s;
+  }
+  .journal-btn:hover{ border-color:#b8943c; background:#fff7e0; transform:translateY(-1px); }
+  .journal-btn.spent{ opacity:.4; pointer-events:none; }
 
   /* ── composer ────────────────────────────────────────── */
   .composer{border-top:1px solid var(--line);padding:14px 18px;background:var(--panel)}
@@ -234,16 +271,27 @@
 
     <!-- main -->
     <div class="main">
-      <div class="rail">
-        <h2>Messages</h2>
-        <div class="convs" id="convs"></div>
+      <div class="top-row">
+        <div class="rail">
+          <h2>Messages</h2>
+          <div class="convs" id="convs"></div>
+        </div>
+
+        <div class="chat">
+          <div class="banner" id="banner"></div>
+          <div class="chat-head" id="chatHead"></div>
+          <div class="thread" id="thread"></div>
+          <div class="composer" id="composer"></div>
+        </div>
       </div>
 
-      <div class="chat">
-        <div class="banner" id="banner"></div>
-        <div class="chat-head" id="chatHead"></div>
-        <div class="thread" id="thread"></div>
-        <div class="composer" id="composer"></div>
+      <div class="journal-panel">
+        <div class="journal-head">
+          <span class="jh-icon">📓</span>
+          <span class="jh-title">Founder's Journal</span>
+          <span class="jh-sub">your private record</span>
+        </div>
+        <div class="journal-scroll" id="journalScroll"></div>
       </div>
     </div>
   </div>
@@ -262,9 +310,12 @@
   (function(){
     const engine = new ChatEngine();
     const META = window.CHAT_META;
-    let active = "alex";          // current conversation
-    const shown = {alex:0, jordan:0, founder:0};  // entries already revealed
-    let revealing = false;        // lock during animated reveal
+    let active = "alex";
+    const shown = {alex:0, jordan:0, founder:0};
+    let revealing = false;
+    let journalRevealing = false;
+    let jShown = 0;       // entries already rendered in the journal panel
+    let jLastWeek = null;
 
     const $ = id => document.getElementById(id);
     const fmtCash = c => "$" + c.toLocaleString();
@@ -282,13 +333,13 @@
         ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
-      $("endweek").disabled = revealing;
+      $("endweek").disabled = revealing || journalRevealing;
       $("endweek").textContent = s.actionsLeft===0 ? "Next week →" : "End week →";
     }
 
-    // ── sidebar ───────────────────────────────────────────
+    // ── sidebar (only chat characters, not founder) ───────
     function renderRail(){
-      const convs = engine.conversations();
+      const convs = engine.conversations().filter(c => !c.isJournal);
       $("convs").innerHTML = convs.map(c=>{
         const unanswered = shown[c.id] < engine.threads[c.id].length;
         const dot = (c.hasAction || unanswered) ? '<span class="badge"></span>' : '';
@@ -307,46 +358,97 @@
 
     // ── chat header ───────────────────────────────────────
     function renderHead(){
-      if (active === "founder"){
-        $("chatHead").innerHTML =
-          `<div class="avatar" style="background:#caa15a">📓</div>
-           <div><div class="nm">Founder's Journal</div><div class="rl">your private record</div></div>`;
-        return;
-      }
       const m = META[active];
+      if (!m) return;
       $("chatHead").innerHTML =
         `<div class="avatar" style="background:${m.color}">${m.initials}</div>
          <div><div class="nm">${m.name}</div><div class="rl">${m.role}</div></div>`;
     }
 
     // ── build one message element ─────────────────────────
-    function buildEntry(e, charId){
-      const journal = charId === "founder";
-
-      if (journal){
-        // Everything in the journal is handwriting on the page — no bubbles.
-        if (e.type === "stamp"){
-          const d = document.createElement("div");
-          d.className = "journal-stamp " + (e.stampClass || "red");
-          d.textContent = e.label; return d;
-        }
-        if (e.type === "reply"){
-          const d = document.createElement("div");
-          d.className = "journal-choice"; d.textContent = "✓ " + e.body; return d;
-        }
-        const wrap = document.createElement("div");
-        if (e.type === "outcome" && e.sourceChar){
-          const src = document.createElement("div");
-          src.className = "journal-source"; src.textContent = "after talking with " + (e.from || e.sourceChar);
-          wrap.appendChild(src);
-        }
+    function buildJournalEntry(e){
+      if (e.type === "stamp"){
         const d = document.createElement("div");
-        d.className = "journal-entry" + (e.type === "outcome" ? " is-outcome" : "");
-        d.textContent = e.body;
-        wrap.appendChild(d);
-        return wrap;
+        d.className = "journal-stamp " + (e.stampClass || "red");
+        d.textContent = e.label; return d;
       }
+      if (e.type === "reply"){
+        const d = document.createElement("div");
+        d.className = "journal-choice"; d.textContent = "✓ " + e.body; return d;
+      }
+      const wrap = document.createElement("div");
+      if (e.type === "outcome" && e.sourceChar){
+        const src = document.createElement("div");
+        src.className = "journal-source"; src.textContent = "after talking with " + (e.from || e.sourceChar);
+        wrap.appendChild(src);
+      }
+      const d = document.createElement("div");
+      d.className = "journal-entry" + (e.type === "outcome" ? " is-outcome" : "");
+      d.textContent = e.body;
+      wrap.appendChild(d);
+      // Inline action buttons for founder prompts that are still surfaced
+      if (e.type === "incoming" && e.cardId && engine.surfaced.has(e.cardId)){
+        const opts = engine.options(e.cardId);
+        if (opts.length){
+          const btns = document.createElement("div");
+          btns.className = "journal-actions";
+          btns.dataset.cardId = e.cardId;
+          const spent = engine.actionsLeft <= 0;
+          for (const o of opts){
+            const b = document.createElement("button");
+            b.className = "journal-btn" + (spent ? " spent" : "");
+            b.textContent = o.label;
+            b.dataset.card = e.cardId;
+            b.dataset.key = o.key;
+            b.onclick = ()=> doJournalAct(e.cardId, o.key, btns);
+            btns.appendChild(b);
+          }
+          wrap.appendChild(btns);
+        }
+      }
+      return wrap;
+    }
 
+    function doJournalAct(cardId, key, btnContainer){
+      if (revealing || journalRevealing || engine.actionsLeft <= 0) return;
+      const jBefore = engine.threads.founder.length;
+      engine.act(cardId, key);
+      // remove the buttons since the card was just answered
+      if (btnContainer) btnContainer.remove();
+      // reveal new journal entries (the reply + outcome)
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore);
+      }
+      renderStats(); renderComposer(); renderRail();
+      // auto-advance if out of actions
+      const checkAuto = setInterval(()=>{
+        if (!journalRevealing){
+          clearInterval(checkAuto);
+          if (engine.actionsLeft <= 0 && !engine.stats().act1Complete){
+            setTimeout(advanceWeek, 900);
+          }
+        }
+      }, 120);
+    }
+
+    // After each action or week advance, update spent state on any remaining
+    // inline journal buttons and remove buttons for cards no longer surfaced.
+    function refreshJournalButtons(){
+      const box = $("journalScroll");
+      const groups = box.querySelectorAll(".journal-actions");
+      for (const g of groups){
+        const cid = g.dataset.cardId;
+        if (!engine.surfaced.has(cid)){
+          g.remove(); continue;
+        }
+        const spent = engine.actionsLeft <= 0;
+        for (const b of g.querySelectorAll(".journal-btn")){
+          b.className = "journal-btn" + (spent ? " spent" : "");
+        }
+      }
+    }
+
+    function buildChatEntry(e){
       if (e.type === "incoming"){
         const wrap = document.createElement("div");
         const row = document.createElement("div");
@@ -365,38 +467,85 @@
         d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
         return d;
       }
-      // outcome / system in a chat thread (shouldn't normally happen now)
       const d = document.createElement("div");
       d.className = "outcome";
       d.innerHTML = `<b>·</b> ${escapeHtml(e.body)}`;
       return d;
     }
 
-    // ── render thread (instant for already-shown, animate the rest) ─────────
+    // ── journal panel (always visible, bottom) ────────────
+    function journalDivider(box, e){
+      if (e.week && e.week !== jLastWeek){
+        const d = document.createElement("div");
+        d.className = "journal-date";
+        d.innerHTML = `<span class="num"><b>${e.week}</b><i>week</i></span>`;
+        box.appendChild(d);
+        jLastWeek = e.week;
+      }
+    }
+
+    function renderJournalCatchup(){
+      const box = $("journalScroll");
+      const thread = engine.threads.founder;
+      while (jShown < thread.length){
+        const e = thread[jShown];
+        journalDivider(box, e);
+        const el = buildJournalEntry(e);
+        el.style.animation = "none";
+        box.appendChild(el);
+        jShown++;
+      }
+    }
+
+    function revealJournalFrom(from){
+      const thread = engine.threads.founder;
+      if (from >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
+      journalRevealing = true; renderStats();
+      const box = $("journalScroll");
+      let i = from;
+      const step = ()=>{
+        if (i >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
+        const e = thread[i];
+        journalDivider(box, e);
+        const delay = e.type === "stamp" ? 500 : 380;
+        setTimeout(()=>{
+          box.appendChild(buildJournalEntry(e));
+          box.scrollTop = box.scrollHeight;
+          i++; jShown = i; step();
+        }, delay);
+      };
+      step();
+    }
+
+    function finishJournalReveal(){
+      journalRevealing = false;
+      renderStats(); renderComposer(); refreshJournalButtons();
+      const s = engine.stats();
+      if (s.act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 500); }
+    }
+
+    // ── chat thread rendering ────────────────────────────
     function openConversation(){
       renderHead();
       const thread = engine.threads[active];
       const box = $("thread");
       box.innerHTML = "";
-      box.className = "thread" + (active === "founder" ? " journal-mode" : "");
+      box.className = "thread";
       let lastWeek = null;
-      // render everything already revealed instantly
       const upto = Math.max(shown[active], 0);
       thread.slice(0, upto).forEach(e=>{
-        lastWeek = maybeDivider(box, e, lastWeek);
-        const el = buildEntry(e, active); el.style.animation = "none"; box.appendChild(el);
+        lastWeek = chatDivider(box, e, lastWeek);
+        const el = buildChatEntry(e); el.style.animation = "none"; box.appendChild(el);
       });
-      // reveal the remainder with animation
       revealFrom(active, upto, lastWeek);
       renderRail(); renderStats(); renderComposer();
       scrollDown();
     }
 
-    function maybeDivider(box, e, lastWeek){
+    function chatDivider(box, e, lastWeek){
       if (e.week && e.week !== lastWeek){
         const d = document.createElement("div");
-        if (active === "founder"){ d.className = "journal-date"; d.innerHTML = `<span class="num"><b>${e.week}</b><i>week</i></span>`; }
-        else { d.className = "divider"; d.textContent = "Week " + e.week; }
+        d.className = "divider"; d.textContent = "Week " + e.week;
         d.style.animation = "none"; box.appendChild(d);
         return e.week;
       }
@@ -413,17 +562,16 @@
         if (charId !== active){ shown[charId]=thread.length; finishReveal(); return; }
         if (i >= thread.length){ shown[charId]=thread.length; finishReveal(); return; }
         const e = thread[i];
-        lw = maybeDivider(box, e, lw);
-        const isJournal = charId === "founder";
-        const useTyping = e.type === "incoming" && !isJournal;
-        const delay = useTyping ? 620 : isJournal ? 380 : e.type === "outcome" ? 340 : 90;
+        lw = chatDivider(box, e, lw);
+        const useTyping = e.type === "incoming";
+        const delay = useTyping ? 620 : 90;
         if (useTyping){
           const t = document.createElement("div");
           t.className="row in"; t.innerHTML = `<div class="typing"><i></i><i></i><i></i></div>`;
           box.appendChild(t); scrollDown();
-          setTimeout(()=>{ t.remove(); box.appendChild(buildEntry(e,charId)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+          setTimeout(()=>{ t.remove(); box.appendChild(buildChatEntry(e)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
         } else {
-          setTimeout(()=>{ box.appendChild(buildEntry(e,charId)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+          setTimeout(()=>{ box.appendChild(buildChatEntry(e)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
         }
       };
       step();
@@ -431,24 +579,21 @@
 
     function finishReveal(){
       revealing = false;
-      renderRail(); renderStats(); renderComposer();
-      // mark non-active threads as needing reveal-on-open but still flag unread in rail
-      const s = engine.stats();
-      if (s.act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 500); }
+      renderRail(); renderStats(); renderComposer(); refreshJournalButtons();
     }
 
-    // ── composer (suggested replies / journal actions) ────
+    // ── composer (only for chat characters now) ──────────
     function renderComposer(){
       const c = $("composer");
       const s = engine.stats();
       const cardId = engine._openCardId(active);
-      const journal = active === "founder";
 
       if (revealing){ c.className="composer"; c.innerHTML = `<div class="empty-state">…</div>`; return; }
 
       if (!cardId){
         c.className="composer";
-        const anyOpen = engine.conversations().some(x=>x.hasAction);
+        const chatConvs = engine.conversations().filter(x => !x.isJournal);
+        const anyOpen = chatConvs.some(x=>x.hasAction);
         c.innerHTML = `<div class="empty-state">${
           anyOpen ? 'Nothing to answer here right now.'
                   : "You're caught up." + (s.actionsLeft>0?' <span class="go" id="goNext">End the week →</span>':'')
@@ -461,9 +606,9 @@
       const spent = s.actionsLeft <= 0;
       c.className = "composer" + (spent?" spent":"");
       c.innerHTML =
-        `<div class="prompt-label">${journal?'Your move':'Suggested replies'} · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left</div>
+        `<div class="prompt-label">Suggested replies · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left</div>
          <div class="chips">${opts.map(o=>
-            `<button class="chip ${journal?'journal':''}" data-card="${cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
+            `<button class="chip" data-card="${cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
           ).join("")}</div>`;
       [...c.querySelectorAll(".chip")].forEach(btn=>{
         btn.onclick = ()=> doAct(btn.dataset.card, btn.dataset.key);
@@ -472,17 +617,27 @@
 
     // ── actions ───────────────────────────────────────────
     function doAct(cardId, key){
-      if (revealing || engine.stats().actionsLeft<=0) return;
-      const from = engine.threads[active].length;
-      const outcome = engine.act(cardId, key);
-      if (active !== "founder" && outcome) banner("✎  Noted in your journal");
-      // reveal the new reply/outcome/followup entries in the active thread
-      const lastWeek = engine.threads[active][from-1]?.week ?? engine.stats().week;
-      revealFrom(active, from, lastWeek);
-      // after reveal, auto-advance if out of actions
+      if (revealing || journalRevealing || engine.stats().actionsLeft<=0) return;
+      const jBefore = engine.threads.founder.length;
+      const chatBefore = engine.threads[active] ? engine.threads[active].length : 0;
+      engine.act(cardId, key);
+
+      // reveal new entries in the active chat thread (reply bubble)
+      if (active !== "founder" && engine.threads[active].length > chatBefore){
+        const lastWeek = engine.threads[active][chatBefore-1]?.week ?? engine.stats().week;
+        revealFrom(active, chatBefore, lastWeek);
+      }
+
+      // reveal new entries in the journal panel
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore);
+      }
+
+      // after both reveals finish, auto-advance if out of actions
       const checkAuto = setInterval(()=>{
-        if (!revealing){
+        if (!revealing && !journalRevealing){
           clearInterval(checkAuto);
+          renderComposer();
           if (engine.stats().actionsLeft<=0 && !engine.stats().act1Complete){
             setTimeout(advanceWeek, 900);
           }
@@ -491,14 +646,18 @@
     }
 
     function advanceWeek(){
-      if (revealing) return;
+      if (revealing || journalRevealing) return;
       engine.nextWeek();
       banner("Week " + engine.stats().week);
-      // jump to the conversation that received the most pressing new message
-      const convs = engine.conversations();
-      const withAction = convs.find(c=>c.hasAction && c.id!=="founder") || convs.find(c=>c.hasAction) || convs[0];
+      const convs = engine.conversations().filter(c => !c.isJournal);
+      const withAction = convs.find(c=>c.hasAction) || convs[0];
       active = withAction ? withAction.id : active;
       openConversation();
+      // also reveal any new journal entries from the week tick
+      const jBefore = jShown;
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore);
+      }
       if (engine.stats().gameOver) setTimeout(showGameOver, 700);
     }
 
@@ -532,10 +691,10 @@
     function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
     function escapeHtml(str){ return (str||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 
-    $("endweek").onclick = ()=>{ if(engine.stats().actionsLeft===2 || confirmSkip()) advanceWeek(); };
-    function confirmSkip(){ return true; } // skipping is always allowed
+    $("endweek").onclick = ()=> advanceWeek();
 
     // boot
+    renderJournalCatchup();
     openConversation();
   })();
   </script>
