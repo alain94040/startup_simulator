@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Kindred — founder chat</title>
+<style>
+  :root{
+    --bg:#ecebf1; --panel:#ffffff; --rail:#f7f7fa; --line:#e3e3e8;
+    --ink:#1c1c1e; --muted:#8a8a8e; --faint:#aeaeb2;
+    --in:#e9e9eb; --out1:#0b84ff; --out2:#0a6fe0;
+    --accent:#0b84ff; --green:#34c759; --gold:#ffb340;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+    --r:18px;
+    /* handwritten stack for the journal — degrades to generic cursive, no web fonts */
+    --hand:"Segoe Print","Bradley Hand","Noteworthy","Marker Felt","Comic Sans MS",cursive;
+    --paper:#faf4e6; --jink:#4a4233; --jink-blue:#2a5db0; --rule:#e6d9bb; --margin:#e6b0a6;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{height:100vh;display:flex;flex-direction:column;max-width:1180px;margin:0 auto;padding:18px;gap:14px}
+
+  /* ── top bar ─────────────────────────────────────────── */
+  .topbar{
+    display:flex;align-items:center;gap:18px;
+    background:var(--panel);border-radius:16px;padding:12px 18px;box-shadow:var(--shadow);
+  }
+  .brand{display:flex;flex-direction:column;line-height:1.1}
+  .brand b{font-size:17px;letter-spacing:.2px}
+  .brand span{font-size:12px;color:var(--muted)}
+  .week-pill{
+    font-weight:600;font-size:13px;background:#f0eefb;color:#5b50d6;
+    padding:5px 12px;border-radius:999px;
+  }
+  .stats{display:flex;gap:8px;margin-left:auto;align-items:center}
+  .stat{
+    display:flex;flex-direction:column;align-items:center;min-width:64px;
+    background:var(--rail);border:1px solid var(--line);border-radius:12px;padding:6px 10px;
+  }
+  .stat .v{font-weight:700;font-size:14px}
+  .stat .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .stat.warn .v{color:#ff3b30}
+  .actions-budget{display:flex;align-items:center;gap:8px;padding-left:6px}
+  .actions-budget .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);transition:.2s}
+  .dot.full{background:var(--accent)}
+  .endweek{
+    border:0;background:var(--ink);color:#fff;font-weight:600;font-size:13px;
+    padding:9px 16px;border-radius:12px;cursor:pointer;transition:.15s;
+  }
+  .endweek:hover{transform:translateY(-1px);opacity:.92}
+  .endweek:disabled{opacity:.4;cursor:default;transform:none}
+
+  /* ── main split ──────────────────────────────────────── */
+  .main{flex:1;display:flex;gap:14px;min-height:0}
+  .rail{
+    width:268px;flex:none;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .rail h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);margin:0;padding:16px 18px 8px}
+  .convs{overflow-y:auto;padding:0 8px 10px}
+  .conv{
+    display:flex;gap:11px;align-items:center;padding:10px 10px;border-radius:13px;cursor:pointer;
+    transition:background .12s;position:relative;
+  }
+  .conv:hover{background:var(--rail)}
+  .conv.active{background:#eaf3ff}
+  .avatar{
+    width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+    color:#fff;font-weight:600;font-size:15px;
+  }
+  .conv-body{min-width:0;flex:1}
+  .conv-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .conv-name{font-weight:600;font-size:14.5px}
+  .conv-prev{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{
+    width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;
+    box-shadow:0 0 0 3px #eaf3ff;
+  }
+  .conv:not(.active) .badge{box-shadow:0 0 0 3px var(--panel)}
+
+  /* ── chat panel ──────────────────────────────────────── */
+  .chat{
+    flex:1;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative;
+  }
+  .chat-head{
+    display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);
+  }
+  .chat-head .avatar{width:34px;height:34px;font-size:13px}
+  .chat-head .nm{font-weight:600}
+  .chat-head .rl{font-size:12px;color:var(--muted)}
+  .thread{flex:1;overflow-y:auto;padding:20px 22px 8px;display:flex;flex-direction:column;gap:3px}
+
+  .divider{align-self:center;margin:14px 0 6px;font-size:11px;color:var(--faint);
+    text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+
+  .row{display:flex;margin-top:4px;animation:rise .32s cubic-bezier(.2,.8,.2,1)}
+  .row.in{justify-content:flex-start}
+  .row.out{justify-content:flex-end}
+  .bubble{
+    max-width:74%;padding:9px 14px;border-radius:20px;font-size:14.5px;
+    white-space:pre-wrap;word-wrap:break-word;
+  }
+  .in .bubble{background:var(--in);color:var(--ink);border-bottom-left-radius:6px}
+  .out .bubble{background:linear-gradient(180deg,var(--out1),var(--out2));color:#fff;border-bottom-right-radius:6px}
+  .subtext{align-self:flex-start;max-width:74%;color:var(--faint);font-size:12px;
+    font-style:italic;margin:1px 0 4px 6px}
+  .outcome{align-self:center;max-width:80%;text-align:center;color:var(--muted);
+    font-size:12.5px;margin:8px 0;padding:0 8px}
+  .outcome b{color:var(--ink)}
+
+  /* typing indicator */
+  .typing{display:inline-flex;gap:4px;padding:12px 15px;background:var(--in);border-radius:20px;border-bottom-left-radius:6px}
+  .typing i{width:7px;height:7px;border-radius:50%;background:#b6b6bb;animation:blink 1.2s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+
+  /* ── journal: the player's private record, styled as paper ─────────── */
+  .thread.journal-mode{
+    gap:0;
+    background-color:var(--paper);
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 33px, var(--rule) 33px, var(--rule) 34px),
+      linear-gradient(90deg, transparent 0 50px, var(--margin) 50px 52px, transparent 52px);
+    background-attachment:local;
+    padding:26px 30px 16px 70px;
+  }
+  .journal-mode .journal-entry{
+    font-family:var(--hand); color:var(--jink);
+    font-size:17px; line-height:34px; margin:0 0 6px; white-space:pre-wrap;
+    animation:inkin .5s ease both;
+  }
+  .journal-mode .journal-entry.is-outcome{ color:#5a513f; }
+  .journal-mode .journal-choice{
+    font-family:var(--hand); color:var(--jink-blue);
+    font-size:17px; line-height:34px; margin:0 0 6px; animation:inkin .45s ease both;
+  }
+  .journal-mode .journal-source{
+    display:block; font-family:-apple-system,sans-serif; font-size:10px; line-height:1;
+    letter-spacing:.6px; text-transform:uppercase; color:#bca978; margin:-2px 0 8px;
+  }
+  /* week number written into the red margin gutter, beside the entry */
+  .journal-mode .journal-date{ position:relative; align-self:stretch; min-height:26px; margin:22px 0 0; }
+  .journal-mode .journal-date:first-child{ margin-top:4px; }
+  .journal-mode .journal-date .num{
+    position:absolute; left:-66px; top:2px; width:44px; text-align:right;
+    font-family:var(--hand); color:#b5654a; line-height:1;
+  }
+  .journal-mode .journal-date .num b{ display:block; font-size:19px; font-weight:700; }
+  .journal-mode .journal-date .num i{
+    display:block; font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase;
+    font-style:normal; color:#c9a98f; margin-top:3px;
+  }
+  /* milestone rubber stamp */
+  .journal-mode .journal-stamp{
+    align-self:flex-start; margin:12px 0 16px; padding:5px 15px;
+    border:3px double currentColor; border-radius:6px;
+    font-family:"Arial Black",Impact,sans-serif; font-weight:800; font-size:14px;
+    letter-spacing:2px; text-transform:uppercase; opacity:.78;
+    transform:rotate(-7deg); animation:stampin .4s cubic-bezier(.2,1.5,.4,1) both;
+  }
+  .journal-mode .journal-stamp.green{ color:#2e8b57 }
+  .journal-mode .journal-stamp.blue{ color:#2a5db0 }
+  .journal-mode .journal-stamp.red{ color:#c0392b }
+
+  /* ── composer ────────────────────────────────────────── */
+  .composer{border-top:1px solid var(--line);padding:14px 18px;background:var(--panel)}
+  .prompt-label{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px}
+  .chips{display:flex;flex-direction:column;gap:9px}
+  .chip{
+    text-align:left;border:1px solid var(--line);background:#f8f9fb;color:var(--ink);
+    padding:11px 15px;border-radius:14px;cursor:pointer;font-size:14px;transition:.13s;line-height:1.35;
+  }
+  .chip:hover{border-color:var(--accent);background:#eef5ff;transform:translateY(-1px)}
+  .chip.journal{background:#fffdf5;border-color:#efe6c8}
+  .chip.journal:hover{border-color:var(--gold);background:#fff7e6}
+  .composer.spent .chip{opacity:.45;pointer-events:none}
+  .empty-state{color:var(--faint);font-size:13.5px;text-align:center;padding:6px 0 2px}
+  .empty-state .go{
+    display:inline-block;margin-top:8px;color:var(--accent);font-weight:600;cursor:pointer;
+  }
+
+  /* ── banner + overlay ────────────────────────────────── */
+  .banner{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);
+    background:var(--ink);color:#fff;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;
+    box-shadow:var(--shadow);opacity:0;transition:.4s cubic-bezier(.2,.8,.2,1);z-index:5;pointer-events:none;
+  }
+  .banner.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,20,30,.55);backdrop-filter:blur(6px);
+    display:none;place-items:center;z-index:20;
+  }
+  .overlay.show{display:grid;animation:fade .3s ease}
+  .card-modal{
+    background:var(--panel);border-radius:22px;max-width:440px;padding:34px 32px;text-align:center;
+    box-shadow:var(--shadow);animation:rise .4s cubic-bezier(.2,.8,.2,1)
+  }
+  .card-modal .em{font-size:42px}
+  .card-modal h3{margin:14px 0 6px;font-size:22px}
+  .card-modal p{color:var(--muted);font-size:14px;margin:0 0 22px}
+  .card-modal .split{font-weight:700;color:var(--accent);font-size:16px}
+  .card-modal button{border:0;background:var(--ink);color:#fff;font-weight:600;padding:11px 22px;
+    border-radius:13px;cursor:pointer;font-size:14px}
+
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes inkin{from{opacity:0;filter:blur(1.5px)}to{opacity:1;filter:blur(0)}}
+  @keyframes stampin{0%{opacity:0;transform:rotate(-7deg) scale(2.2)}60%{opacity:.92}100%{opacity:.78;transform:rotate(-7deg) scale(1)}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
+</style>
+</head>
+<body>
+  <div class="app">
+    <!-- top bar -->
+    <div class="topbar">
+      <div class="avatar" style="background:linear-gradient(135deg,#ff6b9d,#c44bd6);width:38px;height:38px">K</div>
+      <div class="brand"><b>Kindred</b><span>idea → seed round</span></div>
+      <div class="week-pill" id="weekPill">Week 1</div>
+      <div class="stats" id="stats"></div>
+      <div class="actions-budget">
+        <span class="lbl">Actions</span>
+        <div class="dot full" id="dot0"></div>
+        <div class="dot full" id="dot1"></div>
+      </div>
+      <button class="endweek" id="endweek">End week →</button>
+    </div>
+
+    <!-- main -->
+    <div class="main">
+      <div class="rail">
+        <h2>Messages</h2>
+        <div class="convs" id="convs"></div>
+      </div>
+
+      <div class="chat">
+        <div class="banner" id="banner"></div>
+        <div class="chat-head" id="chatHead"></div>
+        <div class="thread" id="thread"></div>
+        <div class="composer" id="composer"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="card-modal" id="modal"></div>
+  </div>
+
+  <!-- content + engine -->
+  <script>window.ROLES = {};</script>
+  <script src="roles/alex.js"></script>
+  <script src="roles/jordan.js"></script>
+  <script src="roles/founder.js"></script>
+  <script src="chat_engine.js"></script>
+  <script>
+  (function(){
+    const engine = new ChatEngine();
+    const META = window.CHAT_META;
+    let active = "alex";          // current conversation
+    const shown = {alex:0, jordan:0, founder:0};  // entries already revealed
+    let revealing = false;        // lock during animated reveal
+
+    const $ = id => document.getElementById(id);
+    const fmtCash = c => "$" + c.toLocaleString();
+
+    // ── status bar ────────────────────────────────────────
+    function renderStats(){
+      const s = engine.stats();
+      $("weekPill").textContent = "Week " + s.week;
+      const runwayWarn = s.runway <= 6;
+      $("stats").innerHTML = `
+        <div class="stat ${s.cash<3000?'warn':''}"><div class="v">${fmtCash(s.cash)}</div><div class="k">Cash</div></div>
+        <div class="stat ${runwayWarn?'warn':''}"><div class="v">${s.runway}w</div><div class="k">Runway</div></div>
+        <div class="stat"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
+        <div class="stat"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>
+        ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
+      $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
+      $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
+      $("endweek").disabled = revealing;
+      $("endweek").textContent = s.actionsLeft===0 ? "Next week →" : "End week →";
+    }
+
+    // ── sidebar ───────────────────────────────────────────
+    function renderRail(){
+      const convs = engine.conversations();
+      $("convs").innerHTML = convs.map(c=>{
+        const unanswered = shown[c.id] < engine.threads[c.id].length;
+        const dot = (c.hasAction || unanswered) ? '<span class="badge"></span>' : '';
+        return `<div class="conv ${c.id===active?'active':''}" data-id="${c.id}">
+          <div class="avatar" style="background:${c.color}">${c.initials}</div>
+          <div class="conv-body">
+            <div class="conv-top"><span class="conv-name">${c.name}</span>${dot}</div>
+            <div class="conv-prev">${c.empty?'<i>no messages yet</i>':escapeHtml(c.preview)}</div>
+          </div>
+        </div>`;
+      }).join("");
+      [...document.querySelectorAll(".conv")].forEach(el=>{
+        el.onclick = ()=>{ if(revealing) return; active = el.dataset.id; openConversation(); };
+      });
+    }
+
+    // ── chat header ───────────────────────────────────────
+    function renderHead(){
+      if (active === "founder"){
+        $("chatHead").innerHTML =
+          `<div class="avatar" style="background:#caa15a">📓</div>
+           <div><div class="nm">Founder's Journal</div><div class="rl">your private record</div></div>`;
+        return;
+      }
+      const m = META[active];
+      $("chatHead").innerHTML =
+        `<div class="avatar" style="background:${m.color}">${m.initials}</div>
+         <div><div class="nm">${m.name}</div><div class="rl">${m.role}</div></div>`;
+    }
+
+    // ── build one message element ─────────────────────────
+    function buildEntry(e, charId){
+      const journal = charId === "founder";
+
+      if (journal){
+        // Everything in the journal is handwriting on the page — no bubbles.
+        if (e.type === "stamp"){
+          const d = document.createElement("div");
+          d.className = "journal-stamp " + (e.stampClass || "red");
+          d.textContent = e.label; return d;
+        }
+        if (e.type === "reply"){
+          const d = document.createElement("div");
+          d.className = "journal-choice"; d.textContent = "✓ " + e.body; return d;
+        }
+        const wrap = document.createElement("div");
+        if (e.type === "outcome" && e.sourceChar){
+          const src = document.createElement("div");
+          src.className = "journal-source"; src.textContent = "after talking with " + (e.from || e.sourceChar);
+          wrap.appendChild(src);
+        }
+        const d = document.createElement("div");
+        d.className = "journal-entry" + (e.type === "outcome" ? " is-outcome" : "");
+        d.textContent = e.body;
+        wrap.appendChild(d);
+        return wrap;
+      }
+
+      if (e.type === "incoming"){
+        const wrap = document.createElement("div");
+        const row = document.createElement("div");
+        row.className = "row in";
+        row.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+        wrap.appendChild(row);
+        if (e.subtext){
+          const st = document.createElement("div");
+          st.className="subtext"; st.textContent = e.subtext; wrap.appendChild(st);
+        }
+        return wrap;
+      }
+      if (e.type === "reply"){
+        const d = document.createElement("div");
+        d.className = "row out";
+        d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+        return d;
+      }
+      // outcome / system in a chat thread (shouldn't normally happen now)
+      const d = document.createElement("div");
+      d.className = "outcome";
+      d.innerHTML = `<b>·</b> ${escapeHtml(e.body)}`;
+      return d;
+    }
+
+    // ── render thread (instant for already-shown, animate the rest) ─────────
+    function openConversation(){
+      renderHead();
+      const thread = engine.threads[active];
+      const box = $("thread");
+      box.innerHTML = "";
+      box.className = "thread" + (active === "founder" ? " journal-mode" : "");
+      let lastWeek = null;
+      // render everything already revealed instantly
+      const upto = Math.max(shown[active], 0);
+      thread.slice(0, upto).forEach(e=>{
+        lastWeek = maybeDivider(box, e, lastWeek);
+        const el = buildEntry(e, active); el.style.animation = "none"; box.appendChild(el);
+      });
+      // reveal the remainder with animation
+      revealFrom(active, upto, lastWeek);
+      renderRail(); renderStats(); renderComposer();
+      scrollDown();
+    }
+
+    function maybeDivider(box, e, lastWeek){
+      if (e.week && e.week !== lastWeek){
+        const d = document.createElement("div");
+        if (active === "founder"){ d.className = "journal-date"; d.innerHTML = `<span class="num"><b>${e.week}</b><i>week</i></span>`; }
+        else { d.className = "divider"; d.textContent = "Week " + e.week; }
+        d.style.animation = "none"; box.appendChild(d);
+        return e.week;
+      }
+      return lastWeek;
+    }
+
+    function revealFrom(charId, from, lastWeek){
+      const thread = engine.threads[charId];
+      if (from >= thread.length){ shown[charId]=thread.length; finishReveal(); return; }
+      revealing = true; renderStats();
+      const box = $("thread");
+      let i = from; let lw = lastWeek;
+      const step = ()=>{
+        if (charId !== active){ shown[charId]=thread.length; finishReveal(); return; }
+        if (i >= thread.length){ shown[charId]=thread.length; finishReveal(); return; }
+        const e = thread[i];
+        lw = maybeDivider(box, e, lw);
+        const isJournal = charId === "founder";
+        const useTyping = e.type === "incoming" && !isJournal;
+        const delay = useTyping ? 620 : isJournal ? 380 : e.type === "outcome" ? 340 : 90;
+        if (useTyping){
+          const t = document.createElement("div");
+          t.className="row in"; t.innerHTML = `<div class="typing"><i></i><i></i><i></i></div>`;
+          box.appendChild(t); scrollDown();
+          setTimeout(()=>{ t.remove(); box.appendChild(buildEntry(e,charId)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+        } else {
+          setTimeout(()=>{ box.appendChild(buildEntry(e,charId)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+        }
+      };
+      step();
+    }
+
+    function finishReveal(){
+      revealing = false;
+      renderRail(); renderStats(); renderComposer();
+      // mark non-active threads as needing reveal-on-open but still flag unread in rail
+      const s = engine.stats();
+      if (s.act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 500); }
+    }
+
+    // ── composer (suggested replies / journal actions) ────
+    function renderComposer(){
+      const c = $("composer");
+      const s = engine.stats();
+      const cardId = engine._openCardId(active);
+      const journal = active === "founder";
+
+      if (revealing){ c.className="composer"; c.innerHTML = `<div class="empty-state">…</div>`; return; }
+
+      if (!cardId){
+        c.className="composer";
+        const anyOpen = engine.conversations().some(x=>x.hasAction);
+        c.innerHTML = `<div class="empty-state">${
+          anyOpen ? 'Nothing to answer here right now.'
+                  : "You're caught up." + (s.actionsLeft>0?' <span class="go" id="goNext">End the week →</span>':'')
+        }</div>`;
+        const g = $("goNext"); if (g) g.onclick = advanceWeek;
+        return;
+      }
+
+      const opts = engine.options(cardId);
+      const spent = s.actionsLeft <= 0;
+      c.className = "composer" + (spent?" spent":"");
+      c.innerHTML =
+        `<div class="prompt-label">${journal?'Your move':'Suggested replies'} · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left</div>
+         <div class="chips">${opts.map(o=>
+            `<button class="chip ${journal?'journal':''}" data-card="${cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
+          ).join("")}</div>`;
+      [...c.querySelectorAll(".chip")].forEach(btn=>{
+        btn.onclick = ()=> doAct(btn.dataset.card, btn.dataset.key);
+      });
+    }
+
+    // ── actions ───────────────────────────────────────────
+    function doAct(cardId, key){
+      if (revealing || engine.stats().actionsLeft<=0) return;
+      const from = engine.threads[active].length;
+      const outcome = engine.act(cardId, key);
+      if (active !== "founder" && outcome) banner("✎  Noted in your journal");
+      // reveal the new reply/outcome/followup entries in the active thread
+      const lastWeek = engine.threads[active][from-1]?.week ?? engine.stats().week;
+      revealFrom(active, from, lastWeek);
+      // after reveal, auto-advance if out of actions
+      const checkAuto = setInterval(()=>{
+        if (!revealing){
+          clearInterval(checkAuto);
+          if (engine.stats().actionsLeft<=0 && !engine.stats().act1Complete){
+            setTimeout(advanceWeek, 900);
+          }
+        }
+      }, 120);
+    }
+
+    function advanceWeek(){
+      if (revealing) return;
+      engine.nextWeek();
+      banner("Week " + engine.stats().week);
+      // jump to the conversation that received the most pressing new message
+      const convs = engine.conversations();
+      const withAction = convs.find(c=>c.hasAction && c.id!=="founder") || convs.find(c=>c.hasAction) || convs[0];
+      active = withAction ? withAction.id : active;
+      openConversation();
+      if (engine.stats().gameOver) setTimeout(showGameOver, 700);
+    }
+
+    // ── banner + modals ───────────────────────────────────
+    function banner(text){
+      const b=$("banner"); b.textContent=text; b.classList.add("show");
+      setTimeout(()=>b.classList.remove("show"), 1900);
+    }
+    function showAct1(){
+      const s = engine.stats();
+      const split = s.equity || "your split";
+      $("modal").innerHTML =
+        `<div class="em">🤝</div><h3>Equity, signed.</h3>
+         <p>The founder agreement is locked in at <span class="split">${split}</span>.
+            The hard conversations are behind you — for now. The real building starts here.</p>
+         <p style="font-size:12.5px">This is the end of the current slice. More of the story is coming.</p>
+         <button id="closeModal">Keep going</button>`;
+      $("overlay").classList.add("show");
+      $("closeModal").onclick = ()=> $("overlay").classList.remove("show");
+    }
+    function showGameOver(){
+      $("modal").innerHTML =
+        `<div class="em">💸</div><h3>Out of runway.</h3>
+         <p>The cash hit zero on week ${engine.stats().week}. Every founder runs this race against the bank balance.</p>
+         <button id="closeModal">Refresh to retry</button>`;
+      $("overlay").classList.add("show");
+      $("closeModal").onclick = ()=> location.reload();
+    }
+
+    // ── utils ─────────────────────────────────────────────
+    function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
+    function escapeHtml(str){ return (str||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+
+    $("endweek").onclick = ()=>{ if(engine.stats().actionsLeft===2 || confirmSkip()) advanceWeek(); };
+    function confirmSkip(){ return true; } // skipping is always allowed
+
+    // boot
+    openConversation();
+  })();
+  </script>
+</body>
+</html>
