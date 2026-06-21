@@ -112,6 +112,7 @@
   .out .bubble{background:linear-gradient(180deg,var(--out1),var(--out2));color:#fff;border-bottom-right-radius:6px}
   .subtext{align-self:flex-start;max-width:74%;color:var(--faint);font-size:12px;
     font-style:italic;margin:1px 0 4px 6px}
+  .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
   .outcome{align-self:center;max-width:80%;text-align:center;color:var(--muted);
     font-size:12.5px;margin:8px 0;padding:0 8px}
   .outcome b{color:var(--ink)}
@@ -304,14 +305,33 @@
   <script>window.ROLES = {};</script>
   <script src="roles/alex.js"></script>
   <script src="roles/jordan.js"></script>
+  <script src="roles/priya.js"></script>
+  <script src="roles/marcus.js"></script>
+  <script src="roles/fatima.js"></script>
+  <script src="roles/ryan.js"></script>
+  <script src="roles/sarah.js"></script>
+  <script src="roles/brett.js"></script>
+  <script src="roles/kevin.js"></script>
+  <script src="roles/mom.js"></script>
+  <script src="roles/jamie.js"></script>
+  <script src="roles/david.js"></script>
   <script src="roles/founder.js"></script>
+  <script src="roles/hacker_news.js"></script>
+  <script src="roles/yc.js"></script>
+  <script src="roles/lena.js"></script>
+  <script src="roles/techcrunch.js"></script>
+  <script src="roles/users.js"></script>
+  <script src="roles/analytics.js"></script>
+  <script src="roles/twitter.js"></script>
+  <script src="roles/tom.js"></script>
   <script src="chat_engine.js"></script>
   <script>
   (function(){
     const engine = new ChatEngine();
     const META = window.CHAT_META;
     let active = "alex";
-    const shown = {alex:0, jordan:0, founder:0};
+    const shown = {};
+    for (const id of engine.order) shown[id] = 0;
     let revealing = false;
     let journalRevealing = false;
     let jShown = 0;       // entries already rendered in the journal panel
@@ -386,6 +406,7 @@
       d.className = "journal-entry" + (e.type === "outcome" ? " is-outcome" : "");
       d.textContent = e.body;
       wrap.appendChild(d);
+      if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
       // Inline action buttons for founder prompts that are still surfaced
       if (e.type === "incoming" && e.cardId && engine.surfaced.has(e.cardId)){
         const opts = engine.options(e.cardId);
@@ -459,6 +480,7 @@
           const st = document.createElement("div");
           st.className="subtext"; st.textContent = e.subtext; wrap.appendChild(st);
         }
+        if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
         return wrap;
       }
       if (e.type === "reply"){

@@ -46,12 +46,13 @@
 
       // ── WEEK 1 ONBOARDING (only 2 cards shown on week 1) ────────────────────
       {
-        id: 'start_prototype', cat: 'p', from: 'You',
-        body: "three of you in the same room for the first time since you decided to do this for real. time to stop talking. alex is ready on the backend. jordan's offered to take the iOS side. one word from you and this becomes real.",
+        id: 'start_prototype', cat: 'p', from: 'Alex',
+        body: "three of us in the same room for the first time since we decided to do this for real. time to stop talking. i'm ready on the backend. jordan's offered to take the iOS side. one word from you and this becomes real.",
         urgency: 3, weeks: 1, priority: true,
         available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
         options: [
           { label: "Game on — everyone start building", key: 'build',
+            reply: "let's do this. you take backend, jordan takes iOS. i'll handle everything else. game on.",
             execute(s, char, e) {
               char.flags.prototype_kicked = true;
               s.jordan_active = true;
@@ -85,9 +86,10 @@
         id: 'incorporate_week1', cat: 'e', from: 'Alex',
         body: "before we do anything else — all three of us need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
         urgency: 3, weeks: 1, priority: true, ignoreForTrust: true,
-        available: (s, char) => s.week === 1 && !s.incorporated,
+        available: (s, char) => s.week <= 3 && char.flags.prototype_kicked && !s.incorporated,
         options: [
           { label: 'Incorporate via Stripe Atlas — $500', key: 'atlas',
+            reply: "do it. stripe atlas, delaware c-corp. let's get this done today.",
             execute(s, char) { s.incorporated = true; s.cash = clamp(s.cash - 500, 0, 9999999); return "Delaware C-corp registered. EIN assigned, bank account open. $500 gone — you're officially a company."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
@@ -99,24 +101,27 @@
       {
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
         body: "jordan and i should align before we go too deep. we could spec the whole product — activity layer, recommendations, the full vision. or scope to what we actually need to test the hypothesis.",
-        urgency: 2, weeks: 2, priority: true,
+        urgency: 2, weeks: 2, patience: 4,
         available: (s, char) => char.flags.prototype_kicked && !char.flags.plan_done && s.week >= 2 && s.week <= 5,
         options: [
-          { label: "Full product spec — let's know what we're building", key: 'full',
+          { label: "Full product spec", key: 'full',
+            reply: "let's spec the whole thing. activity layer, recommendations, all of it. i want us to know exactly what we're building before we go deeper.",
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'full';
               expandItems(s, 'full');
               return "Three-hour session. Whiteboard filled. Twenty-plus items in the backlog. Jordan's excited. Alex is skeptical but admits it looks thorough.";
             } },
-          { label: 'Lean MVP — ship the core and learn', key: 'lean',
+          { label: 'Lean MVP', key: 'lean',
+            reply: "let's keep it tight. core hypothesis only — ship and learn. we can spec the rest when we know what works.",
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'lean';
               expandItems(s, 'lean');
               return "Ninety minutes. Five items on the board. Alex seemed relieved.";
             } },
-          { label: 'Start building — no time for planning', key: 'sprint',
+          { label: 'Skip planning', key: 'sprint',
+            reply: "honestly? let's just build. we'll figure it out as we go.",
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'sprint';
@@ -131,11 +136,13 @@
         id: 'alex_commitment', cat: 't', from: 'Alex',
         body: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
         urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.commitment_resolved,
+        available: (s, char) => s.week >= 2 && s.week <= 5 && char.flags.plan_done && !char.flags.commitment_resolved,
         options: [
-          { label: "Agree — he'll go full-time once we have traction", key: 'accept',
+          { label: 'Agree — part-time for now', key: 'accept',
+            reply: "that's fair. evenings and weekends works for now. let's set a milestone to revisit — once we hit traction, we talk again.",
             execute(s, char) { char.flags.commitment_resolved = true; s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
-          { label: 'Push him — we need full commitment now', key: 'push',
+          { label: 'Push for full-time', key: 'push',
+            reply: "i hear you but i need you all in. evenings and weekends won't cut it — we'll get outrun. can you make the jump now?",
             execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); return "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood."; } },
         ],
         dropDelay: 3, dropFrom: 'Alex',
@@ -143,17 +150,102 @@
         dropCancel: (s, char) => char.flags.committed_fulltime || char.flags.offer_msg_sent,
         dropFx(s, char) { char.flags.offer_msg_sent = true; char.morale = clamp(char.morale - 14, 0, 100); s.alex_offer_week = s.week; },
       },
+      // ── EQUITY (Alex's side — Jordan opened the topic in her thread) ─────────
+      {
+        id: 'jordan_equity_alex', cat: 't', from: 'Alex',
+        body: "jordan wants equal thirds. i've been thinking — she's still at her job, i'm treating this as my main thing. you and i are doing the same amount. i think 40/40/20 is fair. what are you thinking?",
+        urgency: 2, weeks: 1, priority: true,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_proposal && s.week <= 8;
+        },
+        options: [
+          { label: 'Equal thirds', key: 'propose_33',
+            reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '33/33/33';
+              char.morale = clamp(char.morale - 8, 0, 100);
+              return "Equal split. Alex went quiet — he expected more weight for his commitment.";
+            } },
+          { label: '40/40/20', key: 'propose_40',
+            reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '40/40/20';
+              char.morale = clamp(char.morale + 5, 0, 100);
+              return "Alex: 'yeah — that's what I was thinking.' Jordan hasn't heard yet.";
+            } },
+          { label: '50/25/25', key: 'propose_50',
+            reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '50/25/25';
+              char.morale = clamp(char.morale - 3, 0, 100);
+              return "Alex was quiet for a moment. 'Okay. I'll take 25 alongside Jordan.' You'll hear from both of them.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) { jordan.flags.equity_proposal = '33/33/33'; jordan.flags.equity_skipped = true; }
+          char.morale = clamp(char.morale - 10, 0, 100);
+        },
+      },
+      // Alex counters if you picked equal thirds
+      {
+        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
+        body: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return (jordan && jordan.flags.equity_skipped)
+            ? "you never responded to jordan about equity. i've been thinking about it anyway — she's still at her job, i'm all-in. equal thirds means i get the same as someone who's not putting in the same."
+            : "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.";
+        },
+        urgency: 2, weeks: 1,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_proposal === '33/33/33' && !jordan.flags.equity_counter_done && s.week <= 10;
+        },
+        options: [
+          { label: "Give Alex 40%", key: 'cave_40',
+            reply: "you're right. you're full-time, she's not. 40/40/20 — i'll tell jordan.",
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) { jordan.flags.equity_counter_done = true; jordan.flags.equity_proposal = '40/40/20'; }
+              char.morale = clamp(char.morale + 10, 0, 100);
+              return "Alex appreciated it. Jordan will hear about the change.";
+            } },
+          { label: 'Keep equal thirds', key: 'hold_33',
+            reply: "i hear you, but equal thirds is the right call. everyone's essential. let's not let this fester.",
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_counter_done = true;
+              char.morale = clamp(char.morale - 5, 0, 100);
+              return "Alex accepted it. He didn't agree — but he dropped it.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) jordan.flags.equity_counter_done = true;
+          char.morale = clamp(char.morale - 8, 0, 100);
+        },
+      },
+
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
         urgency: 3, weeks: 1, priority: true,
-        available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_beta && !char.flags.vision_resolved,
+        available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_beta && char.flags.commitment_resolved && !char.flags.vision_resolved,
         options: [
-          { label: "Go with Alex's framing — casual dating", key: 'alex',
+          { label: "Go with casual dating", key: 'alex',
+            reply: "you're right, casual is the bigger market. let's go with your framing — 'casual dating done right.'",
             execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with casual dating. Broader market, easier to explain. Some earlier conversations about 'serious matches' are now awkward, but at least you're aligned."; } },
-          { label: 'Defend your framing — serious relationships', key: 'yours',
+          { label: 'Serious relationships', key: 'yours',
+            reply: "i've been saying serious relationships because that's what we're building. the investor story is cleaner and the users pay more. i want to stay with that.",
             execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 8, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); char.trust = clamp(char.trust - 4, 0, 100); return "Alex went along with it. He thinks the casual market is bigger, but the investor story is cleaner. Tension unresolved."; } },
-          { label: 'Run a 1-week test with real users', key: 'test',
+          { label: 'Test it with users', key: 'test',
+            reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
             execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 14, 0, 100); s.market_fit = clamp(s.market_fit + 8, 0, 100); char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 6, 0, 100); return "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
@@ -167,6 +259,7 @@
         available: (s, char) => s.week >= 3 && s.week <= 14 && char.morale > 50 && !char.flags.committed_fulltime && !char.flags.side_project_resolved && !char.flags.side_project_active,
         options: [
           { label: 'Ask him to pause it', key: 'pause',
+            reply: "appreciate you telling me. can you pause it until we hit our first real milestone? i need to know you're fully here for this stretch.",
             execute(s, char) { char.flags.side_project_resolved = true; char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 5, 0, 100); return "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -178,7 +271,8 @@
         urgency: 3, weeks: 1,
         available: (s, char) => char.flags.side_project_active && s.week <= 26,
         options: [
-          { label: 'Tell him the startup needs him fully', key: 'talk',
+          { label: 'Tell him to commit', key: 'talk',
+            reply: "alex, i need to be direct. 15 hours a week on something else means you're not here. i need you fully in or we need to have a different conversation.",
             execute(s, char) { char.flags.side_project_active = false; char.morale = clamp(char.morale + 22, 0, 100); char.trust = clamp(char.trust + 10, 0, 100); return "Hard conversation. Alex commits fully. He was relieved you brought it up directly."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -196,11 +290,13 @@
       },
       {
         id: 'alex_quiet', cat: 't', from: 'Alex',
-        body: "short replies for 3 days, skipped standup yesterday. you don't know if it's burnout, frustration with progress, or something personal.",
+        body: "yeah. fine. just busy.",
+        subtext: "Short replies for 3 days. Skipped standup yesterday.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week > 4 && char.morale < 40 && s.week >= (char.flags.last_quiet || 0) + 4,
         options: [
-          { label: 'Check in with him', key: 'checkin',
+          { label: 'Check in', key: 'checkin',
+            reply: "hey — noticed you've been quiet. everything ok? no pressure, just checking in.",
             execute(s, char) { char.flags.last_quiet = s.week; char.morale = clamp(char.morale + 20, 0, 100); return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -284,7 +380,7 @@
         id: 'early_name', cat: 'e', from: 'Alex', ignoreForTrust: true,
         body: "we need to stop calling this 'the project.' found three good domains: one sounds romantic, one sounds clean and abstract, one is a made-up word. pick one.",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week <= 3 && !char.flags.name_done,
+        available: (s, char) => s.week >= 2 && s.week <= 5 && s.incorporated && !char.flags.name_done,
         options: [
           { label: 'The romantic one', key: 'catchy',
             execute(s, char) { char.flags.name_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Name locked. Memorable, a little warm in exactly the right way. People immediately know what it's for."; } },
@@ -310,7 +406,7 @@
         id: 'early_customer_target', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: "we keep switching who we're talking to — sometimes we pitch to young singles, sometimes to divorced 30-somethings. we should agree before it gets confusing.",
         urgency: 1, weeks: 1,
-        available: (s, char) => s.week <= 6 && !char.flags.customer_target_done,
+        available: (s, char) => s.week >= 3 && s.week <= 8 && char.flags.plan_done && !char.flags.customer_target_done,
         options: [
           { label: 'Young singles — bigger market, easier to reach', key: 'individuals',
             execute(s, char) { char.flags.customer_target_done = true; s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Locked in: 25-35 year olds tired of swiping. Bigger pool, faster feedback."; } },

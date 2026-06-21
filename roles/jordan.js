@@ -14,7 +14,7 @@
       {
         id: 'jordan_equity_mention', cat: 't', from: 'Jordan',
         body: "hey — the three of us should probably sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon.",
-        urgency: 1, weeks: 1,
+        urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.equity_mention_done,
         options: [
           { label: "Agreed — let's work through it over the next few weeks", key: 'open',
@@ -27,76 +27,9 @@
         dropFx(s, char) { char.flags.equity_mention_done = true; },
       },
 
-      // Week 2: Founder's opening offer
-      {
-        id: 'jordan_equity_alex', cat: 't', from: 'Alex',
-        body: "jordan wants equal thirds. i've been thinking — she's still at her job, i'm treating this as my main thing. you and i are doing the same amount. i think 40/40/20 is fair. what are you thinking?",
-        urgency: 2, weeks: 1, priority: true,
-        available: (s, char) => char.flags.equity_mention_done && !char.flags.equity_proposal && s.week <= 8,
-        options: [
-          { label: 'Equal thirds — 33/33/33', key: 'propose_33',
-            execute(s, char, e) {
-              char.flags.equity_proposal = '33/33/33';
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-              return "Equal split. Alex went quiet — he expected more weight for his commitment.";
-            } },
-          { label: '40/40/20 — you and I equal, Jordan gets less', key: 'propose_40',
-            execute(s, char, e) {
-              char.flags.equity_proposal = '40/40/20';
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
-              return "Alex: 'yeah — that's what I was thinking.' Jordan hasn't heard yet.";
-            } },
-          { label: '50/25/25 — I need majority as founder', key: 'propose_50',
-            execute(s, char, e) {
-              char.flags.equity_proposal = '50/25/25';
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
-              return "Alex was quiet for a moment. 'Okay. I'll take 25 alongside Jordan.' You'll hear from both of them.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          char.flags.equity_proposal = '33/33/33';
-          char.flags.equity_skipped = true;
-          const alex = e && e.chars && e.chars.get('alex');
-          if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
-        },
-      },
+      // Week 2: equity proposal is now on Alex's character (he texts you separately)
 
-      // Week 3a: Alex counters (only if proposal is 33/33/33)
-      {
-        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
-        body: (s, char) => char.flags.equity_skipped
-          ? "you didn't respond to jordan. been thinking about it anyway — she's still at her job, i'm all-in. equal thirds means i get the same as someone who's not putting in the same."
-          : "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.",
-        urgency: 2, weeks: 1,
-        available: (s, char) => char.flags.equity_proposal === '33/33/33' && !char.flags.equity_counter_done && s.week <= 10,
-        options: [
-          { label: "You're right — 40/40/20", key: 'cave_40',
-            execute(s, char, e) {
-              char.flags.equity_counter_done = true;
-              char.flags.equity_proposal = '40/40/20';
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale + 10, 0, 100);
-              return "Alex appreciated it. Jordan will hear about the change.";
-            } },
-          { label: 'Equal thirds is still fair', key: 'hold_33',
-            execute(s, char, e) {
-              char.flags.equity_counter_done = true;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 5, 0, 100);
-              return "Alex accepted it. He didn't agree — but he dropped it.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          char.flags.equity_counter_done = true;
-          const alex = e && e.chars && e.chars.get('alex');
-          if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-        },
-      },
+      // Week 3a: Alex counters (now on Alex's character — he texts you)
 
       // Week 3b: Jordan counters (only if proposal is 40/40/20)
       {

@@ -27,6 +27,47 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
 
+      // ── EQUITY SIGNING: surfaces after the counter-offer arc resolves ──────
+      {
+        id: 'equity_signing', cat: 'e', from: 'You',
+        body: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          const split = (jordan && jordan.flags.equity_proposal) || '40/40/20';
+          if (split === '33/33/33') return "three-way call. equal thirds. jordan got what she wanted. alex went quiet when the documents came out. nobody brought up vesting — it felt unnecessary between friends.";
+          if (split === '50/25/25') return "three-way call. 50/25/25 on the table. jordan accepted — at least she's equal to alex. alex signed without comment. nobody mentioned vesting schedules.";
+          return "three-way call. 40/40/20 agreed. alex seemed satisfied. jordan signed — said she'd prove she's worth more than 20%. nobody set up vesting schedules.";
+        },
+        urgency: 3, weeks: 1, priority: true,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_counter_done && !s.jordan_equity && s.week <= 12;
+        },
+        options: [
+          { label: 'Sign the agreement', key: 'sign',
+            execute(s, char, e) {
+              s.jordan_equity = true;
+              s.jordan_cleanup_needed = true;
+              const jordan = e.chars.get('jordan');
+              const split = (jordan && jordan.flags.equity_proposal) || '40/40/20';
+              const alex = e.chars.get('alex');
+              if (alex) {
+                alex.flags.equity_set = true;
+                if (split === '33/33/33') alex.morale = clamp(alex.morale - 8, 0, 100);
+                else if (split === '50/25/25') alex.morale = clamp(alex.morale - 3, 0, 100);
+                else alex.morale = clamp(alex.morale + 5, 0, 100);
+              }
+              return "split locked in. documents signed. nobody set up vesting schedules — it felt unnecessary between friends.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          s.jordan_equity = true;
+          s.jordan_cleanup_needed = true;
+          const alex = e && e.chars && e.chars.get('alex');
+          if (alex) alex.flags.equity_set = true;
+        },
+      },
+
       // ── RECURRING: founder pairs with Alex ──────────────────────────────────
       {
         id: 'founder_codebuild', cat: 'p', from: 'You', _cofounderEngagement: 'alex',
