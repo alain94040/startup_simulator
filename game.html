@@ -122,6 +122,15 @@
     font-style:italic;margin:1px 0 4px 6px}
   .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
   .chat-empty{margin:auto;color:var(--faint);font-size:13px;text-align:center;padding:20px}
+  /* "respond" pill at the end of a thread — bridges the chat to its hand card */
+  .chat-cta{align-self:center;margin:16px 0 6px}
+  .cta-btn{
+    border:0;background:linear-gradient(180deg,var(--out1),var(--out2));color:#fff;font-weight:600;
+    font-size:13px;padding:9px 18px;border-radius:14px;cursor:pointer;
+    box-shadow:0 4px 14px rgba(11,132,255,.3);transition:.15s;animation:rise .3s ease both;
+  }
+  .cta-btn:hover{transform:translateY(-1px)}
+  .cta-btn:disabled{opacity:.5;cursor:default;background:var(--faint);box-shadow:none}
 
   /* typing indicator */
   .typing{display:inline-flex;gap:4px;padding:12px 15px;background:var(--in);border-radius:20px;border-bottom-left-radius:6px}
@@ -211,6 +220,8 @@
     transform-origin:bottom center;animation:dealIn .4s cubic-bezier(.34,1.56,.64,1) backwards;
   }
   .hcard:hover{transform:translateY(-16px);box-shadow:0 16px 40px rgba(0,0,0,.22);z-index:5}
+  /* the card tied to the conversation you're reading — the chat→hand link */
+  .hcard.linked{transform:translateY(-10px);box-shadow:0 10px 30px rgba(11,132,255,.2),0 0 0 2px rgba(11,132,255,.55)}
   .hcard.selected{transform:translateY(-20px);box-shadow:0 18px 46px rgba(11,132,255,.34),0 0 0 2px var(--accent);z-index:10}
   .hcard.played{opacity:.32;pointer-events:none;filter:grayscale(.5)}
   .hcard.locked{cursor:pointer;opacity:.62}
@@ -245,6 +256,7 @@
   }
   .hand-detail .hd-from{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
   .hand-detail .hd-body{font-size:14px;color:var(--ink);line-height:1.5;margin-bottom:14px}
+  .hand-detail .hd-prompt{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:11px}
   .hand-detail .hd-opts{display:flex;flex-direction:column;gap:9px}
   .chip{
     text-align:left;border:1px solid var(--line);background:#f8f9fb;color:var(--ink);
@@ -647,7 +659,27 @@
     }
     function finishReveal(){
       revealing = false;
-      renderRail(); renderStats(); renderHand();
+      renderRail(); renderStats(); renderHand(); updateChatCta();
+    }
+
+    // A "Respond ↓" pill at the end of the active thread, so reading a chat leads
+    // clearly to its action (the matching hand card). Reading is the gate; the
+    // pill only appears once the message is revealed and there's an open card.
+    function updateChatCta(){
+      const box = $("thread");
+      const old = box.querySelector(".chat-cta"); if (old) old.remove();
+      if (active === "founder") return;
+      const cardId = engine.openCardId(active);
+      if (!cardId || !cardReadable(active)) return;
+      if (!engine.options(cardId).length) return;
+      const spent = engine.stats().actionsLeft <= 0;
+      const cta = document.createElement("div");
+      cta.className = "chat-cta";
+      cta.innerHTML = `<button class="cta-btn"${spent?' disabled':''}>${spent?'No actions left this week':'Respond ↓'}</button>`;
+      box.appendChild(cta);
+      const b = cta.querySelector("button");
+      if (b && !spent) b.onclick = ()=>{ if (busy()) return; selectCard(cardId); };
+      scrollDown();
     }
 
     // ── the hand (bottom action cards) ───────────────────
@@ -690,6 +722,8 @@
         const cls = ["hcard"];
         if (!readable) cls.push("locked");
         else if (spent) cls.push("played");
+        // ring the card tied to the conversation currently on screen
+        if (readable && !spent && a.charId === active && a.cardId !== selectedCard) cls.push("linked");
         if (a.cardId === selectedCard) cls.push("selected");
         const preview = (a.body || "").slice(0, 110) + ((a.body||"").length > 110 ? "…" : "");
         return `<div class="${cls.join(' ')}" data-card="${a.cardId}" data-char="${a.charId}" style="animation-delay:${idx*0.05}s">
@@ -731,9 +765,16 @@
     }
 
     function selectCard(cardId){
-      selectedCard = (selectedCard === cardId) ? null : cardId;
+      if (selectedCard === cardId){ selectedCard = null; hideDetail(); renderHand(); return; }
+      const a = engine.openActions().find(x => x.cardId === cardId);
+      // Focus the card's conversation so its message shows in context. (Readable
+      // cards have their thread fully revealed, so this won't kick off a reveal.)
+      if (a && a.charId !== "founder" && a.charId !== active){
+        active = a.charId; openConversation();   // resets selectedCard
+      }
+      selectedCard = cardId;
       renderHand();
-      if (selectedCard) showDetail(selectedCard); else hideDetail();
+      showDetail(cardId);
     }
     function hideDetail(){ $("handDetail").style.display = "none"; }
     function showDetail(cardId){
@@ -741,10 +782,18 @@
       if (!a){ hideDetail(); return; }
       const d = $("handDetail");
       d.style.display = "block";
+      // The popup is a *response* surface. A chat character's message already
+      // lives in the thread (now in view), so we don't repeat it — we go straight
+      // to the choices. A founder "move" has no message anywhere else, so its body
+      // is the brief and belongs here.
+      const showBrief = a.charId === "founder";
+      const context = showBrief
+        ? `<div class="hd-body">${escapeHtml(a.body)}</div>`
+        : `<div class="hd-prompt">Your response:</div>`;
       d.innerHTML =
         `<button class="hd-close" id="hdClose">×</button>
          <div class="hd-from">${escapeHtml(a.name)}${a.role?' · '+escapeHtml(a.role):''}</div>
-         <div class="hd-body">${escapeHtml(a.body)}</div>
+         ${context}
          <div class="hd-opts">${a.options.map(o=>
             `<button class="chip" data-card="${a.cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
           ).join("")}</div>`;
@@ -786,7 +835,7 @@
       const checkAuto = setInterval(()=>{
         if (!revealing && !journalRevealing){
           clearInterval(checkAuto);
-          renderRail(); renderStats(); renderHand();
+          renderRail(); renderStats(); renderHand(); updateChatCta();
           if (engine.stats().actionsLeft <= 0 && !engine.stats().act1Complete){
             setTimeout(advanceWeek, 950);
           }
