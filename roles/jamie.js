@@ -17,7 +17,7 @@
     unlockCondition: (s) => s.week >= 3,
     cards: [
       {
-        id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)',
+        id: 'ff_friend', cat: 'e', from: 'Jamie (college friend)', chat: false,
         body: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear — a dating app, seriously?",
         urgency: 12, weeks: 1,
         available: (s, char) => s.week <= 10 && !char.flags.first_meeting_done,
@@ -32,7 +32,7 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
-        id: 'ff_friend_ask', cat: 'e', from: 'Jamie (college friend)',
+        id: 'ff_friend_ask', cat: 'e', from: 'Jamie (college friend)', chat: false,
         body: "hey — been thinking about what you told me. i want to support this somehow. can we talk again?",
         urgency: 12, weeks: 1,
         available: (s, char) => char.flags.first_meeting_done && !char.flags.done && s.week >= char.flags.first_meeting_week + 4 && s.week <= char.flags.first_meeting_week + 12,

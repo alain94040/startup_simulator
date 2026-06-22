@@ -51,7 +51,7 @@
     },
     cards: [
       {
-        id: 'ff_family', cat: 'e', from: 'Mom',
+        id: 'ff_family', cat: 'e', from: 'Mom', chat: false,
         body: "just checking in! dad and i were talking about you last night. so proud. how's it going? let us know if there's anything we can do.",
         urgency: 12, weeks: 1,
         available: (s, char) => s.week <= 8 && !char.flags.done && !char.flags.shown_1,
@@ -60,7 +60,7 @@
         dropFx(s, char) { char.flags.shown_1 = true; },
       },
       {
-        id: 'ff_family_2', cat: 'e', from: 'Mom',
+        id: 'ff_family_2', cat: 'e', from: 'Mom', chat: false,
         body: "hey, still haven't heard back. dad keeps asking how things are going. if there's anything we can do to help, we really want to.",
         urgency: 12, weeks: 1,
         available: (s, char) => s.week <= 8 && !char.flags.done && char.flags.shown_1 && !char.flags.shown_2,
@@ -69,7 +69,7 @@
         dropFx(s, char) { char.flags.shown_2 = true; },
       },
       {
-        id: 'ff_family_3', cat: 'e', from: 'Mom',
+        id: 'ff_family_3', cat: 'e', from: 'Mom', chat: false,
         body: "dad looked up kindred and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird — but he's really proud.",
         urgency: 13, weeks: 1,
         available: (s, char) => s.week <= 10 && !char.flags.done && char.flags.shown_2,

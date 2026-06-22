@@ -12,6 +12,8 @@
     --accent:#0b84ff; --green:#34c759; --gold:#ffb340;
     --shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
     --r:18px;
+    /* hand card dimensions (ported from the old card build) */
+    --card-w:154px; --card-h:212px;
     /* handwritten stack for the journal — degrades to generic cursive, no web fonts */
     --hand:"Segoe Print","Bradley Hand","Noteworthy","Marker Felt","Comic Sans MS",cursive;
     --paper:#faf4e6; --jink:#4a4233; --jink-blue:#2a5db0; --rule:#e6d9bb; --margin:#e6b0a6;
@@ -23,7 +25,7 @@
     font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .app{height:100vh;display:flex;flex-direction:column;max-width:1180px;margin:0 auto;padding:18px;gap:14px}
+  .app{height:100vh;display:flex;flex-direction:column;max-width:1340px;margin:0 auto;padding:16px;gap:12px}
 
   /* ── top bar ─────────────────────────────────────────── */
   .topbar{
@@ -33,7 +35,6 @@
   .brand{display:flex;flex-direction:column;line-height:1.1}
   .brand b{font-size:17px;letter-spacing:.2px}
   .brand span{font-size:12px;color:var(--muted)}
-  /* runway burn-down — time represented as draining cash/weeks-left */
   .runway{display:flex;flex-direction:column;gap:5px;min-width:210px;max-width:300px;flex:1}
   .runway-top{display:flex;align-items:baseline;gap:6px}
   .runway-num{font-size:23px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;transition:color .5s}
@@ -64,10 +65,10 @@
   .endweek:disabled{opacity:.4;cursor:default;transform:none}
 
   /* ── main split ──────────────────────────────────────── */
-  .main{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
-  .top-row{flex:1;display:flex;gap:14px;min-height:0}
+  .main{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
+  .top-row{flex:1;display:flex;gap:12px;min-height:0}
   .rail{
-    width:268px;flex:none;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    width:236px;flex:none;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
     overflow:hidden;display:flex;flex-direction:column;
   }
   .rail h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);margin:0;padding:16px 18px 8px}
@@ -103,7 +104,7 @@
   .chat-head .avatar{width:34px;height:34px;font-size:13px}
   .chat-head .nm{font-weight:600}
   .chat-head .rl{font-size:12px;color:var(--muted)}
-  .thread{flex:1;overflow-y:auto;padding:20px 22px 8px;display:flex;flex-direction:column;gap:3px}
+  .thread{flex:1;overflow-y:auto;padding:20px 22px 16px;display:flex;flex-direction:column;gap:3px}
 
   .divider{align-self:center;margin:14px 0 6px;font-size:11px;color:var(--faint);
     text-transform:uppercase;letter-spacing:.8px;font-weight:600}
@@ -120,120 +121,142 @@
   .subtext{align-self:flex-start;max-width:74%;color:var(--faint);font-size:12px;
     font-style:italic;margin:1px 0 4px 6px}
   .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
-  .outcome{align-self:center;max-width:80%;text-align:center;color:var(--muted);
-    font-size:12.5px;margin:8px 0;padding:0 8px}
-  .outcome b{color:var(--ink)}
+  .chat-empty{margin:auto;color:var(--faint);font-size:13px;text-align:center;padding:20px}
 
   /* typing indicator */
   .typing{display:inline-flex;gap:4px;padding:12px 15px;background:var(--in);border-radius:20px;border-bottom-left-radius:6px}
   .typing i{width:7px;height:7px;border-radius:50%;background:#b6b6bb;animation:blink 1.2s infinite}
   .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
 
-  /* ── journal panel: always visible at the bottom ──────────────────── */
-  .journal-panel{
-    flex:none; height:220px; min-height:120px;
-    background:var(--panel); border-radius:16px; box-shadow:var(--shadow);
-    display:flex; flex-direction:column; overflow:hidden;
+  /* ── journal column (right, full height) ─────────────── */
+  .journal-col{
+    width:330px;flex:none;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;overflow:hidden;
   }
   .journal-head{
-    display:flex; align-items:center; gap:10px; padding:10px 18px;
-    border-bottom:1px solid var(--line); flex:none;
+    display:flex;align-items:center;gap:10px;padding:12px 18px;
+    border-bottom:1px solid var(--line);flex:none;
   }
-  .journal-head .jh-icon{ font-size:18px }
-  .journal-head .jh-title{ font-weight:600; font-size:14px }
-  .journal-head .jh-sub{ font-size:11px; color:var(--muted) }
+  .journal-head .jh-icon{font-size:18px}
+  .journal-head .jh-title{font-weight:600;font-size:14px}
+  .journal-head .jh-sub{font-size:11px;color:var(--muted);margin-left:auto}
   .journal-scroll{
-    flex:1; overflow-y:auto; gap:0;
+    flex:1;overflow-y:auto;
     background-color:var(--paper);
     background-image:
       repeating-linear-gradient(var(--paper), var(--paper) 33px, var(--rule) 33px, var(--rule) 34px),
       linear-gradient(90deg, transparent 0 50px, var(--margin) 50px 52px, transparent 52px);
     background-attachment:local;
-    padding:16px 30px 16px 70px;
-    display:flex; flex-direction:column;
+    padding:16px 26px 20px 70px;
+    display:flex;flex-direction:column;
   }
-
-  /* keep the old .thread.journal-mode for if someone opens the tab directly */
-  .thread.journal-mode{
-    gap:0;
-    background-color:var(--paper);
-    background-image:
-      repeating-linear-gradient(var(--paper), var(--paper) 33px, var(--rule) 33px, var(--rule) 34px),
-      linear-gradient(90deg, transparent 0 50px, var(--margin) 50px 52px, transparent 52px);
-    background-attachment:local;
-    padding:26px 30px 16px 70px;
-  }
-  .journal-mode .journal-entry, .journal-scroll .journal-entry{
-    font-family:var(--hand); color:var(--jink);
-    font-size:17px; line-height:34px; margin:0 0 6px; white-space:pre-wrap;
+  .journal-entry{
+    font-family:var(--hand);color:var(--jink);
+    font-size:17px;line-height:34px;margin:0 0 6px;white-space:pre-wrap;
     animation:inkin .5s ease both;
   }
-  .journal-mode .journal-entry.is-outcome, .journal-scroll .journal-entry.is-outcome{ color:#5a513f; }
-  .journal-mode .journal-choice, .journal-scroll .journal-choice{
-    font-family:var(--hand); color:var(--jink-blue);
-    font-size:17px; line-height:34px; margin:0 0 6px; animation:inkin .45s ease both;
+  .journal-entry.is-outcome{color:#5a513f}
+  .journal-choice{
+    font-family:var(--hand);color:var(--jink-blue);
+    font-size:17px;line-height:34px;margin:0 0 6px;animation:inkin .45s ease both;
   }
-  .journal-mode .journal-source, .journal-scroll .journal-source{
-    display:block; font-family:-apple-system,sans-serif; font-size:10px; line-height:1;
-    letter-spacing:.6px; text-transform:uppercase; color:#bca978; margin:-2px 0 8px;
+  .journal-source{
+    display:block;font-family:-apple-system,sans-serif;font-size:10px;line-height:1;
+    letter-spacing:.6px;text-transform:uppercase;color:#bca978;margin:-2px 0 8px;
   }
-  /* week number written into the red margin gutter, beside the entry */
-  .journal-mode .journal-date, .journal-scroll .journal-date{ position:relative; align-self:stretch; min-height:26px; margin:22px 0 0; }
-  .journal-mode .journal-date:first-child, .journal-scroll .journal-date:first-child{ margin-top:4px; }
-  .journal-mode .journal-date .num, .journal-scroll .journal-date .num{
-    position:absolute; left:-66px; top:2px; width:44px; text-align:right;
-    font-family:var(--hand); color:#b5654a; line-height:1;
+  .journal-date{position:relative;align-self:stretch;min-height:26px;margin:22px 0 0}
+  .journal-date:first-child{margin-top:4px}
+  .journal-date .num{
+    position:absolute;left:-66px;top:2px;width:44px;text-align:right;
+    font-family:var(--hand);color:#b5654a;line-height:1;
   }
-  .journal-mode .journal-date .num b, .journal-scroll .journal-date .num b{ display:block; font-size:19px; font-weight:700; }
-  .journal-mode .journal-date .num i, .journal-scroll .journal-date .num i{
-    display:block; font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase;
-    font-style:normal; color:#c9a98f; margin-top:3px;
+  .journal-date .num b{display:block;font-size:19px;font-weight:700}
+  .journal-date .num i{
+    display:block;font-size:8.5px;letter-spacing:1.5px;text-transform:uppercase;
+    font-style:normal;color:#c9a98f;margin-top:3px;
   }
-  /* milestone rubber stamp */
-  .journal-mode .journal-stamp, .journal-scroll .journal-stamp{
-    align-self:flex-start; margin:12px 0 16px; padding:5px 15px;
-    border:3px double currentColor; border-radius:6px;
-    font-family:"Arial Black",Impact,sans-serif; font-weight:800; font-size:14px;
-    letter-spacing:2px; text-transform:uppercase; opacity:.78;
-    transform:rotate(-7deg); animation:stampin .4s cubic-bezier(.2,1.5,.4,1) both;
+  .journal-stamp{
+    align-self:flex-start;margin:12px 0 16px;padding:5px 15px;
+    border:3px double currentColor;border-radius:6px;
+    font-family:"Arial Black",Impact,sans-serif;font-weight:800;font-size:14px;
+    letter-spacing:2px;text-transform:uppercase;opacity:.78;
+    transform:rotate(-7deg);animation:stampin .4s cubic-bezier(.2,1.5,.4,1) both;
   }
-  .journal-mode .journal-stamp.green, .journal-scroll .journal-stamp.green{ color:#2e8b57 }
-  .journal-mode .journal-stamp.blue, .journal-scroll .journal-stamp.blue{ color:#2a5db0 }
-  .journal-mode .journal-stamp.red, .journal-scroll .journal-stamp.red{ color:#c0392b }
-  /* inline action buttons inside journal entries */
-  .journal-actions{
-    display:flex; flex-direction:column; gap:7px; margin:4px 0 14px;
-    animation:inkin .4s ease both;
-  }
-  .journal-btn{
-    text-align:left; border:1.5px solid #d8c39c; background:#fefcf2; color:#5b4a24;
-    padding:8px 14px; border-radius:10px; cursor:pointer;
-    font:14px var(--hand); line-height:1.35; transition:.13s;
-  }
-  .journal-btn:hover{ border-color:#b8943c; background:#fff7e0; transform:translateY(-1px); }
-  .journal-btn.spent{ opacity:.4; pointer-events:none; }
+  .journal-stamp.green{color:#2e8b57}
+  .journal-stamp.blue{color:#2a5db0}
+  .journal-stamp.red{color:#c0392b}
+  .journal-empty{font-family:var(--hand);color:#b6a585;font-size:16px;line-height:30px}
 
-  /* ── composer ────────────────────────────────────────── */
-  .composer{border-top:1px solid var(--line);padding:14px 18px;background:var(--panel)}
-  .prompt-label{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px}
-  .chips{display:flex;flex-direction:column;gap:9px}
+  /* ── action hand (bottom) ────────────────────────────── */
+  .hand-panel{
+    flex:none;position:relative;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    padding:10px 16px 16px;display:flex;flex-direction:column;gap:8px;
+  }
+  .hand-top{display:flex;align-items:center;gap:12px}
+  .hand-lbl{font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+  .hand-hint{font-size:12px;color:var(--accent)}
+  .hand-plays{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+  .hand-plays .dot{width:12px;height:12px}
+  .hand-cards{
+    display:flex;gap:12px;align-items:flex-end;justify-content:center;
+    min-height:var(--card-h);overflow-x:auto;padding-top:6px;
+  }
+  .hand-empty{margin:auto;color:var(--faint);font-size:13px}
+
+  .hcard{
+    width:var(--card-w);height:var(--card-h);background:#fff;border-radius:13px;cursor:pointer;
+    position:relative;overflow:hidden;flex:none;display:flex;flex-direction:column;
+    box-shadow:0 3px 14px rgba(0,0,0,.14);border:1px solid var(--line);
+    transition:transform .22s cubic-bezier(.34,1.56,.64,1),box-shadow .2s ease,opacity .3s ease;
+    transform-origin:bottom center;animation:dealIn .4s cubic-bezier(.34,1.56,.64,1) backwards;
+  }
+  .hcard:hover{transform:translateY(-16px);box-shadow:0 16px 40px rgba(0,0,0,.22);z-index:5}
+  .hcard.selected{transform:translateY(-20px);box-shadow:0 18px 46px rgba(11,132,255,.34),0 0 0 2px var(--accent);z-index:10}
+  .hcard.played{opacity:.32;pointer-events:none;filter:grayscale(.5)}
+  .hcard.locked{cursor:pointer;opacity:.62}
+  .hcard.locked:hover{transform:translateY(-6px)}
+  @keyframes dealIn{from{opacity:0;transform:translateY(40px) scale(.86)}to{opacity:1}}
+  .hcard-stripe{height:5px;flex:none}
+  .hcard-inner{padding:10px 11px 6px;flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden}
+  .hcard-av-row{display:flex;align-items:center;gap:7px}
+  .hcard-av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;color:#fff;flex:none}
+  .hcard-sender{flex:1;overflow:hidden}
+  .hcard-from{font-size:12px;font-weight:700;color:#0f0f1e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hcard-role{font-size:10px;color:#999;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hcard-preview{font-size:12.5px;color:#444;line-height:1.4;flex:1;overflow:hidden}
+  .hcard-foot{padding:0 11px 9px;display:flex;align-items:center;justify-content:space-between;flex:none}
+  .hcard-cat-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px}
+  .hcard-urg{width:7px;height:7px;border-radius:50%}
+  .urg-3{background:#ef4444;box-shadow:0 0 5px #ef4444}
+  .urg-2{background:#f59e0b}
+  .urg-1{background:#22c55e}
+  .hcard-lockmsg{
+    position:absolute;inset:0;background:rgba(255,255,255,.62);display:grid;place-items:center;
+    text-align:center;font-size:10px;font-weight:700;letter-spacing:.5px;color:#7a7a82;padding:10px;
+    text-transform:uppercase;
+  }
+
+  /* selected-card option tray (floats above the hand) */
+  .hand-detail{
+    position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);
+    width:min(640px,calc(100% - 24px));background:var(--panel);border:1px solid var(--line);
+    border-radius:16px;box-shadow:0 14px 50px rgba(0,0,0,.22);padding:16px 18px;z-index:30;
+    animation:rise .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .hand-detail .hd-from{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .hand-detail .hd-body{font-size:14px;color:var(--ink);line-height:1.5;margin-bottom:14px}
+  .hand-detail .hd-opts{display:flex;flex-direction:column;gap:9px}
   .chip{
     text-align:left;border:1px solid var(--line);background:#f8f9fb;color:var(--ink);
-    padding:11px 15px;border-radius:14px;cursor:pointer;font-size:14px;transition:.13s;line-height:1.35;
+    padding:11px 15px;border-radius:13px;cursor:pointer;font-size:14px;transition:.13s;line-height:1.35;
   }
   .chip:hover{border-color:var(--accent);background:#eef5ff;transform:translateY(-1px)}
-  .chip.journal{background:#fffdf5;border-color:#efe6c8}
-  .chip.journal:hover{border-color:var(--gold);background:#fff7e6}
-  .composer.spent .chip{opacity:.45;pointer-events:none}
-  .empty-state{color:var(--faint);font-size:13.5px;text-align:center;padding:6px 0 2px}
-  .empty-state .go{
-    display:inline-block;margin-top:8px;color:var(--accent);font-weight:600;cursor:pointer;
-  }
+  .hd-close{position:absolute;top:10px;right:14px;border:0;background:none;font-size:18px;color:var(--faint);cursor:pointer;line-height:1}
 
   /* ── overlay ─────────────────────────────────────────── */
   .overlay{
     position:fixed;inset:0;background:rgba(20,20,30,.55);backdrop-filter:blur(6px);
-    display:none;place-items:center;z-index:20;
+    display:none;place-items:center;z-index:50;
   }
   .overlay.show{display:grid;animation:fade .3s ease}
   .card-modal{
@@ -252,7 +275,7 @@
   @keyframes stampin{0%{opacity:0;transform:rotate(-7deg) scale(2.2)}60%{opacity:.92}100%{opacity:.78;transform:rotate(-7deg) scale(1)}}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
-  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
+  ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
 </style>
 </head>
 <body>
@@ -289,17 +312,26 @@
         <div class="chat">
           <div class="chat-head" id="chatHead"></div>
           <div class="thread" id="thread"></div>
-          <div class="composer" id="composer"></div>
+        </div>
+
+        <div class="journal-col">
+          <div class="journal-head">
+            <span class="jh-icon">📓</span>
+            <span class="jh-title">Founder's Journal</span>
+            <span class="jh-sub">your private record</span>
+          </div>
+          <div class="journal-scroll" id="journalScroll"></div>
         </div>
       </div>
 
-      <div class="journal-panel">
-        <div class="journal-head">
-          <span class="jh-icon">📓</span>
-          <span class="jh-title">Founder's Journal</span>
-          <span class="jh-sub">your private record</span>
+      <div class="hand-panel" id="handPanel">
+        <div class="hand-detail" id="handDetail" style="display:none"></div>
+        <div class="hand-top">
+          <span class="hand-lbl">This week · pick 2</span>
+          <span class="hand-hint" id="handHint"></span>
+          <span class="hand-plays" id="handPlays"></span>
         </div>
-        <div class="journal-scroll" id="journalScroll"></div>
+        <div class="hand-cards" id="handCards"></div>
       </div>
     </div>
   </div>
@@ -360,6 +392,15 @@
       tom:         { color:"#34c759", initials:"T"  },
       founder:     { color:"#8e8e93", initials:"Me" },
     };
+    // Category presentation for the hand cards (p/t/e/c/f).
+    const CAT = {
+      p: { label:"Product", color:"#0b84ff", bg:"#eaf3ff", tc:"#0b6ad6" },
+      t: { label:"Team",    color:"#34c759", bg:"#e7f9ed", tc:"#1f9e46" },
+      e: { label:"Event",   color:"#ff9500", bg:"#fff1df", tc:"#c4710b" },
+      c: { label:"Market",  color:"#af52de", bg:"#f6ecfc", tc:"#8b35bb" },
+      f: { label:"Funding", color:"#ff2d55", bg:"#ffe9ee", tc:"#d61f43" },
+    };
+    const catFor = c => CAT[c] || CAT.e;
     const styleFor = id => STYLE[id] || { color:"#8e8e93", initials:"?" };
     const convFor  = id => engine.conversations().find(c => c.id === id);
     let active = "alex";
@@ -369,13 +410,14 @@
     let journalRevealing = false;
     let jShown = 0;       // entries already rendered in the journal panel
     let jLastWeek = null;
-    let runwayAnim = false;   // true while the burn-down beat is tweening the gauge
+    let runwayAnim = false;
+    let selectedCard = null;   // cardId of the hand card whose options are open
 
     const $ = id => document.getElementById(id);
     const fmtCash = c => "$" + c.toLocaleString();
+    const busy = () => revealing || journalRevealing || runwayAnim;
 
-    // ── runway burn-down: time felt as a draining lifeline ─
-    // The bar represents this many weeks of cash at full width ($10k / $500).
+    // ── runway burn-down ─────────────────────────────────
     const RUNWAY_FULL = 20;
     const runwayColor = w => w <= 4 ? "#ff3b30" : w <= 8 ? "#ff9500" : "#34c759";
     function setRunway(cash){
@@ -387,7 +429,6 @@
       fill.style.background = runwayColor(weeks);
       $("runway").classList.toggle("low", weeks <= 4);
     }
-    // Animate cash from→to over ~1.2s: the felt beat when a week passes.
     function animateRunway(from, to, done){
       runwayAnim = true;
       const start = performance.now(), dur = 1200, ease = t => 1 - Math.pow(1 - t, 3);
@@ -400,7 +441,7 @@
       requestAnimationFrame(step);
     }
 
-    // ── status bar ────────────────────────────────────────
+    // ── status bar ───────────────────────────────────────
     function renderStats(){
       const s = engine.stats();
       $("weekSub").textContent = "Week " + s.week + " · idea → seed";
@@ -411,16 +452,15 @@
         ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
-      $("endweek").disabled = revealing || journalRevealing;
+      $("endweek").disabled = busy();
       $("endweek").textContent = s.actionsLeft===0 ? "Next week →" : "End week →";
     }
 
-    // ── sidebar (only chat characters, not founder) ───────
+    // ── sidebar (chat characters, not the journal) ───────
     function renderRail(){
       const convs = engine.conversations().filter(c => !c.isJournal);
       $("convs").innerHTML = convs.map(c=>{
-        // Blue dot = unread only: thread has entries we haven't revealed/seen yet.
-        // A chat you've read but not yet replied to (still hasAction) is not unread.
+        // Blue dot = unread: thread has entries we haven't revealed yet.
         const unread = shown[c.id] < engine.threads[c.id].length;
         const dot = unread ? '<span class="badge"></span>' : '';
         const st = styleFor(c.id);
@@ -437,7 +477,7 @@
       });
     }
 
-    // ── chat header ───────────────────────────────────────
+    // ── chat header ──────────────────────────────────────
     function renderHead(){
       const c = convFor(active);
       if (!c) return;
@@ -447,8 +487,13 @@
          <div><div class="nm">${c.name}</div><div class="rl">${c.role}</div></div>`;
     }
 
-    // ── build one message element ─────────────────────────
+    // ── journal entries (record only — no action buttons) ─
+    // A founder card's *prompt* (an incoming entry with a cardId) lives on the
+    // hand, not the journal. The journal shows only what happened: the player's
+    // choices (✓), first-person outcomes, milestone stamps, and the rare system
+    // note (an incoming entry with no cardId).
     function buildJournalEntry(e){
+      if (e.type === "incoming" && e.cardId) return null; // prompt → shown as a card
       if (e.type === "stamp"){
         const d = document.createElement("div");
         d.className = "journal-stamp " + (e.stampClass || "red");
@@ -469,66 +514,7 @@
       d.textContent = e.body;
       wrap.appendChild(d);
       if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
-      // Inline action buttons for founder prompts that are still surfaced
-      if (e.type === "incoming" && e.cardId && engine.isOpen(e.cardId)){
-        const opts = engine.options(e.cardId);
-        if (opts.length){
-          const btns = document.createElement("div");
-          btns.className = "journal-actions";
-          btns.dataset.cardId = e.cardId;
-          const spent = engine.actionsLeft <= 0;
-          for (const o of opts){
-            const b = document.createElement("button");
-            b.className = "journal-btn" + (spent ? " spent" : "");
-            b.textContent = o.label;
-            b.dataset.card = e.cardId;
-            b.dataset.key = o.key;
-            b.onclick = ()=> doJournalAct(e.cardId, o.key, btns);
-            btns.appendChild(b);
-          }
-          wrap.appendChild(btns);
-        }
-      }
       return wrap;
-    }
-
-    function doJournalAct(cardId, key, btnContainer){
-      if (revealing || journalRevealing || engine.actionsLeft <= 0) return;
-      const jBefore = engine.threads.founder.length;
-      engine.act(cardId, key);
-      // remove the buttons since the card was just answered
-      if (btnContainer) btnContainer.remove();
-      // reveal new journal entries (the reply + outcome)
-      if (engine.threads.founder.length > jBefore){
-        revealJournalFrom(jBefore);
-      }
-      renderStats(); renderComposer(); renderRail();
-      // auto-advance if out of actions
-      const checkAuto = setInterval(()=>{
-        if (!journalRevealing){
-          clearInterval(checkAuto);
-          if (engine.actionsLeft <= 0 && !engine.stats().act1Complete){
-            setTimeout(advanceWeek, 900);
-          }
-        }
-      }, 120);
-    }
-
-    // After each action or week advance, update spent state on any remaining
-    // inline journal buttons and remove buttons for cards no longer surfaced.
-    function refreshJournalButtons(){
-      const box = $("journalScroll");
-      const groups = box.querySelectorAll(".journal-actions");
-      for (const g of groups){
-        const cid = g.dataset.cardId;
-        if (!engine.isOpen(cid)){
-          g.remove(); continue;
-        }
-        const spent = engine.actionsLeft <= 0;
-        for (const b of g.querySelectorAll(".journal-btn")){
-          b.className = "journal-btn" + (spent ? " spent" : "");
-        }
-      }
     }
 
     function buildChatEntry(e){
@@ -545,19 +531,14 @@
         if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
         return wrap;
       }
-      if (e.type === "reply"){
-        const d = document.createElement("div");
-        d.className = "row out";
-        d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
-        return d;
-      }
+      // reply (player's blue bubble); outcomes are not shown in chat
       const d = document.createElement("div");
-      d.className = "outcome";
-      d.innerHTML = `<b>·</b> ${escapeHtml(e.body)}`;
+      d.className = "row out";
+      d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
       return d;
     }
 
-    // ── journal panel (always visible, bottom) ────────────
+    // ── journal panel ────────────────────────────────────
     function journalDivider(box, e){
       if (e.week && e.week !== jLastWeek){
         const d = document.createElement("div");
@@ -567,54 +548,60 @@
         jLastWeek = e.week;
       }
     }
-
     function renderJournalCatchup(){
       const box = $("journalScroll");
       const thread = engine.threads.founder;
       while (jShown < thread.length){
         const e = thread[jShown];
-        journalDivider(box, e);
         const el = buildJournalEntry(e);
-        el.style.animation = "none";
-        box.appendChild(el);
+        if (el){ journalDivider(box, e); el.style.animation = "none"; box.appendChild(el); }
         jShown++;
       }
+      if (!box.children.length){
+        box.innerHTML = `<div class="journal-empty">the story starts here…</div>`;
+      }
     }
-
     function revealJournalFrom(from){
       const thread = engine.threads.founder;
       if (from >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
       journalRevealing = true; renderStats();
       const box = $("journalScroll");
+      const ghost = box.querySelector(".journal-empty"); if (ghost) ghost.remove();
       let i = from;
       const step = ()=>{
         if (i >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
         const e = thread[i];
-        journalDivider(box, e);
-        const delay = e.type === "stamp" ? 500 : 380;
+        const el = buildJournalEntry(e);
+        if (!el){ i++; jShown = i; step(); return; }
+        const delay = e.type === "stamp" ? 480 : 340;
         setTimeout(()=>{
-          box.appendChild(buildJournalEntry(e));
+          journalDivider(box, e);
+          box.appendChild(el);
           box.scrollTop = box.scrollHeight;
           i++; jShown = i; step();
         }, delay);
       };
       step();
     }
-
     function finishJournalReveal(){
       journalRevealing = false;
-      renderStats(); renderComposer(); refreshJournalButtons();
+      renderStats(); renderHand();
       const s = engine.stats();
       if (s.act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 500); }
     }
 
     // ── chat thread rendering ────────────────────────────
     function openConversation(){
+      selectedCard = null; hideDetail();
       renderHead();
       const thread = engine.threads[active];
       const box = $("thread");
       box.innerHTML = "";
       box.className = "thread";
+      if (!thread.length){
+        box.innerHTML = `<div class="chat-empty">no messages yet</div>`;
+        renderRail(); renderStats(); renderHand(); return;
+      }
       let lastWeek = null;
       const upto = Math.max(shown[active], 0);
       thread.slice(0, upto).forEach(e=>{
@@ -622,10 +609,9 @@
         const el = buildChatEntry(e); el.style.animation = "none"; box.appendChild(el);
       });
       revealFrom(active, upto, lastWeek);
-      renderRail(); renderStats(); renderComposer();
+      renderRail(); renderStats(); renderHand();
       scrollDown();
     }
-
     function chatDivider(box, e, lastWeek){
       if (e.week && e.week !== lastWeek){
         const d = document.createElement("div");
@@ -635,7 +621,6 @@
       }
       return lastWeek;
     }
-
     function revealFrom(charId, from, lastWeek){
       const thread = engine.threads[charId];
       if (from >= thread.length){ shown[charId]=thread.length; finishReveal(); return; }
@@ -648,7 +633,7 @@
         const e = thread[i];
         lw = chatDivider(box, e, lw);
         const useTyping = e.type === "incoming";
-        const delay = useTyping ? 620 : 90;
+        const delay = useTyping ? 600 : 90;
         if (useTyping){
           const t = document.createElement("div");
           t.className="row in"; t.innerHTML = `<div class="typing"><i></i><i></i><i></i></div>`;
@@ -660,102 +645,179 @@
       };
       step();
     }
-
     function finishReveal(){
       revealing = false;
-      renderRail(); renderStats(); renderComposer(); refreshJournalButtons();
+      renderRail(); renderStats(); renderHand();
     }
 
-    // ── composer (only for chat characters now) ──────────
-    function renderComposer(){
-      const c = $("composer");
+    // ── the hand (bottom action cards) ───────────────────
+    // A card can only be played once its source message has been read. A chat
+    // character's card unlocks when its thread has no unread messages; the
+    // founder's own "moves" have no thread to read, so they're always playable.
+    function cardReadable(charId){
+      if (charId === "founder") return true;
+      return shown[charId] >= engine.threads[charId].length;
+    }
+    function renderHand(){
+      const actions = engine.openActions();
       const s = engine.stats();
-      const cardId = engine.openCardId(active);
+      const spent = s.actionsLeft <= 0;
 
-      if (revealing){ c.className="composer"; c.innerHTML = `<div class="empty-state">…</div>`; return; }
+      // plays-left dots
+      $("handPlays").innerHTML =
+        `<div class="dot${s.actionsLeft>=1?' full':''}"></div>` +
+        `<div class="dot${s.actionsLeft>=2?' full':''}"></div>` +
+        `<span style="margin-left:4px">${s.actionsLeft} of 2 left</span>`;
 
-      if (!cardId){
-        c.className="composer";
-        const chatConvs = engine.conversations().filter(x => !x.isJournal);
-        const anyOpen = chatConvs.some(x=>x.hasAction);
-        c.innerHTML = `<div class="empty-state">${
-          anyOpen ? 'Nothing to answer here right now.'
-                  : "You're caught up." + (s.actionsLeft>0?' <span class="go" id="goNext">End the week →</span>':'')
-        }</div>`;
-        const g = $("goNext"); if (g) g.onclick = advanceWeek;
+      // hint: how many actionable threads are still unread
+      const unread = actions.filter(a => !cardReadable(a.charId)).length;
+      $("handHint").textContent = unread > 0
+        ? `· ${unread} unread — open a chat to unlock`
+        : (spent ? "· no actions left this week" : "");
+
+      const box = $("handCards");
+      if (!actions.length){
+        box.innerHTML = `<div class="hand-empty">nothing needs you right now — end the week →</div>`;
+        if (selectedCard){ selectedCard = null; hideDetail(); }
         return;
       }
+      box.innerHTML = actions.map((a, idx)=>{
+        const cat = catFor(a.cat);
+        const st = styleFor(a.charId);
+        const readable = cardReadable(a.charId);
+        const u = a.urgency;
+        const urgCls = u >= 3 ? "urg-3" : u >= 2 ? "urg-2" : "urg-1";
+        const cls = ["hcard"];
+        if (!readable) cls.push("locked");
+        else if (spent) cls.push("played");
+        if (a.cardId === selectedCard) cls.push("selected");
+        const preview = (a.body || "").slice(0, 110) + ((a.body||"").length > 110 ? "…" : "");
+        return `<div class="${cls.join(' ')}" data-card="${a.cardId}" data-char="${a.charId}" style="animation-delay:${idx*0.05}s">
+          <div class="hcard-stripe" style="background:${cat.color}"></div>
+          <div class="hcard-inner">
+            <div class="hcard-av-row">
+              <div class="hcard-av" style="background:${st.color}">${st.initials}</div>
+              <div class="hcard-sender">
+                <div class="hcard-from">${escapeHtml(a.name)}</div>
+                <div class="hcard-role">${escapeHtml(a.role)}</div>
+              </div>
+            </div>
+            <div class="hcard-preview">${escapeHtml(preview)}</div>
+          </div>
+          <div class="hcard-foot">
+            <span class="hcard-cat-badge" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
+            <span class="hcard-urg ${urgCls}"></span>
+          </div>
+          ${!readable ? `<div class="hcard-lockmsg">tap to read<br>the message</div>` : ""}
+        </div>`;
+      }).join("");
 
-      const opts = engine.options(cardId);
-      const spent = s.actionsLeft <= 0;
-      c.className = "composer" + (spent?" spent":"");
-      c.innerHTML =
-        `<div class="prompt-label">Suggested replies · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left</div>
-         <div class="chips">${opts.map(o=>
-            `<button class="chip" data-card="${cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
+      [...box.querySelectorAll(".hcard")].forEach(el=>{
+        el.onclick = ()=>{
+          if (busy()) return;
+          const cardId = el.dataset.card, charId = el.dataset.char;
+          if (!cardReadable(charId)){ active = charId; openConversation(); return; } // jump to read it
+          if (engine.stats().actionsLeft <= 0) return;
+          selectCard(cardId);
+        };
+      });
+
+      // keep an open detail tray in sync, or close it if its card vanished
+      if (selectedCard && !actions.some(a => a.cardId === selectedCard)){
+        selectedCard = null; hideDetail();
+      } else if (selectedCard){
+        showDetail(selectedCard);
+      }
+    }
+
+    function selectCard(cardId){
+      selectedCard = (selectedCard === cardId) ? null : cardId;
+      renderHand();
+      if (selectedCard) showDetail(selectedCard); else hideDetail();
+    }
+    function hideDetail(){ $("handDetail").style.display = "none"; }
+    function showDetail(cardId){
+      const a = engine.openActions().find(x => x.cardId === cardId);
+      if (!a){ hideDetail(); return; }
+      const d = $("handDetail");
+      d.style.display = "block";
+      d.innerHTML =
+        `<button class="hd-close" id="hdClose">×</button>
+         <div class="hd-from">${escapeHtml(a.name)}${a.role?' · '+escapeHtml(a.role):''}</div>
+         <div class="hd-body">${escapeHtml(a.body)}</div>
+         <div class="hd-opts">${a.options.map(o=>
+            `<button class="chip" data-card="${a.cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
           ).join("")}</div>`;
-      [...c.querySelectorAll(".chip")].forEach(btn=>{
-        btn.onclick = ()=> doAct(btn.dataset.card, btn.dataset.key);
+      $("hdClose").onclick = ()=>{ selectedCard = null; hideDetail(); renderHand(); };
+      [...d.querySelectorAll(".chip")].forEach(btn=>{
+        btn.onclick = ()=> commitCard(btn.dataset.card, btn.dataset.key);
       });
     }
 
-    // ── actions ───────────────────────────────────────────
-    function doAct(cardId, key){
-      if (revealing || journalRevealing || engine.stats().actionsLeft<=0) return;
+    // ── commit an action from the hand ───────────────────
+    function commitCard(cardId, key){
+      if (busy() || engine.stats().actionsLeft <= 0) return;
+      const a = engine.openActions().find(x => x.cardId === cardId);
+      const charId = a ? a.charId : null;
+      const dialogue = a ? a.chat : false;
+
+      selectedCard = null; hideDetail();
+
       const jBefore = engine.threads.founder.length;
-      const chatBefore = engine.threads[active] ? engine.threads[active].length : 0;
+      // For a dialogue action, switch to that thread so the reply lands in view.
+      if (dialogue && charId && charId !== "founder" && charId !== active){
+        active = charId; openConversation();
+      }
+      const chatBefore = (charId && engine.threads[charId]) ? engine.threads[charId].length : 0;
+
       engine.act(cardId, key);
 
-      // reveal new entries in the active chat thread (reply bubble)
-      if (active !== "founder" && engine.threads[active].length > chatBefore){
-        const lastWeek = engine.threads[active][chatBefore-1]?.week ?? engine.stats().week;
-        revealFrom(active, chatBefore, lastWeek);
+      // reveal the player's reply bubble in the (now active) chat thread
+      if (dialogue && charId === active && engine.threads[active].length > chatBefore){
+        const lw = engine.threads[active][chatBefore-1]?.week ?? engine.stats().week;
+        revealFrom(active, chatBefore, lw);
       }
-
-      // reveal new entries in the journal panel
+      // reveal new journal entries (outcome + any stamps)
       if (engine.threads.founder.length > jBefore){
         revealJournalFrom(jBefore);
       }
 
-      // after both reveals finish, auto-advance if out of actions
+      // after reveals settle: refresh and maybe advance
       const checkAuto = setInterval(()=>{
         if (!revealing && !journalRevealing){
           clearInterval(checkAuto);
-          renderComposer();
-          if (engine.stats().actionsLeft<=0 && !engine.stats().act1Complete){
-            setTimeout(advanceWeek, 900);
+          renderRail(); renderStats(); renderHand();
+          if (engine.stats().actionsLeft <= 0 && !engine.stats().act1Complete){
+            setTimeout(advanceWeek, 950);
           }
         }
       }, 120);
     }
 
+    // ── advance to next week ─────────────────────────────
     function advanceWeek(){
-      if (revealing || journalRevealing || runwayAnim) return;
+      if (busy()) return;
+      selectedCard = null; hideDetail();
 
       const cashBefore = engine.stats().cash;
       engine.nextWeek();
       const cashAfter = engine.stats().cash;
 
-      // The felt beat: a week passing = a notch of runway spent. Freeze the
-      // gauge at last week's value, then watch the cash/weeks-left drain before
-      // any new messages arrive.
-      revealing = true;
-      runwayAnim = true;
+      revealing = true; runwayAnim = true;
       setRunway(cashBefore);
-      renderStats();   // week label, dots, stat chips (gauge frozen by runwayAnim)
+      renderStats();
 
       animateRunway(cashBefore, cashAfter, () => {
         revealing = false;
+        // Messages arrive first: reveal the active thread (the week-opening beat).
         openConversation();
         const jBefore = jShown;
-        if (engine.threads.founder.length > jBefore){
-          revealJournalFrom(jBefore);
-        }
+        if (engine.threads.founder.length > jBefore) revealJournalFrom(jBefore);
         if (engine.stats().gameOver) setTimeout(showGameOver, 700);
       });
     }
 
-    // ── modals ────────────────────────────────────────────
+    // ── modals ───────────────────────────────────────────
     function showAct1(){
       const s = engine.stats();
       const split = s.equity || "your split";
@@ -777,7 +839,7 @@
       $("closeModal").onclick = ()=> location.reload();
     }
 
-    // ── utils ─────────────────────────────────────────────
+    // ── utils ────────────────────────────────────────────
     function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
     function escapeHtml(str){ return (str||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 

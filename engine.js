@@ -297,13 +297,22 @@
 
       const outcome = opt.execute(this.s, char, this);
 
-      this.threads[charId].push({
-        type: "reply",
-        cardId,
-        body: opt.reply || opt.label,
-        week: this.s.week,
-        isNew: true,
-      });
+      // Echo the player's choice as a chat reply — but only for *dialogue* actions.
+      // "Move" cards (own initiatives) and off-screen "ask" cards mark themselves
+      // `chat: false`: they say nothing in the thread. Their story is told in the
+      // journal outcome and (for asks) a delayed reply pushed onto `pending`.
+      // (For the founder, the thread *is* the journal, so a dialogue reply renders
+      // there as the ✓ choice line — that's the intended record.)
+      const isDialogue = opt.chat !== false && o.def.chat !== false;
+      if (isDialogue) {
+        this.threads[charId].push({
+          type: "reply",
+          cardId,
+          body: opt.reply || opt.label,
+          week: this.s.week,
+          isNew: true,
+        });
+      }
       if (outcome) {
         // Outcomes are narrated in the founder's journal, not the chat thread.
         // The chat stays pure dialogue; the journal is where the story is told,
@@ -475,6 +484,41 @@
       const b = (entry.body || "").replace(/\s+/g, " ").trim();
       const tag = entry.type === "reply" ? "You: " : entry.type === "outcome" ? "" : "";
       return (tag + b).slice(0, 64);
+    }
+
+    // The hand: every currently-open slot that carries a real decision (has at
+    // least one available option). This is the single action surface — people's
+    // asks and the founder's own moves alike. Pure narration (intros, pending
+    // texts, drop follow-ups) never enters `open[]`, so it's naturally excluded;
+    // a card can also opt out explicitly with `notify: true`. Ordered by the
+    // engine's surfacing order, then urgency-first within that.
+    openActions() {
+      const out = [];
+      for (const charId of this.order) {
+        const o = this.open[charId];
+        if (!o) continue;
+        const card = o.def;
+        if (card.notify) continue;
+        const opts = this.options(card.id);
+        if (!opts.length) continue;
+        const char = this.chars.get(charId);
+        const def = DEFS[charId] || {};
+        out.push({
+          charId,
+          cardId: card.id,
+          name: card.from || def.name || charId,
+          role: def.role || "",
+          cat: card.cat || "e",
+          chat: card.chat !== false,
+          urgency: this._rankVal(card),
+          body: this._resolveBody(card, char),
+          subtext: card.subtext || null,
+          options: opts,
+          week: o.week,
+        });
+      }
+      out.sort((a, b) => b.urgency - a.urgency);
+      return out;
     }
 
     // snapshot of headline numbers for the status bar
