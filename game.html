@@ -57,12 +57,6 @@
   .actions-budget .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
   .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);transition:.2s}
   .dot.full{background:var(--accent)}
-  .endweek{
-    border:0;background:var(--ink);color:#fff;font-weight:600;font-size:13px;
-    padding:9px 16px;border-radius:12px;cursor:pointer;transition:.15s;
-  }
-  .endweek:hover{transform:translateY(-1px);opacity:.92}
-  .endweek:disabled{opacity:.4;cursor:default;transform:none}
 
   /* ── main split ──────────────────────────────────────── */
   .main{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
@@ -220,6 +214,12 @@
   .hand-hint{font-size:12px;color:var(--accent)}
   .hand-plays{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
   .hand-plays .dot{width:12px;height:12px}
+  .hand-end{
+    border:0;background:var(--ink);color:#fff;font-weight:600;font-size:12px;
+    padding:7px 14px;border-radius:11px;cursor:pointer;transition:.15s;
+  }
+  .hand-end:hover{transform:translateY(-1px);opacity:.92}
+  .hand-end:disabled{opacity:.4;cursor:default;transform:none}
   .hand-cards{
     display:flex;gap:12px;align-items:flex-end;justify-content:center;
     min-height:var(--card-h);overflow-x:auto;padding-top:6px;
@@ -295,8 +295,17 @@
   @keyframes fade{from{opacity:0}to{opacity:1}}
   @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
   /* turn-end diff highlights (calm, in stable surfaces — no tab switching) */
-  @keyframes jHighlight{0%{background:rgba(255,206,84,.55)}100%{background:transparent}}
-  .journal-entry.arrive,.journal-choice.arrive{animation:jHighlight 1.2s ease;border-radius:5px;margin-left:-4px;padding-left:4px}
+  @keyframes jHighlight{
+    0%{background:rgba(255,184,52,.7);box-shadow:-6px 0 0 rgba(255,184,52,.7)}
+    100%{background:transparent;box-shadow:-6px 0 0 transparent}
+  }
+  .journal-entry.arrive,.journal-choice.arrive{animation:jHighlight 1.7s ease;border-radius:5px;margin-left:-6px;padding-left:6px}
+  /* while the journal inks in this week's outcomes, the whole column glows to pull the
+     eye to the right BEFORE any chat notification buzzes */
+  .journal-col{transition:box-shadow .45s ease}
+  .journal-col.updating{box-shadow:0 0 0 2px var(--gold),0 0 30px rgba(255,179,64,.5),var(--shadow)}
+  @keyframes jHeadFlash{0%,100%{background:transparent}45%{background:rgba(255,179,64,.22)}}
+  .journal-head.flash{animation:jHeadFlash 1.1s ease}
   @keyframes statPulse{0%{transform:scale(1)}40%{transform:scale(1.13);box-shadow:0 0 0 3px rgba(52,199,89,.3)}100%{transform:scale(1);box-shadow:none}}
   .stat.changed{animation:statPulse .85s ease}
 
@@ -342,6 +351,79 @@
   .nc-item{display:flex;gap:10px;align-items:flex-start;padding:9px 9px;border-radius:12px;cursor:pointer;transition:background .12s}
   .nc-item:hover{background:var(--rail)}
   .nc-empty{padding:16px 10px;color:var(--faint);font-size:13px;text-align:center}
+
+  /* topbar icon button (roadmap), matches .bell */
+  .hdr-btn{
+    border:1px solid var(--line);background:var(--rail);
+    width:38px;height:38px;border-radius:11px;cursor:pointer;font-size:16px;
+    display:grid;place-items:center;transition:.13s;
+  }
+  .hdr-btn:hover{background:#eef0f4;transform:translateY(-1px)}
+  .hdr-btn[disabled]{opacity:.4;cursor:default;transform:none}
+
+  /* shared top-right dropdown panel (roadmap / bank) */
+  .pop{
+    position:fixed;top:84px;right:22px;z-index:46;width:330px;max-height:72vh;overflow-y:auto;
+    background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    box-shadow:0 18px 50px rgba(0,0,0,.24);padding:14px 16px;display:none;
+  }
+  .pop.show{display:block;animation:noteIn .22s ease both}
+
+  /* dev-map stepper (roadmap) — light theme port of game_cards .dm-* */
+  .dm-hdr{
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    border-bottom:1px solid var(--line);padding-bottom:7px;margin-bottom:9px;
+    display:flex;justify-content:space-between;align-items:center;gap:8px;
+  }
+  .dm-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;text-transform:uppercase;letter-spacing:.4px}
+  .dm-badge-lean{background:#e6f7ec;color:#1a8a44;border:1px solid #bce8cd}
+  .dm-badge-full{background:#e7f0ff;color:#2563eb;border:1px solid #c2d8ff}
+  .dm-badge-sprint{background:#f0f0f3;color:#888;border:1px solid #e0e0e6}
+  .dm-badge-pivot{background:#fff1e6;color:#d2691e;border:1px solid #f6d3b3}
+  .dm-grp{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#a0a0a8;font-weight:700;padding:8px 0 3px}
+  .dm-grp:first-of-type{padding-top:0}
+  .dm-step{display:flex;gap:9px}
+  .dm-step-track{display:flex;flex-direction:column;align-items:center;width:12px;flex-shrink:0}
+  .dm-step-dot{
+    width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:3px;border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;line-height:1;
+  }
+  .dm-step-dot.st-done{border-color:#22c55e;color:#16a34a}
+  .dm-step-dot.st-active{border:2px solid #cfe0ff;border-top-color:#2563eb;animation:dm-spin .8s linear infinite}
+  .dm-step-dot.st-todo{border-color:#d6d6dd}
+  .dm-step-dot.st-obsolete{border-color:#e3b3bd}
+  @keyframes dm-spin{to{transform:rotate(360deg)}}
+  .dm-step-line{width:2px;background:var(--line);flex:1;min-height:7px;margin-top:3px}
+  .dm-step-body{flex:1;display:flex;align-items:center;gap:6px;padding-bottom:8px}
+  .dm-step-lbl{flex:1;font-size:12.5px}
+  .dm-step-lbl.st-done{color:#15803d}
+  .dm-step-lbl.st-active{color:#1d4ed8;font-weight:600}
+  .dm-step-lbl.st-todo{color:#9a9aa3}
+  .dm-step-lbl.st-defer{color:#b0b0b8;font-style:italic;text-decoration:line-through}
+  .dm-step-lbl.st-obsolete{color:#c06a78;font-style:italic;text-decoration:line-through}
+  .dm-step-who{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0}
+  .dm-empty{color:var(--faint);font-size:13px;padding:6px 2px;line-height:1.5}
+
+  /* bank statement — light theme port of game_cards .bank-* */
+  .runway{cursor:pointer;border-radius:10px;transition:background .13s}
+  .runway:hover{background:var(--rail)}
+  .runway-cash{text-decoration:underline dotted var(--faint);text-underline-offset:3px}
+  .bank-week{margin-bottom:14px}
+  .bank-week-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#a0a0a8;font-weight:700;margin-bottom:3px}
+  .bank-row{display:flex;align-items:flex-start;gap:9px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .bank-row:last-child{border-bottom:none}
+  .bank-row-icon{font-size:13px;width:18px;flex-shrink:0;text-align:center;padding-top:1px}
+  .bank-row-desc{flex:1;min-width:0}
+  .bank-row-lbl{font-size:12px;color:var(--ink);line-height:1.3}
+  .bank-row-note{font-size:10.5px;color:var(--muted);margin-top:1px}
+  .bank-row-amt{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap}
+  .bank-amt-neg{color:#dc2626}
+  .bank-amt-pos{color:#16a34a}
+  .bank-balance{display:flex;justify-content:space-between;align-items:center;padding-top:7px;margin-top:1px}
+  .bank-bal-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .bank-bal-val{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+  .bank-empty{color:var(--faint);font-size:13px;text-align:center;padding:24px 10px;line-height:1.6}
+
   ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
 </style>
 </head>
@@ -365,8 +447,8 @@
         <div class="dot full" id="dot0"></div>
         <div class="dot full" id="dot1"></div>
       </div>
+      <button class="hdr-btn" id="roadmapBtn" title="Build roadmap" disabled style="display:none">🗺️</button>
       <button class="bell" id="bell" title="This week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
-      <button class="endweek" id="endweek">End week →</button>
     </div>
 
     <!-- main -->
@@ -382,8 +464,8 @@
           <div class="thread" id="thread"></div>
         </div>
 
-        <div class="journal-col">
-          <div class="journal-head">
+        <div class="journal-col" id="journalCol">
+          <div class="journal-head" id="journalHead">
             <span class="jh-icon">📓</span>
             <span class="jh-title">Founder's Journal</span>
             <span class="jh-sub">your private record</span>
@@ -398,6 +480,7 @@
           <span class="hand-lbl">This week · pick 2</span>
           <span class="hand-hint" id="handHint"></span>
           <span class="hand-plays" id="handPlays"></span>
+          <button class="hand-end" id="handEnd" style="display:none">End week →</button>
         </div>
         <div class="hand-cards" id="handCards"></div>
       </div>
@@ -408,6 +491,9 @@
   <div class="notes" id="notes"></div>
   <!-- notification center: this week's notifications, reopenable via the bell -->
   <div class="note-center" id="noteCenter"></div>
+  <!-- build roadmap (🗺️ button) and bank statement (cash readout) dropdowns -->
+  <div class="pop" id="roadmapPop"></div>
+  <div class="pop" id="bankPop"></div>
 
   <div class="overlay" id="overlay">
     <div class="card-modal" id="modal"></div>
@@ -534,12 +620,15 @@
       if (!runwayAnim) setRunway(s.cash);
       $("stats").innerHTML = `
         <div class="stat" data-stat="signal"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
-        <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>
-        ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
+        <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>`;
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
-      $("endweek").disabled = busy();
-      $("endweek").textContent = s.actionsLeft===0 ? "Next week →" : "End week →";
+      // Roadmap button appears once Alex/Jordan have a build plan in motion.
+      const hasPlan = !!engine.s.items;
+      const rb = $("roadmapBtn");
+      rb.style.display = hasPlan ? "" : "none";
+      rb.disabled = !hasPlan;
+      refreshPops();
     }
 
     // ── sidebar (chat characters, not the journal) ───────
@@ -647,21 +736,33 @@
         box.innerHTML = `<div class="journal-empty">the story starts here…</div>`;
       }
     }
-    function revealJournalFrom(from){
+    function revealJournalFrom(from, done){
       const thread = engine.threads.founder;
-      if (from >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
+      if (from >= thread.length){ jShown = thread.length; finishJournalReveal(done); return; }
       journalRevealing = true; renderStats();
       const box = $("journalScroll");
       const ghost = box.querySelector(".journal-empty"); if (ghost) ghost.remove();
+      // pull the eye to the right column: glow the journal + flash its header before
+      // the first outcome inks in (the journal beat leads, notifications follow).
+      $("journalCol").classList.add("updating");
+      const head = $("journalHead");
+      head.classList.remove("flash"); void head.offsetWidth; head.classList.add("flash");
       let i = from;
       const step = ()=>{
-        if (i >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
+        if (i >= thread.length){ jShown = thread.length; finishJournalReveal(done); return; }
         const e = thread[i];
         const el = buildJournalEntry(e);
         if (!el){ i++; jShown = i; step(); return; }
         const delay = e.type === "stamp" ? 480 : 340;
         setTimeout(()=>{
           journalDivider(box, e);
+          // glow each new outcome/choice as it inks in (stamps keep their own animation).
+          // Outcomes return a wrapper, so target the inner .journal-entry/.journal-choice.
+          if (e.type !== "stamp"){
+            const glow = (el.classList.contains("journal-entry") || el.classList.contains("journal-choice"))
+              ? el : el.querySelector(".journal-entry,.journal-choice");
+            if (glow) glow.classList.add("arrive");
+          }
           box.appendChild(el);
           box.scrollTop = box.scrollHeight;
           i++; jShown = i; step();
@@ -669,11 +770,13 @@
       };
       step();
     }
-    function finishJournalReveal(){
+    function finishJournalReveal(done){
       journalRevealing = false;
+      $("journalCol").classList.remove("updating");
       renderStats(); renderHand();
       const s = engine.stats();
       if (s.act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 500); }
+      if (done) done();
     }
 
     // ── chat thread rendering ────────────────────────────
@@ -816,6 +919,12 @@
       $("handHint").textContent = unread > 0
         ? `· ${unread} unread message${unread===1?'':'s'} — open a chat to reveal more`
         : (spent ? "· no actions left this week" : "");
+
+      // Fallback advance: the week normally ends implicitly after 2 actions, but on a
+      // thin week (no playable card left) surface an explicit "End week" so you're
+      // never stuck. Hidden whenever a card is available or the turn is mid-reveal.
+      const endBtn = $("handEnd");
+      endBtn.style.display = (!spent && visible.length === 0 && !busy()) ? "" : "none";
 
       const box = $("handCards");
       if (!visible.length){
@@ -964,10 +1073,10 @@
     // the always-visible journal; incoming messages buzz in as notification
     // bubbles you read at your own pace.
     function revealTurnEnd(jBefore){
-      // 1) journal inks in (stable right column) — your deferred outcomes + stamps
-      if (engine.threads.founder.length > jBefore) revealJournalFrom(jBefore);
+      // The journal beat LEADS (glow + inked outcomes in the right column); the chat
+      // notifications follow only once it finishes — see the dispatch at the bottom.
 
-      // 2) gather *incoming* chat messages we haven't notified yet (NOT keyed on
+      // 1) gather *incoming* chat messages we haven't notified yet (NOT keyed on
       //    read-state — an unread message must buzz once, the week it arrives, then
       //    advance the counter so it never repeats).
       const notes = [];
@@ -994,21 +1103,31 @@
       });
       pendingStatPulse = [];
 
-      queueNotifications(notes);
+      // The chat notifications + active-thread refresh — held until the journal beat
+      // has played, so the player sees the journal update first, then the phone buzzes.
+      const startNotifications = ()=>{
+        queueNotifications(notes);
+        // The chat you're *currently viewing* refreshes itself — but only after its
+        // notification has shown (notification first, then the chat updates). Other
+        // threads stay put until you tap their notification / rail row.
+        if (active !== "founder" && shown[active] < engine.threads[active].length){
+          const idx = notes.findIndex(n => n.charId === active);
+          const delay = idx >= 0 ? idx * 750 + 650 : 450;   // 750ms = notification pace
+          setTimeout(()=>{
+            if (active !== "founder" && shown[active] < engine.threads[active].length) openConversation();
+          }, delay);
+        }
+        if (engine.stats().gameOver) setTimeout(showGameOver, 800);
+      };
 
-      // The chat you're *currently viewing* should refresh itself — but only after
-      // its notification has shown (notification first, then the chat updates).
-      // Other threads stay put until you tap their notification / rail row.
-      if (active !== "founder" && shown[active] < engine.threads[active].length){
-        const idx = notes.findIndex(n => n.charId === active);
-        const delay = idx >= 0 ? idx * 750 + 650 : 450;   // 750ms = notification pace
-        setTimeout(()=>{
-          if (active !== "founder" && shown[active] < engine.threads[active].length) openConversation();
-        }, delay);
+      // Journal first (with glow); a short beat after it finishes, the notifications buzz.
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore, ()=> setTimeout(startNotifications, 450));
+      } else {
+        startNotifications();
       }
 
       if (engine.stats().act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 800); }
-      if (engine.stats().gameOver) setTimeout(showGameOver, 800);
     }
 
     // ── iPhone-style notification bubbles ────────────────
@@ -1072,6 +1191,7 @@
     function toggleNoteCenter(){
       const c = $("noteCenter");
       if (c.classList.contains("show")){ c.classList.remove("show"); return; }
+      closePops("noteCenter");
       renderNoteCenter();
       c.classList.add("show");
       notesSeen = true; updateBell();
@@ -1104,6 +1224,123 @@
       });
     }
 
+    // ── build roadmap (🗺️): the dev-map stepper, ported from the card build ──
+    const RM_ITEM_META = {
+      _hdr_backend:      { header:true, lbl:"Backend" },
+      matching_algo:     { lbl:"Matching algorithm",  av:"AL" },
+      api_design:        { lbl:"API design",           av:"AL" },
+      arch_refactor:     { lbl:"Arch refactor",        av:"AL" },
+      sprint_social:     { lbl:"Social + push",        av:"—" },
+      sprint_algo:       { lbl:"Profile verification", av:"—" },
+      plans_matching:    { lbl:"Plans matching",       av:"AL" },
+      _hdr_ios:          { header:true, lbl:"iOS app" },
+      ios_ui:            { lbl:"UI design",            av:"JO" },
+      ios_server:        { lbl:"Backend integration",  av:"JO" },
+      sprint_mono:       { lbl:"Premium subscription", av:"—" },
+      sprint_adv_social: { lbl:"Social graph",         av:"—" },
+      sprint_adv_video:  { lbl:"Video dates",          av:"—" },
+      plans_ui:          { lbl:"Plans UI",             av:"JO" },
+      beta:              { lbl:"Beta",                 av:"AL" },
+    };
+    const RM_AV_STYLE = {
+      AL:"background:#e7f0ff;color:#2563eb",
+      JO:"background:#efe7ff;color:#7c3aed",
+      "—":"background:#f0f0f3;color:#999",
+    };
+    const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
+    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","arch_refactor","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui","beta"];
+    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","arch_refactor","sprint_social","sprint_algo","plans_matching","_hdr_ios","ios_ui","ios_server","sprint_mono","sprint_adv_social","sprint_adv_video","plans_ui","beta"];
+
+    function renderRoadmap(){
+      const s = engine.s;
+      const pop = $("roadmapPop");
+      if (!s.items){
+        pop.innerHTML = `<div class="dm-empty">No build plan yet. Once the team aligns on a roadmap, it shows up here.</div>`;
+        return;
+      }
+      const expanded = !!s.items.beta;
+      const plan = s.dev_plan;
+      const order = !expanded ? RM_ORDER_PRE : (plan === "full" ? RM_ORDER_FULL : RM_ORDER_LEAN);
+      const badgeCls = { lean:"dm-badge-lean", full:"dm-badge-full", sprint:"dm-badge-sprint" };
+      const showLine = new Set();
+      for (let i=0;i<order.length-1;i++){
+        if (!RM_ITEM_META[order[i]]?.header && !RM_ITEM_META[order[i+1]]?.header) showLine.add(order[i]);
+      }
+      const pivotBadge = s.activities_pivot ? `<span class="dm-badge dm-badge-pivot">pivoted</span>` : "";
+      let html = `<div class="dm-hdr">${expanded ? "Roadmap" : "Build plan"}<span class="dm-badge ${badgeCls[plan] || "dm-badge-sprint"}">${plan || "—"}</span>${pivotBadge}</div>`;
+      for (const key of order){
+        const meta = RM_ITEM_META[key];
+        if (!meta) continue;
+        if (meta.header){ html += `<div class="dm-grp">${meta.lbl}</div>`; continue; }
+        const item = s.items[key];
+        if (!item) continue;
+        const st = item.status;
+        const stCls = st==="done"?"done":st==="active"?"active":st==="deferred"?"defer":st==="obsolete"?"obsolete":"todo";
+        const dot = st==="done" ? "✓" : "";
+        const line = showLine.has(key) ? `<div class="dm-step-line"></div>` : "";
+        const who = st==="active" && meta.av!=="—" ? `<span class="dm-step-who" style="${RM_AV_STYLE[meta.av]}">${meta.av}</span>` : "";
+        html += `<div class="dm-step">
+          <div class="dm-step-track"><div class="dm-step-dot st-${stCls}">${dot}</div>${line}</div>
+          <div class="dm-step-body"><span class="dm-step-lbl st-${stCls}">${escapeHtml(meta.lbl)}</span>${who}</div>
+        </div>`;
+      }
+      pop.innerHTML = html;
+    }
+
+    // ── bank statement (cash readout): week-by-week ledger from engine.ledger ──
+    function renderBank(){
+      const pop = $("bankPop");
+      const led = engine.ledger;
+      if (!led.length){
+        pop.innerHTML = `<div class="dm-hdr">Bank statement</div><div class="bank-empty">No transactions yet.<br>Finish a week to see your finances.</div>`;
+        return;
+      }
+      const icon = t => t.type==="burn" ? "🔥" : t.type==="income" ? "💰" : "💸";
+      const clip = (str,n) => (str && str.length>n) ? str.slice(0,n-1)+"…" : (str||"");
+      let html = `<div class="dm-hdr">Bank statement<span style="font-weight:800;color:var(--ink);font-size:12px">${fmtCash(Math.max(0,engine.s.cash))}</span></div>`;
+      for (let i=led.length-1;i>=0;i--){
+        const L = led[i];
+        const rows = L.transactions.map(t=>{
+          const neg = t.delta < 0;
+          const amt = (neg?"−":"+") + fmtCash(Math.abs(t.delta));
+          return `<div class="bank-row">
+            <div class="bank-row-icon">${icon(t)}</div>
+            <div class="bank-row-desc">
+              <div class="bank-row-lbl">${escapeHtml(clip(t.label,90))}</div>
+              ${t.note?`<div class="bank-row-note">${escapeHtml(t.note)}</div>`:""}
+            </div>
+            <div class="bank-row-amt ${neg?"bank-amt-neg":"bank-amt-pos"}">${amt}</div>
+          </div>`;
+        }).join("");
+        html += `<div class="bank-week">
+          <div class="bank-week-lbl">Week ${L.week}</div>
+          ${rows}
+          <div class="bank-balance"><span class="bank-bal-lbl">Balance</span><span class="bank-bal-val">${fmtCash(Math.max(0,L.balanceAfter))}</span></div>
+        </div>`;
+      }
+      pop.innerHTML = html;
+    }
+
+    // Only one top-right dropdown is open at a time.
+    function closePops(except){
+      for (const id of ["noteCenter","roadmapPop","bankPop"]) if (id !== except) $(id).classList.remove("show");
+    }
+    function toggleRoadmap(){
+      const p = $("roadmapPop");
+      if (p.classList.contains("show")){ p.classList.remove("show"); return; }
+      closePops("roadmapPop"); renderRoadmap(); p.classList.add("show");
+    }
+    function toggleBank(){
+      const p = $("bankPop");
+      if (p.classList.contains("show")){ p.classList.remove("show"); return; }
+      closePops("bankPop"); renderBank(); p.classList.add("show");
+    }
+    // Keep an open dropdown current as state changes (e.g. items advance at turn end).
+    function refreshPops(){
+      if ($("roadmapPop").classList.contains("show")) renderRoadmap();
+      if ($("bankPop").classList.contains("show")) renderBank();
+    }
+
     // ── modals ───────────────────────────────────────────
     function showAct1(){
       const s = engine.stats();
@@ -1130,14 +1367,18 @@
     function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
     function escapeHtml(str){ return (str||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 
-    $("endweek").onclick = ()=> advanceWeek();
     $("bell").onclick = (ev)=>{ ev.stopPropagation(); toggleNoteCenter(); };
-    // click outside the panel closes it
+    $("roadmapBtn").onclick = (ev)=>{ ev.stopPropagation(); toggleRoadmap(); };
+    $("runway").onclick = (ev)=>{ ev.stopPropagation(); toggleBank(); };
+    $("handEnd").onclick = ()=>{ if (!busy()) advanceWeek(); };
+    // click outside an open dropdown (and its trigger) closes it
     document.addEventListener("click", (ev)=>{
-      const c = $("noteCenter");
-      if (!c.classList.contains("show")) return;
-      if (c.contains(ev.target) || $("bell").contains(ev.target)) return;
-      c.classList.remove("show");
+      for (const [pid, tid] of [["noteCenter","bell"],["roadmapPop","roadmapBtn"],["bankPop","runway"]]){
+        const c = $(pid);
+        if (!c.classList.contains("show")) continue;
+        if (c.contains(ev.target) || $(tid).contains(ev.target)) continue;
+        c.classList.remove("show");
+      }
     });
 
     // boot

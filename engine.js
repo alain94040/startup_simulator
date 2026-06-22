@@ -120,6 +120,8 @@
       this.act1Complete = false;
       this.firedStamps = new Set();  // milestone stamps already placed
       this.log = [];       // flat event log (debugging / node tests)
+      this.ledger = [];    // per-week bank statements: { week, transactions, balanceAfter }
+      this._weekTx = [];   // cash transactions accumulating for the week in progress
 
       // Impersonal sources (communities, market news, aggregate users, analytics,
       // YC) are NOT chats — they surface as "no-chat" cards under the founder, with
@@ -217,7 +219,11 @@
       this.log.push({ week: this.s.week, charId, ignored: card.id });
       if (card.dropCancel && card.dropCancel(this.s, char)) return;
       if (card.dropCondition && !card.dropCondition(this.s, char)) return;
-      if (card.dropFx) { try { card.dropFx(this.s, char, this); } catch (_) { /* slice-tolerant */ } }
+      if (card.dropFx) {
+        const cashBefore = this.s.cash;
+        try { card.dropFx(this.s, char, this); } catch (_) { /* slice-tolerant */ }
+        this._tx((card.dropFrom || this._name(charId)) + " — missed", cashBefore);
+      }
       if (card.dropMsg) {
         this.threads[charId].push({
           type: "incoming", cardId: card.id,
@@ -300,7 +306,11 @@
       const opt = opts.find(x => x.key === optionKey) || opts[0];
       if (!opt) return null;
 
+      const cashBefore = this.s.cash;
       const outcome = opt.execute(this.s, char, this);
+      // Record any cash this move moved (incorporate −$500, Mom's wire +$5,000, hires…)
+      // on the week's bank statement, labelled with its journal outcome.
+      this._tx(outcome || this._name(charId), cashBefore);
 
       // Echo the player's choice as a chat reply — but only for *dialogue* actions.
       // "Move" cards (own initiatives) and off-screen "ask" cards mark themselves
@@ -381,10 +391,30 @@
     }
 
 
+    // Record a cash movement on this week's bank statement, if cash actually moved.
+    // `label` is the human-readable line; `before` is the cash reading taken before the
+    // mutation. Optional `note`/`type` decorate the row (type: income|expense|burn).
+    _tx(label, before, opts) {
+      const delta = this.s.cash - before;
+      if (delta === 0) return;
+      const o = opts || {};
+      this._weekTx.push({
+        label: label || (delta > 0 ? "Income" : "Expense"),
+        note: o.note,
+        delta,
+        type: o.type || (delta > 0 ? "income" : "expense"),
+      });
+    }
+
     // ── advance to next week ─────────────────────────────────────────────────────
     nextWeek() {
+      const wk = this.s.week;  // the week being closed (statement is filed under it)
       // burn + clock
       this.s.cash = Math.max(0, this.s.cash - this.burnPerWeek);
+      this._weekTx.push({
+        label: "Team & ops", note: "$" + this.burnPerWeek + "/wk burn",
+        delta: -this.burnPerWeek, type: "burn",
+      });
       this.s.week += 1;
       this.actionsLeft = 2;
 
@@ -396,7 +426,11 @@
         if (char && !char.active) continue;
         if (p.cancel && p.cancel(this.s, char)) continue;
         if (p.condition && !p.condition(this.s, char)) continue;
-        if (p.fx) p.fx(this.s, char, this);
+        if (p.fx) {
+          const cashBefore = this.s.cash;
+          p.fx(this.s, char, this);
+          this._tx(p.text || p.from || "Consequence", cashBefore);
+        }
         if (p.text) {
           const tid = this.threads[p.charId] ? p.charId : "founder";
           this.threads[tid].push({
@@ -461,6 +495,11 @@
 
       this._poll();
       this._checkStamps();
+
+      // File this week's bank statement after _poll, so ignored-card consequences that
+      // fire at the boundary land on the week they were ignored; balanceAfter == cash.
+      this.ledger.push({ week: wk, transactions: this._weekTx, balanceAfter: this.s.cash });
+      this._weekTx = [];
     }
 
     get burnPerWeek() { return 500; }
