@@ -2,7 +2,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'hacker_news', type: 'platform',
+    id: 'hacker_news', type: 'platform', noChat: true,
 
     slice: [
       "hn_thread",

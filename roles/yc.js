@@ -1,6 +1,6 @@
 (function () {
   const def = {
-    id: 'yc', type: 'institution',
+    id: 'yc', type: 'institution', noChat: true,
 
     slice: [
       "yc_apply",

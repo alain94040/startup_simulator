@@ -476,6 +476,9 @@
     const catFor = c => CAT[c] || CAT.e;
     const styleFor = id => STYLE[id] || { color:"#8e8e93", initials:"?" };
     const convFor  = id => engine.conversations().find(c => c.id === id);
+    // impersonal sources (communities/market/users/twitter/analytics/yc): no chat —
+    // their cards live under You and resolve via the popup, like the founder's moves.
+    const NOCHAT = new Set(engine.noChatChars || []);
     let active = "alex";
     const shown = {};
     for (const id of engine.order) shown[id] = 0;
@@ -743,7 +746,7 @@
     // (selectedCard), it expands into the full option card, styled like the hand card.
     function renderThreadResponse(){
       clearThreadResponse();
-      if (active === "founder") return;
+      if (active === "founder" || NOCHAT.has(active)) return;
       const cardId = engine.openCardId(active);
       if (!cardId || !cardReadable(active)) return;
       const opts = engine.options(cardId);
@@ -790,7 +793,7 @@
     // character's card unlocks when its thread has no unread messages; the
     // founder's own "moves" have no thread to read, so they're always playable.
     function cardReadable(charId){
-      if (charId === "founder") return true;
+      if (charId === "founder" || NOCHAT.has(charId)) return true;   // no thread to read
       return shown[charId] >= engine.threads[charId].length;
     }
     function renderHand(){
@@ -859,11 +862,11 @@
         };
       });
 
-      // keep the founder popup in sync; chat cards use the inline thread response
+      // keep the founder / no-chat popup in sync; chat cards use the inline thread response
       const sel = selectedCard ? actions.find(a => a.cardId === selectedCard) : null;
       if (selectedCard && !sel){
         selectedCard = null; hideDetail();
-      } else if (sel && sel.charId === "founder"){
+      } else if (sel && (sel.charId === "founder" || sel.noChat)){
         showDetail(selectedCard);
       } else {
         hideDetail();
@@ -873,8 +876,8 @@
     function selectCard(cardId){
       if (selectedCard === cardId){ selectedCard = null; hideDetail(); renderThreadResponse(); renderHand(); return; }
       const a = engine.openActions().find(x => x.cardId === cardId);
-      // Founder "moves" have no chat thread — keep the floating popup.
-      if (a && a.charId === "founder"){
+      // Founder "moves" and no-chat sources have no thread — use the floating popup.
+      if (a && (a.charId === "founder" || a.noChat)){
         selectedCard = cardId; renderHand(); showDetail(cardId); return;
       }
       // Chat character — focus its conversation (its message shows in context) and
@@ -894,9 +897,9 @@
       d.style.display = "block";
       // The popup is a *response* surface. A chat character's message already
       // lives in the thread (now in view), so we don't repeat it — we go straight
-      // to the choices. A founder "move" has no message anywhere else, so its body
-      // is the brief and belongs here.
-      const showBrief = a.charId === "founder";
+      // to the choices. A founder "move" or a no-chat event has no message anywhere
+      // else, so its body is the brief and belongs here.
+      const showBrief = a.charId === "founder" || a.noChat;
       const context = showBrief
         ? `<div class="hd-body">${escapeHtml(a.body)}</div>`
         : `<div class="hd-prompt">Your response:</div>`;
@@ -1033,7 +1036,7 @@
       el.onclick = ()=>{
         dismissNote(el);
         if (busy()) return;
-        active = n.charId; openConversation();   // user-initiated → no blink
+        openFromNote(n);   // user-initiated → no blink
       };
       wrap.appendChild(el);
       setTimeout(()=> dismissNote(el), 6500);   // auto-dismiss; the rail dot persists
@@ -1043,6 +1046,17 @@
       el.__gone = true;
       el.classList.add("leaving");
       setTimeout(()=> el.remove(), 130);
+    }
+    // Opening a notification: a chat character opens its conversation; a no-chat
+    // source (which has no thread) opens its card's popup instead.
+    function openFromNote(n){
+      if (!n) return;
+      if (NOCHAT.has(n.charId)){
+        const cid = engine.openCardId(n.charId);
+        if (cid) selectCard(cid);
+        return;
+      }
+      active = n.charId; openConversation();
     }
 
     // ── notification center (the bell): reopen this week's notifications ──
@@ -1085,7 +1099,7 @@
           const n = weekNotes[+el.dataset.idx];
           $("noteCenter").classList.remove("show");
           if (busy() || !n) return;
-          active = n.charId; openConversation();
+          openFromNote(n);
         };
       });
     }

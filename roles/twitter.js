@@ -2,7 +2,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const def = {
-    id: 'twitter', name: 'Twitter', type: 'platform',
+    id: 'twitter', name: 'Twitter', type: 'platform', noChat: true,
 
     slice: [
       "public_complaint",

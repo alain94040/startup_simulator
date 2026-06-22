@@ -121,6 +121,11 @@
       this.firedStamps = new Set();  // milestone stamps already placed
       this.log = [];       // flat event log (debugging / node tests)
 
+      // Impersonal sources (communities, market news, aggregate users, analytics,
+      // YC) are NOT chats — they surface as "no-chat" cards under the founder, with
+      // no conversation in the rail. The UI reads this to route them to the popup.
+      this.noChatChars = this.order.filter(id => DEFS[id] && DEFS[id].noChat);
+
       // Open the game: poll characters for week-1 messages without consuming a tick.
       this._poll();
     }
@@ -303,7 +308,8 @@
       // journal outcome and (for asks) a delayed reply pushed onto `pending`.
       // (For the founder, the thread *is* the journal, so a dialogue reply renders
       // there as the ✓ choice line — that's the intended record.)
-      const isDialogue = opt.chat !== false && o.def.chat !== false;
+      const isDialogue = opt.chat !== false && o.def.chat !== false
+        && !(DEFS[charId] && DEFS[charId].noChat);
       if (isDialogue) {
         this.threads[charId].push({
           type: "reply",
@@ -463,7 +469,8 @@
     // ── view helpers for the UI ───────────────────────────────────────────────────
     conversations() {
       return this.order
-        .filter(id => this.chars.get(id) && this.chars.get(id).active)
+        .filter(id => this.chars.get(id) && this.chars.get(id).active
+          && !(DEFS[id] && DEFS[id].noChat))   // no-chat sources aren't contacts
         .map(id => {
           const thread = this.threads[id];
           const last = thread.length ? thread[thread.length - 1] : null;
@@ -510,6 +517,7 @@
           role: def.role || "",
           cat: card.cat || "e",
           chat: card.chat !== false,
+          noChat: !!def.noChat,
           urgency: this._rankVal(card),
           body: this._resolveBody(card, char),
           subtext: card.subtext || null,
