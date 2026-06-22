@@ -295,16 +295,21 @@
   @keyframes fade{from{opacity:0}to{opacity:1}}
   @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
   /* turn-end diff highlights (calm, in stable surfaces — no tab switching) */
+  /* a soft luminous halo around each new entry — a glow (blurred box-shadow), not a fill */
   @keyframes jHighlight{
-    0%{background:rgba(255,184,52,.7);box-shadow:-6px 0 0 rgba(255,184,52,.7)}
-    100%{background:transparent;box-shadow:-6px 0 0 transparent}
+    0%  {box-shadow:0 0 16px 5px rgba(255,176,46,.6)}
+    55% {box-shadow:0 0 9px 2px rgba(255,176,46,.28)}
+    100%{box-shadow:0 0 0 0 rgba(255,176,46,0)}
   }
-  .journal-entry.arrive,.journal-choice.arrive{animation:jHighlight 1.7s ease;border-radius:5px;margin-left:-6px;padding-left:6px}
+  .journal-entry.arrive,.journal-choice.arrive{
+    animation:inkin .5s ease both, jHighlight 1.9s ease .15s both;
+    border-radius:6px;
+  }
   /* while the journal inks in this week's outcomes, the whole column glows to pull the
      eye to the right BEFORE any chat notification buzzes */
   .journal-col{transition:box-shadow .45s ease}
-  .journal-col.updating{box-shadow:0 0 0 2px var(--gold),0 0 30px rgba(255,179,64,.5),var(--shadow)}
-  @keyframes jHeadFlash{0%,100%{background:transparent}45%{background:rgba(255,179,64,.22)}}
+  .journal-col.updating{box-shadow:0 0 0 1.5px rgba(255,179,64,.5),0 0 26px rgba(255,179,64,.4),var(--shadow)}
+  @keyframes jHeadFlash{0%,100%{box-shadow:inset 0 0 0 0 transparent}45%{box-shadow:inset 0 0 20px rgba(255,179,64,.3)}}
   .journal-head.flash{animation:jHeadFlash 1.1s ease}
   @keyframes statPulse{0%{transform:scale(1)}40%{transform:scale(1.13);box-shadow:0 0 0 3px rgba(52,199,89,.3)}100%{transform:scale(1);box-shadow:none}}
   .stat.changed{animation:statPulse .85s ease}
