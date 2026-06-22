@@ -238,8 +238,6 @@
   .hcard.linked{transform:translateY(-10px);box-shadow:0 10px 30px rgba(11,132,255,.2),0 0 0 2px rgba(11,132,255,.55)}
   .hcard.selected{transform:translateY(-20px);box-shadow:0 18px 46px rgba(11,132,255,.34),0 0 0 2px var(--accent);z-index:10}
   .hcard.played{opacity:.32;pointer-events:none;filter:grayscale(.5)}
-  .hcard.locked{cursor:pointer;opacity:.62}
-  .hcard.locked:hover{transform:translateY(-6px)}
   @keyframes dealIn{from{opacity:0;transform:translateY(40px) scale(.86)}to{opacity:1}}
   .hcard-stripe{height:5px;flex:none}
   .hcard-inner{padding:10px 11px 6px;flex:1;display:flex;flex-direction:column;gap:6px;overflow:hidden}
@@ -255,11 +253,6 @@
   .urg-3{background:#ef4444;box-shadow:0 0 5px #ef4444}
   .urg-2{background:#f59e0b}
   .urg-1{background:#22c55e}
-  .hcard-lockmsg{
-    position:absolute;inset:0;background:rgba(255,255,255,.62);display:grid;place-items:center;
-    text-align:center;font-size:10px;font-weight:700;letter-spacing:.5px;color:#7a7a82;padding:10px;
-    text-transform:uppercase;
-  }
 
   /* selected-card option tray (floats above the hand) */
   .hand-detail{
@@ -320,7 +313,7 @@
     animation:noteIn .34s cubic-bezier(.2,.9,.3,1) both;
   }
   .note:hover{transform:translateY(-1px)}
-  .note.leaving{animation:noteOut .26s ease forwards}
+  .note.leaving{animation:noteOut .12s ease forwards}
   .note-av{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
   .note-body{min-width:0;flex:1}
   .note-from{font-weight:700;font-size:13px;margin-bottom:1px}
@@ -486,6 +479,11 @@
     let active = "alex";
     const shown = {};
     for (const id of engine.order) shown[id] = 0;
+    // entries already turned into notifications (independent of whether they've been
+    // *read*) — so an unread message buzzes once, the week it arrives, never again.
+    // Seed at the current length so week-1 messages aren't notified retroactively.
+    const notified = {};
+    for (const id of engine.order) notified[id] = engine.threads[id].length;
     let revealing = false;
     let journalRevealing = false;
     let jShown = 0;       // entries already rendered in the journal panel
@@ -797,6 +795,10 @@
     }
     function renderHand(){
       const actions = engine.openActions();
+      // Only show a card once its source message has been read — unread asks stay
+      // hidden, so the player has to discover them by reading threads (the bell /
+      // blue dots / notifications point the way). Founder "moves" are always shown.
+      const visible = actions.filter(a => cardReadable(a.charId));
       const s = engine.stats();
       const spent = s.actionsLeft <= 0;
 
@@ -806,29 +808,29 @@
         `<div class="dot${s.actionsLeft>=2?' full':''}"></div>` +
         `<span style="margin-left:4px">${s.actionsLeft} of 2 left</span>`;
 
-      // hint: how many actionable threads are still unread
-      const unread = actions.filter(a => !cardReadable(a.charId)).length;
+      // hint: actionable messages still waiting to be read (their cards stay hidden)
+      const unread = actions.length - visible.length;
       $("handHint").textContent = unread > 0
-        ? `· ${unread} unread — open a chat to unlock`
+        ? `· ${unread} unread message${unread===1?'':'s'} — open a chat to reveal more`
         : (spent ? "· no actions left this week" : "");
 
       const box = $("handCards");
-      if (!actions.length){
-        box.innerHTML = `<div class="hand-empty">nothing needs you right now — end the week →</div>`;
-        if (selectedCard){ selectedCard = null; hideDetail(); }
+      if (!visible.length){
+        box.innerHTML = unread > 0
+          ? `<div class="hand-empty">📨 ${unread} unread message${unread===1?'':'s'} — read them to see your options</div>`
+          : `<div class="hand-empty">nothing needs you right now — end the week →</div>`;
+        if (selectedCard && !actions.some(a => a.cardId === selectedCard)){ selectedCard = null; hideDetail(); }
         return;
       }
-      box.innerHTML = actions.map((a, idx)=>{
+      box.innerHTML = visible.map((a, idx)=>{
         const cat = catFor(a.cat);
         const st = styleFor(a.charId);
-        const readable = cardReadable(a.charId);
         const u = a.urgency;
         const urgCls = u >= 3 ? "urg-3" : u >= 2 ? "urg-2" : "urg-1";
         const cls = ["hcard"];
-        if (!readable) cls.push("locked");
-        else if (spent) cls.push("played");
+        if (spent) cls.push("played");
         // ring the card tied to the conversation currently on screen
-        if (readable && !spent && a.charId === active && a.cardId !== selectedCard) cls.push("linked");
+        if (!spent && a.charId === active && a.cardId !== selectedCard) cls.push("linked");
         if (a.cardId === selectedCard) cls.push("selected");
         const preview = (a.body || "").slice(0, 110) + ((a.body||"").length > 110 ? "…" : "");
         return `<div class="${cls.join(' ')}" data-card="${a.cardId}" data-char="${a.charId}" style="animation-delay:${idx*0.05}s">
@@ -847,17 +849,13 @@
             <span class="hcard-cat-badge" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
             <span class="hcard-urg ${urgCls}"></span>
           </div>
-          ${!readable ? `<div class="hcard-lockmsg">tap to read<br>the message</div>` : ""}
         </div>`;
       }).join("");
 
       [...box.querySelectorAll(".hcard")].forEach(el=>{
         el.onclick = ()=>{
-          if (busy()) return;
-          const cardId = el.dataset.card, charId = el.dataset.char;
-          if (!cardReadable(charId)){ active = charId; openConversation(); return; } // jump to read it
-          if (engine.stats().actionsLeft <= 0) return;
-          selectCard(cardId);
+          if (busy() || engine.stats().actionsLeft <= 0) return;
+          selectCard(el.dataset.card);
         };
       });
 
@@ -966,15 +964,18 @@
       // 1) journal inks in (stable right column) — your deferred outcomes + stamps
       if (engine.threads.founder.length > jBefore) revealJournalFrom(jBefore);
 
-      // 2) gather new *incoming* chat messages across all threads (still unrevealed)
+      // 2) gather *incoming* chat messages we haven't notified yet (NOT keyed on
+      //    read-state — an unread message must buzz once, the week it arrives, then
+      //    advance the counter so it never repeats).
       const notes = [];
       for (const charId of engine.order){
         if (charId === "founder") continue;
         const thread = engine.threads[charId];
-        for (let i = shown[charId]; i < thread.length; i++){
+        for (let i = notified[charId] || 0; i < thread.length; i++){
           const e = thread[i];
           if (e.type === "incoming") notes.push({ charId, from: e.from, body: e.body });
         }
+        notified[charId] = thread.length;
       }
 
       // remember this week's notifications so the bell can reopen them after they fade
@@ -991,6 +992,17 @@
       pendingStatPulse = [];
 
       queueNotifications(notes);
+
+      // The chat you're *currently viewing* should refresh itself — but only after
+      // its notification has shown (notification first, then the chat updates).
+      // Other threads stay put until you tap their notification / rail row.
+      if (active !== "founder" && shown[active] < engine.threads[active].length){
+        const idx = notes.findIndex(n => n.charId === active);
+        const delay = idx >= 0 ? idx * 750 + 650 : 450;   // 750ms = notification pace
+        setTimeout(()=>{
+          if (active !== "founder" && shown[active] < engine.threads[active].length) openConversation();
+        }, delay);
+      }
 
       if (engine.stats().act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 800); }
       if (engine.stats().gameOver) setTimeout(showGameOver, 800);
@@ -1030,7 +1042,7 @@
       if (!el || el.__gone) return;
       el.__gone = true;
       el.classList.add("leaving");
-      setTimeout(()=> el.remove(), 280);
+      setTimeout(()=> el.remove(), 130);
     }
 
     // ── notification center (the bell): reopen this week's notifications ──
