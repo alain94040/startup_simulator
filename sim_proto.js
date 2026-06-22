@@ -1,6 +1,33 @@
 // Simulation harness — runs N games per strategy, reports findings.
 
-const { Engine, CHARACTER_DEFS } = require('./engine.js');
+const { Engine } = require('./engine.js');
+
+// ─── Engine adapter ──────────────────────────────────────────────────────────
+// The engine was rewritten from a card-dealing model (generateDemands / e.current
+// / resolveTurn) into a chat coordinator (openActions / act / nextWeek). These two
+// helpers bridge the old strategy code to the new API so selectCards / pickOptions /
+// CARD_PREFS stay untouched.
+
+// The current "hand": map each open action to the shape the strategy code expects
+// ({ id, _charId, cat, urgency, options, body, from }).
+function handFromEngine(e) {
+  return e.openActions().map(a => ({
+    id: a.cardId, _charId: a.charId, cat: a.cat,
+    urgency: a.urgency, options: a.options,   // options: [{ key, label }]
+    body: a.body, from: a.name,
+  }));
+}
+
+// Resolve the chosen card ids for this week (2 actions max), returning the outcome
+// strings. Does NOT advance the week — caller decides when to call e.nextWeek().
+function actTurn(e, ids, opts) {
+  const results = [];
+  for (const id of ids) {
+    const out = e.act(id, opts[id]);
+    if (out) results.push(out);
+  }
+  return results;
+}
 
 // ─── Strategy helpers ────────────────────────────────────────────────────────
 
@@ -512,25 +539,26 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
 
   const optStrategy = strategy;
 
-  for (let turn = 0; turn < 80; turn++) {
+  for (let turn = 0; turn < maxWeek + 5; turn++) {
     if (e.s.game_won || e.s.game_over) break;
     if (e.s.week >= maxWeek) { log.push(`TIMEOUT at week ${e.s.week}`); break; }
 
+    let hand;
     try {
-      e.generateDemands();
+      hand = handFromEngine(e);
     } catch(err) {
-      log.push(`ERROR in generateDemands turn ${turn}: ${err.message}`);
+      log.push(`ERROR building hand turn ${turn}: ${err.message}`);
       errorCount++;
       break;
     }
 
-    if (e.current.length === 0) {
+    if (hand.length === 0) {
       log.push(`STUCK: no cards available at week ${e.s.week}`);
       break;
     }
 
     const seenIds = new Set();
-    for (const card of e.current) {
+    for (const card of hand) {
       if (seenIds.has(card.id)) {
         log.push(`DUPLICATE_CARD: ${card.id} appeared twice in hand at week ${e.s.week}`);
         errorCount++;
@@ -538,23 +566,24 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
       seenIds.add(card.id);
     }
 
-    handSizes.push({ week: e.s.week, size: e.current.length });
+    handSizes.push({ week: e.s.week, size: hand.length });
 
     const alexNow = e.chars.get('alex');
     if (alexNow && alexNow.active) {
       moraleSnaps.push({ week: e.s.week, morale: Math.round(alexNow.morale), trust: Math.round(alexNow.trust) });
     }
 
-    let ids = selectCards(e.current, strategy, e.s);
+    let ids = selectCards(hand, strategy, e.s);
     for (const [cardId, action] of Object.entries(cardOverrides)) {
-      if (action === 'force_pick' && e.current.some(c => c.id === cardId) && !ids.includes(cardId))
-        ids.push(cardId);
+      if (action === 'force_pick' && hand.some(c => c.id === cardId) && !ids.includes(cardId))
+        ids.unshift(cardId);   // unshift so a forced pick survives the 2-action cap below
       else if (action === 'force_drop')
         ids = ids.filter(id => id !== cardId);
     }
-    const opts = pickOptions(e.current, ids, optStrategy, e.s);
+    ids = ids.slice(0, 2);     // the week has 2 actions
+    const opts = pickOptions(hand, ids, optStrategy, e.s);
 
-    for (const card of e.current) {
+    for (const card of hand) {
       const c = cardCounts[card.id] || (cardCounts[card.id] = { count: 0, weekSum: 0 });
       c.count++;
       c.weekSum += e.s.week;
@@ -571,9 +600,9 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
 
     }
 
-    const offeredSnapshot = verbose ? e.current.map(d => ({
+    const offeredSnapshot = verbose ? hand.map(d => ({
       id: d.id, cat: d.cat,
-      from: d.from || (d._charId ? CHARACTER_DEFS[d._charId].name : 'System'),
+      from: d.from || 'System',
       body: d.body,
       chosen: ids.includes(d.id),
       optLabel: ids.includes(d.id) && d.options ? (d.options.find(o => o.key === opts[d.id]) || d.options[0]).label : null,
@@ -584,11 +613,11 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     const ycWasPending = e.s.ycApplied && !e.s.ycAccepted;
     const alexChar = e.chars.get('alex');
     const alexAlreadyGone = alexChar && !alexChar.active;
-    let results, sprintWeeks;
+    let results;
     try {
-      ({ results, sprintWeeks } = e.resolveTurn(ids, opts));
+      results = actTurn(e, ids, opts);   // resolve the chosen cards (does not advance)
     } catch(err) {
-      log.push(`ERROR in resolveTurn turn ${turn}: ${err.message}`);
+      log.push(`ERROR resolving actions turn ${turn}: ${err.message}`);
       errorCount++;
       break;
     }
@@ -614,6 +643,9 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
       const idx = results.indexOf("YC accepted! $500k added. See you at kickoff.");
       if (idx !== -1) results[idx] = "[no-yc] YC: passing on this batch. Next window opens in ~12 weeks.";
     }
+
+    // Advance the week (burn, passive contributions, conversions, win/loss checks).
+    e.nextWeek();
 
     if (verbose) {
       const alex = e.chars.get('alex');
@@ -1203,11 +1235,12 @@ if (WINNERS_FLAG) {
       for (let turn = 0; turn < 15; turn++) {
         if (e.s.game_won || e.s.game_over) break;
         alex.focus = 'build';
-        e.generateDemands();
-        if (e.current.length === 0) break;
-        const ids  = selectCards(e.current, 'yc_grind');
-        const opts = pickOptions(e.current, ids, 'yc_grind');
-        e.resolveTurn(ids, opts);
+        const hand = handFromEngine(e);
+        if (hand.length === 0) break;
+        const ids  = selectCards(hand, 'yc_grind').slice(0, 2);
+        const opts = pickOptions(hand, ids, 'yc_grind');
+        actTurn(e, ids, opts);
+        e.nextWeek();
       }
       if (e.s.market_fit > 0) grew++;
       totalFit += e.s.market_fit;
@@ -1309,17 +1342,18 @@ if (WINNERS_FLAG) {
       for (let i = 0; i < RUNS; i++) {
         const e = new Engine();
         for (let turn = 0; turn < 35 && !e.s.has_demo && !e.s.game_over && e.s.week <= 22; turn++) {
-          e.generateDemands();
-          if (e.current.length === 0) break;
-          const ids = selectCards(e.current, 'lean_loop', e.s);
-          const opts = pickOptions(e.current, ids, 'lean_loop', e.s);
-          if (e.current.some(c => c.id === 'alex_commitment')) {
-            if (!ids.includes('alex_commitment')) ids.push('alex_commitment');
-            opts['alex_commitment'] = commitmentKey;
-          }
+          const hand = handFromEngine(e);
+          if (hand.length === 0) break;
+          let ids = selectCards(hand, 'lean_loop', e.s);
+          if (hand.some(c => c.id === 'alex_commitment') && !ids.includes('alex_commitment'))
+            ids.unshift('alex_commitment');   // force, and keep within the 2-action cap
+          ids = ids.slice(0, 2);
+          const opts = pickOptions(hand, ids, 'lean_loop', e.s);
+          if (ids.includes('alex_commitment')) opts['alex_commitment'] = commitmentKey;
           const weekBefore = e.s.week;
-          e.resolveTurn(ids, opts);
+          actTurn(e, ids, opts);
           if (e.s.has_demo) { weeks.push(weekBefore); break; }
+          e.nextWeek();
         }
       }
       return weeks.length ? (weeks.reduce((a, b) => a + b) / weeks.length).toFixed(1) : '—';
