@@ -1,13 +1,27 @@
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+  // Asking family for money never resolves on the spot — they need to talk it
+  // over. We decide the outcome now but defer it to the next week boundary: mom
+  // texts back (and the cash lands) when the week ticks over, via the engine's
+  // pending queue.
+  function askFamily(s, char, engine) {
+    char.flags.done = true;
+    const willInvest = Math.random() < 0.9;
+    engine.pending.push({
+      fireWeek: s.week + 1,
+      from: 'Mom', charId: 'mom',
+      text: willInvest
+        ? "ok!! dad and i talked it over — i just wired you $5,000. so proud of you honey ❤️ go build something amazing."
+        : "honey, we talked it over and we'd love to, but money's a little tight with the house right now. so sorry. we believe in you no matter what ❤️",
+      fx(st) { if (willInvest) st.cash += 5000; },
+    });
+    return "Asked Mom and Dad if they'd put money in. They said they'd talk it over and let me know.";
+  }
+
   const askOption = {
     label: "Ask if they'd put money in", key: 'ask',
-    execute(s, char) {
-      char.flags.done = true;
-      if (Math.random() < 0.9) { s.cash += 5000; return "Mom called back. They're in for $5,000. It hits different when it's family money."; }
-      return "They'd love to help but timing is bad — stretched with the house right now.";
-    },
+    execute(s, char, engine) { return askFamily(s, char, engine); },
   };
 
   const introOption = {
@@ -29,11 +43,11 @@
 
     role: "Family",
     voice: {
-      "ff_family|ask": "Asked the parents to invest. It hits different when it's family money.",
+      "ff_family|ask": "Asked Mom and Dad if they'd put money in. They're going to talk it over and get back to me.",
       "ff_family|intro": "Asked Mom for investor introductions. Turns out she doesn't know any investors.",
-      "ff_family_2|ask": "Asked the parents again. Family money — complicated feelings.",
+      "ff_family_2|ask": "Asked the parents again about chipping in. They said they'd discuss it. Family money — complicated feelings.",
       "ff_family_2|intro": "Mom asked around again. Still no investor connections.",
-      "ff_family_3|ask": "Dad wants to invest. Let him. Family money hits different."
+      "ff_family_3|ask": "Told Dad he could invest. He's going to sort it out. Family money hits different."
     },
     cards: [
       {
@@ -61,11 +75,7 @@
         available: (s, char) => s.week <= 10 && !char.flags.done && char.flags.shown_2,
         options: [
           { label: 'Let them invest', key: 'ask',
-            execute(s, char) {
-              char.flags.done = true;
-              if (Math.random() < 0.9) { s.cash += 5000; return "Mom called back. They're in for $5,000. It hits different when it's family money."; }
-              return "They'd love to help but timing is bad — stretched with the house right now.";
-            } },
+            execute(s, char, engine) { return askFamily(s, char, engine); } },
           introOption,
         ],
         dropDelay: 0, dropMsg: null,

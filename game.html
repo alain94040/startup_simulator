@@ -746,9 +746,6 @@
 
       animateRunway(cashBefore, cashAfter, () => {
         revealing = false;
-        const convs = engine.conversations().filter(c => !c.isJournal);
-        const withAction = convs.find(c=>c.hasAction) || convs[0];
-        active = withAction ? withAction.id : active;
         openConversation();
         const jBefore = jShown;
         if (engine.threads.founder.length > jBefore){
