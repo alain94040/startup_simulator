@@ -62,9 +62,9 @@
 
       // Week 3b: Jordan counters (only if proposal is 40/40/20)
       {
-        id: 'jordan_equity_counter_jordan', priority: 2, cat: 't', from: 'Jordan',
+        id: 'jordan_equity_counter_jordan', cat: 't', from: 'Jordan',
         body: "alex told me about the 40/40/20. we're both writing code — he gets twice what i get? i'm building the whole iOS side. equal thirds is fair. why do i get less?",
-        urgency: 2, weeks: 1,
+        urgency: 22, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '40/40/20' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: 'Equal thirds — fair point', key: 'cave_33',
@@ -87,9 +87,9 @@
 
       // Week 3c: Both counter (only if proposal is 50/25/25)
       {
-        id: 'jordan_equity_counter_both', priority: 2, cat: 't', from: 'Jordan & Alex',
+        id: 'jordan_equity_counter_both', cat: 't', from: 'Jordan & Alex',
         body: "heard back from both. alex: 'i should be equal to you — i'm doing as much as you are.' jordan: 'alex and i are both writing code. 25% each feels low.'",
-        urgency: 2, weeks: 1,
+        urgency: 22, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '50/25/25' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: "Give Alex what he wants — 40/40/20", key: 'cave_alex',
@@ -134,7 +134,7 @@
           if (split === '50/25/25') return "three-way call. 50/25/25 on the table. jordan accepted — at least she's equal to alex. alex signed without comment. nobody mentioned vesting schedules.";
           return "three-way call. 40/40/20 agreed. alex seemed satisfied. jordan signed — said she'd prove she's worth more than 20%. nobody set up vesting schedules.";
         },
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char) => char.flags.equity_counter_done && !s.jordan_equity && s.week <= 12,
         options: [
           { label: 'Sign the agreement', key: 'sign',
@@ -163,11 +163,11 @@
 
       // ── CONTRIBUTION PHASE ───────────────────────────────────────────────────
       {
-        id: 'jordan_ios_sprint', priority: 2, cat: 'p', from: 'Jordan',
+        id: 'jordan_ios_sprint', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.ios_sprint_count || 0) === 0
           ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to wire up the backend — matching, messaging, notifications through the API."
           : "iOS connected to the backend — matching, messaging, notifications all live. same experience as web. ready to open it up.",
-        urgency: 2, weeks: 1,
+        urgency: 22, weeks: 1,
         available: (s, char) => {
           const count = char.flags.ios_sprint_count || 0;
           return s.jordan_active && !s.jordan_drifting && count < 2

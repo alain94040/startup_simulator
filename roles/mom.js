@@ -39,7 +39,7 @@
       {
         id: 'ff_family', cat: 'e', from: 'Mom',
         body: "just checking in! dad and i were talking about you last night. so proud. how's it going? let us know if there's anything we can do.",
-        urgency: 2, weeks: 1, priority: 1,
+        urgency: 12, weeks: 1,
         available: (s, char) => s.week <= 8 && !char.flags.done && !char.flags.shown_1,
         options: [ askOption, introOption ],
         dropDelay: 0, dropMsg: null,
@@ -48,7 +48,7 @@
       {
         id: 'ff_family_2', cat: 'e', from: 'Mom',
         body: "hey, still haven't heard back. dad keeps asking how things are going. if there's anything we can do to help, we really want to.",
-        urgency: 2, weeks: 1, priority: 1,
+        urgency: 12, weeks: 1,
         available: (s, char) => s.week <= 8 && !char.flags.done && char.flags.shown_1 && !char.flags.shown_2,
         options: [ askOption, introOption ],
         dropDelay: 0, dropMsg: null,
@@ -57,7 +57,7 @@
       {
         id: 'ff_family_3', cat: 'e', from: 'Mom',
         body: "dad looked up kindred and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird — but he's really proud.",
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char) => s.week <= 10 && !char.flags.done && char.flags.shown_2,
         options: [
           { label: 'Let them invest', key: 'ask',

@@ -193,7 +193,7 @@
       {
         id: 'start_prototype', cat: 'p', from: 'Alex',
         body: "three of us in the same room for the first time since we decided to do this for real. time to stop talking. i'm ready on the backend. jordan's offered to take the iOS side. one word from you and this becomes real.",
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char) => s.week === 1 && !char.flags.prototype_kicked,
         options: [
           { label: "Game on — everyone start building", key: 'build',
@@ -230,7 +230,7 @@
       {
         id: 'incorporate_week1', cat: 'e', from: 'Alex',
         body: "before we do anything else — all three of us need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
-        urgency: 3, weeks: 1, priority: 1, ignoreForTrust: true,
+        urgency: 13, weeks: 1, ignoreForTrust: true,
         available: (s, char) => s.week <= 3 && char.flags.prototype_kicked && !s.incorporated,
         options: [
           { label: 'Incorporate via Stripe Atlas — $500', key: 'atlas',
@@ -280,7 +280,7 @@
       {
         id: 'alex_commitment', cat: 't', from: 'Alex',
         body: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 5 && char.flags.plan_done && !char.flags.commitment_resolved,
         options: [
           { label: 'Agree — part-time for now', key: 'accept',
@@ -299,7 +299,7 @@
       {
         id: 'jordan_equity_alex', cat: 't', from: 'Alex',
         body: "jordan wants equal thirds. i've been thinking — she's still at her job, i'm treating this as my main thing. you and i are doing the same amount. i think 40/40/20 is fair. what are you thinking?",
-        urgency: 2, weeks: 1, priority: 3,
+        urgency: 32, weeks: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_proposal && s.week <= 8;
@@ -339,14 +339,14 @@
       },
       // Alex counters if you picked equal thirds
       {
-        id: 'jordan_equity_counter_alex', priority: 2, cat: 't', from: 'Alex',
+        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
         body: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return (jordan && jordan.flags.equity_skipped)
             ? "you never responded to jordan about equity. i've been thinking about it anyway — she's still at her job, i'm all-in. equal thirds means i get the same as someone who's not putting in the same."
             : "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.";
         },
-        urgency: 2, weeks: 1,
+        urgency: 22, weeks: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return jordan && jordan.flags.equity_proposal === '33/33/33' && !jordan.flags.equity_counter_done && s.week <= 10;
@@ -380,7 +380,7 @@
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_beta && char.flags.commitment_resolved && !char.flags.vision_resolved,
         options: [
           { label: "Go with casual dating", key: 'alex',
@@ -582,7 +582,7 @@
       {
         id: 'incorporate_now', cat: 'e', from: 'Alex',
         body: "an advisor we're trying to bring on officially asked us to sign an NDA first. we can't without a legal entity. also need a bank account. stripe atlas or find a lawyer?",
-        urgency: 2, weeks: 1, priority: 1, ignoreForTrust: true,
+        urgency: 12, weeks: 1, ignoreForTrust: true,
         available: (s, char) => s.week >= 3 && s.week <= 14 && s.items != null && !s.incorporated,
         options: [
           { label: 'Stripe Atlas — fast and cheap', key: 'atlas',
@@ -992,7 +992,7 @@
       {
         id: 'bad_retention', cat: 'p', from: 'Alex',
         body: "week two post-launch. signups are coming in but nobody's coming back. ran a quick survey — eight out of ten say the same thing: 'i matched with someone but then what?' they don't know what to do with a match. the retention curve is flat.",
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
           && !char.flags.bad_retention_seen && s.week >= 12,
         options: [
@@ -1101,9 +1101,9 @@
         },
       },
       {
-        id: 'arch_refactor_done', priority: 2, cat: 't', from: 'Alex',
+        id: 'arch_refactor_done', cat: 't', from: 'Alex',
         body: "refactor's done. rebuilt the api layer from scratch — clean, fast, and can scale past 10k users without touching it again.",
-        urgency: 3, weeks: 1,
+        urgency: 23, weeks: 1,
         available: (s, char) => s.arch_refactor_effort_target != null && (char.buildEffort || 0) >= s.arch_refactor_effort_target && s.items?.arch_refactor?.status === 'active',
         options: [
           { label: 'Review the new architecture', key: 'review',
@@ -1147,7 +1147,7 @@
       {
         id: 'alex_leaving_threat', cat: 't', from: 'Alex',
         body: "got a message from an old colleague at a well-funded startup. not going anywhere — but we need an honest conversation about where this is headed.",
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char, e) => e.alexDepartureRisk && char.active,
         options: [
           { label: 'Have the honest conversation', key: 'talk',
@@ -1242,7 +1242,7 @@
       {
         id: 'jordan_launch_blocker', cat: 'p', from: 'Alex',
         body: "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening.",
-        urgency: 3, weeks: 1, priority: 2,
+        urgency: 23, weeks: 1,
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
           return s.jordan_drifting && !s.jordan_resolved && !j.flags.launch_blocker_done
@@ -1285,7 +1285,7 @@
           const pct = j.flags.equity_proposal === '33/33/33' ? '33%' : j.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
           return `i need to say something. jordan's been part-time for two months. i'm covering her work and mine. she has ${pct} of the company and i don't think she's earning it anymore. we need to have the conversation.`;
         },
-        urgency: 3, weeks: 1, priority: 2,
+        urgency: 23, weeks: 1,
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
           return s.jordan_drifting && !s.jordan_resolved && !j.flags.confrontation_done
@@ -1351,7 +1351,7 @@
           const pct = j.flags.equity_proposal === '33/33/33' ? '33%' : j.flags.equity_proposal === '50/25/25' ? '25%' : '20%';
           return `jordan's ${pct} is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.`;
         },
-        urgency: 2, weeks: 1, priority: 2,
+        urgency: 22, weeks: 1,
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
           return s.jordan_resolved && s.jordan_cleanup_needed && !j.flags.cap_table_done;

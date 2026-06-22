@@ -4,126 +4,118 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Browser-based educational startup simulation game. Players navigate from idea to seed round, learning trade-offs between building, selling, and fundraising. No build step, no dependencies — everything runs directly in the browser or Node.js.
+Browser-based educational startup simulation game. Players navigate from idea to seed round, learning trade-offs between building, selling, and fundraising. The game is an **iMessage-style chat sim**: characters (co-founders, investors, customers, family, press) text the founder, and the player responds by picking reply chips. No build step, no dependencies — everything runs directly in the browser or Node.js.
 
 ## Commands
 
 | Action | Command |
 |--------|---------|
 | Play | `open game.html` |
-| Run simulation | `node sim_proto.js` |
-| Simulation help | `node sim_proto.js --help` |
-| Card availability map | `node earlymap.js` |
-| Progression tree | `node treemap.js` |
-| Card balance tests | `node test_card_balance.js` |
+| Run engine tests | `node test_engine.js` |
 
 After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No compilation needed.
 
+> **Legacy (card-based) tooling — no longer wired to the engine.** `sim_proto.js`, `earlymap.js`, `treemap.js`, `test_card_balance.js`, and `test_redesign.js` were built against the old card-dealing `Engine` API (`generateDemands`/`resolveTurn`/`CHARACTER_DEFS`/`WORLD`), which no longer exists. They will not run until ported to the chat engine. Don't rely on them.
+
 ## Architecture
 
-- **`engine.js`** — `Engine` class, pure logic, no DOM. Exports `{ Engine, CHARACTER_DEFS, WORLD }`. All game mechanics and state live here. Characters are loaded from `roles/` (Node: `require`, browser: `ROLES` global populated by `<script>` tags).
-- **`roles/*.js`** — One file per character. Each exports a definition object with `id`, `type`, `unlockCondition`, and a `cards` array. See any existing role for the pattern.
-- **`game.html`** — The active browser UI. Self-contained (inline CSS + JS). Loads `engine.js` and all `roles/*.js` via `<script>` tags.
-- **`sim_proto.js`** — Node.js simulation harness. Runs many games with fixed strategies to measure win rates and narrative behavior. This is the primary analysis and debugging tool.
-- **`earlymap.js`** — Prints a Gantt-style map of every card available in weeks 1–8, grouped by track.
-- **`treemap.js`** — Prints the game's progression dependency tree (static visualization, no engine loaded).
-- **`test_card_balance.js`** — Card balance tests; verifies characters have meaningful early-game presence.
-- **`tests/`** — Contains `testing.md` (manual test checklist) and `narrative_review_agent.md`.
+- **`engine.js`** — the `Engine` class, pure logic, no DOM. Exports `{ Engine }` (Node) / `window.Engine` (browser). The engine is a **thin coordinator**: it owns game state and the weekly tick, but it does *not* decide what characters say. Characters are loaded from `roles/` (Node: `require`, browser: the `ROLES` global populated by `<script>` tags).
+- **`roles/*.js`** — one file per character. Each exports a definition object (`id`, `name`, `role`, `type`, optional `intro`, a `slice` of participating card ids, a `voice` map, and a `cards` array). Each character owns its own curation, ranking, and reactions. See any existing role for the pattern.
+- **`game.html`** — the browser UI. Self-contained (inline CSS + JS). Loads `engine.js` and all `roles/*.js` via `<script>` tags; renders the conversation rail, chat threads, and the founder journal. Avatar styling (colors/initials) lives here in a `STYLE` map — it is presentation, not engine state.
+- **`test_engine.js`** — headless behavioral checks (advances past week 1/2, characters react to being ignored, no duplicate spam, ignore reactions move state). This is the regression suite.
 
-Legacy files no longer maintained: `startup_game.html`, `ui.js`, `styles.css`, `tests.js`, `tests.html`, `test_yc.js`, `test_yc_delay.js`.
+Legacy files no longer maintained: `startup_game.html`, `ui.js`, `tests.js`, `tests.html`, plus the card-based tools listed above.
 
-## Simulation (`sim_proto.js`)
+## Turn & surfacing model
 
-```
-node sim_proto.js                          # Strategy comparison, 100 games each
-node sim_proto.js 500                      # Strategy comparison, 500 games each
-node sim_proto.js 500 --no-yc             # Force the angel fundraising path
-node sim_proto.js 200 --winners           # Hunt for 3 winning traces
-node sim_proto.js 500 --winners 1 --no-yc # One angel-path winning trace
-node sim_proto.js 5 --all                 # Print 5 lean_loop traces
-node sim_proto.js 5 --all --messages      # Same, with full card bodies
-node sim_proto.js 5 --all --strategy yc_grind  # Traces for a specific strategy
+**Turn = 1 week, 2 actions.** An action is answering one open chat message (`engine.act(cardId, optionKey)`) or a journal action. After 2 actions (or an explicit "End week"), `engine.nextWeek()` advances.
+
+**One slot per character.** Each character shows at most one open (unanswered) message at a time, tracked in `engine.open[charId] = { cardId, def, week }`.
+
+**Surfacing happens once per week** in `_poll()` (called from the constructor and `nextWeek()`). For each active character the engine asks:
+
+```js
+const card = def.next ? def.next(s, char, engine) : engine.defaultNext(def, char);
 ```
 
-Strategies defined in `sim_proto.js`: `random`, `distracted`, `yc_grind`, `alex_first`, `ignore_alex`, `customer_focus`, `lean_loop`, `ignore_meetup`, `angel_path`, `rand_fulltime`, `rand_parttime`, `keep_jordan`, `skip_cap_table_angel`, `no_pivot`.
+The returned card becomes that character's slot: same id → left in place (no repost); different card → replaces it; `null` → the character stays silent. New messages (including arc continuations) appear at the next week boundary, never mid-week.
 
-## Key Game Mechanics
+**Engine APIs a character calls** (so roles don't duplicate logic):
+- `pick(cards, char)` — the best available card by `urgency` (a `fallback` card only wins when nothing else is available).
+- `sliceCards(def)` — the card defs named in `def.slice`.
+- `openCardId(charId)`, `weeksWaiting(charId)`, `answered(cardId)`, `isOpen(cardId)` — awareness so a character can react to (not) being answered. Plus full `engine.s`, `engine.chars`, `engine.history`.
+- `defaultNext(def, char)` — the shared default decision: hold the open card while it's still relevant; once its moment passes (window closed, or unanswered past its patience) call `_reactIgnored` and move on.
 
-**Win conditions:**
-- YC acceptance (gives $500k + 35 fundraising score boost)
-- Two angel investors committed (`marcusCommitted && followerCommitted`)
+**Win conditions:** YC acceptance (`s.ycAccepted`), or two angel investors committed (`s.marcusCommitted && s.followerCommitted`). **Lose condition:** cash hits $0. **Starting cash:** $10,000. **Burn:** $500/week. `nextWeek()` also runs passive co-founder contributions (by `focus`/`skills`/`trust`), launch conversion, organic signups, free-to-paid conversion, and revenue.
 
-**Lose condition:** Cash hits $0.
+## Character & card model
 
-**Starting cash:** $10,000. **Burn rate:** $500/week.
+A role definition (`roles/*.js`):
+- `id`, `name` (chat display name), `role` (subtitle), `type` (`'cofounder'`, `'investor'`, `'press'`, …)
+- `unlockCondition(s, engine)` — when to activate (omit for always-active); posts `intro` when it flips true
+- `intro` — greeting posted when the character first unlocks
+- `slice` — array of this character's card ids that participate
+- `voice` — map of `"cardId|optionKey"` → first-person journal retelling of the outcome (falls back to the option's `execute()` return)
+- `skills` — for co-founders: `{ build, discover, pitch }` multipliers
+- `cards` — the card array
+- `milestones` — (founder only) `[{ key, cls, label, test }]` for journal rubber-stamps
+- `next(s, char, engine)` — *optional* custom decision fn; omit to use `defaultNext`
 
-**Build efficiency decay** (prevents pure-build strategies):
-```
-efficiency = clamp(0.88^(product - market_fit - 10), 0.05, 1.0)
-```
-Building more than 10 points ahead of market fit loses efficiency exponentially.
-
-**YC decision:** 3 weeks after application. Acceptance requires `ycApplied === true`. Gives +$500k and sets `ycAccepted`.
-
-## Character System
-
-Each character in `roles/` has:
-- `unlockCondition(s)` — when to activate the character (omit for always-active)
-- `cards[]` — cards this character can surface
-
-Each card has:
+Each card:
 - `id` — unique string
-- `cat` — category: `'p'` (product), `'t'` (team/trust), `'e'` (event), `'c'` (customer/market), `'f'` (fundraising)
-- `from` — display sender name (string)
-- `urgency` — 1–3 (affects sort priority)
-- `weeks` — how many weeks the card is shown before it auto-drops
-- `priority` — (optional) boolean, surfaces before other cards
-- `available(s, char)` — whether the card should appear this sprint
-- `options[]` — player choices; each has `execute(s, char, engine)` returning an outcome string
-- `dropDelay` — weeks after drop before `dropFx`/`dropMsg` fires (0 = immediate and silent)
-- `dropFrom` — sender name for the delayed drop message
-- `dropMsg` — narrative message shown when the delayed drop fires (null = silent)
-- `dropCancel(s, char)` — if returns true, cancels the pending drop event entirely
-- `dropFx(s, char, e)` — side effects when the card is ignored (dropped); `e` is the Engine instance
+- `cat` — category: `'p'` product, `'t'` team/trust, `'e'` event, `'c'` customer/market, `'f'` fundraising
+- `from` — display sender name (shown in the bubble)
+- `body` — message text (string, or `(s, char, engine) => string` for dynamic text)
+- `subtext` — optional secondary line
+- `urgency` — the single slot-ranking key. Normal cards use 1–3; arc-continuation cards that must out-rank others use a higher band (e.g. 11–23). May be a function `(s, char) => n`.
+- `fallback` — boolean; the card only surfaces when nothing else is available (e.g. the founder quiet-week card)
+- `weeks` — sprint length if chosen
+- `patience` — weeks the character waits before treating the message as ignored (default `DEFAULT_PATIENCE = 3`; `Infinity` = never)
+- `available(s, char, engine)` — whether the card can surface now
+- `options[]` — player choices; each has `key`, `label`, optional `reply` (chip/bubble text), optional `available(s, char, engine)`, and `execute(s, char, engine)` returning an outcome string
 
-**One-shot card pattern** (card should fire exactly once):
+**Ignore reaction** (replaces the old "dropped card" subsystem): when a character's open message goes unanswered past its `patience` (or its `available()` window closes), `defaultNext` calls `_reactIgnored`, which fires the card's reaction. The reaction content lives on the card:
+- `dropFx(s, char, engine)` — state effects when ignored
+- `dropMsg` / `dropFrom` — an optional follow-up message posted to the thread
+- `dropCancel(s, char)` / `dropCondition(s, char)` — guards that suppress the reaction
+
+> Note: `char` passed to a card is the **owning** character's instance. A card that lives in one character's file but reasons about another (e.g. Alex's cards about Jordan) must read the other via `engine.chars.get('jordan')`, not `char`.
+
+**One-shot card pattern** (fire exactly once):
 ```js
 available: (s, char) => !char.flags.done,
-execute(s, char) { char.flags.done = true; /* ... */ },
+options: [{ key: 'ok', label: '…', execute(s, char) { char.flags.done = true; /* … */ } }],
 dropFx(s, char) { char.flags.done = true; },
 ```
 
 **Recurring card with cooldown:**
 ```js
 available: (s, char) => char.flags.lastWeek != null && s.week >= char.flags.lastWeek + 5,
-execute(s, char) { char.flags.lastWeek = s.week; /* ... */ },
 ```
-
 Use `char.flags.x != null` (not `char.flags.x || 0`) to guard "was this ever set" — the `|| 0` form conflates undefined with week 0.
 
-## Pending Events
+## Pending events
 
-Cards can schedule future narrative events via the engine's pending queue:
+Cards can schedule future narrative events via the engine's pending queue (fired in `nextWeek()`):
 
 ```js
 e.pending.push({
   fireWeek: s.week + 2,
   from: 'Alex', charId: 'alex',
-  text: "message shown to player when this fires",
+  text: "message shown to the player when this fires",
   fx(st) { /* state mutations */ },
   cancel: (st, char) => someCondition,  // if true, suppresses both text and fx
 });
 ```
 
-`dropDelay > 0` causes the drop flow to automatically push a pending event rather than running `dropFx` immediately.
+This is the mechanism for delayed consequences. (The engine no longer auto-queues a delayed drop; a card that wants a delayed follow-up pushes its own pending event from `dropFx`/`execute`.)
 
-## Coding Conventions
+## Coding conventions
 
 - 2-space indentation, double quotes, semicolons.
-- `engine.js` must stay free of DOM manipulation — all UI belongs in `game.html`.
-- Character definitions in `roles/` must work in both Node and browser (see the IIFE + `module.exports` / `ROLES.id` pattern at the bottom of each file).
+- `engine.js` must stay free of DOM manipulation — all UI belongs in `game.html`. All narrative text (bodies, options, voice, intros, names, stamp labels) belongs in `roles/*.js`, not the engine.
+- Character definitions in `roles/` must work in both Node and browser (IIFE + `module.exports` / `ROLES.id` pattern at the bottom of each file).
 
 ## Instructions
 
-Do not change the thresholds in sim_proto.js when a test fails.
-When running regressions, use sim_proto.js with a count of 1000.
+When running regressions, use `node test_engine.js`.

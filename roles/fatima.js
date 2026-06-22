@@ -37,9 +37,9 @@
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
-        id: 'fatima_meeting', priority: 2, cat: 'e', from: 'Fatima (angel)',
+        id: 'fatima_meeting', cat: 'e', from: 'Fatima (angel)',
         body: "been thinking about our call. love the space — dating apps with real retention are rare. can we do a deeper dive this week? i want to understand the go-to-market before i go further.",
-        urgency: 2, weeks: 1,
+        urgency: 22, weeks: 1,
         available: (s, char) => char.flags.intro_done && !char.flags.meeting_done && s.week >= (s.fatima_intro_week || 0) + 2,
         options: [
           { label: 'Set up the meeting', key: 'meet',
@@ -51,9 +51,9 @@
         dropFx(s, char) { char.flags.meeting_done = true; },
       },
       {
-        id: 'fatima_deck', priority: 2, cat: 'e', from: 'Fatima (angel)',
+        id: 'fatima_deck', cat: 'e', from: 'Fatima (angel)',
         body: "strong deck. a few follow-up questions on unit economics and TAM. once i have those i can take it to my next step.",
-        urgency: 1, weeks: 1,
+        urgency: 21, weeks: 1,
         available: (s, char) => char.flags.meeting_done && s.deck_ready && !char.flags.deck_done,
         options: [
           { label: 'Walk her through it', key: 'walk',
@@ -67,7 +67,7 @@
       {
         id: 'fatima_commit', cat: 'e', from: 'Fatima (angel)',
         body: "i've completed my diligence. metrics are where i need them, conviction is there. i'd like to put in $100K — are you still filling the round?",
-        urgency: 3, weeks: 1, priority: 2,
+        urgency: 23, weeks: 1,
         available: (s, char) => char.flags.deck_done && s.marcusCommitted && !char.flags.committed,
         options: [
           { label: 'Yes — welcome aboard', key: 'welcome',

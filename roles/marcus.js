@@ -50,9 +50,9 @@
         dropFx(s, char) { char.flags.deck_asked = true; s.investor_warmth = clamp(s.investor_warmth - 25, 0, 100); },
       },
       {
-        id: 'investor_ready', priority: 2, cat: 'e', from: 'Marcus (angel)',
+        id: 'investor_ready', cat: 'e', from: 'Marcus (angel)',
         body: "two investors want to meet this week. deck is ready, story is tight, both have context. momentum is high right now.",
-        urgency: 2, weeks: 1,
+        urgency: 22, weeks: 1,
         available: (s, char) => s.deck_ready && s.signal >= 38 && s.investor_warmth < 75 && s.network.angels >= 1 && !char.flags.investor_ready_done && !char.flags.intro_moved_on,
         options: [
           { label: 'Take both meetings', key: 'meet',

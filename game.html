@@ -1,3792 +1,752 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Startup: All In</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,400;0,500;1,400&family=Space+Grotesk:wght@600;700&family=Spectral:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<title>Kindred — founder chat</title>
 <style>
-/* ── Reset ──────────────────────────────────────────────── */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-:root {
-  --bg:        #080810;
-  --surface:   #0f0f1e;
-  --surface2:  #161628;
-  --surface3:  #1e1e35;
-  --border:    rgba(255,255,255,0.07);
-  --border2:   rgba(255,255,255,0.12);
-  --text:      #e8e8f2;
-  --dim:       #5a5a7a;
-  --dim2:      #8888aa;
-
-  --cat-t: #a855f7;
-  --cat-c: #22c55e;
-  --cat-p: #3b82f6;
-  --cat-e: #f59e0b;
-
-  --danger: #ef4444;
-  --warn:   #f59e0b;
-  --good:   #22c55e;
-
-  --card-w: 162px;
-  --card-h: 238px;
-}
-
-html, body {
-  height: 100%;
-  overflow: hidden;
-}
-
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'DM Mono', 'SF Mono', monospace;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Subtle noise texture on bg */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* ── HUD ────────────────────────────────────────────────── */
-#hud {
-  position: relative;
-  z-index: 10;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  height: 50px;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-#hud-week {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: white;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  padding: 5px 14px;
-  border-radius: 20px;
-  margin-right: 16px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.hst {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 12px;
-  border-right: 1px solid var(--border);
-  flex-shrink: 0;
-}
-.hst:last-of-type { border-right: none; }
-.hst-lbl {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
-  color: var(--dim);
-  font-weight: 500;
-  margin-bottom: 1px;
-}
-.hst-val {
-  font-size: 13px;
-  font-weight: 500;
-  font-variant-numeric: tabular-nums;
-  color: var(--text);
-}
-.hst-val.warn   { color: var(--warn); }
-.hst-val.danger { color: var(--danger); }
-.hst-val.good   { color: var(--good); }
-
-/* Team button */
-#team-btn {
-  margin-left: auto; display: flex; align-items: center; gap: 8px;
-  padding: 5px 10px 5px 14px; border-left: 1px solid var(--border);
-  background: none; border-top: none; border-right: none; border-bottom: none;
-  cursor: pointer; flex-shrink: 0;
-}
-#team-btn:hover .team-btn-lbl { color: var(--text); }
-#team-avs { display: flex; }
-.tbtn-av {
-  width: 26px; height: 26px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 800; position: relative; flex-shrink: 0;
-}
-.tbtn-av + .tbtn-av { margin-left: -6px; }
-.tbtn-ring {
-  position: absolute; inset: -2px; border-radius: 50%;
-  border: 2px solid #374151; transition: border-color 0.4s;
-}
-.team-btn-lbl { font-size: 11px; font-weight: 600; color: var(--dim2); }
-#team-caret { font-size: 9px; color: var(--dim); transition: transform 0.2s; }
-#team-drop.open ~ * #team-caret,
-#team-btn.open #team-caret { transform: rotate(180deg); }
-
-/* Team dropdown */
-#team-drop {
-  display: none; position: absolute; top: 100%; right: 0; z-index: 200;
-  background: #0c0c1a; border: 1px solid #252540; border-radius: 8px;
-  padding: 10px 12px; min-width: 215px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-  font-family: monospace; font-size: 11px;
-}
-#team-drop.open { display: block; }
-.td-member { display: flex; align-items: center; gap: 10px; padding: 5px 0; }
-.td-member + .td-member { border-top: 1px solid #1a1a2e; }
-.td-av {
-  width: 28px; height: 28px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 800; position: relative; flex-shrink: 0;
-}
-.td-ring {
-  position: absolute; inset: -2px; border-radius: 50%;
-  border: 2px solid #374151; transition: border-color 0.4s;
-}
-.td-info { flex: 1; min-width: 0; }
-.td-name { font-size: 11px; color: var(--dim2); }
-.td-name strong { color: var(--text); font-weight: 500; }
-.td-name strong.st-warn { color: #f59e0b; }
-.td-name strong.st-gone { color: #6b7280; font-style: italic; font-weight: 400; }
-.td-stats { font-size: 10px; color: var(--dim); font-variant-numeric: tabular-nums; margin-top: 1px; }
-.td-member.is-gone { opacity: 0.7; }
-.td-member.is-gone .td-stats { color: #6b7280; }
-.td-sep { border-top: 1px solid #1e1e32; margin: 8px 0; }
-
-/* Dev map (inside team dropdown) */
-.dm-hdr {
-  font-size: 8px; letter-spacing: .12em; text-transform: uppercase; color: #778;
-  border-bottom: 1px solid #1e1e32; padding-bottom: 5px; margin-bottom: 6px;
-  display: flex; justify-content: space-between; align-items: center;
-}
-.dm-badge { font-size: 8px; padding: 1px 6px; border-radius: 3px; }
-.dm-badge-lean   { background: #0a2010; color: #4ade80; border: 1px solid #1a4a28; }
-.dm-badge-full   { background: #1e2a50; color: #60a5fa; border: 1px solid #2a3a70; }
-.dm-badge-sprint { background: #1a1a28; color: #666;    border: 1px solid #2a2a40; }
-.dm-badge-pivot  { background: #2a1500; color: #fb923c; border: 1px solid #7c3a0a; }
-.dm-item { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
-.dm-indent { padding-left: 12px; border-left: 1px solid #252540; margin-left: 6px; }
-.dm-grp { font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: #9ca3af; padding: 6px 0 2px; }
-#td-roadmap .dm-grp:first-child { padding-top: 0; }
-/* Stepper */
-.dm-step { display: flex; gap: 8px; }
-.dm-step-track { display: flex; flex-direction: column; align-items: center; width: 12px; flex-shrink: 0; }
-.dm-step-dot {
-  width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; margin-top: 2px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 700; line-height: 1;
-}
-.dm-step-dot.st-done     { color: #22c55e; }
-.dm-step-dot.st-active   { border: 2px solid #1e3a5f; border-top-color: #3b82f6; animation: dm-spin 0.8s linear infinite; }
-.dm-step-dot.st-obsolete { border: 2px solid #7a3a4a; }
-@keyframes dm-spin { to { transform: rotate(360deg); } }
-.dm-step-line { width: 2px; background: #1e2030; flex: 1; min-height: 6px; margin-top: 3px; }
-.dm-step-body { flex: 1; display: flex; align-items: center; gap: 6px; padding-bottom: 7px; }
-.dm-step-lbl { flex: 1; font-size: 11px; }
-.dm-step-lbl.st-done     { color: #6ee7b7; }
-.dm-step-lbl.st-active   { color: #93c5fd; font-weight: 500; }
-.dm-step-lbl.st-todo     { color: #4a5080; }
-.dm-step-lbl.st-defer    { color: #404060; font-style: italic; text-decoration: line-through; }
-.dm-step-lbl.st-obsolete { color: #b06070; font-style: italic; text-decoration: line-through; }
-.dm-step-who { font-size: 7px; font-weight: 800; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
-
-/* Cash animation */
-.hst-val.cash-up   { color: #4ade80; transition: color 0.15s; }
-.hst-val.cash-down { color: #f87171; transition: color 0.15s; }
-
-.cash-flyup {
-  position: fixed;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 13px; font-weight: 800;
-  pointer-events: none;
-  white-space: nowrap;
-  z-index: 9999;
-  animation: cashFly 5.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.cash-flyup.pos { color: #4ade80; text-shadow: 0 0 12px rgba(74,222,128,0.7); }
-.cash-flyup.neg { color: #f87171; text-shadow: 0 0 12px rgba(248,113,113,0.7); }
-@keyframes cashFly {
-  0%   { opacity: 0;   transform: translateY(0px)   scale(0.8); }
-  15%  { opacity: 1;   transform: translateY(-6px)  scale(1.1); }
-  60%  { opacity: 1;   transform: translateY(-28px) scale(1);   }
-  100% { opacity: 0;   transform: translateY(-52px) scale(0.9); }
-}
-
-
-/* ── Main Layout ────────────────────────────────────────── */
-#chat-main {
-  flex: 1;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 1;
-  margin-left: 280px;
-  background: var(--bg);
-}
-
-#chat-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  min-height: 52px;
-}
-#chat-header .dp-av {
-  width: 32px; height: 32px;
-  font-size: 10px;
-}
-#chat-header-name {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px; font-weight: 800;
-  color: var(--text);
-}
-#chat-header-role {
-  font-size: 10px; color: var(--dim2);
-  margin-top: 1px;
-}
-#chat-header-stats {
-  display: flex; gap: 10px;
-  margin-left: auto;
-}
-
-/* Effort bar */
-#effort-bar-wrap {
-  padding: 6px 18px;
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-#effort-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--dim2);
-  white-space: nowrap;
-}
-#effort-track {
-  flex: 1;
-  height: 6px;
-  background: var(--surface3);
-  border-radius: 3px;
-  overflow: hidden;
-}
-#effort-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-  border-radius: 3px;
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-}
-#effort-fill.low { background: linear-gradient(90deg, #f59e0b, #ef4444); }
-#effort-end-week {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white; border: none;
-  padding: 4px 14px; border-radius: 6px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 10px; font-weight: 800;
-  cursor: pointer; transition: opacity 0.15s;
-  white-space: nowrap;
-}
-#effort-end-week:hover { opacity: 0.85; }
-#effort-end-week:disabled { opacity: 0.3; cursor: default; }
-
-/* Chat thread (main content area) */
-#chat-thread {
-  flex: 1;
-  padding: 16px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  overflow-y: auto;
-}
-#chat-thread::-webkit-scrollbar { width: 4px; }
-#chat-thread::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-/* Empty state when no conversation is open */
-#chat-empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: var(--dim);
-}
-#chat-empty-icon {
-  font-size: 48px;
-  opacity: 0.3;
-}
-#chat-empty-text {
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  text-align: center;
-  line-height: 1.6;
-}
-
-/* Result strip (shown at bottom of chat after week resolves) */
-#chat-results {
-  padding: 10px 18px;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-#chat-results.on { display: flex; }
-#chat-results-deltas {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-#chat-results-btn {
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white; border: none;
-  padding: 7px 20px; border-radius: 8px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px; font-weight: 800;
-  cursor: pointer; transition: opacity 0.15s;
-  white-space: nowrap;
-}
-#chat-results-btn:hover { opacity: 0.85; }
-
-/* Mood accent colors applied via inline style on .cast-mood-tag + .cast-link */
-
-/* ── Conversation List (left sidebar) ─────────────────── */
-#char-panel {
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 280px;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  z-index: 20;
-  padding: 8px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-#char-panel::-webkit-scrollbar { width: 4px; }
-#char-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
-
-.cp-group-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--dim);
-  padding: 14px 16px 6px;
-}
-.cp-group-label:first-child { padding-top: 8px; }
-
-/* Conversation row — iMessage-style */
-.conv-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background 0.15s;
-  position: relative;
-  border-left: 3px solid transparent;
-}
-.conv-row:hover { background: var(--surface2); }
-.conv-row.active-conv {
-  background: var(--surface3);
-  border-left-color: #6366f1;
-}
-.conv-row.no-cards { opacity: 0.5; }
-.conv-row.departed { opacity: 0.25; pointer-events: none; }
-
-.conv-av {
-  width: 40px; height: 40px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 800;
-  flex-shrink: 0;
-  position: relative;
-  transition: box-shadow 0.3s;
-}
-
-/* Unread blue dot */
-.conv-unread-dot {
-  position: absolute;
-  top: 0; right: -2px;
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: #6366f1;
-  border: 2px solid var(--surface);
-  animation: dotBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-@keyframes dotBounce {
-  from { transform: scale(0); }
-  to   { transform: scale(1); }
-}
-
-/* Urgency glow on avatar */
-.conv-row.urgent .conv-av {
-  box-shadow: 0 0 0 2px rgba(239,68,68,0.6), 0 0 12px rgba(239,68,68,0.3);
-  animation: urgentPulse 1.8s ease-in-out infinite;
-}
-.conv-row.warning .conv-av {
-  box-shadow: 0 0 0 2px rgba(245,158,11,0.5), 0 0 8px rgba(245,158,11,0.2);
-}
-
-@keyframes urgentPulse {
-  0%, 100% { box-shadow: 0 0 0 2px rgba(239,68,68,0.6), 0 0 12px rgba(239,68,68,0.3); }
-  50%      { box-shadow: 0 0 0 3px rgba(239,68,68,0.8), 0 0 20px rgba(239,68,68,0.5); }
-}
-
-.conv-body {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.conv-name-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.conv-name {
-  font-size: 12px; font-weight: 500;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-}
-.conv-row.has-new .conv-name {
-  font-weight: 800;
-  color: white;
-}
-.conv-time {
-  font-size: 9px;
-  color: var(--dim);
-  flex-shrink: 0;
-}
-.conv-preview {
-  font-size: 11px;
-  color: var(--dim);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.4;
-}
-.conv-row.has-new .conv-preview {
-  color: var(--dim2);
-}
-
-/* Badge count */
-.conv-badge {
-  min-width: 18px; height: 18px;
-  border-radius: 9px;
-  background: #6366f1;
-  color: white;
-  font-size: 10px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0 5px;
-  flex-shrink: 0;
-  animation: dotBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-.conv-row.urgent .conv-badge { background: #ef4444; }
-.conv-row.warning .conv-badge { background: #f59e0b; color: #1a1a2e; }
-
-/* New message slide-in animation */
-.conv-row.new-message {
-  animation: convSlideIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes convSlideIn {
-  from { opacity: 0; transform: translateX(-20px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-/* Expired flash */
-.conv-expired-flash {
-  animation: expiredFlash 3s ease-out forwards;
-  pointer-events: none;
-}
-.conv-expired-msg {
-  font-size: 9px;
-  color: #ef4444;
-  padding: 2px 14px 2px 64px;
-  animation: fadeOut 3s ease-out forwards;
-}
-@keyframes expiredFlash {
-  0%   { background: rgba(239,68,68,0.2); }
-  100% { background: transparent; }
-}
-@keyframes fadeOut {
-  0%, 70% { opacity: 1; }
-  100%    { opacity: 0; }
-}
-
-/* Typing indicator */
-.typing-indicator {
-  display: inline-flex;
-  gap: 4px;
-  padding: 10px 14px;
-  background: var(--surface2);
-  border-radius: 16px 16px 16px 4px;
-  align-self: flex-start;
-}
-.typing-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--dim);
-  animation: typingBounce 1.2s ease-in-out infinite;
-}
-.typing-dot:nth-child(2) { animation-delay: 0.15s; }
-.typing-dot:nth-child(3) { animation-delay: 0.3s; }
-@keyframes typingBounce {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30%           { transform: translateY(-4px); opacity: 1; }
-}
-
-/* ── Detail Panel (reusable styles for chat header) ─────── */
-.dp-av {
-  width: 36px; height: 36px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 12px; font-weight: 800;
-  flex-shrink: 0;
-}
-.dp-stat {
-  font-size: 10px; color: var(--dim2);
-}
-.dp-stat-bar {
-  width: 60px; height: 4px;
-  background: var(--surface3);
-  border-radius: 2px;
-  margin-top: 3px;
-  overflow: hidden;
-}
-.dp-stat-fill {
-  height: 100%; border-radius: 2px;
-  transition: width 0.3s;
-}
-
-/* ── Chat thread ───────────────────────────────────────── */
-
-/* Incoming message: character's bubble (left-aligned) */
-.chat-msg {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-width: 100%;
-}
-
-.chat-msg.incoming { align-items: flex-start; }
-.chat-msg.outgoing { align-items: flex-end; }
-
-.chat-bubble {
-  position: relative;
-  max-width: 88%;
-  padding: 12px 14px;
-  border-radius: 16px;
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 14px;
-  line-height: 1.55;
-  animation: bubbleFadeIn 0.3s ease-out;
-}
-@keyframes bubbleFadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
-
-.chat-msg.incoming .chat-bubble {
-  background: var(--surface2);
-  border-bottom-left-radius: 4px;
-  color: rgba(225,225,255,0.9);
-}
-.chat-msg.outgoing .chat-bubble {
-  background: #2d2b6b;
-  border-bottom-right-radius: 4px;
-  color: rgba(225,225,255,0.95);
-}
-
-.chat-sender {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--dim2);
-  letter-spacing: 0.5px;
-  padding: 0 4px;
-}
-
-.chat-patience {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  padding: 0 4px;
-  margin-top: -4px;
-}
-.chat-patience.fresh { color: var(--dim); }
-.chat-patience.waiting { color: #f59e0b; }
-.chat-patience.last-chance {
-  color: #ef4444;
-  animation: urgentPulse-text 1.5s ease-in-out infinite;
-}
-@keyframes urgentPulse-text {
-  0%, 100% { opacity: 1; }
-  50%      { opacity: 0.5; }
-}
-
-/* Reply options — shown below incoming bubble */
-.chat-replies {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-left: 4px;
-  max-width: 88%;
-}
-.chat-reply-btn {
-  padding: 8px 14px;
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  color: var(--text);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.15s, border-color 0.15s;
-}
-.chat-reply-btn:hover {
-  background: var(--surface2);
-  border-color: rgba(99,102,241,0.4);
-}
-.chat-reply-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
-.chat-reply-btn.slotted {
-  background: rgba(99,102,241,0.15);
-  border-color: rgba(99,102,241,0.4);
-  color: #a5b4fc;
-}
-
-/* Outgoing "send" button */
-.chat-send-btn {
-  padding: 8px 20px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  align-self: flex-end;
-}
-.chat-send-btn:hover { opacity: 0.85; }
-.chat-send-btn:disabled { opacity: 0.35; cursor: default; }
-.chat-send-btn.slotted {
-  background: var(--surface3);
-  color: var(--dim2);
-}
-
-.dp-idle {
-  padding: 24px 18px;
-  font-family: 'Spectral', Georgia, serif;
-  font-style: italic;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--dim2);
-  text-align: center;
-}
-
-/* Subtext — narrator context below incoming bubble */
-.chat-subtext {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--dim);
-  font-style: italic;
-  padding: 2px 4px 0;
-}
-
-/* Suggested replies — Siri-style pre-composed messages */
-.chat-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: flex-end;
-  padding: 4px 0;
-}
-.chat-suggestion {
-  max-width: 88%;
-  padding: 10px 14px;
-  background: rgba(99,102,241,0.08);
-  border: 1px solid rgba(99,102,241,0.25);
-  border-radius: 16px 16px 4px 16px;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.2s, transform 0.15s;
-}
-.chat-suggestion:hover {
-  background: rgba(99,102,241,0.15);
-  border-color: rgba(99,102,241,0.5);
-  transform: translateX(-2px);
-}
-.chat-suggestion.disabled {
-  opacity: 0.3;
-  cursor: default;
-  pointer-events: none;
-}
-.chat-suggestion-text {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 13px;
-  line-height: 1.5;
-  color: rgba(200,200,240,0.85);
-}
-.chat-suggestion-label {
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  color: rgba(99,102,241,0.7);
-  margin-top: 4px;
-  letter-spacing: 0.3px;
-}
-
-/* Sent / pending reply states */
-.chat-reply-sent {
-  opacity: 0.7;
-}
-.chat-reply-pending {
-  opacity: 0.5;
-  cursor: pointer;
-  border: 1px dashed rgba(99,102,241,0.3);
-}
-
-/* Week divider in chat thread */
-.chat-week-divider {
-  text-align: center;
-  font-family: 'DM Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: var(--dim);
-  padding: 8px 0 4px;
-  position: relative;
-}
-.chat-week-divider::before,
-.chat-week-divider::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 30%;
-  height: 1px;
-  background: var(--border);
-}
-.chat-week-divider::before { left: 0; }
-.chat-week-divider::after { right: 0; }
-
-/* History messages are slightly dimmed */
-.chat-msg.history .chat-bubble { opacity: 0.7; }
-.chat-msg.history .chat-sender { opacity: 0.5; }
-
-/* Outcome — result text after a reply */
-.chat-outcome {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--dim2);
-  padding: 4px 14px 4px;
-  font-style: italic;
-  border-left: 2px solid var(--border);
-  margin-left: 20px;
-}
-
-/* Expired note */
-.chat-expired-note {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: rgba(239,68,68,0.6);
-  padding: 4px 14px;
-  font-style: italic;
-}
-
-/* Category dot — small inline indicator */
-.chat-cat-dot {
-  display: inline-block;
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  margin-right: 4px;
-  vertical-align: middle;
-}
-
-/* History button — float to character panel bottom */
-#cp-history-btn {
-  margin-top: auto;
-  padding: 8px 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border: none;
-  border-top: 1px solid var(--border);
-  background: none;
-  color: var(--dim2);
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-}
-#cp-history-btn:hover { background: var(--surface2); }
-
-@keyframes stripIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* Notebook entries (founder journal) */
-.notebook-entry {
-  padding: 12px 14px;
-  background: var(--surface2);
-  border-radius: 10px;
-  border-left: 3px solid rgba(99,102,241,0.3);
-}
-.notebook-entry.history { opacity: 0.6; }
-.notebook-entry.done { opacity: 0.5; border-left-color: #22c55e; }
-.notebook-text {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 14px;
-  line-height: 1.55;
-  color: rgba(225,225,255,0.85);
-}
-.notebook-action {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border);
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: #22c55e;
-}
-.notebook-action::before {
-  content: '✓ ';
-}
-
-/* New messages banner */
-#new-msgs-banner {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  z-index: 30;
-  text-align: center;
-  padding: 8px 16px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px; font-weight: 700;
-  letter-spacing: 0.5px;
-  transform: translateY(-100%);
-  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-  pointer-events: none;
-}
-#new-msgs-banner.on {
-  transform: translateY(0);
-}
-
-/* outcome toast overlay */
-.outcome-toast {
-  position: fixed;
-  bottom: 20px; left: 50%;
-  transform: translateX(-50%);
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 12px;
-  padding: 12px 20px;
-  max-width: 500px;
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 14px;
-  line-height: 1.5;
-  color: rgba(220,220,250,0.85);
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-  z-index: 100;
-  animation: toastIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-}
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-}
-.sc-role { font-size: 10px; color: #999; margin-top: 1px; }
-.sc-badges { display: flex; flex-direction: column; gap: 3px; align-items: flex-end; margin-left: auto; }
-.sc-dbg-id {
-  font-family: 'DM Mono', monospace; font-size: 9px; color: #aaa;
-  padding: 4px 16px 0; user-select: text; cursor: text;
-}
-.sc-body {
-  padding: 14px 16px;
-  font-family: 'Spectral', Georgia, serif;
-  font-style: italic; font-size: 14px; color: #333; line-height: 1.6;
-}
-.sc-options {
-  display: flex; flex-direction: column; gap: 6px;
-  padding: 0 16px 14px;
-}
-.sc-options .opt-btn { font-size: 12px; padding: 9px 14px; }
-.sc-committed {
-  margin: 0 16px 16px;
-  padding: 10px 14px;
-  background: #f0fdf4; border-radius: 10px;
-  display: flex; align-items: center; gap: 8px;
-}
-.sc-committed-check { font-size: 15px; color: #16a34a; flex-shrink: 0; }
-.sc-committed-label { font-size: 12px; font-weight: 600; color: #15803d; line-height: 1.3; }
-
-/* legacy hint (kept for fallback) */
-#stage-hint {
-  font-size: 12px;
-  color: var(--dim);
-  letter-spacing: 0.5px;
-  margin-top: 4px;
-}
-
-/* ── Active Card ────────────────────────────────────────── */
-#active-panel {
-  display: none;
-  flex-direction: column;
-  width: 420px;
-  max-width: 90vw;
-  background: #ffffff;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow:
-    0 0 0 1px rgba(255,255,255,0.12),
-    0 24px 80px rgba(0,0,0,0.7),
-    0 8px 24px rgba(0,0,0,0.4);
-  color: #1a1a2e;
-  transform-origin: bottom center;
-}
-#active-panel.show {
-  display: flex;
-  animation: cardRise 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-#active-panel.dismiss {
-  animation: cardSink 0.28s ease-in forwards;
-}
-
-@keyframes cardRise {
-  from { opacity: 0; transform: scale(0.82) translateY(28px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-@keyframes cardSink {
-  from { opacity: 1; transform: scale(1); }
-  to   { opacity: 0; transform: scale(0.88) translateY(-16px); }
-}
-
-#ac-stripe { height: 6px; flex-shrink: 0; }
-
-#ac-header {
-  display: flex; align-items: center; gap: 14px;
-  padding: 18px 22px 14px;
-  border-bottom: 1px solid #f0f0f8;
-}
-#ac-av {
-  width: 46px; height: 46px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 13px; font-weight: 800;
-  flex-shrink: 0;
-}
-#ac-meta { flex: 1; }
-#ac-name {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 17px; font-weight: 800;
-  color: #0f0f1e; line-height: 1.1;
-}
-#ac-role { font-size: 11px; color: #888; margin-top: 2px; }
-#ac-badges { display: flex; flex-direction: column; gap: 4px; align-items: flex-end; }
-
-.badge {
-  font-size: 9px; font-weight: 700;
-  padding: 3px 9px; border-radius: 20px;
-  white-space: nowrap; letter-spacing: 0.5px;
-  font-family: 'DM Mono', monospace;
-}
-.badge-cat { background: #f3f4f6; color: #6b7280; }
-.b-u1 { background: #f0fdf4; color: #16a34a; }
-.b-u2 { background: #fffbeb; color: #b45309; }
-.b-u3 { background: #fef2f2; color: #dc2626; }
-.b-exp { background: #fef2f2; color: #dc2626; font-weight: 900; animation: pulse-badge 1s ease infinite; }
-
-@keyframes pulse-badge {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
-}
-
-#ac-body {
-  padding: 18px 22px;
-  font-family: 'Spectral', Georgia, serif;
-  font-style: italic;
-  font-size: 16px;
-  color: #2a2a3e;
-  line-height: 1.65;
-}
-
-#ac-options {
-  display: flex; flex-direction: column; gap: 7px;
-  padding: 0 22px 14px;
-}
-
-.opt-btn {
-  padding: 11px 16px;
-  border-radius: 10px;
-  border: 1.5px solid #e5e5f0;
-  background: white;
-  font-family: 'DM Mono', monospace;
-  font-size: 12px;
-  font-weight: 500;
-  color: #333;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
-}
-.opt-btn:hover {
-  border-color: #6366f1;
-  background: #f5f5ff;
-  color: #3730a3;
-  transform: translateX(3px);
-}
-.opt-btn.chosen {
-  background: #0f0f1e;
-  border-color: #0f0f1e;
-  color: white;
-}
-.opt-btn:disabled { opacity: 0.4; pointer-events: none; }
-
-/* Close button — returns card to hand, no action consumed */
-#ac-close {
-  position: absolute;
-  top: 12px; right: 14px;
-}
-#close-btn {
-  background: #f3f4f6; border: none;
-  width: 28px; height: 28px; border-radius: 50%;
-  font-size: 13px; color: #999;
-  cursor: pointer; display: flex;
-  align-items: center; justify-content: center;
-  transition: background 0.15s, color 0.15s;
-  line-height: 1;
-}
-#close-btn:hover { background: #e5e7eb; color: #555; }
-
-/* ── Hand Area ──────────────────────────────────────────── */
-#hand-area {
-  position: relative;
-  z-index: 2;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 14px 24px 18px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#hand-top {
-  display: flex; align-items: center; justify-content: space-between;
-}
-.hand-lbl {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--dim);
-}
-#plays-left {
-  font-size: 11px; color: var(--dim2);
-}
-#plays-left span {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 15px; font-weight: 800;
-  color: white;
-}
-
-#hand-cards {
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  align-items: flex-end;
-  min-height: var(--card-h);
-}
-
-/* ── Hand Card ──────────────────────────────────────────── */
-.hcard {
-  width: var(--card-w);
-  height: var(--card-h);
-  background: white;
-  border-radius: 12px;
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-  transition:
-    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    box-shadow 0.2s ease,
-    opacity 0.3s ease;
-  transform-origin: bottom center;
-  will-change: transform;
-}
-.hcard.dealing {
-  animation: dealIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
-}
-
-/* Fan */
-#hand-cards .hcard:nth-child(1) { transform: rotate(0deg) translateY(6px); animation-delay: 0.04s; }
-#hand-cards .hcard:nth-child(2) { transform: rotate(0deg) translateY(3px); animation-delay: 0.10s; }
-#hand-cards .hcard:nth-child(3) { transform: rotate(0deg) translateY(1px); animation-delay: 0.16s; }
-#hand-cards .hcard:nth-child(4) { transform: rotate(0deg)  translateY(1px); animation-delay: 0.22s; }
-#hand-cards .hcard:nth-child(5) { transform: rotate(0deg)  translateY(3px); animation-delay: 0.28s; }
-#hand-cards .hcard:nth-child(6) { transform: rotate(0deg)  translateY(6px); animation-delay: 0.34s; }
-
-.hcard:hover {
-  transform: rotate(0deg) translateY(-20px) !important;
-  box-shadow: 0 16px 50px rgba(0,0,0,0.7);
-  z-index: 5;
-}
-.hcard.selected {
-  transform: rotate(0deg) translateY(-26px) !important;
-  box-shadow: 0 20px 60px rgba(99,102,241,0.5), 0 0 0 2px #6366f1;
-  z-index: 10;
-}
-.hcard.played {
-  opacity: 0.25;
-  pointer-events: none;
-  filter: grayscale(0.5);
-  transform: rotate(0deg) translateY(0) !important;
-}
-.hcard.passed {
-  opacity: 0.15;
-  pointer-events: none;
-  transform: rotate(6deg) translateY(8px) !important;
-}
-.hcard.locked {
-  cursor: default;
-}
-
-@keyframes dealIn {
-  from { opacity: 0; transform: translateY(50px) scale(0.85); }
-  to   { opacity: 1; }
-}
-
-.hcard.discarding {
-  animation: cardDiscard 0.28s ease-in forwards;
-  pointer-events: none;
-}
-@keyframes cardDiscard {
-  0%   { opacity: 1; transform: rotate(0deg) translateY(0) scale(1); }
-  40%  { opacity: 0.7; }
-  100% { opacity: 0; transform: rotate(var(--discard-rot, -5deg)) translateY(56px) scale(0.86); }
-}
-
-/* ── How-to-play overlay ────────────────────────────────── */
-#htp-overlay {
-  display: none;
-  position: fixed;
-  top: 50px; /* below HUD */
-  left: 0; right: 0; bottom: 0;
-  z-index: 80;
-  background: rgba(8, 8, 18, 0.68);
-  align-items: center;
-  justify-content: center;
-  padding-bottom: 0;
-}
-#htp-overlay.on { display: flex; }
-#htp-overlay.out { animation: htpOut 0.22s ease-in forwards; }
-@keyframes htpOut {
-  to { opacity: 0; }
-}
-#htp-panel {
-  background: var(--surface);
-  border: 1px solid var(--border2);
-  border-radius: 16px;
-  padding: 26px 28px 22px;
-  max-width: 480px;
-  width: calc(100% - 48px);
-  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
-  animation: htpIn 0.38s cubic-bezier(0.34,1.4,0.64,1) forwards;
-}
-@keyframes htpIn {
-  from { opacity: 0; transform: translateY(28px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-#htp-eyebrow {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: #8b5cf6;
-  margin-bottom: 10px;
-}
-#htp-heading {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 20px; font-weight: 800;
-  color: white;
-  margin-bottom: 12px;
-  line-height: 1.25;
-}
-#htp-body {
-  font-size: 13px;
-  color: var(--dim2);
-  line-height: 1.65;
-  margin-bottom: 20px;
-}
-#htp-ok {
-  width: 100%;
-  padding: 12px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-family: 'DM Mono', monospace;
-  font-size: 13px; font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  transition: opacity 0.15s;
-}
-#htp-ok:hover { opacity: 0.88; }
-
-/* Card stripe */
-.hcard-stripe { height: 5px; flex-shrink: 0; }
-
-/* Card body */
-.hcard-inner {
-  padding: 10px 10px 6px;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  overflow: hidden;
-}
-.hcard-av-row {
-  display: flex; align-items: center; gap: 7px;
-}
-.hcard-av {
-  width: 32px; height: 32px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 10px; font-weight: 800;
-  flex-shrink: 0;
-}
-.hcard-sender { flex: 1; overflow: hidden; }
-.hcard-from {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px; font-weight: 700;
-  color: #0f0f1e;
-}
-.hcard-role { font-size: 10px; color: #999; margin-top: 1px; }
-.hcard-preview {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 14px; color: #444;
-  line-height: 1.5;
-  flex: 1;
-}
-
-/* Card foot */
-.hcard-foot {
-  padding: 0 10px 8px;
-  display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
-}
-.hcard-cat-badge {
-  font-size: 9px; font-weight: 700;
-  padding: 2px 7px; border-radius: 10px;
-  text-transform: uppercase; letter-spacing: 0.4px;
-  font-family: 'DM Mono', monospace;
-}
-.hcard-dbg-id {
-  font-size: 8px; font-family: 'DM Mono', monospace;
-  color: #404060; flex: 1; text-align: center; overflow: hidden;
-  white-space: nowrap; text-overflow: ellipsis;
-}
-.hcard-urg {
-  width: 7px; height: 7px; border-radius: 50%;
-}
-.urg-3 { background: #ef4444; box-shadow: 0 0 5px #ef4444, 0 0 10px rgba(239,68,68,0.4); }
-.urg-2 { background: #f59e0b; }
-.urg-1 { background: #22c55e; }
-
-/* Expiry ribbon */
-.hcard.expiring::after {
-  content: 'LAST CHANCE';
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(220,38,38,0.92);
-  color: white;
-  font-size: 7px; font-weight: 900;
-  letter-spacing: 1.5px; text-align: center;
-  padding: 3px;
-  font-family: 'Space Grotesk', sans-serif;
-}
-
-/* No plays overlay */
-.hcard-noplays {
-  display: none;
-  position: absolute; inset: 0;
-  background: rgba(255,255,255,0.65);
-  border-radius: 12px;
-  align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 700;
-  color: #888; text-align: center;
-  padding: 12px;
-  font-family: 'DM Mono', monospace;
-  letter-spacing: 0.5px;
-}
-.hcard.locked .hcard-noplays { display: flex; }
-
-/* ── Hand footer ────────────────────────────────────────── */
-#hand-footer {
-  display: flex; align-items: center; justify-content: center;
-}
-#hand-status { font-size: 11px; color: var(--dim); text-align: center; }
-
-/* ── Summary Overlay ────────────────────────────────────── */
-#summary-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.82);
-  backdrop-filter: blur(6px);
-  z-index: 100;
-  align-items: center; justify-content: center;
-}
-#summary-overlay.on { display: flex; }
-
-#summary-box {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  padding: 32px 36px;
-  width: 480px; max-width: 92vw;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
-  animation: summaryIn 0.3s cubic-bezier(0.34,1.5,0.64,1) forwards;
-}
-@keyframes summaryIn {
-  from { opacity: 0; transform: scale(0.9) translateY(20px); }
-  to   { opacity: 1; transform: none; }
-}
-
-#sum-eyebrow {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: 4px;
-}
-#sum-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 24px; font-weight: 800;
-  color: white; margin-bottom: 22px;
-}
-#sum-outcomes {
-  display: flex; flex-direction: column; gap: 7px;
-  margin-bottom: 20px;
-  max-height: 280px; overflow-y: auto;
-}
-.sum-item {
-  display: flex; gap: 10px; align-items: flex-start;
-  padding: 10px 14px;
-  background: var(--surface);
-  border-radius: 10px;
-  font-size: 12px; line-height: 1.55;
-  opacity: 0; transform: translateY(6px);
-  transition: opacity 0.3s, transform 0.3s;
-}
-.sum-item.vis { opacity: 1; transform: none; }
-.sum-icon { font-size: 13px; flex-shrink: 0; margin-top: 1px; }
-.sum-text { color: var(--text); }
-.sum-drop { color: var(--dim2); }
-
-#sum-deltas {
-  display: flex; gap: 8px; flex-wrap: wrap;
-  margin-bottom: 22px;
-}
-.delta {
-  padding: 5px 12px; border-radius: 8px;
-  font-size: 11px; font-weight: 700;
-  font-family: 'DM Mono', monospace;
-}
-.d-pos { background: rgba(34,197,94,0.14); color: #22c55e; }
-.d-neg { background: rgba(239,68,68,0.14); color: #ef4444; }
-
-#sum-next {
-  width: 100%; padding: 13px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: none; border-radius: 12px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px; font-weight: 800;
-  color: white; cursor: pointer;
-  transition: opacity 0.15s;
-}
-#sum-next:hover { opacity: 0.9; }
-
-/* ── End Overlay (win/lose) ─────────────────────────────── */
-#end-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.93);
-  backdrop-filter: blur(10px);
-  z-index: 200;
-  flex-direction: column;
-  align-items: center; justify-content: center;
-  gap: 14px; text-align: center;
-}
-#end-overlay.on { display: flex; }
-#end-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 48px; font-weight: 800;
-  letter-spacing: -2px; line-height: 1;
-}
-#end-sub { font-size: 15px; color: var(--dim2); max-width: 380px; line-height: 1.6; }
-#end-btn {
-  margin-top: 6px; padding: 13px 40px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: none; border-radius: 12px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 14px; font-weight: 800;
-  color: white; cursor: pointer;
-}
-
-/* ── Splash Screen ──────────────────────────────────────── */
-#splash-overlay {
-  display: flex;
-  position: fixed; inset: 0;
-  background: var(--bg);
-  z-index: 400;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 24px;
-  text-align: center;
-  transition: opacity 0.5s ease;
-}
-#splash-overlay.hiding {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.splash-tagline {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: clamp(18px, 3vw, 22px);
-  font-style: italic;
-  color: var(--dim2);
-  line-height: 1.5;
-  margin-bottom: 28px;
-  opacity: 0;
-  animation: splashIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s both;
-}
-.splash-tagline strong {
-  color: var(--text);
-  font-style: normal;
-  font-weight: 500;
-}
-
-.splash-divider {
-  width: 48px; height: 1px;
-  background: var(--border2);
-  margin: 0 auto 28px;
-  opacity: 0;
-  animation: splashIn 0.5s ease 0.35s both;
-}
-
-.splash-eyebrow {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px; font-weight: 500;
-  letter-spacing: 3px;
-  text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: 10px;
-  opacity: 0;
-  animation: splashIn 0.5s ease 0.45s both;
-}
-
-.splash-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(48px, 9vw, 78px);
-  font-weight: 800;
-  letter-spacing: -3px;
-  line-height: 0.95;
-  background: linear-gradient(135deg, #818cf8 0%, #a78bfa 45%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 32px;
-  opacity: 0;
-  animation: splashIn 0.7s cubic-bezier(0.22,1,0.36,1) 0.55s both;
-}
-
-.splash-body {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: clamp(14px, 2vw, 16px);
-  color: var(--dim2);
-  line-height: 1.75;
-  max-width: 400px;
-  margin-bottom: 24px;
-  opacity: 0;
-  animation: splashIn 0.6s ease 0.75s both;
-}
-
-.splash-stats {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px; font-weight: 500;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--dim);
-  margin-bottom: 40px;
-  opacity: 0;
-  animation: splashIn 0.5s ease 0.9s both;
-}
-
-#splash-btn {
-  padding: 14px 48px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: none; border-radius: 12px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 15px; font-weight: 800;
-  color: white; cursor: pointer;
-  box-shadow: 0 0 48px rgba(99,102,241,0.35);
-  opacity: 0;
-  animation: splashIn 0.6s cubic-bezier(0.34,1.5,0.64,1) 1.05s both;
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-#splash-btn:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 64px rgba(139,92,246,0.5);
-}
-#splash-btn:active { transform: scale(0.97); }
-
-@keyframes splashIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* ── Debug bar ──────────────────────────────────────────── */
-#debug-bar {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  z-index: 300;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(0,0,0,0.82);
-  border: 1px solid #7c3a0a;
-  border-radius: 6px;
-  padding: 5px 9px;
-  pointer-events: all;
-}
-#debug-lbl {
-  font-size: 9px;
-  color: #f97316;
-  font-weight: 700;
-  letter-spacing: .12em;
-  text-transform: uppercase;
-  margin-right: 3px;
-}
-#debug-bar button {
-  font-size: 10px;
-  padding: 3px 9px;
-  background: #111;
-  border: 1px solid #333;
-  color: #aaa;
-  border-radius: 4px;
-  cursor: pointer;
-  font-family: inherit;
-}
-#debug-bar button:hover { background: #222; color: #fff; border-color: #f97316; }
-#debug-bar button:active { transform: scale(0.95); }
-
-/* ── Intro Overlay ──────────────────────────────────────── */
-#intro-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.96);
-  backdrop-filter: blur(12px);
-  z-index: 300;
-  align-items: center; justify-content: center;
-}
-#intro-overlay.on { display: flex; }
-
-#intro-card {
-  width: 420px; max-width: 92vw;
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow: 0 40px 120px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04);
-  animation: introCardIn 0.4s cubic-bezier(0.34,1.5,0.64,1) forwards;
-}
-@keyframes introCardIn {
-  from { opacity: 0; transform: scale(0.88) translateY(30px); }
-  to   { opacity: 1; transform: none; }
-}
-.intro-card-exit {
-  animation: introCardOut 0.28s ease-in forwards !important;
-}
-@keyframes introCardOut {
-  from { opacity: 1; transform: none; }
-  to   { opacity: 0; transform: scale(0.92) translateY(-20px); }
-}
-
-#intro-stripe {
-  height: 6px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6, #a855f7);
-}
-
-#intro-body { padding: 32px 36px 28px; }
-#intro-step {
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--dim); margin-bottom: 6px;
-  font-family: 'DM Mono', monospace;
-}
-#intro-heading {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 22px; font-weight: 800;
-  color: white; margin-bottom: 14px; line-height: 1.2;
-}
-#intro-text {
-  font-family: 'Spectral', Georgia, serif;
-  font-size: 16px; color: var(--dim2);
-  line-height: 1.7; margin-bottom: 32px;
-}
-#intro-footer {
-  display: flex; align-items: center;
-  justify-content: space-between; gap: 12px;
-}
-#intro-dots { display: flex; gap: 6px; align-items: center; }
-.intro-dot {
-  width: 6px; height: 6px; border-radius: 50%;
-  background: var(--surface3); border: 1px solid var(--border2);
-  transition: background 0.2s, transform 0.2s;
-}
-.intro-dot.active {
-  background: #8b5cf6; transform: scale(1.3); border-color: transparent;
-}
-#intro-skip {
-  font-size: 11px; color: var(--dim);
-  background: none; border: none; cursor: pointer;
-  font-family: 'DM Mono', monospace;
-  text-decoration: underline; padding: 0;
-  transition: color 0.15s;
-}
-#intro-skip:hover { color: var(--dim2); }
-#intro-next {
-  padding: 11px 26px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  border: none; border-radius: 10px;
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 13px; font-weight: 800;
-  color: white; cursor: pointer;
-  transition: opacity 0.15s, transform 0.1s;
-}
-#intro-next:hover { opacity: 0.9; }
-#intro-next:active { transform: scale(0.97); }
-
-
-/* ── History Pile ───────────────────────────────────────── */
-#pile-btn {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 10px 4px 4px;
-  border-radius: 10px;
-  transition: background 0.15s;
-  flex-shrink: 0;
-}
-#pile-btn:hover { background: var(--surface3); }
-
-#pile-stack {
-  position: relative;
-  width: 34px; height: 46px;
-  flex-shrink: 0;
-}
-.pile-c {
-  position: absolute;
-  width: 26px; height: 37px;
-  border-radius: 5px;
-  border: 1px solid var(--border2);
-}
-.pile-c1 { background: var(--surface3); transform: rotate(-5deg) translate(-3px, 4px); z-index: 1; }
-.pile-c2 { background: var(--surface2); transform: rotate(-1deg) translate(0px, 2px);  z-index: 2; }
-.pile-c3 { background: #1a1a30;         transform: rotate(3deg)  translate(4px, 0px);  z-index: 3; overflow: hidden; }
-.pile-c3::before {
-  content: '';
-  display: block;
-  height: 4px;
-  background: linear-gradient(90deg, #6366f1, #8b5cf6);
-}
-
-#pile-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; }
-#pile-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--dim); font-family: 'DM Mono', monospace;
-}
-#pile-count-val {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 15px; font-weight: 800;
-  color: var(--dim2); line-height: 1;
-}
-
-@keyframes pilePop {
-  0%   { transform: scale(1); }
-  35%  { transform: scale(1.3); }
-  100% { transform: scale(1); }
-}
-.pile-pop { animation: pilePop 0.38s cubic-bezier(0.34,1.56,0.64,1); }
-
-/* ── Log Overlay ────────────────────────────────────────── */
-#log-overlay {
-  display: none;
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.82);
-  backdrop-filter: blur(6px);
-  z-index: 120;
-  align-items: center; justify-content: center;
-}
-#log-overlay.on { display: flex; }
-
-#log-box {
-  background: var(--surface2);
-  border: 1px solid var(--border2);
-  border-radius: 20px;
-  width: 520px; max-width: 94vw;
-  max-height: 82vh;
-  display: flex; flex-direction: column;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
-  animation: summaryIn 0.3s cubic-bezier(0.34,1.5,0.64,1) forwards;
-}
-
-#log-header {
-  padding: 22px 26px 18px;
-  border-bottom: 1px solid var(--border);
-  display: flex; align-items: flex-start; justify-content: space-between;
-  flex-shrink: 0;
-}
-#log-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 20px; font-weight: 800; color: white;
-}
-#log-subtitle { font-size: 11px; color: var(--dim); margin-top: 3px; }
-#log-close-btn {
-  background: var(--surface3); border: 1px solid var(--border2);
-  width: 30px; height: 30px; border-radius: 50%;
-  font-size: 12px; color: var(--dim2);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s, color 0.15s; flex-shrink: 0;
-}
-#log-close-btn:hover { background: var(--surface); color: var(--text); }
-
-#log-filters {
-  padding: 10px 26px 12px;
-  border-bottom: 1px solid var(--border);
-  display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
-}
-#log-filters:empty { display: none; }
-.lf-pill {
-  display: flex; align-items: center; gap: 5px;
-  padding: 3px 10px 3px 5px;
-  border-radius: 20px; cursor: pointer;
-  border: 1px solid var(--border2);
-  background: none;
-  font-size: 11px; font-family: 'DM Mono', monospace; color: var(--dim2);
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-  white-space: nowrap;
-}
-.lf-pill:hover { border-color: rgba(255,255,255,0.22); color: var(--text); }
-.lf-pill.active { background: var(--surface3); border-color: rgba(255,255,255,0.3); color: var(--text); }
-.lf-av {
-  width: 18px; height: 18px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 7px; font-weight: 800;
-}
-
-#log-scroll {
-  overflow-y: auto; flex: 1;
-  padding: 16px 26px 24px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--surface3) transparent;
-}
-
-.log-week { margin-bottom: 22px; }
-.log-week-label {
-  font-size: 9px; font-weight: 700;
-  letter-spacing: 2px; text-transform: uppercase;
-  color: var(--dim); font-family: 'DM Mono', monospace;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 10px;
-}
-
-.log-entry {
-  display: flex; gap: 11px; align-items: flex-start;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
-}
-.log-entry:last-child { border-bottom: none; }
-
-.log-av {
-  width: 30px; height: 30px; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 800;
-  flex-shrink: 0; margin-top: 1px;
-}
-.log-right { flex: 1; min-width: 0; }
-.log-top { display: flex; align-items: center; gap: 7px; margin-bottom: 3px; flex-wrap: wrap; }
-.log-from {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 12px; font-weight: 700; color: var(--text);
-}
-.log-cat {
-  font-size: 8px; font-weight: 700;
-  padding: 2px 6px; border-radius: 8px;
-  text-transform: uppercase; letter-spacing: 0.4px;
-  font-family: 'DM Mono', monospace;
-}
-.log-body {
-  font-family: 'Spectral', Georgia, serif;
-  font-style: italic; font-size: 13px;
-  color: var(--dim2); line-height: 1.5;
-  margin-bottom: 5px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.log-action {
-  font-size: 11px; display: flex; gap: 5px; align-items: flex-start;
-  font-family: 'DM Mono', monospace;
-}
-.log-acted   { color: var(--good); }
-.log-dropped { color: var(--danger); }
-.log-passed  { color: var(--dim); }
-.log-act-icon { flex-shrink: 0; margin-top: 1px; }
-.log-outcome {
-  margin-top: 4px;
-  font-size: 12px; color: var(--dim2);
-  line-height: 1.5; padding-left: 14px;
-}
-#log-empty {
-  text-align: center; padding: 48px 20px;
-  color: var(--dim); font-size: 13px; line-height: 1.7;
-}
-
-/* ── Milestone Toast ─────────────────────────────────────── */
-#milestone-toast {
-  position: fixed; inset: 0; z-index: 990;
-  display: flex; align-items: center; justify-content: center;
-  pointer-events: none;
-  transition: background 0.3s;
-}
-#milestone-toast.on {
-  pointer-events: auto;
-  background: rgba(0,0,0,0.55);
-  backdrop-filter: blur(6px);
-}
-
-#milestone-card {
-  display: none;
-  flex-direction: column; align-items: center; text-align: center;
-  padding: 44px 52px 38px;
-  background: radial-gradient(ellipse at 50% 0%, #1c1c48, #09090f);
-  border: 1px solid rgba(255,255,255,0.11);
-  border-radius: 28px;
-  box-shadow:
-    0 0 0 1px rgba(139,92,246,0.25),
-    0 0 80px rgba(99,102,241,0.2),
-    0 40px 120px rgba(0,0,0,0.9);
-  max-width: 380px; width: 90vw;
-  position: relative; overflow: hidden;
-}
-#milestone-card.on {
-  display: flex;
-  animation: msIn 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards;
-}
-#milestone-card.out { animation: msOut 0.3s ease-in forwards !important; }
-
-@keyframes msIn {
-  from { opacity: 0; transform: scale(0.62) translateY(28px); }
-  to   { opacity: 1; transform: none; }
-}
-@keyframes msOut {
-  from { opacity: 1; transform: none; }
-  to   { opacity: 0; transform: scale(0.87) translateY(-18px); }
-}
-
-/* inner radial glow */
-#ms-glow {
-  position: absolute; inset: 0; border-radius: 28px;
-  background: radial-gradient(ellipse at 50% -20%, rgba(139,92,246,0.18) 0%, transparent 65%);
-  pointer-events: none;
-  animation: msGlowPulse 2.2s ease-in-out infinite;
-}
-@keyframes msGlowPulse {
-  0%,100% { opacity: 0.5; }
-  50%      { opacity: 1; }
-}
-
-#ms-emoji {
-  font-size: 66px; line-height: 1; display: block;
-  margin-bottom: 16px; position: relative; z-index: 1;
-  filter: drop-shadow(0 4px 20px rgba(255,255,255,0.22));
-  animation: msEmojiIn 0.7s cubic-bezier(0.34,1.56,0.64,1) 0.1s backwards;
-}
-@keyframes msEmojiIn {
-  from { transform: scale(0.15) rotate(-30deg); opacity: 0; }
-  to   { transform: none; opacity: 1; }
-}
-#ms-label {
-  font-size: 10px; font-weight: 700; letter-spacing: 3px;
-  text-transform: uppercase; color: #8b5cf6;
-  margin-bottom: 8px; font-family: 'DM Mono', monospace;
-  position: relative; z-index: 1;
-  animation: msFadeUp 0.38s ease 0.27s backwards;
-}
-#ms-title {
-  font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 800;
-  color: white; margin-bottom: 10px; line-height: 1.15;
-  position: relative; z-index: 1;
-  animation: msFadeUp 0.38s ease 0.34s backwards;
-}
-#ms-sub {
-  font-family: 'Spectral', Georgia, serif; font-style: italic;
-  font-size: 15px; color: rgba(190,190,230,0.85); line-height: 1.65;
-  position: relative; z-index: 1;
-  animation: msFadeUp 0.38s ease 0.42s backwards;
-}
-#ms-hint {
-  margin-top: 22px; font-size: 10px; color: rgba(255,255,255,0.2);
-  font-family: 'DM Mono', monospace; letter-spacing: 0.5px;
-  position: relative; z-index: 1;
-  animation: msFadeUp 0.38s ease 0.52s backwards;
-}
-@keyframes msFadeUp {
-  from { opacity: 0; transform: translateY(10px); }
-  to   { opacity: 1; transform: none; }
-}
-
-/* ── Danger milestone variant (Alex departure, etc.) ─────── */
-#milestone-card.danger {
-  background: radial-gradient(ellipse at 50% 0%, #2a0f0f, #09090f);
-  box-shadow:
-    0 0 0 1px rgba(239,68,68,0.3),
-    0 0 80px rgba(220,38,38,0.18),
-    0 40px 120px rgba(0,0,0,0.9);
-}
-#milestone-card.danger #ms-glow {
-  background: radial-gradient(ellipse at 50% -20%, rgba(239,68,68,0.22) 0%, transparent 65%);
-}
-#milestone-card.danger #ms-label { color: #ef4444; }
-#milestone-card.danger #ms-sub   { color: rgba(230,180,180,0.8); }
-#milestone-card.danger #ms-hint  { color: rgba(255,255,255,0.25); }
-
-/* ── Bank Overlay ────────────────────────────────────────── */
-#bank-overlay {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.82); backdrop-filter: blur(6px);
-  z-index: 120; align-items: center; justify-content: center;
-}
-#bank-overlay.on { display: flex; }
-#bank-box {
-  background: var(--surface2); border: 1px solid var(--border2);
-  border-radius: 20px; width: 520px; max-width: 94vw; max-height: 82vh;
-  display: flex; flex-direction: column;
-  box-shadow: 0 40px 100px rgba(0,0,0,0.7);
-  animation: summaryIn 0.3s cubic-bezier(0.34,1.5,0.64,1) forwards;
-}
-#bank-header {
-  padding: 22px 26px 16px; border-bottom: 1px solid var(--border);
-  display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
-}
-#bank-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 800; color: white; }
-#bank-subtitle { font-size: 11px; color: var(--dim); margin-top: 3px; }
-#bank-close-btn {
-  background: var(--surface3); border: 1px solid var(--border2);
-  width: 30px; height: 30px; border-radius: 50%; font-size: 12px; color: var(--dim2);
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background 0.15s, color 0.15s; flex-shrink: 0;
-}
-#bank-close-btn:hover { background: var(--surface); color: var(--text); }
-#bank-scroll {
-  overflow-y: auto; flex: 1; padding: 16px 26px 24px;
-  scrollbar-width: thin; scrollbar-color: var(--surface3) transparent;
-}
-.bank-opening {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 10px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 18px;
-}
-.bank-opening-lbl { font-size: 11px; color: var(--dim2); font-family: 'DM Mono', monospace; }
-.bank-opening-val { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 800; color: white; }
-.bank-sprint { margin-bottom: 18px; }
-.bank-sprint-lbl {
-  font-size: 9px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
-  color: var(--dim); font-family: 'DM Mono', monospace;
-  padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 8px;
-}
-.bank-row {
-  display: flex; align-items: flex-start; padding: 8px 0;
-  border-bottom: 1px solid rgba(255,255,255,0.03); gap: 10px;
-}
-.bank-row:last-of-type { border-bottom: none; }
-.bank-row-icon { font-size: 13px; width: 20px; flex-shrink: 0; padding-top: 1px; text-align: center; }
-.bank-row-desc { flex: 1; min-width: 0; }
-.bank-row-lbl { font-size: 12px; color: var(--text); line-height: 1.3; }
-.bank-row-note {
-  display: block; margin-top: 3px; font-size: 11px; color: var(--dim);
-  font-family: 'Spectral', Georgia, serif; font-style: italic; line-height: 1.4;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.bank-row-amt {
-  font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 700;
-  white-space: nowrap; padding-top: 1px; flex-shrink: 0;
-}
-.bank-amt-neg { color: var(--danger); }
-.bank-amt-pos { color: var(--good); }
-.bank-balance {
-  display: flex; justify-content: flex-end; align-items: center;
-  gap: 8px; padding: 6px 0 2px;
-}
-.bank-bal-lbl {
-  font-size: 9px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--dim); font-family: 'DM Mono', monospace;
-}
-.bank-bal-val {
-  font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 800;
-  font-variant-numeric: tabular-nums;
-}
-.bank-bal-ok { color: var(--text); }
-.bank-bal-warn { color: var(--warn); }
-.bank-bal-danger { color: var(--danger); }
-/* Cash stat clickable hint */
-#cash-hst { cursor: pointer; border-radius: 8px; transition: background 0.15s; padding: 0 6px; margin: 0 -6px; }
-#cash-hst:hover { background: var(--surface3); }
-#cash-hst .hst-lbl { color: #8b5cf6; }
-#cash-hst #h-cash { text-decoration: underline solid rgba(139,92,246,0.55); text-underline-offset: 3px; }
-
-.ms-particle {
-  position: fixed; pointer-events: none; z-index: 1000;
-  border-radius: 2px;
-  animation: msParticle var(--dur) cubic-bezier(0.15,0.8,0.3,1) var(--delay) forwards;
-}
-@keyframes msParticle {
-  0%   { opacity: 1; transform: translate(0,0) scale(1) rotate(0deg); }
-  60%  { opacity: 0.8; }
-  100% { opacity: 0; transform: translate(var(--tx),var(--ty)) scale(0.05) rotate(var(--rot)); }
-}
-
-/* ── Mobile (portrait) ──────────────────────────────────── */
-@media (max-width: 600px) {
-  #char-panel { width: 100%; position: relative; max-height: 40vh; }
-  #chat-main { margin-left: 0; }
-}
+  :root{
+    --bg:#ecebf1; --panel:#ffffff; --rail:#f7f7fa; --line:#e3e3e8;
+    --ink:#1c1c1e; --muted:#8a8a8e; --faint:#aeaeb2;
+    --in:#e9e9eb; --out1:#0b84ff; --out2:#0a6fe0;
+    --accent:#0b84ff; --green:#34c759; --gold:#ffb340;
+    --shadow:0 1px 3px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
+    --r:18px;
+    /* handwritten stack for the journal — degrades to generic cursive, no web fonts */
+    --hand:"Segoe Print","Bradley Hand","Noteworthy","Marker Felt","Comic Sans MS",cursive;
+    --paper:#faf4e6; --jink:#4a4233; --jink-blue:#2a5db0; --rule:#e6d9bb; --margin:#e6b0a6;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{height:100vh;display:flex;flex-direction:column;max-width:1180px;margin:0 auto;padding:18px;gap:14px}
+
+  /* ── top bar ─────────────────────────────────────────── */
+  .topbar{
+    display:flex;align-items:center;gap:18px;
+    background:var(--panel);border-radius:16px;padding:12px 18px;box-shadow:var(--shadow);
+  }
+  .brand{display:flex;flex-direction:column;line-height:1.1}
+  .brand b{font-size:17px;letter-spacing:.2px}
+  .brand span{font-size:12px;color:var(--muted)}
+  .week-pill{
+    font-weight:600;font-size:13px;background:#f0eefb;color:#5b50d6;
+    padding:5px 12px;border-radius:999px;
+  }
+  .stats{display:flex;gap:8px;margin-left:auto;align-items:center}
+  .stat{
+    display:flex;flex-direction:column;align-items:center;min-width:64px;
+    background:var(--rail);border:1px solid var(--line);border-radius:12px;padding:6px 10px;
+  }
+  .stat .v{font-weight:700;font-size:14px}
+  .stat .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .stat.warn .v{color:#ff3b30}
+  .actions-budget{display:flex;align-items:center;gap:8px;padding-left:6px}
+  .actions-budget .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);transition:.2s}
+  .dot.full{background:var(--accent)}
+  .endweek{
+    border:0;background:var(--ink);color:#fff;font-weight:600;font-size:13px;
+    padding:9px 16px;border-radius:12px;cursor:pointer;transition:.15s;
+  }
+  .endweek:hover{transform:translateY(-1px);opacity:.92}
+  .endweek:disabled{opacity:.4;cursor:default;transform:none}
+
+  /* ── main split ──────────────────────────────────────── */
+  .main{flex:1;display:flex;flex-direction:column;gap:14px;min-height:0}
+  .top-row{flex:1;display:flex;gap:14px;min-height:0}
+  .rail{
+    width:268px;flex:none;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .rail h2{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--faint);margin:0;padding:16px 18px 8px}
+  .convs{overflow-y:auto;padding:0 8px 10px}
+  .conv{
+    display:flex;gap:11px;align-items:center;padding:10px 10px;border-radius:13px;cursor:pointer;
+    transition:background .12s;position:relative;
+  }
+  .conv:hover{background:var(--rail)}
+  .conv.active{background:#eaf3ff}
+  .avatar{
+    width:42px;height:42px;border-radius:50%;flex:none;display:grid;place-items:center;
+    color:#fff;font-weight:600;font-size:15px;
+  }
+  .conv-body{min-width:0;flex:1}
+  .conv-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .conv-name{font-weight:600;font-size:14.5px}
+  .conv-prev{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .badge{
+    width:9px;height:9px;border-radius:50%;background:var(--accent);flex:none;
+    box-shadow:0 0 0 3px #eaf3ff;
+  }
+  .conv:not(.active) .badge{box-shadow:0 0 0 3px var(--panel)}
+
+  /* ── chat panel ──────────────────────────────────────── */
+  .chat{
+    flex:1;background:var(--panel);border-radius:16px;box-shadow:var(--shadow);
+    display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative;
+  }
+  .chat-head{
+    display:flex;align-items:center;gap:12px;padding:13px 18px;border-bottom:1px solid var(--line);
+  }
+  .chat-head .avatar{width:34px;height:34px;font-size:13px}
+  .chat-head .nm{font-weight:600}
+  .chat-head .rl{font-size:12px;color:var(--muted)}
+  .thread{flex:1;overflow-y:auto;padding:20px 22px 8px;display:flex;flex-direction:column;gap:3px}
+
+  .divider{align-self:center;margin:14px 0 6px;font-size:11px;color:var(--faint);
+    text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+
+  .row{display:flex;margin-top:4px;animation:rise .32s cubic-bezier(.2,.8,.2,1)}
+  .row.in{justify-content:flex-start}
+  .row.out{justify-content:flex-end}
+  .bubble{
+    max-width:74%;padding:9px 14px;border-radius:20px;font-size:14.5px;
+    white-space:pre-wrap;word-wrap:break-word;
+  }
+  .in .bubble{background:var(--in);color:var(--ink);border-bottom-left-radius:6px}
+  .out .bubble{background:linear-gradient(180deg,var(--out1),var(--out2));color:#fff;border-bottom-right-radius:6px}
+  .subtext{align-self:flex-start;max-width:74%;color:var(--faint);font-size:12px;
+    font-style:italic;margin:1px 0 4px 6px}
+  .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
+  .outcome{align-self:center;max-width:80%;text-align:center;color:var(--muted);
+    font-size:12.5px;margin:8px 0;padding:0 8px}
+  .outcome b{color:var(--ink)}
+
+  /* typing indicator */
+  .typing{display:inline-flex;gap:4px;padding:12px 15px;background:var(--in);border-radius:20px;border-bottom-left-radius:6px}
+  .typing i{width:7px;height:7px;border-radius:50%;background:#b6b6bb;animation:blink 1.2s infinite}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+
+  /* ── journal panel: always visible at the bottom ──────────────────── */
+  .journal-panel{
+    flex:none; height:220px; min-height:120px;
+    background:var(--panel); border-radius:16px; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .journal-head{
+    display:flex; align-items:center; gap:10px; padding:10px 18px;
+    border-bottom:1px solid var(--line); flex:none;
+  }
+  .journal-head .jh-icon{ font-size:18px }
+  .journal-head .jh-title{ font-weight:600; font-size:14px }
+  .journal-head .jh-sub{ font-size:11px; color:var(--muted) }
+  .journal-scroll{
+    flex:1; overflow-y:auto; gap:0;
+    background-color:var(--paper);
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 33px, var(--rule) 33px, var(--rule) 34px),
+      linear-gradient(90deg, transparent 0 50px, var(--margin) 50px 52px, transparent 52px);
+    background-attachment:local;
+    padding:16px 30px 16px 70px;
+    display:flex; flex-direction:column;
+  }
+
+  /* keep the old .thread.journal-mode for if someone opens the tab directly */
+  .thread.journal-mode{
+    gap:0;
+    background-color:var(--paper);
+    background-image:
+      repeating-linear-gradient(var(--paper), var(--paper) 33px, var(--rule) 33px, var(--rule) 34px),
+      linear-gradient(90deg, transparent 0 50px, var(--margin) 50px 52px, transparent 52px);
+    background-attachment:local;
+    padding:26px 30px 16px 70px;
+  }
+  .journal-mode .journal-entry, .journal-scroll .journal-entry{
+    font-family:var(--hand); color:var(--jink);
+    font-size:17px; line-height:34px; margin:0 0 6px; white-space:pre-wrap;
+    animation:inkin .5s ease both;
+  }
+  .journal-mode .journal-entry.is-outcome, .journal-scroll .journal-entry.is-outcome{ color:#5a513f; }
+  .journal-mode .journal-choice, .journal-scroll .journal-choice{
+    font-family:var(--hand); color:var(--jink-blue);
+    font-size:17px; line-height:34px; margin:0 0 6px; animation:inkin .45s ease both;
+  }
+  .journal-mode .journal-source, .journal-scroll .journal-source{
+    display:block; font-family:-apple-system,sans-serif; font-size:10px; line-height:1;
+    letter-spacing:.6px; text-transform:uppercase; color:#bca978; margin:-2px 0 8px;
+  }
+  /* week number written into the red margin gutter, beside the entry */
+  .journal-mode .journal-date, .journal-scroll .journal-date{ position:relative; align-self:stretch; min-height:26px; margin:22px 0 0; }
+  .journal-mode .journal-date:first-child, .journal-scroll .journal-date:first-child{ margin-top:4px; }
+  .journal-mode .journal-date .num, .journal-scroll .journal-date .num{
+    position:absolute; left:-66px; top:2px; width:44px; text-align:right;
+    font-family:var(--hand); color:#b5654a; line-height:1;
+  }
+  .journal-mode .journal-date .num b, .journal-scroll .journal-date .num b{ display:block; font-size:19px; font-weight:700; }
+  .journal-mode .journal-date .num i, .journal-scroll .journal-date .num i{
+    display:block; font-size:8.5px; letter-spacing:1.5px; text-transform:uppercase;
+    font-style:normal; color:#c9a98f; margin-top:3px;
+  }
+  /* milestone rubber stamp */
+  .journal-mode .journal-stamp, .journal-scroll .journal-stamp{
+    align-self:flex-start; margin:12px 0 16px; padding:5px 15px;
+    border:3px double currentColor; border-radius:6px;
+    font-family:"Arial Black",Impact,sans-serif; font-weight:800; font-size:14px;
+    letter-spacing:2px; text-transform:uppercase; opacity:.78;
+    transform:rotate(-7deg); animation:stampin .4s cubic-bezier(.2,1.5,.4,1) both;
+  }
+  .journal-mode .journal-stamp.green, .journal-scroll .journal-stamp.green{ color:#2e8b57 }
+  .journal-mode .journal-stamp.blue, .journal-scroll .journal-stamp.blue{ color:#2a5db0 }
+  .journal-mode .journal-stamp.red, .journal-scroll .journal-stamp.red{ color:#c0392b }
+  /* inline action buttons inside journal entries */
+  .journal-actions{
+    display:flex; flex-direction:column; gap:7px; margin:4px 0 14px;
+    animation:inkin .4s ease both;
+  }
+  .journal-btn{
+    text-align:left; border:1.5px solid #d8c39c; background:#fefcf2; color:#5b4a24;
+    padding:8px 14px; border-radius:10px; cursor:pointer;
+    font:14px var(--hand); line-height:1.35; transition:.13s;
+  }
+  .journal-btn:hover{ border-color:#b8943c; background:#fff7e0; transform:translateY(-1px); }
+  .journal-btn.spent{ opacity:.4; pointer-events:none; }
+
+  /* ── composer ────────────────────────────────────────── */
+  .composer{border-top:1px solid var(--line);padding:14px 18px;background:var(--panel)}
+  .prompt-label{font-size:11px;color:var(--faint);text-transform:uppercase;letter-spacing:.6px;margin-bottom:9px}
+  .chips{display:flex;flex-direction:column;gap:9px}
+  .chip{
+    text-align:left;border:1px solid var(--line);background:#f8f9fb;color:var(--ink);
+    padding:11px 15px;border-radius:14px;cursor:pointer;font-size:14px;transition:.13s;line-height:1.35;
+  }
+  .chip:hover{border-color:var(--accent);background:#eef5ff;transform:translateY(-1px)}
+  .chip.journal{background:#fffdf5;border-color:#efe6c8}
+  .chip.journal:hover{border-color:var(--gold);background:#fff7e6}
+  .composer.spent .chip{opacity:.45;pointer-events:none}
+  .empty-state{color:var(--faint);font-size:13.5px;text-align:center;padding:6px 0 2px}
+  .empty-state .go{
+    display:inline-block;margin-top:8px;color:var(--accent);font-weight:600;cursor:pointer;
+  }
+
+  /* ── banner + overlay ────────────────────────────────── */
+  .banner{
+    position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);
+    background:var(--ink);color:#fff;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;
+    box-shadow:var(--shadow);opacity:0;transition:.4s cubic-bezier(.2,.8,.2,1);z-index:5;pointer-events:none;
+  }
+  .banner.show{transform:translateX(-50%) translateY(0);opacity:1}
+  .overlay{
+    position:fixed;inset:0;background:rgba(20,20,30,.55);backdrop-filter:blur(6px);
+    display:none;place-items:center;z-index:20;
+  }
+  .overlay.show{display:grid;animation:fade .3s ease}
+  .card-modal{
+    background:var(--panel);border-radius:22px;max-width:440px;padding:34px 32px;text-align:center;
+    box-shadow:var(--shadow);animation:rise .4s cubic-bezier(.2,.8,.2,1)
+  }
+  .card-modal .em{font-size:42px}
+  .card-modal h3{margin:14px 0 6px;font-size:22px}
+  .card-modal p{color:var(--muted);font-size:14px;margin:0 0 22px}
+  .card-modal .split{font-weight:700;color:var(--accent);font-size:16px}
+  .card-modal button{border:0;background:var(--ink);color:#fff;font-weight:600;padding:11px 22px;
+    border-radius:13px;cursor:pointer;font-size:14px}
+
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes inkin{from{opacity:0;filter:blur(1.5px)}to{opacity:1;filter:blur(0)}}
+  @keyframes stampin{0%{opacity:0;transform:rotate(-7deg) scale(2.2)}60%{opacity:.92}100%{opacity:.78;transform:rotate(-7deg) scale(1)}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+  ::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
 </style>
 </head>
 <body>
-
-<!-- ── HUD ──────────────────────────────────────────────── -->
-<div id="hud">
-  <div id="hud-week">WEEK 1 · M1</div>
-  <div class="hst" id="cash-hst" onclick="openBank()" title="View bank statement"><span class="hst-lbl">Cash <span style="font-size:9px;color:#8b5cf6">↗</span></span><span class="hst-val" id="h-cash">$10k</span></div>
-  <div class="hst"><span class="hst-lbl">Runway</span><span class="hst-val" id="h-rwy">20wk</span></div>
-  <div class="hst" id="h-yc-wrap"><span class="hst-lbl">YC</span><span class="hst-val" id="h-yc">—</span></div>
-  <div class="hst"><span class="hst-lbl">Fit</span><span class="hst-val" id="h-fit">0%</span></div>
-  <div class="hst"><span class="hst-lbl">Signal</span><span class="hst-val" id="h-sig">28</span></div>
-  <div class="hst" id="h-wl-wrap" style="display:none"><span class="hst-lbl">Waitlist</span><span class="hst-val" id="h-wl">0</span></div>
-  <div class="hst" id="h-usr-wrap" style="display:none"><span class="hst-lbl">Users</span><span class="hst-val" id="h-usr">0</span></div>
-  <div class="hst" style="border-right:none"><span class="hst-lbl">Customers</span><span class="hst-val" id="h-cust">0</span></div>
-  <button id="team-btn" onclick="toggleTeamDrop()">
-    <div id="team-avs">
-      <div class="tbtn-av" id="tbtn-al" style="background:#1e3a5f;color:#93c5fd">AL<div class="tbtn-ring" id="tbtn-al-ring"></div></div>
-      <div class="tbtn-av" id="tbtn-jo" style="background:#4c1d95;color:#c4b5fd;display:none">JO<div class="tbtn-ring" id="tbtn-jo-ring"></div></div>
+  <div class="app">
+    <!-- top bar -->
+    <div class="topbar">
+      <div class="avatar" style="background:linear-gradient(135deg,#ff6b9d,#c44bd6);width:38px;height:38px">K</div>
+      <div class="brand"><b>Kindred</b><span>idea → seed round</span></div>
+      <div class="week-pill" id="weekPill">Week 1</div>
+      <div class="stats" id="stats"></div>
+      <div class="actions-budget">
+        <span class="lbl">Actions</span>
+        <div class="dot full" id="dot0"></div>
+        <div class="dot full" id="dot1"></div>
+      </div>
+      <button class="endweek" id="endweek">End week →</button>
     </div>
-    <span class="team-btn-lbl">Team</span><span id="team-caret">▾</span>
-  </button>
-  <div id="team-drop">
-    <div id="td-members"></div>
-    <div id="td-roadmap"></div>
-  </div>
-</div>
 
-<!-- ── Conversation List (left sidebar) ──────────────────── -->
-<div id="char-panel"></div>
+    <!-- main -->
+    <div class="main">
+      <div class="top-row">
+        <div class="rail">
+          <h2>Messages</h2>
+          <div class="convs" id="convs"></div>
+        </div>
 
-<!-- ── Chat Main Area ──────────────────────────────────── -->
-<div id="chat-main">
-  <div id="chat-header" style="display:none"></div>
-  <div id="effort-bar-wrap">
-    <span id="effort-label">Week 1 — 1.0 wk left</span>
-    <div id="effort-track"><div id="effort-fill" style="width:100%"></div></div>
-    <button id="effort-end-week" onclick="endWeekEarly()">End Week</button>
-  </div>
-  <div id="chat-empty">
-    <div id="chat-empty-icon">💬</div>
-    <div id="chat-empty-text">Pick a conversation to get started.<br>Your co-founders are waiting.</div>
-  </div>
-  <div id="chat-thread" style="display:none"></div>
-  <div id="chat-results">
-    <div id="chat-results-deltas"></div>
-    <button id="chat-results-btn" onclick="nextWeek()">Week 2 →</button>
-  </div>
-</div>
-
-<!-- ── Hand (hidden, kept for compatibility) ────────────── -->
-<div id="hand-area" style="display:none">
-  <div id="hand-top">
-    <button id="pile-btn" onclick="openLog()">
-      <div id="pile-stack">
-        <div class="pile-c pile-c1"></div>
-        <div class="pile-c pile-c2"></div>
-        <div class="pile-c pile-c3"></div>
-      </div>
-      <div id="pile-meta">
-        <span id="pile-label">History</span>
-        <span id="pile-count-val">0</span>
-      </div>
-    </button>
-    <span class="hand-lbl">Your Hand</span>
-    <button id="deal-btn-old" style="display:none">Deal cards →</button>
-    <span id="plays-left" style="display:none"><span>2</span> plays remaining</span>
-  </div>
-  <div id="hand-cards"></div>
-  <div id="hand-footer">
-    <span id="hand-status"></span>
-  </div>
-</div>
-
-<!-- ── How-to-play overlay ──────────────────────────────── -->
-<div id="htp-overlay">
-  <div id="htp-panel">
-    <div id="htp-eyebrow">How to play</div>
-    <div id="htp-heading">Everyone's texting. You can only reply to 2.</div>
-    <div id="htp-body">Running a startup is hard. Co-founders, investors, advisors — everyone wants your time.<br><br>Each week you have 1 week of effort. Most replies cost half a week. Ignore someone too long and there will be consequences...</div>
-    <button id="htp-ok" onclick="dismissHTP()">Got it, let's go →</button>
-  </div>
-</div>
-
-<!-- ── Summary ───────────────────────────────────────────── -->
-<div id="summary-overlay">
-  <div id="summary-box">
-    <div id="sum-eyebrow"></div>
-    <div id="sum-title"></div>
-    <div id="sum-outcomes"></div>
-    <div id="sum-deltas"></div>
-    <button id="sum-next">Start Week 2 →</button>
-  </div>
-</div>
-
-<!-- ── End Game ──────────────────────────────────────────── -->
-<div id="end-overlay">
-  <div id="end-title"></div>
-  <div id="end-sub"></div>
-  <button id="end-btn" onclick="introIdx=0;introRender();document.getElementById('intro-overlay').classList.add('on')">Play Again</button>
-</div>
-
-<!-- ── Game Log Overlay ──────────────────────────────────── -->
-<div id="log-overlay" onclick="if(event.target===this)closeLog()">
-  <div id="log-box">
-    <div id="log-header">
-      <div>
-        <div id="log-title">Game Log</div>
-        <div id="log-subtitle">Your story so far</div>
-      </div>
-      <button id="log-close-btn" onclick="closeLog()">✕</button>
-    </div>
-    <div id="log-filters"></div>
-    <div id="log-scroll"></div>
-  </div>
-</div>
-
-<!-- ── Bank Account Overlay ──────────────────────────────── -->
-<div id="bank-overlay" onclick="if(event.target===this)closeBank()">
-  <div id="bank-box">
-    <div id="bank-header">
-      <div>
-        <div id="bank-title">Bank Account</div>
-        <div id="bank-subtitle">Where the money went</div>
-      </div>
-      <button id="bank-close-btn" onclick="closeBank()">✕</button>
-    </div>
-    <div id="bank-scroll"></div>
-  </div>
-</div>
-
-<!-- ── Milestone Toast ───────────────────────────────────── -->
-<div id="milestone-toast">
-  <div id="milestone-card">
-    <div id="ms-glow"></div>
-    <span id="ms-emoji">🎉</span>
-    <div id="ms-label">MILESTONE</div>
-    <div id="ms-title">First User!</div>
-    <div id="ms-sub">Someone actually tried your product.</div>
-    <div id="ms-hint">tap anywhere to continue</div>
-  </div>
-</div>
-
-
-<!-- ── Intro ──────────────────────────────────────────────── -->
-<div id="splash-overlay">
-  <p class="splash-tagline"><strong>Every founder thinks they're ready.</strong><br>Most aren't.</p>
-  <div class="splash-divider"></div>
-  <div class="splash-eyebrow">A founder's card game</div>
-  <h1 class="splash-title">Startup: All In</h1>
-  <p class="splash-body">A card game built from real stories by hundreds of silicon valley tech founders. Navigate co‑founders, investors, and burnout — and find out if you've got what it takes to start a startup.</p>
-  <div class="splash-stats">20 weeks &middot; 1 shot</div>
-  <button id="splash-btn" onclick="hideSplash()">Start Playing →</button>
-</div>
-
-<div id="intro-overlay" class="on">
-  <div id="intro-card">
-    <div id="intro-stripe"></div>
-    <div id="intro-body">
-      <div id="intro-step"></div>
-      <div id="intro-heading"></div>
-      <div id="intro-text"></div>
-      <div id="intro-footer">
-        <div id="intro-dots"></div>
-        <div style="display:flex;gap:12px;align-items:center">
-          <button id="intro-skip" onclick="startGame()">skip</button>
-          <button id="intro-next" onclick="introNext()">Continue →</button>
+        <div class="chat">
+          <div class="banner" id="banner"></div>
+          <div class="chat-head" id="chatHead"></div>
+          <div class="thread" id="thread"></div>
+          <div class="composer" id="composer"></div>
         </div>
       </div>
+
+      <div class="journal-panel">
+        <div class="journal-head">
+          <span class="jh-icon">📓</span>
+          <span class="jh-title">Founder's Journal</span>
+          <span class="jh-sub">your private record</span>
+        </div>
+        <div class="journal-scroll" id="journalScroll"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<script async data-id="101301276" src="//static.getclicky.com/js"></script>
-
-<script>
-const ROLES = {};
-
-function hideSplash() {
-  const el = document.getElementById('splash-overlay');
-  el.classList.add('hiding');
-  el.addEventListener('transitionend', () => el.remove(), { once: true });
-}
-
-// Intro data lives here so it renders before role scripts load
-const INTRO_SLIDES = [
-  {
-    step: 'The Beginning',
-    heading: 'Three of you. One idea. Six months of talking.',
-    text: 'You, Alex, and Jordan have been circling this for a while. Alex is the backend engineer. Jordan offered to handle the iOS version. You\'re the one who finally said: enough talking — let\'s actually do this.',
-  },
-  {
-    step: 'The Idea',
-    heading: 'Dating apps are broken and everyone knows it.',
-    text: 'You\'ve all been there — swiping for months, going on zero dates. Matches that go nowhere. You think you can build something actually worth paying for. The question is whether you can prove it before the money runs out.',
-  },
-  {
-    step: 'The Stakes',
-    heading: 'You\'ve got $10,000 and a team that isn\'t fully in yet.',
-    text: 'Alex quit his job last month. Jordan is still at hers — helping nights and weekends for now. At $500 a week in burn, you have 20 weeks. Not everyone starts a company the same way. That gap will matter.',
-  },
-  {
-    step: 'The Goal',
-    heading: 'One shot. Make it count.',
-    text: 'Raise $500K from YC or an angel before the money runs out. Build, get traction, keep the team aligned. The hardest decisions won\'t be about the product.',
-    last: true,
-  },
-];
-let introIdx = 0;
-function introRender() {
-  const slide = INTRO_SLIDES[introIdx];
-  document.getElementById('intro-step').textContent = slide.step;
-  document.getElementById('intro-heading').textContent = slide.heading;
-  document.getElementById('intro-text').textContent = slide.text;
-  document.getElementById('intro-next').textContent = slide.last ? 'Start building →' : 'Continue →';
-  const dots = document.getElementById('intro-dots');
-  dots.innerHTML = INTRO_SLIDES.map((_, i) =>
-    `<div class="intro-dot${i === introIdx ? ' active' : ''}"></div>`
-  ).join('');
-}
-introRender(); // populate immediately, before any other scripts load
-</script>
-<script src="roles/jordan.js"></script>
-<script src="roles/alex.js"></script>
-<script src="roles/priya.js"></script>
-<script src="roles/marcus.js"></script>
-<script src="roles/fatima.js"></script>
-<script src="roles/ryan.js"></script>
-<script src="roles/sarah.js"></script>
-<script src="roles/brett.js"></script>
-<script src="roles/kevin.js"></script>
-<script src="roles/mom.js"></script>
-<script src="roles/jamie.js"></script>
-<script src="roles/david.js"></script>
-<script src="roles/founder.js"></script>
-<script src="roles/hacker_news.js"></script>
-<script src="roles/yc.js"></script>
-<script src="roles/lena.js"></script>
-<script src="roles/techcrunch.js"></script>
-<script src="roles/users.js"></script>
-<script src="roles/analytics.js"></script>
-<script src="roles/twitter.js"></script>
-<script src="roles/tom.js"></script>
-<script src="engine.js"></script>
-<script>
-// ─────────────────────────────────────────────────────────
-// Character + Category metadata
-// ─────────────────────────────────────────────────────────
-const CM = {
-  jordan:      { i:'JO', bg:'#4c1d95', c:'#c4b5fd', r:'Co-founder' },
-  alex:        { i:'AL', bg:'#4c1d95', c:'#c4b5fd', r:'Co-founder' },
-  priya:       { i:'PR', bg:'#064e3b', c:'#6ee7b7', r:'Advisor' },
-  marcus:      { i:'MA', bg:'#78350f', c:'#fcd34d', r:'Angel' },
-  fatima:      { i:'FA', bg:'#78350f', c:'#fcd34d', r:'Angel' },
-  ryan:        { i:'RY', bg:'#78350f', c:'#fcd34d', r:'Angel' },
-  sarah:       { i:'SA', bg:'#1e3a5f', c:'#93c5fd', r:'Investor' },
-  brett:       { i:'BR', bg:'#1e3a5f', c:'#93c5fd', r:'Investor' },
-  kevin:       { i:'KE', bg:'#1e3a5f', c:'#93c5fd', r:'Investor' },
-  mom:         { i:'MO', bg:'#831843', c:'#fbcfe8', r:'Family' },
-  jamie:       { i:'JA', bg:'#164e63', c:'#67e8f9', r:'Friend' },
-  david:       { i:'DA', bg:'#064e3b', c:'#6ee7b7', r:'Ex-Manager' },
-  founder:     { i:'📓', bg:'#312e81', c:'#a5b4fc', r:'Journal', isNotebook: true },
-  hacker_news: { i:'HN', bg:'#7c2d12', c:'#fed7aa', r:'Community' },
-  twitter:     { i:'TW', bg:'#0c4a6e', c:'#bae6fd', r:'Social' },
-  reddit:      { i:'RE', bg:'#7f1d1d', c:'#fca5a5', r:'Community' },
-  yc:          { i:'YC', bg:'#78350f', c:'#fde68a', r:'YC' },
-  lena:        { i:'LE', bg:'#374151', c:'#d1d5db', r:'Press' },
-  techcrunch:  { i:'TC', bg:'#7c2d12', c:'#fed7aa', r:'Press' },
-  users:       { i:'US', bg:'#0c4a6e', c:'#bae6fd', r:'Users' },
-  analytics:   { i:'AN', bg:'#312e81', c:'#c4b5fd', r:'Analytics' },
-  tom:         { i:'TO', bg:'#064e3b', c:'#6ee7b7', r:'Advisor' },
-};
-
-const CAT = {
-  t: { color:'#a855f7', bg:'#faf5ff', tc:'#7e22ce', label:'TEAM' },
-  c: { color:'#22c55e', bg:'#f0fdf4', tc:'#15803d', label:'MARKET' },
-  p: { color:'#3b82f6', bg:'#eff6ff', tc:'#1d4ed8', label:'PRODUCT' },
-  e: { color:'#f59e0b', bg:'#fffbeb', tc:'#92400e', label:'EVENT' },
-};
-const ULBL = ['','Routine','Important','Urgent'];
-
-// ─────────────────────────────────────────────────────────
-// State
-// ─────────────────────────────────────────────────────────
-let E;
-let prevSnap       = null;
-let displayedCash  = null;
-let gameLog        = [];
-let cashLedger     = [];
-let logFilter      = null;
-
-// Effort system — replaces the 2-slot model
-let weekActions    = [];   // { cardId, optKey } — actions committed this week
-let effortLeft     = 1.0;  // effort budget for this week (1.0 = full week)
-const EFFORT_PER_ACTION = 0.5;
-
-const actedIds     = () => weekActions.map(a => a.cardId);
-const effortSpent  = () => weekActions.length * EFFORT_PER_ACTION;
-
-// ─────────────────────────────────────────────────────────
-// Milestones
-// ─────────────────────────────────────────────────────────
-const MS_CFG = {
-  alexGone: {
-    emoji: '🚪', label: 'CO-FOUNDER GONE',
-    title: 'Alex just left.',
-    sub: "He took another offer. You're building alone now — every technical decision just got harder.",
-    danger: true,
-  },
-  moneyRaised: {
-    emoji: '💸', label: 'FIRST MONEY IN',
-    title: 'Cash is coming in.',
-    sub: 'Someone put real money behind your idea. This changes things.',
-    colors: ['#4ade80','#fbbf24','#86efac','#fde68a','#a3e635','#ffffff'],
-  },
-  firstUser: {
-    emoji: '🎉', label: 'FIRST USER',
-    title: 'You have a user.',
-    sub: 'A real person chose to try your product. Now make them love it.',
-    colors: ['#818cf8','#a78bfa','#c084fc','#60a5fa','#e879f9','#ffffff'],
-  },
-  firstCustomer: {
-    emoji: '🤑', label: 'FIRST PAYING CUSTOMER',
-    title: 'They paid.',
-    sub: "A stranger gave you money for something you built. That's revenue.",
-    colors: ['#4ade80','#22d3ee','#fbbf24','#34d399','#a3e635','#ffffff'],
-  },
-};
-
-let milestones = { alexGone: false, moneyRaised: false, firstUser: false, firstCustomer: false };
-let msQueue    = [];
-let msShowing  = false;
-
-// ─────────────────────────────────────────────────────────
-// Bank Account
-// ─────────────────────────────────────────────────────────
-function openBank() {
-  renderBank();
-  document.getElementById('bank-overlay').classList.add('on');
-}
-function closeBank() {
-  document.getElementById('bank-overlay').classList.remove('on');
-}
-function renderBank() {
-  const curCash = E ? E.s.cash : 10000;
-  const isLow   = curCash < 3000;
-  document.getElementById('bank-subtitle').innerHTML =
-    `Balance: <span style="font-weight:700;color:${isLow ? 'var(--danger)' : 'var(--good)'}">$${curCash.toLocaleString()}</span>`;
-
-  const scroll = document.getElementById('bank-scroll');
-  if (!cashLedger.length) {
-    scroll.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--dim);font-size:13px;line-height:1.7">No transactions yet.<br>Resolve a week to see your finances.</div>`;
-    return;
-  }
-
-  const ICON = { burn: '🔥', income: '📈', expense: '💸' };
-  let html = `<div class="bank-opening">
-    <span class="bank-opening-lbl">Opening balance — Week 1</span>
-    <span class="bank-opening-val">$10,000</span>
-  </div>`;
-
-  for (const e of cashLedger) {
-    const wkLabel = e.sprintWeeks === 1
-      ? `Week ${e.week}`
-      : `Weeks ${e.week}–${e.week + e.sprintWeeks - 1}`;
-    const balCls = e.balanceAfter < 3000 ? 'bank-bal-danger'
-                 : e.balanceAfter < 6000 ? 'bank-bal-warn' : 'bank-bal-ok';
-
-    const rows = e.transactions.map(tx => {
-      const icon  = ICON[tx.type] || (tx.delta > 0 ? '📈' : '💸');
-      const amt   = tx.delta > 0
-        ? `<span class="bank-row-amt bank-amt-pos">+$${tx.delta.toLocaleString()}</span>`
-        : `<span class="bank-row-amt bank-amt-neg">−$${Math.abs(tx.delta).toLocaleString()}</span>`;
-      const note  = tx.note ? `<span class="bank-row-note">${tx.note}</span>` : '';
-      const label = tx.label ? tx.label.replace(/</g, '&lt;') : '—';
-      const trunc = label.length > 72 ? label.slice(0, 72) + '…' : label;
-      return `<div class="bank-row">
-        <span class="bank-row-icon">${icon}</span>
-        <span class="bank-row-desc"><span class="bank-row-lbl">${trunc}</span>${note}</span>
-        ${amt}
-      </div>`;
-    }).join('');
-
-    html += `<div class="bank-sprint">
-      <div class="bank-sprint-lbl">${wkLabel}</div>
-      ${rows}
-      <div class="bank-balance">
-        <span class="bank-bal-lbl">balance</span>
-        <span class="bank-bal-val ${balCls}">$${e.balanceAfter.toLocaleString()}</span>
-      </div>
-    </div>`;
-  }
-
-  scroll.innerHTML = html;
-  scroll.scrollTop = scroll.scrollHeight;
-}
-
-function checkMilestones(prev, cur) {
-  if (!milestones.alexGone && prev.alexActive && !(E.chars.get('alex')?.active ?? true)) {
-    milestones.alexGone = true; msQueue.push('alexGone');
-  }
-  if (!milestones.moneyRaised && cur.cash > prev.cash) {
-    milestones.moneyRaised = true; msQueue.push('moneyRaised');
-  }
-  if (!milestones.firstUser && prev.users === 0 && cur.users > 0) {
-    milestones.firstUser = true; msQueue.push('firstUser');
-  }
-  if (!milestones.firstCustomer && prev.customers === 0 && cur.customers > 0) {
-    milestones.firstCustomer = true; msQueue.push('firstCustomer');
-  }
-  drainMsQueue();
-}
-
-function drainMsQueue() {
-  if (msShowing || !msQueue.length) return;
-  showMilestone(MS_CFG[msQueue.shift()]);
-}
-
-function showMilestone(cfg) {
-  msShowing = true;
-  const toast = document.getElementById('milestone-toast');
-  const card  = document.getElementById('milestone-card');
-  document.getElementById('ms-emoji').textContent = cfg.emoji;
-  document.getElementById('ms-label').textContent = cfg.label;
-  document.getElementById('ms-title').textContent = cfg.title;
-  document.getElementById('ms-sub').textContent   = cfg.sub;
-
-  card.classList.remove('out', 'on', 'danger');
-  if (cfg.danger) card.classList.add('danger');
-  void card.offsetWidth;
-  toast.classList.add('on');
-  card.classList.add('on');
-
-  if (!cfg.danger) spawnMsParticles(cfg.colors);
-
-  const dismiss = () => {
-    toast.onclick = null;
-    card.classList.add('out');
-    card.addEventListener('animationend', () => {
-      card.classList.remove('on', 'out', 'danger');
-      toast.classList.remove('on');
-      msShowing = false;
-      drainMsQueue();
-    }, { once: true });
-  };
-  toast.onclick = dismiss;
-  if (!cfg.danger) setTimeout(dismiss, 3200);
-}
-
-function spawnMsParticles(colors) {
-  const cx = window.innerWidth  / 2;
-  const cy = window.innerHeight / 2;
-  const count = 48;
-  for (let i = 0; i < count; i++) {
-    const p   = document.createElement('div');
-    const ang = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
-    const dist = 80 + Math.random() * 280;
-    const size = 4 + Math.random() * 8;
-    const isRect = Math.random() < 0.45;
-    p.className = 'ms-particle';
-    p.style.cssText = [
-      `left:${cx}px`, `top:${cy}px`,
-      `width:${isRect ? size * 0.5 : size}px`,
-      `height:${isRect ? size * 2 : size}px`,
-      `border-radius:${isRect ? '2px' : '50%'}`,
-      `background:${colors[Math.floor(Math.random() * colors.length)]}`,
-      `--tx:${(Math.cos(ang) * dist).toFixed(1)}px`,
-      `--ty:${(Math.sin(ang) * dist - Math.random() * 60).toFixed(1)}px`,
-      `--rot:${Math.floor(Math.random() * 720 - 360)}deg`,
-      `--dur:${(0.75 + Math.random() * 0.7).toFixed(2)}s`,
-      `--delay:${(Math.random() * 0.12).toFixed(3)}s`,
-    ].join(';');
-    document.body.appendChild(p);
-    p.addEventListener('animationend', () => p.remove());
-  }
-}
-
-// ─────────────────────────────────────────────────────────
-// Guru reactions
-// ─────────────────────────────────────────────────────────
-
-const GURU_REACTIONS = {
-  'founder_first_interviews:interview': {
-    mood: 'pleased', name: 'Paul Graham',
-    initials: 'PG', avatarBg: '#292010', avatarFg: '#fbbf24',
-    quote: 'The most common unscalable thing founders have to do at the start is to recruit users manually.',
-    essay: 'Do Things That Don\'t Scale',
-    url: 'https://paulgraham.com/ds.html',
-  },
-};
-
-const GURU_MOOD_LABEL   = { pleased: 'approves', cautious: 'has a note', concerned: 'disagrees' };
-const GURU_MOOD_COLOR   = { pleased: '#4ade80',  cautious: '#fbbf24',    concerned: '#f87171'    };
-
-function checkGuruReaction(actions) {
-  for (const a of actions) {
-    if (!a?.optKey) continue;
-    const rx = GURU_REACTIONS[`${a.cardId}:${a.optKey}`];
-    if (rx) return rx;
-  }
-  return null;
-}
-
-function showGuruReaction(rx) {
-  const color = GURU_MOOD_COLOR[rx.mood] || '#a5b4fc';
-  const mood  = GURU_MOOD_LABEL[rx.mood] || 'says';
-
-  const toast = document.createElement('div');
-  toast.className = 'outcome-toast';
-  toast.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-      <div style="width:32px;height:32px;border-radius:50%;background:${rx.avatarBg};color:${rx.avatarFg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;flex-shrink:0">${rx.initials}</div>
-      <div>
-        <div style="font-family:'Space Grotesk',sans-serif;font-size:12px;font-weight:800;color:var(--text)">${rx.name}</div>
-        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:${color}">${mood}</div>
-      </div>
-    </div>
-    <div style="font-style:italic;margin-bottom:6px">"${rx.quote}"</div>
-    <a style="font-family:'DM Mono',monospace;font-size:11px;color:${color};text-decoration:underline" href="${rx.url}" target="_blank" rel="noopener">${rx.essay} →</a>`;
-
-  document.body.appendChild(toast);
-
-  toast.addEventListener('click', (e) => {
-    if (e.target.closest('a')) return;
-    toast.remove();
-  });
-  setTimeout(() => toast.remove(), 6000);
-}
-
-// ─────────────────────────────────────────────────────────
-// Intro sequence
-// ─────────────────────────────────────────────────────────
-function introNext() {
-  if (introIdx >= INTRO_SLIDES.length - 1) { startGame(); return; }
-  const card = document.getElementById('intro-card');
-  card.classList.add('intro-card-exit');
-  card.addEventListener('animationend', () => {
-    card.classList.remove('intro-card-exit');
-    introIdx++;
-    introRender();
-  }, { once: true });
-}
-
-function startGame() {
-  document.getElementById('intro-overlay').classList.remove('on');
-  boot();
-}
-
-// ─────────────────────────────────────────────────────────
-// How-to-play overlay
-// ─────────────────────────────────────────────────────────
-let htpSeen = false;
-
-function dismissHTP() {
-  htpSeen = true;
-  const el = document.getElementById('htp-overlay');
-  el.classList.add('out');
-  el.addEventListener('animationend', () => el.classList.remove('on', 'out'), { once: true });
-}
-
-// ─────────────────────────────────────────────────────────
-// Boot
-// ─────────────────────────────────────────────────────────
-function boot() {
-  E = new Engine();
-  weekActions = []; effortLeft = 1.0; prevSnap = null; displayedCash = null;
-  gameLog = []; cashLedger = []; logFilter = null; openCharId = null;
-  milestones = { alexGone: false, moneyRaised: false, firstUser: false, firstCustomer: false };
-  msQueue = []; msShowing = false;
-  document.getElementById('end-overlay').classList.remove('on');
-  document.getElementById('chat-results').classList.remove('on');
-  document.getElementById('chat-header').style.display = 'none';
-  document.getElementById('chat-thread').style.display = 'none';
-  document.getElementById('chat-empty').style.display = 'flex';
-  E.advanceWeek();
-  renderAll();
-  if (!htpSeen) document.getElementById('htp-overlay').classList.add('on');
-}
-
-// ─────────────────────────────────────────────────────────
-// History / Game Log
-// ─────────────────────────────────────────────────────────
-function logWeek(cards, actedIds, optMap, results, engineOrder) {
-  const week = prevSnap.week;
-  const expiredIds = new Set(E.expiredThisTurn.map(e => e.cardId));
-  for (const card of cards) {
-    const actIdx = engineOrder.indexOf(card.id);
-    const acted  = actIdx !== -1;
-    if (!acted) continue;
-    const chosen = card.options?.find(o => o.key === optMap[card.id]);
-    gameLog.push({
-      week,
-      from:    card.from || CHARACTER_DEFS[card._charId]?.name || '?',
-      charId:  card._charId,
-      cat:     card.cat,
-      body:    card.body,
-      action:  chosen?.label || 'Acted on this',
-      outcome: results[actIdx] || null,
-      dropped: false,
-    });
-  }
-  for (const exp of E.expiredThisTurn) {
-    gameLog.push({
-      week,
-      from:    exp.from,
-      charId:  exp.charId,
-      cat:     exp.card.cat,
-      body:    exp.card.body,
-      action:  null,
-      outcome: null,
-      dropped: true,
-    });
-  }
-}
-
-// updatePileCount is defined later, near the interactions section
-
-function openLog() {
-  renderLogFilters();
-  renderLog();
-  document.getElementById('log-overlay').classList.add('on');
-}
-
-function setLogFilter(charId) {
-  logFilter = charId;
-  renderLogFilters();
-  renderLog();
-  document.getElementById('log-scroll').scrollTop = 0;
-}
-
-function renderLogFilters() {
-  const bar = document.getElementById('log-filters');
-  // Collect unique chars in appearance order
-  const seen = new Map();
-  for (const e of gameLog) {
-    if (e.charId && !seen.has(e.charId))
-      seen.set(e.charId, (CHARACTER_DEFS[e.charId]?.name || e.from).replace(/\s*\(.*?\)/, '').trim());
-  }
-  if (!seen.size) { bar.innerHTML = ''; return; }
-
-  const allPill = `<button class="lf-pill${logFilter === null ? ' active' : ''}" onclick="setLogFilter(null)">All</button>`;
-  const charPills = [...seen.entries()].map(([charId, name]) => {
-    const meta   = CM[charId] || { i:'?', bg:'#374151', c:'#d1d5db' };
-    const active = logFilter === charId;
-    return `<button class="lf-pill${active ? ' active' : ''}" onclick="setLogFilter('${charId}')">
-      <span class="lf-av" style="background:${meta.bg};color:${meta.c}">${meta.i}</span>${name}
-    </button>`;
-  }).join('');
-  bar.innerHTML = allPill + charPills;
-}
-
-function closeLog() {
-  document.getElementById('log-overlay').classList.remove('on');
-}
-
-function renderLog() {
-  const scroll = document.getElementById('log-scroll');
-  const entries = logFilter ? gameLog.filter(e => e.charId === logFilter) : gameLog;
-  if (!entries.length) {
-    const msg = logFilter ? 'No entries for this character yet.' : 'No history yet.<br>Resolve a week to start building your story.';
-    scroll.innerHTML = `<div id="log-empty">${msg}</div>`;
-    return;
-  }
-
-  const byWeek = {};
-  for (const e of entries) {
-    if (!byWeek[e.week]) byWeek[e.week] = [];
-    byWeek[e.week].push(e);
-  }
-  const weeks = Object.keys(byWeek).map(Number).sort((a, b) => a - b);
-
-  let html = '';
-  for (const w of weeks) {
-    html += `<div class="log-week"><div class="log-week-label">Week ${w}</div>`;
-    for (const e of byWeek[w]) {
-      const meta = CM[e.charId] || { i:'?', bg:'#374151', c:'#d1d5db' };
-      const cat  = CAT[e.cat]  || CAT.e;
-      let actionHtml;
-      if (e.action) {
-        actionHtml = `<div class="log-action log-acted"><span class="log-act-icon">✓</span>${e.action}</div>`
-          + (e.outcome ? `<div class="log-outcome">${e.outcome}</div>` : '');
-      } else if (e.dropped) {
-        actionHtml = `<div class="log-action log-dropped"><span class="log-act-icon">✗</span>Ignored — expired</div>`;
-      } else {
-        actionHtml = `<div class="log-action log-passed"><span class="log-act-icon">—</span>Not responded to</div>`;
-      }
-      html += `<div class="log-entry">
-        <div class="log-av" style="background:${meta.bg};color:${meta.c}">${meta.i}</div>
-        <div class="log-right">
-          <div class="log-top">
-            <span class="log-from">${e.from}</span>
-            <span class="log-cat" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
-          </div>
-          <div class="log-body">${e.body}</div>
-          ${actionHtml}
-        </div>
-      </div>`;
-    }
-    html += `</div>`;
-  }
-
-  scroll.innerHTML = html;
-  scroll.scrollTop = scroll.scrollHeight;
-}
-
-function renderAll() { renderHUD(); renderConvList(); renderEffortBar(); if (openCharId) renderChat(); }
-
-// ─────────────────────────────────────────────────────────
-// Character groups for the left panel
-// ─────────────────────────────────────────────────────────
-const CHAR_GROUPS = [
-  { label: 'CORE TEAM', ids: ['alex', 'jordan'] },
-  { label: 'INVESTORS', ids: ['marcus', 'fatima', 'ryan', 'sarah', 'brett', 'kevin'] },
-  { label: 'NETWORK',   ids: ['priya', 'mom', 'jamie', 'david', 'tom'] },
-  { label: 'WORLD',     ids: ['hacker_news', 'twitter', 'techcrunch', 'lena', 'yc', 'users', 'analytics'] },
-  { label: 'NOTEBOOK',  ids: ['founder'] },
-];
-
-let openCharId = null;
-
-function getPreviewText(charId) {
-  const thread = E.getThread(charId);
-  const cards = E.getCharacterCards(charId);
-  if (cards.length > 0) {
-    const body = cards[0].body || '';
-    return body.length > 50 ? body.slice(0, 50) + '...' : body;
-  }
-  if (thread.length > 0) {
-    const last = thread[thread.length - 1];
-    const prefix = last.type === 'reply' ? 'You: ' : '';
-    const body = last.body || '';
-    const text = prefix + body;
-    return text.length > 50 ? text.slice(0, 50) + '...' : text;
-  }
-  return '';
-}
-
-function renderConvList() {
-  const panel = document.getElementById('char-panel');
-  const states = E.getCharacterStates();
-  const acted = new Set(actedIds());
-  let html = '';
-
-  for (const group of CHAR_GROUPS) {
-    const visibleChars = group.ids.filter(id => {
-      const st = states.get(id);
-      return st && st.active;
-    });
-    if (visibleChars.length === 0) continue;
-
-    html += `<div class="cp-group-label">${group.label}</div>`;
-
-    for (const id of visibleChars) {
-      const st = states.get(id);
-      const meta = CM[id] || { i: '?', bg: '#374151', c: '#d1d5db', r: '' };
-
-      const hasUnread = st.cardCount > 0 && !acted.has(E.getCharacterCards(id)[0]?.id);
-      const hasActed = weekActions.some(a => {
-        const entry = E.activeCards.get(a.cardId);
-        return entry && entry.charId === id;
-      });
-
-      let cls = 'conv-row';
-      if (id === openCharId) cls += ' active-conv';
-      if (st.cardCount === 0 && !hasActed) cls += ' no-cards';
-      if (hasUnread) cls += ' has-new';
-      if (st.cardCount > 0 && st.minPatience <= 1) cls += ' urgent';
-      else if (st.cardCount > 0 && st.minPatience === 2) cls += ' warning';
-
-      const preview = getPreviewText(id);
-      const badgeHtml = st.cardCount > 0 && hasUnread
-        ? `<span class="conv-badge">${st.cardCount}</span>`
-        : hasActed
-        ? `<span style="color:#22c55e;font-size:12px;flex-shrink:0">✓</span>`
-        : '';
-
-      const dotHtml = hasUnread ? `<div class="conv-unread-dot"></div>` : '';
-      const displayName = meta.isNotebook ? 'Notebook' : st.name;
-      const avHtml = meta.isNotebook
-        ? `<div class="conv-av" style="background:${meta.bg};font-size:18px">${meta.i}</div>`
-        : `<div class="conv-av" style="background:${meta.bg};color:${meta.c}">${meta.i}${dotHtml}</div>`;
-
-      html += `<div class="${cls}" onclick="openCharacter('${id}')">
-        ${avHtml}
-        <div class="conv-body">
-          <div class="conv-name-row">
-            <span class="conv-name">${displayName}</span>
-            <span class="conv-time">wk ${E.s.week}</span>
-          </div>
-          <div class="conv-preview">${preview}</div>
-        </div>
-        ${badgeHtml}
-      </div>`;
-    }
-  }
-
-  html += `<button id="cp-history-btn" onclick="openLog()">History <span id="pile-count-val">${gameLog.length}</span></button>`;
-  panel.innerHTML = html;
-}
-
-function isOutgoing(card, charId) {
-  if (charId === 'founder') return true;
-  if (card.from === 'You') return true;
-  return false;
-}
-
-function openCharacter(charId) {
-  openCharId = charId;
-
-  const meta = CM[charId] || { i: '?', bg: '#374151', c: '#d1d5db', r: '' };
-  const char = E.chars.get(charId);
-  const def = CHARACTER_DEFS[charId];
-  const cards = E.getCharacterCards(charId);
-
-  const header = document.getElementById('chat-header');
-
-  if (meta.isNotebook) {
-    header.innerHTML = `
-      <div style="font-size:20px;flex-shrink:0">📓</div>
-      <div style="flex:1">
-        <div id="chat-header-name">Notebook</div>
-        <div id="chat-header-role">Your thoughts & ideas</div>
-      </div>`;
-  } else {
-    let statsHtml = '';
-    if ('trust' in char) {
-      const trustColor = char.trust > 60 ? '#22c55e' : char.trust > 30 ? '#f59e0b' : '#ef4444';
-      statsHtml += `<div class="dp-stat">Trust <div class="dp-stat-bar"><div class="dp-stat-fill" style="width:${char.trust}%;background:${trustColor}"></div></div></div>`;
-    }
-    if ('morale' in char) {
-      const moraleColor = char.morale > 60 ? '#22c55e' : char.morale > 30 ? '#f59e0b' : '#ef4444';
-      statsHtml += `<div class="dp-stat">Morale <div class="dp-stat-bar"><div class="dp-stat-fill" style="width:${char.morale}%;background:${moraleColor}"></div></div></div>`;
-    }
-    if ('engagement' in char) {
-      const engColor = char.engagement > 60 ? '#22c55e' : char.engagement > 30 ? '#f59e0b' : '#ef4444';
-      statsHtml += `<div class="dp-stat">Engagement <div class="dp-stat-bar"><div class="dp-stat-fill" style="width:${char.engagement}%;background:${engColor}"></div></div></div>`;
-    }
-
-    header.innerHTML = `
-      <div class="dp-av" style="background:${meta.bg};color:${meta.c}">${meta.i}</div>
-      <div style="flex:1">
-        <div id="chat-header-name">${def.name}</div>
-        <div id="chat-header-role">${meta.r}</div>
-      </div>
-      ${statsHtml ? `<div id="chat-header-stats">${statsHtml}</div>` : ''}`;
-  }
-  header.style.display = 'flex';
-
-  // Hide empty state, show thread
-  document.getElementById('chat-empty').style.display = 'none';
-  const threadEl = document.getElementById('chat-thread');
-  threadEl.style.display = 'flex';
-
-  renderChat();
-  renderConvList();
-}
-
-function renderChat() {
-  if (!openCharId) return;
-  const charId = openCharId;
-  const meta = CM[charId] || {};
-  const def = CHARACTER_DEFS[charId];
-  const cards = E.getCharacterCards(charId);
-  const thread = E.getThread(charId);
-  const activeCardIds = new Set(cards.map(c => c.id));
-  const acted = new Set(actedIds());
-  const noEffort = effortLeft < EFFORT_PER_ACTION;
-
-  // Notebook mode for founder
-  if (meta.isNotebook) {
-    renderNotebook(charId, cards, thread, acted, noEffort);
-    return;
-  }
-
-  let html = '';
-  let lastWeek = -1;
-
-  // 1) Chat history
-  for (const msg of thread) {
-    if (activeCardIds.has(msg.cardId) && msg.type === 'incoming') continue;
-
-    if (msg.week !== lastWeek) {
-      html += `<div class="chat-week-divider">week ${msg.week}</div>`;
-      lastWeek = msg.week;
-    }
-
-    if (msg.type === 'incoming') {
-      html += `<div class="chat-msg incoming history">
-        <span class="chat-sender">${msg.from}</span>
-        <div class="chat-bubble">${msg.body}</div>
-        ${msg.subtext ? `<div class="chat-subtext">${msg.subtext}</div>` : ''}
-      </div>`;
-    } else if (msg.type === 'reply') {
-      html += `<div class="chat-msg outgoing history">
-        <div class="chat-bubble">${msg.body}</div>
-      </div>`;
-    } else if (msg.type === 'expired') {
-      html += `<div class="chat-expired-note">${msg.body || 'No reply.'}</div>`;
-    }
-  }
-
-  // 2) Current active cards
-  if (cards.length > 0 && lastWeek !== E.s.week) {
-    html += `<div class="chat-week-divider">week ${E.s.week}</div>`;
-  }
-
-  for (const card of cards) {
-    const outgoing = isOutgoing(card, charId);
-    const isActed = acted.has(card.id);
-
-    let patienceClass = 'fresh';
-    let patienceText = `${card._patienceLeft}wk`;
-    if (card._patienceLeft <= 1) { patienceClass = 'last-chance'; patienceText = 'last chance'; }
-    else if (card._patienceLeft === 2) { patienceClass = 'waiting'; }
-
-    if (outgoing) {
-      let actionHtml = '';
-      if (isActed) {
-        const action = weekActions.find(a => a.cardId === card.id);
-        const chosenOpt = card.options?.find(o => o.key === action?.optKey);
-        const replyText = chosenOpt?.reply || chosenOpt?.label || 'Sent';
-        actionHtml = `<div class="chat-msg outgoing"><div class="chat-bubble chat-reply-sent">${replyText}</div></div>`;
-      } else if (card.options?.length > 1) {
-        actionHtml = `<div class="chat-suggestions">`;
-        for (const o of card.options) {
-          const text = o.reply || o.label;
-          actionHtml += `<div class="chat-suggestion ${noEffort ? 'disabled' : ''}" ${noEffort ? '' : `onclick="commitAction('${card.id}','${o.key}')"`}>
-            <div class="chat-suggestion-text">${text}</div>
-            <div class="chat-suggestion-label">${o.label}</div>
-          </div>`;
-        }
-        actionHtml += `</div>`;
-      } else if (noEffort) {
-        actionHtml = `<div class="chat-suggestions"><div class="chat-suggestion disabled"><div class="chat-suggestion-text">No time left this week</div></div></div>`;
-      } else {
-        const singleKey = card.options?.[0]?.key || '__act__';
-        const singleReply = card.options?.[0]?.reply || card.body;
-        const singleLabel = card.options?.[0]?.label || 'Do this';
-        actionHtml = `<div class="chat-suggestions"><div class="chat-suggestion" onclick="commitAction('${card.id}','${singleKey}')">
-          <div class="chat-suggestion-text">${singleReply}</div>
-          <div class="chat-suggestion-label">${singleLabel}</div>
-        </div></div>`;
-      }
-
-      html += `<div class="chat-msg outgoing">
-        <span class="chat-patience ${patienceClass}">${patienceText}</span>
-        <div class="chat-bubble">${card.body}</div>
-        ${actionHtml}
-      </div>`;
-
-    } else {
-      const senderName = card.from || def.name;
-      const subtextHtml = card.subtext ? `<div class="chat-subtext">${card.subtext}</div>` : '';
-
-      let repliesHtml = '';
-      if (isActed) {
-        const action = weekActions.find(a => a.cardId === card.id);
-        const chosenOpt = card.options?.find(o => o.key === action?.optKey);
-        const replyText = chosenOpt?.reply || chosenOpt?.label || 'Sent';
-        repliesHtml = `<div class="chat-msg outgoing"><div class="chat-bubble chat-reply-sent">${replyText}</div></div>`;
-      } else if (card.options?.length) {
-        repliesHtml = `<div class="chat-suggestions">`;
-        for (const o of card.options) {
-          const text = o.reply || o.label;
-          repliesHtml += `<div class="chat-suggestion ${noEffort ? 'disabled' : ''}" ${noEffort ? '' : `onclick="commitAction('${card.id}','${o.key}')"`}>
-            <div class="chat-suggestion-text">${text}</div>
-            <div class="chat-suggestion-label">${o.label}</div>
-          </div>`;
-        }
-        repliesHtml += `</div>`;
-      } else if (!noEffort) {
-        repliesHtml = `<div class="chat-suggestions"><div class="chat-suggestion" onclick="commitAction('${card.id}','__act__')"><div class="chat-suggestion-text">Respond</div></div></div>`;
-      }
-
-      html += `<div class="chat-msg incoming">
-        <span class="chat-sender">${senderName} <span class="chat-patience ${patienceClass}">${patienceText}</span></span>
-        <div class="chat-bubble">${card.body}</div>
-        ${subtextHtml}
-      </div>
-      ${repliesHtml}`;
-    }
-  }
-
-  if (cards.length === 0 && thread.length === 0) {
-    const idleTexts = {
-      alex: "Alex is heads-down building.",
-      jordan: "Jordan is focused on the codebase.",
-      founder: "Nothing to jot down right now.",
-      marcus: "Marcus is reviewing other deals.",
-      fatima: "Fatima is traveling this week.",
-      ryan: "Ryan is busy with portfolio companies.",
-      mom: "Mom is thinking of you.",
-      priya: "Priya is consulting with other founders.",
+  <div class="overlay" id="overlay">
+    <div class="card-modal" id="modal"></div>
+  </div>
+
+  <!-- content + engine -->
+  <script>window.ROLES = {};</script>
+  <script src="roles/alex.js"></script>
+  <script src="roles/jordan.js"></script>
+  <script src="roles/priya.js"></script>
+  <script src="roles/marcus.js"></script>
+  <script src="roles/fatima.js"></script>
+  <script src="roles/ryan.js"></script>
+  <script src="roles/sarah.js"></script>
+  <script src="roles/brett.js"></script>
+  <script src="roles/kevin.js"></script>
+  <script src="roles/mom.js"></script>
+  <script src="roles/jamie.js"></script>
+  <script src="roles/david.js"></script>
+  <script src="roles/founder.js"></script>
+  <script src="roles/hacker_news.js"></script>
+  <script src="roles/yc.js"></script>
+  <script src="roles/lena.js"></script>
+  <script src="roles/techcrunch.js"></script>
+  <script src="roles/users.js"></script>
+  <script src="roles/analytics.js"></script>
+  <script src="roles/twitter.js"></script>
+  <script src="roles/tom.js"></script>
+  <script src="engine.js"></script>
+  <script>
+  (function(){
+    const engine = new Engine();
+    // Avatar styling is pure presentation and lives in the UI; names/roles come
+    // from the role defs via engine.conversations().
+    const STYLE = {
+      alex:        { color:"#0b84ff", initials:"A"  },
+      jordan:      { color:"#34c759", initials:"J"  },
+      priya:       { color:"#af52de", initials:"P"  },
+      marcus:      { color:"#ff9500", initials:"M"  },
+      fatima:      { color:"#ff6482", initials:"F"  },
+      ryan:        { color:"#5ac8fa", initials:"R"  },
+      sarah:       { color:"#ff2d55", initials:"S"  },
+      brett:       { color:"#8e8e93", initials:"B"  },
+      kevin:       { color:"#8e8e93", initials:"K"  },
+      mom:         { color:"#ffcc02", initials:"👩" },
+      jamie:       { color:"#64d2ff", initials:"Ja" },
+      david:       { color:"#30b0c7", initials:"D"  },
+      hacker_news: { color:"#ff6600", initials:"📰" },
+      yc:          { color:"#f26522", initials:"Y"  },
+      lena:        { color:"#bf5af2", initials:"L"  },
+      techcrunch:  { color:"#00c853", initials:"📊" },
+      users:       { color:"#007aff", initials:"👥" },
+      analytics:   { color:"#5856d6", initials:"📈" },
+      twitter:     { color:"#1da1f2", initials:"𝕏"  },
+      tom:         { color:"#34c759", initials:"T"  },
+      founder:     { color:"#8e8e93", initials:"Me" },
     };
-    html += `<div class="dp-idle">${idleTexts[charId] || def.name + ' has nothing new right now.'}</div>`;
-  }
+    const styleFor = id => STYLE[id] || { color:"#8e8e93", initials:"?" };
+    const convFor  = id => engine.conversations().find(c => c.id === id);
+    let active = "alex";
+    const shown = {};
+    for (const id of engine.order) shown[id] = 0;
+    let revealing = false;
+    let journalRevealing = false;
+    let jShown = 0;       // entries already rendered in the journal panel
+    let jLastWeek = null;
 
-  const threadEl = document.getElementById('chat-thread');
-  threadEl.innerHTML = html;
-  threadEl.scrollTop = threadEl.scrollHeight;
-}
+    const $ = id => document.getElementById(id);
+    const fmtCash = c => "$" + c.toLocaleString();
 
-function renderNotebook(charId, cards, thread, acted, noEffort) {
-  const activeCardIds = new Set(cards.map(c => c.id));
-  let html = '';
-  let lastWeek = -1;
-
-  // Past notebook entries (history)
-  for (const msg of thread) {
-    if (activeCardIds.has(msg.cardId) && msg.type === 'incoming') continue;
-
-    if (msg.week !== lastWeek) {
-      html += `<div class="chat-week-divider">week ${msg.week}</div>`;
-      lastWeek = msg.week;
+    // ── status bar ────────────────────────────────────────
+    function renderStats(){
+      const s = engine.stats();
+      $("weekPill").textContent = "Week " + s.week;
+      const runwayWarn = s.runway <= 6;
+      $("stats").innerHTML = `
+        <div class="stat ${s.cash<3000?'warn':''}"><div class="v">${fmtCash(s.cash)}</div><div class="k">Cash</div></div>
+        <div class="stat ${runwayWarn?'warn':''}"><div class="v">${s.runway}w</div><div class="k">Runway</div></div>
+        <div class="stat"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
+        <div class="stat"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>
+        ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
+      $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
+      $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
+      $("endweek").disabled = revealing || journalRevealing;
+      $("endweek").textContent = s.actionsLeft===0 ? "Next week →" : "End week →";
     }
 
-    if (msg.type === 'incoming' || msg.type === 'reply') {
-      html += `<div class="notebook-entry history">
-        <div class="notebook-text">${msg.body}</div>
-      </div>`;
+    // ── sidebar (only chat characters, not founder) ───────
+    function renderRail(){
+      const convs = engine.conversations().filter(c => !c.isJournal);
+      $("convs").innerHTML = convs.map(c=>{
+        const unanswered = shown[c.id] < engine.threads[c.id].length;
+        const dot = (c.hasAction || unanswered) ? '<span class="badge"></span>' : '';
+        const st = styleFor(c.id);
+        return `<div class="conv ${c.id===active?'active':''}" data-id="${c.id}">
+          <div class="avatar" style="background:${st.color}">${st.initials}</div>
+          <div class="conv-body">
+            <div class="conv-top"><span class="conv-name">${c.name}</span>${dot}</div>
+            <div class="conv-prev">${c.empty?'<i>no messages yet</i>':escapeHtml(c.preview)}</div>
+          </div>
+        </div>`;
+      }).join("");
+      [...document.querySelectorAll(".conv")].forEach(el=>{
+        el.onclick = ()=>{ if(revealing) return; active = el.dataset.id; openConversation(); };
+      });
     }
-  }
 
-  // Current notebook actions (things to do / think about)
-  if (cards.length > 0 && lastWeek !== E.s.week) {
-    html += `<div class="chat-week-divider">week ${E.s.week}</div>`;
-  }
+    // ── chat header ───────────────────────────────────────
+    function renderHead(){
+      const c = convFor(active);
+      if (!c) return;
+      const st = styleFor(active);
+      $("chatHead").innerHTML =
+        `<div class="avatar" style="background:${st.color}">${st.initials}</div>
+         <div><div class="nm">${c.name}</div><div class="rl">${c.role}</div></div>`;
+    }
 
-  for (const card of cards) {
-    const isActed = acted.has(card.id);
-
-    if (isActed) {
-      const action = weekActions.find(a => a.cardId === card.id);
-      const chosenOpt = card.options?.find(o => o.key === action?.optKey);
-      html += `<div class="notebook-entry done">
-        <div class="notebook-text">${card.body}</div>
-        <div class="notebook-action">${chosenOpt?.reply || chosenOpt?.label || 'Done'}</div>
-      </div>`;
-    } else {
-      html += `<div class="notebook-entry">
-        <div class="notebook-text">${card.body}</div>`;
-      if (card.options?.length) {
-        html += `<div class="chat-suggestions">`;
-        for (const o of card.options) {
-          const text = o.reply || o.label;
-          html += `<div class="chat-suggestion ${noEffort ? 'disabled' : ''}" ${noEffort ? '' : `onclick="commitAction('${card.id}','${o.key}')"`}>
-            <div class="chat-suggestion-text">${text}</div>
-            <div class="chat-suggestion-label">${o.label}</div>
-          </div>`;
-        }
-        html += `</div>`;
+    // ── build one message element ─────────────────────────
+    function buildJournalEntry(e){
+      if (e.type === "stamp"){
+        const d = document.createElement("div");
+        d.className = "journal-stamp " + (e.stampClass || "red");
+        d.textContent = e.label; return d;
       }
-      html += `</div>`;
-    }
-  }
-
-  if (cards.length === 0 && thread.length === 0) {
-    html += `<div class="dp-idle">Nothing on your mind right now.</div>`;
-  }
-
-  const threadEl = document.getElementById('chat-thread');
-  threadEl.innerHTML = html;
-  threadEl.scrollTop = threadEl.scrollHeight;
-}
-
-function commitAction(cardId, optKey) {
-  console.log('[commitAction]', cardId, optKey, 'effortLeft:', effortLeft);
-  if (effortLeft < EFFORT_PER_ACTION) { console.log('  -> no effort'); return; }
-  if (weekActions.some(a => a.cardId === cardId)) { console.log('  -> already acted'); return; }
-
-  weekActions.push({ cardId, optKey });
-  effortLeft -= EFFORT_PER_ACTION;
-
-  renderConvList();
-  renderEffortBar();
-  if (openCharId) renderChat();
-
-  console.log('[commitAction] effortLeft:', effortLeft, 'auto-endWeek:', effortLeft < EFFORT_PER_ACTION);
-  if (effortLeft < EFFORT_PER_ACTION) {
-    setTimeout(endWeek, 800);
-  }
-}
-
-function renderEffortBar() {
-  const pct = Math.max(0, effortLeft) * 100;
-  const fill = document.getElementById('effort-fill');
-  fill.style.width = pct + '%';
-  fill.className = pct <= 25 ? 'low' : '';
-  document.getElementById('effort-label').textContent =
-    `Week ${E.s.week} — ${effortLeft.toFixed(1)} wk left`;
-  document.getElementById('effort-end-week').disabled = weekActions.length === 0;
-}
-
-function endWeekEarly() {
-  if (weekActions.length === 0) return;
-  endWeek();
-}
-
-// ─────────────────────────────────────────────────────────
-// Cash animation helpers
-// ─────────────────────────────────────────────────────────
-
-function itemStatusLabel(s) {
-  if (!s || !s.items) return '—';
-  const order = ['matching_algo','api_design','ios_ui','ios_server','sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video','plans_matching','plans_ui','beta'];
-  const active = order.find(k => s.items[k] && s.items[k].status === 'active');
-  if (active) {
-    const lbls = { matching_algo:'matching', api_design:'API', ios_ui:'iOS UI', ios_server:'backend integration',
-                   sprint_social:'social', sprint_algo:'verification', sprint_mono:'premium',
-                   sprint_adv_social:'social graph', sprint_adv_video:'video dates',
-                   plans_matching:'plans matching', plans_ui:'plans UI', beta:'beta' };
-    return lbls[active] || active;
-  }
-  if (s.launched) return 'live';
-  const allDone = order.filter(k => s.items[k]).every(k => ['done','deferred','obsolete'].includes(s.items[k].status));
-  return allDone ? 'ready' : '—';
-}
-
-function toggleTeamDrop() {
-  const drop = document.getElementById('team-drop');
-  const caret = document.getElementById('team-caret');
-  const open = drop.classList.toggle('open');
-  caret.style.transform = open ? 'rotate(180deg)' : '';
-}
-
-document.addEventListener('click', e => {
-  const btn  = document.getElementById('team-btn');
-  const drop = document.getElementById('team-drop');
-  if (drop && drop.classList.contains('open') && !btn.contains(e.target) && !drop.contains(e.target)) {
-    drop.classList.remove('open');
-    document.getElementById('team-caret').style.transform = '';
-  }
-});
-
-function fmtCash(v) {
-  return v >= 1e6 ? '$' + (v/1e6).toFixed(1) + 'M'
-       : v >= 1000 ? '$' + (v/1000).toFixed(1) + 'k'
-       : '$' + v;
-}
-
-function animateCash(el, fromVal, toVal) {
-  const delta  = toVal - fromVal;
-  const isGain = delta > 0;
-  const dur    = 3600;
-  const steps  = 28;
-  let   step   = 0;
-
-  // Fly-up chip — append first, then measure width for accurate centering
-  const rect = el.getBoundingClientRect();
-  const chip = document.createElement('div');
-  chip.className = 'cash-flyup ' + (isGain ? 'pos' : 'neg');
-  chip.textContent = (isGain ? '+' : '') + fmtCash(delta);
-  chip.style.visibility = 'hidden'; // hide until positioned
-  chip.style.top = (rect.top - 4) + 'px';
-  chip.style.left = '0px';
-  document.body.appendChild(chip);
-  const chipW = chip.getBoundingClientRect().width;
-  chip.style.left = (rect.left + rect.width / 2 - chipW / 2) + 'px';
-  chip.style.visibility = '';
-  chip.addEventListener('animationend', () => chip.remove());
-
-  // Color flash — set class directly so className overwrite below preserves it
-  el.dataset.cashAnim = isGain ? 'up' : 'down';
-  el.classList.add(isGain ? 'cash-up' : 'cash-down');
-
-  // Counter tween (ease-out)
-  const iv = setInterval(() => {
-    step++;
-    const t    = step / steps;
-    const ease = 1 - Math.pow(1 - t, 3);
-    el.textContent = fmtCash(Math.round(fromVal + delta * ease));
-    if (step >= steps) {
-      clearInterval(iv);
-      el.textContent = fmtCash(toVal);
-      setTimeout(() => {
-        el.classList.remove('cash-up', 'cash-down');
-        delete el.dataset.cashAnim;
-      }, 2400);
-    }
-  }, dur / steps);
-}
-
-// ─────────────────────────────────────────────────────────
-// HUD
-// ─────────────────────────────────────────────────────────
-function renderHUD() {
-  const s = E.s;
-  const mo = Math.ceil(s.week / 4);
-  document.getElementById('hud-week').textContent = `WK ${s.week} · M${mo}`;
-
-  const cash = document.getElementById('h-cash');
-  if (displayedCash !== null && displayedCash !== s.cash) {
-    animateCash(cash, displayedCash, s.cash);
-  } else {
-    cash.textContent = fmtCash(s.cash);
-  }
-  displayedCash = s.cash;
-  const cashState = s.cash < 3000 ? ' danger' : s.cash < 7000 ? ' warn' : '';
-  const cashAnim  = cash.dataset.cashAnim === 'up' ? ' cash-up'
-                  : cash.dataset.cashAnim === 'down' ? ' cash-down' : '';
-  cash.className  = 'hst-val' + cashState + cashAnim;
-
-  const rw = E.runwayWeeks;
-  const rwe = document.getElementById('h-rwy');
-  rwe.textContent = rw + 'wk';
-  rwe.className   = 'hst-val' + (rw <= 3 ? ' danger' : rw <= 6 ? ' warn' : '');
-
-
-  const ycEl = document.getElementById('h-yc');
-  if (s.ycAccepted) {
-    ycEl.textContent = '✓ accepted'; ycEl.className = 'hst-val';
-  } else if (s.ycApplied && s.ycDecisionWeek) {
-    ycEl.textContent = `decision wk ${s.ycDecisionWeek}`; ycEl.className = 'hst-val';
-  } else if (!s.ycApplied && E.ycWeek && s.week > E.ycWeek + 3) {
-    ycEl.textContent = `next wk ${E.ycWeek}`; ycEl.className = 'hst-val warn';
-  } else if (E.ycWeek) {
-    ycEl.textContent = `opens wk ${E.ycWeek}`; ycEl.className = 'hst-val';
-  } else {
-    ycEl.textContent = '—'; ycEl.className = 'hst-val';
-  }
-  document.getElementById('h-fit').textContent   = Math.round(s.market_fit) + '%';
-  document.getElementById('h-sig').textContent   = Math.round(s.signal);
-
-  const wlWrap = document.getElementById('h-wl-wrap');
-  wlWrap.style.display = (s.waitlist || 0) > 0 ? 'flex' : 'none';
-  document.getElementById('h-wl').textContent = s.waitlist || 0;
-
-  const usrWrap = document.getElementById('h-usr-wrap');
-  usrWrap.style.display = (s.users || 0) > 0 ? 'flex' : 'none';
-  document.getElementById('h-usr').textContent = s.users || 0;
-
-  document.getElementById('h-cust').textContent  = s.customers;
-
-  renderTeamDrop();
-}
-
-function moraleColor(m) {
-  return m > 65 ? '#22c55e' : m > 35 ? '#f59e0b' : '#ef4444';
-}
-
-function renderTeamDrop() {
-  const s = E.s;
-  const fl = { build: 'building', discover: 'discovery', pitch: 'pitching' };
-  const members = [
-    { id: 'alex',   initials: 'AL', bg: '#1e3a5f', c: '#93c5fd', label: 'Alex',   btnId: 'tbtn-al', ringId: 'tbtn-al-ring' },
-    { id: 'jordan', initials: 'JO', bg: '#4c1d95', c: '#c4b5fd', label: 'Jordan', btnId: 'tbtn-jo', ringId: 'tbtn-jo-ring' },
-  ];
-
-  let membersHtml = '';
-  for (const m of members) {
-    const char = E.chars.get(m.id);
-    const btnAv  = document.getElementById(m.btnId);
-    const btnRng = document.getElementById(m.ringId);
-
-    const isGone = (m.id === 'jordan' && s.jordan_resolved) || (char && !char.active);
-    if (isGone) {
-      if (btnAv) btnAv.style.display = 'none';
-      const reason = (m.id === 'jordan') ? 'let go' : 'departed';
-      membersHtml += `<div class="td-member is-gone">
-        <div class="td-av" style="background:#16161f;color:#333">${m.initials}</div>
-        <div class="td-info">
-          <div class="td-name">${m.label} — <strong class="st-gone">${reason}</strong></div>
-          <div class="td-stats">off the team</div>
-        </div>
-      </div>`;
-      continue;
+      if (e.type === "reply"){
+        const d = document.createElement("div");
+        d.className = "journal-choice"; d.textContent = "✓ " + e.body; return d;
+      }
+      const wrap = document.createElement("div");
+      if (e.type === "outcome" && e.sourceChar){
+        const src = document.createElement("div");
+        src.className = "journal-source"; src.textContent = "after talking with " + (e.from || e.sourceChar);
+        wrap.appendChild(src);
+      }
+      const d = document.createElement("div");
+      d.className = "journal-entry" + (e.type === "outcome" ? " is-outcome" : "");
+      d.textContent = e.body;
+      wrap.appendChild(d);
+      if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
+      // Inline action buttons for founder prompts that are still surfaced
+      if (e.type === "incoming" && e.cardId && engine.isOpen(e.cardId)){
+        const opts = engine.options(e.cardId);
+        if (opts.length){
+          const btns = document.createElement("div");
+          btns.className = "journal-actions";
+          btns.dataset.cardId = e.cardId;
+          const spent = engine.actionsLeft <= 0;
+          for (const o of opts){
+            const b = document.createElement("button");
+            b.className = "journal-btn" + (spent ? " spent" : "");
+            b.textContent = o.label;
+            b.dataset.card = e.cardId;
+            b.dataset.key = o.key;
+            b.onclick = ()=> doJournalAct(e.cardId, o.key, btns);
+            btns.appendChild(b);
+          }
+          wrap.appendChild(btns);
+        }
+      }
+      return wrap;
     }
 
-    if (!char || !char.active) { if (btnAv) btnAv.style.display = 'none'; continue; }
-    if (btnAv) btnAv.style.display = 'flex';
-    const rc = moraleColor(char.morale);
-    if (btnRng) btnRng.style.borderColor = rc;
-
-    // Status label — surface disconnection states before falling back to focus
-    let focus, statusCls = '';
-    if (m.id === 'jordan' && s.jordan_drifting) {
-      focus = 'going quiet'; statusCls = 'st-warn';
-    } else if (m.id === 'alex' && E.alexDepartureRisk) {
-      focus = 'pulling away'; statusCls = 'st-warn';
-    } else if (char.morale < 25) {
-      focus = 'disengaged'; statusCls = 'st-warn';
-    } else if (char.morale < 40) {
-      focus = 'distant'; statusCls = 'st-warn';
-    } else if (!s.items) {
-      focus = 'waiting on you';
-    } else {
-      focus = fl[char.focus] || char.focus || '—';
+    function doJournalAct(cardId, key, btnContainer){
+      if (revealing || journalRevealing || engine.actionsLeft <= 0) return;
+      const jBefore = engine.threads.founder.length;
+      engine.act(cardId, key);
+      // remove the buttons since the card was just answered
+      if (btnContainer) btnContainer.remove();
+      // reveal new journal entries (the reply + outcome)
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore);
+      }
+      renderStats(); renderComposer(); renderRail();
+      // auto-advance if out of actions
+      const checkAuto = setInterval(()=>{
+        if (!journalRevealing){
+          clearInterval(checkAuto);
+          if (engine.actionsLeft <= 0 && !engine.stats().act1Complete){
+            setTimeout(advanceWeek, 900);
+          }
+        }
+      }, 120);
     }
 
-    membersHtml += `<div class="td-member">
-      <div class="td-av" style="background:${m.bg};color:${m.c}">${m.initials}<div class="td-ring" style="border-color:${rc}"></div></div>
-      <div class="td-info">
-        <div class="td-name">${m.label} — <strong class="${statusCls}">${focus}</strong></div>
-        <div class="td-stats">T:${char.trust} · M:${Math.round(char.morale)}</div>
-      </div>
-    </div>`;
-  }
-  document.getElementById('td-members').innerHTML = membersHtml;
-
-  // Roadmap section
-  const roadmap = document.getElementById('td-roadmap');
-  if (!s.items) { roadmap.innerHTML = ''; return; }
-
-  const expanded = !!s.items.beta;
-  const plan = s.dev_plan;
-  const ITEM_META = {
-    _hdr_backend:      { header: true, lbl: 'Backend' },
-    matching_algo:     { lbl: 'Matching algorithm',  av: 'AL', indent: true },
-    api_design:        { lbl: 'API design',           av: 'AL', indent: true },
-    arch_refactor:     { lbl: 'Arch refactor',        av: 'AL', indent: true },
-    sprint_social:     { lbl: 'Social + push',        av: '—',  indent: true },
-    sprint_algo:       { lbl: 'Profile verification', av: '—',  indent: true },
-    plans_matching:    { lbl: 'Plans matching',       av: 'AL', indent: true },
-    _hdr_ios:          { header: true, lbl: 'iOS app' },
-    ios_ui:            { lbl: 'UI design',            av: 'JO', indent: true },
-    ios_server:        { lbl: 'Backend integration',  av: 'JO', indent: true },
-    sprint_mono:       { lbl: 'Premium subscription', av: '—',  indent: true },
-    sprint_adv_social: { lbl: 'Social graph',         av: '—',  indent: true },
-    sprint_adv_video:  { lbl: 'Video dates',          av: '—',  indent: true },
-    plans_ui:          { lbl: 'Plans UI',             av: 'JO', indent: true },
-    beta:              { lbl: 'Beta',                 av: 'AL' },
-  };
-  const AV_STYLE = {
-    AL: 'background:#1e3a5f;color:#93c5fd',
-    JO: 'background:#4c1d95;color:#c4b5fd',
-    '—': 'background:#1e1e2a;color:#778',
-  };
-  const ORDER_PRE  = ['_hdr_backend','_hdr_ios'];
-  const ORDER_LEAN = ['_hdr_backend','matching_algo','api_design','arch_refactor','plans_matching','_hdr_ios','ios_ui','ios_server','plans_ui','beta'];
-  const ORDER_FULL = ['_hdr_backend','matching_algo','api_design','arch_refactor','sprint_social','sprint_algo','plans_matching','_hdr_ios','ios_ui','ios_server','sprint_mono','sprint_adv_social','sprint_adv_video','plans_ui','beta'];
-  const order = !expanded ? ORDER_PRE : (plan === 'full' ? ORDER_FULL : ORDER_LEAN);
-  const badgeCls = { lean: 'dm-badge-lean', full: 'dm-badge-full', sprint: 'dm-badge-sprint' };
-
-  // Pre-compute which items get a connector line (all non-header items whose
-  // immediate successor in the order is also a non-header item)
-  const showLine = new Set();
-  for (let i = 0; i < order.length - 1; i++) {
-    if (!ITEM_META[order[i]]?.header && !ITEM_META[order[i + 1]]?.header) {
-      showLine.add(order[i]);
+    // After each action or week advance, update spent state on any remaining
+    // inline journal buttons and remove buttons for cards no longer surfaced.
+    function refreshJournalButtons(){
+      const box = $("journalScroll");
+      const groups = box.querySelectorAll(".journal-actions");
+      for (const g of groups){
+        const cid = g.dataset.cardId;
+        if (!engine.isOpen(cid)){
+          g.remove(); continue;
+        }
+        const spent = engine.actionsLeft <= 0;
+        for (const b of g.querySelectorAll(".journal-btn")){
+          b.className = "journal-btn" + (spent ? " spent" : "");
+        }
+      }
     }
-  }
 
-  const pivotBadge = s.activities_pivot ? `<span class="dm-badge dm-badge-pivot">pivoted</span>` : '';
-  let html = `<div class="td-sep"></div><div class="dm-hdr">${expanded ? 'Roadmap' : 'Build'}<span class="dm-badge ${badgeCls[plan] || 'dm-badge-sprint'}">${plan || '—'}</span>${pivotBadge}</div>`;
-  for (const key of order) {
-    const meta = ITEM_META[key];
-    if (!meta) continue;
-    if (meta.header) { html += `<div class="dm-grp">${meta.lbl}</div>`; continue; }
-    const item = s.items[key];
-    if (!item) continue;
-    const st     = item.status;
-    const stCls  = st === 'done' ? 'done' : st === 'active' ? 'active' : st === 'deferred' ? 'defer' : st === 'obsolete' ? 'obsolete' : 'todo';
-    const dotCls = `dm-step-dot st-${stCls}`;
-    const lblCls = `dm-step-lbl st-${stCls}`;
-    const dotContent = st === 'done' ? '✓' : '';
-    const line    = showLine.has(key) ? '<div class="dm-step-line"></div>' : '';
-    const whoHtml = st === 'active' && meta.av !== '—'
-      ? `<span class="dm-step-who" style="${AV_STYLE[meta.av]}">${meta.av}</span>` : '';
-    html += `<div class="dm-step">
-      <div class="dm-step-track"><div class="${dotCls}">${dotContent}</div>${line}</div>
-      <div class="dm-step-body"><span class="${lblCls}">${meta.lbl}</span>${whoHtml}</div>
-    </div>`;
-  }
-  roadmap.innerHTML = html;
-}
-
-function updatePileCount() {
-  const el = document.getElementById('pile-count-val');
-  if (el) el.textContent = gameLog.length;
-}
-
-
-// ─────────────────────────────────────────────────────────
-// End Week
-// ─────────────────────────────────────────────────────────
-function endWeek() {
-  console.log('[endWeek] called, weekActions:', weekActions.length, 'game_over:', E.s.game_over);
-  if (E.s.game_over || E.s.game_won) return;
-  if (weekActions.length === 0) return;
-
-  prevSnap = {
-    cash: E.s.cash, market_fit: E.s.market_fit,
-    signal: E.s.signal, users: E.s.users, customers: E.s.customers, week: E.s.week,
-    alexActive: E.chars.get('alex')?.active ?? true,
-  };
-
-  const ids = actedIds();
-  const optMap = {};
-  for (const a of weekActions) {
-    if (a.optKey && a.optKey !== '__act__') optMap[a.cardId] = a.optKey;
-  }
-
-  const currentCards = [...E.current];
-  const engineOrder = ids.slice();
-
-  const { results, sprintWeeks, transactions } = E.resolveTurn(ids, optMap);
-  cashLedger.push({ week: prevSnap.week, sprintWeeks, transactions, balanceAfter: E.s.cash });
-  logWeek(currentCards, ids, optMap, results, engineOrder);
-  updatePileCount();
-  renderHUD();
-
-  showResultStrip(results, sprintWeeks);
-
-  const guruRx = checkGuruReaction(weekActions);
-  if (guruRx) setTimeout(() => showGuruReaction(guruRx), 800);
-}
-
-// ─────────────────────────────────────────────────────────
-// Result strip — shown at bottom of chat area
-// ─────────────────────────────────────────────────────────
-function showResultStrip(results, sprintWeeks) {
-  const s   = prevSnap;
-  const cur = E.s;
-
-  const fmtD = (v, isInt) => (v >= 0 ? '+' : '') + (isInt ? Math.round(v) : v);
-  const deltas = [
-    { lbl:'Cash',   d: cur.cash       - s.cash,       str: v => (v>=0?'+$':'-$')+Math.abs(Math.round(v/100)*100).toLocaleString() },
-    { lbl:'Fit',    d: cur.market_fit - s.market_fit, str: v => fmtD(Math.round(v))+'%' },
-    { lbl:'Signal', d: cur.signal     - s.signal,     str: v => fmtD(Math.round(v)) },
-    { lbl:'Users',  d: cur.users      - s.users,      str: v => fmtD(v, true) },
-  ].filter(x => Math.abs(x.d) >= 1);
-
-  document.getElementById('chat-results-deltas').innerHTML =
-    deltas.map(x => `<span class="delta ${x.d>=0?'d-pos':'d-neg'}">${x.lbl} ${x.str(x.d)}</span>`).join('');
-
-  const btn = document.getElementById('chat-results-btn');
-  if (cur.game_won) {
-    btn.textContent = 'See Results';
-    btn.onclick = () => showEnd(true);
-  } else if (cur.game_over) {
-    btn.textContent = 'See Results';
-    btn.onclick = () => showEnd(false);
-  } else {
-    btn.textContent = `Week ${cur.week} →`;
-    btn.onclick = nextWeek;
-  }
-  document.getElementById('chat-results').classList.add('on');
-
-  setTimeout(() => checkMilestones(s, cur), 500);
-}
-
-// ─────────────────────────────────────────────────────────
-// Summary
-// ─────────────────────────────────────────────────────────
-function showSummary(results, sprintWeeks) {
-  const s    = E.s;
-  const prev = prevSnap;
-
-  document.getElementById('sum-eyebrow').textContent =
-    `WEEK ${prev.week} COMPLETE`;
-  document.getElementById('sum-title').textContent =
-    sprintWeeks === 1 ? 'One week passed.' : `${sprintWeeks}-week sprint.`;
-
-  // Outcomes
-  const items = [
-    ...results.map(r => ({ text: r, ok: true })),
-    ...E.expiredThisTurn.map(e => ({
-      text: `${e.from} — patience expired.`,
-      ok: false,
-    })),
-  ];
-
-  const outEl = document.getElementById('sum-outcomes');
-  outEl.innerHTML = items.length
-    ? items.map((o, i) =>
-        `<div class="sum-item${o.ok?'':' sum-drop'}" style="transition-delay:${i*110}ms">
-          <span class="sum-icon">${o.ok?'✓':'✗'}</span>
-          <span class="sum-text">${o.text}</span>
-        </div>`).join('')
-    : `<div class="sum-item" style="transition-delay:0ms">
-         <span class="sum-icon">—</span>
-         <span class="sum-text" style="color:var(--dim)">A quiet week. Nothing resolved.</span>
-       </div>`;
-
-  // Deltas
-  const deltas = [
-    { lbl:'Cash',   d: s.cash - prev.cash,            fmt: v => (v>=0?'+':'')+Math.round(v/100)*100 },
-    { lbl:'Fit',    d: s.market_fit - prev.market_fit, fmt: v => (v>=0?'+':'')+Math.round(v)+'%' },
-    { lbl:'Signal', d: s.signal - prev.signal,         fmt: v => (v>=0?'+':'')+Math.round(v) },
-    { lbl:'Users',  d: s.users - prev.users,           fmt: v => (v>=0?'+':'')+v },
-  ].filter(d => Math.abs(d.d) >= 1);
-
-  document.getElementById('sum-deltas').innerHTML = deltas.map(d =>
-    `<span class="delta ${d.d >= 0 ? 'd-pos' : 'd-neg'}">${d.lbl} ${d.fmt(d.d)}</span>`
-  ).join('') || `<span style="font-size:11px;color:var(--dim)">No significant changes.</span>`;
-
-  const btn = document.getElementById('sum-next');
-  if (s.game_won) {
-    btn.textContent = '🎉 See Results';
-    btn.onclick = () => { document.getElementById('summary-overlay').classList.remove('on'); showEnd(true); };
-  } else if (s.game_over) {
-    btn.textContent = '💀 See Results';
-    btn.onclick = () => { document.getElementById('summary-overlay').classList.remove('on'); showEnd(false); };
-  } else {
-    btn.textContent = `Start Week ${s.week} →`;
-    btn.onclick = nextWeek;
-  }
-
-  document.getElementById('summary-overlay').classList.add('on');
-
-  // Stagger reveal
-  requestAnimationFrame(() => requestAnimationFrame(() => {
-    outEl.querySelectorAll('.sum-item').forEach(el => el.classList.add('vis'));
-  }));
-}
-
-function nextWeek() {
-  document.getElementById('chat-results').classList.remove('on');
-
-  const prevCharId = openCharId;
-  weekActions = [];
-  effortLeft = 1.0;
-  prevSnap = null;
-
-  E.advanceWeek();
-  displayedCash = E.s.cash;
-
-  console.log('[nextWeek] week:', E.s.week, 'activeCards:', E.activeCards.size, 'current:', E.current.length, 'openCharId:', openCharId);
-  for (const [id, entry] of E.activeCards) console.log('  card:', id, 'char:', entry.charId);
-
-  renderAll();
-
-  if (E.expiredThisTurn.length > 0) {
-    for (const exp of E.expiredThisTurn) {
-      showExpiryFlash(exp.charId, exp.from, exp.card);
+    function buildChatEntry(e){
+      if (e.type === "incoming"){
+        const wrap = document.createElement("div");
+        const row = document.createElement("div");
+        row.className = "row in";
+        row.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+        wrap.appendChild(row);
+        if (e.subtext){
+          const st = document.createElement("div");
+          st.className="subtext"; st.textContent = e.subtext; wrap.appendChild(st);
+        }
+        if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
+        return wrap;
+      }
+      if (e.type === "reply"){
+        const d = document.createElement("div");
+        d.className = "row out";
+        d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+        return d;
+      }
+      const d = document.createElement("div");
+      d.className = "outcome";
+      d.innerHTML = `<b>·</b> ${escapeHtml(e.body)}`;
+      return d;
     }
-  }
 
-  // Animate new messages arriving across all characters
-  animateNewMessages();
-
-  // If a chat was open, keep it open — don't reset to empty state
-  if (prevCharId) {
-    openCharId = prevCharId;
-    document.getElementById('chat-empty').style.display = 'none';
-    document.getElementById('chat-thread').style.display = 'flex';
-    openCharacter(prevCharId);
-  }
-}
-
-function animateNewMessages() {
-  const states = E.getCharacterStates();
-  const charsWithMessages = [];
-  for (const [id, st] of states) {
-    if (st.cardCount > 0 && id !== 'founder') charsWithMessages.push(id);
-  }
-
-  // Add new-message class to rows that have messages
-  const panel = document.getElementById('char-panel');
-  for (const id of charsWithMessages) {
-    const row = panel.querySelector(`[onclick="openCharacter('${id}')"]`);
-    if (row) {
-      row.classList.add('new-message');
-      setTimeout(() => row.classList.remove('new-message'), 400);
+    // ── journal panel (always visible, bottom) ────────────
+    function journalDivider(box, e){
+      if (e.week && e.week !== jLastWeek){
+        const d = document.createElement("div");
+        d.className = "journal-date";
+        d.innerHTML = `<span class="num"><b>${e.week}</b><i>week</i></span>`;
+        box.appendChild(d);
+        jLastWeek = e.week;
+      }
     }
-  }
 
-  // Show a brief notification banner
-  if (charsWithMessages.length > 0) {
-    showNewMessagesBanner(charsWithMessages.length);
-  }
-}
-
-function showNewMessagesBanner(count) {
-  let banner = document.getElementById('new-msgs-banner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'new-msgs-banner';
-    document.getElementById('chat-main').prepend(banner);
-  }
-  banner.textContent = count === 1 ? '1 new message' : `${count} new messages`;
-  banner.classList.add('on');
-  setTimeout(() => banner.classList.remove('on'), 2500);
-}
-
-function showExpiryFlash(charId, from, card) {
-  const panel = document.getElementById('char-panel');
-  const charEl = panel.querySelector(`[onclick="openCharacter('${charId}')"]`);
-  if (!charEl) return;
-  charEl.classList.add('conv-expired-flash');
-  const msg = document.createElement('div');
-  msg.className = 'conv-expired-msg';
-  msg.textContent = card.dropMsg ? `"${card.dropMsg}"`.slice(0, 40) : `${from} stopped waiting`;
-  charEl.parentNode.insertBefore(msg, charEl.nextSibling);
-  setTimeout(() => {
-    charEl.classList.remove('conv-expired-flash');
-    msg.remove();
-  }, 3000);
-}
-
-function showEnd(won) {
-  const s = E.s;
-  const el = document.getElementById('end-overlay');
-  document.getElementById('end-title').textContent = won ? '🎉 Seed Round Closed' : '💀 Out of Runway';
-  document.getElementById('end-sub').textContent = won
-    ? `You raised $1.2M at week ${s.week} with ${s.customers} paying customers. That's a real company.`
-    : `Made it to week ${s.week} with ${s.customers} customers before cash hit zero.`;
-  el.classList.add('on');
-}
-
-// ─────────────────────────────────────────────────────────
-// Wire + Start
-// ─────────────────────────────────────────────────────────
-
-// Keyboard: Escape closes overlays
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') {
-    if (document.getElementById('bank-overlay').classList.contains('on')) { closeBank(); return; }
-    if (document.getElementById('log-overlay').classList.contains('on'))  { closeLog();  return; }
-  }
-});
-
-// intro already rendered by the early script block above
-
-// ─────────────────────────────────────────────────────────
-// Debug skip
-// ─────────────────────────────────────────────────────────
-const DBG_PREFS = {
-  dev_planning_session: 'lean',
-  alex_commitment:      'accept',
-  start_prototype:      'build',
-  incorporate_week1:    'atlas',
-};
-
-// Mirrors lean_loop selectCards from sim_proto.js: critical first, then
-// product/customer by phase, then urgency descending.
-function debugSelectCards(hand, s) {
-  const CRITICAL = new Set([
-    'start_prototype','incorporate_week1','dev_planning_session',
-    'alex_commitment','alex_equity','vision_mismatch','jordan_confrontation',
-    'alex_demo_ready','alex_beta_ready','good_enough_launch',
-    'jordan_confrontation','activity_pivot','bad_retention',
-  ]);
-  const fit = s.market_fit || 0;
-  let catOrder;
-  if (fit < 50)      catOrder = { c: 0, p: 1, e: 2, t: 3 };
-  else if (!s.launched) catOrder = { p: 0, c: 1, t: 2, e: 3 };
-  else               catOrder = { e: 0, c: 1, p: 2, t: 3 };
-
-  const rank = c => {
-    if (CRITICAL.has(c.id)) return 0;
-    return 1 + (catOrder[c.cat] ?? 9);
-  };
-  const playable = hand.filter(c => c.options?.length > 0);
-  return playable.slice().sort((a, b) => {
-    const d = rank(a) - rank(b);
-    return d !== 0 ? d : (b.urgency || 0) - (a.urgency || 0);
-  }).slice(0, 2);
-}
-
-function debugSkipTo(targetWeek) {
-  ['intro-overlay','htp-overlay','summary-overlay','end-overlay','log-overlay','bank-overlay'].forEach(id => {
-    document.getElementById(id)?.classList.remove('on');
-  });
-
-  E = new Engine();
-  weekActions = []; effortLeft = 1.0; prevSnap = null; displayedCash = null; openCharId = null;
-  gameLog = []; cashLedger = []; logFilter = null;
-  milestones = { alexGone: false, moneyRaised: false, firstUser: false, firstCustomer: false };
-  msQueue = []; msShowing = false;
-  document.getElementById('end-overlay').classList.remove('on');
-  document.getElementById('chat-results').classList.remove('on');
-  document.getElementById('chat-header').style.display = 'none';
-  document.getElementById('chat-thread').style.display = 'none';
-  document.getElementById('chat-empty').style.display = 'flex';
-  E.advanceWeek();
-
-  while (E.s.week < targetWeek && !E.s.game_over && !E.s.game_won) {
-    const allCards  = [...E.current];
-    const acted     = debugSelectCards(allCards, E.s);
-    const actedIds  = acted.map(c => c.id);
-    const optMap    = {};
-    for (const c of acted) {
-      const preferred = DBG_PREFS[c.id] && c.options.find(o => o.key === DBG_PREFS[c.id]);
-      optMap[c.id] = preferred ? preferred.key : c.options[0].key;
+    function renderJournalCatchup(){
+      const box = $("journalScroll");
+      const thread = engine.threads.founder;
+      while (jShown < thread.length){
+        const e = thread[jShown];
+        journalDivider(box, e);
+        const el = buildJournalEntry(e);
+        el.style.animation = "none";
+        box.appendChild(el);
+        jShown++;
+      }
     }
-    const engineOrder = actedIds.slice();
-    prevSnap = { week: E.s.week };
-    const { results, sprintWeeks, transactions } = E.resolveTurn(actedIds, optMap);
-    cashLedger.push({ week: prevSnap.week, sprintWeeks, transactions, balanceAfter: E.s.cash });
-    logWeek(allCards, actedIds, optMap, results, engineOrder);
-    E.advanceWeek();
-  }
-  prevSnap = null;
-  updatePileCount();
 
-  displayedCash = E.s.cash;
-  renderAll();
-}
-</script>
+    function revealJournalFrom(from){
+      const thread = engine.threads.founder;
+      if (from >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
+      journalRevealing = true; renderStats();
+      const box = $("journalScroll");
+      let i = from;
+      const step = ()=>{
+        if (i >= thread.length){ jShown = thread.length; finishJournalReveal(); return; }
+        const e = thread[i];
+        journalDivider(box, e);
+        const delay = e.type === "stamp" ? 500 : 380;
+        setTimeout(()=>{
+          box.appendChild(buildJournalEntry(e));
+          box.scrollTop = box.scrollHeight;
+          i++; jShown = i; step();
+        }, delay);
+      };
+      step();
+    }
 
-<!-- ── Debug bar ──────────────────────────────────────────── -->
-<div id="debug-bar">
-  <span id="debug-lbl">⚡ skip to</span>
-  <button onclick="debugSkipTo(8)">Wk 8 · beta</button>
-  <button onclick="debugSkipTo(14)">Wk 14 · launch</button>
-  <button onclick="debugSkipTo(20)">Wk 20 · investors</button>
-  <button onclick="debugSkipTo(28)">Wk 28 · late game</button>
-</div>
+    function finishJournalReveal(){
+      journalRevealing = false;
+      renderStats(); renderComposer(); refreshJournalButtons();
+      const s = engine.stats();
+      if (s.act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 500); }
+    }
 
+    // ── chat thread rendering ────────────────────────────
+    function openConversation(){
+      renderHead();
+      const thread = engine.threads[active];
+      const box = $("thread");
+      box.innerHTML = "";
+      box.className = "thread";
+      let lastWeek = null;
+      const upto = Math.max(shown[active], 0);
+      thread.slice(0, upto).forEach(e=>{
+        lastWeek = chatDivider(box, e, lastWeek);
+        const el = buildChatEntry(e); el.style.animation = "none"; box.appendChild(el);
+      });
+      revealFrom(active, upto, lastWeek);
+      renderRail(); renderStats(); renderComposer();
+      scrollDown();
+    }
+
+    function chatDivider(box, e, lastWeek){
+      if (e.week && e.week !== lastWeek){
+        const d = document.createElement("div");
+        d.className = "divider"; d.textContent = "Week " + e.week;
+        d.style.animation = "none"; box.appendChild(d);
+        return e.week;
+      }
+      return lastWeek;
+    }
+
+    function revealFrom(charId, from, lastWeek){
+      const thread = engine.threads[charId];
+      if (from >= thread.length){ shown[charId]=thread.length; finishReveal(); return; }
+      revealing = true; renderStats();
+      const box = $("thread");
+      let i = from; let lw = lastWeek;
+      const step = ()=>{
+        if (charId !== active){ shown[charId]=thread.length; finishReveal(); return; }
+        if (i >= thread.length){ shown[charId]=thread.length; finishReveal(); return; }
+        const e = thread[i];
+        lw = chatDivider(box, e, lw);
+        const useTyping = e.type === "incoming";
+        const delay = useTyping ? 620 : 90;
+        if (useTyping){
+          const t = document.createElement("div");
+          t.className="row in"; t.innerHTML = `<div class="typing"><i></i><i></i><i></i></div>`;
+          box.appendChild(t); scrollDown();
+          setTimeout(()=>{ t.remove(); box.appendChild(buildChatEntry(e)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+        } else {
+          setTimeout(()=>{ box.appendChild(buildChatEntry(e)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+        }
+      };
+      step();
+    }
+
+    function finishReveal(){
+      revealing = false;
+      renderRail(); renderStats(); renderComposer(); refreshJournalButtons();
+    }
+
+    // ── composer (only for chat characters now) ──────────
+    function renderComposer(){
+      const c = $("composer");
+      const s = engine.stats();
+      const cardId = engine.openCardId(active);
+
+      if (revealing){ c.className="composer"; c.innerHTML = `<div class="empty-state">…</div>`; return; }
+
+      if (!cardId){
+        c.className="composer";
+        const chatConvs = engine.conversations().filter(x => !x.isJournal);
+        const anyOpen = chatConvs.some(x=>x.hasAction);
+        c.innerHTML = `<div class="empty-state">${
+          anyOpen ? 'Nothing to answer here right now.'
+                  : "You're caught up." + (s.actionsLeft>0?' <span class="go" id="goNext">End the week →</span>':'')
+        }</div>`;
+        const g = $("goNext"); if (g) g.onclick = advanceWeek;
+        return;
+      }
+
+      const opts = engine.options(cardId);
+      const spent = s.actionsLeft <= 0;
+      c.className = "composer" + (spent?" spent":"");
+      c.innerHTML =
+        `<div class="prompt-label">Suggested replies · ${s.actionsLeft} action${s.actionsLeft===1?'':'s'} left</div>
+         <div class="chips">${opts.map(o=>
+            `<button class="chip" data-card="${cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
+          ).join("")}</div>`;
+      [...c.querySelectorAll(".chip")].forEach(btn=>{
+        btn.onclick = ()=> doAct(btn.dataset.card, btn.dataset.key);
+      });
+    }
+
+    // ── actions ───────────────────────────────────────────
+    function doAct(cardId, key){
+      if (revealing || journalRevealing || engine.stats().actionsLeft<=0) return;
+      const jBefore = engine.threads.founder.length;
+      const chatBefore = engine.threads[active] ? engine.threads[active].length : 0;
+      engine.act(cardId, key);
+
+      // reveal new entries in the active chat thread (reply bubble)
+      if (active !== "founder" && engine.threads[active].length > chatBefore){
+        const lastWeek = engine.threads[active][chatBefore-1]?.week ?? engine.stats().week;
+        revealFrom(active, chatBefore, lastWeek);
+      }
+
+      // reveal new entries in the journal panel
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore);
+      }
+
+      // after both reveals finish, auto-advance if out of actions
+      const checkAuto = setInterval(()=>{
+        if (!revealing && !journalRevealing){
+          clearInterval(checkAuto);
+          renderComposer();
+          if (engine.stats().actionsLeft<=0 && !engine.stats().act1Complete){
+            setTimeout(advanceWeek, 900);
+          }
+        }
+      }, 120);
+    }
+
+    function advanceWeek(){
+      if (revealing || journalRevealing) return;
+      engine.nextWeek();
+      banner("Week " + engine.stats().week);
+      const convs = engine.conversations().filter(c => !c.isJournal);
+      const withAction = convs.find(c=>c.hasAction) || convs[0];
+      active = withAction ? withAction.id : active;
+      openConversation();
+      // also reveal any new journal entries from the week tick
+      const jBefore = jShown;
+      if (engine.threads.founder.length > jBefore){
+        revealJournalFrom(jBefore);
+      }
+      if (engine.stats().gameOver) setTimeout(showGameOver, 700);
+    }
+
+    // ── banner + modals ───────────────────────────────────
+    function banner(text){
+      const b=$("banner"); b.textContent=text; b.classList.add("show");
+      setTimeout(()=>b.classList.remove("show"), 1900);
+    }
+    function showAct1(){
+      const s = engine.stats();
+      const split = s.equity || "your split";
+      $("modal").innerHTML =
+        `<div class="em">🤝</div><h3>Equity, signed.</h3>
+         <p>The founder agreement is locked in at <span class="split">${split}</span>.
+            The hard conversations are behind you — for now. The real building starts here.</p>
+         <p style="font-size:12.5px">This is the end of the current slice. More of the story is coming.</p>
+         <button id="closeModal">Keep going</button>`;
+      $("overlay").classList.add("show");
+      $("closeModal").onclick = ()=> $("overlay").classList.remove("show");
+    }
+    function showGameOver(){
+      $("modal").innerHTML =
+        `<div class="em">💸</div><h3>Out of runway.</h3>
+         <p>The cash hit zero on week ${engine.stats().week}. Every founder runs this race against the bank balance.</p>
+         <button id="closeModal">Refresh to retry</button>`;
+      $("overlay").classList.add("show");
+      $("closeModal").onclick = ()=> location.reload();
+    }
+
+    // ── utils ─────────────────────────────────────────────
+    function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
+    function escapeHtml(str){ return (str||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
+
+    $("endweek").onclick = ()=> advanceWeek();
+
+    // boot
+    renderJournalCatchup();
+    openConversation();
+  })();
+  </script>
 </body>
 </html>

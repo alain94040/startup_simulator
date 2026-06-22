@@ -248,7 +248,7 @@
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
         body: "YC applications just opened. Your stats qualify — live product, 10+ paying subscribers. A lot of founders in the consumer social space are applying.",
-        urgency: 2, weeks: 1, priority: 1,
+        urgency: 12, weeks: 1,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.launched && s.customers >= 10,
         options: [
           { label: 'Start writing the application', key: 'apply',
@@ -261,7 +261,7 @@
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
         body: "YC applications just opened. Stats aren't quite there yet — not launched or fewer than 10 paying subscribers. Some apply anyway for partner feedback. Apply or wait?",
-        urgency: 2, weeks: 1, priority: 1,
+        urgency: 12, weeks: 1,
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (!s.launched || s.customers < 10),
         options: [
           { label: 'Start writing anyway', key: 'apply',

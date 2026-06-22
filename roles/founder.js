@@ -108,7 +108,7 @@
           if (split === '50/25/25') return "three-way call. 50/25/25 on the table. jordan accepted — at least she's equal to alex. alex signed without comment. nobody mentioned vesting schedules.";
           return "three-way call. 40/40/20 agreed. alex seemed satisfied. jordan signed — said she'd prove she's worth more than 20%. nobody set up vesting schedules.";
         },
-        urgency: 3, weeks: 1, priority: 1,
+        urgency: 13, weeks: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return jordan && jordan.flags.equity_counter_done && !s.jordan_equity && s.week <= 12;
