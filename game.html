@@ -131,6 +131,20 @@
   }
   .cta-btn:hover{transform:translateY(-1px)}
   .cta-btn:disabled{opacity:.5;cursor:default;background:var(--faint);box-shadow:none}
+  /* inline response card — the expanded options, in-flow at the end of the thread
+     (reserves space, never overlays the latest message). Mirrors the hand card. */
+  .thread-card{
+    align-self:stretch;flex:none;margin:14px 0 6px;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 6px 22px rgba(11,132,255,.16),0 0 0 1.5px rgba(11,132,255,.4);
+    animation:rise .25s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .tc-stripe{height:5px}
+  .tc-head{display:flex;align-items:center;gap:9px;padding:10px 12px 4px}
+  .tc-id{flex:1;min-width:0}
+  .tc-from{font-size:12.5px;font-weight:700;color:#0f0f1e}
+  .tc-role{font-size:10.5px;color:#999}
+  .tc-close{border:0;background:none;font-size:18px;color:var(--faint);cursor:pointer;line-height:1}
+  .tc-opts{display:flex;flex-direction:column;gap:8px;padding:4px 12px 12px}
 
   /* typing indicator */
   .typing{display:inline-flex;gap:4px;padding:12px 15px;background:var(--in);border-radius:20px;border-bottom-left-radius:6px}
@@ -287,6 +301,32 @@
   @keyframes stampin{0%{opacity:0;transform:rotate(-7deg) scale(2.2)}60%{opacity:.92}100%{opacity:.78;transform:rotate(-7deg) scale(1)}}
   @keyframes fade{from{opacity:0}to{opacity:1}}
   @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+  /* turn-end diff highlights (calm, in stable surfaces — no tab switching) */
+  @keyframes jHighlight{0%{background:rgba(255,206,84,.55)}100%{background:transparent}}
+  .journal-entry.arrive,.journal-choice.arrive{animation:jHighlight 1.2s ease;border-radius:5px;margin-left:-4px;padding-left:4px}
+  @keyframes statPulse{0%{transform:scale(1)}40%{transform:scale(1.13);box-shadow:0 0 0 3px rgba(52,199,89,.3)}100%{transform:scale(1);box-shadow:none}}
+  .stat.changed{animation:statPulse .85s ease}
+
+  /* ── iPhone-style notification bubbles (week-turn consequences) ── */
+  .notes{
+    position:fixed;top:84px;right:22px;z-index:45;width:330px;
+    display:flex;flex-direction:column;gap:10px;pointer-events:none;
+  }
+  .note{
+    pointer-events:auto;display:flex;gap:11px;align-items:flex-start;cursor:pointer;
+    background:rgba(255,255,255,.93);backdrop-filter:blur(12px);
+    border:1px solid var(--line);border-radius:16px;padding:11px 13px;
+    box-shadow:0 10px 34px rgba(0,0,0,.2);transition:transform .12s;
+    animation:noteIn .34s cubic-bezier(.2,.9,.3,1) both;
+  }
+  .note:hover{transform:translateY(-1px)}
+  .note.leaving{animation:noteOut .26s ease forwards}
+  .note-av{width:34px;height:34px;border-radius:9px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}
+  .note-body{min-width:0;flex:1}
+  .note-from{font-weight:700;font-size:13px;margin-bottom:1px}
+  .note-text{font-size:12.5px;color:var(--muted);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  @keyframes noteIn{from{opacity:0;transform:translateX(34px) scale(.96)}to{opacity:1;transform:none}}
+  @keyframes noteOut{to{opacity:0;transform:translateX(34px)}}
   ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
 </style>
 </head>
@@ -347,6 +387,9 @@
       </div>
     </div>
   </div>
+
+  <!-- iPhone-style notification bubbles (week-turn consequences) -->
+  <div class="notes" id="notes"></div>
 
   <div class="overlay" id="overlay">
     <div class="card-modal" id="modal"></div>
@@ -424,6 +467,9 @@
     let jLastWeek = null;
     let runwayAnim = false;
     let selectedCard = null;   // cardId of the hand card whose options are open
+    let pendingStatPulse = []; // stat keys (signal/fit) that changed this turn, to pulse
+    let noteQueue = [];        // pending notification toasts to reveal one at a time
+    let noteTimer = null;      // paces the notification reveal
 
     const $ = id => document.getElementById(id);
     const fmtCash = c => "$" + c.toLocaleString();
@@ -459,8 +505,8 @@
       $("weekSub").textContent = "Week " + s.week + " · idea → seed";
       if (!runwayAnim) setRunway(s.cash);
       $("stats").innerHTML = `
-        <div class="stat"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
-        <div class="stat"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>
+        <div class="stat" data-stat="signal"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
+        <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>
         ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
@@ -472,8 +518,8 @@
     function renderRail(){
       const convs = engine.conversations().filter(c => !c.isJournal);
       $("convs").innerHTML = convs.map(c=>{
-        // Blue dot = unread: thread has entries we haven't revealed yet.
-        const unread = shown[c.id] < engine.threads[c.id].length;
+        // Blue dot = an unrevealed *incoming* message waits (your own replies don't count).
+        const unread = engine.threads[c.id].slice(shown[c.id]).some(e => e.type === "incoming");
         const dot = unread ? '<span class="badge"></span>' : '';
         const st = styleFor(c.id);
         return `<div class="conv ${c.id===active?'active':''}" data-id="${c.id}">
@@ -659,26 +705,58 @@
     }
     function finishReveal(){
       revealing = false;
-      renderRail(); renderStats(); renderHand(); updateChatCta();
+      renderRail(); renderStats(); renderHand(); renderThreadResponse();
     }
 
-    // A "Respond ↓" pill at the end of the active thread, so reading a chat leads
-    // clearly to its action (the matching hand card). Reading is the gate; the
-    // pill only appears once the message is revealed and there's an open card.
-    function updateChatCta(){
+    function clearThreadResponse(){
       const box = $("thread");
-      const old = box.querySelector(".chat-cta"); if (old) old.remove();
+      [...box.querySelectorAll(".chat-cta, .thread-card")].forEach(el => el.remove());
+    }
+    // The response surface for a chat character lives *inside* the thread, in-flow,
+    // so it reserves space and never covers the latest message. Default state is a
+    // "Respond ↓" pill (the trigger); when its card is the one being engaged
+    // (selectedCard), it expands into the full option card, styled like the hand card.
+    function renderThreadResponse(){
+      clearThreadResponse();
       if (active === "founder") return;
       const cardId = engine.openCardId(active);
       if (!cardId || !cardReadable(active)) return;
-      if (!engine.options(cardId).length) return;
+      const opts = engine.options(cardId);
+      if (!opts.length) return;
+      const box = $("thread");
       const spent = engine.stats().actionsLeft <= 0;
+
+      if (selectedCard === cardId && !spent){
+        const a = engine.openActions().find(x => x.cardId === cardId);
+        const st = styleFor(active);
+        const cat = catFor(a ? a.cat : "e");
+        const card = document.createElement("div");
+        card.className = "thread-card";
+        card.innerHTML =
+          `<div class="tc-stripe" style="background:${cat.color}"></div>
+           <div class="tc-head">
+             <div class="hcard-av" style="background:${st.color}">${st.initials}</div>
+             <div class="tc-id"><div class="tc-from">${escapeHtml(a ? a.name : active)}</div><div class="tc-role">Your response</div></div>
+             <button class="tc-close" id="tcClose">×</button>
+           </div>
+           <div class="tc-opts">${opts.map(o=>
+              `<button class="chip" data-card="${cardId}" data-key="${o.key}">${escapeHtml(o.label)}</button>`
+            ).join("")}</div>`;
+        box.appendChild(card);
+        $("tcClose").onclick = ()=>{ if (busy()) return; selectedCard = null; renderThreadResponse(); renderHand(); };
+        [...card.querySelectorAll(".chip")].forEach(btn=>{ btn.onclick = ()=> commitCard(btn.dataset.card, btn.dataset.key); });
+        // scroll the freshly-appended card fully into view, after layout settles
+        scrollDown();
+        requestAnimationFrame(()=>{ box.scrollTop = box.scrollHeight; });
+        return;
+      }
+
       const cta = document.createElement("div");
       cta.className = "chat-cta";
       cta.innerHTML = `<button class="cta-btn"${spent?' disabled':''}>${spent?'No actions left this week':'Respond ↓'}</button>`;
       box.appendChild(cta);
       const b = cta.querySelector("button");
-      if (b && !spent) b.onclick = ()=>{ if (busy()) return; selectCard(cardId); };
+      if (b && !spent) b.onclick = ()=>{ if (busy()) return; selectedCard = cardId; renderThreadResponse(); renderHand(); };
       scrollDown();
     }
 
@@ -756,25 +834,32 @@
         };
       });
 
-      // keep an open detail tray in sync, or close it if its card vanished
-      if (selectedCard && !actions.some(a => a.cardId === selectedCard)){
+      // keep the founder popup in sync; chat cards use the inline thread response
+      const sel = selectedCard ? actions.find(a => a.cardId === selectedCard) : null;
+      if (selectedCard && !sel){
         selectedCard = null; hideDetail();
-      } else if (selectedCard){
+      } else if (sel && sel.charId === "founder"){
         showDetail(selectedCard);
+      } else {
+        hideDetail();
       }
     }
 
     function selectCard(cardId){
-      if (selectedCard === cardId){ selectedCard = null; hideDetail(); renderHand(); return; }
+      if (selectedCard === cardId){ selectedCard = null; hideDetail(); renderThreadResponse(); renderHand(); return; }
       const a = engine.openActions().find(x => x.cardId === cardId);
-      // Focus the card's conversation so its message shows in context. (Readable
-      // cards have their thread fully revealed, so this won't kick off a reveal.)
-      if (a && a.charId !== "founder" && a.charId !== active){
-        active = a.charId; openConversation();   // resets selectedCard
+      // Founder "moves" have no chat thread — keep the floating popup.
+      if (a && a.charId === "founder"){
+        selectedCard = cardId; renderHand(); showDetail(cardId); return;
       }
+      // Chat character — focus its conversation (its message shows in context) and
+      // expand the options inline in the thread. (Readable cards are fully revealed,
+      // so openConversation won't kick off a reveal.)
+      hideDetail();
+      if (a && a.charId !== active){ active = a.charId; openConversation(); } // resets selectedCard
       selectedCard = cardId;
       renderHand();
-      showDetail(cardId);
+      renderThreadResponse();
     }
     function hideDetail(){ $("handDetail").style.display = "none"; }
     function showDetail(cardId){
@@ -804,66 +889,116 @@
     }
 
     // ── commit an action from the hand ───────────────────
+    // Results are *withheld*: committing spends an action and consumes the card, but
+    // reveals nothing. Every consequence (the reply bubble, the journal outcome, the
+    // delayed text back) surfaces at turn end as notifications + journal ink.
     function commitCard(cardId, key){
       if (busy() || engine.stats().actionsLeft <= 0) return;
-      const a = engine.openActions().find(x => x.cardId === cardId);
-      const charId = a ? a.charId : null;
-      const dialogue = a ? a.chat : false;
+      selectedCard = null; hideDetail(); clearThreadResponse();
 
-      selectedCard = null; hideDetail();
+      engine.act(cardId, key);   // state + entries change, but we reveal nothing now
 
-      const jBefore = engine.threads.founder.length;
-      // For a dialogue action, switch to that thread so the reply lands in view.
-      if (dialogue && charId && charId !== "founder" && charId !== active){
-        active = charId; openConversation();
-      }
-      const chatBefore = (charId && engine.threads[charId]) ? engine.threads[charId].length : 0;
+      renderRail(); renderStats(); renderHand(); renderThreadResponse();
 
-      engine.act(cardId, key);
-
-      // reveal the player's reply bubble in the (now active) chat thread
-      if (dialogue && charId === active && engine.threads[active].length > chatBefore){
-        const lw = engine.threads[active][chatBefore-1]?.week ?? engine.stats().week;
-        revealFrom(active, chatBefore, lw);
-      }
-      // reveal new journal entries (outcome + any stamps)
-      if (engine.threads.founder.length > jBefore){
-        revealJournalFrom(jBefore);
-      }
-
-      // after reveals settle: refresh and maybe advance
-      const checkAuto = setInterval(()=>{
-        if (!revealing && !journalRevealing){
-          clearInterval(checkAuto);
-          renderRail(); renderStats(); renderHand(); updateChatCta();
-          if (engine.stats().actionsLeft <= 0 && !engine.stats().act1Complete){
-            setTimeout(advanceWeek, 950);
-          }
-        }
-      }, 120);
+      // out of actions → the week ends, which plays the turn-end reveal
+      if (engine.stats().actionsLeft <= 0) setTimeout(advanceWeek, 600);
     }
 
     // ── advance to next week ─────────────────────────────
     function advanceWeek(){
       if (busy()) return;
-      selectedCard = null; hideDetail();
+      selectedCard = null; hideDetail(); clearThreadResponse();
 
-      const cashBefore = engine.stats().cash;
+      const before = engine.stats();
+      const cashBefore = before.cash;
+      const sigBefore = before.signal, fitBefore = before.marketFit;
       engine.nextWeek();
-      const cashAfter = engine.stats().cash;
+      const after = engine.stats();
+      const cashAfter = after.cash;
+
+      // which headline stats changed → pulse them once at the end of the reveal
+      pendingStatPulse = [];
+      if (after.signal !== sigBefore) pendingStatPulse.push("signal");
+      if (after.marketFit !== fitBefore) pendingStatPulse.push("fit");
+
+      const jBefore = jShown;
 
       revealing = true; runwayAnim = true;
       setRunway(cashBefore);
       renderStats();
 
-      animateRunway(cashBefore, cashAfter, () => {
-        revealing = false;
-        // Messages arrive first: reveal the active thread (the week-opening beat).
-        openConversation();
-        const jBefore = jShown;
-        if (engine.threads.founder.length > jBefore) revealJournalFrom(jBefore);
-        if (engine.stats().gameOver) setTimeout(showGameOver, 700);
+      // opening beat (a week passed) → then the calm, non-moving turn-end reveal
+      animateRunway(cashBefore, cashAfter, () => { revealing = false; revealTurnEnd(jBefore); });
+    }
+
+    // ── turn-end reveal: calm journal ink + iPhone-style notifications ───
+    // The chat viewport NEVER moves on its own. Your actions' outcomes ink into
+    // the always-visible journal; incoming messages buzz in as notification
+    // bubbles you read at your own pace.
+    function revealTurnEnd(jBefore){
+      // 1) journal inks in (stable right column) — your deferred outcomes + stamps
+      if (engine.threads.founder.length > jBefore) revealJournalFrom(jBefore);
+
+      // 2) gather new *incoming* chat messages across all threads (still unrevealed)
+      const notes = [];
+      for (const charId of engine.order){
+        if (charId === "founder") continue;
+        const thread = engine.threads[charId];
+        for (let i = shown[charId]; i < thread.length; i++){
+          const e = thread[i];
+          if (e.type === "incoming") notes.push({ charId, from: e.from, body: e.body });
+        }
+      }
+
+      // 3) refresh rail dots + hand; pulse changed stats; then pace the toasts
+      renderRail(); renderHand();
+      pendingStatPulse.forEach(k=>{
+        const el = document.querySelector('.stat[data-stat="' + k + '"]');
+        if (el) el.classList.add("changed");
       });
+      pendingStatPulse = [];
+
+      queueNotifications(notes);
+
+      if (engine.stats().act1Complete && !window.__act1shown){ window.__act1shown = true; setTimeout(showAct1, 800); }
+      if (engine.stats().gameOver) setTimeout(showGameOver, 800);
+    }
+
+    // ── iPhone-style notification bubbles ────────────────
+    function queueNotifications(list){
+      noteQueue = noteQueue.concat(list);
+      if (!noteTimer) pumpNotifications();
+    }
+    function pumpNotifications(){
+      if (!noteQueue.length){ noteTimer = null; return; }
+      showNote(noteQueue.shift());
+      noteTimer = setTimeout(pumpNotifications, 750);   // one toast at a time
+    }
+    function showNote(n){
+      const wrap = $("notes");
+      const st = styleFor(n.charId);
+      const name = n.from || (convFor(n.charId) || {}).name || n.charId;
+      const el = document.createElement("div");
+      el.className = "note";
+      el.innerHTML =
+        `<div class="note-av" style="background:${st.color}">${st.initials}</div>
+         <div class="note-body">
+           <div class="note-from">${escapeHtml(name)}</div>
+           <div class="note-text">${escapeHtml(n.body || "")}</div>
+         </div>`;
+      el.onclick = ()=>{
+        dismissNote(el);
+        if (busy()) return;
+        active = n.charId; openConversation();   // user-initiated → no blink
+      };
+      wrap.appendChild(el);
+      setTimeout(()=> dismissNote(el), 6500);   // auto-dismiss; the rail dot persists
+    }
+    function dismissNote(el){
+      if (!el || el.__gone) return;
+      el.__gone = true;
+      el.classList.add("leaving");
+      setTimeout(()=> el.remove(), 280);
     }
 
     // ── modals ───────────────────────────────────────────
