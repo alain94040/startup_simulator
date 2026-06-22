@@ -33,10 +33,17 @@
   .brand{display:flex;flex-direction:column;line-height:1.1}
   .brand b{font-size:17px;letter-spacing:.2px}
   .brand span{font-size:12px;color:var(--muted)}
-  .week-pill{
-    font-weight:600;font-size:13px;background:#f0eefb;color:#5b50d6;
-    padding:5px 12px;border-radius:999px;
-  }
+  /* runway burn-down — time represented as draining cash/weeks-left */
+  .runway{display:flex;flex-direction:column;gap:5px;min-width:210px;max-width:300px;flex:1}
+  .runway-top{display:flex;align-items:baseline;gap:6px}
+  .runway-num{font-size:23px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums;transition:color .5s}
+  .runway-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .runway-cash{margin-left:auto;font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+  .runway-bar{height:9px;border-radius:999px;background:var(--rail);overflow:hidden;box-shadow:inset 0 0 0 1px var(--line)}
+  .runway-fill{height:100%;border-radius:999px;width:100%;background:#34c759}
+  .runway.low .runway-num{color:#ff3b30}
+  .runway.low .runway-fill{animation:pulseRed 1.1s ease-in-out infinite}
+  @keyframes pulseRed{0%,100%{opacity:1}50%{opacity:.45}}
   .stats{display:flex;gap:8px;margin-left:auto;align-items:center}
   .stat{
     display:flex;flex-direction:column;align-items:center;min-width:64px;
@@ -223,13 +230,7 @@
     display:inline-block;margin-top:8px;color:var(--accent);font-weight:600;cursor:pointer;
   }
 
-  /* ── banner + overlay ────────────────────────────────── */
-  .banner{
-    position:absolute;top:14px;left:50%;transform:translateX(-50%) translateY(-80px);
-    background:var(--ink);color:#fff;padding:8px 18px;border-radius:999px;font-size:13px;font-weight:600;
-    box-shadow:var(--shadow);opacity:0;transition:.4s cubic-bezier(.2,.8,.2,1);z-index:5;pointer-events:none;
-  }
-  .banner.show{transform:translateX(-50%) translateY(0);opacity:1}
+  /* ── overlay ─────────────────────────────────────────── */
   .overlay{
     position:fixed;inset:0;background:rgba(20,20,30,.55);backdrop-filter:blur(6px);
     display:none;place-items:center;z-index:20;
@@ -259,8 +260,15 @@
     <!-- top bar -->
     <div class="topbar">
       <div class="avatar" style="background:linear-gradient(135deg,#ff6b9d,#c44bd6);width:38px;height:38px">K</div>
-      <div class="brand"><b>Kindred</b><span>idea → seed round</span></div>
-      <div class="week-pill" id="weekPill">Week 1</div>
+      <div class="brand"><b>Kindred</b><span id="weekSub">Week 1 · idea → seed</span></div>
+      <div class="runway" id="runway">
+        <div class="runway-top">
+          <span class="runway-num" id="runwayNum">20</span>
+          <span class="runway-lbl">weeks left</span>
+          <span class="runway-cash" id="runwayCash">$10,000</span>
+        </div>
+        <div class="runway-bar"><div class="runway-fill" id="runwayFill"></div></div>
+      </div>
       <div class="stats" id="stats"></div>
       <div class="actions-budget">
         <span class="lbl">Actions</span>
@@ -279,7 +287,6 @@
         </div>
 
         <div class="chat">
-          <div class="banner" id="banner"></div>
           <div class="chat-head" id="chatHead"></div>
           <div class="thread" id="thread"></div>
           <div class="composer" id="composer"></div>
@@ -362,18 +369,43 @@
     let journalRevealing = false;
     let jShown = 0;       // entries already rendered in the journal panel
     let jLastWeek = null;
+    let runwayAnim = false;   // true while the burn-down beat is tweening the gauge
 
     const $ = id => document.getElementById(id);
     const fmtCash = c => "$" + c.toLocaleString();
 
+    // ── runway burn-down: time felt as a draining lifeline ─
+    // The bar represents this many weeks of cash at full width ($10k / $500).
+    const RUNWAY_FULL = 20;
+    const runwayColor = w => w <= 4 ? "#ff3b30" : w <= 8 ? "#ff9500" : "#34c759";
+    function setRunway(cash){
+      const weeks = Math.floor(cash / 500);
+      $("runwayNum").textContent = weeks;
+      $("runwayCash").textContent = fmtCash(Math.max(0, cash));
+      const fill = $("runwayFill");
+      fill.style.width = Math.max(0, Math.min(100, (cash / (RUNWAY_FULL * 500)) * 100)) + "%";
+      fill.style.background = runwayColor(weeks);
+      $("runway").classList.toggle("low", weeks <= 4);
+    }
+    // Animate cash from→to over ~1.2s: the felt beat when a week passes.
+    function animateRunway(from, to, done){
+      runwayAnim = true;
+      const start = performance.now(), dur = 1200, ease = t => 1 - Math.pow(1 - t, 3);
+      const step = now => {
+        const t = Math.min(1, (now - start) / dur);
+        setRunway(Math.round((from + (to - from) * ease(t)) / 10) * 10);
+        if (t < 1) requestAnimationFrame(step);
+        else { setRunway(to); runwayAnim = false; done && done(); }
+      };
+      requestAnimationFrame(step);
+    }
+
     // ── status bar ────────────────────────────────────────
     function renderStats(){
       const s = engine.stats();
-      $("weekPill").textContent = "Week " + s.week;
-      const runwayWarn = s.runway <= 6;
+      $("weekSub").textContent = "Week " + s.week + " · idea → seed";
+      if (!runwayAnim) setRunway(s.cash);
       $("stats").innerHTML = `
-        <div class="stat ${s.cash<3000?'warn':''}"><div class="v">${fmtCash(s.cash)}</div><div class="k">Cash</div></div>
-        <div class="stat ${runwayWarn?'warn':''}"><div class="v">${s.runway}w</div><div class="k">Runway</div></div>
         <div class="stat"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
         <div class="stat"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>
         ${s.equity?`<div class="stat"><div class="v" style="font-size:12px">${s.equity}</div><div class="k">Equity</div></div>`:''}`;
@@ -387,8 +419,10 @@
     function renderRail(){
       const convs = engine.conversations().filter(c => !c.isJournal);
       $("convs").innerHTML = convs.map(c=>{
-        const unanswered = shown[c.id] < engine.threads[c.id].length;
-        const dot = (c.hasAction || unanswered) ? '<span class="badge"></span>' : '';
+        // Blue dot = unread only: thread has entries we haven't revealed/seen yet.
+        // A chat you've read but not yet replied to (still hasAction) is not unread.
+        const unread = shown[c.id] < engine.threads[c.id].length;
+        const dot = unread ? '<span class="badge"></span>' : '';
         const st = styleFor(c.id);
         return `<div class="conv ${c.id===active?'active':''}" data-id="${c.id}">
           <div class="avatar" style="background:${st.color}">${st.initials}</div>
@@ -696,26 +730,35 @@
     }
 
     function advanceWeek(){
-      if (revealing || journalRevealing) return;
+      if (revealing || journalRevealing || runwayAnim) return;
+
+      const cashBefore = engine.stats().cash;
       engine.nextWeek();
-      banner("Week " + engine.stats().week);
-      const convs = engine.conversations().filter(c => !c.isJournal);
-      const withAction = convs.find(c=>c.hasAction) || convs[0];
-      active = withAction ? withAction.id : active;
-      openConversation();
-      // also reveal any new journal entries from the week tick
-      const jBefore = jShown;
-      if (engine.threads.founder.length > jBefore){
-        revealJournalFrom(jBefore);
-      }
-      if (engine.stats().gameOver) setTimeout(showGameOver, 700);
+      const cashAfter = engine.stats().cash;
+
+      // The felt beat: a week passing = a notch of runway spent. Freeze the
+      // gauge at last week's value, then watch the cash/weeks-left drain before
+      // any new messages arrive.
+      revealing = true;
+      runwayAnim = true;
+      setRunway(cashBefore);
+      renderStats();   // week label, dots, stat chips (gauge frozen by runwayAnim)
+
+      animateRunway(cashBefore, cashAfter, () => {
+        revealing = false;
+        const convs = engine.conversations().filter(c => !c.isJournal);
+        const withAction = convs.find(c=>c.hasAction) || convs[0];
+        active = withAction ? withAction.id : active;
+        openConversation();
+        const jBefore = jShown;
+        if (engine.threads.founder.length > jBefore){
+          revealJournalFrom(jBefore);
+        }
+        if (engine.stats().gameOver) setTimeout(showGameOver, 700);
+      });
     }
 
-    // ── banner + modals ───────────────────────────────────
-    function banner(text){
-      const b=$("banner"); b.textContent=text; b.classList.add("show");
-      setTimeout(()=>b.classList.remove("show"), 1900);
-    }
+    // ── modals ────────────────────────────────────────────
     function showAct1(){
       const s = engine.stats();
       const split = s.equity || "your split";
