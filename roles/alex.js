@@ -1148,7 +1148,19 @@
         id: 'alex_leaving_threat', cat: 't', from: 'Alex',
         body: "got a message from an old colleague at a well-funded startup. not going anywhere — but we need an honest conversation about where this is headed.",
         urgency: 13, weeks: 1,
-        available: (s, char, e) => e.alexDepartureRisk && char.active,
+        // Surfaces from the Jordan-fire fallout (alexDepartureRisk), from cratered
+        // stats, OR — the ignore-Alex case — from sustained recent neglect: three of
+        // his messages ignored within a rolling 10-week window. The neglect trigger
+        // fires early enough to beat the runway (morale decay alone bottoms out too
+        // late, after most games have already gone bankrupt). Resolvable via 'talk'
+        // (sets departure_resolved so it never nags a re-engaged founder again).
+        available: (s, char, e) => {
+          if (!char.active || char.flags.departure_resolved) return false;
+          if (e.alexDepartureRisk || char.trust < 15 || char.morale < 10) return true;
+          const recentIgnores = e.log.filter(
+            l => l.charId === "alex" && l.ignored && l.week >= s.week - 10).length;
+          return recentIgnores >= 3;
+        },
         options: [
           { label: 'Have the honest conversation', key: 'talk',
             execute(s, char, e) { char.trust = clamp(char.trust + 20, 0, 100); char.morale = clamp(char.morale + 15, 0, 100); char.flags.departure_resolved = true; e.alexDepartureRisk = false; return "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now."; } },
