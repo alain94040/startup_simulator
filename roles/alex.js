@@ -99,7 +99,7 @@
       "incorporate_week1|atlas": "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
       "dev_planning_session|full": "We spec'd the whole thing — three hours, the whiteboard packed with twenty-plus items. Jordan's thrilled. Alex thinks it's too much, and part of me suspects he's right.",
       "dev_planning_session|lean": "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
-      "dev_planning_session|sprint": "Skipped planning. We're just going to build and figure it out as we go. No shared picture of what 'done' looks like — which nags at me a little.",
+      "dev_planning_session|sprint": "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
       "alex_commitment|accept": "Agreed Alex stays part-time for now — evenings and weekends. Slower, but he won't resent it. We set a milestone to revisit once we have traction.",
       "alex_commitment|push": "Pushed Alex to go full-time. He said yes, but I could tell he wasn't ready. I'll need to watch how he's doing.",
       "early_name|catchy": "Locked the name. Warm and memorable — people get what it's for the second they hear it.",
@@ -245,32 +245,45 @@
       // ── DEVELOPMENT PLANNING ────────────────────────────────────────────────
       {
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
-        body: "jordan and i should align before we go too deep. we could spec the whole product — activity layer, recommendations, the full vision. or scope to what we actually need to test the hypothesis.",
+        body: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
         urgency: 2, weeks: 2, patience: 4,
         available: (s, char) => char.flags.prototype_kicked && !char.flags.plan_done && s.week >= 2 && s.week <= 5,
+        // Browser-only: Alex texts three phone mockups (iMessage-style photos the
+        // player taps to view full-size). No cost/time labels — the player has to
+        // judge scope from the screens themselves: the feature-loaded one (full) is
+        // the runway-killer, the sparse one (lean) is the right call, the rough one
+        // (sprint) is no plan at all. Headless play ignores this and uses the keys.
+        mockups: {
+          full:   { tag: 'A', variant: 'rich' },
+          lean:   { tag: 'B', variant: 'minimal' },
+          sprint: { tag: 'C', variant: 'generic' },
+        },
         options: [
-          { label: "Full product spec", key: 'full',
-            reply: "let's spec the whole thing. activity layer, recommendations, all of it. i want us to know exactly what we're building before we go deeper.",
+          { label: "Build version A", key: 'full',
+            reply: "let's build A. activity layer, recommendations, all of it. i want us to know exactly what we're building before we go deeper.",
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'full';
               expandItems(s, 'full');
               return "Three-hour session. Whiteboard filled. Twenty-plus items in the backlog. Jordan's excited. Alex is skeptical but admits it looks thorough.";
             } },
-          { label: 'Lean MVP', key: 'lean',
-            reply: "let's keep it tight. core hypothesis only — ship and learn. we can spec the rest when we know what works.",
+          { label: 'Build version B', key: 'lean',
+            reply: "let's build B. core hypothesis only — ship and learn. we can spec the rest when we know what works.",
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'lean';
               expandItems(s, 'lean');
               return "Ninety minutes. Five items on the board. Alex seemed relieved.";
             } },
-          { label: 'Skip planning', key: 'sprint',
-            reply: "honestly? let's just build. we'll figure it out as we go.",
+          { label: 'Build version C', key: 'sprint',
+            reply: "let's build C. strip it to the essentials and ship — we can layer the rest on once it's working.",
             execute(s, char) {
               char.flags.plan_done = true;
-              s.dev_plan = 'sprint';
-              return "No plan, just action. No shared picture of what done looks like.";
+              // Hidden binary: C resolves to the same lean plan as B. The only real
+              // decision here is avoiding A (the over-scoped build).
+              s.dev_plan = 'lean';
+              expandItems(s, 'lean');
+              return "Ninety minutes. Five items on the board. Alex seemed relieved.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,

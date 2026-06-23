@@ -273,6 +273,7 @@
           from: card.from || this._name(charId),
           body: this._resolveBody(card, char),
           subtext: card.subtext || null,
+          mockups: card.mockups || null,  // browser-only: photo attachments on the text
           week: this.s.week,
           isNew: true,
         });
