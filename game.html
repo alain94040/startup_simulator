@@ -116,6 +116,8 @@
     font-style:italic;margin:1px 0 4px 6px}
   .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
   .chat-empty{margin:auto;color:var(--faint);font-size:13px;text-align:center;padding:20px}
+  .chat-blocked{align-self:center;margin:20px 0 8px;font-size:12px;color:var(--faint);
+    text-align:center;font-style:italic}
   /* "respond" pill at the end of a thread — bridges the chat to its hand card */
   .chat-cta{align-self:center;margin:16px 0 6px}
   .cta-btn{
@@ -651,9 +653,19 @@
       const s = engine.stats();
       $("weekSub").textContent = "Week " + s.week + " · idea → seed";
       if (!runwayAnim) setRunway(s.cash);
+      // Phase-aware traction readout: "Beta" (waitlist signups) pre-launch becomes
+      // "Users" post-launch, with a "Paying" chip once there are paying customers.
+      const st = engine.s;
+      const traction = st.launched
+        ? `<div class="stat" data-stat="users"><div class="v">${st.users}</div><div class="k">Users</div></div>`
+          + (st.customers > 0
+            ? `<div class="stat" data-stat="paying"><div class="v">${st.customers}</div><div class="k">Paying</div></div>`
+            : "")
+        : `<div class="stat" data-stat="beta"><div class="v">${st.waitlist}</div><div class="k">Beta</div></div>`;
       $("stats").innerHTML = `
         <div class="stat" data-stat="signal"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
-        <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>`;
+        <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>`
+        + traction;
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
       // Roadmap button appears once Alex/Jordan have a build plan in motion.
@@ -874,7 +886,7 @@
 
     function clearThreadResponse(){
       const box = $("thread");
-      [...box.querySelectorAll(".chat-cta, .thread-card")].forEach(el => el.remove());
+      [...box.querySelectorAll(".chat-cta, .thread-card, .chat-blocked")].forEach(el => el.remove());
     }
     // The response surface for a chat character lives *inside* the thread, in-flow,
     // so it reserves space and never covers the latest message. Default state is a
@@ -883,6 +895,15 @@
     function renderThreadResponse(){
       clearThreadResponse();
       if (active === "founder" || NOCHAT.has(active)) return;
+      if (active === "jordan" && engine.s.jordan_resolved) {
+        const box = $("thread");
+        const b = document.createElement("div");
+        b.className = "chat-blocked";
+        b.textContent = "This user blocked you.";
+        box.appendChild(b);
+        scrollDown();
+        return;
+      }
       const cardId = engine.openCardId(active);
       if (!cardId || !cardReadable(active)) return;
       const opts = engine.options(cardId);
@@ -1082,6 +1103,8 @@
       const before = engine.stats();
       const cashBefore = before.cash;
       const sigBefore = before.signal, fitBefore = before.marketFit;
+      // traction counts aren't on stats() — read them straight off engine.s
+      const betaBefore = engine.s.waitlist, usersBefore = engine.s.users, payingBefore = engine.s.customers;
       engine.nextWeek();
       const after = engine.stats();
       const cashAfter = after.cash;
@@ -1090,6 +1113,9 @@
       pendingStatPulse = [];
       if (after.signal !== sigBefore) pendingStatPulse.push("signal");
       if (after.marketFit !== fitBefore) pendingStatPulse.push("fit");
+      if (engine.s.waitlist !== betaBefore) pendingStatPulse.push("beta");
+      if (engine.s.users !== usersBefore) pendingStatPulse.push("users");
+      if (engine.s.customers !== payingBefore) pendingStatPulse.push("paying");
 
       const jBefore = jShown;
 
