@@ -158,7 +158,12 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return alex && alex.active && alex.focus === 'build' && !s.has_beta
+          // Recurs the whole time Alex is heads-down building — including post-beta and
+          // post-launch (the timesPaired>=3 body variants and the demos option's
+          // `else s.users += 3` branch are written for the growth phase). The old
+          // `!s.has_beta` ceiling retired the card at ~wk11, before any of that was
+          // reachable, so the "pair with Alex" beat effectively never fired.
+          return alex && alex.active && alex.focus === 'build'
             && s.week >= (s.cobuild_last || 0) + 4;
         },
         options: [
