@@ -494,6 +494,34 @@
 
   <!-- iPhone-style notification bubbles (week-turn consequences) -->
   <div class="notes" id="notes"></div>
+
+  <!-- ── Debug bar: auto-play a decent strategy and skip ahead (testing only) ── -->
+  <style>
+    #debug-bar {
+      position: fixed; bottom: 10px; left: 10px; z-index: 9999;
+      display: flex; align-items: center; gap: 5px;
+      background: rgba(17,17,17,.92); border: 1px solid #333; border-radius: 8px;
+      padding: 5px 8px; font-family: -apple-system, system-ui, sans-serif;
+      box-shadow: 0 4px 14px rgba(0,0,0,.3);
+    }
+    #debug-bar #debug-lbl { font-size: 9px; font-weight: 700; letter-spacing: .04em;
+      text-transform: uppercase; color: #f97316; margin-right: 2px; }
+    #debug-bar button {
+      font-size: 10px; padding: 3px 9px; border-radius: 6px; cursor: pointer;
+      background: #1a1a1a; color: #ddd; border: 1px solid #444; transition: all .12s;
+    }
+    #debug-bar button:hover { background: #222; color: #fff; border-color: #f97316; }
+    #debug-bar button:active { transform: scale(.95); }
+    #debug-bar.skipping button { opacity: .5; pointer-events: none; }
+  </style>
+  <div id="debug-bar">
+    <span id="debug-lbl">⚡ skip to</span>
+    <button data-week="8">Wk 8 · beta</button>
+    <button data-week="14">Wk 14 · launch</button>
+    <button data-week="20">Wk 20 · investors</button>
+    <button data-week="28">Wk 28 · late game</button>
+    <button data-step="5">+5 wk</button>
+  </div>
   <!-- notification center: this week's notifications, reopenable via the bell -->
   <div class="note-center" id="noteCenter"></div>
   <!-- build roadmap (🗺️ button) and bank statement (cash readout) dropdowns -->
@@ -1073,6 +1101,61 @@
       animateRunway(cashBefore, cashAfter, () => { revealing = false; revealTurnEnd(jBefore); });
     }
 
+    // ── debug skip: auto-play a decent strategy, land caught-up ──────────
+    // Mirrors the old debug skip-ahead button. Plays the engine directly (no
+    // animation) with a sensible default strategy until the target week (or the
+    // game ends), then statically syncs the UI so you land fully caught up.
+    const DBG_PREFS = {
+      dev_planning_session: "lean",     // pick the lean roadmap
+      alex_commitment:      "accept",   // bring Alex on full-time
+      start_prototype:      "build",    // start building
+      incorporate_week1:    "atlas",    // incorporate
+      jordan_equity:        "fair",     // sign a fair split
+    };
+    function debugStep(opts){
+      // resolve up to the weekly action budget with the preferred (or first) option
+      let safety = 0;
+      while (engine.stats().actionsLeft > 0 && safety++ < 12){
+        const actions = engine.openActions();
+        if (!actions.length) break;
+        const a = actions[0];                       // openActions is urgency-sorted
+        const pref = opts[a.cardId];
+        const key = (pref && a.options.some(o => o.key === pref))
+          ? pref : (a.options[0] && a.options[0].key);
+        if (!key) break;
+        engine.act(a.cardId, key);
+      }
+      engine.nextWeek();
+    }
+    function debugSkip(targetWeek){
+      if (busy()) return;
+      const bar = $("debug-bar"); bar.classList.add("skipping");
+      // dismiss any open overlays / dropdowns
+      $("overlay").classList.remove("show");
+      closePops();
+      [...$("notes").children].forEach(el => el.remove());
+
+      let guard = 0;
+      while (engine.stats().week < targetWeek && !engine.s.game_over && !engine.s.game_won && guard++ < 400){
+        debugStep(DBG_PREFS);
+      }
+
+      // sync UI counters so everything reads as already-seen, then render statically
+      for (const id of engine.order){
+        shown[id]    = engine.threads[id].length;
+        notified[id] = engine.threads[id].length;
+      }
+      weekNotes = []; notesSeen = true;
+      if (engine.stats().act1Complete) window.__act1shown = true;  // don't pop the Act-1 modal retroactively
+
+      renderJournalCatchup();   // append new journal entries (no animation)
+      updateBell();
+      openConversation();       // re-render the active chat + rail + stats + hand
+
+      bar.classList.remove("skipping");
+      if (engine.s.game_over) setTimeout(showGameOver, 400);
+    }
+
     // ── turn-end reveal: calm journal ink + iPhone-style notifications ───
     // The chat viewport NEVER moves on its own. Your actions' outcomes ink into
     // the always-visible journal; incoming messages buzz in as notification
@@ -1384,6 +1467,17 @@
         if (c.contains(ev.target) || $(tid).contains(ev.target)) continue;
         c.classList.remove("show");
       }
+    });
+
+    // debug skip bar (testing) — absolute targets + a relative +N step
+    [...document.querySelectorAll("#debug-bar button")].forEach(btn=>{
+      btn.onclick = ()=>{
+        if (busy()) return;
+        const target = btn.dataset.step
+          ? engine.stats().week + (+btn.dataset.step)
+          : +btn.dataset.week;
+        debugSkip(target);
+      };
     });
 
     // boot
