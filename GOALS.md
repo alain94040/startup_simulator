@@ -16,9 +16,12 @@ Money is critical to extending the runway of the startup. The game should be str
 
 However, it's hard to tell the difference between legitimate investors and investors who only follow other leads. For instance, Fatima will never invest until Marcus does, no matter how interested she pretends to be.
 
-# Lean plan and pivot
+Another financial lesson: most consultants who reach out to you in your early days are trying to get money from you but they don't provide value.
+
+# Lean plan, Market Fit and Pivot
 
 The only way to win is to choose a lean development plan. If you are too ambitious, the development should take too long and the player should run out of money.
 
-Even with a lean plan, the initial plan will not reach market fit. To win, a pivot is required. Several hints are given over time.
+When getting into the details of what to build, it's important that the player has done some market research, actually talking to real potential users. If they do, better build options should be proposed.
 
+Even with a lean plan, the initial plan will not reach market fit. To win, a pivot is required. Several hints are given over time. Having engaged with users is required to discover the correct pivot.
