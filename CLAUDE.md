@@ -13,6 +13,7 @@ Browser-based educational startup simulation game. Players navigate from idea to
 | Play | `open game.html` |
 | Run engine tests | `node test_engine.js` |
 | Run narrative checks | `node test_narrative.js` |
+| Map game pacing | `node phase_map.js` |
 
 After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No compilation needed.
 
@@ -25,6 +26,7 @@ After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No
 - **`game.html`** — the browser UI. Self-contained (inline CSS + JS). Loads `engine.js` and all `roles/*.js` via `<script>` tags; renders the conversation rail, chat threads, and the founder journal. Avatar styling (colors/initials) lives here in a `STYLE` map — it is presentation, not engine state.
 - **`test_engine.js`** — headless behavioral checks (advances past week 1/2, characters react to being ignored, no duplicate spam, ignore reactions move state). This is the regression suite.
 - **`test_narrative.js`** — narrative-consistency fuzzer. Auto-plays many games across several drivers (decent / pivot / random) with a seeded RNG, then flags any card or message whose text contradicts the game state when it surfaces — two layers: state invariants on `engine.s` (e.g. `customers>0 ⇒ launched`) and card-surfacing rules (e.g. a "subscriber churned" message requires `customers>=1`). Complements `test_engine.js` (behavioral) and the balance harness; rules + allowlist live in one block at the top of the file, replay a finding with `--seed N --driver X`.
+- **`phase_map.js`** — simulation-driven pacing / phase-timeline extractor (this is the *live* counterpart to the static `earlymap.js`). Reuses the `test_narrative.js` harness (seeded RNG + decent/pivot drivers) but instead of checking consistency it records the first week each arc beat is reached (equity, dev plan, demo, beta, pivot, launch, first customer, first customer issue, firing Jordan) across many games, then reports: a phase-timeline table (reach% + p10/median/p90), an ASCII median timeline, consecutive-beat **gaps with the longest stretch flagged** (the boring-stretch finder), decision-density / dead-air stats, launch-vs-pivot ordering, and the outcome mix. Timing defaults to the winning cohort but falls back to all games (per-phase, over games that reached each beat) when wins are too few. Analysis tool, always exits 0.
 
 Legacy files no longer maintained: `startup_game.html`, `ui.js`, `tests.js`, `tests.html`, plus the card-based tools listed above.
 

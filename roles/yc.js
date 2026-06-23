@@ -20,7 +20,34 @@
         available: (s) => s.ycDeciding && !s.ycApplied,
         options: [
           { label: 'Submit the application', key: 'submit',
-            execute(s) { s.ycDeciding = false; s.ycApplied = true; return "Application submitted. Decision in 3 weeks."; } },
+            execute(s, char, e) {
+              s.ycDeciding = false; s.ycApplied = true;
+              // The decision resolver lives here as a pending event (was lost from
+              // engine.js in the chat-engine refactor). Three weeks out, YC rolls a
+              // verdict — better odds if we qualified (launched + 10+ subscribers).
+              // Accept → $500k + win; reject → reapply opens in ~12 weeks.
+              e.pending.push({
+                fireWeek: s.week + 3, from: 'Y Combinator',
+                cancel: (st) => st.ycAccepted,        // already in — nothing to decide
+                fx(st, _char, en) {
+                  if (st.ycAccepted) return;
+                  const accepted = Math.random() < (st.ycQualified ? 0.18 : 0.04);
+                  const post = (body) => en.threads.founder.push({
+                    type: 'incoming', from: 'Y Combinator', body, week: st.week, isNew: true });
+                  if (accepted) {
+                    st.ycAccepted = true; st.ycApplied = false;
+                    st.cash += 500000;
+                    st.signal = Math.min(100, st.signal + 25);
+                    post("You're in. Welcome to the batch — $500k for 7%. See you at kickoff.");
+                  } else {
+                    st.ycApplied = false;
+                    en.ycWeek = st.week + 12;          // reapply window reopens
+                    post("Thanks for applying — we're passing this batch. The bar was tight; reapply next cycle (~12 weeks).");
+                  }
+                },
+              });
+              return "Application submitted. Decision in 3 weeks.";
+            } },
         ],
         dropDelay: 1, dropFrom: 'Y Combinator',
         dropMsg: "Missed the YC deadline. The next batch opens in about 12 weeks.",
