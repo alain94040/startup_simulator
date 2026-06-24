@@ -258,6 +258,7 @@
               char.flags.matching_choice_done = true;
               s.matching_licensed = true;
               s.extra_burn += 100;
+              s.saas.push({ label: "MatchKit license", cost: 100 });
               char.morale = clamp(char.morale + 5, 0, 100);
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);

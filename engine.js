@@ -76,6 +76,7 @@
         items: null,
         dev_plan: null,
         extra_burn: 0,
+        saas: [],
       };
 
       this.chars = new Map([
@@ -421,11 +422,18 @@
     nextWeek() {
       const wk = this.s.week;  // the week being closed (statement is filed under it)
       // burn + clock
+      const baseBurn = 500;
       this.s.cash = Math.max(0, this.s.cash - this.burnPerWeek);
       this._weekTx.push({
-        label: "Team & ops", note: "$" + this.burnPerWeek + "/wk burn",
-        delta: -this.burnPerWeek, type: "burn",
+        label: "Team & ops", note: "$" + baseBurn + "/wk",
+        delta: -baseBurn, type: "burn",
       });
+      for (const sub of this.s.saas) {
+        this._weekTx.push({
+          label: sub.label, note: "$" + sub.cost + "/wk",
+          delta: -sub.cost, type: "saas",
+        });
+      }
       this.s.week += 1;
       this.actionsLeft = 2;
 

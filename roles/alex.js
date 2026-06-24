@@ -299,6 +299,7 @@
             execute(s, char) {
               char.flags.auth_resolved = true;
               s.extra_burn += 30;
+              s.saas.push({ label: "Auth provider", cost: 30 });
               if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
               return "Hosted auth wired up in an afternoon — login, signup, reset, social sign-in. $30/wk for it, but it's done and it's solid. Alex grumbled about the fee.";
             } },
@@ -333,6 +334,7 @@
               char.flags.auth_resolved = true;
               char.flags.auth_building = false;
               s.extra_burn += 30;
+              s.saas.push({ label: "Auth provider", cost: 30 });
               char.buildEffort = Math.max(0, (char.buildEffort || 0) - 2.4);
               char.morale = clamp(char.morale - 4, 0, 100);
               if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
@@ -344,6 +346,7 @@
           char.flags.auth_resolved = true;
           char.flags.auth_building = false;
           s.extra_burn += 30;
+          s.saas.push({ label: "Auth provider", cost: 30 });
           char.buildEffort = Math.max(0, (char.buildEffort || 0) - 2.4);
           char.morale = clamp(char.morale - 4, 0, 100);
           if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
@@ -365,6 +368,7 @@
               char.flags.analytics_choice_done = true;
               s.analytics_live = true;
               s.extra_burn += 30;
+              s.saas.push({ label: "Analytics SDK", cost: 30 });
               if (s.items && s.items.analytics) { s.items.analytics.status = 'done'; s.items.analytics.quality = 'bought'; s.items.analytics.assignee = null; }
               return "Analytics SDK live in a day — funnels, retention, event tracking. Now we can see what's actually happening instead of guessing.";
             } },
