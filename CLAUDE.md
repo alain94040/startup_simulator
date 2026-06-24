@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Browser-based educational startup simulation game. Players navigate from idea to seed round, learning trade-offs between building, selling, and fundraising. The game is an **iMessage-style chat sim**: characters (co-founders, investors, customers, family, press) text the founder, and the player responds by picking reply chips. No build step, no dependencies — everything runs directly in the browser or Node.js.
 
+This game is educational, the educational goals are in GOALS.md
+
 ## Commands
 
 | Action | Command |
