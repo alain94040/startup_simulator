@@ -205,6 +205,7 @@
   .journal-stamp.blue{color:#2a5db0}
   .journal-stamp.red{color:#c0392b}
   .journal-empty{font-family:var(--hand);color:#b6a585;font-size:16px;line-height:30px}
+  .jnl-mockup{display:block;margin:8px 0 4px;font-size:8px}
 
   /* ── action hand (bottom) ────────────────────────────── */
   .hand-panel{
@@ -655,7 +656,7 @@
   </style>
   <div id="debug-bar">
     <span id="debug-lbl">⚡ skip to</span>
-    <button data-week="8">Wk 8 · beta</button>
+    <button data-week="8">Wk 8 · build</button>
     <button data-week="14">Wk 14 · launch</button>
     <button data-week="20">Wk 20 · investors</button>
     <button data-week="28">Wk 28 · late game</button>
@@ -797,15 +798,13 @@
       const s = engine.stats();
       $("weekSub").textContent = "Week " + s.week + " · idea → seed";
       if (!runwayAnim) setRunway(s.cash);
-      // Phase-aware traction readout: "Beta" (waitlist signups) pre-launch becomes
-      // "Users" post-launch, with a "Paying" chip once there are paying customers.
       const st = engine.s;
       const traction = st.launched
         ? `<div class="stat" data-stat="users"><div class="v">${st.users}</div><div class="k">Users</div></div>`
           + (st.customers > 0
             ? `<div class="stat" data-stat="paying"><div class="v">${st.customers}</div><div class="k">Paying</div></div>`
             : "")
-        : `<div class="stat" data-stat="beta"><div class="v">${st.waitlist}</div><div class="k">Beta</div></div>`;
+        : `<div class="stat" data-stat="waitlist"><div class="v">${st.waitlist}</div><div class="k">Waitlist</div></div>`;
       $("stats").innerHTML = `
         <div class="stat" data-stat="signal"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
         <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>`
@@ -877,6 +876,13 @@
       d.className = "journal-entry" + (e.type === "outcome" ? " is-outcome" : "");
       d.textContent = e.body;
       wrap.appendChild(d);
+      if (e.mockup) {
+        const thumb = document.createElement("button");
+        thumb.className = "mk-thumb jnl-mockup";
+        thumb.innerHTML = mockupPhoneHtml(e.mockup) + `<span class="mk-badge">${escapeHtml(e.mockup.tag||"")}</span>`;
+        thumb.onclick = () => openMockupLightbox({ chosen: e.mockup }, "chosen");
+        wrap.appendChild(thumb);
+      }
       if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
       return wrap;
     }
@@ -1333,7 +1339,7 @@
       const cashBefore = before.cash;
       const sigBefore = before.signal, fitBefore = before.marketFit;
       // traction counts aren't on stats() — read them straight off engine.s
-      const betaBefore = engine.s.waitlist, usersBefore = engine.s.users, payingBefore = engine.s.customers;
+      const waitlistBefore = engine.s.waitlist, usersBefore = engine.s.users, payingBefore = engine.s.customers;
       engine.nextWeek();
       const after = engine.stats();
       const cashAfter = after.cash;
@@ -1342,7 +1348,7 @@
       pendingStatPulse = [];
       if (after.signal !== sigBefore) pendingStatPulse.push("signal");
       if (after.marketFit !== fitBefore) pendingStatPulse.push("fit");
-      if (engine.s.waitlist !== betaBefore) pendingStatPulse.push("beta");
+      if (engine.s.waitlist !== waitlistBefore) pendingStatPulse.push("waitlist");
       if (engine.s.users !== usersBefore) pendingStatPulse.push("users");
       if (engine.s.customers !== payingBefore) pendingStatPulse.push("paying");
 
@@ -1589,7 +1595,6 @@
       scope_socialgraph: { lbl:"Social graph",         av:"—" },
       scope_video:       { lbl:"Video dates",          av:"—" },
       plans_ui:          { lbl:"Plans UI",             av:"JO" },
-      beta:              { lbl:"Beta",                 av:"AL" },
     };
     const RM_AV_STYLE = {
       AL:"background:#e7f0ff;color:#2563eb",
@@ -1597,8 +1602,8 @@
       "—":"background:#f0f0f3;color:#999",
     };
     const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
-    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui","beta"];
-    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","scope_social","scope_verification","plans_matching","_hdr_ios","ios_ui","ios_server","scope_premium","scope_socialgraph","scope_video","plans_ui","beta"];
+    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui"];
+    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","scope_social","scope_verification","plans_matching","_hdr_ios","ios_ui","ios_server","scope_premium","scope_socialgraph","scope_video","plans_ui"];
 
     function renderRoadmap(){
       const s = engine.s;
@@ -1607,7 +1612,7 @@
         pop.innerHTML = `<div class="dm-empty">No build plan yet. Once the team aligns on a roadmap, it shows up here.</div>`;
         return;
       }
-      const expanded = !!s.items.beta;
+      const expanded = !!s.dev_plan;
       const plan = s.dev_plan;
       const order = !expanded ? RM_ORDER_PRE : (plan === "full" ? RM_ORDER_FULL : RM_ORDER_LEAN);
       const badgeCls = { lean:"dm-badge-lean", full:"dm-badge-full", sprint:"dm-badge-sprint" };

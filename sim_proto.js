@@ -55,7 +55,8 @@ const CARD_PREFS = {
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
     alex_demo_ready:          'polish',
-    alex_beta_ready:          'curated',
+
+    proto_to_product:         'commit',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'apply',
@@ -91,7 +92,8 @@ const CARD_PREFS = {
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
     alex_demo_ready:          'polish',
-    alex_beta_ready:          'curated',
+
+    proto_to_product:         'commit',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'apply',
@@ -126,7 +128,8 @@ const CARD_PREFS = {
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
     alex_demo_ready:          'rough',
-    alex_beta_ready:          'open',
+
+    proto_to_product:         'commit',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'skip',
     yc_discussion_early:      'skip',
@@ -195,7 +198,8 @@ const CARD_PREFS = {
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
     alex_demo_ready:          'rough',
-    alex_beta_ready:          'open',
+
+    proto_to_product:         'commit',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'skip',
     yc_discussion_early:      'skip',
@@ -264,7 +268,8 @@ const CARD_PREFS = {
     pivot_insight_1:          'pivot',
     pivot_insight_2:          'pivot',
     alex_demo_ready:          'rough',
-    alex_beta_ready:          'curated',
+
+    proto_to_product:         'commit',
     good_enough_launch:       'ship',
     yc_discussion_ready:      'apply',
     yc_discussion_early:      'apply',
@@ -361,7 +366,7 @@ function selectCards(current, strategy, state) {
   if (strategy === 'yc_grind') {
     // Priority: YC cards > product > customer > external > team
     const order = ['jordan_confrontation','dev_planning_session','yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
-                   'alex_demo_ready','alex_beta_ready',
+                   'alex_demo_ready','proto_to_product',
                    'good_enough_launch','bug_reports','feature_cluster','silent_churn',
                    'public_complaint','power_user_quiet','reporter_deadline','hn_thread'];
     const sorted = pool.slice().sort((a, b) => {
@@ -444,8 +449,8 @@ function selectCards(current, strategy, state) {
       if (c.id === 'jordan_cap_table') return 0; // must clean before any investor pitch
       if (INVESTOR_IDS.has(c.id))  return 1;
       if (FAMILY_CASH.has(c.id))   return 2;
-      if (c.id === 'alex_demo_ready' || c.id === 'alex_beta_ready') return 2;
-      if (c.id === 'good_enough_launch' && s.has_beta) return 2;
+      if (c.id === 'alex_demo_ready' || c.id === 'proto_to_product') return 2;
+      if (c.id === 'good_enough_launch' && s.productPhase === "product") return 2;
       if (c.cat === 'p') return 3;   // product cards: demos add direct paying customers
       if (c.cat === 'c') return 4;
       return 5 + (4 - c.urgency);

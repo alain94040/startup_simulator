@@ -30,7 +30,7 @@
       "early_pricing|free": "Decided to stay free until we have critical mass. More people in the door — the cold-start problem is real, and nobody finds a match worth paying for in an empty app.",
       "matching_engine_choice|build": "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
       "matching_engine_choice|license": "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
-      "pivot_open|open": "Jordan flagged something in the beta feedback: users keep saying 'I matched, but then what?' Put it on the agenda.",
+      "pivot_open|open": "Jordan flagged something from the early testers: users keep saying 'I matched, but then what?' Put it on the agenda.",
       "jordan_fulltime_ask|accept": "Accepted Jordan's answer — she stays part-time. Alex heard and he's covering her work.",
       "jordan_fulltime_ask|pressure": "Told Jordan this is a dealbreaker. She said she'd think about it. She didn't change."
     },
@@ -280,10 +280,10 @@
         id: 'pivot_open', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.pivot_dismissed || 0) >= 2
           ? "this has come up four separate times now. i'm not saying we pivot — i'm saying we need to have the conversation."
-          : "been going through beta feedback threads. three users independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
+          : "been going through demo feedback. three testers independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
         urgency: (s, char) => (char.flags.pivot_dismissed || 0) >= 2 ? 3 : 2,
         weeks: 1,
-        available: (s, char) => s.activities_cut && s.has_beta && s.market_fit >= 5
+        available: (s, char) => s.activities_cut && s.has_demo && s.market_fit >= 5
           && s.jordan_active && !s.jordan_resolved && !s.launched
           && !char.flags.pivot_open_done && s.week >= (char.flags.pivot_open_wait || 0),
         options: [

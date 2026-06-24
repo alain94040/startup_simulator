@@ -10,13 +10,12 @@
 
   function expandItems(s, plan) {
     if (!s.items) return;
-    s.items.beta = { status: 'todo', quality: null, assignee: null };
     if (plan === 'full') {
       for (const k of SCOPE_ITEMS) s.items[k] = { status: 'todo', quality: null, assignee: null, auto: true };
     }
   }
 
-  // True once every over-scope (auto) item is built/dropped — gates beta on the full
+  // True once every over-scope (auto) item is built/dropped — gates launch on the full
   // plan. Lean has no auto items, so this is always true there (no change for lean).
   function allScopeBuilt(s) {
     if (!s.items) return true;
@@ -68,7 +67,6 @@
       "alex_sync_build",
       "alex_sync_pitch",
       "alex_demo_ready",
-      "alex_beta_ready",
       "auth_build_buy",
       "auth_buy_forced",
       "analytics_choice",
@@ -135,8 +133,6 @@
       "alex_sync_pitch|pitch": "Alex is working the investor pipeline. Traction story is solid enough to pitch.",
       "alex_demo_ready|rough": "Showed the demo rough. Three contacts in the room — two hit bugs, but one leaned forward: 'Show me that again.' We know what to build next.",
       "alex_demo_ready|polish": "Spent a sprint polishing before showing anyone. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'",
-      "alex_beta_ready|curated": "Invited 10 hand-picked singles for the beta. Eight signed up. Three matched on day one. One asked if they could pay now.",
-      "alex_beta_ready|open": "Posted in two singles communities. 20 signups in 48 hours. Chaotic — but we're seeing match patterns we couldn't have predicted.",
       "auth_build_buy|buy": "Wired up a hosted auth provider — login, signup, password reset, social sign-in, all of it — in an afternoon. Costs us a bit each month, but it's a solved problem and now it's solved. Alex grumbled about the monthly fee.",
       "auth_build_buy|build": "Let Alex build our own auth. He's sure it's a few days of work — 'why pay monthly for something this basic.' We'll see.",
       "auth_buy_forced|buy": "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
@@ -493,7 +489,7 @@
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
         urgency: 13, weeks: 1,
-        available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_beta && char.flags.commitment_resolved && !char.flags.vision_resolved,
+        available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_demo && char.flags.commitment_resolved && !char.flags.vision_resolved,
         options: [
           { label: "Go with casual dating", key: 'alex',
             reply: "you're right, casual is the bigger market. let's go with your framing — 'casual dating done right.'",
@@ -600,7 +596,7 @@
         },
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
-          && (s.market_fit < 80 && !s.has_beta)
+          && s.market_fit < 80
           && s.week >= (char.flags.lastSyncToDiscover || 0) + 8,
         options: [
           { label: 'Yes — shift to discovery', key: 'discover',
@@ -862,36 +858,6 @@
           }
         },
       },
-      {
-        id: 'alex_beta_ready', cat: 'p', from: 'Alex',
-        body: "web beta is ready. real accounts, real matches, real data. this is the first time we'll see if the product actually works in the wild.",
-        urgency: 3, weeks: 1,
-        available: (s) => s.has_demo && (s.ios_unblocked || s.jordan_resolved) && !s.has_beta && !s.launched
-          && allScopeBuilt(s),
-        options: [
-          { label: 'Invite 10 hand-picked singles', key: 'curated',
-            execute(s) {
-              s.has_beta = true;
-              s.waitlist += 5; s.market_fit = clamp(s.market_fit + 12, 0, 100);
-              if (s.items && s.items.beta) s.items.beta.status = 'active';
-              return "Invited 10 contacts — making sure we had a real mix of people. Eight signed up. Three matched with each other on day one. Two hit the same bug on day 3 — fixed before they could complain. One asked if they could pay now.";
-            } },
-          { label: 'Post it in two singles communities', key: 'open',
-            execute(s) {
-              s.has_beta = true;
-              s.waitlist += 20; s.market_fit = clamp(s.market_fit + 5, 0, 100); s.signal = clamp(s.signal + 10, 0, 100);
-              if (s.items && s.items.beta) s.items.beta.status = 'active';
-              return "Posted in r/datingapps and a singles Facebook group. 20 signups in 48 hours. Chaotic — some people signed up just to see what it is. But you're seeing match patterns you couldn't have predicted.";
-            } },
-        ],
-        dropDelay: 2, dropFrom: 'Alex',
-        dropMsg: "getting inbound requests for beta access. i'm opening it up next week.",
-        dropFx(s) {
-          s.has_beta = true; s.waitlist += 3; s.market_fit = clamp(s.market_fit + 3, 0, 100);
-          if (s.items && s.items.beta) s.items.beta.status = 'active';
-        },
-      },
-
       // ── PIVOT DISCUSSION (card 2 of 3: Alex pushes back on Jordan's flag) ──────
       {
         id: 'pivot_alex_pushback', cat: 'p', from: 'Alex',
@@ -1021,14 +987,15 @@
         id: 'proto_to_product', cat: 'p', from: 'Alex',
         body: "the demo held together long enough to learn what we needed. but we both know it's duct tape. real users will break it in a week. i want to build this properly.",
         urgency: 2, weeks: 1,
-        available: (s, char) => s.has_beta && !char.flags.rebuild_triggered
+        available: (s, char) => s.has_demo && !char.flags.rebuild_triggered
           && s.week >= (char.flags.rebuild_last || 0) + 4,
         options: [
           { label: "Let's build it for real", key: 'commit',
             execute(s, char) {
               char.flags.rebuild_triggered = true;
               s.productPhase = "product";
-              return "Keeping what worked, scrapping the rest. We know the core flow — now we build it properly.";
+              s.waitlist += 5; s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              return "Keeping what worked, scrapping the rest. We know the core flow — now we build it properly. Word's getting around — 5 people already asked for early access.";
             } },
           { label: 'Not yet — keep polishing the demo', key: 'delay',
             execute(s, char) {
@@ -1040,16 +1007,17 @@
       },
       {
         id: 'good_enough_launch', cat: 'p', from: 'Alex',
-        body: "beta users have been in it for weeks. feedback is real, nothing's on fire. as ready as it'll get without public traffic — let's ship it.",
+        body: "the product is solid. we could keep polishing or we could ship it and learn from real users. nothing's on fire — let's launch.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.productPhase === "product" && s.has_beta && !s.launched
+        available: (s, char, e) => s.productPhase === "product" && allScopeBuilt(s)
+          && (s.ios_unblocked || s.jordan_resolved) && !s.launched
           && char.focus === 'build' && s.week >= (s.good_enough_last || 0) + 4
           && !(s.jordan_drifting && !s.jordan_resolved),
         options: [
           { label: 'Ship it — launch now', key: 'ship',
-            execute(s, char) {
+            execute(s, char, e) {
               s.launched = true; s.signal = clamp(s.signal + 12, 0, 100);
-              if (s.items && s.items.beta) { s.items.beta.status = 'done'; s.items.beta.quality = 'solid'; }
+              e.finishItemsAtLaunch();
               if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn.";
               return "Launched. First real users are in. Feedback starts flowing.";
             } },
@@ -1245,7 +1213,7 @@
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
           return s.jordan_drifting && !s.jordan_resolved && !j.flags.launch_blocker_done
-            && s.has_beta && !s.launched && !s.ios_unblocked;
+            && s.productPhase === "product" && allScopeBuilt(s) && !s.launched && !s.ios_unblocked;
         },
         options: [
           { label: 'Launch web-only — fix iOS later', key: 'web_only',
@@ -1253,6 +1221,7 @@
               e.chars.get('jordan').flags.launch_blocker_done = true;
               s.launched = true;
               s.signal = clamp(s.signal - 10, 0, 100);
+              e.finishItemsAtLaunch();
               return "Launched. Web-only. A dating app without iOS is a real handicap — early retention will show it.";
             } },
           { label: 'Give Jordan two more weeks', key: 'wait',
@@ -1275,6 +1244,7 @@
           e.chars.get('jordan').flags.launch_blocker_done = true;
           s.launched = true;
           s.signal = clamp(s.signal - 15, 0, 100);
+          e.finishItemsAtLaunch();
         },
       },
       {

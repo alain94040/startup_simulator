@@ -66,7 +66,7 @@
         id: 'seed_pitch', cat: 'e', from: 'Marcus (angel)',
         body: "we've been watching your progress. i think the traction is there. ready to have the formal conversation about me leading your round?",
         urgency: 2, weeks: 2,
-        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.has_beta && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
+        available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
           execute(s, char, e) {
             if (s.jordan_cleanup_needed) {
@@ -76,7 +76,7 @@
               return `Marcus: "one flag before we go further — there's a ${jPct} stake on the cap table with no vesting schedule. who is that and why do they still own that much of the company? we'd need that cleaned up before i can lead a round."`;
             }
             const alexGone = e && !(e.chars.get('alex')?.active ?? true);
-            const productPts = s.launched ? 20 : s.has_beta ? 12 : s.has_demo ? 6 : 0;
+            const productPts = s.launched ? 20 : s.productPhase === "product" ? 12 : s.has_demo ? 6 : 0;
             const score = clamp(s.customers * 2, 0, 35) + productPts
               + clamp(s.investor_warmth / 4, 0, 25) + (s.signal >= 60 ? 8 : 0);
             const baseP = score >= 65 ? 0.85 : score >= 50 ? 0.55 : 0.15;

@@ -30,7 +30,7 @@
       "community_signal_hn_1|skip": "Read the HN thread. Nothing actionable right now.",
       "community_signal_hn_2|engage": "Left a detailed reply on the HN thread. Two people asked to be notified at launch — one is a former PM at a big company.",
       "community_signal_hn_2|skip": "Didn't engage the HN thread. Kept building.",
-      "community_signal_hn_3|engage": "Shared the waitlist link on HN. 8 signups from the thread. One person asked to beta test.",
+      "community_signal_hn_3|engage": "Shared the waitlist link on HN. 8 signups from the thread. One person asked for early access.",
       "community_signal_hn_3|skip": "Watched the HN thread from the sidelines. Three potential users moved on.",
       "community_signal_reddit_1|engage": "Joined the Reddit conversation as a builder. 2 people signed up for early access.",
       "community_signal_reddit_1|skip": "Skipped the Reddit thread. Staying focused.",
@@ -104,7 +104,7 @@
         available: (s, char) => !s.launched && char.flags.hn_stage === 2 && s.week >= (char.flags.hn_stage_week || 0) + 5,
         options: [
           { label: 'Share the waitlist link', key: 'engage',
-            execute(s, char) { char.flags.hn_stage = 3; s.signal = clamp(s.signal + 9, 0, 100); s.waitlist += 8; s.network.peers += 5; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Shared the link. 8 signups from the thread. One person asked to beta test — you said yes."; } },
+            execute(s, char) { char.flags.hn_stage = 3; s.signal = clamp(s.signal + 9, 0, 100); s.waitlist += 8; s.network.peers += 5; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Shared the link. 8 signups from the thread. One person asked for early access — you said yes."; } },
           { label: 'Stay quiet for now', key: 'skip',
             execute(s, char) { char.flags.hn_stage = 3; s.signal = clamp(s.signal + 2, 0, 100); return "Watched from the sidelines. Three potential users moved on. The thread died."; } },
         ],

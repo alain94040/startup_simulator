@@ -32,7 +32,6 @@
       { key: "incorporated", cls: "blue", label: "Incorporated", test: (s) => !!s.incorporated },
       { key: "equity", cls: "red", label: "Equity Signed", test: (s) => !!s.jordan_equity },
       { key: "demo", cls: "green", label: "First Demo", test: (s) => !!s.has_demo },
-      { key: "beta", cls: "green", label: "Beta Live", test: (s) => !!s.has_beta },
       { key: "launched", cls: "green", label: "Launched", test: (s) => !!s.launched },
       { key: "firstcust", cls: "blue", label: "First Customer", test: (s) => s.customers >= 1 },
       { key: "marcus", cls: "blue", label: "Lead Investor", test: (s) => !!s.marcusCommitted },
@@ -157,11 +156,9 @@
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          // Recurs the whole time Alex is heads-down building — including post-beta and
-          // post-launch (the timesPaired>=3 body variants and the demos option's
-          // `else s.users += 3` branch are written for the growth phase). The old
-          // `!s.has_beta` ceiling retired the card at ~wk11, before any of that was
-          // reachable, so the "pair with Alex" beat effectively never fired.
+          // Recurs the whole time Alex is heads-down building — including post-launch
+          // (the timesPaired>=3 body variants and the demos option's `else s.users += 3`
+          // branch are written for the growth phase).
           return alex && alex.active && alex.focus === 'build'
             && s.week >= (s.cobuild_last || 0) + 4;
         },
@@ -201,7 +198,7 @@
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
       {
         id: 'founder_build_onboarding', cat: 'p', from: 'You',
-        body: "you mapped onboarding based on where beta users get stuck — most drop off during profile setup. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
+        body: "you mapped onboarding based on where testers get stuck — most drop off during profile setup. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -241,8 +238,8 @@
               const jordan = e.chars.get('jordan');
               if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
               if (jordan) jordan.morale = clamp(jordan.morale + 5, 0, 100);
-              return s.has_beta || s.users > 0
-                ? "Added helpful empty states to every screen. Small fix, big impact — beta users stopped asking 'is the app broken?'"
+              return s.waitlist > 0 || s.users > 0
+                ? "Added helpful empty states to every screen. Small fix, big impact — testers stopped asking 'is the app broken?'"
                 : "Added helpful empty states to every screen. Ready before anyone hits them.";
             } },
           { label: 'Add it to the backlog', key: 'pass',
@@ -255,7 +252,7 @@
       },
       {
         id: 'founder_build_export', cat: 'p', from: 'You',
-        body: "four beta users have messaged asking about photo verification. they're hesitant to upgrade without knowing their matches are real. a few days of work.",
+        body: "four testers have messaged asking about photo verification. they're hesitant to upgrade without knowing their matches are real. a few days of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -284,7 +281,7 @@
         urgency: 1, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.has_beta && !char.flags.demo_account_built && alex && alex.active;
+          return !s.launched && s.has_demo && !char.flags.demo_account_built && alex && alex.active;
         },
         options: [
           { label: 'Build the demo environment', key: 'build',
@@ -346,9 +343,10 @@
         },
         options: [
           { label: 'Ship it', key: 'ship',
-            execute(s) {
+            execute(s, char, e) {
               s.launched = true;
               s.signal = clamp(s.signal + 6, 0, 100);
+              e.finishItemsAtLaunch();
               return "Launched solo. No fanfare. But it's live.";
             } },
           { label: 'One more week of polish', key: 'wait',

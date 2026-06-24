@@ -57,7 +57,6 @@ const PHASES = [
   { key: "incorporated",   label: "Incorporated",      reached: s => !!s.incorporated },
   { key: "demo",           label: "First demo",        reached: s => !!s.has_demo },
   { key: "met_priya",      label: "Pivot mentor met",  reached: s => !!s.met_priya },
-  { key: "beta",           label: "Beta live",         reached: s => !!s.has_beta },
   { key: "pivot",          label: "Pivot committed",   reached: s => !!s.activities_pivot },
   { key: "launched",       label: "Launched",          reached: s => !!s.launched },
   { key: "first_customer", label: "First customer",    reached: s => s.customers >= 1 },

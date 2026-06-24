@@ -12,7 +12,7 @@
     role: "Product data",
     intro: "instrumentation is live — enough data to start seeing patterns.",
     voice: {
-      "post_match_dropoff|dig": "Pulled the beta cohort apart. Matches that never become conversations, conversations that never become dates. The instrumentation paid for itself — I can see the pivot from here.",
+      "post_match_dropoff|dig": "Pulled the early cohort apart. Matches that never become conversations, conversations that never become dates. The instrumentation paid for itself — I can see the pivot from here.",
       "silent_churn|call": "Called all 3 silent users. Found a critical onboarding gap. Fixed it. 2 came back."
     },
     // Unlocks early if you BOUGHT analytics (the "sight" payoff), otherwise only once
@@ -24,7 +24,7 @@
         id: 'post_match_dropoff', cat: 'c', from: 'Analytics',
         body: "the funnel is stark: people match, open the thread… and stop. ~80% of matches never get past 'hey.' it's not the matching that's losing them — it's what comes after a match. there's nowhere for them to go.",
         urgency: 3, weeks: 1,
-        available: (s, char) => s.analytics_live && s.has_beta && !s.launched && !char.flags.dropoff_done,
+        available: (s, char) => s.analytics_live && s.has_demo && !s.launched && !char.flags.dropoff_done,
         options: [
           { label: 'Dig into the drop-off', key: 'dig',
             execute(s, char) {

@@ -51,7 +51,6 @@ function withSeed(seed, fn) {
 // These are intended narrative truths; a failure is either an engine bug or a
 // wrong assumption to revise here. `describe` renders the contradiction.
 // ─────────────────────────────────────────────────────────────────────────────
-const betaStatus = s => s.items && s.items.beta && s.items.beta.status;
 const STATE_INVARIANTS = [
   { name: "customers-imply-launched",
     holds: s => !(s.customers > 0) || s.launched,
@@ -59,18 +58,24 @@ const STATE_INVARIANTS = [
   { name: "users-imply-launched",
     holds: s => !(s.users > 0) || s.launched,
     describe: s => `users=${s.users} but launched=${!!s.launched}` },
-  { name: "launched-implies-beta-done",
-    // Scoped to games where the beta roadmap item actually exists: if it does and we
-    // launched, it must read 'done'. (Launching with no beta item is a separate, lower-
-    // volume case covered by launched-implies-has-beta.)
-    holds: s => !s.launched || !(s.items && s.items.beta) || betaStatus(s) === "done",
-    describe: s => `launched but items.beta.status=${betaStatus(s) || "(none)"}` },
-  { name: "launched-implies-has-beta",
-    holds: s => !s.launched || !!s.has_beta,
-    describe: s => `launched but has_beta=${!!s.has_beta}` },
-  { name: "beta-implies-demo",
-    holds: s => !s.has_beta || !!s.has_demo,
-    describe: s => `has_beta but has_demo=${!!s.has_demo}` },
+  { name: "launched-implies-pre-launch-items-done",
+    // Items that existed before launch should be done. Post-launch items (pivot
+    // rebuild, arch refactor) are legitimately active.
+    holds: s => {
+      if (!s.launched || !s.items) return true;
+      const POST_LAUNCH = new Set(["plans_matching", "plans_ui", "arch_refactor", "api_design"]);
+      return Object.keys(s.items).every(k => {
+        if (POST_LAUNCH.has(k)) return true;
+        const it = s.items[k];
+        return !it || it.status === 'done' || it.status === 'obsolete' || it.status === 'deferred';
+      });
+    },
+    describe: s => {
+      if (!s.items) return "launched with no items";
+      const POST_LAUNCH = new Set(["plans_matching", "plans_ui", "arch_refactor", "api_design"]);
+      const spinning = Object.keys(s.items).filter(k => !POST_LAUNCH.has(k) && s.items[k] && (s.items[k].status === 'active' || s.items[k].status === 'todo'));
+      return `launched but pre-launch items still active/todo: ${spinning.join(', ')}`;
+    } },
   { name: "pivot-creates-plans",
     holds: s => !s.activities_pivot || !!(s.items && s.items.plans_matching),
     describe: s => `activities_pivot but items.plans_matching=${s.items && s.items.plans_matching ? "ok" : "(missing)"}` },
@@ -145,10 +150,10 @@ function cov(driver) {
 
 function snapshot(s) {
   return {
-    week: s.week, launched: !!s.launched, has_beta: !!s.has_beta, has_demo: !!s.has_demo,
+    week: s.week, launched: !!s.launched, has_demo: !!s.has_demo,
     customers: s.customers, users: s.users, market_fit: Math.round(s.market_fit),
     signal: Math.round(s.signal), activities_pivot: !!s.activities_pivot,
-    dev_plan: s.dev_plan || null, beta: betaStatus(s) || null,
+    dev_plan: s.dev_plan || null,
     plans_matching: s.items && s.items.plans_matching ? s.items.plans_matching.status : null,
   };
 }

@@ -11,7 +11,7 @@
     name: "Jamie",  // chat display name
     intro: "yo! heard you actually quit to do this for real. wild. coffee?",
     voice: {
-      "ff_friend|tell": "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the beta list.",
+      "ff_friend|tell": "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the waitlist.",
       "ff_friend_ask|ask": "Asked Jamie to invest. He wants to support this."
     },
     unlockCondition: (s) => s.week >= 3,
@@ -26,7 +26,7 @@
             execute(s, char) {
               char.flags.first_meeting_done = true;
               char.flags.first_meeting_week = s.week;
-              return "Caught up over coffee. Told him everything. He was into it — 'a dating app that actually works? I need to try this.' You put him on the beta list.";
+              return "Caught up over coffee. Told him everything. He was into it — 'a dating app that actually works? I need to try this.' You put him on the waitlist.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,

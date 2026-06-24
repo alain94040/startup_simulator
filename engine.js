@@ -66,7 +66,7 @@
         cash: 10000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
         signal: 28, market_fit: 0, launched: false, deck_ready: false,
         productPhase: "proto",
-        has_demo: false, has_beta: false, tech_debt: 0,
+        has_demo: false, tech_debt: 0,
         investor_warmth: 0,
         incorporated: false, ip_clear: false,
         has_landing_page: false,
@@ -340,7 +340,7 @@
         // Outcomes are narrated in the founder's journal, not the chat thread.
         // The chat stays pure dialogue; the journal is where the story is told,
         // retold in the founder's own first-person voice where we have one.
-        this.threads.founder.push({
+        const entry = {
           type: "outcome",
           cardId,
           from: this._name(charId),
@@ -348,7 +348,11 @@
           body: this._voiced(charId, cardId, opt.key, outcome),
           week: this.s.week,
           isNew: true,
-        });
+        };
+        if (o.def.mockups && o.def.mockups[opt.key]) {
+          entry.mockup = o.def.mockups[opt.key];
+        }
+        this.threads.founder.push(entry);
       }
 
       this.open[charId] = null;  // answered — slot clears
@@ -534,6 +538,17 @@
 
     get burnPerWeek() { return 500 + (this.s.extra_burn || 0); }
     get runwayWeeks() { return Math.floor(this.s.cash / this.burnPerWeek); }
+
+    finishItemsAtLaunch() {
+      if (!this.s.items) return;
+      for (const k of Object.keys(this.s.items)) {
+        const it = this.s.items[k];
+        if (it && (it.status === 'active' || it.status === 'todo')) {
+          it.status = 'done';
+          it.quality = it.quality || 'rough';
+        }
+      }
+    }
 
     // ── view helpers for the UI ───────────────────────────────────────────────────
     conversations() {
