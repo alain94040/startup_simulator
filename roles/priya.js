@@ -1,6 +1,26 @@
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+  // Mirror of alex.js applyActivitiesPivot — the pivot rewrites the roadmap around
+  // activities. Duplicated here because the helper is scoped to alex.js's IIFE.
+  function pivotItems(s) {
+    if (!s.items) return;
+    if (s.items.matching_algo) s.items.matching_algo.status = "obsolete";
+    if (s.items.ios_ui)        s.items.ios_ui.status        = "obsolete";
+    ["scope_social", "scope_verification", "scope_premium", "scope_socialgraph", "scope_video"].forEach(k => {
+      if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
+    });
+    // Licensing the core (Jordan's call) bites here: a black box can't be re-tuned for
+    // the pivot — it has to be ripped out and rebuilt, costing extra cash and fit.
+    if (s.matching_licensed && !s.matching_blackbox_ripped) {
+      s.matching_blackbox_ripped = true;
+      s.cash = clamp(s.cash - 1500, 0, 9999999);
+      s.market_fit = clamp(s.market_fit - 10, 0, 100);
+    }
+    s.items.plans_matching = { status: "active", quality: null, assignee: "alex"   };
+    s.items.plans_ui       = { status: "todo",   quality: null, assignee: s.jordan_resolved ? null : "jordan" };
+  }
+
   const def = {
     id: 'priya', type: 'advisor',
 
@@ -54,15 +74,7 @@
               if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
               const jordan = e.chars.get("jordan");
               if (jordan) jordan.morale = clamp(jordan.morale + 3, 0, 100);
-              if (s.items) {
-                if (s.items.matching_algo) s.items.matching_algo.status = "obsolete";
-                if (s.items.ios_ui)        s.items.ios_ui.status        = "obsolete";
-                ["sprint_social","sprint_algo","sprint_mono","sprint_adv_social","sprint_adv_video"].forEach(k => {
-                  if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
-                });
-                s.items.plans_matching = { status: "active", quality: null, assignee: "alex"   };
-                s.items.plans_ui       = { status: "todo",   quality: null, assignee: s.jordan_resolved ? null : "jordan" };
-              }
+              pivotItems(s);
               return "You called Alex. 'I've made the decision.' He went quiet, then: 'okay.' Three weeks. $2k.";
             } },
           { label: "Appreciate it — but we ship as planned", key: "ship",
@@ -83,15 +95,7 @@
               if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
               const jordan = e.chars.get("jordan");
               if (jordan) jordan.morale = clamp(jordan.morale + 3, 0, 100);
-              if (s.items) {
-                if (s.items.matching_algo) s.items.matching_algo.status = "obsolete";
-                if (s.items.ios_ui)        s.items.ios_ui.status        = "obsolete";
-                ["sprint_social","sprint_algo","sprint_mono","sprint_adv_social","sprint_adv_video"].forEach(k => {
-                  if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
-                });
-                s.items.plans_matching = { status: "active", quality: null, assignee: "alex"   };
-                s.items.plans_ui       = { status: "todo",   quality: null, assignee: s.jordan_resolved ? null : "jordan" };
-              }
+              pivotItems(s);
               return "Three weeks. $2k. Alex built it without comment. The product shifted.";
             } },
         ],
@@ -103,15 +107,7 @@
             s.activities_pivot = true;
             s.cash = clamp(s.cash - 2000, 0, 9999999);
             s.market_fit = clamp(s.market_fit + 10, 0, 100);
-            if (s.items) {
-              if (s.items.matching_algo) s.items.matching_algo.status = "obsolete";
-              if (s.items.ios_ui)        s.items.ios_ui.status        = "obsolete";
-              ["sprint_social","sprint_algo","sprint_mono","sprint_adv_social","sprint_adv_video"].forEach(k => {
-                if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
-              });
-              s.items.plans_matching = { status: "active", quality: null, assignee: "alex"   };
-              s.items.plans_ui       = { status: "todo",   quality: null, assignee: s.jordan_resolved ? null : "jordan" };
-            }
+            pivotItems(s);
           } else {
             s.pivot_deferred = true;
             const alex = e && e.chars && e.chars.get("alex");

@@ -3,22 +3,25 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   // ── Roadmap item helpers ──────────────────────────────────────────────────
+  // The over-scoped (full/A) plan's extra work. These are inert "auto" items — no
+  // cards; they build themselves over time via the engine's build burn-down, doubling
+  // time-to-product-ready. (They replace the old per-sprint decision cards.)
+  const SCOPE_ITEMS = ['scope_social', 'scope_verification', 'scope_premium', 'scope_socialgraph', 'scope_video'];
+
   function expandItems(s, plan) {
     if (!s.items) return;
     s.items.beta = { status: 'todo', quality: null, assignee: null };
     if (plan === 'full') {
-      s.items.sprint_social     = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_algo       = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_mono       = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_adv_social = { status: 'todo', quality: null, assignee: null };
-      s.items.sprint_adv_video  = { status: 'todo', quality: null, assignee: null };
+      for (const k of SCOPE_ITEMS) s.items[k] = { status: 'todo', quality: null, assignee: null, auto: true };
     }
   }
 
-  function allSprintsResolved(s) {
+  // True once every over-scope (auto) item is built/dropped — gates beta on the full
+  // plan. Lean has no auto items, so this is always true there (no change for lean).
+  function allScopeBuilt(s) {
     if (!s.items) return true;
-    const keys = ['sprint_social', 'sprint_algo', 'sprint_mono', 'sprint_adv_social', 'sprint_adv_video'];
-    return keys.every(k => !s.items[k] || s.items[k].status === 'done' || s.items[k].status === 'deferred' || s.items[k].status === 'obsolete');
+    return Object.keys(s.items).every(k => !s.items[k].auto
+      || s.items[k].status === 'done' || s.items[k].status === 'deferred' || s.items[k].status === 'obsolete');
   }
 
   function applyActivitiesPivot(s) {
@@ -26,17 +29,20 @@
     // Cross out the items built for profile-based matching
     if (s.items.matching_algo) s.items.matching_algo.status = 'obsolete';
     if (s.items.ios_ui)        s.items.ios_ui.status        = 'obsolete';
-    // Full-plan sprint items are also superseded
-    ['sprint_social','sprint_algo','sprint_mono','sprint_adv_social','sprint_adv_video'].forEach(k => {
+    // Full-plan over-scope items are also superseded
+    SCOPE_ITEMS.forEach(k => {
       if (s.items[k] && s.items[k].status === 'todo') s.items[k].status = 'obsolete';
     });
+    // Licensing the core (Jordan's call) bites here: a black box can't be re-tuned for
+    // the pivot — it has to be ripped out and rebuilt, costing extra cash and fit.
+    if (s.matching_licensed && !s.matching_blackbox_ripped) {
+      s.matching_blackbox_ripped = true;
+      s.cash = clamp(s.cash - 1500, 0, 9999999);
+      s.market_fit = clamp(s.market_fit - 10, 0, 100);
+    }
     // Add plans-first replacements
     s.items.plans_matching = { status: 'active', quality: null, assignee: 'alex'   };
     s.items.plans_ui       = { status: 'todo',   quality: null, assignee: s.jordan_resolved ? null : 'jordan' };
-  }
-
-  function sprintResolved(s, key) {
-    return !s.items || !s.items[key] || s.items[key].status !== 'todo';
   }
 
   const def = {
@@ -63,11 +69,9 @@
       "alex_sync_pitch",
       "alex_demo_ready",
       "alex_beta_ready",
-      "sprint_social",
-      "sprint_algo",
-      "sprint_mono",
-      "sprint_adv_social",
-      "sprint_adv_video",
+      "auth_build_buy",
+      "auth_buy_forced",
+      "analytics_choice",
       "pivot_alex_pushback",
       "pivot_counter_alex",
       "bad_retention",
@@ -133,21 +137,11 @@
       "alex_demo_ready|polish": "Spent a sprint polishing before showing anyone. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'",
       "alex_beta_ready|curated": "Invited 10 hand-picked singles for the beta. Eight signed up. Three matched on day one. One asked if they could pay now.",
       "alex_beta_ready|open": "Posted in two singles communities. 20 signups in 48 hours. Chaotic — but we're seeing match patterns we couldn't have predicted.",
-      "sprint_social|build": "Built the activity layer and push notifications properly. Real re-engagement driver in the product now.",
-      "sprint_social|lean": "Shipped stripped-down versions of the social features. Works, but we'll need to revisit.",
-      "sprint_social|defer": "Deferred the social layer to v2. Staying lean for now.",
-      "sprint_algo|build": "Profile verification shipped — photo checks and linked accounts. Fake profile reports dropped immediately.",
-      "sprint_algo|lean": "Basic verification only — photo check, no linked accounts. Trust signals are thin but there.",
-      "sprint_algo|defer": "Deferred verification. Staying focused on core.",
-      "sprint_mono|build": "Premium subscription is live. No paying users yet, but the infrastructure's there.",
-      "sprint_mono|lean": "Basic paywall shipped. Will need work before serious monetization.",
-      "sprint_mono|defer": "Deferred monetization. Smart — validate retention before building a paywall.",
-      "sprint_adv_social|build": "Social graph shipped. Mutual-connection matches converting at twice the rate of cold ones.",
-      "sprint_adv_social|lean": "Basic social discovery in — limited to one degree out. Good enough to test the hypothesis.",
-      "sprint_adv_social|defer": "Deferred social discovery. Core product ships without it.",
-      "sprint_adv_video|build": "Video dates shipped. Took longer and cost more than planned. Users love it.",
-      "sprint_adv_video|lean": "Basic video in. Drops occasionally, no recording. Users complained, then kept using it anyway.",
-      "sprint_adv_video|defer": "Deferred video dates — told users to use FaceTime. We'll revisit after funding.",
+      "auth_build_buy|buy": "Wired up a hosted auth provider — login, signup, password reset, social sign-in, all of it — in an afternoon. Costs us a bit each month, but it's a solved problem and now it's solved. Alex grumbled about the monthly fee.",
+      "auth_build_buy|build": "Let Alex build our own auth. He's sure it's a few days of work — 'why pay monthly for something this basic.' We'll see.",
+      "auth_buy_forced|buy": "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
+      "analytics_choice|buy": "Dropped in a real analytics SDK. Funnels, retention curves, event tracking — live in a day. Now we can actually see what users do instead of guessing. Small monthly cost, worth every cent.",
+      "analytics_choice|build": "Decided to build our own analytics dashboard. Alex's plate is already full. We're flying half-blind until it's done.",
       "pivot_alex_pushback|ship": "Sided with Alex — we ship what we have, add activities post-launch. Alex looked relieved. Jordan went quiet.",
       "pivot_alex_pushback|pivot": "Told Alex the signal is real — we should pivot. He went quiet. 'Okay. It's your call.' He doesn't agree.",
       "pivot_counter_alex|confirm": "Confirmed the pivot over Alex's objection. Three weeks, $2k. We're rebuilding around activities.",
@@ -205,6 +199,7 @@
               s.items = {
                 matching_algo: { status: 'active', quality: null, assignee: 'alex'   },
                 api_design:    { status: 'todo',   quality: null, assignee: 'alex'   },
+                auth:          { status: 'todo',   quality: null, assignee: null     },
                 ios_ui:        { status: 'active', quality: null, assignee: 'jordan' },
                 ios_server:    { status: 'todo',   quality: null, assignee: 'jordan' },
               };
@@ -220,6 +215,7 @@
           s.items = {
             matching_algo: { status: 'active', quality: null, assignee: 'alex'   },
             api_design:    { status: 'todo',   quality: null, assignee: 'alex'   },
+            auth:          { status: 'todo',   quality: null, assignee: null     },
             ios_ui:        { status: 'active', quality: null, assignee: 'jordan' },
             ios_server:    { status: 'todo',   quality: null, assignee: 'jordan' },
           };
@@ -287,6 +283,108 @@
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── BUILD vs BUY: AUTH (commodity → buy is right) ────────────────────────
+      // Hidden binary. Buying (+$30/wk) is correct; letting Alex build it is strictly
+      // worse — he runs late, you buy anyway (same +$30/wk) AND lose ~2 weeks.
+      {
+        id: 'auth_build_buy', cat: 'p', from: 'Alex',
+        body: "we need login, account creation, password reset, social sign-in. i can build our own auth — couple days, tops. why pay a monthly fee for something this basic? or we just wire up a hosted provider. your call.",
+        // urgency 11: above the flavor cards (1-3) so it reliably surfaces in Alex's busy
+        // early slot, below the equity/commitment arc (13+). Wide window so it always lands.
+        urgency: 11, weeks: 1,
+        available: (s, char) => char.flags.plan_done && !char.flags.auth_resolved && !char.flags.auth_building
+          && s.week >= 3 && s.week <= 14,
+        options: [
+          { label: 'Just buy a hosted auth provider', key: 'buy',
+            reply: "let's not reinvent the wheel. wire up a hosted provider — auth is a solved problem. the monthly fee is worth it.",
+            execute(s, char) {
+              char.flags.auth_resolved = true;
+              s.extra_burn += 30;
+              if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
+              return "Hosted auth wired up in an afternoon — login, signup, reset, social sign-in. $30/wk for it, but it's done and it's solid. Alex grumbled about the fee.";
+            } },
+          { label: 'Let Alex build it himself', key: 'build',
+            reply: "ok — build it, if you're sure it's just a few days.",
+            execute(s, char) {
+              char.flags.auth_building = true;
+              char.flags.auth_build_start = s.week;
+              char.morale = clamp(char.morale + 4, 0, 100);
+              if (s.items && s.items.auth) { s.items.auth.status = 'active'; s.items.auth.assignee = 'alex'; }
+              return "Alex is building our own auth. He's sure it's a few days of work.";
+            } },
+        ],
+        // If the founder doesn't say no, Alex optimistically starts building it.
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          char.flags.auth_building = true;
+          char.flags.auth_build_start = s.week;
+          if (s.items && s.items.auth) { s.items.auth.status = 'active'; s.items.auth.assignee = 'alex'; }
+        },
+      },
+      {
+        id: 'auth_buy_forced', cat: 'p', from: 'Alex',
+        body: "i'm behind. the auth thing is fighting me — oauth refresh tokens, password-reset edge cases, account recovery. it's eating the whole sprint. honestly... we should just buy it.",
+        urgency: 12, weeks: 1,
+        available: (s, char) => char.flags.auth_building && !char.flags.auth_resolved
+          && s.week >= (char.flags.auth_build_start || 0) + 2,
+        options: [
+          { label: 'Tell him to buy it', key: 'buy',
+            reply: "stop — buy the hosted provider. we should've done that two weeks ago. let's move on.",
+            execute(s, char) {
+              char.flags.auth_resolved = true;
+              char.flags.auth_building = false;
+              s.extra_burn += 30;
+              char.buildEffort = Math.max(0, (char.buildEffort || 0) - 2.4);
+              char.morale = clamp(char.morale - 4, 0, 100);
+              if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
+              return "Bought the hosted provider in the end — same $30/wk we'd have paid on day one, plus two weeks of Alex's time gone. The throwaway code got tossed.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          char.flags.auth_resolved = true;
+          char.flags.auth_building = false;
+          s.extra_burn += 30;
+          char.buildEffort = Math.max(0, (char.buildEffort || 0) - 2.4);
+          char.morale = clamp(char.morale - 4, 0, 100);
+          if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
+        },
+      },
+
+      // ── BUILD vs BUY: ANALYTICS (commodity → buy is right; buying buys you sight) ─
+      // Buying instrumentation surfaces the "users match, then go silent" drop-off
+      // early — the pivot signal. Building it leaves you blind until it's too late.
+      {
+        id: 'analytics_choice', cat: 'p', from: 'Alex',
+        body: "we're flying blind — no analytics. i can build us a proper dashboard, or we drop in an off-the-shelf SDK and have funnels and retention curves today. building it ourselves is more work but no monthly fee.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.has_demo && !s.launched && !char.flags.analytics_choice_done,
+        options: [
+          { label: 'Drop in an analytics SDK', key: 'buy',
+            reply: "drop in the SDK. i want to see what users actually do, not guess. the monthly cost is nothing next to shipping blind.",
+            execute(s, char) {
+              char.flags.analytics_choice_done = true;
+              s.analytics_live = true;
+              s.extra_burn += 30;
+              if (s.items && s.items.analytics) { s.items.analytics.status = 'done'; s.items.analytics.quality = 'bought'; s.items.analytics.assignee = null; }
+              return "Analytics SDK live in a day — funnels, retention, event tracking. Now we can see what's actually happening instead of guessing.";
+            } },
+          { label: 'Build our own dashboard', key: 'build',
+            reply: "build our own — no point paying monthly when you can do it yourself.",
+            execute(s, char) {
+              char.flags.analytics_choice_done = true;
+              char.buildEffort = Math.max(0, (char.buildEffort || 0) - 2.0);
+              if (s.items && s.items.analytics) { s.items.analytics.status = 'active'; s.items.analytics.assignee = 'alex'; }
+              return "Alex started building an analytics dashboard. His plate was already full — and we're flying half-blind until it's done.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          char.flags.analytics_choice_done = true;
+          if (s.items && s.items.analytics) { s.items.analytics.status = 'active'; s.items.analytics.assignee = 'alex'; }
+        },
       },
 
       // ── EARLY: RELATIONSHIP ──────────────────────────────────────────────────
@@ -719,15 +817,24 @@
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
         body: "profiles and matching work end-to-end for the first time. create an account, get matched, send a message. that's the core hypothesis. want to put it in front of real people?",
         urgency: 3, weeks: 1,
-        available: (s, char) => (char.buildEffort || 0) >= 4 && s.items?.matching_algo?.status === 'active' && !s.launched,
+        // Auth must be settled first (so the build-vs-buy lesson lands before the demo).
+        // Works for both matching paths: owned → matching_algo is 'active' here; licensed
+        // → it's already 'done' (generic), so we only finish it when it's still active.
+        // Gated on the matching decision (so a licensed engine isn't overwritten), not on
+        // auth — auth resolves in parallel in Alex's slot; serializing both here delayed
+        // the demo ~4 weeks. Letting Alex build auth still bites: its buildEffort hit
+        // delays this and later milestones.
+        available: (s, char, e) => (char.buildEffort || 0) >= 4 && !s.has_demo && !s.launched
+          && (s.matching_owned || s.matching_licensed || !(e.chars.get('jordan') && e.chars.get('jordan').active)),
         options: [
           { label: 'Show it rough — learn fast', key: 'rough',
             execute(s) {
               s.has_demo = true; s.tech_debt += 12;
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
               if (s.items) {
-                s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'rough';
+                if (s.items.matching_algo && s.items.matching_algo.status === 'active') { s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'rough'; }
                 if (s.items.api_design) s.items.api_design.status = 'active';
+                if (!s.items.analytics) s.items.analytics = { status: 'todo', quality: null, assignee: null };
               }
               return "Three contacts in the room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been on every app and none of them work like this.' You know what to build next.";
             } },
@@ -736,8 +843,9 @@
               s.has_demo = true; s.tech_debt += 3;
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); s.signal = clamp(s.signal + 4, 0, 100);
               if (s.items) {
-                s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'solid';
+                if (s.items.matching_algo && s.items.matching_algo.status === 'active') { s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'solid'; }
                 if (s.items.api_design) s.items.api_design.status = 'active';
+                if (!s.items.analytics) s.items.analytics = { status: 'todo', quality: null, assignee: null };
               }
               return "Spent the sprint cleaning up the worst rough edges. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'";
             } },
@@ -747,8 +855,9 @@
         dropFx(s) {
           s.has_demo = true; s.tech_debt += 18; s.waitlist += 1;
           if (s.items) {
-            s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'rough';
+            if (s.items.matching_algo && s.items.matching_algo.status === 'active') { s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'rough'; }
             if (s.items.api_design) s.items.api_design.status = 'active';
+            if (!s.items.analytics) s.items.analytics = { status: 'todo', quality: null, assignee: null };
           }
         },
       },
@@ -757,7 +866,7 @@
         body: "web beta is ready. real accounts, real matches, real data. this is the first time we'll see if the product actually works in the wild.",
         urgency: 3, weeks: 1,
         available: (s) => s.has_demo && (s.ios_unblocked || s.jordan_resolved) && !s.has_beta && !s.launched
-          && (s.dev_plan !== 'full' || allSprintsResolved(s)),
+          && allScopeBuilt(s),
         options: [
           { label: 'Invite 10 hand-picked singles', key: 'curated',
             execute(s) {
@@ -782,142 +891,6 @@
         },
       },
 
-      // ── FULL-SPEC SPRINT CARDS ───────────────────────────────────────────────
-      {
-        id: 'sprint_social', cat: 'p', from: 'Alex',
-        body: "we planned the social layer — activity-based matching and push re-engagement. two sprints of work. do we build it before beta or defer to v2?",
-        urgency: 2, weeks: 2,
-        available: (s) => s.dev_plan === 'full' && s.items?.sprint_social?.status === 'todo' && s.has_demo,
-        options: [
-          { label: 'Build it properly', key: 'build',
-            execute(s) {
-              s.items.sprint_social.status = 'done'; s.items.sprint_social.quality = 'solid';
-              s.cash = clamp(s.cash - 1200, 0, 9999999); s.market_fit = clamp(s.market_fit + 5, 0, 100);
-              return "Activity layer and push notifications built. Real re-engagement driver in the product.";
-            } },
-          { label: 'Build lean versions', key: 'lean',
-            execute(s) {
-              s.items.sprint_social.status = 'done'; s.items.sprint_social.quality = 'rough';
-              s.tech_debt += 6;
-              return "Shipped stripped-down versions. Works, but will need revisiting.";
-            } },
-          { label: 'Defer to v2', key: 'defer',
-            execute(s) {
-              s.items.sprint_social.status = 'deferred';
-              return "Noted. On the backlog. Staying lean for now.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { if (s.items?.sprint_social) s.items.sprint_social.status = 'deferred'; },
-      },
-      {
-        id: 'sprint_algo', cat: 'p', from: 'Alex',
-        body: "profile verification — photo check, linked accounts, basic trust signals. reduces fake profiles. on the roadmap — build before beta or defer?",
-        urgency: 2, weeks: 2,
-        available: (s) => s.dev_plan === 'full' && s.items?.sprint_algo?.status === 'todo' && sprintResolved(s, 'sprint_social'),
-        options: [
-          { label: 'Build it properly', key: 'build',
-            execute(s) {
-              s.items.sprint_algo.status = 'done'; s.items.sprint_algo.quality = 'solid';
-              s.cash = clamp(s.cash - 1200, 0, 9999999); s.market_fit = clamp(s.market_fit + 6, 0, 100);
-              return "Profile verification shipped. Photo checks and linked accounts live. Fake profile reports dropped.";
-            } },
-          { label: 'Build lean versions', key: 'lean',
-            execute(s) {
-              s.items.sprint_algo.status = 'done'; s.items.sprint_algo.quality = 'rough';
-              s.tech_debt += 6;
-              return "Basic verification shipped. Photo check only — no linked accounts. Trust signals are there but thin.";
-            } },
-          { label: 'Defer to v2', key: 'defer',
-            execute(s) {
-              s.items.sprint_algo.status = 'deferred';
-              return "Deferred. Staying focused on core.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { if (s.items?.sprint_algo) s.items.sprint_algo.status = 'deferred'; },
-      },
-      {
-        id: 'sprint_mono', cat: 'p', from: 'Alex',
-        body: "we spec'd a paid tier. paywall, subscription flow. do we build it before we know if free users stick?",
-        urgency: 2, weeks: 2,
-        available: (s) => s.dev_plan === 'full' && s.items?.sprint_mono?.status === 'todo' && sprintResolved(s, 'sprint_algo'),
-        options: [
-          { label: 'Build the paywall', key: 'build',
-            execute(s) {
-              s.items.sprint_mono.status = 'done'; s.items.sprint_mono.quality = 'solid';
-              s.cash = clamp(s.cash - 800, 0, 9999999);
-              return "Premium subscription live. No paying users yet, but the infrastructure is there.";
-            } },
-          { label: 'Minimal version', key: 'lean',
-            execute(s) {
-              s.items.sprint_mono.status = 'done'; s.items.sprint_mono.quality = 'rough';
-              s.tech_debt += 4;
-              return "Basic paywall shipped. Will need work before serious monetization.";
-            } },
-          { label: 'Defer — validate free users first', key: 'defer',
-            execute(s) {
-              s.items.sprint_mono.status = 'deferred';
-              return "Smart. Validate retention before monetizing.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { if (s.items?.sprint_mono) s.items.sprint_mono.status = 'deferred'; },
-      },
-      {
-        id: 'sprint_adv_social', cat: 'p', from: 'Alex',
-        body: "friend-of-friend discovery — surface matches through mutual connections. adds a trust layer. on the original spec. build now or defer?",
-        urgency: 2, weeks: 2,
-        available: (s) => s.dev_plan === 'full' && s.items?.sprint_adv_social?.status === 'todo' && sprintResolved(s, 'sprint_mono'),
-        options: [
-          { label: 'Build it', key: 'build',
-            execute(s) {
-              s.items.sprint_adv_social.status = 'done'; s.items.sprint_adv_social.quality = 'solid';
-              s.market_fit = clamp(s.market_fit + 3, 0, 100);
-              return "Social graph shipped. Mutual-connection matches converting at twice the rate.";
-            } },
-          { label: 'Build a lean version', key: 'lean',
-            execute(s) {
-              s.items.sprint_adv_social.status = 'done'; s.items.sprint_adv_social.quality = 'rough';
-              s.tech_debt += 5;
-              return "Basic version in. Discovery is limited to one degree out. Good enough to test the hypothesis.";
-            } },
-          { label: 'Defer', key: 'defer',
-            execute(s) {
-              s.items.sprint_adv_social.status = 'deferred';
-              return "Deferred. Core product ships without it.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { if (s.items?.sprint_adv_social) s.items.sprint_adv_social.status = 'deferred'; },
-      },
-      {
-        id: 'sprint_adv_video', cat: 'p', from: 'Alex',
-        body: "in-app video dates. biggest ask from beta users. also the most complex thing left on the roadmap. build it or tell people to use FaceTime?",
-        urgency: 2, weeks: 2,
-        available: (s) => s.dev_plan === 'full' && s.items?.sprint_adv_video?.status === 'todo' && sprintResolved(s, 'sprint_adv_social'),
-        options: [
-          { label: 'Build it', key: 'build',
-            execute(s) {
-              s.items.sprint_adv_video.status = 'done'; s.items.sprint_adv_video.quality = 'solid';
-              s.cash = clamp(s.cash - 2000, 0, 9999999); s.market_fit = clamp(s.market_fit + 5, 0, 100);
-              return "Video dates shipped. Took longer and cost more than planned. Users love it.";
-            } },
-          { label: 'Build a lean version', key: 'lean',
-            execute(s) {
-              s.items.sprint_adv_video.status = 'done'; s.items.sprint_adv_video.quality = 'rough';
-              s.cash = clamp(s.cash - 800, 0, 9999999); s.tech_debt += 10;
-              return "Basic video in. Drops occasionally, no recording. Users complained, then kept using it anyway.";
-            } },
-          { label: 'Defer — tell them to use FaceTime', key: 'defer',
-            execute(s) {
-              s.items.sprint_adv_video.status = 'deferred';
-              return "Deferred. You'll revisit after funding.";
-            } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { if (s.items?.sprint_adv_video) s.items.sprint_adv_video.status = 'deferred'; },
-      },
       // ── PIVOT DISCUSSION (card 2 of 3: Alex pushes back on Jordan's flag) ──────
       {
         id: 'pivot_alex_pushback', cat: 'p', from: 'Alex',

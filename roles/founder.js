@@ -45,7 +45,6 @@
       "founder_first_interviews|interview": "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
       "founder_meetup|go": "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on retention, and seemed genuinely curious about what we're building.",
       "founder_reflect|review": "Quiet week. Sharpened the pitch — small refinements, nothing dramatic. Sometimes that's the work.",
-      "founder_codebuild|pair": "Paired up with Alex this sprint. My contribution was modest but Alex shipped faster with me there.",
       "founder_codebuild|demos": "Ran 3 demos instead of pairing with Alex. 3 people signed up for early access.",
       "founder_build_onboarding|build": "Built the onboarding end-to-end myself. Took longer than expected — not my strongest skill — but it shipped.",
       "founder_build_onboarding|pass": "Handed the onboarding spec to Alex. He'll fit it in — but his queue just got longer.",
@@ -172,6 +171,19 @@
               s.cobuild_last = s.week;
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
+              // Building our own matching engine? Pairing on it is how the secret sauce
+              // gets sharper. Research-gated: you only know what to match on after talking
+              // to users (GOALS.md), so discovery makes the pairing pay off far more.
+              if (s.matching_owned && !s.launched) {
+                const researched = !!char.flags.interviews_done || (alex && alex.focus === 'discover');
+                s.market_fit = clamp(s.market_fit + (researched ? 6 : 2), 0, 100);
+                if (s.items && s.items.matching_algo && s.items.matching_algo.status !== 'obsolete' && researched) {
+                  s.items.matching_algo.quality = 'solid';
+                }
+                return researched
+                  ? "Paired with Alex on the matching engine — the core of Kindred. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
+                  : "Paired with Alex on the matching engine — the core of Kindred. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
+              }
               return "Paired up. You worked on the profiles UI, Alex handled the matching algorithm. Your contribution was modest but Alex shipped faster with you there.";
             } },
           { label: 'Run demos instead', key: 'demos',
@@ -479,7 +491,7 @@
       },
       {
         id: 'reference_checkin', cat: 'c', from: 'You',
-        body: "your reference subscriber has been on kindred for 3 weeks. they've been on two dates. time to collect that testimonial while the experience is fresh.",
+        body: "your reference user has been on kindred for 3 weeks. they've been on two dates. time to collect that story while the experience is fresh.",
         urgency: 2, weeks: 1,
         available: (s) => s.reference_customer && !s.testimonial && s.week >= (s.reference_customer_week || 0) + 3,
         options: [

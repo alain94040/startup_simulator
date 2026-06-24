@@ -10,6 +10,7 @@
       "jordan_equity_counter_both",
       "early_working_style",
       "early_pricing",
+      "matching_engine_choice",
       "jordan_ios_sprint",
       "pivot_open",
       "jordan_fulltime_ask",
@@ -27,6 +28,8 @@
       "early_working_style|async": "Decided to work async with Jordan — ping when blocked. Fewer interruptions, more deep work.",
       "early_pricing|charge": "Decided to charge from day one. Ten serious subscribers beat a hundred who open it once. If they pay before there are many matches, they really want this.",
       "early_pricing|free": "Decided to stay free until we have critical mass. More people in the door — the cold-start problem is real, and nobody finds a match worth paying for in an empty app.",
+      "matching_engine_choice|build": "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
+      "matching_engine_choice|license": "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
       "jordan_ios_sprint|ack": "Jordan's iOS sprint is done. Good momentum — keep it rolling.",
       "pivot_open|open": "Jordan flagged something in the beta feedback: users keep saying 'I matched, but then what?' Put it on the agenda.",
       "jordan_fulltime_ask|accept": "Accepted Jordan's answer — she stays part-time. Alex heard and he's covering her work.",
@@ -222,6 +225,55 @@
             execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door. The cold start problem is real — you need enough singles before anyone finds a match worth paying for."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
+      },
+
+      // ── BUILD vs BUY: MATCHING (the core → BUILD is right) ───────────────────
+      // Jordan pushes to license the *core* matching engine from a vendor — an early
+      // red flag that she's the wrong co-founder (she'd outsource the one thing that
+      // makes Kindred Kindred). Right call: overrule her and build it. Licensing is a
+      // black box that can't be re-tuned for the pivot — it bites later (see
+      // applyActivitiesPivot in roles/alex.js). Lives here so Jordan owns the proposal;
+      // reads/writes Alex via e.chars.get('alex').
+      {
+        id: 'matching_engine_choice', cat: 'p', from: 'Jordan',
+        body: "found something — MatchKit. they license a ready-made recommendation engine; we'd have matching working in days instead of building it from scratch. why reinvent the wheel? i say we plug it in.",
+        urgency: 12, weeks: 1,
+        // week>=6 so this (urgency 12) can't preempt the low-urgency equity opener
+        // (jordan_equity_mention, urgency 2, window wk2-5) and derail the equity arc.
+        available: (s, char) => s.dev_plan != null && !char.flags.matching_choice_done && !s.has_demo
+          && s.week >= 6 && s.week <= 14,
+        options: [
+          { label: "No — matching is the whole product, we build it", key: 'build',
+            reply: "no. the matching engine *is* kindred — it's the one thing we can't outsource. we build it ourselves.",
+            execute(s, char, e) {
+              char.flags.matching_choice_done = true;
+              s.matching_owned = true;
+              char.morale = clamp(char.morale - 3, 0, 100);
+              const alex = e.chars.get('alex');
+              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
+              return "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the IP, the one thing we can't outsource. Alex was visibly relieved.";
+            } },
+          { label: "Good find — license it and ship faster", key: 'license',
+            reply: "nice find. plug in MatchKit — if we can ship matching in days, let's not waste weeks on it.",
+            execute(s, char, e) {
+              char.flags.matching_choice_done = true;
+              s.matching_licensed = true;
+              s.extra_burn += 100;
+              char.morale = clamp(char.morale + 5, 0, 100);
+              const alex = e.chars.get('alex');
+              if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
+              if (s.items && s.items.matching_algo) { s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'generic'; s.items.matching_algo.assignee = null; }
+              return "Licensed MatchKit. Matching working in days — but it's a black box everyone else can rent too. Alex went quiet: 'It's our whole product and we just rented it.' $100/wk.";
+            } },
+        ],
+        // If ignored, Alex steps in and builds the core himself; Jordan's idea quietly dropped.
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.matching_choice_done = true;
+          s.matching_owned = true;
+          const alex = e && e.chars && e.chars.get('alex');
+          if (alex) alex.morale = clamp(alex.morale + 3, 0, 100);
+        },
       },
 
       // ── PIVOT DISCUSSION (card 1 of 3: Jordan surfaces the user signal) ────────

@@ -53,6 +53,11 @@
   // answered. Cards override with `patience` (Infinity = never expire on time).
   const DEFAULT_PATIENCE = 3;
 
+  // Cumulative team build-effort needed to silently finish one over-scope ("auto")
+  // roadmap item. The full/A plan carries ~2x these items, so it takes ~2x longer to
+  // reach product-ready (the over-scope penalty; see roles/alex.js expandItems).
+  const AUTO_BUILD_INCREMENT = 6.5;
+
   class Engine {
     constructor() {
       // Mirrors the initial-state shape of the legacy engine so every slice
@@ -70,6 +75,7 @@
         network: { peers: 12, advisors: 0, angels: 0, press: 0 },
         items: null,
         dev_plan: null,
+        extra_burn: 0,
       };
 
       this.chars = new Map([
@@ -462,6 +468,29 @@
         char.focusSprints = (char.focusSprints || 0) + 1;
       }
 
+      // Generic build burn-down: the over-scoped plan's extra "auto" roadmap items get
+      // built passively as the team's cumulative build effort accrues. Content-free —
+      // the engine flips statuses by effort; item keys/labels live in roles/UI. The
+      // read of buildEffort is non-destructive so it never starves other build gates.
+      if (this.s.items) {
+        let teamEffort = 0;
+        for (const [id, char] of this.chars) {
+          const def = DEFS[id];
+          if (def && def.type === "cofounder" && char.active) teamEffort += (char.buildEffort || 0);
+        }
+        const autoKeys = Object.keys(this.s.items).filter(k => this.s.items[k] && this.s.items[k].auto);
+        const target = Math.floor(teamEffort / AUTO_BUILD_INCREMENT);
+        let done = autoKeys.filter(k => this.s.items[k].status === "done").length;
+        for (const k of autoKeys) {
+          if (done >= target) break;
+          if (this.s.items[k].status === "todo") {
+            this.s.items[k].status = "done";
+            this.s.items[k].quality = this.s.items[k].quality || "solid";
+            done++;
+          }
+        }
+      }
+
       // Launch day: convert waitlist to users
       if (this.s.launched && this.s.waitlist > 0 && !this._launchConverted) {
         this._launchConverted = true;
@@ -503,7 +532,7 @@
       this._weekTx = [];
     }
 
-    get burnPerWeek() { return 500; }
+    get burnPerWeek() { return 500 + (this.s.extra_burn || 0); }
     get runwayWeeks() { return Math.floor(this.s.cash / this.burnPerWeek); }
 
     // ── view helpers for the UI ───────────────────────────────────────────────────

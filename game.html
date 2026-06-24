@@ -544,6 +544,8 @@
   .dm-step-lbl.st-defer{color:#b0b0b8;font-style:italic;text-decoration:line-through}
   .dm-step-lbl.st-obsolete{color:#c06a78;font-style:italic;text-decoration:line-through}
   .dm-step-who{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0}
+  .dm-step-tag{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px;background:#f0f0f3;color:#888;border:1px solid #e0e0e6}
+  .dm-step-tag.tag-licensed{background:#fff1e6;color:#d2691e;border:1px solid #f6d3b3}
   .dm-empty{color:var(--faint);font-size:13px;padding:6px 2px;line-height:1.5}
 
   /* bank statement — light theme port of game_cards .bank-* */
@@ -1359,11 +1361,15 @@
     // animation) with a sensible default strategy until the target week (or the
     // game ends), then statically syncs the UI so you land fully caught up.
     const DBG_PREFS = {
-      dev_planning_session: "lean",     // pick the lean roadmap
-      alex_commitment:      "accept",   // bring Alex on full-time
-      start_prototype:      "build",    // start building
-      incorporate_week1:    "atlas",    // incorporate
-      jordan_equity:        "fair",     // sign a fair split
+      dev_planning_session:  "lean",     // pick the lean roadmap
+      alex_commitment:       "accept",   // bring Alex on full-time
+      start_prototype:       "build",    // start building
+      incorporate_week1:     "atlas",    // incorporate
+      jordan_equity:         "fair",     // sign a fair split
+      auth_build_buy:        "buy",      // buy commodity auth
+      auth_buy_forced:       "buy",      // (if Alex built it) buy in the end
+      matching_engine_choice:"build",    // build the core ourselves
+      analytics_choice:      "buy",      // buy analytics → see the pivot
     };
     function debugStep(opts){
       // resolve up to the weekly action budget with the preferred (or first) option
@@ -1568,18 +1574,20 @@
     // ── build roadmap (🗺️): the dev-map stepper, ported from the card build ──
     const RM_ITEM_META = {
       _hdr_backend:      { header:true, lbl:"Backend" },
-      matching_algo:     { lbl:"Matching algorithm",  av:"AL" },
+      matching_algo:     { lbl:"Matching engine · core", av:"AL" },
       api_design:        { lbl:"API design",           av:"AL" },
+      auth:              { lbl:"Authentication",        av:"AL" },
+      analytics:         { lbl:"Analytics",             av:"AL" },
       arch_refactor:     { lbl:"Arch refactor",        av:"AL" },
-      sprint_social:     { lbl:"Social + push",        av:"—" },
-      sprint_algo:       { lbl:"Profile verification", av:"—" },
+      scope_social:      { lbl:"Social + push",        av:"—" },
+      scope_verification:{ lbl:"Profile verification", av:"—" },
       plans_matching:    { lbl:"Plans matching",       av:"AL" },
       _hdr_ios:          { header:true, lbl:"iOS app" },
       ios_ui:            { lbl:"UI design",            av:"JO" },
       ios_server:        { lbl:"Backend integration",  av:"JO" },
-      sprint_mono:       { lbl:"Premium subscription", av:"—" },
-      sprint_adv_social: { lbl:"Social graph",         av:"—" },
-      sprint_adv_video:  { lbl:"Video dates",          av:"—" },
+      scope_premium:     { lbl:"Premium subscription", av:"—" },
+      scope_socialgraph: { lbl:"Social graph",         av:"—" },
+      scope_video:       { lbl:"Video dates",          av:"—" },
       plans_ui:          { lbl:"Plans UI",             av:"JO" },
       beta:              { lbl:"Beta",                 av:"AL" },
     };
@@ -1589,8 +1597,8 @@
       "—":"background:#f0f0f3;color:#999",
     };
     const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
-    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","arch_refactor","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui","beta"];
-    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","arch_refactor","sprint_social","sprint_algo","plans_matching","_hdr_ios","ios_ui","ios_server","sprint_mono","sprint_adv_social","sprint_adv_video","plans_ui","beta"];
+    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui","beta"];
+    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","scope_social","scope_verification","plans_matching","_hdr_ios","ios_ui","ios_server","scope_premium","scope_socialgraph","scope_video","plans_ui","beta"];
 
     function renderRoadmap(){
       const s = engine.s;
@@ -1619,10 +1627,13 @@
         const stCls = st==="done"?"done":st==="active"?"active":st==="deferred"?"defer":st==="obsolete"?"obsolete":"todo";
         const dot = st==="done" ? "✓" : "";
         const line = showLine.has(key) ? `<div class="dm-step-line"></div>` : "";
-        const who = st==="active" && meta.av!=="—" ? `<span class="dm-step-who" style="${RM_AV_STYLE[meta.av]}">${meta.av}</span>` : "";
+        // Bought commodity (auth/analytics) → "SaaS"; licensed core matching → "licensed".
+        const tag = item.quality==="bought" ? `<span class="dm-step-tag">SaaS</span>`
+                  : item.quality==="generic" ? `<span class="dm-step-tag tag-licensed">licensed</span>` : "";
+        const who = !tag && st==="active" && meta.av!=="—" ? `<span class="dm-step-who" style="${RM_AV_STYLE[meta.av]}">${meta.av}</span>` : "";
         html += `<div class="dm-step">
           <div class="dm-step-track"><div class="dm-step-dot st-${stCls}">${dot}</div>${line}</div>
-          <div class="dm-step-body"><span class="dm-step-lbl st-${stCls}">${escapeHtml(meta.lbl)}</span>${who}</div>
+          <div class="dm-step-body"><span class="dm-step-lbl st-${stCls}">${escapeHtml(meta.lbl)}</span>${tag}${who}</div>
         </div>`;
       }
       pop.innerHTML = html;

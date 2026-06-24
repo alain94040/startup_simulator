@@ -11,9 +11,8 @@ Browser-based educational startup simulation game. Players navigate from idea to
 | Action | Command |
 |--------|---------|
 | Play | `open game.html` |
-| Run engine tests | `node test_engine.js` |
-| Run narrative checks | `node test_narrative.js` |
-| Map game pacing | `node phase_map.js` |
+| Run narrative checks / regressions | `node tests/test_narrative.js` |
+| Map game pacing & win rate | `node tests/phase_map.js` |
 
 After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No compilation needed.
 
@@ -24,9 +23,8 @@ After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No
 - **`engine.js`** — the `Engine` class, pure logic, no DOM. Exports `{ Engine }` (Node) / `window.Engine` (browser). The engine is a **thin coordinator**: it owns game state and the weekly tick, but it does *not* decide what characters say. Characters are loaded from `roles/` (Node: `require`, browser: the `ROLES` global populated by `<script>` tags).
 - **`roles/*.js`** — one file per character. Each exports a definition object (`id`, `name`, `role`, `type`, optional `intro`, a `slice` of participating card ids, a `voice` map, and a `cards` array). Each character owns its own curation, ranking, and reactions. See any existing role for the pattern.
 - **`game.html`** — the browser UI. Self-contained (inline CSS + JS). Loads `engine.js` and all `roles/*.js` via `<script>` tags; renders the conversation rail, chat threads, and the founder journal. Avatar styling (colors/initials) lives here in a `STYLE` map — it is presentation, not engine state.
-- **`test_engine.js`** — headless behavioral checks (advances past week 1/2, characters react to being ignored, no duplicate spam, ignore reactions move state). This is the regression suite.
-- **`test_narrative.js`** — narrative-consistency fuzzer. Auto-plays many games across several drivers (decent / pivot / random) with a seeded RNG, then flags any card or message whose text contradicts the game state when it surfaces — two layers: state invariants on `engine.s` (e.g. `customers>0 ⇒ launched`) and card-surfacing rules (e.g. a "subscriber churned" message requires `customers>=1`). Complements `test_engine.js` (behavioral) and the balance harness; rules + allowlist live in one block at the top of the file, replay a finding with `--seed N --driver X`.
-- **`phase_map.js`** — simulation-driven pacing / phase-timeline extractor (this is the *live* counterpart to the static `earlymap.js`). Reuses the `test_narrative.js` harness (seeded RNG + decent/pivot drivers) but instead of checking consistency it records the first week each arc beat is reached (equity, dev plan, demo, beta, pivot, launch, first customer, first customer issue, firing Jordan) across many games, then reports: a phase-timeline table (reach% + p10/median/p90), an ASCII median timeline, consecutive-beat **gaps with the longest stretch flagged** (the boring-stretch finder), decision-density / dead-air stats, launch-vs-pivot ordering, and the outcome mix. Timing defaults to the winning cohort but falls back to all games (per-phase, over games that reached each beat) when wins are too few. Analysis tool, always exits 0.
+- **`tests/test_narrative.js`** — narrative-consistency fuzzer **and the primary regression suite**. Auto-plays many games across several drivers (decent / pivot / random) with a seeded RNG, then flags any card or message whose text contradicts the game state when it surfaces — two layers: state invariants on `engine.s` (e.g. `customers>0 ⇒ launched`) and card-surfacing rules (e.g. a "subscriber churned" message requires `customers>=1`). It tags each finding ‹realistic› (reachable by decent/pivot play) vs ‹fuzzer-only› (random-only edge state) — **keep realistic-play violations at 0**; fix a flagged card by rewording it or, for a genuine pre-launch beat, adding it to the `ALLOW` set. Rules + allowlist live in one block at the top of the file; replay a finding with `--seed N --driver X`.
+- **`tests/phase_map.js`** — simulation-driven pacing / phase-timeline extractor (this is the *live* counterpart to the static `earlymap.js`). Reuses the `tests/test_narrative.js` harness (seeded RNG + decent/pivot drivers) but instead of checking consistency it records the first week each arc beat is reached (equity, dev plan, demo, beta, pivot, launch, first customer, first customer issue, firing Jordan) across many games, then reports: a phase-timeline table (reach% + p10/median/p90), an ASCII median timeline, consecutive-beat **gaps with the longest stretch flagged** (the boring-stretch finder), decision-density / dead-air stats, launch-vs-pivot ordering, and the outcome mix (win rate). Timing defaults to the winning cohort but falls back to all games (per-phase, over games that reached each beat) when wins are too few. Analysis tool, always exits 0.
 
 Legacy files no longer maintained: `startup_game.html`, `ui.js`, `tests.js`, `tests.html`, plus the card-based tools listed above.
 
@@ -50,7 +48,7 @@ The returned card becomes that character's slot: same id → left in place (no r
 - `openCardId(charId)`, `weeksWaiting(charId)`, `answered(cardId)`, `isOpen(cardId)` — awareness so a character can react to (not) being answered. Plus full `engine.s`, `engine.chars`, `engine.history`.
 - `defaultNext(def, char)` — the shared default decision: hold the open card while it's still relevant; once its moment passes (window closed, or unanswered past its patience) call `_reactIgnored` and move on.
 
-**Win conditions:** YC acceptance (`s.ycAccepted`), or two angel investors committed (`s.marcusCommitted && s.followerCommitted`). **Lose condition:** cash hits $0. **Starting cash:** $10,000. **Burn:** $500/week. `nextWeek()` also runs passive co-founder contributions (by `focus`/`skills`/`trust`), launch conversion, organic signups, free-to-paid conversion, and revenue.
+**Win conditions:** YC acceptance (`s.ycAccepted`), or two angel investors committed (`s.marcusCommitted && s.followerCommitted`). **Lose condition:** cash hits $0. **Starting cash:** $10,000. **Burn:** `burnPerWeek` = $500/week base **+ `s.extra_burn`** (recurring SaaS costs from build-vs-buy decisions; see *Build arc*). `nextWeek()` also runs passive co-founder contributions (by `focus`/`skills`/`trust`), the over-scope build burn-down (auto items), launch conversion, organic signups, free-to-paid conversion, and revenue.
 
 ## Character & card model
 
@@ -114,6 +112,37 @@ e.pending.push({
 
 This is the mechanism for delayed consequences. (The engine no longer auto-queues a delayed drop; a card that wants a delayed follow-up pushes its own pending event from `dropFx`/`execute`.)
 
+## Build arc — engineering decisions
+
+After the dev-plan scope choice (`dev_planning_session`: A/full vs B/lean vs C/decoy-lean) the build
+phase is a sequence of **build-vs-buy** decisions teaching *buy commodity, build your edge* (not
+"always buy"):
+
+- **Auth** (`auth_build_buy` → `auth_buy_forced`, Alex) — **buy** is right (+$30/wk `s.extra_burn`).
+  Letting Alex build it is strictly worse: he runs late, you buy anyway (same fee) *and* lose ~2 weeks
+  (`buildEffort` hit). If the card is ignored, Alex optimistically starts building by default.
+- **Matching engine** (`matching_engine_choice`, **Jordan**) — **build** is right; it's the core IP.
+  Jordan proposing to license it is an early red flag she's the wrong co-founder. Licensing
+  (`s.matching_licensed`) caps market-fit and is penalized at the pivot (`applyActivitiesPivot` rips out
+  the black box). Building (`s.matching_owned`) makes the `founder_codebuild` pairing card advance the
+  algorithm (research-gated via `interviews_done`/discovery focus).
+- **Analytics** (`analytics_choice`, Alex) — **buy** is right (+$30/wk); sets `s.analytics_live`, which
+  unlocks the pre-launch post-match drop-off card (`roles/analytics.js`) that reveals the pivot signal.
+
+**Recurring SaaS cost.** Bought commodity adds to `s.extra_burn` (folded into `burnPerWeek`) — the
+perceived ongoing downside that tempts the wrong build choice. Keep these modest so correct play stays
+winnable (tune with `tests/phase_map.js`).
+
+**Lean vs full = scope *volume*.** The build-vs-buy decisions fire on both plans. The over-scoped
+`full` plan additionally carries ~2× inert **auto items** (`expandItems` adds `{ auto:true }` `scope_*`
+items, no cards); the engine's build burn-down in `nextWeek()` flips them to `done` as cumulative team
+`buildEffort` passes `AUTO_BUILD_INCREMENT`, so full takes ~2× longer to reach beta/product-ready
+(`allScopeBuilt` gates `alex_beta_ready`). There are no per-sprint "build properly / lean / defer" cards.
+
+**Roadmap (`game.html`)** renders `s.items` (the 🗺️ panel): `quality:'bought'` → **SaaS** pill,
+`quality:'generic'` (licensed matching) → **licensed** pill; auto `scope_*` rows appear on the full plan
+only and burn down visibly.
+
 ## Coding conventions
 
 - 2-space indentation, double quotes, semicolons.
@@ -122,4 +151,4 @@ This is the mechanism for delayed consequences. (The engine no longer auto-queue
 
 ## Instructions
 
-When running regressions, use `node test_engine.js`.
+When running regressions, use `node tests/test_narrative.js` (keep realistic-play violations at 0), and `node tests/phase_map.js` to check pacing and win rate after balance-affecting changes.
