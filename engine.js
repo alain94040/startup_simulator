@@ -128,6 +128,7 @@
       this.firedStamps = new Set();  // milestone stamps already placed
       this.log = [];       // flat event log (debugging / node tests)
       this.ledger = [];    // per-week bank statements: { week, transactions, balanceAfter }
+      this.userHistory = []; // per-week traction: { week, users (total), customers (paying) }
       this._weekTx = [];   // cash transactions accumulating for the week in progress
 
       // Impersonal sources (communities, market news, aggregate users, analytics,
@@ -541,6 +542,10 @@
       // File this week's bank statement after _poll, so ignored-card consequences that
       // fire at the boundary land on the week they were ignored; balanceAfter == cash.
       this.ledger.push({ week: wk, transactions: this._weekTx, balanceAfter: this.s.cash });
+      const totalAccounts = this.s.users + this.s.customers;
+      const retention = Math.min(0.95, 0.15 + (this.s.market_fit / 100) * 0.75);
+      const active = Math.max(this.s.customers, Math.round(totalAccounts * retention));
+      this.userHistory.push({ week: wk, users: totalAccounts, customers: this.s.customers, active });
       this._weekTx = [];
     }
 

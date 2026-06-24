@@ -512,6 +512,14 @@
   }
   .pop.show{display:block;animation:noteIn .22s ease both}
 
+  /* growth chart (users-over-time) */
+  .growth-chart{width:100%;height:200px}
+  .growth-legend{display:flex;gap:14px;justify-content:center;padding:8px 0 4px;font-size:11px;color:var(--muted)}
+  .growth-legend span{display:flex;align-items:center;gap:5px}
+  .growth-swatch{width:14px;height:3px;border-radius:2px}
+  .stat.clickable{cursor:pointer;transition:background .12s,transform .12s}
+  .stat.clickable:hover{background:#eef0f4;transform:translateY(-1px)}
+
   /* dev-map stepper (roadmap) — light theme port of game_cards .dm-* */
   .dm-hdr{
     font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
@@ -667,6 +675,7 @@
   <!-- build roadmap (🗺️ button) and bank statement (cash readout) dropdowns -->
   <div class="pop" id="roadmapPop"></div>
   <div class="pop" id="bankPop"></div>
+  <div class="pop" id="growthPop"></div>
 
   <div class="overlay" id="overlay">
     <div class="card-modal" id="modal"></div>
@@ -800,15 +809,17 @@
       if (!runwayAnim) setRunway(s.cash);
       const st = engine.s;
       const traction = st.launched
-        ? `<div class="stat" data-stat="users"><div class="v">${st.users}</div><div class="k">Users</div></div>`
+        ? `<div class="stat clickable" data-stat="users"><div class="v">${st.users}</div><div class="k">Users</div></div>`
           + (st.customers > 0
-            ? `<div class="stat" data-stat="paying"><div class="v">${st.customers}</div><div class="k">Paying</div></div>`
+            ? `<div class="stat clickable" data-stat="paying"><div class="v">${st.customers}</div><div class="k">Paying</div></div>`
             : "")
         : `<div class="stat" data-stat="waitlist"><div class="v">${st.waitlist}</div><div class="k">Waitlist</div></div>`;
       $("stats").innerHTML = `
         <div class="stat" data-stat="signal"><div class="v">${s.signal}</div><div class="k">Signal</div></div>
         <div class="stat" data-stat="fit"><div class="v">${s.marketFit}</div><div class="k">Fit</div></div>`
         + traction;
+      for (const el of document.querySelectorAll(".stat.clickable"))
+        el.onclick = (ev) => { ev.stopPropagation(); toggleGrowth(); };
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
       // Roadmap button appears once Alex/Jordan have a build plan in motion.
@@ -1678,9 +1689,103 @@
       pop.innerHTML = html;
     }
 
+    // ── growth chart (users over time) ─────────────────
+    function renderGrowth(){
+      const pop = $("growthPop");
+      const hist = engine.userHistory.filter(h => h.users > 0 || h.customers > 0);
+      if (hist.length < 2){
+        pop.innerHTML = `<div class="dm-hdr">Growth</div><div class="bank-empty">Not enough data yet.<br>Check back after a few weeks post-launch.</div>`;
+        return;
+      }
+      const latest = hist[hist.length - 1];
+      const hasAnalytics = !!engine.s.analytics_live;
+      pop.innerHTML = `<div class="dm-hdr">Growth<span style="font-weight:800;color:var(--ink);font-size:12px">${latest.users} signups</span></div>
+        <canvas class="growth-chart" id="growthCanvas"></canvas>
+        <div class="growth-legend">
+          <span><span class="growth-swatch" style="background:#0b84ff"></span>Signups</span>`
+        + (hasAnalytics
+          ? `<span><span class="growth-swatch" style="background:#ff9500"></span>Active</span>`
+          : "")
+        + `<span><span class="growth-swatch" style="background:#34c759"></span>Paying</span>
+        </div>`;
+      drawGrowthChart(hist, hasAnalytics);
+    }
+    function drawGrowthChart(hist, showActive){
+      const canvas = $("growthCanvas");
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const W = 298, H = 200;
+      canvas.width = W * dpr; canvas.height = H * dpr;
+      canvas.style.width = W + "px"; canvas.style.height = H + "px";
+      const ctx = canvas.getContext("2d");
+      ctx.scale(dpr, dpr);
+
+      const ml = 36, mr = 10, mt = 10, mb = 22;
+      const pw = W - ml - mr, ph = H - mt - mb;
+
+      const weeks = hist.map(h => h.week);
+      const maxU = Math.max(...hist.map(h => h.users), 1);
+      const yMax = niceMax(maxU);
+      const xMin = weeks[0], xMax = weeks[weeks.length - 1];
+      const xRange = Math.max(xMax - xMin, 1);
+
+      const xPos = w => ml + ((w - xMin) / xRange) * pw;
+      const yPos = v => mt + (1 - v / yMax) * ph;
+
+      ctx.strokeStyle = "#e3e3e8"; ctx.lineWidth = 1;
+      const gridN = 4;
+      ctx.font = "10px -apple-system,system-ui,sans-serif";
+      for (let i = 0; i <= gridN; i++){
+        const val = (yMax / gridN) * i;
+        const yy = yPos(val);
+        ctx.beginPath(); ctx.moveTo(ml, yy); ctx.lineTo(W - mr, yy); ctx.stroke();
+        ctx.fillStyle = "#8a8a8e"; ctx.textAlign = "right";
+        ctx.fillText(Math.round(val), ml - 5, yy + 3);
+      }
+
+      ctx.textAlign = "center"; ctx.fillStyle = "#8a8a8e";
+      const step = Math.max(1, Math.ceil(weeks.length / 8));
+      for (let i = 0; i < weeks.length; i += step)
+        ctx.fillText("W" + weeks[i], xPos(weeks[i]), H - 4);
+
+      function drawLine(data, color, fill){
+        if (data.length < 2) return;
+        ctx.beginPath();
+        ctx.moveTo(xPos(data[0].w), yPos(0));
+        data.forEach(d => ctx.lineTo(xPos(d.w), yPos(d.v)));
+        ctx.lineTo(xPos(data[data.length - 1].w), yPos(0));
+        ctx.closePath();
+        ctx.fillStyle = fill; ctx.fill();
+        ctx.beginPath();
+        data.forEach((d, i) => i === 0 ? ctx.moveTo(xPos(d.w), yPos(d.v)) : ctx.lineTo(xPos(d.w), yPos(d.v)));
+        ctx.strokeStyle = color; ctx.lineWidth = 2;
+        ctx.lineJoin = "round"; ctx.lineCap = "round"; ctx.stroke();
+        data.forEach(d => {
+          ctx.beginPath(); ctx.arc(xPos(d.w), yPos(d.v), 3, 0, Math.PI * 2);
+          ctx.fillStyle = color; ctx.fill();
+        });
+      }
+
+      const totalData = hist.map(h => ({ w: h.week, v: h.users }));
+      const payingData = hist.map(h => ({ w: h.week, v: h.customers }));
+      drawLine(totalData, "#0b84ff", "rgba(11,132,255,0.08)");
+      if (showActive) {
+        const activeData = hist.map(h => ({ w: h.week, v: h.active }));
+        drawLine(activeData, "#ff9500", "rgba(255,149,0,0.08)");
+      }
+      drawLine(payingData, "#34c759", "rgba(52,199,89,0.08)");
+    }
+    function niceMax(v){
+      if (v <= 10) return 10;
+      const mag = Math.pow(10, Math.floor(Math.log10(v)));
+      const norm = v / mag;
+      const nice = norm <= 1.5 ? 2 : norm <= 3 ? 4 : norm <= 7 ? 8 : 10;
+      return nice * mag;
+    }
+
     // Only one top-right dropdown is open at a time.
     function closePops(except){
-      for (const id of ["noteCenter","roadmapPop","bankPop"]) if (id !== except) $(id).classList.remove("show");
+      for (const id of ["noteCenter","roadmapPop","bankPop","growthPop"]) if (id !== except) $(id).classList.remove("show");
     }
     function toggleRoadmap(){
       const p = $("roadmapPop");
@@ -1692,10 +1797,16 @@
       if (p.classList.contains("show")){ p.classList.remove("show"); return; }
       closePops("bankPop"); renderBank(); p.classList.add("show");
     }
+    function toggleGrowth(){
+      const p = $("growthPop");
+      if (p.classList.contains("show")){ p.classList.remove("show"); return; }
+      closePops("growthPop"); renderGrowth(); p.classList.add("show");
+    }
     // Keep an open dropdown current as state changes (e.g. items advance at turn end).
     function refreshPops(){
       if ($("roadmapPop").classList.contains("show")) renderRoadmap();
       if ($("bankPop").classList.contains("show")) renderBank();
+      if ($("growthPop").classList.contains("show")) renderGrowth();
     }
 
     // ── modals ───────────────────────────────────────────
@@ -1730,7 +1841,7 @@
     $("handEnd").onclick = ()=>{ if (!busy()) advanceWeek(); };
     // click outside an open dropdown (and its trigger) closes it
     document.addEventListener("click", (ev)=>{
-      for (const [pid, tid] of [["noteCenter","bell"],["roadmapPop","roadmapBtn"],["bankPop","runway"]]){
+      for (const [pid, tid] of [["noteCenter","bell"],["roadmapPop","roadmapBtn"],["bankPop","runway"],["growthPop","stats"]]){
         const c = $(pid);
         if (!c.classList.contains("show")) continue;
         if (c.contains(ev.target) || $(tid).contains(ev.target)) continue;
