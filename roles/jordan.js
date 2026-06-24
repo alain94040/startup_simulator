@@ -30,7 +30,6 @@
       "early_pricing|free": "Decided to stay free until we have critical mass. More people in the door — the cold-start problem is real, and nobody finds a match worth paying for in an empty app.",
       "matching_engine_choice|build": "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
       "matching_engine_choice|license": "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
-      "jordan_ios_sprint|ack": "Jordan's iOS sprint is done. Good momentum — keep it rolling.",
       "pivot_open|open": "Jordan flagged something in the beta feedback: users keep saying 'I matched, but then what?' Put it on the agenda.",
       "jordan_fulltime_ask|accept": "Accepted Jordan's answer — she stays part-time. Alex heard and he's covering her work.",
       "jordan_fulltime_ask|pressure": "Told Jordan this is a dealbreaker. She said she'd think about it. She didn't change."
@@ -168,8 +167,8 @@
       {
         id: 'jordan_ios_sprint', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.ios_sprint_count || 0) === 0
-          ? "profile screen, photo uploads, basic navigation working on iOS. one more sprint to wire up the backend — matching, messaging, notifications through the API."
-          : "iOS connected to the backend — matching, messaging, notifications all live. same experience as web. ready to open it up.",
+          ? "the iOS shell is coming together — profile screens, photo upload, the swipe deck. next sprint i wire it to the backend: login, the matching API, messaging."
+          : "iOS is wired to the backend now — login, matching, and messaging all flowing through the API. same experience as web. ready to open it up.",
         urgency: 22, weeks: 1,
         available: (s, char) => {
           const count = char.flags.ios_sprint_count || 0;
@@ -186,13 +185,13 @@
                 if (s.items) {
                   if (s.items.ios_server) { s.items.ios_server.status = 'done'; s.items.ios_server.quality = 'solid'; }
                 }
-                return "iOS feature complete. Matching, messaging, notifications — same experience as web. Ready to open it up.";
+                return "iOS feature-complete — login, matching, and messaging all wired through the API. Same experience as web. Ready to open it up.";
               }
               if (s.items) {
                 if (s.items.ios_ui) { s.items.ios_ui.status = 'done'; s.items.ios_ui.quality = 'solid'; }
                 if (s.items.ios_server) s.items.ios_server.status = 'active';
               }
-              return "First iOS sprint done. Profile screen, photo uploads, navigation are working. One more sprint for feature parity with web.";
+              return "First iOS sprint done — profile screens, photo upload, and the swipe deck are working. One more sprint to wire it to auth and the matching API.";
             } },
         ],
         dropDelay: 0, dropMsg: null,

@@ -291,9 +291,10 @@
       {
         id: 'auth_build_buy', cat: 'p', from: 'Alex',
         body: "we need login, account creation, password reset, social sign-in. i can build our own auth — couple days, tops. why pay a monthly fee for something this basic? or we just wire up a hosted provider. your call.",
-        // urgency 11: above the flavor cards (1-3) so it reliably surfaces in Alex's busy
-        // early slot, below the equity/commitment arc (13+). Wide window so it always lands.
-        urgency: 11, weeks: 1,
+        // urgency 13: surfaces and gets answered early (alongside the commitment/vision
+        // arc) so it doesn't linger in Alex's slot and floor the demo — that's what lets
+        // part-time vs full-time Alex differ on demo timing again. Wide window so it lands.
+        urgency: 13, weeks: 1,
         available: (s, char) => char.flags.plan_done && !char.flags.auth_resolved && !char.flags.auth_building
           && s.week >= 3 && s.week <= 14,
         options: [
@@ -816,15 +817,15 @@
       {
         id: 'alex_demo_ready', cat: 'p', from: 'Alex',
         body: "profiles and matching work end-to-end for the first time. create an account, get matched, send a message. that's the core hypothesis. want to put it in front of real people?",
-        urgency: 3, weeks: 1,
-        // Auth must be settled first (so the build-vs-buy lesson lands before the demo).
-        // Works for both matching paths: owned → matching_algo is 'active' here; licensed
-        // → it's already 'done' (generic), so we only finish it when it's still active.
-        // Gated on the matching decision (so a licensed engine isn't overwritten), not on
-        // auth — auth resolves in parallel in Alex's slot; serializing both here delayed
-        // the demo ~4 weeks. Letting Alex build auth still bites: its buildEffort hit
-        // delays this and later milestones.
-        available: (s, char, e) => (char.buildEffort || 0) >= 4 && !s.has_demo && !s.launched
+        // urgency 12: once the build is ready the demo is the headline beat — fires promptly
+        // instead of being crowded out by urgency-3 flavor cards (which masked the penalty).
+        urgency: 12, weeks: 1,
+        // buildEffort>=6 (not 4) so Alex's actual build output is the binding constraint:
+        // part-time Alex (0.4x buildEffort, see engine ptMult) reaches it ~3-4 weeks later
+        // than full-time, so part-time genuinely slows the demo. Also gated on the matching
+        // decision (so a licensed engine isn't overwritten); matching's execute only finishes
+        // matching_algo when it's still 'active', so the licensed/generic engine is preserved.
+        available: (s, char, e) => (char.buildEffort || 0) >= 6 && !s.has_demo && !s.launched
           && (s.matching_owned || s.matching_licensed || !(e.chars.get('jordan') && e.chars.get('jordan').active)),
         options: [
           { label: 'Show it rough — learn fast', key: 'rough',

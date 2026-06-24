@@ -456,7 +456,7 @@
         const sideProjectMult = char.flags.side_project_active ? 0.7 : 1.0;
         const trustFactor = "trust" in char ? char.trust / 100 : 1.0;
         const base = 1.2 * skill * sideProjectMult * trustFactor;
-        const ptMult = id === "alex" ? (char.flags.committed_fulltime ? 1.0 : 0.5) : 1.0;
+        const ptMult = id === "alex" ? (char.flags.committed_fulltime ? 1.0 : 0.4) : 1.0;
         if (char.focus === "build") {
           char.buildEffort = (char.buildEffort || 0) + base * ptMult;
         } else if (char.focus === "discover") {
