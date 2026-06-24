@@ -274,6 +274,141 @@
   .chip:hover{border-color:var(--accent);background:#eef5ff;transform:translateY(-1px)}
   .hd-close{position:absolute;top:10px;right:14px;border:0;background:none;font-size:18px;color:var(--faint);cursor:pointer;line-height:1}
 
+  /* ── prototype mockups: pure-CSS phone "screenshots" ───────
+     Everything is em-based, so the same markup is a 108px thumbnail in the chat
+     and a ~250px image in the lightbox. Three variants: rich / minimal / generic. */
+  .mk-phone{
+    position:relative;width:13.5em;background:#fff;
+    border-radius:2.1em;overflow:hidden;display:flex;flex-direction:column;
+    border:1px solid rgba(20,8,30,.07);box-shadow:0 .3em 1.1em rgba(30,12,40,.18);
+    font-family:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,system-ui,sans-serif;
+  }
+  .mk-notch{position:absolute;top:.55em;left:50%;transform:translateX(-50%);
+    width:2.9em;height:.55em;background:#15151b;border-radius:1em;z-index:9}
+  .mk-statusbar{display:flex;align-items:center;justify-content:space-between;
+    padding:.55em 1.1em .1em;font-size:.6em;font-weight:800;color:#1c1c22;flex:none}
+  .mk-statusbar .mk-sysicons{display:flex;gap:.32em;align-items:center}
+  .mk-statusbar .mk-sysicons i{width:.85em;height:.6em;border-radius:.12em;background:#1c1c22}
+  .mk-statusbar .mk-sysicons i.bat{width:1.35em;opacity:.9}
+
+  /* shared "photo": a warm gradient with an abstract silhouette, no image files */
+  .mk-portrait{position:absolute;inset:0;overflow:hidden;
+    background:
+      radial-gradient(58% 38% at 70% 14%, rgba(255,255,255,.22), transparent 60%),
+      linear-gradient(160deg,#ff9a35 0%,#ff5d63 34%,#f53197 64%,#8b1ec2 100%);
+  }
+  .mk-portrait::before{content:"";position:absolute;left:50%;bottom:-9%;width:86%;height:52%;
+    transform:translateX(-50%);border-radius:46% 46% 0 0;background:rgba(28,5,40,.30)}
+  .mk-portrait::after{content:"";position:absolute;left:50%;bottom:31%;width:30%;aspect-ratio:1;
+    transform:translateX(-50%);border-radius:50%;background:rgba(28,5,40,.30)}
+
+  /* ===== A · RICH — looks loaded with features ===== */
+  .v-rich .mk-rhead{display:flex;align-items:center;justify-content:space-between;padding:.15em 1em .55em}
+  .v-rich .mk-brand{font-size:1.15em;font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(92deg,#ff8a5b,#ff4f81);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .v-rich .mk-brand b{-webkit-text-fill-color:#ff4f81;color:#ff4f81;font-size:.72em;margin-left:.15em}
+  .v-rich .mk-rhead-ico{display:flex;gap:.6em;align-items:center}
+  .v-rich .mk-rhead-ico i{position:relative;width:1.05em;height:1.05em;border:.15em solid #adadb8;border-radius:.28em}
+  .v-rich .mk-rhead-ico i.ic-bell{border-radius:50% 50% .28em .28em}
+  .v-rich .mk-rhead-ico i.ic-bell em{position:absolute;top:-.42em;right:-.42em;min-width:1em;height:1em;border-radius:1em;
+    background:#ff4f81;color:#fff;font-size:.5em;font-style:normal;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 .15em}
+  .v-rich .mk-stories{display:flex;gap:.52em;padding:0 1em .55em}
+  .v-rich .st{width:2em;height:2em;border-radius:50%;flex:none;background:linear-gradient(150deg,#ff9d5c,#ff4f81);
+    box-shadow:0 0 0 .13em #fff,0 0 0 .27em #ff5e88}
+  .v-rich .st-you{background:#eef0f4;box-shadow:0 0 0 .13em #fff,0 0 0 .24em #d9dbe2}
+  .v-rich .mk-prof{position:relative;aspect-ratio:3/4;margin:0 .85em;border-radius:1.2em;overflow:hidden;
+    box-shadow:0 .45em 1.1em rgba(150,30,95,.26)}
+  .v-rich .mk-match{position:absolute;top:.6em;left:.6em;z-index:3;font-size:.52em;font-weight:800;color:#fff;
+    padding:.42em .7em;border-radius:1em;background:rgba(20,8,28,.32);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.4)}
+  .v-rich .mk-verif{position:absolute;top:.55em;right:.55em;z-index:3;width:1.5em;height:1.5em;border-radius:50%;
+    background:#3897ff;color:#fff;font-size:.58em;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 .12em #fff}
+  .v-rich .mk-prof-info{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:1.5em .8em .7em;
+    background:linear-gradient(transparent,rgba(18,5,24,.85));color:#fff}
+  .v-rich .mk-name{font-size:.86em;font-weight:800;display:flex;align-items:center;gap:.32em}
+  .v-rich .mk-name .vdot{width:.42em;height:.42em;border-radius:50%;background:#69e08a}
+  .v-rich .mk-sub{font-size:.55em;opacity:.92;margin-top:.12em}
+  .v-rich .mk-chips{display:flex;gap:.32em;margin-top:.5em}
+  .v-rich .mk-chips span{font-size:.49em;font-weight:700;padding:.42em .62em;border-radius:1em;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34)}
+  .v-rich .mk-actions{display:flex;align-items:center;justify-content:center;gap:.5em;padding:.75em 0 .55em;flex:none}
+  .v-rich .act{border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;
+    box-shadow:0 .18em .5em rgba(40,12,40,.16);font-weight:800;line-height:1}
+  .v-rich .a-rewind{width:1.7em;height:1.7em;color:#ffb23e;font-size:.82em}
+  .v-rich .a-no{width:2.1em;height:2.1em;color:#ff5773;font-size:.92em}
+  .v-rich .a-super{width:1.7em;height:1.7em;color:#3897ff;font-size:.82em}
+  .v-rich .a-like{width:2.55em;height:2.55em;font-size:1.18em;color:#fff;
+    background:linear-gradient(150deg,#ff8a5b,#ff4f81);box-shadow:0 .25em .7em rgba(255,79,129,.5)}
+  .v-rich .a-boost{width:1.7em;height:1.7em;color:#a45cff;font-size:.78em}
+  .v-rich .mk-tabs5{display:flex;align-items:center;justify-content:space-around;padding:.5em .4em .65em;
+    background:#fff;border-top:1px solid #f0f0f4;flex:none}
+  .v-rich .tb{position:relative;font-style:normal;font-size:.8em;color:#c6c6ce;line-height:1}
+  .v-rich .tb.on{color:#ff4f81}
+  .v-rich .tb em{position:absolute;top:-.55em;right:-.7em;background:#ff4f81;color:#fff;font-size:.46em;font-style:normal;
+    min-width:1.5em;height:1.5em;padding:0 .2em;border-radius:1em;display:flex;align-items:center;justify-content:center;font-weight:800}
+
+  /* ===== B · MINIMAL — calm, confident, lots of air ===== */
+  .v-minimal{padding-bottom:.3em}
+  .v-minimal .mk-mhead{text-align:center;font-size:.8em;font-weight:800;letter-spacing:.4em;color:#1c1c22;padding:.45em 0 .1em}
+  .v-minimal .mk-mphoto{position:relative;aspect-ratio:4/5;margin:1.4em 1.5em 0;border-radius:1.6em;overflow:hidden;
+    box-shadow:0 .55em 1.4em rgba(40,12,50,.18)}
+  .v-minimal .mk-mmeta{text-align:center;padding:1em 1.5em .2em}
+  .v-minimal .mk-mname{font-size:.95em;font-weight:800;color:#1c1c22}
+  .v-minimal .mk-mbio{font-size:.58em;color:#9a9aa3;margin-top:.3em;letter-spacing:.01em}
+  .v-minimal .mk-mactions{display:flex;justify-content:center;align-items:center;gap:1.7em;padding:1em 0 1.3em}
+  .v-minimal .mact{width:2.6em;height:2.6em;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.05em;line-height:1}
+  .v-minimal .m-no{background:#fff;border:1.5px solid #e9e9ee;color:#bdbdc6}
+  .v-minimal .m-like{border:0;color:#fff;background:linear-gradient(150deg,#ff8a5b,#ff4f81);box-shadow:0 .3em .7em rgba(255,79,129,.42)}
+
+  /* ===== C · GENERIC — a competent, faceless dating-app clone ===== */
+  .v-generic .mk-ghead{display:flex;align-items:center;justify-content:space-between;padding:.2em 1.05em .6em}
+  .v-generic .mk-gbrand{font-size:1.02em;font-weight:800;color:#ff4f6d;letter-spacing:-.01em}
+  .v-generic .mk-ggear{width:1.1em;height:1.1em;border-radius:50%;border:.15em solid #c9c9d0}
+  .v-generic .mk-gcard{position:relative;aspect-ratio:5/7;margin:0 .9em;border-radius:1em;overflow:hidden;
+    box-shadow:0 .35em .9em rgba(40,12,40,.16)}
+  .v-generic .mk-ginfo{position:absolute;left:0;right:0;bottom:0;padding:1.4em .8em .65em;
+    background:linear-gradient(transparent,rgba(14,5,18,.78));color:#fff}
+  .v-generic .mk-gname{font-size:.82em;font-weight:800}
+  .v-generic .mk-gsub{font-size:.55em;opacity:.9;margin-top:.08em}
+  .v-generic .mk-gacts{display:flex;align-items:center;justify-content:center;gap:1.15em;padding:.85em 0 .6em}
+  .v-generic .gact{border:0;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 .16em .45em rgba(40,12,40,.14);font-weight:800;line-height:1}
+  .v-generic .g-no{width:2.1em;height:2.1em;color:#ff5773;font-size:.92em}
+  .v-generic .g-star{width:1.7em;height:1.7em;color:#3897ff;font-size:.82em}
+  .v-generic .g-like{width:2.1em;height:2.1em;color:#fff;background:#ff4f6d;font-size:.95em}
+  .v-generic .mk-gtabs{display:flex;align-items:center;justify-content:space-around;padding:.55em 1.4em .65em;
+    background:#fff;border-top:1px solid #f0f0f4}
+  .v-generic .gt{width:1.05em;height:1.05em;border-radius:.28em;background:#d4d4dc}
+  .v-generic .gt.on{background:#ff4f6d}
+
+  .mk-photos{display:flex;gap:9px;align-self:flex-start;max-width:88%;margin:8px 2px 2px;flex-wrap:wrap}
+  .mk-thumb{
+    position:relative;border:0;background:none;padding:0;cursor:pointer;font-size:8px;
+    border-radius:2.1em;transition:transform .15s,filter .15s;line-height:0;filter:saturate(1);
+  }
+  .mk-thumb:hover{transform:translateY(-3px)}
+  .mk-thumb:hover .mk-phone{box-shadow:0 .7em 1.7em rgba(40,12,50,.32)}
+  .mk-badge{
+    position:absolute;bottom:.7em;left:.7em;z-index:5;background:rgba(16,6,22,.62);color:#fff;
+    font-weight:800;border-radius:50%;width:2em;height:2em;display:flex;align-items:center;
+    justify-content:center;font-size:1.25em;backdrop-filter:blur(2px);line-height:1;box-shadow:0 0 0 1.5px rgba(255,255,255,.5)}
+
+  .lightbox{
+    position:fixed;inset:0;background:rgba(14,14,20,.82);backdrop-filter:blur(7px);
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:60;
+  }
+  .lightbox.show{display:flex;animation:fade .25s ease}
+  .lb-close{
+    position:absolute;top:18px;right:22px;border:0;background:rgba(255,255,255,.16);color:#fff;
+    width:40px;height:40px;border-radius:50%;font-size:24px;cursor:pointer;line-height:1;
+  }
+  .lb-stage{position:relative;font-size:18px}
+  .lb-thumbs{display:flex;gap:10px}
+  .lb-dot{
+    width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;
+    font-weight:800;font-size:13px;cursor:pointer;transition:.13s;
+  }
+  .lb-dot.on{background:#fff;color:#1c1c1e}
+
   /* ── overlay ─────────────────────────────────────────── */
   .overlay{
     position:fixed;inset:0;background:rgba(20,20,30,.55);backdrop-filter:blur(6px);
@@ -534,6 +669,13 @@
     <div class="card-modal" id="modal"></div>
   </div>
 
+  <!-- full-size viewer for chat photo attachments (prototype mockups) -->
+  <div class="lightbox" id="lightbox">
+    <button class="lb-close" id="lbClose">×</button>
+    <div class="lb-stage" id="lbStage"></div>
+    <div class="lb-thumbs" id="lbThumbs"></div>
+  </div>
+
   <!-- content + engine -->
   <script>window.ROLES = {};</script>
   <script src="roles/alex.js"></script>
@@ -748,6 +890,19 @@
           const st = document.createElement("div");
           st.className="subtext"; st.textContent = e.subtext; wrap.appendChild(st);
         }
+        if (e.mockups){
+          const tray = document.createElement("div");
+          tray.className = "mk-photos";
+          Object.keys(e.mockups).forEach(key=>{
+            const m = e.mockups[key];
+            const thumb = document.createElement("button");
+            thumb.className = "mk-thumb";
+            thumb.innerHTML = mockupPhoneHtml(m) + `<span class="mk-badge">${escapeHtml(m.tag||"")}</span>`;
+            thumb.onclick = ()=> openMockupLightbox(e.mockups, key);
+            tray.appendChild(thumb);
+          });
+          wrap.appendChild(tray);
+        }
         if (e.cardId){ const tag = document.createElement("div"); tag.className="dbg-card"; tag.textContent=e.cardId; wrap.appendChild(tag); }
         return wrap;
       }
@@ -892,6 +1047,78 @@
     // so it reserves space and never covers the latest message. Default state is a
     // "Respond ↓" pill (the trigger); when its card is the one being engaged
     // (selectedCard), it expands into the full option card, styled like the hand card.
+    // Renders one phone "screenshot" — pure CSS/HTML, no image files. Sizing is
+    // em-based so identical markup is a small thumbnail in-thread and a big image
+    // in the lightbox. Deliberately no cost/time labels: the player judges scope
+    // from the screen itself (rich = over-built, minimal = lean, generic = safe clone).
+    const MK_STATUSBAR =
+      `<div class="mk-statusbar"><span>9:41</span><span class="mk-sysicons"><i></i><i></i><i class="bat"></i></span></div>`;
+    function mkRich(){
+      return MK_STATUSBAR +
+        `<div class="mk-rhead"><span class="mk-brand">kindred<b>♥</b></span>
+           <span class="mk-rhead-ico"><i class="ic-sliders"></i><i class="ic-bell"><em>3</em></i></span></div>
+         <div class="mk-stories"><span class="st st-you"></span><span class="st"></span><span class="st"></span><span class="st"></span><span class="st"></span></div>
+         <div class="mk-prof">
+           <div class="mk-portrait"></div>
+           <span class="mk-match">92% match</span>
+           <span class="mk-verif">✓</span>
+           <div class="mk-prof-info">
+             <div class="mk-name">Maya, 26 <span class="vdot"></span></div>
+             <div class="mk-sub">Photographer · 2 miles away</div>
+             <div class="mk-chips"><span>Coffee</span><span>Film</span><span>Hiking</span></div>
+           </div>
+         </div>
+         <div class="mk-actions">
+           <button class="act a-rewind">↺</button><button class="act a-no">✕</button>
+           <button class="act a-super">★</button><button class="act a-like">♥</button>
+           <button class="act a-boost">⚡</button>
+         </div>
+         <div class="mk-tabs5"><i class="tb on">♥</i><i class="tb">★<em>9</em></i><i class="tb">◷</i><i class="tb">✉</i><i class="tb">◍</i></div>`;
+    }
+    function mkMinimal(){
+      return MK_STATUSBAR +
+        `<div class="mk-mhead">KINDRED</div>
+         <div class="mk-mphoto"><div class="mk-portrait"></div></div>
+         <div class="mk-mmeta"><div class="mk-mname">Maya, 26</div><div class="mk-mbio">Photographer who'd rather be hiking.</div></div>
+         <div class="mk-mactions"><button class="mact m-no">✕</button><button class="mact m-like">♥</button></div>`;
+    }
+    function mkGeneric(){
+      return MK_STATUSBAR +
+        `<div class="mk-ghead"><span class="mk-gbrand">Kindred</span><span class="mk-ggear"></span></div>
+         <div class="mk-gcard">
+           <div class="mk-portrait"></div>
+           <div class="mk-ginfo"><div class="mk-gname">Maya, 26</div><div class="mk-gsub">2 miles away</div></div>
+         </div>
+         <div class="mk-gacts"><button class="gact g-no">✕</button><button class="gact g-star">★</button><button class="gact g-like">♥</button></div>
+         <div class="mk-gtabs"><i class="gt on"></i><i class="gt"></i><i class="gt"></i></div>`;
+    }
+    function mockupPhoneHtml(m){
+      const body = m.variant === "rich" ? mkRich()
+                 : m.variant === "generic" ? mkGeneric()
+                 : mkMinimal();
+      return `<div class="mk-phone v-${escapeHtml(m.variant||"minimal")}"><span class="mk-notch"></span>${body}</div>`;
+    }
+
+    // iMessage-style: tapping a photo opens it full-size, with dots to flip between
+    // the three. Backdrop or × closes.
+    function openMockupLightbox(mockups, startKey){
+      const keys = Object.keys(mockups);
+      const lb = $("lightbox");
+      function show(k){
+        const m = mockups[k];
+        $("lbStage").innerHTML =
+          `<div class="mk-large">${mockupPhoneHtml(m)}<span class="mk-badge">${escapeHtml(m.tag||"")}</span></div>`;
+        $("lbThumbs").innerHTML = keys.map(kk=>
+          `<button class="lb-dot${kk===k?" on":""}" data-k="${escapeHtml(kk)}">${escapeHtml(mockups[kk].tag||"")}</button>`
+        ).join("");
+        [...$("lbThumbs").querySelectorAll(".lb-dot")].forEach(d=> d.onclick = ()=> show(d.dataset.k));
+      }
+      show(startKey);
+      lb.classList.add("show");
+      $("lbClose").onclick = ()=> lb.classList.remove("show");
+      lb.onclick = (ev)=>{ if (ev.target === lb) lb.classList.remove("show"); };
+    }
+
     function renderThreadResponse(){
       clearThreadResponse();
       if (active === "founder" || NOCHAT.has(active)) return;
