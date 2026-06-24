@@ -543,7 +543,12 @@
       // fire at the boundary land on the week they were ignored; balanceAfter == cash.
       this.ledger.push({ week: wk, transactions: this._weekTx, balanceAfter: this.s.cash });
       const totalAccounts = this.s.users + this.s.customers;
-      const retention = Math.min(0.95, 0.15 + (this.s.market_fit / 100) * 0.75);
+      if (this.s.activities_pivot && this.s.fit_at_pivot == null)
+        this.s.fit_at_pivot = this.s.market_fit;
+      const trueFit = Math.max(0, this.s.activities_pivot
+        ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot)
+        : this.s.market_fit / 6);
+      const retention = Math.min(0.95, 0.05 + (trueFit / 100) * 0.9);
       const active = Math.max(this.s.customers, Math.round(totalAccounts * retention));
       this.userHistory.push({ week: wk, users: totalAccounts, customers: this.s.customers, active });
       this._weekTx = [];
