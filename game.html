@@ -531,6 +531,7 @@
   .dm-badge-full{background:#e7f0ff;color:#2563eb;border:1px solid #c2d8ff}
   .dm-badge-sprint{background:#f0f0f3;color:#888;border:1px solid #e0e0e6}
   .dm-badge-pivot{background:#fff1e6;color:#d2691e;border:1px solid #f6d3b3}
+  .dm-badge-shipped{background:#e6f7ec;color:#1a8a44;border:1px solid #bce8cd}
   .dm-grp{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#a0a0a8;font-weight:700;padding:8px 0 3px}
   .dm-grp:first-of-type{padding-top:0}
   .dm-step{display:flex;gap:9px}
@@ -1598,6 +1599,7 @@
       arch_refactor:     { lbl:"Arch refactor",        av:"AL" },
       scope_social:      { lbl:"Social + push",        av:"—" },
       scope_verification:{ lbl:"Profile verification", av:"—" },
+      video_dates:       { lbl:"Video dates",           av:"AL" },
       plans_matching:    { lbl:"Plans matching",       av:"AL" },
       _hdr_ios:          { header:true, lbl:"iOS app" },
       ios_ui:            { lbl:"UI design",            av:"JO" },
@@ -1613,8 +1615,8 @@
       "—":"background:#f0f0f3;color:#999",
     };
     const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
-    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui"];
-    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","scope_social","scope_verification","plans_matching","_hdr_ios","ios_ui","ios_server","scope_premium","scope_socialgraph","scope_video","plans_ui"];
+    const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","video_dates","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui"];
+    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","scope_social","scope_verification","video_dates","plans_matching","_hdr_ios","ios_ui","ios_server","scope_premium","scope_socialgraph","scope_video","plans_ui"];
 
     function renderRoadmap(){
       const s = engine.s;
@@ -1632,7 +1634,8 @@
         if (!RM_ITEM_META[order[i]]?.header && !RM_ITEM_META[order[i+1]]?.header) showLine.add(order[i]);
       }
       const pivotBadge = s.activities_pivot ? `<span class="dm-badge dm-badge-pivot">pivoted</span>` : "";
-      let html = `<div class="dm-hdr">${expanded ? "Roadmap" : "Build plan"}<span class="dm-badge ${badgeCls[plan] || "dm-badge-sprint"}">${plan || "—"}</span>${pivotBadge}</div>`;
+      const shippedBadge = s.launched ? `<span class="dm-badge dm-badge-shipped">${s.pivot_shipped ? "shipped v2" : "shipped"}</span>` : "";
+      let html = `<div class="dm-hdr">${expanded ? "Roadmap" : "Build plan"}<span class="dm-badge ${badgeCls[plan] || "dm-badge-sprint"}">${plan || "—"}</span>${pivotBadge}${shippedBadge}</div>`;
       for (const key of order){
         const meta = RM_ITEM_META[key];
         if (!meta) continue;

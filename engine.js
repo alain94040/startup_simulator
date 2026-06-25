@@ -514,6 +514,13 @@
           this.s.items.plans_ui.status = "done";
       }
 
+      if (this.s.video_dates_effort_target != null && this.s.items && this.s.items.video_dates
+          && this.s.items.video_dates.status === "active") {
+        const alex = this.chars.get("alex");
+        if (alex && (alex.buildEffort || 0) >= this.s.video_dates_effort_target)
+          this.s.items.video_dates.status = "done";
+      }
+
       // Launch day: convert waitlist to users
       if (this.s.launched && this.s.waitlist > 0 && !this._launchConverted) {
         this._launchConverted = true;

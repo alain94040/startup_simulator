@@ -86,14 +86,13 @@
           { label: 'Build video dates — keep them happy', key: 'build',
             execute(s, char, e) {
               char.flags.custom_request_done = true;
-              s.customers += 1;
-              s.market_fit = clamp(s.market_fit - 5, 0, 100);
+              if (s.items) s.items.video_dates = { status: 'active', quality: null, assignee: 'alex' };
               const alex = e.chars.get('alex');
-              if (alex && alex.active) alex.morale = clamp(alex.morale - 8, 0, 100);
-              const alexActive = e.chars.get('alex')?.active;
-              return alexActive
-                ? "Built it. They doubled their plan. Alex spent 3 weeks on video infrastructure — it works, but it's really built around one person's workflow."
-                : "Built it. They doubled their plan. Took 3 weeks of engineering time — it works, but it's really built around one person's workflow.";
+              if (alex) {
+                s.video_dates_effort_target = (alex.buildEffort || 0) + 3.0;
+                if (alex.active) alex.morale = clamp(alex.morale - 8, 0, 100);
+              }
+              return "Said yes. Alex is heads-down on video infrastructure — WebRTC, TURN servers, recording consent.";
             } },
           { label: 'Decline — stay on roadmap', key: 'decline',
             execute(s, char) {

@@ -63,7 +63,7 @@ const STATE_INVARIANTS = [
     // rebuild, arch refactor) are legitimately active.
     holds: s => {
       if (!s.launched || !s.items) return true;
-      const POST_LAUNCH = new Set(["plans_matching", "plans_ui", "arch_refactor", "api_design"]);
+      const POST_LAUNCH = new Set(["plans_matching", "plans_ui", "arch_refactor", "api_design", "video_dates"]);
       return Object.keys(s.items).every(k => {
         if (POST_LAUNCH.has(k)) return true;
         const it = s.items[k];
@@ -72,7 +72,7 @@ const STATE_INVARIANTS = [
     },
     describe: s => {
       if (!s.items) return "launched with no items";
-      const POST_LAUNCH = new Set(["plans_matching", "plans_ui", "arch_refactor", "api_design"]);
+      const POST_LAUNCH = new Set(["plans_matching", "plans_ui", "arch_refactor", "api_design", "video_dates"]);
       const spinning = Object.keys(s.items).filter(k => !POST_LAUNCH.has(k) && s.items[k] && (s.items[k].status === 'active' || s.items[k].status === 'todo'));
       return `launched but pre-launch items still active/todo: ${spinning.join(', ')}`;
     } },
