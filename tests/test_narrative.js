@@ -79,6 +79,9 @@ const STATE_INVARIANTS = [
   { name: "pivot-creates-plans",
     holds: s => !s.activities_pivot || !!(s.items && s.items.plans_matching),
     describe: s => `activities_pivot but items.plans_matching=${s.items && s.items.plans_matching ? "ok" : "(missing)"}` },
+  { name: "pivot-shipped-implies-pivot",
+    holds: s => !s.pivot_shipped || s.activities_pivot,
+    describe: s => `pivot_shipped but activities_pivot=${!!s.activities_pivot}` },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -153,6 +156,7 @@ function snapshot(s) {
     week: s.week, launched: !!s.launched, has_demo: !!s.has_demo,
     customers: s.customers, users: s.users, market_fit: Math.round(s.market_fit),
     signal: Math.round(s.signal), activities_pivot: !!s.activities_pivot,
+    pivot_shipped: !!s.pivot_shipped,
     dev_plan: s.dev_plan || null,
     plans_matching: s.items && s.items.plans_matching ? s.items.plans_matching.status : null,
   };

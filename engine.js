@@ -555,12 +555,21 @@
       const totalAccounts = this.s.users + this.s.customers;
       if (this.s.activities_pivot && this.s.fit_at_pivot == null)
         this.s.fit_at_pivot = this.s.market_fit;
+      if (this.s.pivot_shipped && this.s.users_at_pivot_ship == null)
+        this.s.users_at_pivot_ship = totalAccounts;
       const trueFit = Math.max(0,
         this.s.pivot_shipped ? this.s.market_fit
         : this.s.activities_pivot ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot)
         : this.s.market_fit / 6);
       const retention = Math.min(0.95, 0.05 + (trueFit / 100) * 0.9);
-      const active = Math.max(this.s.customers, Math.round(totalAccounts * retention));
+      let active;
+      if (this.s.pivot_shipped) {
+        const oldPool = this.s.users_at_pivot_ship;
+        const newUsers = totalAccounts - oldPool;
+        active = Math.max(this.s.customers, Math.round(oldPool * 0.1 + newUsers * retention));
+      } else {
+        active = Math.max(this.s.customers, Math.round(totalAccounts * retention));
+      }
       this.userHistory.push({ week: wk, users: totalAccounts, customers: this.s.customers, active });
       this._weekTx = [];
     }

@@ -33,6 +33,7 @@
       { key: "equity", cls: "red", label: "Equity Signed", test: (s) => !!s.jordan_equity },
       { key: "demo", cls: "green", label: "First Demo", test: (s) => !!s.has_demo },
       { key: "launched", cls: "green", label: "Launched", test: (s) => !!s.launched },
+      { key: "pivotshipped", cls: "green", label: "Shipped v2", test: (s) => !!s.pivot_shipped },
       { key: "firstcust", cls: "blue", label: "First Customer", test: (s) => s.customers >= 1 },
       { key: "marcus", cls: "blue", label: "Lead Investor", test: (s) => !!s.marcusCommitted },
       { key: "funded", cls: "red", label: "Round Closed", test: (s) => !!s.followerCommitted },
