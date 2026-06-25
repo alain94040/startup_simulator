@@ -73,6 +73,7 @@
       "pivot_alex_pushback",
       "pivot_counter_alex",
       "bad_retention",
+      "pivot_relaunch",
       "proto_to_product",
       "good_enough_launch",
       "alex_wants_rebuild",
@@ -138,6 +139,7 @@
       "auth_buy_forced|buy": "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
       "analytics_choice|buy": "Dropped in a real analytics SDK. Funnels, retention curves, event tracking — live in a day. Now we can actually see what users do instead of guessing. Small monthly cost, worth every cent.",
       "analytics_choice|build": "Decided to build our own analytics dashboard. Alex's plate is already full. We're flying half-blind until it's done.",
+      "pivot_relaunch|ship": "Shipped the pivot. Different product under the same name. The first activity was created within an hour.",
       "pivot_alex_pushback|ship": "Sided with Alex — we ship what we have, add activities post-launch. Alex looked relieved. Jordan went quiet.",
       "pivot_alex_pushback|pivot": "Told Alex the signal is real — we should pivot. He went quiet. 'Okay. It's your call.' He doesn't agree.",
       "pivot_counter_alex|confirm": "Confirmed the pivot over Alex's objection. Three weeks, $2k. We're rebuilding around activities.",
@@ -923,6 +925,7 @@
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.activities_pivot = true;
+              s.pivot_week = s.week;
               s.cash = clamp(s.cash - 2000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 15, 0, 100);
               char.morale = clamp(char.morale - 10, 0, 100);
@@ -957,6 +960,7 @@
             execute(s, char) {
               char.flags.bad_retention_seen = true;
               s.activities_pivot = true;
+              s.pivot_week = s.week;
               s.cash = clamp(s.cash - 3000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 8, 0, 100);
               char.morale = clamp(char.morale + 3, 0, 100);
@@ -985,6 +989,34 @@
           s.market_fit = clamp(s.market_fit - 25, 0, 100);
           s.signal = clamp(s.signal - 25, 0, 100);
           char.morale = clamp(char.morale - 15, 0, 100);
+        },
+      },
+      {
+        id: 'pivot_relaunch', cat: 'p', from: 'Alex',
+        body: "activity features are live in staging. the matching is rebuilt around shared interests instead of profiles. this is a different product — ready to push it to users?",
+        urgency: 14, weeks: 1,
+        available: (s, char) => s.activities_pivot && s.launched && !s.pivot_shipped
+          && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
+          && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved)
+          && s.week >= (s.pivot_relaunch_last || 0) + 4,
+        options: [
+          { label: 'Ship it — relaunch now', key: 'ship',
+            execute(s, char) {
+              s.pivot_shipped = true;
+              s.signal = clamp(s.signal + 15, 0, 100);
+              s.market_fit = clamp(s.market_fit + 20, 0, 100);
+              return "Pushed to production. Existing users got the update. First activity was created within an hour. Retention will tell the real story over the next few weeks.";
+            } },
+          { label: 'One more week of polish', key: 'wait',
+            execute(s, char) {
+              s.pivot_relaunch_last = s.week;
+              char.morale = clamp(char.morale - 8, 0, 100);
+              return "Another week polishing. Alex thinks you're overthinking it.";
+            } },
+        ],
+        dropFx(s, char) {
+          s.pivot_relaunch_last = s.week;
+          char.morale = clamp(char.morale - 10, 0, 100);
         },
       },
       {

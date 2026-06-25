@@ -68,6 +68,7 @@
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.activities_pivot = true;
+              s.pivot_week = s.week;
               s.cash = clamp(s.cash - 2000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 15, 0, 100);
               const alex = e.chars.get("alex");
@@ -89,6 +90,7 @@
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.activities_pivot = true;
+              s.pivot_week = s.week;
               s.cash = clamp(s.cash - 2000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 15, 0, 100);
               const alex = e.chars.get("alex");
@@ -105,6 +107,7 @@
           if (s.pivot_direction_game === "pivot") {
             // Player already committed to pivot with Alex — execute it even without engaging Priya
             s.activities_pivot = true;
+            s.pivot_week = s.week;
             s.cash = clamp(s.cash - 2000, 0, 9999999);
             s.market_fit = clamp(s.market_fit + 10, 0, 100);
             pivotItems(s);

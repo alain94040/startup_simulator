@@ -485,12 +485,13 @@
       // built passively as the team's cumulative build effort accrues. Content-free —
       // the engine flips statuses by effort; item keys/labels live in roles/UI. The
       // read of buildEffort is non-destructive so it never starves other build gates.
+      let teamEffort = 0;
+      for (const [id, char] of this.chars) {
+        const def = DEFS[id];
+        if (def && def.type === "cofounder" && char.active) teamEffort += (char.buildEffort || 0);
+      }
+
       if (this.s.items) {
-        let teamEffort = 0;
-        for (const [id, char] of this.chars) {
-          const def = DEFS[id];
-          if (def && def.type === "cofounder" && char.active) teamEffort += (char.buildEffort || 0);
-        }
         const autoKeys = Object.keys(this.s.items).filter(k => this.s.items[k] && this.s.items[k].auto);
         const target = Math.floor(teamEffort / AUTO_BUILD_INCREMENT);
         let done = autoKeys.filter(k => this.s.items[k].status === "done").length;
@@ -502,6 +503,15 @@
             done++;
           }
         }
+      }
+
+      if (this.s.activities_pivot && this.s.items) {
+        if (this.s.pivot_effort_base == null) this.s.pivot_effort_base = teamEffort;
+        const pivotEffort = teamEffort - this.s.pivot_effort_base;
+        if (pivotEffort >= 3.0 && this.s.items.plans_matching && this.s.items.plans_matching.status === "active")
+          this.s.items.plans_matching.status = "done";
+        if (pivotEffort >= 5.5 && this.s.items.plans_ui && this.s.items.plans_ui.status === "todo")
+          this.s.items.plans_ui.status = "done";
       }
 
       // Launch day: convert waitlist to users
@@ -545,8 +555,9 @@
       const totalAccounts = this.s.users + this.s.customers;
       if (this.s.activities_pivot && this.s.fit_at_pivot == null)
         this.s.fit_at_pivot = this.s.market_fit;
-      const trueFit = Math.max(0, this.s.activities_pivot
-        ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot)
+      const trueFit = Math.max(0,
+        this.s.pivot_shipped ? this.s.market_fit
+        : this.s.activities_pivot ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot)
         : this.s.market_fit / 6);
       const retention = Math.min(0.95, 0.05 + (trueFit / 100) * 0.9);
       const active = Math.max(this.s.customers, Math.round(totalAccounts * retention));
