@@ -22,7 +22,7 @@
       // Pre-launch: bought analytics surfaces the post-match drop-off — the pivot signal.
       {
         id: 'post_match_dropoff', cat: 'c', from: 'Analytics',
-        body: "the funnel is stark: people match, open the thread… and stop. ~80% of matches never get past 'hey.' it's not the matching that's losing them — it's what comes after a match. there's nowhere for them to go.",
+        body: "looked at the beta cohort — people match in the demo, open the thread… and stop. ~80% of matches never get past 'hey.' it's not the matching that's losing them — it's what comes after a match. there's nowhere for them to go.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.analytics_live && s.has_demo && !s.launched && !char.flags.dropoff_done,
         options: [
