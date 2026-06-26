@@ -428,7 +428,7 @@ function selectCards(current, strategy, state) {
   if (strategy === 'customer_focus') {
     const sorted = pool.slice().sort((a, b) => {
       const catOrder = { c: 0, p: 1, e: 2, t: 3 };
-      if (a.cat !== b.cat) return (catOrder[a.cat] || 9) - (catOrder[b.cat] || 9);
+      if (a.cat !== b.cat) return (catOrder[a.cat] ?? 9) - (catOrder[b.cat] ?? 9);
       return b.urgency - a.urgency;
     });
     return sorted.slice(0, 2).map(c => c.id);
