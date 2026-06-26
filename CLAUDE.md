@@ -13,12 +13,13 @@ This game is educational, the educational goals are in GOALS.md
 | Action | Command |
 |--------|---------|
 | Play | `open game.html` |
+| Run regressions and tests | `node sim_proto.js 1000` |
 | Run narrative checks / regressions | `node tests/test_narrative.js` |
 | Map game pacing & win rate | `node tests/phase_map.js` |
 
 After editing `engine.js` or any `roles/*.js` file, refresh the browser page. No compilation needed.
 
-> **Legacy (card-based) tooling — no longer wired to the engine.** `sim_proto.js`, `earlymap.js`, `treemap.js`, `test_card_balance.js`, and `test_redesign.js` were built against the old card-dealing `Engine` API (`generateDemands`/`resolveTurn`/`CHARACTER_DEFS`/`WORLD`), which no longer exists. They will not run until ported to the chat engine. Don't rely on them.
+> **Legacy (card-based) tooling — no longer wired to the engine.** `earlymap.js`, `treemap.js`, `test_card_balance.js`, and `test_redesign.js` were built against the old card-dealing `Engine` API (`generateDemands`/`resolveTurn`/`CHARACTER_DEFS`/`WORLD`), which no longer exists. They will not run until ported to the chat engine. Don't rely on them.
 
 ## Architecture
 
