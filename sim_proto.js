@@ -364,12 +364,16 @@ function selectCards(current, strategy, state) {
   }
 
   if (strategy === 'yc_grind') {
+    const FAMILY_CASH = new Set(['ff_family','ff_family_2','ff_family_3','ff_friend','ff_friend_ask','ff_mentor','ff_mentor_pitch']);
     // Priority: YC cards > product > customer > external > team
     const order = ['jordan_confrontation','dev_planning_session','yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
                    'alex_demo_ready','proto_to_product',
                    'good_enough_launch','bug_reports','feature_cluster','silent_churn',
                    'public_complaint','power_user_quiet','reporter_deadline','hn_thread'];
     const sorted = pool.slice().sort((a, b) => {
+      // F&F cash is free runway — grab it whenever available
+      const aFF = FAMILY_CASH.has(a.id), bFF = FAMILY_CASH.has(b.id);
+      if (aFF !== bFF) return aFF ? -1 : 1;
       const ai = order.indexOf(a.id), bi = order.indexOf(b.id);
       if (ai !== -1 && bi !== -1) return ai - bi;
       if (ai !== -1) return -1;
@@ -541,6 +545,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
   const moraleSnaps = [];  // {week, morale, trust} snapshot at start of each turn
   let errorCount = 0;
   let ycEverApplied = false;   // tracks ever-applied, not reset on rejection
+  let launchWeek = null;
 
   const optStrategy = strategy;
 
@@ -651,6 +656,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
 
     // Advance the week (burn, passive contributions, conversions, win/loss checks).
     e.nextWeek();
+    if (launchWeek == null && e.s.launched) launchWeek = e.s.week;
 
     if (verbose) {
       const alex = e.chars.get('alex');
@@ -685,6 +691,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     customers:e.s.customers,
     signal:   e.s.signal,
     launched:   e.s.launched,
+    launchWeek,
     ycApplied:        ycEverApplied,
     ycAccepted:       e.s.ycAccepted,
     marcusCommitted:  e.s.marcusCommitted,
@@ -1099,11 +1106,13 @@ if (WINNERS_FLAG) {
     check(`rand_parttime.alexLeft (${s.rand_parttime.alexLeft}%) >= rand_fulltime.alexLeft (${s.rand_fulltime.alexLeft}%)`,
           s.rand_parttime.alexLeft >= s.rand_fulltime.alexLeft);
 
-    // YC application behaviour
-    check(`yc_grind.ycApplied (${s.yc_grind.ycApplied}%) >= 90%`,
-          s.yc_grind.ycApplied >= 90);
-    check(`lean_loop.ycApplied (${s.lean_loop.ycApplied}%) >= 85%`,
-          s.lean_loop.ycApplied >= 85);
+    // YC application behaviour — batch 1 now at fixed week 30
+    // yc_grind uses full-time Alex and grabs F&F cash → survives to week 30 → applies (often unqualified)
+    check(`yc_grind.ycApplied (${s.yc_grind.ycApplied}%) >= 40% — full plan with full-time Alex applies to YC`,
+          s.yc_grind.ycApplied >= 40);
+    // lean plan survives to week 30 in roughly half of games → applies
+    check(`lean_loop.ycApplied (${s.lean_loop.ycApplied}%) >= 40%`,
+          s.lean_loop.ycApplied >= 40);
     check(`angel_path.ycApplied (${s.angel_path.ycApplied}%) <= 10%`,
           s.angel_path.ycApplied <= 10);
     check(`ignore_alex.ycApplied (${s.ignore_alex.ycApplied}%) <= 10%`,
@@ -1304,6 +1313,15 @@ if (WINNERS_FLAG) {
     const pct = (arr, fn) => Math.round(arr.filter(fn).length / arr.length * 100);
     const avg = (arr, fn) => (arr.reduce((s, r) => s + fn(r), 0) / arr.length).toFixed(1);
 
+    const medLaunch = (arr) => {
+      const wks = arr.map(r => r.launchWeek).filter(w => w != null).sort((a, b) => a - b);
+      return wks.length ? String(wks[Math.floor(wks.length / 2)]) : '—';
+    };
+    const avgLaunch = (arr) => {
+      const wks = arr.map(r => r.launchWeek).filter(w => w != null);
+      return wks.length ? (wks.reduce((s, v) => s + v, 0) / wks.length).toFixed(1) : '—';
+    };
+
     const rows = [
       ['Win rate',      pct(lean, r => r.won),                     pct(full, r => r.won),                     pct(none, r => r.won)],
       ['Bankrupt',      pct(lean, r => r.bankrupt),                pct(full, r => r.bankrupt),                pct(none, r => r.bankrupt)],
@@ -1312,6 +1330,8 @@ if (WINNERS_FLAG) {
       ['No plan',       pct(lean, r => r.devPlan == null),         pct(full, r => r.devPlan == null),         pct(none, r => r.devPlan == null)],
       ['Alex active',   pct(lean, r => r.alexActive),              pct(full, r => r.alexActive),              pct(none, r => r.alexActive)],
       ['Launched',      pct(lean, r => r.launched),                pct(full, r => r.launched),                pct(none, r => r.launched)],
+      ['Launch wk med', medLaunch(lean),                           medLaunch(full),                           medLaunch(none)],
+      ['Launch wk avg', avgLaunch(lean),                           avgLaunch(full),                           avgLaunch(none)],
       ['Avg product',   avg(lean, r => r.product),                 avg(full, r => r.product),                 avg(none, r => r.product)],
       ['Avg fit',       avg(lean, r => r.market_fit),              avg(full, r => r.market_fit),              avg(none, r => r.market_fit)],
       ['Avg customers', avg(lean, r => r.customers),               avg(full, r => r.customers),               avg(none, r => r.customers)],
@@ -1333,8 +1353,17 @@ if (WINNERS_FLAG) {
     const p1 = leanWins > fullWins;
     const p2 = leanWins > noneWins;
     const p3 = noneNoPlan >= 80;
+    const leanLaunchMed = medLaunch(lean);
+    const fullLaunchMed = medLaunch(full);
+    // lean ships earlier than full — if full never ships at all, lean having a median is a pass
+    const p4 = leanLaunchMed !== '—' && (fullLaunchMed === '—' || Number(leanLaunchMed) < Number(fullLaunchMed));
+    const leanLaunchRate = pct(lean, r => r.launched);
+    const fullLaunchRate = pct(full, r => r.launched);
+    const p5 = leanLaunchRate >= 75 && fullLaunchRate <= 5;
     console.log(`  lean wins more than full:   ${p1 ? 'PASS' : 'FAIL'}  (lean ${leanWins}% vs full ${fullWins}%)`);
     console.log(`  lean wins more than none:   ${p2 ? 'PASS' : 'FAIL'}  (lean ${leanWins}% vs none ${noneWins}%)`);
+    console.log(`  lean launches before full:  ${p4 ? 'PASS' : 'FAIL'}  (lean wk ${leanLaunchMed} vs full wk ${fullLaunchMed})`);
+    console.log(`  lean launches, full doesn't:  ${p5 ? 'PASS' : 'FAIL'}  (lean ${leanLaunchRate}% launched vs full ${fullLaunchRate}%)`);
     console.log(`  force_drop leaves no plan:  ${p3 ? 'PASS' : 'FAIL'}  (${noneNoPlan}% have no dev_plan)`);
   })();
 

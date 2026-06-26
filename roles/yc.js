@@ -41,8 +41,8 @@
                     post("You're in. Welcome to the batch — $500k for 7%. See you at kickoff.");
                   } else {
                     st.ycApplied = false;
-                    en.ycWeek = st.week + 12;          // reapply window reopens
-                    post("Thanks for applying — we're passing this batch. The bar was tight; reapply next cycle (~12 weeks).");
+                    en.ycWeek = st.week + 26;          // reapply window reopens (next batch ~6 months)
+                    post("Thanks for applying — we're passing this batch. The bar was tight; reapply next cycle (~6 months).");
                   }
                 },
               });
@@ -50,8 +50,8 @@
             } },
         ],
         dropDelay: 1, dropFrom: 'Y Combinator',
-        dropMsg: "Missed the YC deadline. The next batch opens in about 12 weeks.",
-        dropFx(s, char, e) { s.ycDeciding = false; e.ycWeek = s.week + 12; },
+        dropMsg: "Missed the YC deadline. The next batch opens in about 6 months.",
+        dropFx(s, char, e) { s.ycDeciding = false; e.ycWeek = s.week + 26; },
       },
     ],
   };

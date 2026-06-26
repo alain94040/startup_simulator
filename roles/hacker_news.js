@@ -247,30 +247,30 @@
 
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
-        body: "YC applications just opened. Your stats qualify — live product, 10+ paying subscribers. A lot of founders in the consumer social space are applying.",
+        body: "YC applications just opened. Your stats qualify — live product, at least one paying subscriber, and a clear pivot story. A lot of founders in the consumer social space are applying.",
         urgency: 12, weeks: 1,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.launched && s.customers >= 10,
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.launched && s.pivot_shipped && s.customers >= 1,
         options: [
           { label: 'Start writing the application', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; s.ycQualified = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
           { label: 'Skip this batch', key: 'skip',
-            execute(s, char, e) { e.ycWeek += 12; return "Decided to skip this batch. Next one opens in ~12 weeks."; } },
+            execute(s, char, e) { e.ycWeek += 26; return "Decided to skip this batch. Next one opens in ~6 months."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
       {
         id: 'yc_discussion_early', cat: 'e', from: 'Hacker News',
-        body: "YC applications just opened. Stats aren't quite there yet — not launched or fewer than 10 paying subscribers. Some apply anyway for partner feedback. Apply or wait?",
+        body: "YC applications just opened. Stats aren't quite there yet — not launched, no pivot, or no paying subscribers yet. Some apply anyway for partner feedback. Apply or wait?",
         urgency: 12, weeks: 1,
-        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (!s.launched || s.customers < 10),
+        available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (!s.launched || !s.pivot_shipped || s.customers < 1),
         options: [
           { label: 'Start writing anyway', key: 'apply',
             execute(s, char, e) { s.ycDeciding = true; s.ycQualified = false; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },
           { label: 'Wait for next batch', key: 'skip',
-            execute(s, char, e) { e.ycWeek += 12; return "Waiting for next batch. More time to hit the numbers. Next window in ~12 weeks."; } },
+            execute(s, char, e) { e.ycWeek += 26; return "Waiting for next batch. More time to hit the numbers. Next window in ~6 months."; } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) { e.ycWeek = s.week + 12; },
+        dropFx(s, char, e) { e.ycWeek = s.week + 26; },
       },
     ],
   };

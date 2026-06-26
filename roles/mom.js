@@ -12,9 +12,9 @@
       fireWeek: s.week + 1,
       from: 'Mom', charId: 'mom',
       text: willInvest
-        ? "ok!! dad and i talked it over — i just wired you $5,000. so proud of you honey ❤️ go build something amazing."
+        ? "ok!! dad and i talked it over — i just wired you $4,000. so proud of you honey ❤️ go build something amazing."
         : "honey, we talked it over and we'd love to, but money's a little tight with the house right now. so sorry. we believe in you no matter what ❤️",
-      fx(st) { if (willInvest) st.cash += 5000; },
+      fx(st) { if (willInvest) st.cash += 4000; },
     });
     return "Asked Mom and Dad if they'd put money in. They said they'd talk it over and let me know.";
   }

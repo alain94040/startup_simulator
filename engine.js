@@ -63,7 +63,7 @@
       // Mirrors the initial-state shape of the legacy engine so every slice
       // card finds the field it reads. Unused fields are harmless.
       this.s = {
-        cash: 10000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
+        cash: 8000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
         signal: 28, market_fit: 0, launched: false, deck_ready: false,
         productPhase: "proto",
         has_demo: false, tech_debt: 0,
@@ -119,7 +119,7 @@
       // One slot per character — a character shows at most one unanswered message.
       this.open = {};
 
-      this.ycWeek = 10 + Math.floor(Math.random() * 8);
+      this.ycWeek = 30;
       this.alexDepartureRisk = false;
       this.pending = [];
       this.history = [];
@@ -497,7 +497,7 @@
         let done = autoKeys.filter(k => this.s.items[k].status === "done").length;
         for (const k of autoKeys) {
           if (done >= target) break;
-          if (this.s.items[k].status === "todo") {
+          if (this.s.items[k].status === "todo" || this.s.items[k].status === "obsolete") {
             this.s.items[k].status = "done";
             this.s.items[k].quality = this.s.items[k].quality || "solid";
             done++;
@@ -505,7 +505,7 @@
         }
       }
 
-      if (this.s.activities_pivot && this.s.items) {
+      if (this.s.activities_pivot && this.s.launched && this.s.items) {
         if (this.s.pivot_effort_base == null) this.s.pivot_effort_base = teamEffort;
         const pivotEffort = teamEffort - this.s.pivot_effort_base;
         if (pivotEffort >= 3.0 && this.s.items.plans_matching && this.s.items.plans_matching.status === "active")
@@ -533,16 +533,25 @@
       if (this.s.launched && this.s.signal >= 70)
         this.s.users += Math.floor((this.s.signal - 70) / 30) + 1;
 
-      // Free-to-paid conversion
+      // True product-market fit: pre-pivot the raw score overstates reality.
+      if (this.s.activities_pivot && this.s.fit_at_pivot == null)
+        this.s.fit_at_pivot = this.s.market_fit;
+      const trueFit = Math.max(0,
+        this.s.pivot_shipped ? this.s.market_fit
+        : this.s.activities_pivot ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot) * 0.5
+        : this.s.market_fit / 6);
+
+      // Free-to-paid conversion (uses trueFit — users don't pay for a product
+      // that doesn't retain them)
       if (this.s.launched && this.s.users > 0) {
-        const baseRate = this.s.market_fit < 30 ? 0.005 : this.s.market_fit < 50 ? 0.01 : this.s.market_fit < 70 ? 0.02 : 0.03;
+        const baseRate = trueFit < 30 ? 0.005 : trueFit < 50 ? 0.01 : trueFit < 70 ? 0.02 : 0.03;
         const rate = baseRate * (this.s.website_updated ? 1.3 : 1.0);
         const raw = this.s.users * rate;
         const converted = Math.floor(raw) + (Math.random() < (raw % 1) ? 1 : 0);
         if (converted > 0) { this.s.users = Math.max(0, this.s.users - converted); this.s.customers += converted; }
       }
 
-      // B2B revenue
+      // B2B revenue (display only — negligible at pre-seed scale)
       this.s.revenue = this.s.customers * 50;
 
       // Win conditions
@@ -560,14 +569,8 @@
       // fire at the boundary land on the week they were ignored; balanceAfter == cash.
       this.ledger.push({ week: wk, transactions: this._weekTx, balanceAfter: this.s.cash });
       const totalAccounts = this.s.users + this.s.customers;
-      if (this.s.activities_pivot && this.s.fit_at_pivot == null)
-        this.s.fit_at_pivot = this.s.market_fit;
       if (this.s.pivot_shipped && this.s.users_at_pivot_ship == null)
         this.s.users_at_pivot_ship = totalAccounts;
-      const trueFit = Math.max(0,
-        this.s.pivot_shipped ? this.s.market_fit
-        : this.s.activities_pivot ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot)
-        : this.s.market_fit / 6);
       const retention = Math.min(0.95, 0.05 + (trueFit / 100) * 0.9);
       let active;
       if (this.s.pivot_shipped) {

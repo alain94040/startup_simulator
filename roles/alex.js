@@ -15,12 +15,14 @@
     }
   }
 
-  // True once every over-scope (auto) item is built/dropped — gates launch on the full
-  // plan. Lean has no auto items, so this is always true there (no change for lean).
+  // True once every over-scope (auto) item is built or cleaned up — gates launch on the
+  // full plan. Lean has no auto items, so this is always true there. Items marked
+  // obsolete by the pivot still need cleanup time (the engine's passive build burn-down
+  // handles them at the same rate as building new).
   function allScopeBuilt(s) {
     if (!s.items) return true;
     return Object.keys(s.items).every(k => !s.items[k].auto
-      || s.items[k].status === 'done' || s.items[k].status === 'deferred' || s.items[k].status === 'obsolete');
+      || s.items[k].status === 'done' || s.items[k].status === 'deferred');
   }
 
   function applyActivitiesPivot(s) {

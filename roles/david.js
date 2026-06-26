@@ -42,7 +42,7 @@
           { label: 'Show him the deck', key: 'pitch',
             execute(s, char) {
               char.flags.done = true;
-              if (Math.random() < 0.7) { s.cash += 10000; s.investor_warmth = clamp(s.investor_warmth + 5, 0, 100); return "David pulled out his checkbook. $10,000 and a warm intro to two angels he knows."; }
+              if (Math.random() < 0.7) { s.cash += 5000; s.investor_warmth = clamp(s.investor_warmth + 5, 0, 100); return "David pulled out his checkbook. $5,000 and a warm intro to two angels he knows."; }
               return "Great coffee. David's being conservative with money this year — new baby coming. 'I'm rooting for you though.'";
             } },
         ],
