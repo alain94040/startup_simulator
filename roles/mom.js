@@ -21,6 +21,7 @@
 
   const askOption = {
     label: "Ask if they'd put money in", key: 'ask',
+    reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
     execute(s, char, engine) { return askFamily(s, char, engine); },
   };
 
@@ -51,7 +52,7 @@
     },
     cards: [
       {
-        id: 'ff_family', cat: 'e', from: 'Mom', chat: false,
+        id: 'ff_family', cat: 'e', from: 'Mom',
         body: "just checking in! dad and i were talking about you last night. so proud. how's it going? let us know if there's anything we can do.",
         urgency: 12, weeks: 1,
         available: (s, char) => s.week <= 8 && !char.flags.done && !char.flags.shown_1,
