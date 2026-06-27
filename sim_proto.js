@@ -537,13 +537,15 @@ function roadmapStr(items) {
 
 // ─── Run one game ─────────────────────────────────────────────────────────────
 
-function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOverrides = {}) {
+function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOverrides = {}, chatMode = false) {
   const e = new Engine();
   const log = [];
   const cardCounts = {};   // cardId -> times offered this game
   const handSizes  = [];   // {week, size} per turn
   const moraleSnaps = [];  // {week, morale, trust} snapshot at start of each turn
   let errorCount = 0;
+  const weekSnaps = {};    // chatMode only: week -> state snapshot before turn
+  const cardOptMap = {};   // chatMode only: cardId -> {options, chosenKey}
   let ycEverApplied = false;   // tracks ever-applied, not reset on rejection
   let launchWeek = null;
 
@@ -552,6 +554,17 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
   for (let turn = 0; turn < maxWeek + 5; turn++) {
     if (e.s.game_won || e.s.game_over) break;
     if (e.s.week >= maxWeek) { log.push(`TIMEOUT at week ${e.s.week}`); break; }
+
+    if (chatMode) {
+      weekSnaps[e.s.week] = {
+        cash: e.s.cash, launched: e.s.launched,
+        customers: e.s.customers, users: e.s.users,
+        fit: Math.round(e.s.market_fit), signal: Math.round(e.s.signal),
+        items: e.s.items ? Object.fromEntries(
+          Object.entries(e.s.items).map(([k, v]) => [k, { status: v.status, quality: v.quality }])
+        ) : null,
+      };
+    }
 
     let hand;
     try {
@@ -592,6 +605,18 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     }
     ids = ids.slice(0, 2);     // the week has 2 actions
     const opts = pickOptions(hand, ids, optStrategy, e.s);
+
+    if (chatMode) {
+      for (const id of ids) {
+        const card = hand.find(c => c.id === id);
+        if (card && card.options) {
+          cardOptMap[id] = {
+            options: card.options.map(o => ({ key: o.key, label: o.label })),
+            chosenKey: opts[id],
+          };
+        }
+      }
+    }
 
     for (const card of hand) {
       const c = cardCounts[card.id] || (cardCounts[card.id] = { count: 0, weekSum: 0 });
@@ -681,6 +706,17 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
   const alex = e.chars.get('alex');
   const activeChars = [...e.chars.entries()].filter(([,c]) => c.active).map(([id]) => id);
 
+  if (chatMode) {
+    weekSnaps[e.s.week] = {
+      cash: e.s.cash, launched: e.s.launched,
+      customers: e.s.customers, users: e.s.users,
+      fit: Math.round(e.s.market_fit), signal: Math.round(e.s.signal),
+      items: e.s.items ? Object.fromEntries(
+        Object.entries(e.s.items).map(([k, v]) => [k, { status: v.status, quality: v.quality }])
+      ) : null,
+    };
+  }
+
   return {
     won:      e.s.game_won,
     bankrupt: e.s.game_over,
@@ -709,6 +745,7 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
     cardCounts,
     handSizes,
     moraleSnaps,
+    ...(chatMode ? { engine: e, weekSnaps, cardOpts: cardOptMap } : {}),
   };
 }
 
@@ -865,7 +902,7 @@ const STRATEGY_NAMES = ['random','distracted','yc_grind','alex_first','ignore_al
 
 function parseArgs(argv) {
   const args = argv.slice(2);
-  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3, fullMessages: false, strategy: 'lean_loop' };
+  const opts = { n: 100, noYC: false, mode: 'summary', winners: 3, fullMessages: false, strategy: 'lean_loop', chat: 1 };
   const errors = [];
 
   for (let i = 0; i < args.length; i++) {
@@ -873,18 +910,19 @@ function parseArgs(argv) {
 
     if (a === '--help' || a === '-h') {
       console.log(`
-Usage: node sim_proto.js [N] [--no-yc] [--winners [K] | --all] [--strategy NAME]
+Usage: node sim_proto.js [N] [--no-yc] [--winners [K] | --all | --chat [K]] [--strategy NAME]
 
 Modes (mutually exclusive — default is summary):
   (no flag)          Run strategy comparison across all strategies.
   --winners [K]      Hunt for K winning traces (default: 3). Tries up to N games.
-  --all              Print N game traces regardless of outcome.
+  --all              Print N card-centric traces regardless of outcome.
+  --chat [K]         Print K per-character chat traces (default: 1). Runs up to N games.
 
 Options:
   N                  Number of games: samples per strategy (summary),
-                     max attempts (--winners), or traces printed (--all).
+                     max attempts (--winners/--chat), or traces printed (--all).
                      Default: 100.
-  --strategy NAME    Strategy to use for --all and --winners modes (default: lean_loop).
+  --strategy NAME    Strategy to use for --all, --winners, and --chat modes (default: lean_loop).
                      One of: ${STRATEGY_NAMES.join(', ')}.
   --no-yc            Block YC acceptance — forces the angel fundraising path.
   --messages         Print full card bodies and outcome messages without truncation.
@@ -896,8 +934,11 @@ Examples:
   node sim_proto.js 500 --no-yc                  Summary, angel path only
   node sim_proto.js 200 --winners                Hunt for 3 lean_loop winners
   node sim_proto.js 500 --winners 1 --no-yc      One angel-path win, up to 500 tries
-  node sim_proto.js 5 --all                      Print 5 lean_loop traces
+  node sim_proto.js 5 --all                      Print 5 lean_loop card-centric traces
   node sim_proto.js 5 --all --strategy angel_path  Print 5 angel_path traces
+  node sim_proto.js --chat                       Print 1 lean_loop chat trace
+  node sim_proto.js 50 --chat 3                  Hunt up to 50 games for 3 winners, print chat traces
+  node sim_proto.js --chat --strategy angel_path  Print 1 angel_path chat trace
 `);
       process.exit(0);
     }
@@ -930,6 +971,14 @@ Examples:
       continue;
     }
 
+    if (a === '--chat') {
+      if (opts.mode === 'winners' || opts.mode === 'all') { errors.push('--chat is mutually exclusive with --winners and --all'); break; }
+      opts.mode = 'chat';
+      const v = parseInt(args[i + 1], 10);
+      if (!isNaN(v) && v > 0) { opts.chat = v; i++; }
+      continue;
+    }
+
     if (/^\d+$/.test(a)) { opts.n = parseInt(a, 10); continue; }
 
     errors.push(`unknown option: ${a}`);
@@ -944,9 +993,10 @@ Examples:
   return opts;
 }
 
-const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT, fullMessages: FULL_MESSAGES, strategy: TRACE_STRATEGY } = parseArgs(process.argv);
+const { n: N, noYC: NO_YC, mode, winners: WINNERS_COUNT, chat: CHAT_COUNT, fullMessages: FULL_MESSAGES, strategy: TRACE_STRATEGY } = parseArgs(process.argv);
 const WINNERS_FLAG = mode === 'winners';
 const ALL_FLAG     = mode === 'all';
+const CHAT_FLAG    = mode === 'chat';
 
 // ─── Narrative trace ──────────────────────────────────────────────────────────
 
@@ -1007,6 +1057,256 @@ function printTrace(trace, label, fullMessages = false) {
   }
 }
 
+// ─── Chat-thread trace ────────────────────────────────────────────────────────
+
+function printChatTrace(result, fullMessages = false) {
+  const trunc = fullMessages
+    ? (s) => s || ''
+    : (s, n) => s && s.length > (n || 80) ? s.slice(0, (n || 80) - 1) + '…' : (s || '');
+
+  const e = result.engine;
+  const weekSnaps = result.weekSnaps || {};
+  const cardOptMap = result.cardOpts || {};
+
+  // Outcome lookup: cardId → voiced outcome (lives in founder thread)
+  const outcomeByCard = {};
+  for (const entry of (e.threads.founder || [])) {
+    if (entry.type === 'outcome' && entry.cardId) {
+      outcomeByCard[entry.cardId] = entry.body;
+    }
+  }
+
+  // Set of cardIds that expired unanswered
+  const ignoredCards = new Set();
+  for (const l of e.log) {
+    if (l.ignored) ignoredCards.add(l.ignored);
+  }
+
+  // ── Header ─────────────────────────────────────────────────────────────────
+  const resultLabel = result.won ? 'WIN' : result.bankrupt ? 'BANKRUPT' : 'TIMEOUT';
+  console.log('\n' + '═'.repeat(70));
+  console.log(`TRACE  result=${resultLabel} (W${result.week})  customers=${result.customers}  fit=${Math.round(result.market_fit)}%`);
+  console.log('═'.repeat(70));
+
+  // ── Timeline ───────────────────────────────────────────────────────────────
+  console.log('\nTIMELINE');
+  console.log('─'.repeat(50));
+
+  const stampsByWeek = {};
+  for (const entry of (e.threads.founder || [])) {
+    if (entry.type === 'stamp') {
+      if (!stampsByWeek[entry.week]) stampsByWeek[entry.week] = [];
+      stampsByWeek[entry.week].push(entry.label);
+    }
+  }
+
+  const weeks = Object.keys(weekSnaps).map(Number).sort((a, b) => a - b);
+  let prevSnap = null;
+  for (const wk of weeks) {
+    const snap = weekSnaps[wk];
+    const events = [];
+    if (!prevSnap) {
+      events.push('start');
+    } else {
+      if (snap.launched && !prevSnap.launched)           events.push('launched=true');
+      if (snap.customers > 0 && prevSnap.customers === 0) events.push('first_customer');
+      else if (snap.customers !== prevSnap.customers)    events.push(`customers=${snap.customers}`);
+      if (snap.users > 0 && prevSnap.users === 0)       events.push('first_user');
+    }
+    for (const label of (stampsByWeek[wk] || [])) events.push(`✦ ${label}`);
+    {
+      const evStr = events.length ? '  ' + events.join('  ') : '';
+      console.log(`W${String(wk).padStart(2)}  cash=$${snap.cash.toLocaleString()}  users=${snap.users}  customers=${snap.customers}  fit=${snap.fit}%${evStr}`);
+    }
+    prevSnap = snap;
+  }
+  if (result.won)      console.log(`W${result.week}  ← YC_ACCEPTED  WIN`);
+  else if (result.bankrupt) console.log(`W${result.week}  ← BANKRUPT`);
+
+  // ── Per-character chat threads ─────────────────────────────────────────────
+  const noChatSet = new Set(e.noChatChars);
+  const chatCharIds  = e.order.filter(id => id !== 'founder' && !noChatSet.has(id));
+  const eventCharIds = e.order.filter(id => noChatSet.has(id));
+
+  for (const charId of chatCharIds) {
+    const thread = e.threads[charId] || [];
+    if (thread.length === 0) continue;
+
+    const nameEntry = thread.find(ent => ent.from && ent.type === 'incoming' && !ent.dropped);
+    const charName = nameEntry ? nameEntry.from : charId;
+
+    console.log(`\n${'─'.repeat(70)}`);
+    console.log(`CHAT: ${charName}`);
+    console.log('─'.repeat(70));
+
+    let i = 0;
+    while (i < thread.length) {
+      const entry = thread[i];
+
+      // Consequence/follow-up message (dropMsg) — shown inline after its ignored card
+      if (entry.type === 'incoming' && entry.dropped) {
+        console.log(`[W${String(entry.week).padStart(2)}]   → ${entry.from}: "${trunc(entry.body, 90)}"  ← follow-up after no reply`);
+        console.log();
+        i++;
+        continue;
+      }
+
+      if (entry.type === 'incoming') {
+        const wk = entry.week;
+        const cardId = entry.cardId;
+        const snap = weekSnaps[wk] || {};
+
+        // Detect what happened to this message
+        const next = thread[i + 1];
+        const wasReplied = next && next.type === 'reply' && next.cardId === cardId;
+        const wasIgnored = cardId && ignoredCards.has(cardId);
+        // Some cards have chat:false — answered but no reply bubble, only an outcome in the journal
+        const wasAnsweredSilently = !wasReplied && cardId && !!outcomeByCard[cardId];
+
+        console.log(`[W${String(wk).padStart(2)}] ${entry.from}: "${trunc(entry.body, 90)}"`);
+        if (entry.subtext) console.log(`       ${entry.subtext}`);
+
+        if (wasReplied || wasAnsweredSilently) {
+          const cardData = cardId ? cardOptMap[cardId] : null;
+          const chosenKey = cardData ? cardData.chosenKey : null;
+
+          if (wasReplied) {
+            console.log(`       ✓ Chose: "${trunc(next.body, 80)}"`);
+          } else {
+            const chosenOpt = cardData && cardData.options.find(o => o.key === chosenKey);
+            if (chosenOpt) console.log(`       ✓ Chose: "${chosenOpt.label}" (no dialogue reply)`);
+          }
+
+          if (cardData && cardData.options.length > 1) {
+            for (const opt of cardData.options) {
+              if (opt.key !== chosenKey) console.log(`       ↩ Skipped: "${opt.label}"`);
+            }
+          }
+
+          i += wasReplied ? 2 : 1;
+        } else if (wasIgnored) {
+          console.log(`       ⚠ IGNORED (patience expired)`);
+          i++;
+        } else {
+          console.log(`       (open at game end)`);
+          i++;
+        }
+        console.log();
+        continue;
+      }
+
+      i++;
+    }
+  }
+
+  // ── Events & notifications (noChat sources: HN, Twitter, YC, Analytics, etc.) ──
+  const eventEntries = [];
+  for (const charId of eventCharIds) {
+    for (const entry of (e.threads[charId] || [])) {
+      eventEntries.push({ charId, ...entry });
+    }
+  }
+  eventEntries.sort((a, b) => a.week - b.week);
+
+  if (eventEntries.length > 0) {
+    console.log(`\n${'─'.repeat(70)}`);
+    console.log('EVENTS & NOTIFICATIONS (HN, Twitter, YC, Analytics, Users)');
+    console.log('─'.repeat(70));
+    for (const entry of eventEntries) {
+      const wk = String(entry.week).padStart(2);
+      const snap = weekSnaps[entry.week] || {};
+      const snapStr = snap.cash !== undefined
+        ? `       state: {cash:$${snap.cash.toLocaleString()} launched:${snap.launched} customers:${snap.customers} fit:${snap.fit}%}`
+        : '';
+      if (entry.type === 'incoming' && !entry.dropped) {
+        console.log(`[W${wk}] ${entry.from}: "${trunc(entry.body, 90)}"`);
+        if (snapStr) console.log(snapStr);
+        // Show chosen option + outcome if answered
+        const cardData = entry.cardId ? cardOptMap[entry.cardId] : null;
+        if (cardData) {
+          const chosenOpt = cardData.options.find(o => o.key === cardData.chosenKey);
+          if (chosenOpt) console.log(`       ✓ Chose: "${chosenOpt.label}"`);
+          if (cardData.options.length > 1) {
+            for (const opt of cardData.options) {
+              if (opt.key !== cardData.chosenKey) console.log(`       ↩ Skipped: "${opt.label}"`);
+            }
+          }
+        } else if (ignoredCards.has(entry.cardId)) {
+          console.log(`       ⚠ IGNORED`);
+        }
+        console.log();
+      } else if (entry.type === 'incoming' && entry.dropped) {
+        console.log(`[W${wk}]   → ${entry.from}: "${trunc(entry.body, 90)}"  ← follow-up`);
+        console.log();
+      }
+    }
+  }
+
+  // ── Roadmap changes ────────────────────────────────────────────────────────
+  // Diff consecutive weekSnaps to find when item statuses/qualities changed.
+  // Changes are logged as happening *during* the week whose snapshot precedes them.
+  const roadmapChanges = [];
+  for (let wi = 1; wi < weeks.length; wi++) {
+    const prevWk  = weeks[wi - 1];
+    const curWk   = weeks[wi];
+    const prevIts = weekSnaps[prevWk].items || {};
+    const curIts  = weekSnaps[curWk].items  || {};
+    const allKeys = new Set([...Object.keys(prevIts), ...Object.keys(curIts)]);
+    for (const k of allKeys) {
+      const p = prevIts[k] || null;
+      const c = curIts[k]  || null;
+      if (!p && c) {
+        roadmapChanges.push({ week: prevWk, key: k, from: null, to: c });
+      } else if (p && !c) {
+        roadmapChanges.push({ week: prevWk, key: k, from: p, to: null });
+      } else if (p && c && (p.status !== c.status || p.quality !== c.quality)) {
+        roadmapChanges.push({ week: prevWk, key: k, from: p, to: c });
+      }
+    }
+  }
+
+  if (roadmapChanges.length > 0) {
+    console.log(`\n${'─'.repeat(70)}`);
+    console.log('ROADMAP CHANGES');
+    console.log('─'.repeat(70));
+    for (const { week: wk, key, from, to } of roadmapChanges) {
+      const wkStr = String(wk).padStart(2);
+      const snap  = weekSnaps[wk] || {};
+      const ctx   = snap.cash !== undefined
+        ? ` {launched:${snap.launched} customers:${snap.customers} fit:${snap.fit}%}`
+        : '';
+      if (!from) {
+        const qual = to.quality ? ` (${to.quality})` : '';
+        console.log(`[W${wkStr}] + ${key}: ${to.status}${qual}  ← new item${ctx}`);
+      } else if (!to) {
+        console.log(`[W${wkStr}] - ${key}: removed${ctx}`);
+      } else {
+        const fromStr = from.quality ? `${from.status} (${from.quality})` : from.status;
+        const toStr   = to.quality   ? `${to.status} (${to.quality})`     : to.status;
+        console.log(`[W${wkStr}]   ${key}:  ${fromStr} → ${toStr}${ctx}`);
+      }
+    }
+  }
+
+  // ── Founder journal ────────────────────────────────────────────────────────
+  console.log(`\n${'─'.repeat(70)}`);
+  console.log('JOURNAL (founder)');
+  console.log('─'.repeat(70));
+
+  for (const entry of (e.threads.founder || [])) {
+    const wk = String(entry.week).padStart(2);
+    if (entry.type === 'stamp') {
+      console.log(`[W${wk}] ✦ ${entry.label}`);
+    } else if (entry.type === 'outcome') {
+      const tag = entry.from ? `[${entry.from}] ` : '';
+      console.log(`[W${wk}] ${tag}${trunc(entry.body, 110)}`);
+    } else if (entry.type === 'incoming') {
+      console.log(`[W${wk}] ${entry.from}: "${trunc(entry.body, 90)}"`);
+    }
+  }
+  console.log();
+}
+
 // ─── Mode dispatch ────────────────────────────────────────────────────────────
 
 if (WINNERS_FLAG) {
@@ -1034,6 +1334,18 @@ if (WINNERS_FLAG) {
     const g = runGame(TRACE_STRATEGY, 120, true, NO_YC);
     printTrace(g, `${TRACE_STRATEGY} run ${i + 1}/${N}${ycTag}`, FULL_MESSAGES);
   }
+
+} else if (CHAT_FLAG) {
+  const found = [];
+  let attempts = 0;
+  process.stdout.write(`\nHunting for ${CHAT_COUNT} ${TRACE_STRATEGY} chat trace(s) (any outcome)${NO_YC ? ' [YC disabled]' : ''}…`);
+  while (found.length < CHAT_COUNT && attempts < Math.max(N, CHAT_COUNT)) {
+    const g = runGame(TRACE_STRATEGY, 120, false, NO_YC, {}, true);
+    attempts++;
+    found.push(g);
+  }
+  console.log(` ${found.length} game(s) in ${attempts} attempt(s).\n`);
+  found.forEach(g => printChatTrace(g, FULL_MESSAGES));
 
 } else {
   // Default: strategy summary only
@@ -1412,5 +1724,54 @@ if (WINNERS_FLAG) {
     const pass = alexLeftPct >= 80;
     console.log(`\nCHECK jordan_drag ignored → Alex departs (lean_loop, ${RUNS} games)`);
     console.log(`  Alex left when Jordan warnings ignored: ${pass ? 'PASS' : 'FAIL'}  (${alexLeftPct}%)`);
+  })();
+
+  // ── Repeated narrative detection ───────────────────────────────────────────
+  // In a real chat, you never see the same message twice. Games capped at 50
+  // weeks — covers both wins (~wk30) and typical bankruptcies (~wk25–35) while
+  // excluding degenerate 120-week timeout sessions no real player experiences.
+  // lean_loop exercises the canonical path: 'build' on matching_engine_choice
+  // (s.matching_owned) + 'pair' on founder_codebuild (recurs every 4+ weeks).
+  (() => {
+    const RUNS = 100;
+    const MAX_WEEK = 50;
+    const MIN_LENGTH = 60;
+
+    const violations = new Map();  // msg → worst { count, firstWeek, lastWeek }
+
+    for (let i = 0; i < RUNS; i++) {
+      const g = runGame('lean_loop', MAX_WEEK, true, false);
+
+      const counts = new Map();
+      for (const entry of g.log) {
+        if (typeof entry !== 'object' || !entry.outcomes) continue;
+        for (const msg of entry.outcomes) {
+          if (typeof msg !== 'string' || msg.length < MIN_LENGTH) continue;
+          const prev = counts.get(msg);
+          if (!prev) {
+            counts.set(msg, { count: 1, firstWeek: entry.week, lastWeek: entry.week });
+          } else {
+            counts.set(msg, { count: prev.count + 1, firstWeek: prev.firstWeek, lastWeek: entry.week });
+          }
+        }
+      }
+
+      for (const [msg, data] of counts) {
+        if (data.count > 1) {
+          const prev = violations.get(msg);
+          if (!prev || data.count > prev.count) violations.set(msg, data);
+        }
+      }
+    }
+
+    const pass = violations.size === 0;
+    console.log(`\nCHECK repeated narrative (lean_loop, ${RUNS} games ≤${MAX_WEEK}wk, min ${MIN_LENGTH} chars)`);
+    if (pass) {
+      console.log(`  No repeated narrative detected  PASS`);
+    } else {
+      for (const [msg, { count, firstWeek, lastWeek }] of violations) {
+        console.log(`  FAIL  "${msg.slice(0, 90)}…"  ×${count} (wk${firstWeek}–wk${lastWeek})`);
+      }
+    }
   })();
 }

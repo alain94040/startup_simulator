@@ -32,12 +32,6 @@
     role: "Advisor",
     name: "Priya",  // chat display name
     intro: "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute.",
-    voice: {
-      "mentor_competitor_bomb|research": "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's our wedge. Priya's officially advising now.",
-      "pivot_priya_verdict|pivot": "Called Alex. 'I've made the decision — we're pivoting.' He went quiet, then: 'okay.' Three weeks, $2k. We're rebuilding around activities.",
-      "pivot_priya_verdict|ship": "Decided to ship as planned. Alex was relieved. Priya said 'okay — watch your week-two retention closely.' I'll remember that.",
-      "pivot_priya_verdict|go": "Three weeks. $2k. Alex built it without comment. The product shifted underneath us — and it feels right."
-    },
     unlockCondition: (s) => s.met_priya === true && s.week >= s.met_priya_week + 2,
     cards: [
       {
@@ -47,6 +41,7 @@
         available: (s, char) => s.week <= 10 && s.signal < 60 && !char.flags.competitor_resolved,
         options: [
           { label: 'Do a competitive deep-dive', key: 'research',
+            journal: "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's our wedge. Priya's officially advising now.",
             execute(s, char) { char.flags.competitor_resolved = true; s.signal = clamp(s.signal + 8, 0, 100); s.market_fit = clamp(s.market_fit + 6, 0, 100); s.network.advisors++; return "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor."; } },
         ],
         dropDelay: 2, dropFrom: 'Priya',
@@ -65,6 +60,7 @@
           && s.met_priya && s.week <= 22,
         options: [
           { label: "Priya's right — we pivot", key: "pivot",
+            journal: "Called Alex. 'I've made the decision — we're pivoting.' He went quiet, then: 'okay.' Three weeks, $2k. We're rebuilding around activities.",
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.activities_pivot = true;
@@ -79,6 +75,7 @@
               return "You called Alex. 'I've made the decision.' He went quiet, then: 'okay.' Three weeks. $2k.";
             } },
           { label: "Appreciate it — but we ship as planned", key: "ship",
+            journal: "Decided to ship as planned. Alex was relieved. Priya said 'okay — watch your week-two retention closely.' I'll remember that.",
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.pivot_deferred = true;
@@ -87,6 +84,7 @@
               return "Alex was relieved. Priya said 'okay — watch your week-two retention closely.'";
             } },
           { label: "Good — let's make it happen", key: "go",
+            journal: "Three weeks. $2k. Alex built it without comment. The product shifted underneath us — and it feels right.",
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.activities_pivot = true;

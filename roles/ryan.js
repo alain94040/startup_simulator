@@ -30,10 +30,6 @@
     role: "Angel investor",
     name: "Ryan",  // chat display name
     intro: "heard about you through the network. love what you're building in the dating space — would love to grab coffee.",
-    voice: {
-      "ryan_intro|meet": "Great coffee with Ryan. Sharp questions, genuinely excited. He wants to stay close as things develop.",
-      "ryan_intro|pass": "Declined Ryan's coffee invite. He said to reach out when timing's better."
-    },
     unlockCondition: (s) => s.week >= 8 && s.network.advisors >= 1,
     cards: [
       {
@@ -43,12 +39,14 @@
         available: (s, char) => !char.flags.intro_done,
         options: [
           { label: 'Grab coffee', key: 'meet',
+            journal: "Great coffee with Ryan. Sharp questions, genuinely excited. He wants to stay close as things develop.",
             execute(s, char) {
               char.flags.intro_done = true;
               char.flags.lastUpdateWeek = s.week;
               return "Great coffee. Ryan asked sharp questions and seemed genuinely excited. 'Keep me posted as things develop — I want to stay close to this.'";
             } },
           { label: 'Not right now', key: 'pass',
+            journal: "Declined Ryan's coffee invite. He said to reach out when timing's better.",
             execute(s, char) { char.flags.intro_done = true; return "Declined. Ryan said to reach out when timing is better."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,

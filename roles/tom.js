@@ -11,9 +11,6 @@
     role: "Power user",
     name: "Tom",  // chat display name
     intro: "your most active subscriber just went quiet.",
-    voice: {
-      "power_user_quiet|call": "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had."
-    },
     unlockCondition: (s) => s.launched && s.customers >= 10,
     cards: [
       {
@@ -23,6 +20,7 @@
         available: (s, char) => s.launched && s.customers >= 10 && !char.flags.done && s.week >= (s.power_user_quiet_last || 0) + 6,
         options: [
           { label: 'Call Tom', key: 'call',
+            journal: "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
             execute(s, char) {
               char.flags.done = true;
               s.power_user_quiet_last = s.week;

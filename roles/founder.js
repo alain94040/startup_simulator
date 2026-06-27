@@ -39,40 +39,6 @@
       { key: "funded", cls: "red", label: "Round Closed", test: (s) => !!s.followerCommitted },
       { key: "yc", cls: "red", label: "YC Accepted", test: (s) => !!s.ycAccepted },
     ],
-    voice: {
-      "equity_signing|sign": "We signed the founder agreement. The split's locked in. Nobody set up vesting schedules — it felt unnecessary between friends. I hope that's not something I regret.",
-      "founder_landing|build": "Registered the domain and put up a simple landing page — $200 for the domain, hosting, and Carrd. Already got twelve 'signups'… all crypto spam. Still, we exist online now.",
-      "founder_first_interviews|interview": "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
-      "founder_meetup|go": "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on retention, and seemed genuinely curious about what we're building.",
-      "founder_reflect|review": "Quiet week. Sharpened the pitch — small refinements, nothing dramatic. Sometimes that's the work.",
-      "founder_codebuild|demos": "Ran 3 demos instead of pairing with Alex. 3 people signed up for early access.",
-      "founder_build_onboarding|build": "Built the onboarding end-to-end myself. Took longer than expected — not my strongest skill — but it shipped.",
-      "founder_build_onboarding|pass": "Handed the onboarding spec to Alex. He'll fit it in — but his queue just got longer.",
-      "founder_build_empty_states|build": "Added helpful empty states to every screen. Small fix, big impact.",
-      "founder_build_empty_states|pass": "Added empty states to the backlog. It'll stay there a while.",
-      "founder_build_export|build": "Photo verification shipped. All four users who asked about it upgraded.",
-      "founder_build_export|pass": "Asked Alex to prioritize photo verification. He'll ship it — but two weeks later, two of the four users had moved on.",
-      "founder_build_demo_account|build": "Seeded the demo account with realistic profiles. Next investor call, they asked 'can I sign up?' instead of 'how does this work?'",
-      "founder_build_demo_account|pass": "Kept winging investor demos. Lost two calls to confusion.",
-      "founder_solo_launch|ship": "Launched solo. No fanfare. But it's live.",
-      "founder_solo_launch|wait": "Polished a few things. Still not launched.",
-      "founder_solo_build|build": "Two weeks of solo heads-down. Much slower without Alex — things that took a day take a week now.",
-      "founder_solo_build|min": "Kept things barely moving. Not much progress but nothing broke.",
-      "founder_solo_discover|calls": "Three calls done on my own. One person asked if they could pay now. Signal is still there.",
-      "founder_solo_discover|survey": "Sent a survey instead of doing calls. Lower signal but saves time.",
-      "founder_solo_growth|outreach": "Cold batch sent. 2 signups from people I messaged directly.",
-      "founder_solo_growth|light": "Posted an update in one community. Small ripple. Keeps the light on.",
-      "founder_user_depth|deep": "Five user sessions done. Found patterns I didn't expect.",
-      "founder_user_depth|survey": "Sent a structured survey. 60% response rate. Useful signal, but nothing I didn't already suspect.",
-      "first_customer_offer|reference": "Offered 3 months free for a testimonial. They said yes immediately. First reference customer locked in.",
-      "first_customer_offer|pitch": "Pitched them at $49/month. They converted. First paying subscriber. Not much, but it's real.",
-      "reference_checkin|call": "One hour call with the reference customer. They've been on two dates from kindred. Got a quote I can use anywhere.",
-      "reference_checkin|email": "Asked the reference customer for a testimonial over email. Short paragraph back — honest and usable.",
-      "website_social_proof|rebuild": "Rebuilt the website around the customer story. Hero section is now the customer quote. Conversion jumped immediately.",
-      "founder_pricing_experiment|prompt": "Added an upgrade prompt. A few users complained about the nag — but some converted. Worth it.",
-      "founder_pricing_experiment|cap": "Capped the free tier at 3 seats. More revenue, fewer free users.",
-      "founder_pricing_experiment|hold": "Held off on pricing. Free users keep coming. The conversion problem isn't going anywhere."
-    },
     cards: [
       {
         id: 'founder_landing', cat: 'p', from: 'You',
@@ -81,6 +47,7 @@
         available: (s) => s.week <= 5 && !s.has_landing_page,
         options: [
           { label: 'Register the domain + set up a landing page — $200', key: 'build',
+            journal: "Registered the domain and put up a simple landing page — $200 for the domain, hosting, and Carrd. Already got twelve 'signups'… all crypto spam. Still, we exist online now.",
             execute(s) { s.has_landing_page = true; s.cash = clamp(s.cash - 200, 0, 9999999); s.signal = clamp(s.signal + 8, 0, 100); return "Domain registered. Simple landing page live. $200 out for domain, annual hosting, and a Carrd subscription. Already have 12 email signups from people! wait actually these are just spammers pushing some crypto scam."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
@@ -92,6 +59,7 @@
         available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
         options: [
           { label: 'Block off this week for 5 customer interviews', key: 'interview',
+            journal: "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
             execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.waitlist += 1; return "5 calls done. Two insights you didn't expect. One person said they'd pay right now if it existed. Signal much clearer."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
@@ -114,6 +82,7 @@
         },
         options: [
           { label: 'Sign the agreement', key: 'sign',
+            journal: "We signed the founder agreement. The split's locked in. Nobody set up vesting schedules — it felt unnecessary between friends. I hope that's not something I regret.",
             execute(s, char, e) {
               s.jordan_equity = true;
               s.jordan_cleanup_needed = true;
@@ -178,9 +147,31 @@
                 if (s.items && s.items.matching_algo && s.items.matching_algo.status !== 'obsolete' && researched) {
                   s.items.matching_algo.quality = 'solid';
                 }
-                return researched
-                  ? "Paired with Alex on the matching engine — the core of Kindred. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
-                  : "Paired with Alex on the matching engine — the core of Kindred. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
+                if (!char.flags.matching_pair_intro) {
+                  char.flags.matching_pair_intro = true;
+                  return researched
+                    ? "Paired with Alex on the matching engine — the core of Kindred. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
+                    : "Paired with Alex on the matching engine — the core of Kindred. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
+                }
+                const pairN = (char.flags.matching_pair_count = (char.flags.matching_pair_count || 0) + 1);
+                const researchedMsgs = [
+                  "Back on the algorithm with Alex. Last week's interviews surfaced two ranking heuristics we hadn't considered — both are in now.",
+                  "Two days deep on match scoring with Alex. Building intuition nobody else has, one heuristic at a time.",
+                  "More engine work with Alex. The ranking is tightening up — you can feel it in the match quality.",
+                  "Another focused sprint with Alex. Refined match weighting based on what users actually do after matching, not what they say they want.",
+                  "Spent the day pair-programming on the core algorithm. A subtle bias in the scoring got fixed — match quality should improve.",
+                  "Deep into the algorithm with Alex again. One major edge case squashed; first-match acceptance rate up noticeably.",
+                ];
+                const unresearchedMsgs = [
+                  "More time on the algorithm with Alex. Moving forward, but without real user signal you're still partly guessing.",
+                  "Another engine sprint. Useful, but optimizing without user data means some of this will get thrown out later.",
+                  "Paired on the matching logic again. Progress is real but slow when you don't know what a good match looks like in practice.",
+                  "More algorithm work with Alex. The logic feels tighter but you're still flying blind on what users actually respond to.",
+                  "Another week on the engine. Without user signal, it's hard to know if you're improving what matters.",
+                  "Back on the matching engine with Alex. Smart engineering — but engineering without signal is just guessing dressed up as progress.",
+                ];
+                const pool = researched ? researchedMsgs : unresearchedMsgs;
+                return pool[(pairN - 1) % pool.length];
               }
               return "Paired up. You worked on the profiles UI, Alex handled the matching algorithm. Your contribution was modest but Alex shipped faster with you there.";
             } },
@@ -207,6 +198,7 @@
         },
         options: [
           { label: 'Build it yourself', key: 'build',
+            journal: "Built the onboarding end-to-end myself. Took longer than expected — not my strongest skill — but it shipped.",
             execute(s, char, e) {
               char.flags.onboarding_built = true;
               s.market_fit = clamp(s.market_fit + 5, 0, 100);
@@ -315,6 +307,7 @@
         },
         options: [
           { label: 'Go to the meetup', key: 'go',
+            journal: "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on retention, and seemed genuinely curious about what we're building.",
             execute(s, char) {
               char.flags.meetup_done = true;
               s.met_priya = true;
@@ -397,6 +390,7 @@
               return "Three calls done. One person asked if they could pay now. Signal is still there.";
             } },
           { label: 'Send a survey instead', key: 'survey',
+            journal: "Sent a survey instead of doing calls. Lower signal but saves time.",
             execute(s) {
               s.solo_discover_last = s.week;
               s.signal = clamp(s.signal + 3, 0, 100);
@@ -417,6 +411,7 @@
         },
         options: [
           { label: 'Do the outreach', key: 'outreach',
+            journal: "Cold batch sent. 2 signups from people I messaged directly.",
             execute(s) {
               s.solo_growth_last = s.week;
               s.users += 2;
@@ -452,6 +447,7 @@
               return "Five sessions done. Same burst-then-silence pattern, but this time you found where drop-off happens later in the conversation — users who don't get a reply within 48 hours almost never come back. Adjusted the nudge timing.";
             } },
           { label: 'Send a structured survey', key: 'survey',
+            journal: "Sent a structured survey. 60% response rate. Useful signal, but nothing I didn't already suspect.",
             execute(s) {
               s.user_depth_last = s.week;
               s.user_depth_count = (s.user_depth_count || 0) + 1;
@@ -478,6 +474,7 @@
               return "Offered 3 months free in exchange for a public testimonial. They said yes immediately. First reference customer locked in.";
             } },
           { label: 'Pitch them at $49/month', key: 'pitch',
+            journal: "Pitched them at $49/month. They converted. First paying subscriber. Not much, but it's real.",
             execute(s) {
               s.first_customer_offered = true;
               s.users = Math.max(0, s.users - 1);
@@ -502,6 +499,7 @@
               return "One hour call. They walked you through what actually leads to a date on kindred — two patterns you hadn't designed around. And a quote you can use anywhere.";
             } },
           { label: 'Ask over email', key: 'email',
+            journal: "Asked the reference customer for a testimonial over email. Short paragraph back — honest and usable.",
             execute(s) {
               s.testimonial = true;
               s.signal = clamp(s.signal + 3, 0, 100);
@@ -553,6 +551,7 @@
               return `Seat cap live. ${converted} upgraded, ${churned} left when the wall went up. More revenue, fewer free users.`;
             } },
           { label: 'Hold — grow the free tier first', key: 'hold',
+            journal: "Held off on pricing. Free users keep coming. The conversion problem isn't going anywhere.",
             execute(s) {
               s.pricing_exp_last = s.week;
               s.users += 5;
@@ -579,7 +578,21 @@
         available: () => true,
         options: [
           { label: 'Review your positioning', key: 'review',
-            execute(s) { s.signal = clamp(s.signal + 2, 0, 100); return "Spent time thinking about the pitch. Small refinements. Nothing dramatic."; } },
+            execute(s, char) {
+              s.signal = clamp(s.signal + 2, 0, 100);
+              const n = (char.flags.reflect_count = (char.flags.reflect_count || 0) + 1);
+              const msgs = [
+                "Spent time thinking about the pitch. Small refinements. Nothing dramatic.",
+                "Wrote out the 'why now' for Kindred again. Tighter than before, but still not crisp enough for a cold email.",
+                "Mapped out how we talk about the problem. Some clarity — nothing that changes the strategy.",
+                "Refined the one-liner. Closer, but still not the version that makes someone lean in.",
+                "Ran through the positioning again. A few word changes, one sharper framing. Progress.",
+                "Wrote down the three objections we always get. No good answers yet — but naming them is a start.",
+                "Spent an hour on the competitive landscape. We're not as unique as I thought, but the distribution angle still holds.",
+                "Revisited the target persona. Still feels right. The ICP is narrow but it's real.",
+              ];
+              return msgs[(n - 1) % msgs.length];
+            } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },

@@ -24,37 +24,6 @@
 
     role: "Communities",
     name: "HN / Reddit",  // chat display name
-    voice: {
-      "hn_thread|engage": "Engaged the HN thread authentically. 7 DMs requesting early access.",
-      "community_signal_hn_1|engage": "Commented on the HN thread with a genuine take. 4 people DM'd asking when we're launching.",
-      "community_signal_hn_1|skip": "Read the HN thread. Nothing actionable right now.",
-      "community_signal_hn_2|engage": "Left a detailed reply on the HN thread. Two people asked to be notified at launch — one is a former PM at a big company.",
-      "community_signal_hn_2|skip": "Didn't engage the HN thread. Kept building.",
-      "community_signal_hn_3|engage": "Shared the waitlist link on HN. 8 signups from the thread. One person asked for early access.",
-      "community_signal_hn_3|skip": "Watched the HN thread from the sidelines. Three potential users moved on.",
-      "community_signal_reddit_1|engage": "Joined the Reddit conversation as a builder. 2 people signed up for early access.",
-      "community_signal_reddit_1|skip": "Skipped the Reddit thread. Staying focused.",
-      "community_signal_reddit_2|engage": "Added my take on why anti-Tinder startups keep failing. 12 upvotes, 3 private follow-ups.",
-      "community_signal_reddit_2|skip": "Took notes from the Reddit thread. Three failure modes to avoid.",
-      "community_signal_reddit_3|engage": "Jumped into the Reddit thread as the founder. Thread stayed warm for two days. 7 signups.",
-      "community_signal_reddit_3|watch": "Let the Reddit thread run on its own. 3 signups without lifting a finger.",
-      "community_signal_slack_1|engage": "Posted an honest update on Indie Hackers. 5 people followed up with their own experiences.",
-      "community_signal_slack_1|skip": "Skipped the Indie Hackers thread. Head down this week.",
-      "community_signal_slack_2|engage": "Replied to the dating app post-mortem on Indie Hackers with what we're doing differently. The author DM'd me.",
-      "community_signal_slack_2|skip": "Took notes from the IH post-mortem. Three failure modes to avoid.",
-      "community_signal_slack_3|engage": "Started posting weekly updates on Indie Hackers. 6 new subscribers in 48 hours. Two founders reached out.",
-      "community_signal_slack_3|skip": "Stayed quiet on Indie Hackers. The gap with other builders is widening.",
-      "community_product_hn|engage": "Responded to every comment on the HN post about us. Thread stayed warm for 3 days. 5 signups.",
-      "community_product_hn|watch": "Let the HN post run. Thread faded quickly. 1 signup.",
-      "community_product_reddit|engage": "Thanked the Reddit poster publicly and privately. They became a power user and wrote a short review.",
-      "community_product_reddit|watch": "Let the Reddit post ride. 2 more signups from the thread tail.",
-      "community_product_slack|engage": "Answered pricing questions on the IH post honestly. 2 signups, 1 feature request worth exploring.",
-      "community_product_slack|watch": "Let the IH post run. 1 signup.",
-      "yc_discussion_ready|apply": "Committed to this YC batch. Deadline is next sprint — time to write the application.",
-      "yc_discussion_ready|skip": "Decided to skip this YC batch. Next one opens in ~12 weeks.",
-      "yc_discussion_early|apply": "Going for YC anyway — a long shot, but the partner feedback alone is worth it.",
-      "yc_discussion_early|skip": "Waiting for the next YC batch. More time to hit the numbers."
-    },
     cards: [
       {
         id: 'hn_thread', cat: 'e', from: 'Hacker News',
@@ -63,6 +32,7 @@
         available: (s) => !s.launched && !s.hn_thread_done,
         options: [
           { label: 'Engage the thread', key: 'engage',
+            journal: "Engaged the HN thread authentically. 7 DMs requesting early access.",
             execute(s) { s.hn_thread_done = true; s.signal = clamp(s.signal + 12, 0, 100); s.market_fit = clamp(s.market_fit + 3, 0, 100); s.waitlist += 7; s.network.peers += 8; return "Engaged the thread authentically. 7 DMs requesting early access."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -76,8 +46,10 @@
         available: (s, char) => !s.launched && s.week >= 6 && (char.flags.hn_stage || 0) === 0,
         options: [
           { label: 'Drop a comment', key: 'engage',
+            journal: "Commented on the HN thread with a genuine take. 4 people DM'd asking when we're launching.",
             execute(s, char) { char.flags.hn_stage = 1; char.flags.hn_stage_week = s.week; s.signal = clamp(s.signal + 6, 0, 100); s.waitlist += 4; s.network.peers += 3; s.market_fit = clamp(s.market_fit + 1, 0, 100); return "Commented with a genuine take. 4 people DM'd asking when you're launching."; } },
           { label: 'Read and move on', key: 'skip',
+            journal: "Read the HN thread. Nothing actionable right now.",
             execute(s, char) { char.flags.hn_stage = 1; char.flags.hn_stage_week = s.week; return "Read it. Nothing actionable right now."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -90,8 +62,10 @@
         available: (s, char) => !s.launched && char.flags.hn_stage === 1 && s.week >= (char.flags.hn_stage_week || 0) + 5,
         options: [
           { label: 'Leave a detailed reply', key: 'engage',
+            journal: "Left a detailed reply on the HN thread. Two people asked to be notified at launch — one is a former PM at a big company.",
             execute(s, char) { char.flags.hn_stage = 2; char.flags.hn_stage_week = s.week; s.signal = clamp(s.signal + 7, 0, 100); s.waitlist += 5; s.network.peers += 4; return "Left a detailed reply. Two people asked to be notified at launch. One is a former PM at a big company."; } },
           { label: 'Leave it', key: 'skip',
+            journal: "Didn't engage the HN thread. Kept building.",
             execute(s, char) { char.flags.hn_stage = 2; char.flags.hn_stage_week = s.week; return "Didn't engage. Kept building."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -104,8 +78,10 @@
         available: (s, char) => !s.launched && char.flags.hn_stage === 2 && s.week >= (char.flags.hn_stage_week || 0) + 5,
         options: [
           { label: 'Share the waitlist link', key: 'engage',
+            journal: "Shared the waitlist link on HN. 8 signups from the thread. One person asked for early access.",
             execute(s, char) { char.flags.hn_stage = 3; s.signal = clamp(s.signal + 9, 0, 100); s.waitlist += 8; s.network.peers += 5; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Shared the link. 8 signups from the thread. One person asked for early access — you said yes."; } },
           { label: 'Stay quiet for now', key: 'skip',
+            journal: "Watched the HN thread from the sidelines. Three potential users moved on.",
             execute(s, char) { char.flags.hn_stage = 3; s.signal = clamp(s.signal + 2, 0, 100); return "Watched from the sidelines. Three potential users moved on. The thread died."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -120,8 +96,10 @@
         available: (s, char) => !s.launched && s.week >= 8 && (char.flags.reddit_stage || 0) === 0,
         options: [
           { label: 'Join the conversation', key: 'engage',
+            journal: "Joined the Reddit conversation as a builder. 2 people signed up for early access.",
             execute(s, char) { char.flags.reddit_stage = 1; char.flags.reddit_stage_week = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.waitlist += 2; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Joined as a builder, not a promoter. 2 people signed up for early access."; } },
           { label: 'Skip it', key: 'skip',
+            journal: "Skipped the Reddit thread. Staying focused.",
             execute(s, char) { char.flags.reddit_stage = 1; char.flags.reddit_stage_week = s.week; return "Skipped. Staying focused."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -134,8 +112,10 @@
         available: (s, char) => !s.launched && char.flags.reddit_stage === 1 && s.week >= (char.flags.reddit_stage_week || 0) + 5,
         options: [
           { label: 'Respond with your read on it', key: 'engage',
+            journal: "Added my take on why anti-Tinder startups keep failing. 12 upvotes, 3 private follow-ups.",
             execute(s, char) { char.flags.reddit_stage = 2; char.flags.reddit_stage_week = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.market_fit = clamp(s.market_fit + 4, 0, 100); return "Added your take on where they missed. 12 upvotes. Three people followed up privately."; } },
           { label: 'Take notes and move on', key: 'skip',
+            journal: "Took notes from the Reddit thread. Three failure modes to avoid.",
             execute(s, char) { char.flags.reddit_stage = 2; char.flags.reddit_stage_week = s.week; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Read everything. Three things to avoid. Filed away."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -148,8 +128,10 @@
         available: (s, char) => !s.launched && char.flags.reddit_stage === 2 && s.week >= (char.flags.reddit_stage_week || 0) + 5,
         options: [
           { label: 'Jump in as the founder', key: 'engage',
+            journal: "Jumped into the Reddit thread as the founder. Thread stayed warm for two days. 7 signups.",
             execute(s, char) { char.flags.reddit_stage = 3; s.signal = clamp(s.signal + 8, 0, 100); s.waitlist += 7; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Jumped in as the founder. Thread stayed warm for two days. 7 signups."; } },
           { label: 'Let it run on its own', key: 'watch',
+            journal: "Let the Reddit thread run on its own. 3 signups without lifting a finger.",
             execute(s, char) { char.flags.reddit_stage = 3; s.signal = clamp(s.signal + 3, 0, 100); s.waitlist += 3; return "Organic momentum. 3 signups without lifting a finger."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -164,8 +146,10 @@
         available: (s, char) => !s.launched && s.week >= 10 && (char.flags.ih_stage || 0) === 0,
         options: [
           { label: 'Share what you\'ve learned', key: 'engage',
+            journal: "Posted an honest update on Indie Hackers. 5 people followed up with their own experiences.",
             execute(s, char) { char.flags.ih_stage = 1; char.flags.ih_stage_week = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.network.peers += 4; s.market_fit = clamp(s.market_fit + 1, 0, 100); return "Posted an honest update. 5 people followed up with their own experiences. Real signal."; } },
           { label: 'Skip it', key: 'skip',
+            journal: "Skipped the Indie Hackers thread. Head down this week.",
             execute(s, char) { char.flags.ih_stage = 1; char.flags.ih_stage_week = s.week; return "Skipped. Head down this week."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -178,8 +162,10 @@
         available: (s, char) => !s.launched && char.flags.ih_stage === 1 && s.week >= (char.flags.ih_stage_week || 0) + 5,
         options: [
           { label: 'Reply with what you\'re doing differently', key: 'engage',
+            journal: "Replied to the dating app post-mortem on Indie Hackers with what we're doing differently. The author DM'd me.",
             execute(s, char) { char.flags.ih_stage = 2; char.flags.ih_stage_week = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.market_fit = clamp(s.market_fit + 5, 0, 100); s.network.peers += 3; return "Left a detailed reply on what you learned from their mistakes. The author DM'd you. Useful conversation."; } },
           { label: 'Take notes privately', key: 'skip',
+            journal: "Took notes from the IH post-mortem. Three failure modes to avoid.",
             execute(s, char) { char.flags.ih_stage = 2; char.flags.ih_stage_week = s.week; s.market_fit = clamp(s.market_fit + 3, 0, 100); return "Took notes. Three failure modes to avoid. Filed away."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -192,8 +178,10 @@
         available: (s, char) => !s.launched && char.flags.ih_stage === 2 && s.week >= (char.flags.ih_stage_week || 0) + 5,
         options: [
           { label: 'Start posting weekly updates', key: 'engage',
+            journal: "Started posting weekly updates on Indie Hackers. 6 new subscribers in 48 hours. Two founders reached out.",
             execute(s, char) { char.flags.ih_stage = 3; s.signal = clamp(s.signal + 6, 0, 100); s.waitlist += 6; s.network.peers += 5; return "First public update posted. 6 new subscribers in 48 hours. Two founders reached out to compare notes."; } },
           { label: 'Keep heads down', key: 'skip',
+            journal: "Stayed quiet on Indie Hackers. The gap with other builders is widening.",
             execute(s, char) { char.flags.ih_stage = 3; return "Stayed quiet. The gap is widening."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -208,8 +196,25 @@
         available: (s) => s.launched && s.week >= (s.community_product_hn_last || 0) + 3,
         options: [
           { label: 'Engage the thread', key: 'engage',
-            execute(s) { s.community_product_hn_last = s.week; s.signal = clamp(s.signal + 7, 0, 100); s.users += 5; return "Responded to every comment. Thread stayed warm for 3 days. 5 signups."; } },
+            execute(s, char) {
+              s.community_product_hn_last = s.week;
+              s.signal = clamp(s.signal + 7, 0, 100);
+              s.users += 5;
+              const n = (char.flags.hn_product_count = (char.flags.hn_product_count || 0) + 1);
+              const msgs = [
+                "Responded to every comment. Thread stayed warm for 3 days. 5 signups.",
+                "Jumped in early and corrected a misconception about pricing. Thread picked up. 5 new users.",
+                "Replied to every critique with specifics. One exchange turned into a paying customer.",
+                "Engaged the skeptics directly. A few people came around. 5 signups from the tail.",
+                "Spent a few hours in the comments addressing every concern. 5 signups and a useful feature request.",
+                "Wrote a detailed founder reply. It climbed to the top of the thread. 5 new users from the discussion.",
+                "Responded as the founder — honest and direct. Thread stayed active longer than usual. 5 more signups.",
+                "Engaged with the doubters first. Honest answers. 5 signups from people who appreciated the transparency.",
+              ];
+              return msgs[(n - 1) % msgs.length];
+            } },
           { label: 'Let it run', key: 'watch',
+            journal: "Let the HN post run. Thread faded quickly. 1 signup.",
             execute(s) { s.community_product_hn_last = s.week; s.users += 1; return "Didn't engage. Thread faded quickly. 1 signup."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -222,8 +227,26 @@
         available: (s) => s.launched && s.week >= (s.community_product_reddit_last || 0) + 3,
         options: [
           { label: 'Reach out to the poster', key: 'engage',
-            execute(s) { s.community_product_reddit_last = s.week; s.signal = clamp(s.signal + 5, 0, 100); s.users += 3; s.market_fit = clamp(s.market_fit + 1, 0, 100); return "Thanked them publicly and privately. They became a power user and wrote a short review."; } },
+            execute(s, char) {
+              s.community_product_reddit_last = s.week;
+              s.signal = clamp(s.signal + 5, 0, 100);
+              s.users += 3;
+              s.market_fit = clamp(s.market_fit + 1, 0, 100);
+              const n = (char.flags.reddit_product_count = (char.flags.reddit_product_count || 0) + 1);
+              const msgs = [
+                "Thanked them publicly and privately. They became a power user and wrote a short review.",
+                "Sent a DM with a personal thank-you and a promo code. They stuck around and started recommending us.",
+                "Messaged the poster. Turned into a 20-minute call. They're now one of our most active users.",
+                "Reached out directly. They appreciated it — converted to paid and referred two friends.",
+                "Sent a personal note to the poster. They shared it in two other communities. 3 more signups.",
+                "DM'd with a genuine thank-you. They became one of our most vocal advocates on the platform.",
+                "Replied publicly and messaged privately. They converted to paid and left a glowing comment the next day.",
+                "Reached out to thank them and ask for feedback. Great conversation — and 2 more referrals from their network.",
+              ];
+              return msgs[(n - 1) % msgs.length];
+            } },
           { label: 'Let it ride', key: 'watch',
+            journal: "Let the Reddit post ride. 2 more signups from the thread tail.",
             execute(s) { s.community_product_reddit_last = s.week; s.users += 2; return "Organic momentum. 2 more signups from the thread tail."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -237,8 +260,25 @@
         available: (s) => s.launched && s.week >= (s.community_product_slack_last || 0) + 3,
         options: [
           { label: 'Engage and answer pricing questions', key: 'engage',
-            execute(s) { s.community_product_slack_last = s.week; s.signal = clamp(s.signal + 4, 0, 100); s.users += 2; return "Answered everything honestly. 2 signups, 1 feature request worth exploring."; } },
+            execute(s, char) {
+              s.community_product_slack_last = s.week;
+              s.signal = clamp(s.signal + 4, 0, 100);
+              s.users += 2;
+              const n = (char.flags.slack_product_count = (char.flags.slack_product_count || 0) + 1);
+              const msgs = [
+                "Answered everything honestly. 2 signups, 1 feature request worth exploring.",
+                "Went through the pricing questions one by one. Ended with 2 new users and a useful thread.",
+                "Spent an hour in the comments. 2 signups and a feature request I'm actually going to build.",
+                "Replied to every pricing question directly. The transparency helped — 2 more users.",
+                "Walked through the pricing logic in the thread. 2 conversions and a good back-and-forth.",
+                "Answered the hard questions publicly. Turned a few skeptics. 2 signups from the thread.",
+                "Gave real numbers when they asked about pricing. 2 new users who said the honesty sold them.",
+                "Responded to every question with specifics. 2 signups and one person who said they'd been waiting for exactly this.",
+              ];
+              return msgs[(n - 1) % msgs.length];
+            } },
           { label: 'Let it run', key: 'watch',
+            journal: "Let the IH post run. 1 signup.",
             execute(s) { s.community_product_slack_last = s.week; s.users += 1; return "Thread ran its course. 1 signup."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -252,8 +292,10 @@
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && s.launched && s.pivot_shipped && s.customers >= 1,
         options: [
           { label: 'Start writing the application', key: 'apply',
+            journal: "Committed to this YC batch. Deadline is next sprint — time to write the application.",
             execute(s, char, e) { s.ycDeciding = true; s.ycQualified = true; return "Committed to this batch. Deadline is next sprint — time to write."; } },
           { label: 'Skip this batch', key: 'skip',
+            journal: "Decided to skip this YC batch. Next one opens in ~6 months.",
             execute(s, char, e) { e.ycWeek += 26; return "Decided to skip this batch. Next one opens in ~6 months."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
@@ -265,8 +307,10 @@
         available: (s, char, e) => s.week >= e.ycWeek && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && (!s.launched || !s.pivot_shipped || s.customers < 1),
         options: [
           { label: 'Start writing anyway', key: 'apply',
+            journal: "Going for YC anyway — a long shot, but the partner feedback alone is worth it.",
             execute(s, char, e) { s.ycDeciding = true; s.ycQualified = false; return "Going for it — a long shot, but the partner feedback alone is worth it."; } },
           { label: 'Wait for next batch', key: 'skip',
+            journal: "Waiting for the next YC batch. More time to hit the numbers.",
             execute(s, char, e) { e.ycWeek += 26; return "Waiting for next batch. More time to hit the numbers. Next window in ~6 months."; } },
         ],
         dropDelay: 0, dropMsg: null,

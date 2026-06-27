@@ -11,9 +11,6 @@
     role: "Brand consultant",
     name: "Brett",  // chat display name
     intro: "found you on crunchbase. i work with early-stage founders on positioning — dropping you a line.",
-    voice: {
-      "consultant_brand|hire": "Hired Brett for a brand workshop. 45 minutes of sticky notes and a 'narrative architecture' framework. His main insight: 'lean into your why.' I already knew this. $1,500."
-    },
     unlockCondition: (s) => s.incorporated && s.hn_thread_done && s.week >= 4,
     cards: [
       {
@@ -23,6 +20,7 @@
         available: (s, char) => !char.flags.done,
         options: [
           { label: 'Book the session — $1,500', key: 'hire',
+            journal: "Hired Brett for a brand workshop. 45 minutes of sticky notes and a 'narrative architecture' framework. His main insight: 'lean into your why.' I already knew this. $1,500.",
             execute(s, char) { char.flags.done = true; s.cash = clamp(s.cash - 1500, 0, 9999999); return "45 minutes of sticky notes and a 'narrative architecture' framework. Brett's main insight: 'lean into your why.' You already knew this. He emailed his invoice immediately."; } },
         ],
         dropDelay: 1, dropFrom: 'Brett',

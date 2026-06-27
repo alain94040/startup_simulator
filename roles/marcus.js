@@ -14,12 +14,6 @@
     role: "Angel investor",
     name: "Marcus",  // chat display name
     intro: "heard about kindred through the network. genuinely curious about what you're building in the dating space — would love to connect when you have a minute.",
-    voice: {
-      "investor_intro_warm|call": "Great call with Marcus. He's following our progress now.",
-      "prep_deck|build": "Built the investor deck. Story is clear, numbers are real. Ready when the time comes.",
-      "investor_ready|meet": "Took both investor meetings. Strong — both want to see our next milestone.",
-      "seed_pitch|pitch": "Had the formal conversation with Marcus about leading our round."
-    },
     unlockCondition: (s) => s.week >= 6 && s.network.advisors >= 1,
     cards: [
       {
@@ -29,6 +23,7 @@
         available: (s, char) => s.week > 4 && s.investor_warmth < 50 && !char.flags.intro_warm_done,
         options: [
           { label: 'Take the call', key: 'call',
+            journal: "Great call with Marcus. He's following our progress now.",
             execute(s, char) { char.flags.intro_warm_done = true; s.investor_warmth = clamp(s.investor_warmth + 20, 0, 100); s.network.angels++; return "Great call. Marcus is following your progress."; } },
         ],
         dropDelay: 1, dropFrom: 'Marcus',
@@ -43,6 +38,7 @@
         available: (s, char) => char.flags.intro_warm_done && !char.flags.intro_moved_on && !s.deck_ready && !char.flags.deck_asked && s.signal >= 38 && (s.customers >= 2 || s.users >= 20 || s.waitlist >= 20),
         options: [
           { label: 'Build the deck now', key: 'build',
+            journal: "Built the investor deck. Story is clear, numbers are real. Ready when the time comes.",
             execute(s, char) { s.deck_ready = true; char.flags.deck_asked = true; return "Deck done. Story is clear. Ready when the time comes."; } },
         ],
         dropDelay: 2, dropFrom: 'Marcus',
@@ -56,6 +52,7 @@
         available: (s, char) => s.deck_ready && s.signal >= 38 && s.investor_warmth < 75 && s.network.angels >= 1 && !char.flags.investor_ready_done && !char.flags.intro_moved_on,
         options: [
           { label: 'Take both meetings', key: 'meet',
+            journal: "Took both investor meetings. Strong — both want to see our next milestone.",
             execute(s, char) { char.flags.investor_ready_done = true; s.investor_warmth = clamp(s.investor_warmth + 33, 0, 100); return "Strong meetings. Both investors want to see your next milestone."; } },
         ],
         dropDelay: 2, dropFrom: 'Investor',
@@ -68,6 +65,7 @@
         urgency: 2, weeks: 2,
         available: (s, char) => s.investor_warmth >= 50 && s.deck_ready && s.customers >= 6 && s.signal >= 45 && !s.marcusCommitted && !char.flags.intro_moved_on,
         options: [{ label: "Yes — let's talk terms", key: 'pitch',
+          journal: "Had the formal conversation with Marcus about leading our round.",
           execute(s, char, e) {
             if (s.jordan_cleanup_needed) {
               s.investor_warmth = clamp(s.investor_warmth - 10, 0, 100);

@@ -12,9 +12,6 @@
     role: "Community leader",
     name: "Sarah",  // chat display name
     intro: "hey — heard about kindred from a mutual friend. i run a singles community in SF and i think there could be a fit.",
-    voice: {
-      "intro_expiring|reply": "Met with Sarah — she runs a singles community of 18,000 members. She liked the product and agreed to feature kindred at her next event. 12 signups in the first week."
-    },
     unlockCondition: (s) => s.week >= 3,
     cards: [
       {
@@ -24,6 +21,7 @@
         available: (s, char) => s.week > 3 && !char.flags.intro_done && s.launched && s.activities_pivot,
         options: [
           { label: 'Meet with Sarah now', key: 'reply',
+            journal: "Met with Sarah — she runs a singles community of 18,000 members. She liked the product and agreed to feature kindred at her next event. 12 signups in the first week.",
             execute(s, char) { char.flags.intro_done = true; s.users += 12; s.signal = clamp(s.signal + 7, 0, 100); s.network.advisors++; return "Met with Sarah. She liked the product and agreed to feature kindred in her next event. 12 signups in the first week. She's now a connector you can rely on."; } },
         ],
         dropDelay: 1, dropFrom: 'Sarah',

@@ -12,18 +12,6 @@
 
     role: "Industry news",
     name: "Market",  // chat display name
-    voice: {
-      "competitor_launch|study": "Spent 2 weeks mapping Flare's product. They went broad — swiping, video dates, lots of noise. Our niche is the gap they skipped.",
-      "competitor_launch|compare": "Published a direct comparison with Flare. Our niche is clearer now. Alex is rattled but focused.",
-      "competitor_launch|copy": "Copied Flare's best features. Shipped fast — but we're building for their users now, not ours. Alex is frustrated.",
-      "competitor_launch|ignore": "Ignored Flare's launch and stayed on our roadmap. Their noise is real but so is our plan.",
-      "competitor_growing|calls": "Called 5 subscribers. Most still prefer our approach. Two want video dates — for a different reason than I assumed. Now I know what to build next.",
-      "competitor_growing|discount": "Offered existing subscribers a discount to stay. Bought loyalty — not ideal, but stopped the bleeding.",
-      "competitor_growing|ignore": "Kept building, ignored the Flare noise. Lost two subscribers. The remaining users are still with us — for now.",
-      "investor_moat_question|niche": "Answered the moat question directly — explained the niche Flare ignored.",
-      "investor_moat_question|speed": "Told the investor we're moving faster and closer to customers. Plausible but he wanted more.",
-      "investor_moat_question|deflect": "Tried to pivot to traction instead of answering the Flare question. The investor noticed."
-    },
     unlockCondition: (s) => s.items != null,
     cards: [
       {
@@ -33,6 +21,7 @@
         available: (s, char) => s.has_demo && !char.flags.done,
         options: [
           { label: 'Study what they built', key: 'study',
+            journal: "Spent 2 weeks mapping Flare's product. They went broad — swiping, video dates, lots of noise. Our niche is the gap they skipped.",
             execute(s, char, e) {
               char.flags.done = true;
               s.competitor_launch_week = s.week;
@@ -47,6 +36,7 @@
                 : "Spent 2 weeks mapping their product. They went broad — swiping, video dates, lots of noise. Your niche is the gap they skipped.";
             } },
           { label: 'Write a comparison piece', key: 'compare',
+            journal: "Published a direct comparison with Flare. Our niche is clearer now. Alex is rattled but focused.",
             execute(s, char, e) {
               char.flags.done = true;
               s.competitor_launch_week = s.week;
@@ -56,6 +46,7 @@
               return "Published a direct comparison. Your niche is clearer. Alex is rattled but focused.";
             } },
           { label: 'Copy their best features', key: 'copy',
+            journal: "Copied Flare's best features. Shipped fast — but we're building for their users now, not ours. Alex is frustrated.",
             execute(s, char, e) {
               char.flags.done = true;
               s.competitor_launch_week = s.week;
@@ -67,6 +58,7 @@
               return "Shipped fast. But you're building for their users now, not yours. Alex is frustrated. Twitter called you a Flare clone.";
             } },
           { label: 'Ignore it — stay on roadmap', key: 'ignore',
+            journal: "Ignored Flare's launch and stayed on our roadmap. Their noise is real but so is our plan.",
             execute(s, char, e) {
               char.flags.done = true;
               s.competitor_launch_week = s.week;
@@ -94,6 +86,7 @@
           && s.customers >= 1 && s.week >= (s.competitor_launch_week || 0) + 3,
         options: [
           { label: 'Do user calls — understand what they actually need', key: 'calls',
+            journal: "Called 5 subscribers. Most still prefer our approach. Two want video dates — for a different reason than I assumed. Now I know what to build next.",
             execute(s) {
               s.competitor_pressure_done = true;
               s.market_fit = clamp(s.market_fit + 6, 0, 100);
@@ -101,6 +94,7 @@
               return "Called 5 subscribers. Most still prefer your approach. Two want video dates — but for a different reason than you assumed. Now you know what to build next.";
             } },
           { label: 'Offer existing subscribers a discount to stay', key: 'discount',
+            journal: "Offered existing subscribers a discount to stay. Bought loyalty — not ideal, but stopped the bleeding.",
             execute(s) {
               s.competitor_pressure_done = true;
               s.customers = clamp(s.customers + 1, 0, 9999);
@@ -108,6 +102,7 @@
               return "Gave 3 subscribers 20% off. Bought loyalty — not ideal, but stopped the bleeding. The feature question didn't go away.";
             } },
           { label: 'Keep building, ignore the noise', key: 'ignore',
+            journal: "Kept building, ignored the Flare noise. Lost two subscribers. The remaining users are still with us — for now.",
             execute(s) {
               s.competitor_pressure_done = true;
               s.market_fit = clamp(s.market_fit - 5, 0, 100);
@@ -131,6 +126,7 @@
         available: (s) => s.deck_ready && s.competitor_launch_week && !s.moat_answered,
         options: [
           { label: "Explain the niche they ignored", key: 'niche',
+            journal: "Answered the moat question directly — explained the niche Flare ignored.",
             execute(s) {
               s.moat_answered = true;
               if (s.competitive_intel) {
@@ -141,12 +137,14 @@
               return "You said 'they're going broad, we're going deep' — but couldn't back it up with specifics. The investor nodded slowly. Conviction cooled.";
             } },
           { label: "We're moving faster and closer to customers", key: 'speed',
+            journal: "Told the investor we're moving faster and closer to customers. Plausible but he wanted more.",
             execute(s) {
               s.moat_answered = true;
               s.investor_warmth = clamp(s.investor_warmth + 2, 0, 100);
               return "Plausible answer. The investor appreciated the honesty but wanted more. 'Come back when you have 3 months of retention data.'";
             } },
           { label: "Deflect — pivot to your traction story", key: 'deflect',
+            journal: "Tried to pivot to traction instead of answering the Flare question. The investor noticed.",
             execute(s) {
               s.moat_answered = true;
               s.investor_warmth = clamp(s.investor_warmth - 8, 0, 100);

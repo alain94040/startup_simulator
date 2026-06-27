@@ -99,87 +99,6 @@
     ],
 
     role: "Co-founder · CTO",
-    voice: {
-      "start_prototype|build": "Told the team to start building today. Alex took profiles and matching, Jordan's on iOS, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.",
-      "incorporate_week1|atlas": "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
-      "dev_planning_session|full": "We spec'd the whole thing — three hours, the whiteboard packed with twenty-plus items. Jordan's thrilled. Alex thinks it's too much, and part of me suspects he's right.",
-      "dev_planning_session|lean": "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
-      "dev_planning_session|sprint": "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
-      "alex_commitment|accept": "Agreed Alex stays part-time for now — evenings and weekends. Slower, but he won't resent it. We set a milestone to revisit once we have traction.",
-      "alex_commitment|push": "Pushed Alex to go full-time. He said yes, but I could tell he wasn't ready. I'll need to watch how he's doing.",
-      "early_name|catchy": "Locked the name. Warm and memorable — people get what it's for the second they hear it.",
-      "early_name|descriptive": "Locked the name. Clean and distinctive, hard to confuse with anything else. It grows on people once they try it.",
-      "early_tech_stack|fast": "Decided to ship the fast version of the matching algorithm and fix scale later. The 10,000-user problem is a good problem to have.",
-      "early_tech_stack|scalable": "Decided to build the matching engine to scale from the start. Slower, but a cleaner foundation — and Alex hates rewriting things.",
-      "early_customer_target|individuals": "Settled on who we're for: 25–35, tired of swiping. Bigger pool, faster feedback.",
-      "early_customer_target|teams": "Settled on relationship-seekers — people seriously looking. Higher willingness to pay, a stronger retention story.",
-      "early_customer_target|open": "Decided to stay flexible on who we're for and let the first signups tell us who they are.",
-      "early_funding_goal|vc": "We aligned on the VC path — raise, grow fast, aim big. Every investor conversation gets sharper now that we know what we're building toward.",
-      "early_funding_goal|profitable": "We agreed to aim for profitable first — a real business, no VC required. Every product call gets cleaner when the bar is 'do people pay for this.'",
-      "early_funding_goal|open": "Left the funding question open. We'll revisit once we have enough users to know what kind of company we actually are.",
-      "vision_mismatch|alex": "Conceded the framing to Alex — we're 'casual dating done right.' Broader market, easier to explain. A few old 'serious matches' conversations are awkward now, but at least we're aligned.",
-      "vision_mismatch|yours": "Held the line on serious relationships. Alex went along with it — he still thinks casual is bigger, but the investor story is cleaner. The tension isn't really gone.",
-      "vision_mismatch|test": "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
-      "jordan_equity_alex|propose_33": "Proposed equal thirds — Jordan found the space and brought us together, Alex builds, I run it. We're all essential. Alex went quiet; he expected more for being all-in.",
-      "jordan_equity_alex|propose_40": "Proposed 40/40/20 — Alex and I are all in, Jordan's still at her job. Alex was happy. Jordan hasn't heard yet.",
-      "jordan_equity_alex|propose_50": "Took 50 for myself, 25 each for Alex and Jordan. Alex went quiet for a moment, then said okay. I'll be hearing from both of them.",
-      "jordan_equity_counter_alex|cave_40": "Alex pushed back, and he had a point — he's full-time, Jordan isn't. Moved to 40/40/20. He appreciated it.",
-      "jordan_equity_counter_alex|hold_33": "Alex pushed for more, but I held equal thirds. Everyone's essential. He didn't agree — but he dropped it.",
-      "alex_side_project|pause": "Appreciated the honesty. Asked him to pause the side project until we hit a milestone. He agreed — relationship's stronger for it.",
-      "alex_side_project_escalation|talk": "Had a hard conversation. Alex committed fully — said he was relieved I brought it up directly.",
-      "alex_quiet|checkin": "Noticed Alex had gone quiet. Checked in. Honest conversation — he's exhausted. Adjusted expectations for the week.",
-      "alex_equity|fair": "Revised the equity split. Both sides signed. Relationship's back on solid ground.",
-      "alex_equity|hard": "Pushed back hard on the equity ask. Alex accepted for now but he's not happy — this is coming back.",
-      "alex_equity|defer": "Kicked the equity discussion down the road. Alex grudgingly agreed, but the tension's building.",
-      "alex_sync_discover|discover": "Agreed to shift Alex to customer discovery this sprint. Time to talk to real people again.",
-      "alex_sync_build|build": "Alex back to building. Enough feedback for now — time to act on what we learned.",
-      "alex_sync_pitch|pitch": "Alex is working the investor pipeline. Traction story is solid enough to pitch.",
-      "alex_demo_ready|rough": "Showed the demo rough. Three contacts in the room — two hit bugs, but one leaned forward: 'Show me that again.' We know what to build next.",
-      "alex_demo_ready|polish": "Spent a sprint polishing before showing anyone. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'",
-      "auth_build_buy|buy": "Wired up a hosted auth provider — login, signup, password reset, social sign-in, all of it — in an afternoon. Costs us a bit each month, but it's a solved problem and now it's solved. Alex grumbled about the monthly fee.",
-      "auth_build_buy|build": "Let Alex build our own auth. He's sure it's a few days of work — 'why pay monthly for something this basic.' We'll see.",
-      "auth_buy_forced|buy": "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
-      "analytics_choice|buy": "Dropped in a real analytics SDK. Funnels, retention curves, event tracking — live in a day. Now we can actually see what users do instead of guessing. Small monthly cost, worth every cent.",
-      "analytics_choice|build": "Decided to build our own analytics dashboard. Alex's plate is already full. We're flying half-blind until it's done.",
-      "pivot_relaunch|ship": "Shipped the pivot. Different product under the same name. The first activity was created within an hour.",
-      "pivot_alex_pushback|ship": "Sided with Alex — we ship what we have, add activities post-launch. Alex looked relieved. Jordan went quiet.",
-      "pivot_alex_pushback|pivot": "Told Alex the signal is real — we should pivot. He went quiet. 'Okay. It's your call.' He doesn't agree.",
-      "pivot_counter_alex|confirm": "Confirmed the pivot over Alex's objection. Three weeks, $2k. We're rebuilding around activities.",
-      "pivot_counter_alex|reverse": "Changed my mind — shipping as planned. Alex seemed relieved.",
-      "bad_retention|fix": "Retrofitted activity features post-launch. More expensive and disruptive than doing it pre-launch, but users who stayed are responding.",
-      "bad_retention|calls": "Did 12 user calls this week. Every single one mentioned not knowing what to do after matching. The path forward is clear — just late.",
-      "bad_retention|stay": "Decided the problem was matching quality, not the post-match experience. Users keep churning. I think Alex is right that this was the wrong call.",
-      "proto_to_product|commit": "Keeping what worked from the demo, scrapping the rest. We know the core flow — now we build it properly.",
-      "proto_to_product|delay": "Not ready to rebuild yet — still learning from the demo. Alex nods, but I can tell he wants to move on.",
-      "good_enough_launch|ship": "Launched. First real users are in. Feedback starts flowing.",
-      "good_enough_launch|wait": "Polished a few more things instead of launching. Alex thinks I'm stalling — and he might be right.",
-      "alex_wants_rebuild|refactor": "Gave Alex two weeks to rebuild the API layer from scratch. Nothing else gets done — but if he's right, it'll save us months later.",
-      "arch_refactor_done|review": "Walked through the new codebase with Alex. Clean separation, well-documented. He seemed proud of this one.",
-      "alex_decision|ship": "Pulled off photo verification by Friday. User upgraded immediately. Set clear boundaries with Alex about making commitments without asking first.",
-      "alex_leaving_threat|talk": "Long, honest conversation with Alex. He's staying. Things need to improve — but we're aligned now.",
-      "incorporate_now|atlas": "Incorporated via Stripe Atlas. $500, Delaware C-corp, EIN, bank account. Feels official.",
-      "ip_concern|lawyer": "Lawyer reviewed Alex's previous employer IP agreement. Personal time, unrelated enough — no claim. IP assignment signed. Clean. $1,500.",
-      "first_interview_shock|pivot": "Pivoted focus to conversation quality and date-booking. Three more interviews confirmed it. Some earlier work won't carry over.",
-      "first_interview_shock|stay": "Filed the customer insight away. Not ready to pivot on one data point.",
-      "cold_silence|rewrite": "Rewrote the outreach. New version leads with the pain — 'you've matched with dozens of people and gone on zero dates.' First reply came in 4 hours.",
-      "random_reframe|test": "Ran the 'vetting tool' framing by 3 more people. All 3 immediately got it. Updated the positioning.",
-      "pivot_insight_1|pivot": "Rethought the approach. The real problem is conversation quality, not match quantity. Signal improved immediately.",
-      "pivot_insight_1|stay": "Logged the feedback but staying the course for now. Alex isn't convinced either.",
-      "pivot_insight_2|pivot": "Narrowed scope significantly. Less ambitious but far more right. Three users asked for exactly this.",
-      "pivot_insight_2|stay": "Decided to ship the broader scope. Market fit isn't perfect but we're moving.",
-      "pmf_lock|lock": "Locked in. Three users said the same thing unprompted this week: 'I actually went on a date because of this.' This is the product. Now build it right.",
-      "family_doubt|talk": "Long talk with Alex about family pressure. Reminded each other why we're doing this. Morale reset.",
-      "jordan_drift_start|talk": "Talked to Jordan directly about slowing down. She was apologetic, said it's temporary. I'm not sure.",
-      "jordan_drift_start|cover": "Let Alex cover for Jordan. He nodded, but his backlog just got longer.",
-      "jordan_drag|talk": "Sat down with Jordan. She heard the weight of it. Alex noticed I followed up.",
-      "jordan_launch_blocker|web_only": "Launched web-only. A dating app without iOS is a real handicap — early retention will show it.",
-      "jordan_launch_blocker|wait": "Gave Jordan two more weeks. Alex wasn't happy. The clock is running.",
-      "jordan_launch_blocker|confront": "Decided to confront Jordan about the launch blocker. This conversation is overdue.",
-      "jordan_confrontation|fire": "Hard conversation. Jordan wasn't surprised — she knew it wasn't working. She's off the team.",
-      "jordan_confrontation|defer": "Gave Jordan one more sprint. Alex went quiet. We both know how this ends.",
-      "jordan_cap_table|lawyer": "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
-      "jordan_cap_table|defer": "Can't afford cap table cleanup right now. Every investor who looks will ask about Jordan's stake."
-    },
     skills: { build: 1.2, discover: 0.7, pitch: 0.5 },
     cards: [
 
@@ -192,6 +111,7 @@
         options: [
           { label: "Game on — everyone start building", key: 'build',
             reply: "let's do this. you take backend, jordan takes iOS. i'll handle everything else. game on.",
+            journal: "Told the team to start building today. Alex took profiles and matching, Jordan's on iOS, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.",
             execute(s, char, e) {
               char.flags.prototype_kicked = true;
               s.jordan_active = true;
@@ -231,6 +151,7 @@
         options: [
           { label: 'Incorporate via Stripe Atlas — $500', key: 'atlas',
             reply: "do it. stripe atlas, delaware c-corp. let's get this done today.",
+            journal: "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
             execute(s, char) { s.incorporated = true; s.cash = clamp(s.cash - 500, 0, 9999999); return "Delaware C-corp registered. EIN assigned, bank account open. $500 gone — you're officially a company."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
@@ -265,6 +186,7 @@
             } },
           { label: 'Build version B', key: 'lean',
             reply: "let's build B. core hypothesis only — ship and learn. we can spec the rest when we know what works.",
+            journal: "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'lean';
@@ -273,6 +195,7 @@
             } },
           { label: 'Build version C', key: 'sprint',
             reply: "let's build C. strip it to the essentials and ship — we can layer the rest on once it's working.",
+            journal: "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
             execute(s, char) {
               char.flags.plan_done = true;
               // Hidden binary: C resolves to the same lean plan as B. The only real
@@ -334,6 +257,7 @@
         options: [
           { label: 'Tell him to buy it', key: 'buy',
             reply: "stop — buy the hosted provider. we should've done that two weeks ago. let's move on.",
+            journal: "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
             execute(s, char) {
               char.flags.auth_resolved = true;
               char.flags.auth_building = false;
@@ -401,9 +325,11 @@
         options: [
           { label: 'Agree — part-time for now', key: 'accept',
             reply: "that's fair. evenings and weekends works for now. let's set a milestone to revisit — once we hit traction, we talk again.",
+            journal: "Agreed Alex stays part-time for now — evenings and weekends. Slower, but he won't resent it. We set a milestone to revisit once we have traction.",
             execute(s, char) { char.flags.commitment_resolved = true; s.signal = clamp(s.signal - 5, 0, 100); return "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit."; } },
           { label: 'Push for full-time', key: 'push',
             reply: "i hear you but i need you all in. evenings and weekends won't cut it — we'll get outrun. can you make the jump now?",
+            journal: "Pushed Alex to go full-time. He said yes, but I could tell he wasn't ready. I'll need to watch how he's doing.",
             execute(s, char) { char.flags.commitment_resolved = true; char.flags.committed_fulltime = true; char.morale = clamp(char.morale - 10, 0, 100); char.trust = clamp(char.trust - 10, 0, 100); return "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood."; } },
         ],
         dropDelay: 3, dropFrom: 'Alex',
@@ -423,6 +349,7 @@
         options: [
           { label: 'Equal thirds', key: 'propose_33',
             reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
+            journal: "Proposed equal thirds — Jordan found the space and brought us together, Alex builds, I run it. We're all essential. Alex went quiet; he expected more for being all-in.",
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '33/33/33';
@@ -439,6 +366,7 @@
             } },
           { label: '50/25/25', key: 'propose_50',
             reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
+            journal: "Took 50 for myself, 25 each for Alex and Jordan. Alex went quiet for a moment, then said okay. I'll be hearing from both of them.",
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '50/25/25';
@@ -470,6 +398,7 @@
         options: [
           { label: "Give Alex 40%", key: 'cave_40',
             reply: "you're right. you're full-time, she's not. 40/40/20 — i'll tell jordan.",
+            journal: "Alex pushed back, and he had a point — he's full-time, Jordan isn't. Moved to 40/40/20. He appreciated it.",
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) { jordan.flags.equity_counter_done = true; jordan.flags.equity_proposal = '40/40/20'; }
@@ -501,12 +430,15 @@
         options: [
           { label: "Go with casual dating", key: 'alex',
             reply: "you're right, casual is the bigger market. let's go with your framing — 'casual dating done right.'",
+            journal: "Conceded the framing to Alex — we're 'casual dating done right.' Broader market, easier to explain. A few old 'serious matches' conversations are awkward now, but at least we're aligned.",
             execute(s, char) { char.flags.vision_resolved = true; char.trust = clamp(char.trust + 8, 0, 100); char.morale = clamp(char.morale + 10, 0, 100); s.signal = clamp(s.signal - 4, 0, 100); return "Went with casual dating. Broader market, easier to explain. Some earlier conversations about 'serious matches' are now awkward, but at least you're aligned."; } },
           { label: 'Serious relationships', key: 'yours',
             reply: "i've been saying serious relationships because that's what we're building. the investor story is cleaner and the users pay more. i want to stay with that.",
+            journal: "Held the line on serious relationships. Alex went along with it — he still thinks casual is bigger, but the investor story is cleaner. The tension isn't really gone.",
             execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 8, 0, 100); char.morale = clamp(char.morale - 8, 0, 100); char.trust = clamp(char.trust - 4, 0, 100); return "Alex went along with it. He thinks the casual market is bigger, but the investor story is cleaner. Tension unresolved."; } },
           { label: 'Test it with users', key: 'test',
             reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
+            journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
             execute(s, char) { char.flags.vision_resolved = true; s.signal = clamp(s.signal + 14, 0, 100); s.market_fit = clamp(s.market_fit + 8, 0, 100); char.morale = clamp(char.morale + 5, 0, 100); char.trust = clamp(char.trust + 6, 0, 100); return "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
@@ -558,6 +490,7 @@
         options: [
           { label: 'Check in', key: 'checkin',
             reply: "hey — noticed you've been quiet. everything ok? no pressure, just checking in.",
+            journal: "Noticed Alex had gone quiet. Checked in. Honest conversation — he's exhausted. Adjusted expectations for the week.",
             execute(s, char) { char.flags.last_quiet = s.week; char.morale = clamp(char.morale + 20, 0, 100); return "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -580,6 +513,7 @@
         available: (s, char) => s.week >= 16 && char.morale < 55 && !char.flags.equity_resolved,
         options: [
           { label: 'Revise fairly', key: 'fair',
+            journal: "Revised the equity split. Both sides signed. Relationship's back on solid ground.",
             execute(s, char) { char.flags.equity_resolved = true; char.morale = clamp(char.morale + 30, 0, 100); char.trust = clamp(char.trust + 15, 0, 100); return "Revised the split. Both sides signed. Relationship back on solid ground."; } },
           { label: 'Bargain hard', key: 'hard',
             execute(s, char) { char.morale = clamp(char.morale + 8, 0, 100); return "Pushed back hard. Alex accepted for now but isn't happy — expect this again."; } },
@@ -657,6 +591,7 @@
         available: (s, char) => s.dev_plan != null && s.week <= 6 && !char.flags.stack_done,
         options: [
           { label: 'Ship now — fix the algorithm later', key: 'fast',
+            journal: "Decided to ship the fast version of the matching algorithm and fix scale later. The 10,000-user problem is a good problem to have.",
             execute(s, char) { char.flags.stack_done = true; return "Shipping with the fast version. Alex moving immediately. The 10,000-user problem is a good problem to have."; } },
           { label: 'Build it to scale from the start', key: 'scalable',
             execute(s, char) { char.flags.stack_done = true; s.tech_debt -= 5; return "Slower start, cleaner foundation. Alex is happy — he hates rewriting things."; } },
@@ -715,6 +650,7 @@
         available: (s, char) => s.week >= 5 && s.week <= 12 && !s.ip_clear && !s.ip_concern_dismissed,
         options: [
           { label: 'Get a lawyer to review', key: 'lawyer',
+            journal: "Lawyer reviewed Alex's previous employer IP agreement. Personal time, unrelated enough — no claim. IP assignment signed. Clean. $1,500.",
             execute(s, char) { s.ip_clear = true; s.cash -= 1500; return "Lawyer reviewed. Previous employer has no claim — personal time, unrelated enough. IP assignment signed. Clean. ($1,500)"; } },
         ],
         dropDelay: 3, dropFrom: 'Lawyer (friend)',
@@ -771,6 +707,7 @@
           { label: 'Pivot — rethink the approach', key: 'pivot',
             execute(s, char) { char.flags.pivot1 = true; s.market_fit = clamp(s.market_fit + 25, 0, 100); s.signal = clamp(s.signal + 8, 0, 100); return "Rethought the approach. The real problem is conversation quality, not match quantity. Signal improved immediately."; } },
           { label: 'Stay the course', key: 'stay',
+            journal: "Logged the feedback but staying the course for now. Alex isn't convinced either.",
             execute(s, char) { char.flags.pivot1 = true; s.market_fit = clamp(s.market_fit + 5, 0, 100); return "Stayed the course. Alex logged the feedback but we're not changing direction yet."; } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
@@ -800,6 +737,7 @@
         available: (s, char) => char.flags.pivot2 && char.focus === 'discover' && char.focusSprints >= 2 && s.market_fit >= 55 && !char.flags.pmf_locked,
         options: [
           { label: 'Lock in the direction', key: 'lock',
+            journal: "Locked in. Three users said the same thing unprompted this week: 'I actually went on a date because of this.' This is the product. Now build it right.",
             execute(s, char) { char.flags.pmf_locked = true; s.market_fit = clamp(s.market_fit + 15, 0, 100); s.signal = clamp(s.signal + 15, 0, 100); return "Locked in. This is the product. Now build it right."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
@@ -811,6 +749,7 @@
         available: (s, char) => s.week >= 2 && s.week <= 18 && char.morale < 50 && !char.flags.family_doubt_resolved,
         options: [
           { label: 'Remind each other why', key: 'talk',
+            journal: "Long talk with Alex about family pressure. Reminded each other why we're doing this. Morale reset.",
             execute(s, char) { char.flags.family_doubt_resolved = true; char.morale = clamp(char.morale + 12, 0, 100); return "Long talk. Reminded each other why you're doing this. Morale reset."; } },
         ],
         dropDelay: 0, dropMsg: null,
@@ -883,6 +822,7 @@
         },
         options: [
           { label: "Alex is right — ship what we have, add activities post-launch", key: "ship",
+            journal: "Sided with Alex — we ship what we have, add activities post-launch. Alex looked relieved. Jordan went quiet.",
             execute(s, char, e) {
               char.flags.pivot_direction = "ship";
               char.flags.pivot_direction_set = true;
@@ -897,6 +837,7 @@
               return "Alex looked relieved. Jordan went quiet — she's not sure you're right, but she'll build the release checklist.";
             } },
           { label: "The signal is real — I think we should pivot", key: "pivot",
+            journal: "Told Alex the signal is real — we should pivot. He went quiet. 'Okay. It's your call.' He doesn't agree.",
             execute(s, char) {
               char.flags.pivot_direction = "pivot";
               char.flags.pivot_direction_set = true;
@@ -924,6 +865,7 @@
           && !s.met_priya && s.week <= 22,
         options: [
           { label: "I've made the call — we pivot", key: "confirm",
+            journal: "Confirmed the pivot over Alex's objection. Three weeks, $2k. We're rebuilding around activities.",
             execute(s, char, e) {
               s.pivot_resolved_flag = true;
               s.activities_pivot = true;
@@ -937,6 +879,7 @@
               return "Alex went quiet. 'Okay.' Three weeks. $2k. Rebuilding around activities.";
             } },
           { label: "You're right — we ship as planned", key: "reverse",
+            journal: "Changed my mind — shipping as planned. Alex seemed relieved.",
             execute(s, char) {
               s.pivot_resolved_flag = true;
               s.pivot_deferred = true;
@@ -959,6 +902,7 @@
           && !char.flags.bad_retention_seen && s.week >= 12,
         options: [
           { label: 'Add activity features now — two-sprint fix', key: 'fix',
+            journal: "Retrofitted activity features post-launch. More expensive and disruptive than doing it before, but users who stayed are responding.",
             execute(s, char) {
               char.flags.bad_retention_seen = true;
               s.activities_pivot = true;
@@ -970,6 +914,7 @@
               return "Two sprints to retrofit activities post-launch. More expensive and disruptive than doing it before. Users who stayed are responding.";
             } },
           { label: "Run user calls — figure out what they actually need", key: 'calls',
+            journal: "Did 12 user calls this week. Every single one mentioned not knowing what to do after matching. The path forward is clear — just late.",
             execute(s, char) {
               char.flags.bad_retention_seen = true;
               s.market_fit = clamp(s.market_fit + 4, 0, 100);
@@ -977,6 +922,7 @@
               return "12 user calls this week. Every single one mentioned not knowing what to do after a match. The path forward is clear — it's just late.";
             } },
           { label: "Stay course — improve matching quality", key: 'stay',
+            journal: "Decided the problem was matching quality, not the post-match experience. Users keep churning. I think Alex is right that this was the wrong call.",
             execute(s, char) {
               char.flags.bad_retention_seen = true;
               s.market_fit = clamp(s.market_fit - 20, 0, 100);
@@ -1003,6 +949,7 @@
           && s.week >= (s.pivot_relaunch_last || 0) + 4,
         options: [
           { label: 'Ship it — relaunch now', key: 'ship',
+            journal: "Shipped the pivot. Different product under the same name. The first activity was created within an hour.",
             execute(s, char) {
               s.pivot_shipped = true;
               s.signal = clamp(s.signal + 15, 0, 100);
@@ -1036,6 +983,7 @@
               return "Keeping what worked, scrapping the rest. We know the core flow — now we build it properly. Word's getting around — 5 people already asked for early access.";
             } },
           { label: 'Not yet — keep polishing the demo', key: 'delay',
+            journal: "Not ready to rebuild yet — still learning from the demo. Alex nods, but I can tell he wants to move on.",
             execute(s, char) {
               char.flags.rebuild_last = s.week;
               return "Still things to learn from the demo. Alex nods, but you can tell he's ready to move on.";
@@ -1060,6 +1008,7 @@
               return "Launched. First real users are in. Feedback starts flowing.";
             } },
           { label: 'Two more weeks', key: 'wait',
+            journal: "Polished a few more things instead of launching. Alex thinks I'm stalling — and he might be right.",
             execute(s, char) { s.good_enough_last = s.week; char.morale = clamp(char.morale - 12, 0, 100); return "Polished a few more things. Alex thinks you're stalling — and he might be right."; } },
         ],
         dropDelay: 1, dropFrom: 'Alex',
@@ -1073,6 +1022,7 @@
         available: (s, char) => !s.alex_rebuild_done && char.focus === 'build' && (s.has_demo || s.tech_debt >= 20),
         options: [
           { label: 'Do the refactor', key: 'refactor',
+            journal: "Gave Alex two weeks to rebuild the API layer from scratch. Nothing else gets done — but if he's right, it'll save us months later.",
             execute(s, char) {
               s.alex_rebuild_done = true;
               char.morale = clamp(char.morale + 10, 0, 100);
@@ -1175,6 +1125,7 @@
         },
         options: [
           { label: 'Talk to Jordan directly', key: 'talk',
+            journal: "Talked to Jordan directly about slowing down. She was apologetic, said it's temporary. I'm not sure.",
             execute(s, char, e) {
               const j = e.chars.get('jordan');
               j.flags.drift_start_done = true;
@@ -1184,6 +1135,7 @@
               return "Jordan was apologetic. Said it's temporary. You're not sure.";
             } },
           { label: 'Alex can cover for now', key: 'cover',
+            journal: "Let Alex cover for Jordan. He nodded, but his backlog just got longer.",
             execute(s, char, e) {
               const j = e.chars.get('jordan');
               j.flags.drift_start_done = true;
@@ -1216,6 +1168,7 @@
         },
         options: [
           { label: 'Talk to Jordan directly', key: 'talk',
+            journal: "Sat down with Jordan. She heard the weight of it. Alex noticed I followed up.",
             execute(s, char, e) {
               const j = e.chars.get('jordan');
               j.flags.drag_count = (j.flags.drag_count || 0) + 1;
@@ -1263,6 +1216,7 @@
               return "Launched. Web-only. A dating app without iOS is a real handicap — early retention will show it.";
             } },
           { label: 'Give Jordan two more weeks', key: 'wait',
+            journal: "Gave Jordan two more weeks. Alex wasn't happy. The clock is running.",
             execute(s, char, e) {
               const j = e.chars.get('jordan');
               j.flags.launch_blocker_wait = (j.flags.launch_blocker_wait || 0) + 1;
@@ -1271,6 +1225,7 @@
             },
             available: (s, char, e) => (e.chars.get('jordan').flags.launch_blocker_wait || 0) < 1 },
           { label: 'Confront Jordan — this has to be resolved', key: 'confront',
+            journal: "Decided to confront Jordan about the launch blocker. This conversation is overdue.",
             execute(s, char, e) {
               e.chars.get('jordan').flags.launch_blocker_done = true;
               s.jordan_confrontation_triggered = true;
@@ -1337,6 +1292,7 @@
               return `Hard conversation. Jordan wasn't surprised — she knew it wasn't working. She's off the team. Her ${pct} is still on the cap table.`;
             } },
           { label: 'One more sprint to turn it around', key: 'defer',
+            journal: "Gave Jordan one more sprint. Alex went quiet. We both know how this ends.",
             execute(s, char, e) {
               s.jordan_confrontation_triggered = false;
               s.jordan_confrontation_defer_until = s.week + 4;
@@ -1365,6 +1321,7 @@
         },
         options: [
           { label: 'Hire a lawyer — $2,000', key: 'lawyer',
+            journal: "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
             execute(s, char, e) {
               e.chars.get('jordan').flags.cap_table_done = true;
               s.jordan_cleanup_needed = false;
@@ -1372,6 +1329,7 @@
               return "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.";
             } },
           { label: "Can't afford it right now", key: 'defer',
+            journal: "Can't afford cap table cleanup right now. Every investor who looks will ask about Jordan's stake.",
             execute(s, char, e) {
               e.chars.get('jordan').flags.cap_table_done = true;
               return "Left it for now. Every investor who looks at the cap table will ask about Jordan's stake.";

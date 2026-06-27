@@ -17,23 +17,6 @@
     ],
 
     role: "Co-founder · iOS",
-    voice: {
-      "jordan_equity_mention|open": "Jordan brought up equity before it gets weird. Put it on the agenda — glad someone said it out loud.",
-      "jordan_equity_counter_jordan|cave_33": "Jordan was right — two people writing code shouldn't be split so unevenly. Went back to equal thirds. She was relieved; Alex went quiet when he heard.",
-      "jordan_equity_counter_jordan|hold_40": "Held 40/40/20 — Jordan's not full-time and the split reflects that. She went quiet. 'Fine. I'll show you what 20% of work looks like.'",
-      "jordan_equity_counter_both|cave_alex": "Gave Alex what he wanted — 40/40/20. Jordan has less than she hoped, but she accepted it.",
-      "jordan_equity_counter_both|cave_jordan": "Gave Jordan equal thirds. Alex went quiet, and I gave up my majority — but it felt fair.",
-      "jordan_equity_counter_both|hold_50": "Held 50/25/25 — I run this company. Both accepted it. Alex was terse, Jordan just said 'okay.' The tension didn't disappear.",
-      "early_working_style|standup": "Set a daily 15-minute standup at 9am with Jordan. Keeps us both honest while she's still juggling her day job.",
-      "early_working_style|async": "Decided to work async with Jordan — ping when blocked. Fewer interruptions, more deep work.",
-      "early_pricing|charge": "Decided to charge from day one. Ten serious subscribers beat a hundred who open it once. If they pay before there are many matches, they really want this.",
-      "early_pricing|free": "Decided to stay free until we have critical mass. More people in the door — the cold-start problem is real, and nobody finds a match worth paying for in an empty app.",
-      "matching_engine_choice|build": "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
-      "matching_engine_choice|license": "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
-      "pivot_open|open": "Jordan flagged something from the early testers: users keep saying 'I matched, but then what?' Put it on the agenda.",
-      "jordan_fulltime_ask|accept": "Accepted Jordan's answer — she stays part-time. Alex heard and he's covering her work.",
-      "jordan_fulltime_ask|pressure": "Told Jordan this is a dealbreaker. She said she'd think about it. She didn't change."
-    },
     skills: { build: 0.7 },
     cards: [
 
@@ -49,6 +32,7 @@
         available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.equity_mention_done,
         options: [
           { label: "Agreed — let's work through it over the next few weeks", key: 'open',
+            journal: "Jordan brought up equity before it gets weird. Put it on the agenda — glad someone said it out loud.",
             execute(s, char) {
               char.flags.equity_mention_done = true;
               return "On the agenda. Good that someone brought it up.";
@@ -70,6 +54,7 @@
         available: (s, char) => char.flags.equity_proposal === '40/40/20' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: 'Equal thirds — fair point', key: 'cave_33',
+            journal: "Jordan was right — two people writing code shouldn't be split so unevenly. Went back to equal thirds. She was relieved; Alex went quiet when he heard.",
             execute(s, char, e) {
               char.flags.equity_counter_done = true;
               char.flags.equity_proposal = '33/33/33';
@@ -78,6 +63,7 @@
               return "Jordan seemed relieved. Alex heard about it and went quiet.";
             } },
           { label: "You're not full-time — this reflects that", key: 'hold_40',
+            journal: "Held 40/40/20 — Jordan's not full-time and the split reflects that. She went quiet. 'Fine. I'll show you what 20% of work looks like.'",
             execute(s, char) {
               char.flags.equity_counter_done = true;
               return "Jordan went quiet. 'Fine. I'll show you what 20% worth of work looks like.'";
@@ -95,6 +81,7 @@
         available: (s, char) => char.flags.equity_proposal === '50/25/25' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: "Give Alex what he wants — 40/40/20", key: 'cave_alex',
+            journal: "Gave Alex what he wanted — 40/40/20. Jordan has less than she hoped, but she accepted it.",
             execute(s, char, e) {
               char.flags.equity_counter_done = true;
               char.flags.equity_proposal = '40/40/20';
@@ -103,6 +90,7 @@
               return "Alex got what he wanted. Jordan still has less than she wanted, but she accepted it.";
             } },
           { label: "Give Jordan what she wants — 33/33/33", key: 'cave_jordan',
+            journal: "Gave Jordan equal thirds. Alex went quiet, and I gave up my majority — but it felt fair.",
             execute(s, char, e) {
               char.flags.equity_counter_done = true;
               char.flags.equity_proposal = '33/33/33';
@@ -111,6 +99,7 @@
               return "Jordan got equal thirds. Alex went quiet. You gave up your majority.";
             } },
           { label: '50/25/25 stands — I run this company', key: 'hold_50',
+            journal: "Held 50/25/25 — I run this company. Both accepted it. Alex was terse, Jordan just said 'okay.' The tension didn't disappear.",
             execute(s, char, e) {
               char.flags.equity_counter_done = true;
               const alex = e.chars.get('alex');
@@ -206,8 +195,10 @@
         available: (s, char) => s.week <= 4 && !char.flags.working_style_done,
         options: [
           { label: 'Daily 15-min standup', key: 'standup',
+            journal: "Set a daily 15-minute standup at 9am with Jordan. Keeps us both honest while she's still juggling her day job.",
             execute(s, char) { char.flags.working_style_done = true; char.morale = clamp(char.morale + 5, 0, 100); return "Daily standup at 9am. Keeps both of you honest."; } },
           { label: 'Async — ping when blocked', key: 'async',
+            journal: "Decided to work async with Jordan — ping when blocked. Fewer interruptions, more deep work.",
             execute(s, char) { char.flags.working_style_done = true; return "Async by default. Fewer interruptions, more deep work."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.working_style_done = true; },
@@ -219,8 +210,10 @@
         available: (s, char) => s.week >= 4 && s.week <= 8 && !char.flags.pricing_done,
         options: [
           { label: 'Charge from day one — find the true believers', key: 'charge',
+            journal: "Decided to charge from day one. Ten serious subscribers beat a hundred who open it once. If they pay before there are many matches, they really want this.",
             execute(s, char) { char.flags.pricing_done = true; s.signal = clamp(s.signal + 4, 0, 100); return "Charging early. You'll get 10 serious subscribers instead of 100 who open it once. If they pay before there are many matches, they really want this."; } },
           { label: 'Free until we have real critical mass', key: 'free',
+            journal: "Decided to stay free until we have critical mass. More people in the door — the cold-start problem is real, and nobody finds a match worth paying for in an empty app.",
             execute(s, char) { char.flags.pricing_done = true; s.waitlist += 2; return "Free to start. More people in the door. The cold start problem is real — you need enough singles before anyone finds a match worth paying for."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
@@ -244,6 +237,7 @@
         options: [
           { label: "No — matching is the whole product, we build it", key: 'build',
             reply: "no. the matching engine *is* kindred — it's the one thing we can't outsource. we build it ourselves.",
+            journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
             execute(s, char, e) {
               char.flags.matching_choice_done = true;
               s.matching_owned = true;
@@ -254,6 +248,7 @@
             } },
           { label: "Good find — license it and ship faster", key: 'license',
             reply: "nice find. plug in MatchKit — if we can ship matching in days, let's not waste weeks on it.",
+            journal: "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
             execute(s, char, e) {
               char.flags.matching_choice_done = true;
               s.matching_licensed = true;
@@ -289,6 +284,7 @@
           && !char.flags.pivot_open_done && s.week >= (char.flags.pivot_open_wait || 0),
         options: [
           { label: "Good flag — let's talk through it", key: "open",
+            journal: "Jordan flagged something from the early testers: users keep saying 'I matched, but then what?' Put it on the agenda.",
             execute(s, char) {
               char.flags.pivot_open_done = true;
               return "On the agenda. Good that someone flagged it before launch.";
@@ -309,6 +305,7 @@
         available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.fulltime_ask_done && s.week >= 10,
         options: [
           { label: 'Accept her answer — she stays part-time', key: 'accept',
+            journal: "Accepted Jordan's answer — she stays part-time. Alex heard and he's covering her work.",
             execute(s, char, e) {
               char.flags.fulltime_ask_done = true;
               const alex = e.chars.get('alex');
@@ -316,6 +313,7 @@
               return "Jordan's staying part-time. Alex heard the outcome. He's covering her work — and now he knows you know it too.";
             } },
           { label: 'Tell her this is a dealbreaker', key: 'pressure',
+            journal: "Told Jordan this is a dealbreaker. She said she'd think about it. She didn't change.",
             execute(s, char, e) {
               char.flags.fulltime_ask_done = true;
               s.jordan_confrontation_triggered = true;

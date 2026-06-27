@@ -12,9 +12,6 @@
     role: "Tech journalist",
     name: "Lena",  // chat display name
     intro: "hi — i'm a reporter covering the consumer dating space. might want to feature you in an upcoming piece.",
-    voice: {
-      "reporter_deadline|reply": "Replied to Lena's deadline. Story ran the next morning."
-    },
     unlockCondition: (s) => s.launched,
     cards: [
       {
@@ -24,6 +21,7 @@
         available: (s, char) => s.launched && !char.flags.done,
         options: [
           { label: 'Reply to Lena now', key: 'reply',
+            journal: "Replied to Lena's deadline. Story ran the next morning.",
             execute(s, char) { char.flags.done = true; const n = 10 + rnd(10); s.users += n; s.signal = clamp(s.signal + 10, 0, 100); s.network.press++; return `Story ran. ${n} signups in 24 hours.`; } },
         ],
         dropDelay: 0, dropMsg: null,

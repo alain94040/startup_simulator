@@ -10,9 +10,6 @@
 
     role: "Social media",
     intro: "people are talking about kindred on social media.",
-    voice: {
-      "public_complaint|respond": "Responded publicly to the Twitter complaint, fixed the duplicate match bug. The user deleted the tweet and posted an apology."
-    },
     unlockCondition: (s) => s.launched && (s.users >= 10 || s.customers >= 2),
     cards: [
       {
@@ -22,6 +19,7 @@
         available: (s) => s.launched && (s.users >= 10 || s.customers >= 2) && !s.public_complaint_done,
         options: [
           { label: 'Respond publicly', key: 'respond',
+            journal: "Responded publicly to the Twitter complaint, fixed the duplicate match bug. The user deleted the tweet and posted an apology.",
             execute(s) { s.public_complaint_done = true; s.signal = clamp(s.signal + 5, 0, 100); return "Responded publicly, fixed the duplicate match bug. The user deleted the tweet and posted an apology. A few people replied saying they'd sign up now."; } },
         ],
         dropDelay: 1, dropFrom: 'Twitter',

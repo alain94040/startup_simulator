@@ -321,33 +321,27 @@
       // on the week's bank statement, labelled with its journal outcome.
       this._tx(outcome || this._name(charId), cashBefore);
 
-      // Echo the player's choice as a chat reply — but only for *dialogue* actions.
-      // "Move" cards (own initiatives) and off-screen "ask" cards mark themselves
-      // `chat: false`: they say nothing in the thread. Their story is told in the
-      // journal outcome and (for asks) a delayed reply pushed onto `pending`.
-      // (For the founder, the thread *is* the journal, so a dialogue reply renders
-      // there as the ✓ choice line — that's the intended record.)
-      const isDialogue = opt.chat !== false && o.def.chat !== false
-        && !(DEFS[charId] && DEFS[charId].noChat);
-      if (isDialogue) {
+      // Reply bubble appears in the character's thread only when the option
+      // provides explicit reply text. noChat characters never get reply bubbles.
+      if (typeof opt.reply === "string" && !(DEFS[charId] && DEFS[charId].noChat)) {
         this.threads[charId].push({
           type: "reply",
           cardId,
-          body: opt.reply || opt.label,
+          body: opt.reply,
           week: this.s.week,
           isNew: true,
         });
       }
-      if (outcome) {
+      // Journal outcome: opt.journal when provided, else the raw execute() return.
+      const journalBody = opt.journal !== undefined ? opt.journal : outcome;
+      if (journalBody) {
         // Outcomes are narrated in the founder's journal, not the chat thread.
-        // The chat stays pure dialogue; the journal is where the story is told,
-        // retold in the founder's own first-person voice where we have one.
         const entry = {
           type: "outcome",
           cardId,
           from: this._name(charId),
           sourceChar: charId === "founder" ? null : charId,
-          body: this._voiced(charId, cardId, opt.key, outcome),
+          body: journalBody,
           week: this.s.week,
           isNew: true,
         };
@@ -373,17 +367,6 @@
       this._checkStamps();
 
       return outcome;
-    }
-
-    // First-person journal retelling of an outcome. Content lives in the role
-    // def's `voice` map (keyed "cardId|optionKey", or by "cardId"), falling back
-    // to the raw execute() return when a card has no journal voice.
-    _voiced(charId, cardId, optKey, fallback) {
-      const map = (DEFS[charId] && DEFS[charId].voice) || null;
-      if (!map) return fallback;
-      const byOpt = map[cardId + "|" + optKey];
-      if (byOpt != null) return byOpt;
-      return map[cardId] != null ? map[cardId] : fallback;
     }
 
     // Place a rubber-stamp in the journal for any milestone that just flipped.
@@ -648,7 +631,6 @@
           name: card.from || def.name || charId,
           role: def.role || "",
           cat: card.cat || "e",
-          chat: card.chat !== false,
           noChat: !!def.noChat,
           urgency: this._rankVal(card),
           body: this._resolveBody(card, char),

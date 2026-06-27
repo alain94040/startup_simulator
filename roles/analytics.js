@@ -11,10 +11,6 @@
 
     role: "Product data",
     intro: "instrumentation is live — enough data to start seeing patterns.",
-    voice: {
-      "post_match_dropoff|dig": "Pulled the early cohort apart. Matches that never become conversations, conversations that never become dates. The instrumentation paid for itself — I can see the pivot from here.",
-      "silent_churn|call": "Called all 3 silent users. Found a critical onboarding gap. Fixed it. 2 came back."
-    },
     // Unlocks early if you BOUGHT analytics (the "sight" payoff), otherwise only once
     // there's real post-launch traffic to look at.
     unlockCondition: (s) => s.analytics_live || (s.launched && (s.users >= 3 || s.customers >= 1)),
@@ -27,6 +23,7 @@
         available: (s, char) => s.analytics_live && s.has_demo && !s.launched && !char.flags.dropoff_done,
         options: [
           { label: 'Dig into the drop-off', key: 'dig',
+            journal: "Pulled the early cohort apart. Matches that never become conversations, conversations that never become dates. The instrumentation paid for itself — I can see the pivot from here.",
             execute(s, char) {
               char.flags.dropoff_done = true;
               s.analytics_dropoff_seen = true;
@@ -45,6 +42,7 @@
         available: (s, char) => s.launched && s.users >= 3 && s.users < 30 && !char.flags.done && s.week >= (s.silent_churn_last || 0) + 8,
         options: [
           { label: 'Call all three', key: 'call',
+            journal: "Called all 3 silent users. Found a critical onboarding gap. Fixed it. 2 came back.",
             execute(s, char) { char.flags.done = true; s.silent_churn_last = s.week; s.signal = clamp(s.signal + 6, 0, 100); return "Called all 3. Found a critical onboarding gap. Fixed it. 2 came back."; } },
         ],
         dropDelay: 0, dropMsg: null,

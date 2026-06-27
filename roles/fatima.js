@@ -14,13 +14,6 @@
     role: "Angel investor",
     name: "Fatima",  // chat display name
     intro: "a few people i trust have mentioned kindred. i invest in consumer social — would love to hear more.",
-    voice: {
-      "fatima_intro|call": "Good call with Fatima. Sharp questions about the problem space. She asked for the deck when it's ready.",
-      "fatima_intro|pass": "Declined Fatima's call. She said to reach out when timing is better.",
-      "fatima_meeting|meet": "Strong meeting with Fatima. She pushed hard on distribution, then asked for the deck and latest numbers.",
-      "fatima_deck|walk": "Walked Fatima through the unit economics and TAM. She said the story is tight — completing diligence now.",
-      "fatima_commit|welcome": "Fatima committed. Her diligence is done."
-    },
     unlockCondition: (s) => s.week >= 8 && s.network.advisors >= 1,
     cards: [
       {
@@ -57,6 +50,7 @@
         available: (s, char) => char.flags.meeting_done && s.deck_ready && !char.flags.deck_done,
         options: [
           { label: 'Walk her through it', key: 'walk',
+            journal: "Walked Fatima through the unit economics and TAM. She said the story is tight — completing diligence now.",
             execute(s, char) { char.flags.deck_done = true; return "Good follow-up. Fatima: 'the story is tight. i'm going to complete my diligence and come back to you.'"; } },
         ],
         dropDelay: 3, dropFrom: 'Fatima',

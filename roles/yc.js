@@ -8,9 +8,6 @@
 
     role: "Y Combinator",
     name: "YC",  // chat display name
-    voice: {
-      "yc_apply|submit": "YC application submitted. Decision in 3 weeks."
-    },
     unlockCondition: (s) => s.ycDeciding,
     cards: [
       {
@@ -20,6 +17,7 @@
         available: (s) => s.ycDeciding && !s.ycApplied,
         options: [
           { label: 'Submit the application', key: 'submit',
+            journal: "YC application submitted. Decision in 3 weeks.",
             execute(s, char, e) {
               s.ycDeciding = false; s.ycApplied = true;
               // The decision resolver lives here as a pending event (was lost from
