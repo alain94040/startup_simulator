@@ -60,7 +60,9 @@
       "early_funding_goal",
       "vision_mismatch",
       "jordan_equity_alex",
+      "jordan_equity_alex_why",
       "jordan_equity_counter_alex",
+      "jordan_equity_counter_alex_50",
       "alex_side_project",
       "alex_side_project_escalation",
       "alex_quiet",
@@ -164,7 +166,14 @@
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
         body: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
         urgency: 2, weeks: 2, patience: 4,
-        available: (s, char) => char.flags.prototype_kicked && !char.flags.plan_done && s.week >= 2 && s.week <= 5,
+        available: (s, char, e) => {
+          if (!char.flags.prototype_kicked || char.flags.plan_done) return false;
+          if (!s.jordan_equity) return false;
+          const jordan = e.chars.get('jordan');
+          const isAlexHappy = jordan && jordan.flags.equity_proposal === '40/40/20';
+          const delay = isAlexHappy ? 0 : 1;
+          return s.week >= (s.equity_week || 0) + delay && s.week <= 8;
+        },
         // Browser-only: Alex texts three phone mockups (iMessage-style photos the
         // player taps to view full-size). No cost/time labels — the player has to
         // judge scope from the screens themselves: the feature-loaded one (full) is
@@ -338,26 +347,42 @@
         dropFx(s, char) { char.flags.offer_msg_sent = true; char.morale = clamp(char.morale - 14, 0, 100); s.alex_offer_week = s.week; },
       },
       // ── EQUITY (Alex's side — Jordan opened the topic in her thread) ─────────
+      // Alex opens by refusing equal thirds, but WITHOUT naming a number. The player
+      // can probe ("what are you thinking?") to hear his reasoning, or commit a split.
+      // Alex's real position is 40/40/20 — he wants to be the founder's equal AND
+      // Jordan dialed down (she's part-time). 33/33/33 still triggers his counter
+      // (jordan_equity_counter_alex); 50/25/25 triggers his 50-counter. The probe is
+      // pure info: it sets equity_probed and hands off to jordan_equity_alex_why.
       {
-        id: 'jordan_equity_alex', cat: 't', from: 'Alex',
-        body: "jordan wants equal thirds. i've been thinking — she's still at her job, i'm treating this as my main thing. you and i are doing the same amount. i think 40/40/20 is fair. what are you thinking?",
+        id: 'jordan_equity_alex', cat: 't', from: 'Alex', focus: 'equity',
+        body: "before we lock anything in — i can't sign off on equal thirds. not the way jordan framed it. i need to know where your head's actually at first.",
         urgency: 32, weeks: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
-          return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_proposal && s.week <= 8;
+          return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_probed
+            && !jordan.flags.equity_proposal && s.week <= 8;
         },
         options: [
+          { label: "What are you thinking?", key: 'probe',
+            reply: "before i put a number on the table — talk to me. what feels fair to you, and why?",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_probed = true;
+              return "Asked Alex to lay out his thinking before you name a split.";
+            } },
           { label: 'Equal thirds', key: 'propose_33',
             reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
-            journal: "Proposed equal thirds — Jordan found the space and brought us together, Alex builds, I run it. We're all essential. Alex went quiet; he expected more for being all-in.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '33/33/33';
-              char.morale = clamp(char.morale - 8, 0, 100);
+              char.morale = clamp(char.morale - 3, 0, 100);
               return "Equal split. Alex went quiet — he expected more weight for his commitment.";
             } },
           { label: '40/40/20', key: 'propose_40',
             reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '40/40/20';
@@ -366,7 +391,7 @@
             } },
           { label: '50/25/25', key: 'propose_50',
             reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
-            journal: "Took 50 for myself, 25 each for Alex and Jordan. Alex went quiet for a moment, then said okay. I'll be hearing from both of them.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '50/25/25';
@@ -381,14 +406,61 @@
           char.morale = clamp(char.morale - 10, 0, 100);
         },
       },
+      // Probe answer: Alex lays out his reasoning, then the same three splits. His line
+      // ("you and me, even") is deliberately ambiguous — it rules out 50 but a player
+      // can misread it as "33 is fine too." Picking 33 still triggers his counter.
+      {
+        id: 'jordan_equity_alex_why', cat: 't', from: 'Alex', focus: 'equity',
+        body: "i am doing exactly what you are doing — same hours, same code, same risk. i'm not asking for a gift. i'm asking to be your equal. you and me, even. jordan's great, but she's still got a paycheck to fall back on. so — what's the split?",
+        urgency: 32, weeks: 1,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_probed && !jordan.flags.equity_proposal && s.week <= 12;
+        },
+        options: [
+          { label: 'Equal thirds', key: 'propose_33',
+            reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '33/33/33';
+              char.morale = clamp(char.morale - 3, 0, 100);
+              return "Equal split. Alex went quiet — he'd just told you he wanted to be your equal, not Jordan's.";
+            } },
+          { label: '40/40/20 — you and me even, Jordan at 20', key: 'propose_40',
+            reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '40/40/20';
+              char.morale = clamp(char.morale + 5, 0, 100);
+              return "Alex: 'yeah — that's exactly it.' Jordan hasn't heard yet.";
+            } },
+          { label: '50/25/25 — I take half', key: 'propose_50',
+            reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '50/25/25';
+              char.morale = clamp(char.morale - 3, 0, 100);
+              return "Alex went still. 'I just asked to be even with you.' You'll hear from both of them.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) { jordan.flags.equity_proposal = '33/33/33'; jordan.flags.equity_skipped = true; }
+          char.morale = clamp(char.morale - 10, 0, 100);
+        },
+      },
       // Alex counters if you picked equal thirds
       {
-        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
+        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex', focus: 'equity',
         body: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return (jordan && jordan.flags.equity_skipped)
-            ? "you never responded to jordan about equity. i've been thinking about it anyway — she's still at her job, i'm all-in. equal thirds means i get the same as someone who's not putting in the same."
-            : "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.";
+            ? "you never even answered jordan on equity, so i'll say it: equal thirds isn't fair. she's got a day job to fall back on. i quit mine. we are not taking the same risk, and the split shouldn't pretend we are."
+            : "i need to push back on equal thirds. jordan still has a paycheck coming in every two weeks. i gave that up. same equity for different risk isn't 'fair' — it just feels fair because it's round. i should be at least even with you.";
         },
         urgency: 22, weeks: 1,
         available: (s, char, e) => {
@@ -398,7 +470,7 @@
         options: [
           { label: "Give Alex 40%", key: 'cave_40',
             reply: "you're right. you're full-time, she's not. 40/40/20 — i'll tell jordan.",
-            journal: "Alex pushed back, and he had a point — he's full-time, Jordan isn't. Moved to 40/40/20. He appreciated it.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) { jordan.flags.equity_counter_done = true; jordan.flags.equity_proposal = '40/40/20'; }
@@ -407,6 +479,7 @@
             } },
           { label: 'Keep equal thirds', key: 'hold_33',
             reply: "i hear you, but equal thirds is the right call. everyone's essential. let's not let this fester.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_counter_done = true;
@@ -419,6 +492,59 @@
           const jordan = e && e.chars && e.chars.get('jordan');
           if (jordan) jordan.flags.equity_counter_done = true;
           char.morale = clamp(char.morale - 8, 0, 100);
+        },
+      },
+
+      // 50/25/25 path — Alex comes at you first (his own thread). If you bump him to
+      // 40/40/20, Jordan then hits you in hers (jordan_equity_counter_jordan). A
+      // two-front fight, never a merged "heard from both" card.
+      {
+        id: 'jordan_equity_counter_alex_50', cat: 't', from: 'Alex', focus: 'equity',
+        body: "you kept half? and you're handing me the same as jordan??? same hours, same code, same risk — and half says you don't see me as your equal. fix this.",
+        urgency: 23, weeks: 1,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_proposal === '50/25/25' && !jordan.flags.equity_counter_done && s.week <= 10;
+        },
+        options: [
+          { label: "You're right — you and me at 40, Jordan at 20", key: 'give_alex',
+            reply: "you're right. you and i are doing the same work. 40/40/20 — i'll square it with jordan.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '40/40/20';  // → Jordan now confronts you
+              char.morale = clamp(char.morale + 8, 0, 100);
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "good. you and me at 40. i'm solid.",
+                week: s.week, isNew: true, focus: 'equity', seq: e._seq++,
+              });
+              return "Alex is solid again. But Jordan's at 20 now — you'll hear from her.";
+            } },
+          { label: "Everyone equal — thirds across the board", key: 'equalize',
+            reply: "you know what, you're both right. equal thirds. we're all essential, let's not poison this over points.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) { jordan.flags.equity_counter_done = true; jordan.flags.equity_proposal = '33/33/33'; }
+              return "Equal thirds. You gave up your majority — but nobody's nursing a grudge.";
+            } },
+          { label: "I took the risk first — 50/25/25 stands", key: 'hold_50',
+            reply: "i hear you. but i started this, i carry the most risk, and the split reflects that. 50/25/25. i need you with me on this.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_counter_done = true;
+              char.morale = clamp(char.morale - 12, 0, 100);
+              char.trust = clamp(char.trust - 8, 0, 100);
+              return "Alex went quiet. 'Okay. You're the boss.' Something cooled between you.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) jordan.flags.equity_counter_done = true;
+          char.morale = clamp(char.morale - 12, 0, 100);
         },
       },
 

@@ -6,8 +6,9 @@
 
     slice: [
       "jordan_equity_mention",
+      "jordan_equity_worry",
       "jordan_equity_counter_jordan",
-      "jordan_equity_counter_both",
+      "jordan_equity_5050_interject",
       "early_working_style",
       "early_pricing",
       "matching_engine_choice",
@@ -20,22 +21,31 @@
     skills: { build: 0.7 },
     cards: [
 
-      // ── EQUITY ARC: 4 cards, 3 weeks ─────────────────────────────────────────
-      // Week 1: Jordan opens topic (atmospheric, single option)
-      // Week 2: Founder makes opening offer (3 options)
-      // Week 3: Unhappy co-founder(s) counter — exactly one of three cards fires
-      // Week 4: Signing
+      // ── EQUITY ARC (focus mode — chains in one sitting, free of action cost) ──
+      // Jordan opens with equal thirds → Alex refuses without naming a number
+      // (roles/alex.js: jordan_equity_alex). The player probes ("what are you
+      // thinking?" → jordan_equity_alex_why) or commits a split. Whoever the split
+      // shortchanges counters (Alex on 33/50, Jordan on 40/40/20); Jordan also pings
+      // in parallel via jordan_equity_worry (post-probe) and jordan_equity_5050_interject.
+      // Exactly one counter-round fires (equity_counter_done gates founder's
+      // equity_signing). No split satisfies both — only vesting (skipped here) is the
+      // clean lesson left standing.
       {
-        id: 'jordan_equity_mention', cat: 't', from: 'Jordan',
+        id: 'jordan_equity_mention', cat: 't', from: 'Jordan', focus: 'equity',
         body: "hey — the three of us should probably sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.week >= 2 && s.week <= 5 && !char.flags.equity_mention_done,
         options: [
-          { label: "Agreed — let's work through it over the next few weeks", key: 'open',
-            journal: "Jordan brought up equity before it gets weird. Put it on the agenda — glad someone said it out loud.",
+          { label: "Let's sit down right now and settle it", key: 'open',
+            reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
+            journal: null,
             execute(s, char) {
               char.flags.equity_mention_done = true;
-              return "On the agenda. Good that someone brought it up.";
+              // Enter the equity focus arc: only these participants surface, free of
+              // action cost, each beat re-polled mid-week so the talk flows in one
+              // sitting. 'founder' owns the closing equity_signing beat.
+              s.focus = { id: 'equity', charIds: ['jordan', 'alex', 'founder'] };
+              return "Cleared the calendar. The three of us, sorting it out now.";
             } },
         ],
         dropDelay: 2, dropMsg: null,
@@ -44,77 +54,101 @@
 
       // Week 2: equity proposal is now on Alex's character (he texts you separately)
 
+      // Parallel rumor beat: once the player has probed Alex (but not yet committed a
+      // split), Jordan hears the two of them talking numbers without her and pushes back
+      // from her own thread. Non-mutating — it only banks/erodes trust. Reassuring her
+      // here and then choosing 40/40/20 reads as a broken promise (see counter below).
+      {
+        id: 'jordan_equity_worry', cat: 't', from: 'Jordan', focus: 'equity',
+        body: "i can hear you and alex going back and forth without me. i opened this with equal thirds and now i'm getting it secondhand. tell me straight — am i an equal partner here, or am i the part-timer you two are quietly pricing down?",
+        urgency: 22, weeks: 1,
+        available: (s, char) => char.flags.equity_probed && !char.flags.equity_proposal && !char.flags.worry_done,
+        options: [
+          { label: "You're an equal partner", key: 'reassure',
+            reply: "you're an equal partner. i'm not cutting you out — we'll land this fair.",
+            journal: null,
+            execute(s, char) {
+              char.flags.worry_done = true;
+              char.flags.reassured = true;
+              char.trust = clamp(char.trust + 6, 0, 100);
+              return "Jordan eased up. 'Okay. I trust you.' Now you've said it out loud.";
+            } },
+          { label: "We're still working it out", key: 'noncommittal',
+            reply: "we're still working it out. nothing's decided yet. i'll loop you in.",
+            journal: null,
+            execute(s, char) {
+              char.flags.worry_done = true;
+              char.trust = clamp(char.trust - 4, 0, 100);
+              return "Jordan went quiet. 'Right. Let me know when you've decided what I'm worth.'";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.worry_done = true; char.trust = clamp(char.trust - 4, 0, 100); },
+      },
+
       // Week 3a: Alex counters (now on Alex's character — he texts you)
 
       // Week 3b: Jordan counters (only if proposal is 40/40/20)
       {
-        id: 'jordan_equity_counter_jordan', cat: 't', from: 'Jordan',
-        body: "alex told me about the 40/40/20. we're both writing code — he gets twice what i get? i'm building the whole iOS side. equal thirds is fair. why do i get less?",
+        id: 'jordan_equity_counter_jordan', cat: 't', from: 'Jordan', focus: 'equity',
+        body: "alex just told me the split. 40, 40, and 20 for me. we write the same code — i'm building the entire iOS app on my own. so why is my work worth half of his? that's not a cap table. that's a message. tell me i'm wrong.",
         urgency: 22, weeks: 1,
         available: (s, char) => char.flags.equity_proposal === '40/40/20' && !char.flags.equity_counter_done && s.week <= 10,
         options: [
           { label: 'Equal thirds — fair point', key: 'cave_33',
-            journal: "Jordan was right — two people writing code shouldn't be split so unevenly. Went back to equal thirds. She was relieved; Alex went quiet when he heard.",
+            reply: "you're right. two people building the product shouldn't be split that unevenly. equal thirds.",
+            journal: null,
             execute(s, char, e) {
               char.flags.equity_counter_done = true;
               char.flags.equity_proposal = '33/33/33';
+              char.morale = clamp(char.morale + 8, 0, 100);
+              char.trust = clamp(char.trust + (char.flags.reassured ? 10 : 6), 0, 100);
+              // Alex now grudging at thirds — he loses this one without his own counter.
               const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-              return "Jordan seemed relieved. Alex heard about it and went quiet.";
+              if (alex) alex.morale = clamp(alex.morale - 5, 0, 100);
+              return "Jordan seemed relieved. Alex heard about it and went quiet — equal wasn't what he asked for.";
             } },
           { label: "You're not full-time — this reflects that", key: 'hold_40',
-            journal: "Held 40/40/20 — Jordan's not full-time and the split reflects that. She went quiet. 'Fine. I'll show you what 20% of work looks like.'",
+            reply: "i hear you. but you're still at your job — the split reflects that. 40/40/20 stands until you're all-in.",
+            journal: null,
             execute(s, char) {
               char.flags.equity_counter_done = true;
+              char.morale = clamp(char.morale - 10, 0, 100);
+              // Telling her she was an equal and then holding 20% is a broken promise.
+              char.trust = clamp(char.trust - (char.flags.reassured ? 18 : 10), 0, 100);
               return "Jordan went quiet. 'Fine. I'll show you what 20% worth of work looks like.'";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char) { char.flags.equity_counter_done = true; },
+        dropFx(s, char) { char.flags.equity_counter_done = true; char.trust = clamp(char.trust - 8, 0, 100); },
       },
 
-      // Week 3c: Both counter (only if proposal is 50/25/25)
+      // Parallel line on the 50/25/25 two-front: while Alex confronts you in his thread,
+      // Jordan pipes up in hers. Non-mutating — the number is resolved on Alex's card;
+      // this just raises the trust cost of grabbing half.
       {
-        id: 'jordan_equity_counter_both', cat: 't', from: 'Jordan & Alex',
-        body: "heard back from both. alex: 'i should be equal to you — i'm doing as much as you are.' jordan: 'alex and i are both writing code. 25% each feels low.'",
-        urgency: 22, weeks: 1,
-        available: (s, char) => char.flags.equity_proposal === '50/25/25' && !char.flags.equity_counter_done && s.week <= 10,
+        id: 'jordan_equity_5050_interject', cat: 't', from: 'Jordan', focus: 'equity',
+        body: "fifty for yourself? i came to you asking for equal thirds and you're keeping double what alex and i get. i'll be blunt — founders who grab half before there's anything to grab don't keep their co-founders for long. don't sign that.",
+        urgency: 21, weeks: 1,
+        available: (s, char) => char.flags.equity_proposal === '50/25/25' && !char.flags.equity_counter_done && !char.flags.jordan_50_said,
         options: [
-          { label: "Give Alex what he wants — 40/40/20", key: 'cave_alex',
-            journal: "Gave Alex what he wanted — 40/40/20. Jordan has less than she hoped, but she accepted it.",
-            execute(s, char, e) {
-              char.flags.equity_counter_done = true;
-              char.flags.equity_proposal = '40/40/20';
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale + 8, 0, 100);
-              return "Alex got what he wanted. Jordan still has less than she wanted, but she accepted it.";
-            } },
-          { label: "Give Jordan what she wants — 33/33/33", key: 'cave_jordan',
-            journal: "Gave Jordan equal thirds. Alex went quiet, and I gave up my majority — but it felt fair.",
-            execute(s, char, e) {
-              char.flags.equity_counter_done = true;
-              char.flags.equity_proposal = '33/33/33';
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-              return "Jordan got equal thirds. Alex went quiet. You gave up your majority.";
-            } },
-          { label: '50/25/25 stands — I run this company', key: 'hold_50',
-            journal: "Held 50/25/25 — I run this company. Both accepted it. Alex was terse, Jordan just said 'okay.' The tension didn't disappear.",
-            execute(s, char, e) {
-              char.flags.equity_counter_done = true;
-              const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale - 5, 0, 100);
-              return "Both accepted it. Alex was terse. Jordan said 'okay.' The tension didn't disappear.";
+          { label: "Hear you — still settling it", key: 'ack',
+            reply: "i hear you. nothing's signed. we're still settling it.",
+            journal: null,
+            execute(s, char) {
+              char.flags.jordan_50_said = true;
+              char.trust = clamp(char.trust - 5, 0, 100);
+              return "Jordan's blunt about it. 'Fix it before you sign.' Her goodwill is on the clock.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          char.flags.equity_counter_done = true;
-          char.flags.equity_proposal = '33/33/33';
-          const alex = e && e.chars && e.chars.get('alex');
-          if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
-        },
+        dropFx(s, char) { char.flags.jordan_50_said = true; char.trust = clamp(char.trust - 5, 0, 100); },
       },
+
+      // Week 3c: the 50/25/25 path is a two-front fight — Alex confronts you first
+      // (roles/alex.js: jordan_equity_counter_alex_50). If you bump him to 40/40/20,
+      // Jordan then comes at you in her own thread via jordan_equity_counter_jordan
+      // above. No merged "heard from both" card — each co-founder hits you 1:1.
 
       // Week 4: Signing
       {

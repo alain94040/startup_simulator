@@ -44,6 +44,7 @@
         analytics:    require("./roles/analytics.js"),
         twitter:      require("./roles/twitter.js"),
         tom:          require("./roles/tom.js"),
+        growth:       require("./roles/growth.js"),
       }
     : (typeof ROLES !== "undefined" ? ROLES : {});
 
@@ -77,6 +78,16 @@
         dev_plan: null,
         extra_burn: 0,
         saas: [],
+        // Launch & growth (see roles/growth.js): cold-start density choice, the
+        // channel-experiment results, and the channel chosen to double down on.
+        beachhead: null,         // null | 'narrow' (own one market) | 'broad' (open everywhere)
+        channels: {},            // { channelId: { fit, cac, tested:true } } — Bullseye test results
+        primary_channel: null,   // channelId once you commit (drives sustained growth)
+        // Focus mode: when a "war-room" arc is engaged, this holds { id, charIds }.
+        // While set, only cards tagged `focus === s.focus.id` surface, they cost no
+        // action, and the next beat is re-polled mid-week so the talk flows in one
+        // sitting; every other character/card is held on hold. See roles/jordan.js.
+        focus: null,
       };
 
       this.chars = new Map([
@@ -100,6 +111,7 @@
         ["analytics",    { archetypeId: "analytics",    active: false, flags: {} }],
         ["twitter",      { archetypeId: "twitter",      active: false, flags: {} }],
         ["tom",          { archetypeId: "tom",          active: false, flags: {} }],
+      ["growth",       { archetypeId: "growth",       active: false, flags: {} }],
         ["founder",      { archetypeId: "founder",      active: true,  flags: {} }],
       ]);
 
@@ -107,7 +119,7 @@
         "alex", "jordan", "priya", "marcus", "fatima", "ryan", "sarah",
         "brett", "kevin", "mom", "jamie", "david",
         "hacker_news", "yc", "lena", "techcrunch",
-        "users", "analytics", "twitter", "tom",
+        "users", "analytics", "twitter", "tom", "growth",
         "founder", // always last
       ];
 
@@ -123,6 +135,8 @@
       this.alexDepartureRisk = false;
       this.pending = [];
       this.history = [];
+      this._seq = 0;       // monotonic stamp on thread entries — lets the UI merge two
+                           // participants' threads into one ordered focus-room transcript
       this.actionsLeft = 2;
       this.act1Complete = false;
       this.firedStamps = new Set();  // milestone stamps already placed
@@ -244,8 +258,11 @@
 
     // ── weekly poll: ask each character what (if anything) to say, then show it ──
     _poll() {
-      // 1) unlock any inactive characters whose condition now passes
-      for (const [id, char] of this.chars) {
+      const focus = this.s.focus;
+
+      // 1) unlock any inactive characters whose condition now passes.
+      //    Suppressed during a focus arc — no new characters/intros mid-war-room.
+      if (!focus) for (const [id, char] of this.chars) {
         if (!char.active) {
           const def = DEFS[id];
           if (def && def.unlockCondition && def.unlockCondition(this.s, this)) {
@@ -266,10 +283,23 @@
       for (const charId of this.order) {
         const char = this.chars.get(charId);
         if (!char || !char.active) continue;
+        // During a focus arc, only the participants are polled; everyone else is
+        // held in place (their open slot is left untouched, not cleared).
+        if (focus && !focus.charIds.includes(charId)) continue;
         const def = DEFS[charId];
         if (!def) continue;
 
-        const card = def.next ? def.next(this.s, char, this) : this.defaultNext(def, char);
+        let card;
+        if (focus) {
+          // Within a focus arc, surface only that arc's tagged cards, ranked by
+          // urgency — bypassing the normal "hold the open slot" logic so a pending
+          // consequence-card can't block the arc. A card displaced this way isn't
+          // dropped: it simply resurfaces (availability-driven) once focus ends.
+          card = this.pick(this.sliceCards(def).filter(c => c.focus === focus.id), char);
+          if (!card) continue;  // nothing from the arc for this participant right now
+        } else {
+          card = def.next ? def.next(this.s, char, this) : this.defaultNext(def, char);
+        }
         const cur = this.open[charId];
         if (!card) { this.open[charId] = null; continue; }
         if (cur && cur.cardId === card.id) continue; // unchanged — don't repost
@@ -284,6 +314,8 @@
           mockups: card.mockups || null,  // browser-only: photo attachments on the text
           week: this.s.week,
           isNew: true,
+          focus: card.focus || null,   // tags arc messages so the UI can build the room
+          seq: this._seq++,
         });
         this.log.push({ week: this.s.week, charId, surfaced: card.id });
       }
@@ -307,7 +339,8 @@
     act(cardId, optionKey) {
       const o = this._openByCard(cardId);
       if (!o) return null;
-      if (this.actionsLeft <= 0) return null;
+      // Focus-arc cards (e.g. the equity talk) cost no action — playable even at 0 left.
+      if (this.actionsLeft <= 0 && !o.def.focus) return null;
 
       const charId = o.charId;
       const char = this.chars.get(charId);
@@ -315,14 +348,7 @@
       const opt = opts.find(x => x.key === optionKey) || opts[0];
       if (!opt) return null;
 
-      const cashBefore = this.s.cash;
-      const outcome = opt.execute(this.s, char, this);
-      // Record any cash this move moved (incorporate −$500, Mom's wire +$5,000, hires…)
-      // on the week's bank statement, labelled with its journal outcome.
-      this._tx(outcome || this._name(charId), cashBefore);
-
-      // Reply bubble appears in the character's thread only when the option
-      // provides explicit reply text. noChat characters never get reply bubbles.
+      // Reply bubble first — so execute() can push follow-up messages that appear after it.
       if (typeof opt.reply === "string" && !(DEFS[charId] && DEFS[charId].noChat)) {
         this.threads[charId].push({
           type: "reply",
@@ -330,8 +356,16 @@
           body: opt.reply,
           week: this.s.week,
           isNew: true,
+          focus: o.def.focus || null,
+          seq: this._seq++,
         });
       }
+
+      const cashBefore = this.s.cash;
+      const outcome = opt.execute(this.s, char, this);
+      // Record any cash this move moved (incorporate −$500, Mom's wire +$5,000, hires…)
+      // on the week's bank statement, labelled with its journal outcome.
+      this._tx(outcome || this._name(charId), cashBefore);
       // Journal outcome: opt.journal when provided, else the raw execute() return.
       const journalBody = opt.journal !== undefined ? opt.journal : outcome;
       if (journalBody) {
@@ -353,7 +387,7 @@
 
       this.open[charId] = null;  // answered — slot clears
       this.history.push({ week: this.s.week, chosen: [cardId] });
-      this.actionsLeft--;
+      if (!o.def.focus) this.actionsLeft--;  // focus-arc beats are free
       this.log.push({ week: this.s.week, charId, acted: cardId, option: opt.key });
 
       // milestone: equity locked in
@@ -361,8 +395,10 @@
         this.act1Complete = true;
       }
 
-      // New messages (including arc continuations) surface at the next week
-      // boundary in _poll(), not mid-week — answering never triggers an instant reply.
+      // New messages normally surface at the next week boundary in _poll(), not
+      // mid-week. Exception: while a focus arc is active, re-poll now so the next
+      // beat lands immediately and the conversation flows in a single sitting.
+      if (this.s.focus) this._poll();
 
       this._checkStamps();
 
@@ -512,9 +548,24 @@
         this.s.waitlist = 0;
       }
 
+      // Cold-start density (the dating ghost-town lesson): owning one narrow market
+      // gives liquidity — real matches → people convert and stay. Spreading thin
+      // ("broad") means an empty app — signups that never match and churn.
+      const density = this.s.beachhead === 'narrow' ? 1.25 : this.s.beachhead === 'broad' ? 0.7 : 1.0;
+
       // Organic signups at high signal
       if (this.s.launched && this.s.signal >= 70)
         this.s.users += Math.floor((this.s.signal - 70) / 30) + 1;
+
+      // Channel-driven growth (after committing to a winning channel via Bullseye).
+      // A channel that fits dating (referrals, creators, community) compounds; a dud
+      // (paid search, cold sales) barely moves the needle even after you've focused on it.
+      if (this.s.launched && this.s.primary_channel) {
+        const ch = this.s.channels[this.s.primary_channel];
+        const fit = ch ? ch.fit : 0;   // 0..1 effectiveness for a consumer dating app
+        const gained = Math.round((1 + fit * 7) * density);
+        if (gained > 0) this.s.users += gained;
+      }
 
       // True product-market fit: pre-pivot the raw score overstates reality.
       if (this.s.activities_pivot && this.s.fit_at_pivot == null)
@@ -528,7 +579,7 @@
       // that doesn't retain them)
       if (this.s.launched && this.s.users > 0) {
         const baseRate = trueFit < 30 ? 0.005 : trueFit < 50 ? 0.01 : trueFit < 70 ? 0.02 : 0.03;
-        const rate = baseRate * (this.s.website_updated ? 1.3 : 1.0);
+        const rate = baseRate * (this.s.website_updated ? 1.3 : 1.0) * density;
         const raw = this.s.users * rate;
         const converted = Math.floor(raw) + (Math.random() < (raw % 1) ? 1 : 0);
         if (converted > 0) { this.s.users = Math.max(0, this.s.users - converted); this.s.customers += converted; }
@@ -554,7 +605,7 @@
       const totalAccounts = this.s.users + this.s.customers;
       if (this.s.pivot_shipped && this.s.users_at_pivot_ship == null)
         this.s.users_at_pivot_ship = totalAccounts;
-      const retention = Math.min(0.95, 0.05 + (trueFit / 100) * 0.9);
+      const retention = Math.min(0.95, (0.05 + (trueFit / 100) * 0.9) * density);
       let active;
       if (this.s.pivot_shipped) {
         const oldPool = this.s.users_at_pivot_ship;
@@ -599,6 +650,8 @@
             hasAction: !!this.open[id],
             actionCardId: this.openCardId(id),
             empty: thread.length === 0,
+            // During a focus arc, non-participant contacts are dimmed/on hold.
+            onHold: !!(this.s.focus && !this.s.focus.charIds.includes(id)),
           };
         });
     }
@@ -637,6 +690,9 @@
           subtext: card.subtext || null,
           options: opts,
           week: o.week,
+          // While a focus arc runs, only its tagged card is live; the rest is on hold.
+          onHold: !!(this.s.focus && card.focus !== this.s.focus.id),
+          focus: card.focus || null,
         });
       }
       out.sort((a, b) => b.urgency - a.urgency);
@@ -657,6 +713,7 @@
         equitySigned: !!this.s.jordan_equity,
         act1Complete: this.act1Complete,
         gameOver: this.s.game_over,
+        focus: this.s.focus,   // { id, charIds } while a war-room arc is active, else null
       };
     }
   }

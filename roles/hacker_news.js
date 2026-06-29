@@ -15,9 +15,6 @@
       "community_signal_slack_1",
       "community_signal_slack_2",
       "community_signal_slack_3",
-      "community_product_hn",
-      "community_product_reddit",
-      "community_product_slack",
       "yc_discussion_ready",
       "yc_discussion_early",
     ],
@@ -188,102 +185,10 @@
         dropFx(s, char) { char.flags.ih_stage = 3; },
       },
 
-      // ── RECURRING: post-launch product mentions ──────────────────────────────
-      {
-        id: 'community_product_hn', cat: 'e', from: 'Hacker News',
-        body: "someone posted your product on HN. mixed reactions — a few critiques, but 5 people asking how to sign up.",
-        urgency: 1, weeks: 1,
-        available: (s) => s.launched && s.week >= (s.community_product_hn_last || 0) + 3,
-        options: [
-          { label: 'Engage the thread', key: 'engage',
-            execute(s, char) {
-              s.community_product_hn_last = s.week;
-              s.signal = clamp(s.signal + 7, 0, 100);
-              s.users += 5;
-              const n = (char.flags.hn_product_count = (char.flags.hn_product_count || 0) + 1);
-              const msgs = [
-                "Responded to every comment. Thread stayed warm for 3 days. 5 signups.",
-                "Jumped in early and corrected a misconception about pricing. Thread picked up. 5 new users.",
-                "Replied to every critique with specifics. One exchange turned into a paying customer.",
-                "Engaged the skeptics directly. A few people came around. 5 signups from the tail.",
-                "Spent a few hours in the comments addressing every concern. 5 signups and a useful feature request.",
-                "Wrote a detailed founder reply. It climbed to the top of the thread. 5 new users from the discussion.",
-                "Responded as the founder — honest and direct. Thread stayed active longer than usual. 5 more signups.",
-                "Engaged with the doubters first. Honest answers. 5 signups from people who appreciated the transparency.",
-              ];
-              return msgs[(n - 1) % msgs.length];
-            } },
-          { label: 'Let it run', key: 'watch',
-            journal: "Let the HN post run. Thread faded quickly. 1 signup.",
-            execute(s) { s.community_product_hn_last = s.week; s.users += 1; return "Didn't engage. Thread faded quickly. 1 signup."; } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { s.community_product_hn_last = s.week; },
-      },
-      {
-        id: 'community_product_reddit', cat: 'e', from: 'Reddit',
-        body: "someone recommended your product in a thread. comment got 40 upvotes. you're showing up in searches now.",
-        urgency: 1, weeks: 1,
-        available: (s) => s.launched && s.week >= (s.community_product_reddit_last || 0) + 3,
-        options: [
-          { label: 'Reach out to the poster', key: 'engage',
-            execute(s, char) {
-              s.community_product_reddit_last = s.week;
-              s.signal = clamp(s.signal + 5, 0, 100);
-              s.users += 3;
-              s.market_fit = clamp(s.market_fit + 1, 0, 100);
-              const n = (char.flags.reddit_product_count = (char.flags.reddit_product_count || 0) + 1);
-              const msgs = [
-                "Thanked them publicly and privately. They became a power user and wrote a short review.",
-                "Sent a DM with a personal thank-you and a promo code. They stuck around and started recommending us.",
-                "Messaged the poster. Turned into a 20-minute call. They're now one of our most active users.",
-                "Reached out directly. They appreciated it — converted to paid and referred two friends.",
-                "Sent a personal note to the poster. They shared it in two other communities. 3 more signups.",
-                "DM'd with a genuine thank-you. They became one of our most vocal advocates on the platform.",
-                "Replied publicly and messaged privately. They converted to paid and left a glowing comment the next day.",
-                "Reached out to thank them and ask for feedback. Great conversation — and 2 more referrals from their network.",
-              ];
-              return msgs[(n - 1) % msgs.length];
-            } },
-          { label: 'Let it ride', key: 'watch',
-            journal: "Let the Reddit post ride. 2 more signups from the thread tail.",
-            execute(s) { s.community_product_reddit_last = s.week; s.users += 2; return "Organic momentum. 2 more signups from the thread tail."; } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { s.community_product_reddit_last = s.week; },
-      },
-
-      {
-        id: 'community_product_slack', cat: 'e', from: 'Indie Hackers',
-        body: "someone posted a 'Show IH' about your product. mostly positive. a few asking about pricing.",
-        urgency: 1, weeks: 1,
-        available: (s) => s.launched && s.week >= (s.community_product_slack_last || 0) + 3,
-        options: [
-          { label: 'Engage and answer pricing questions', key: 'engage',
-            execute(s, char) {
-              s.community_product_slack_last = s.week;
-              s.signal = clamp(s.signal + 4, 0, 100);
-              s.users += 2;
-              const n = (char.flags.slack_product_count = (char.flags.slack_product_count || 0) + 1);
-              const msgs = [
-                "Answered everything honestly. 2 signups, 1 feature request worth exploring.",
-                "Went through the pricing questions one by one. Ended with 2 new users and a useful thread.",
-                "Spent an hour in the comments. 2 signups and a feature request I'm actually going to build.",
-                "Replied to every pricing question directly. The transparency helped — 2 more users.",
-                "Walked through the pricing logic in the thread. 2 conversions and a good back-and-forth.",
-                "Answered the hard questions publicly. Turned a few skeptics. 2 signups from the thread.",
-                "Gave real numbers when they asked about pricing. 2 new users who said the honesty sold them.",
-                "Responded to every question with specifics. 2 signups and one person who said they'd been waiting for exactly this.",
-              ];
-              return msgs[(n - 1) % msgs.length];
-            } },
-          { label: 'Let it run', key: 'watch',
-            journal: "Let the IH post run. 1 signup.",
-            execute(s) { s.community_product_slack_last = s.week; s.users += 1; return "Thread ran its course. 1 signup."; } },
-        ],
-        dropDelay: 0, dropMsg: null,
-        dropFx(s) { s.community_product_slack_last = s.week; },
-      },
+      // NOTE: the three recurring "someone posted your product on HN/Reddit/IH"
+      // cards were retired — post-launch growth is now driven by the deliberate
+      // channel-experiment loop in roles/growth.js (test cheap → focus), which
+      // replaces the old passive, repetitive community drip.
 
       {
         id: 'yc_discussion_ready', cat: 'e', from: 'Hacker News',
