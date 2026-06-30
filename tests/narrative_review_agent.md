@@ -1,302 +1,193 @@
 # Narrative Consistency Review — Agent Instructions
 
-You are reviewing game traces from a browser-based startup simulation game. Your job is to find moments where the story doesn't hold together — where a player would be confused, misled, or pulled out of the experience. This document explains the game, its characters, and exactly what to look for.
-
----
+Find moments where the story contradicts game state — text that would confuse or mislead a real player.
 
 ## The Game
 
-The player is a founder taking a startup from idea to seed round. Each sprint (usually 1 week), they are shown up to 6 cards representing situations, requests, or decisions. They pick 2. The rest are dropped. After ~20–60 weeks the game ends in a win (YC accepted, or two angel investors committed) or bankruptcy (cash hits $0).
+Founder chat sim, idea → seed round, ~20–60 weeks. Player answers up to 2 character messages per week. Ends: YC accepted, two angels committed, or cash = $0.
 
-**Key stats shown at the end of each sprint:**
-- `Cash` — starts at $10k, burns $500/week
-- `Fit` (market_fit) — 0–100%, built through discovery
-- `Users` — free users (post-launch)
-- `Customers` — paying customers (post-launch)
-- `Signal` — investor/market confidence (0–100)
-- `launched` — whether the product is live (pre-launch or launched)
-- `Alex trust / morale` — Alex's relationship health (shown while he's active)
-- `Alex: gone` — shown when Alex has left
-
-**Trace format:**
-```
-Wk 7   Month 2   ──────────────────
-  ✓  [cat] Character   "card body text"
-       → Chosen option label
-  ✗  [cat] Character   "card body text"
-
-       "Outcome text from chosen cards"
-       "Character: "delayed message text""
-
-       Cash $X  Product Y%  Fit Z%  Users N  Customers M  Signal S  pre-launch  Alex trust:T morale:M
-```
-
-`✓` = player picked this card. `✗` = player saw it but didn't pick it (it was dropped).
-Outcomes are the results of chosen cards plus any delayed messages that fired this sprint.
-Delayed messages are formatted as `CharacterName: "text in double quotes"`.
+Key state: `cash` (starts $8k, burns $500+/wk) · `fit` 0–100% · `users` · `customers` · `launched` (bool) · `signal`
 
 ---
 
-## Card System Mechanics
+## Trace Format
 
-**Delayed messages** (`dropMsg`): when a card is dropped (not chosen), it can schedule a message to appear 1–4 weeks later. These are shown in the outcomes block as `Character: "..."`. They represent follow-ups, consequences, or reactions from the character who owned the dropped card.
+```bash
+node sim_proto.js --chat [K] --strategy STRATEGY --messages
+```
 
-**The critical timing problem**: a delayed message is queued when the card is dropped, and fires a fixed number of weeks later regardless of what the player did in the meantime. This means a player can drop a card in week 8, take action in week 9 to resolve the situation, and still receive the "you went quiet" message in week 10. **This is the most common source of incoherency.**
-
-**Cooldowns**: recurring cards have cooldown timers (e.g. "available every 5 weeks"). If the cooldown only resets when the card is *chosen* (not when dropped), the card can spam every sprint when the player ignores it.
-
-**One-shot cards**: cards with `!char.flags.done` guards fire exactly once. After that they're gone. If they appear multiple times, something is wrong.
+`--messages` is required (without it text is truncated). Each trace has five sections:
 
 ---
 
-## Characters
+### 1. TIMELINE
 
-### Alex (co-founder, engineer)
-- **Always active from week 1.** He's the technical co-founder — the player's partner.
-- **Cards**: equity split, commitment level, vision alignment, discovery vs. build tradeoffs, side project confession, departure threat, launch decisions.
-- **Departure arc**: if morale and trust collapse (from being ignored), Alex's `alexDepartureRisk` flag triggers a "leaving threat" card. Dropping that card causes him to leave (`Alex: gone`). After departure, his delayed messages are now suppressed — **no Alex messages should appear after `Alex: gone`**.
-- **Common issue**: Alex's delayed messages (queued before his departure) used to fire after he left. This is now fixed in the engine, but watch for regressions.
-- **Another issue**: Alex has cards that fire based on his `focus` (build vs. discover). Cards about "should we shift to discovery" (`alex_sync_discover`) should NOT fire post-launch — by that point the question is moot. Check for this card appearing when `launched=true`.
-- **Language watch**: Alex's discovery cards say "we've been heads-down building without talking to anyone outside" — this is wrong post-launch when the company has users and customers. Flag any sprint where this card appears after launch.
+Notable weeks only. Use to orient: when launch happened, when customers appeared, cash burn rate.
 
-### Jordan (co-founder)
-- works with Alex on development at first, is under-performing, player is given clues. Hard to win unless the player fires Jordan and cleans up the equity table
+```
+W 1  cash=$8,000  users=0  customers=0  fit=0%  start
+W20  cash=$4,760  users=7  customers=0  fit=84%  launched=true  first_user
+W23  cash=$3,080  users=18  customers=1  fit=85%  first_customer
+W29  ← BANKRUPT
+```
 
-### Priya (advisor)
-- **Unlocks only after the player attends a meetup** (the `founder_meetup` card, available weeks 2–6 and 8–11). Until then she must not appear.
-- **First card**: "looked at your idea over the weekend. you should know: 3 companies are working on this right now..." — only fires when `signal < 60`.
-- **Red flag**: Priya appearing before the meetup outcome text has been seen. Her intro comes from a TechCrunch `dropMsg` that formerly used `dropFrom: 'Priya (advisor)'` — that's been fixed, but watch for any Priya message before the player's meetup outcome.
+---
 
-### Marcus (angel investor)
-- **Unlocks at week 6+ when `network.advisors >= 1`.**
-- **Arc**: intro call → deck request → investor meetings → seed pitch → commit ($400k).
-- **Common issue**: Marcus's intro card drops with `dropDelay: 1, dropMsg: "tried twice. no reply. moving on"`. If the player drops the intro at week 9 and takes it at week 10, both "Great call" and "tried twice" appear in week 10's outcomes. This is now fixed with a `dropCondition` — flag any recurrence.
-- **Watch for**: Marcus's "tried twice" message appearing in a sprint where Marcus's intro was successfully taken that same week.
+### 2. CHAT blocks (one per real character)
 
-### Fatima (angel investor)
-- **Unlocks at week 8+ when `network.advisors >= 1`.**
-- **Arc**: intro call → deeper meeting → deck Q&A → commit ($100k, follows Marcus).
-- **Common issue**: same as Marcus — `fatima_meeting` drops with `dropDelay: 2, dropMsg: "you went quiet after the intro"`. If the player takes the meeting the same sprint that message fires, both outcomes appear together. Now gated with `dropCondition: !char.flags.meeting_done`.
-- **Same issue on `fatima_deck`**: `dropMsg: "still working through my diligence process"` should not fire after the deck Q&A is complete.
-- **Watch for**: any Fatima message referencing her being stalled/waiting in a sprint where she just had a successful meeting.
+Real people the founder texts: Alex, Jordan, Priya, Marcus, Fatima, Ryan, Sarah, Mom, Jamie, David, Brett, Kevin, Tom, Lena.
 
-### Ryan (angel investor)
-- **Unlocks at week 8+ when `network.advisors >= 1`.**
-- **Arc**: intro coffee → recurring check-ins every 5 weeks.
-- **Watch for**: the `ryan_checkin` card body rotates through 4 variants — verify they actually vary (not all identical). The "Skip it this week" option now resets the cooldown, so the card should respect the 5-week gap.
+```
+[W06] Alex: "we need login, account creation, password reset..."
+       state: {cash:$8,800 launched:false customers:0 fit:20%}
+       ✓ Chose: "let's not reinvent the wheel. wire up a hosted provider"
+         → Wired up a hosted auth provider in an afternoon.…
+       ↩ Skipped: "Let Alex build it himself"
 
-### Mom
-- **Always active from week 1.** Family/friend fundraising character.
-- **Cards**: emotional check-ins, small cash injections ($5k–$15k), moral support.
-- **Watch for**: Mom cards appearing very late in the game (week 40+) — the F&F fundraising window should be early. Cards with `s.week <= N` guards should prevent this.
+[W07] Alex: "jordan wants equal thirds. i've been thinking..."
+       state: {cash:$8,270 launched:false customers:0 fit:20%}
+       ⚠ IGNORED (patience expired)
 
-### Jamie (college friend) and David (ex-manager)
-- **Early-game characters**, typically weeks 3–8.
-- **Jamie**: intro coffee, small angel ask, testimonial chain.
-- **David**: lunch, potential advisor intro.
-- **Watch for**: these characters appearing very late in the game — they have `s.week <= N` guards on most cards. Flag any appearance after week 15.
+[W09]   → Alex: "you never responded. i've been thinking about it anyway..."  ← follow-up after no reply
+```
 
-### Brett (brand strategist) and Kevin (growth consultant)
-- **Consultants** — optional, cost money, one-time cards.
-- **Brett**: positioning workshop ($1,500). Appears pre-launch.
-- **Kevin**: growth audit ($2,000). Appears post-launch.
-- **Watch for**: Brett appearing post-launch, Kevin appearing pre-launch.
+**Field reference:**
+- `state:` — game state **when the message surfaced**. The message text must make sense given this state.
+- `✓ Chose:` / `→ outcome` — what player replied and what happened.
+- `↩ Skipped:` — unchosen options. **Their text can also contain bugs.**
+- `(no dialogue reply)` — card has `chat:false`; action happens silently but outcome still posts to journal.
+- `⚠ IGNORED` — message expired unanswered; drop consequence fired.
+- `← follow-up after no reply` — consequence message queued at ignore-time, fires on fixed delay. **Most bug-prone area**: can arrive after the situation resolved.
+- `(open at game end)` — never answered.
 
-### Tom (top user)
-- **Unlocks when `customers >= 10`.**
-- **Card**: "he was in the product every single day for 6 weeks. then nothing for 10 days." — silent churn from a power user.
-- **Watch for**: Tom appearing when customers < 10, or his card body referencing "6 weeks of daily use" when the product has only been live for 2 weeks.
+---
 
-### Hacker News / Reddit / Indie Hackers (community platforms)
-- **Pre-launch community signal** (3 cards each, sequential one-shots):
-  - Card 1: first discovery of the problem space on the platform
-  - Card 2: deeper thread, escalating stakes
-  - Card 3: the platform discovers the player's product
-- **Post-launch**: recurring "someone posted your product" cards with cooldowns.
-- **Watch for**: the sequence firing out of order (card 2 before card 1 resolved), or post-launch community cards appearing pre-launch.
+### 3. EVENTS & NOTIFICATIONS
 
-### TechCrunch
-- **Competitor launch arc**: 3 cards — Rivalio stealth launch, Rivalio growing, investor asking why you win.
-- **Watch for**: `dropMsg: "Rivalio has 200 customers..."` — this was formerly attributed to `Priya (advisor)` before the fix. Any Priya-attributed competitive message before the meetup is attended is a regression.
+Impersonal sources (HN, Reddit, Twitter, Analytics, YC, Users) in chronological order. Same fields as CHAT. Apply the same consistency checks.
 
-### Analytics
-- **Unlocks post-launch when `users >= 3`.**
-- **`silent_churn` card**: "free users are signing up, poking around for 20 minutes, and disappearing. no explanation." Cooldown: 8 weeks.
-- **Watch for**: this card appearing pre-launch (users = 0), or the old "your first free users" phrasing (now fixed — flag any recurrence of "first free users").
+---
 
-### YC
-- **YC application arc** (Hacker News character): opens every 12 weeks, requires `product >= 60` and `customers >= 10` for the "ready" version.
-- **Watch for**: the "Stats qualify" (ready) card appearing when product < 60 or customers < 10, or the "stats aren't there" (early) card appearing when they ARE qualified.
+### 4. ROADMAP CHANGES
+
+Every item status/quality change, derived from weekly state diffs. Attributed to the week the change occurred.
+
+```
+[W 1] + matching_algo: active  ← new item {launched:false customers:0 fit:0%}
+[W 6]   auth:  todo → done (bought) {launched:false customers:0 fit:20%}
+[W18]   matching_algo:  done (solid) → obsolete (solid) {launched:false customers:0 fit:56%}
+[W18] + plans_matching: active  ← new item {launched:false customers:0 fit:56%}
+```
+
+Quality values: `solid` = properly built · `bought` = third-party SaaS · `rough` = shipped fast · `licensed` = outsourced matching (strategic mistake).
+
+---
+
+### 5. JOURNAL (founder)
+
+All outcomes and stamps in chronological order. `✦` = milestone stamp. `[CharName]` = voiced outcome from that character's card.
+
+```
+[W 2] ✦ Incorporated
+[W 6] [Alex] Wired up a hosted auth provider in an afternoon.…
+[W19] ✦ Launched
+[W23] ✦ First Customer
+```
+
+---
+
+## Characters & Unlock Conditions
+
+| Character | Unlocks when | Key watch |
+|---|---|---|
+| Alex | Always (W1) | No messages after departure. `alex_sync_discover` wrong post-launch. |
+| Jordan | Always (W1) | Follow-ups after ignored equity cards should reference tension, not praise. |
+| Priya | After `founder_meetup` card is answered | No appearance before meetup outcome in journal. |
+| Marcus | W6+, `network.advisors >= 1` | "tried twice" follow-up must not appear same week as successful call. |
+| Fatima | W8+, `network.advisors >= 1` | "you went quiet" follow-up must not appear same week as successful meeting. |
+| Ryan | W8+, `network.advisors >= 1` | `ryan_checkin` body rotates 4 variants — should not repeat identically. |
+| Mom / Jamie / David | W1 / W2 / W2 | Should not appear after W20 (family/friend window is early runway). |
+| Brett (brand) | Pre-launch only | Flag if appears when `launched:true`. |
+| Kevin (growth) | Post-launch only | Flag if appears when `launched:false`. |
+| Tom (top user) | `customers >= 10` | Flag if `customers < 10` in state line at first appearance. |
+| Analytics | Post-launch, `users >= 3` | `silent_churn` must not fire with `launched:false` or `users:0`. |
+| HN / Reddit / Indie Hackers | Sequence: 3 pre-launch one-shots, then recurring post-launch | Out-of-order or wrong phase. |
+| YC | Fixed windows (W30, then every 12 wk) | "stats qualify" version wrong if `customers < 10`. |
 
 ---
 
 ## What to Look For
 
-### 1. Delayed messages that contradict current state
-The most common issue. Look for `Character: "message"` lines in the outcomes block that don't match what happened that sprint or in recent sprints.
+### 1. Stale follow-ups
+Every `← follow-up after no reply` line: check the state when it fires vs. when the original was ignored. Look for the situation having resolved in the meantime.
 
-**Examples of bugs:**
-- `Fatima: "you went quiet after the intro"` appearing in the same sprint as `"Strong meeting. Fatima pushed hard on distribution."` — player didn't go quiet, they just had the meeting.
-- `Marcus: "tried twice. no reply. moving on"` in the same sprint as `"Great call. Marcus is following your progress."`
-- `Alex: "i accepted the offer"` appearing in the same sprint as `"i need to decide by friday"` — two departure beats collapsed into one.
-- Any `Alex: "..."` message after the stats line shows `Alex: gone`.
+**Bug examples:**
+- `"you went quiet after the intro"` same week JOURNAL shows a successful Fatima meeting.
+- Any Alex message after his CHAT block ends (post-departure).
 
-**How to spot**: look for the outcomes block containing two messages that directly contradict each other, or a `Character: "..."` message referencing inaction when that same sprint shows action.
+### 2. Message body vs. state
+Read the body, check the `state:` line. Body must match.
 
-### 2. Card body text assuming wrong game state
-The card was written for a specific context but fires in a different one.
+**Bug examples:**
+- `"we've been heads-down building without talking to anyone"` when journal shows interviews already done.
+- `"your first free users signed up"` when `users > 20`.
+- Any reference to subscribers/churn when `customers:0` or `launched:false`.
 
-**Examples:**
-- `"we've been heads-down building without talking to anyone outside. should we shift to customer discovery?"` — wrong after launch when the player has users and paying customers.
-- `"your first free users signed up, poked around..."` — wrong when users > 10 and the product has been live for weeks.
-- `"you've been building for two weeks without a single structured customer conversation"` — wrong if the player already ran customer interviews.
-- `"you don't have a public launch yet"` — wrong if `launched = true` in the stats.
+### 3. Skipped option text wrong
+`↩ Skipped:` labels can also reference wrong state.
 
-**How to spot**: read the card body, then check the stats line for that sprint. If the body assumes a state the stats contradict, flag it.
+**Bug examples:**
+- Option says "fire Jordan" after Jordan was already fired.
+- Option references "your investors" before any investor committed.
 
-### 3. Same card text appearing in consecutive or near-consecutive sprints
-Recurring cards should have cooldowns. If the exact same body text appears in weeks 15 and 16 back-to-back, the cooldown isn't working.
+### 4. Repeat without variation
+Within a CHAT block, same body text in adjacent `[W##]` entries = broken cooldown. Fallback journal card repeating 5+ weeks in a row = game ran out of content.
 
-**Examples:**
-- `"alex has been heads-down but the queue isn't shrinking"` appearing every sprint for 10+ weeks.
-- `"a quiet stretch. no fires, no urgent asks"` (the fallback card) appearing 5 weeks in a row — the game has no real content left.
-- Any community signal card (`HN`, `Reddit`, `Indie Hackers`) appearing twice with identical text — these are now one-shot sequences.
+### 5. Missing introduction
+Check each character's first CHAT entry against unlock conditions in the table above.
 
-**How to spot**: look at the "Repeated cards (>3×)" line at the end of each trace. Any card there that isn't `founder_reflect`, `alex_sync_discover`, or `founder_solo_discover` is worth investigating. Then scroll through the trace and look for near-identical card bodies in adjacent weeks.
+### 6. Outcome contradicts choice
+`✓ Chose:` label and `→ outcome` must agree. "Chose 'engage'" + outcome "Didn't engage" is a bug.
 
-### 4. Character appearing without any prior introduction
-A character sends a card or message when the player has never had any interaction that would make them aware of each other.
+### 7. Roadmap vs. card actions
+Cross-reference ROADMAP CHANGES with CHAT blocks:
+- `auth: done(bought)` but Alex's CHAT shows "build it himself" was chosen → contradiction.
+- `plans_matching` appears but no pivot card (`pivot_open`, `pivot_alex_pushback`, `pivot_priya_verdict`) in any CHAT → orphaned state change.
+- `analytics: done(bought)` appears *after* an Analytics EVENTS card fires → used before set up.
+- `✦ Launched` in JOURNAL before `launched:true` in TIMELINE → ordering bug.
 
-**Examples:**
-- Priya (advisor) sending a competitive intelligence message before the meetup outcome text has appeared in the trace.
-- Marcus or Fatima appearing as if they know the player when neither a network introduction nor any advisor relationship has been established.
-- Tom (top user) appearing with `customers < 10`.
-
-**How to spot**: for each character's first appearance in a trace, verify the unlock conditions were met. Check the stats at that week: did the player have enough `network.advisors`, or `customers`, or did the meetup card fire?
-
-### 5. Outcome text contradicting the chosen option
-The player chose one option but the outcome describes something else.
-
-**Examples:**
-- Player chose "engage" on a community card but the outcome says "Didn't engage. Thread faded."
-- Player chose "Do the competitive deep-dive" but the outcome describes ignoring the competition.
-
-**How to spot**: read the `→ Chosen option label` line and then the outcome text. The outcome should clearly follow from the choice. If the outcome sounds like a different option was taken, flag it.
-
-### 6. Two cards in the same sprint that contradict each other
-Two ✓ cards chosen in the same sprint produce outcomes that tell incompatible stories.
-
-**Examples:**
-- One card says "launched the product to wide public" and another says "decided to keep the beta private."
-- One card says "Alex is pushing for a major pivot" and another says "Alex locked in the direction and is building."
-
-**How to spot**: read both outcome texts for any sprint and check if they describe the same reality.
-
-### 7. Timing violations — card fires too early or too late
-Some cards have strong implicit timing requirements.
-
-**Too early:**
-- The competitor launch (Rivalio stealth) card appearing in week 2 — the player hasn't built anything yet, so "your product looks similar" is premature.
-- Marcus's formal pitch card (`seed_pitch`) appearing before the player has 6 paying customers.
-- Family/friend fundraising cards (Mom, Jamie) appearing after week 20 — these should be early runway.
-
-**Too late:**
-- `founder_first_interviews` ("you've been building for two weeks without a single customer conversation") appearing at week 30 post-launch with 20 users.
-- `alex_commitment` ("I can't quit my job until we have real traction") appearing after Alex has been working full-time for months.
-
-**How to spot**: note the week and the implicit timing the card assumes. A card saying "it's only been two weeks" at week 40 is wrong.
+### 8. Timing violations
+- Any investor intro before W6.
+- `seed_pitch` before `customers >= 6`.
+- `"you've been building two weeks without talking to customers"` at W30 post-launch.
+- `alex_commitment` ("can't quit my job") after Alex has been full-time for months.
 
 ---
 
-## How to Generate Traces
+## Strategies
 
+| Strategy | Use for |
+|---|---|
+| `lean_loop` | General — exercises most cards |
+| `lean_loop --no-yc` | Angel arc (Marcus / Fatima / Ryan) |
+| `ignore_alex` | Alex departure + post-departure follow-up suppression |
+| `distracted` | Maximises `⚠ IGNORED` and follow-ups — best for stale-follow-up bugs |
+| `random` | Edge cases |
 
-### Basic command structure
-
-```
-node sim_proto.js N --all --strategy STRATEGY [--messages] [--no-yc]
-```
-
-- `N` — number of game traces to print
-- `--all` — print full narrative traces (required for review; without it, only aggregate stats are shown)
-- `--strategy STRATEGY` — which AI strategy drives the player's decisions (see below)
-- `--messages` — show full card body text; without this flag, bodies are truncated at 60 characters, which makes narrative review impossible. **Always use `--messages`.**
-- `--no-yc` — force the angel fundraising path (YC acceptances are blocked); use this to exercise the Marcus/Fatima/Ryan investor arc
-
-### Strategies and what they exercise
-
-| Strategy | What it exercises | Why useful for review |
-|---|---|---|
-| `lean_loop` | Balanced YC path, full character roster | Best general-purpose trace; exercises most cards |
-| `lean_loop --no-yc` | Angel fundraising arc | Exercises Marcus, Fatima, Ryan investor chains fully |
-| `angel_path` | Investor-first approach | Best for Marcus/Fatima timing issues |
-| `ignore_alex` | Alex departure arc | Always triggers Alex leaving; tests post-departure behaviour |
-| `yc_grind` | Aggressive YC focus | Fast product/launch arc; good for post-launch card timing |
-| `distracted` | Unfocused play, many dropped cards | Triggers the most delayed messages; maximises delayed-message bugs |
-| `random` | Fully random choices | Finds edge cases other strategies miss; noisy but useful |
-
-### Recommended review session
-
-Run these commands and read all output. Each produces output too large to print inline — capture to files using `2>&1 >`:
+### Recommended session
 
 ```bash
-node sim_proto.js 5 --all --strategy lean_loop --messages > trace_lean.txt
-node sim_proto.js 4 --all --strategy ignore_alex --messages > trace_ignore_alex.txt
-node sim_proto.js 4 --all --strategy angel_path --no-yc --messages > trace_angel.txt
-node sim_proto.js 3 --all --strategy distracted --messages > trace_distracted.txt
+node sim_proto.js --chat 1 --strategy lean_loop --messages
 ```
 
-Then read each file in full. The traces are long (30–100KB each) — read them completely, not just the first few weeks.
-
-### What a trace looks like
-
-Each game starts with `=== STORY TRACE: strategy run N/total ===` and ends with a summary line showing outcome, final stats, active characters, and repeated cards.
-
-Within a game, each sprint looks like:
-
-```
-  Wk 9   Month 3   ────────────────────────────────────────────────────
-  ✓  [e] Fatima (angel)        "heard good things about what you're building..."
-         → Take the call
-  ✗  [t] Alex                  "we've been heads-down building without talking..."
-  ✗  [e] Marcus (angel)        "genuinely interested in what you're building..."
-  ✗  [e] Ryan (angel)          "heard about you through the network..."
-
-         "Good call. Fatima asked sharp questions about the problem space."
-         "Marcus: "tried twice. no reply. moving on — good luck with the company.""
-
-         Cash $26,800  Product 21%  Fit 29%  Users 0  Customers 0  Signal 40  pre-launch  Alex trust:40 morale:57
-```
-
-**Reading the sprint:**
-- `✓` cards were chosen; `✗` cards were in the player's hand but not picked (dropped)
-- `→ label` shows which option the player chose
-- The indented quoted lines after the blank line are **outcomes** — results from chosen cards and any delayed messages that fired this sprint
-- Lines formatted as `Character: "text"` are **delayed messages** — these fired from cards dropped in a previous sprint
-- The stats line at the bottom shows the state *after* this sprint resolves
-
-### The summary block at the end of each game
-
-```
-  💸 BANKRUPT — Week 38 · Product 45% · Customers 0
-  YC: applied=false accepted=false
-  Active chars: alex, marcus, fatima, ryan, sarah, ...
-  Repeated cards (>3×): alex_sync_discover×12@wk18  founder_codebuild×8@wk22  ...
-```
-
-- **Active chars** — which characters were ever activated. Use this to spot characters who appeared despite unlock conditions not being met (e.g. Priya active but no meetup in the trace).
-- **Repeated cards** — `cardId×N@wkAvg` means the card appeared N times, average at week wkAvg. Any card here that isn't `founder_reflect` or `founder_solo_discover` is a candidate for a cooldown bug. Cards appearing 10+ times are almost certainly broken.
+Read each file completely — bugs often appear in weeks 20–40.
 
 ---
 
 ## Reporting Format
 
-For each issue found:
+For each issue: **file · game · week** · character/section · exact quote · state at that week · why it's wrong · category.
 
-1. **Game / week**: which run, which week
-2. **Quote**: the exact card body, outcome text, or delayed message
-3. **Stats at that week**: the relevant stat that contradicts it (e.g., `Users 0` when body says "your active users")
-4. **Why it's wrong**: one sentence
-5. **Category**: one of — *stale delayed message*, *wrong state assumption*, *repeat without variation*, *missing introduction*, *outcome contradiction*, *timing violation*
+Categories: *stale follow-up* · *wrong state assumption* · *option text wrong* · *repeat without variation* · *missing introduction* · *outcome contradiction* · *roadmap mismatch* · *timing violation*
 
-Group issues by category. Skip pure balance concerns (win rate, cash amounts). If unsure whether something is a bug or intentional design, note it as "possibly intentional" rather than skipping it.
+Group by category. Mark uncertain cases "possibly intentional" rather than skipping.
