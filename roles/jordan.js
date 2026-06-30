@@ -15,6 +15,13 @@
       "jordan_ios_sprint",
       "pivot_open",
       "jordan_fulltime_ask",
+      "launch_first_bounce",
+      "launch_first_signup_live",
+      "launch_hustle_temptation",
+      "launch_abuser_early",
+      "launch_going_home",
+      "launch_9pm_crisis",
+      "launch_signal",
     ],
 
     role: "Co-founder · iOS",
@@ -329,6 +336,276 @@
           char.flags.pivot_dismissed = (char.flags.pivot_dismissed || 0) + 1;
           char.flags.pivot_open_wait = s.week + 3;
         },
+      },
+
+      // ── LAUNCH FOCUS ARC (Jordan's beats) ───────────────────────────────────
+      // Jordan watches the user side during launch day. Sending her to hustle on
+      // social media (the tempting response to a quiet launch) means nobody is
+      // watching the platform — the abuser runs unchecked until 9pm.
+      {
+        id: 'launch_first_bounce', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "first click from the blast just came in. someone opened it on their phone, hit the homepage, maybe 10 seconds — didn't scroll past the hero. no signup.",
+        urgency: 19, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'launch' && alex && alex.flags.email_pulse_done && !char.flags.first_bounce_done;
+        },
+        options: [
+          { key: 'normal', label: "Normal — first visitors are just curious",
+            reply: "normal. probably opened it on their commute. real signups need a minute to think.",
+            journal: null,
+            execute(s, char) { char.flags.first_bounce_done = true; return null; } },
+          { key: 'broken', label: "Was something wrong on mobile?",
+            reply: "check if the page is broken on mobile.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.first_bounce_done = true;
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "tested on my phone — page loads clean, 1.4s, no errors. they just weren't ready to commit on a first glance.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'who', label: "Can we figure out who it was?",
+            reply: "any way to tell who it was? might be worth reaching out.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.first_bounce_done = true;
+              const msg = s.analytics_live
+                ? "it's a uuid — no name until they sign up. they hit the /how-it-works page before leaving."
+                : "just a hit in the access logs. no identity until they sign up.";
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: msg,
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_first_signup_live', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "first real profile just went live — maya, 28, SF. she's still filling it out but she's in the app. pipeline runs every few minutes so matches haven't shown up yet.",
+        urgency: 18.5, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'launch' && alex && alex.flags.staging_done && char.flags.first_bounce_done && !char.flags.first_signup_live_done;
+        },
+        options: [
+          { key: 'watch', label: "Watch her — first real user in the app",
+            reply: "watch her. i want to see what a real user actually does.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.first_signup_live_done = true;
+              s.launch_time = '11AM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "she completed her profile — 3 photos, full bio. she's now checking for matches.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'welcome', label: "Send her a welcome message",
+            reply: "send her a personal welcome. first user deserves it.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.first_signup_live_done = true;
+              s.launch_time = '11AM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "sent. she replied 'omg i didn't expect to hear from you!' — she's filling out her profile now.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'leave', label: "Leave her — let her explore on her own",
+            reply: "don't hover. let her figure it out herself.",
+            journal: null,
+            execute(s, char) {
+              char.flags.first_signup_live_done = true;
+              s.launch_time = '11AM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_hustle_temptation', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "it's noon and we only have 14 signups. should i post a thread on LinkedIn? might drive some traffic while the email's still fresh.",
+        urgency: 18, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'launch' && alex && alex.flags.staging_done && alex.flags.inbox_question_done && !char.flags.hustle_done;
+        },
+        options: [
+          { key: 'go', label: 'Go for it — hustle for more signups',
+            reply: "yes, go post. let's hustle for signups.",
+            journal: null,
+            execute(s, char) {
+              char.flags.hustle_done = true;
+              s.jordan_left_watch = true;
+              s.launch_time = '1PM';
+              return null;
+            } },
+          { key: 'stay', label: 'Stay in the app — watch real users',
+            reply: "stay in the app. watch how real users behave — that's worth more than 20 extra signups right now.",
+            journal: null,
+            execute(s, char) {
+              char.flags.hustle_done = true;
+              s.launch_time = '1PM';
+              return null;
+            } },
+        ],
+      },
+
+      // Only surfaces if Jordan stayed to watch (not sent to hustle).
+      // Surfaces simultaneously with Alex's launch_test_profiles — triage window.
+      {
+        id: 'launch_abuser_early', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "seeing something weird. one user has sent the exact same opener to at least 10 women in the last hour. just got a DM from one asking if this is allowed. what do you want me to do?",
+        urgency: 17, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'launch' && alex && alex.flags.staging_done && char.flags.hustle_done && !s.jordan_left_watch && !char.flags.abuser_done;
+        },
+        options: [
+          { key: 'ban', label: 'Ban him now',
+            reply: "ban him. we don't need a ToS to know mass-messaging isn't okay.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.abuser_done = true;
+              s.launch_time = '4PM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "done. he's off the platform. the woman who complained sent a thank you.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'warn', label: 'Send him a warning first',
+            reply: "send him a warning — one chance to stop.",
+            journal: null,
+            execute(s, char) {
+              char.flags.abuser_done = true;
+              s.moderation_warned = true;
+              s.launch_time = '4PM';
+              return null;
+            } },
+          { key: 'investigate', label: 'Investigate more before deciding',
+            reply: "look into it more — how many women, what did he actually say?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.abuser_done = true;
+              s.moderation_warned = true;
+              s.launch_time = '4PM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "checked — he sent the same message to 15 women. nothing explicitly offensive, just copy-pasted. sent him a warning for now.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_going_home', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "it's 6pm. heading home — long day. 19 signups total. not bad for day one?",
+        urgency: 14, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          const abuser_resolved = s.jordan_left_watch || char.flags.abuser_done;
+          return s.focus && s.focus.id === 'launch' && alex && alex.flags.stripe_done && abuser_resolved && !char.flags.going_home_done;
+        },
+        options: [
+          { key: 'ack', label: 'Good work today. Rest up.',
+            reply: "good work today. rest up.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.going_home_done = true;
+              s.launch_time = s.moderation_warned ? '9PM' : '11PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "same. grabbing dinner. 19 signups honestly isn't bad. more tomorrow.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      // Only fires if abuser was warned (not banned) — s.moderation_warned.
+      // Both people are home; the constraint is emotional, not logistical.
+      {
+        id: 'launch_9pm_crisis', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "hey — i know we said we were done. the guy i warned is back. messaged 5 more women tonight. one of them is threatening to post publicly about it. alex says he doesn't have his laptop.",
+        urgency: 13, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.going_home_done && !!s.moderation_warned && !char.flags.crisis_done,
+        options: [
+          { key: 'ban', label: 'Ban him now',
+            reply: "ban him now. should have done it this afternoon.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.crisis_done = true;
+              s.launch_time = '11PM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "done. banned. reached out to the victim — she's still upset but said thank you. we need a real ToS.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'victim_first', label: 'Reach out to the victim first, then ban',
+            reply: "message the victim first — apologize, then ban him.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.crisis_done = true;
+              s.launch_time = '11PM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "messaged her. she softened when we apologized. banned him. she said she'll hold off on posting.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'morning', label: 'Handle it in the morning',
+            reply: "it can wait until morning.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.crisis_done = true;
+              s.moderation_ignored = true;
+              s.launch_time = '11PM';
+              e.pending.push({
+                fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
+                text: "that woman posted about the harassment overnight. 'new dating app has zero moderation.' it's getting shared.",
+                cancel: (st) => !st.moderation_ignored,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_signal', cat: 'e', from: 'Jordan', focus: 'launch',
+        body: "hey — i know it's late. just got a DM. two users matched and they're already texting each other. 😭 this is actually real.",
+        urgency: 12, patience: Infinity,
+        available: (s, char) => {
+          const needCrisis = !!s.moderation_warned;
+          return s.focus && s.focus.id === 'launch' && char.flags.going_home_done && (!needCrisis || char.flags.crisis_done) && !char.flags.signal_done;
+        },
+        options: [
+          { key: 'ack', label: "That's what we built it for",
+            reply: "that's why we did all of this. get some sleep.",
+            journal: "11pm. Jordan texted — two users matched and they're already talking to each other. The whole chaotic day collapsed into one message. It's working.",
+            execute(s, char) {
+              char.flags.signal_done = true;
+              s.launch_time = '11PM';
+              s.focus = null;  // launch day is over — world resumes
+              return null;
+            } },
+        ],
       },
 
       // ── FULL-TIME ASK ────────────────────────────────────────────────────────

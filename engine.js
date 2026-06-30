@@ -88,6 +88,7 @@
         // action, and the next beat is re-polled mid-week so the talk flows in one
         // sitting; every other character/card is held on hold. See roles/jordan.js.
         focus: null,
+        launch_time: null,  // time-of-day label while launch focus arc is active
       };
 
       this.chars = new Map([

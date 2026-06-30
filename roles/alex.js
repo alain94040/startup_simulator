@@ -80,6 +80,12 @@
       "pivot_relaunch",
       "proto_to_product",
       "good_enough_launch",
+      "launch_preflight",
+      "launch_email_pulse",
+      "launch_staging_bug",
+      "launch_inbox_question",
+      "launch_test_profiles",
+      "launch_stripe_sting",
       "alex_wants_rebuild",
       "arch_refactor_done",
       "alex_decision",
@@ -1127,9 +1133,19 @@
           && !(s.jordan_drifting && !s.jordan_resolved),
         options: [
           { label: 'Ship it — launch now', key: 'ship',
+            reply: "ship it. we're launching.",
+            journal: null,
             execute(s, char, e) {
               s.launched = true; s.signal = clamp(s.signal + 12, 0, 100);
               e.finishItemsAtLaunch();
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "tomorrow 8am. game on.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              // Enter launch focus arc — the day plays out beat by beat
+              s.launch_time = '8AM';
+              s.focus = { id: 'launch', charIds: ['alex', 'jordan'] };
               if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn.";
               return "Launched. First real users are in. Feedback starts flowing.";
             } },
@@ -1141,6 +1157,296 @@
         dropMsg: "another week building in a vacuum. runway is ticking and real users are waiting.",
         dropFx(s, char) { s.cash = clamp(s.cash - 800, 0, 9999999); char.morale = clamp(char.morale - 10, 0, 100); },
       },
+
+      // ── LAUNCH FOCUS ARC (triggered by good_enough_launch → ship) ────────────
+      // Launch day plays out as a sequence of beats. Alex and Jordan each hold one
+      // active slot; decisions in one beat can open or close paths in the next.
+      // All cards are free (focus arc) and tagged focus:'launch'.
+      {
+        id: 'launch_preflight', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "email's queued — 847 addresses. want a quick look before i hit send, or we go now?",
+        urgency: 20, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && !char.flags.preflight_done,
+        options: [
+          { key: 'review', label: 'Quick review — two minutes',
+            reply: "quick review first.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.preflight_done = true;
+              s.launch_time = '9AM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "i'm keeping an eye on the site.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'send', label: 'Send it — we\'re ready',
+            reply: "send it. we're ready.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.preflight_done = true;
+              s.launch_email_mistake = true;
+              s.launch_time = '9AM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "i'm keeping an eye on the site.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "oh no. subject line on the blast says 'test - do not send'. went to all 847 people.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              // deferred: Alex mentions unsubscribes next week
+              e.pending.push({
+                fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
+                text: "checked the stats — about 80 people unsubscribed after the launch email. the test subject line thing. annoying but recoverable.",
+                cancel: (st) => !st.launch_email_mistake,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_email_pulse', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "30 minutes since the blast. open rate's at 19% — solid. 6 click-throughs. nobody's signed up yet. want me to keep watching?",
+        urgency: 19.5, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.preflight_done && !char.flags.email_pulse_done,
+        options: [
+          { key: 'yes', label: 'Yes — keep an eye on it',
+            reply: "keep watching. ping me when someone signs up.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.email_pulse_done = true;
+              s.launch_time = '10AM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "47 opens, 8 click-throughs. rate's holding at 19%. most people haven't seen it yet — opens usually spike after lunch.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'no', label: "No — step away. Stats don't make signups happen.",
+            reply: "step away. watching the numbers won't make people sign up faster.",
+            journal: null,
+            execute(s, char) {
+              char.flags.email_pulse_done = true;
+              s.launch_time = '10AM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_staging_bug', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "something's off — nobody's matching. pulled the logs: we're still pointed at the staging database. what do you want to do?",
+        urgency: 19, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return s.focus && s.focus.id === 'launch' && char.flags.preflight_done && jordan && jordan.flags.first_bounce_done && !char.flags.staging_done;
+        },
+        options: [
+          { key: 'hotfix', label: 'Push a hotfix now',
+            reply: "push the hotfix. do it now.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "pushed. prod is live on the real database. fingers crossed nothing breaks.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'takedown', label: 'Take it offline — fix it properly',
+            reply: "put up a maintenance page. fix it properly.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              s.press_bounce = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "maintenance page up. fixed. back online — took 30 minutes. some early visitors bounced.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'wait', label: 'Wait — most people won\'t open it for hours',
+            reply: "wait. most people won't open the app until tonight. we'll fix it properly then.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              s.press_bounce = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "ok. hoping nobody important tries to match in the next 8 hours.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "while i was in the database fixing staging i noticed something — we never deleted the test profiles. sarah_test_003 already matched with 3 real users and 2 of them messaged her.",
+        urgency: 18, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return s.focus && s.focus.id === 'launch' && char.flags.staging_done && jordan && jordan.flags.hustle_done && !char.flags.test_profiles_done;
+        },
+        options: [
+          { key: 'disclose', label: 'Email the affected users — be honest',
+            reply: "email all three. apologize, explain what happened, give them a free month.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_done = true;
+              s.honest_launch = true;
+              s.launch_time = '4PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "done. three emails out. deleted sarah_test_003. two users already replied — they appreciated the honesty.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'delete', label: 'Quietly delete them — nobody will know',
+            reply: "just delete the test profiles. those matches weren't real anyway.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_done = true;
+              s.silent_delete = true;
+              s.launch_time = '4PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "deleted. those three users just lost a match without knowing why.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              e.pending.push({
+                fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
+                text: "one of the users who matched with sarah_test_003 just reached out — they want to know why their match disappeared. what do i tell them?",
+                cancel: (st) => !st.silent_delete,
+              });
+              return null;
+            } },
+          { key: 'nothing', label: 'Leave them — not worth disrupting day one',
+            reply: "leave them. one fake profile isn't worth disrupting real users on day one.",
+            journal: null,
+            execute(s, char) {
+              char.flags.test_profiles_done = true;
+              s.test_profiles_live = true;
+              s.launch_time = '4PM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_stripe_sting', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "first upgrade — user in SF tried to go premium. payment failed. we're still on stripe test mode. she thinks the app is broken.",
+        urgency: 16, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          const abuser_resolved = s.jordan_left_watch || (jordan && jordan.flags.abuser_done);
+          return s.focus && s.focus.id === 'launch' && char.flags.test_profiles_done && abuser_resolved && !char.flags.stripe_done;
+        },
+        options: [
+          { key: 'tell', label: 'Tell her honestly — our mistake',
+            reply: "email her. be honest — it was our mistake. fix it now and let her retry.",
+            journal: null,
+            execute(s, char) {
+              char.flags.stripe_done = true;
+              s.first_paid = true;
+              s.launch_time = '6PM';
+              return null;
+            } },
+          { key: 'fix_charge', label: 'Quietly fix it and re-charge her card',
+            reply: "switch stripe to live mode and retry the charge quietly.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.stripe_done = true;
+              s.launch_time = '6PM';
+              // unauthorized re-charge risk
+              e.pending.push({
+                fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+                text: "the SF user filed a chargeback — she didn't authorize the retry. stripe flagged the account.",
+                fx(st) { st.cash = clamp(st.cash - 300, 0, 9999999); },
+                cancel: (st) => !!st.first_paid,
+              });
+              return null;
+            } },
+          { key: 'free_month', label: 'Fix it and give her a free month',
+            reply: "switch to live mode and comp her a free month — she earned it.",
+            journal: null,
+            execute(s, char) {
+              char.flags.stripe_done = true;
+              s.launch_time = '6PM';
+              return null;
+            } },
+          { key: 'wait', label: 'Wait and see if she reaches out',
+            reply: "let's wait — she might reach out.",
+            journal: null,
+            execute(s, char) {
+              char.flags.stripe_done = true;
+              s.first_churn = true;
+              s.launch_time = '6PM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_inbox_question', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "first support email just hit the inbox — 'i signed up but i don't understand how matching works. when will i get someone?' what should i tell her?",
+        urgency: 18.5, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return s.focus && s.focus.id === 'launch' && jordan && jordan.flags.first_signup_live_done && !char.flags.inbox_question_done;
+        },
+        options: [
+          { key: 'personal', label: 'Reply personally',
+            reply: "reply from me personally. first user gets a real answer.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.inbox_question_done = true;
+              s.launch_time = '12PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "done. she responded: 'omg the founder replied — so cool!'",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'faq', label: 'Write a 3-line FAQ answer',
+            reply: "write a quick faq answer. we'll need the template anyway.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.inbox_question_done = true;
+              s.launch_time = '12PM';
+              s.faq_started = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "wrote 3 lines, sent it. she said 'thanks!' — first ticket closed.",
+                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'wait', label: "Leave it — the product should explain itself",
+            reply: "leave it. if the product needs a manual, that's the real problem.",
+            journal: null,
+            execute(s, char) {
+              char.flags.inbox_question_done = true;
+              s.launch_time = '12PM';
+              return null;
+            } },
+        ],
+      },
+
       {
         id: 'alex_wants_rebuild', cat: 'p', from: 'Alex',
         body: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",
