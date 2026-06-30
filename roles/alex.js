@@ -60,7 +60,9 @@
       "early_funding_goal",
       "vision_mismatch",
       "jordan_equity_alex",
+      "jordan_equity_alex_why",
       "jordan_equity_counter_alex",
+      "jordan_equity_counter_alex_50",
       "alex_side_project",
       "alex_side_project_escalation",
       "alex_quiet",
@@ -78,6 +80,18 @@
       "pivot_relaunch",
       "proto_to_product",
       "good_enough_launch",
+      "launch_preflight",
+      "launch_email_pulse",
+      "launch_staging_bug_discover",
+      "launch_staging_bug_found",
+      "launch_staging_bug_decide",
+      "launch_inbox_question",
+      "launch_test_profiles_notice",
+      "launch_test_profiles_scope",
+      "launch_test_profiles_decide",
+      "launch_stripe_sting_discover",
+      "launch_stripe_sting_research",
+      "launch_stripe_sting_decide",
       "alex_wants_rebuild",
       "arch_refactor_done",
       "alex_decision",
@@ -164,7 +178,14 @@
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
         body: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
         urgency: 2, weeks: 2, patience: 4,
-        available: (s, char) => char.flags.prototype_kicked && !char.flags.plan_done && s.week >= 2 && s.week <= 5,
+        available: (s, char, e) => {
+          if (!char.flags.prototype_kicked || char.flags.plan_done) return false;
+          if (!s.jordan_equity) return false;
+          const jordan = e.chars.get('jordan');
+          const isAlexHappy = jordan && jordan.flags.equity_proposal === '40/40/20';
+          const delay = isAlexHappy ? 0 : 1;
+          return s.week >= (s.equity_week || 0) + delay && s.week <= 8;
+        },
         // Browser-only: Alex texts three phone mockups (iMessage-style photos the
         // player taps to view full-size). No cost/time labels — the player has to
         // judge scope from the screens themselves: the feature-loaded one (full) is
@@ -338,26 +359,42 @@
         dropFx(s, char) { char.flags.offer_msg_sent = true; char.morale = clamp(char.morale - 14, 0, 100); s.alex_offer_week = s.week; },
       },
       // ── EQUITY (Alex's side — Jordan opened the topic in her thread) ─────────
+      // Alex opens by refusing equal thirds, but WITHOUT naming a number. The player
+      // can probe ("what are you thinking?") to hear his reasoning, or commit a split.
+      // Alex's real position is 40/40/20 — he wants to be the founder's equal AND
+      // Jordan dialed down (she's part-time). 33/33/33 still triggers his counter
+      // (jordan_equity_counter_alex); 50/25/25 triggers his 50-counter. The probe is
+      // pure info: it sets equity_probed and hands off to jordan_equity_alex_why.
       {
-        id: 'jordan_equity_alex', cat: 't', from: 'Alex',
-        body: "jordan wants equal thirds. i've been thinking — she's still at her job, i'm treating this as my main thing. you and i are doing the same amount. i think 40/40/20 is fair. what are you thinking?",
+        id: 'jordan_equity_alex', cat: 't', from: 'Alex', focus: 'equity',
+        body: "before we lock anything in — i can't sign off on equal thirds. not the way jordan framed it. i need to know where your head's actually at first.",
         urgency: 32, weeks: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
-          return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_proposal && s.week <= 8;
+          return jordan && jordan.flags.equity_mention_done && !jordan.flags.equity_probed
+            && !jordan.flags.equity_proposal && s.week <= 8;
         },
         options: [
+          { label: "What are you thinking?", key: 'probe',
+            reply: "before i put a number on the table — talk to me. what feels fair to you, and why?",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_probed = true;
+              return "Asked Alex to lay out his thinking before you name a split.";
+            } },
           { label: 'Equal thirds', key: 'propose_33',
             reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
-            journal: "Proposed equal thirds — Jordan found the space and brought us together, Alex builds, I run it. We're all essential. Alex went quiet; he expected more for being all-in.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '33/33/33';
-              char.morale = clamp(char.morale - 8, 0, 100);
+              char.morale = clamp(char.morale - 3, 0, 100);
               return "Equal split. Alex went quiet — he expected more weight for his commitment.";
             } },
           { label: '40/40/20', key: 'propose_40',
             reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '40/40/20';
@@ -366,7 +403,7 @@
             } },
           { label: '50/25/25', key: 'propose_50',
             reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
-            journal: "Took 50 for myself, 25 each for Alex and Jordan. Alex went quiet for a moment, then said okay. I'll be hearing from both of them.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_proposal = '50/25/25';
@@ -381,14 +418,61 @@
           char.morale = clamp(char.morale - 10, 0, 100);
         },
       },
+      // Probe answer: Alex lays out his reasoning, then the same three splits. His line
+      // ("you and me, even") is deliberately ambiguous — it rules out 50 but a player
+      // can misread it as "33 is fine too." Picking 33 still triggers his counter.
+      {
+        id: 'jordan_equity_alex_why', cat: 't', from: 'Alex', focus: 'equity',
+        body: "i am doing exactly what you are doing — same hours, same code, same risk. i'm not asking for a gift. i'm asking to be your equal. you and me, even. jordan's great, but she's still got a paycheck to fall back on. so — what's the split?",
+        urgency: 32, weeks: 1,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_probed && !jordan.flags.equity_proposal && s.week <= 12;
+        },
+        options: [
+          { label: 'Equal thirds', key: 'propose_33',
+            reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '33/33/33';
+              char.morale = clamp(char.morale - 3, 0, 100);
+              return "Equal split. Alex went quiet — he'd just told you he wanted to be your equal, not Jordan's.";
+            } },
+          { label: '40/40/20 — you and me even, Jordan at 20', key: 'propose_40',
+            reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '40/40/20';
+              char.morale = clamp(char.morale + 5, 0, 100);
+              return "Alex: 'yeah — that's exactly it.' Jordan hasn't heard yet.";
+            } },
+          { label: '50/25/25 — I take half', key: 'propose_50',
+            reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '50/25/25';
+              char.morale = clamp(char.morale - 3, 0, 100);
+              return "Alex went still. 'I just asked to be even with you.' You'll hear from both of them.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) { jordan.flags.equity_proposal = '33/33/33'; jordan.flags.equity_skipped = true; }
+          char.morale = clamp(char.morale - 10, 0, 100);
+        },
+      },
       // Alex counters if you picked equal thirds
       {
-        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex',
+        id: 'jordan_equity_counter_alex', cat: 't', from: 'Alex', focus: 'equity',
         body: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           return (jordan && jordan.flags.equity_skipped)
-            ? "you never responded to jordan about equity. i've been thinking about it anyway — she's still at her job, i'm all-in. equal thirds means i get the same as someone who's not putting in the same."
-            : "i've been thinking about the 33/33/33 thing. jordan's still at her job. i'm all-in. equal thirds means i get the same as someone who's not putting in the same. i think i should have at least equal to you.";
+            ? "you never even answered jordan on equity, so i'll say it: equal thirds isn't fair. she's got a day job to fall back on. i quit mine. we are not taking the same risk, and the split shouldn't pretend we are."
+            : "i need to push back on equal thirds. jordan still has a paycheck coming in every two weeks. i gave that up. same equity for different risk isn't 'fair' — it just feels fair because it's round. i should be at least even with you.";
         },
         urgency: 22, weeks: 1,
         available: (s, char, e) => {
@@ -398,7 +482,7 @@
         options: [
           { label: "Give Alex 40%", key: 'cave_40',
             reply: "you're right. you're full-time, she's not. 40/40/20 — i'll tell jordan.",
-            journal: "Alex pushed back, and he had a point — he's full-time, Jordan isn't. Moved to 40/40/20. He appreciated it.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) { jordan.flags.equity_counter_done = true; jordan.flags.equity_proposal = '40/40/20'; }
@@ -407,6 +491,7 @@
             } },
           { label: 'Keep equal thirds', key: 'hold_33',
             reply: "i hear you, but equal thirds is the right call. everyone's essential. let's not let this fester.",
+            journal: null,
             execute(s, char, e) {
               const jordan = e.chars.get('jordan');
               if (jordan) jordan.flags.equity_counter_done = true;
@@ -419,6 +504,59 @@
           const jordan = e && e.chars && e.chars.get('jordan');
           if (jordan) jordan.flags.equity_counter_done = true;
           char.morale = clamp(char.morale - 8, 0, 100);
+        },
+      },
+
+      // 50/25/25 path — Alex comes at you first (his own thread). If you bump him to
+      // 40/40/20, Jordan then hits you in hers (jordan_equity_counter_jordan). A
+      // two-front fight, never a merged "heard from both" card.
+      {
+        id: 'jordan_equity_counter_alex_50', cat: 't', from: 'Alex', focus: 'equity',
+        body: "you kept half? and you're handing me the same as jordan??? same hours, same code, same risk — and half says you don't see me as your equal. fix this.",
+        urgency: 23, weeks: 1,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return jordan && jordan.flags.equity_proposal === '50/25/25' && !jordan.flags.equity_counter_done && s.week <= 10;
+        },
+        options: [
+          { label: "You're right — you and me at 40, Jordan at 20", key: 'give_alex',
+            reply: "you're right. you and i are doing the same work. 40/40/20 — i'll square it with jordan.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_proposal = '40/40/20';  // → Jordan now confronts you
+              char.morale = clamp(char.morale + 8, 0, 100);
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "good. you and me at 40. i'm solid.",
+                week: s.week, isNew: true, focus: 'equity', seq: e._seq++,
+              });
+              return "Alex is solid again. But Jordan's at 20 now — you'll hear from her.";
+            } },
+          { label: "Everyone equal — thirds across the board", key: 'equalize',
+            reply: "you know what, you're both right. equal thirds. we're all essential, let's not poison this over points.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) { jordan.flags.equity_counter_done = true; jordan.flags.equity_proposal = '33/33/33'; }
+              return "Equal thirds. You gave up your majority — but nobody's nursing a grudge.";
+            } },
+          { label: "I took the risk first — 50/25/25 stands", key: 'hold_50',
+            reply: "i hear you. but i started this, i carry the most risk, and the split reflects that. 50/25/25. i need you with me on this.",
+            journal: null,
+            execute(s, char, e) {
+              const jordan = e.chars.get('jordan');
+              if (jordan) jordan.flags.equity_counter_done = true;
+              char.morale = clamp(char.morale - 12, 0, 100);
+              char.trust = clamp(char.trust - 8, 0, 100);
+              return "Alex went quiet. 'Okay. You're the boss.' Something cooled between you.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          const jordan = e && e.chars && e.chars.get('jordan');
+          if (jordan) jordan.flags.equity_counter_done = true;
+          char.morale = clamp(char.morale - 12, 0, 100);
         },
       },
 
@@ -1001,9 +1139,19 @@
           && !(s.jordan_drifting && !s.jordan_resolved),
         options: [
           { label: 'Ship it — launch now', key: 'ship',
+            reply: "ship it. we're launching.",
+            journal: null,
             execute(s, char, e) {
               s.launched = true; s.signal = clamp(s.signal + 12, 0, 100);
               e.finishItemsAtLaunch();
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "tomorrow 8am. game on.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              // Enter launch focus arc — the day plays out beat by beat
+              s.launch_time = '8AM';
+              s.focus = { id: 'launch', charIds: ['alex', 'jordan'] };
               if (s.market_fit < 40) return "Launched. Users are signing up but not sticking around — the product doesn't match what they actually needed. Expect churn.";
               return "Launched. First real users are in. Feedback starts flowing.";
             } },
@@ -1015,6 +1163,419 @@
         dropMsg: "another week building in a vacuum. runway is ticking and real users are waiting.",
         dropFx(s, char) { s.cash = clamp(s.cash - 800, 0, 9999999); char.morale = clamp(char.morale - 10, 0, 100); },
       },
+
+      // ── LAUNCH FOCUS ARC (triggered by good_enough_launch → ship) ────────────
+      // Launch day plays out as a sequence of beats. Alex and Jordan each hold one
+      // active slot; decisions in one beat can open or close paths in the next.
+      // All cards are free (focus arc) and tagged focus:'launch'.
+      {
+        id: 'launch_preflight', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "email's queued — 847 addresses. want a quick look before i hit send, or we go now?",
+        urgency: 20, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && !char.flags.preflight_done,
+        options: [
+          { key: 'review', label: 'Quick review — two minutes',
+            reply: "quick review first.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.preflight_done = true;
+              s.launch_time = '9AM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "i'm keeping an eye on the site.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'send', label: 'Send it — we\'re ready',
+            reply: "send it. we're ready.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.preflight_done = true;
+              s.launch_email_mistake = true;
+              s.launch_time = '9AM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "i'm keeping an eye on the site.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "oh no. subject line on the blast says 'test - do not send'. went to all 847 people.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              // deferred: Alex mentions unsubscribes next week
+              e.pending.push({
+                fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
+                text: "checked the stats — about 80 people unsubscribed after the launch email. the test subject line thing. annoying but recoverable.",
+                cancel: (st) => !st.launch_email_mistake,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_email_pulse', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "30 minutes since the blast. open rate's at 19% — solid. 6 click-throughs. nobody's signed up yet. want me to keep watching?",
+        urgency: 19.5, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.preflight_done && !char.flags.email_pulse_done,
+        options: [
+          { key: 'yes', label: 'Yes — keep an eye on it',
+            reply: "keep watching. ping me when someone signs up.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.email_pulse_done = true;
+              s.launch_time = '10AM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "47 opens, 8 click-throughs. rate's holding at 19%. most people haven't seen it yet — opens usually spike after lunch.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'no', label: "No — step away. Stats don't make signups happen.",
+            reply: "step away. watching the numbers won't make people sign up faster.",
+            journal: null,
+            execute(s, char) {
+              char.flags.email_pulse_done = true;
+              s.launch_time = '10AM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_staging_bug_discover', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "hold on. signups are coming in but the match pipeline is completely silent — not a single match in 45 minutes. something is wrong. pulling logs.",
+        urgency: 19, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return s.focus && s.focus.id === 'launch' && char.flags.preflight_done && jordan && jordan.flags.first_bounce_done && !char.flags.staging_bug_seen;
+        },
+        options: [
+          { key: 'check', label: "What's happening?",
+            reply: "what's wrong?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_bug_seen = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "one sec.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_staging_bug_found', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "oh no. oh no oh no. we're on the staging database. the env var is pointing at staging. every signup since 8am has been going into the test environment — none of them can see each other. we have real users in a ghost app.",
+        urgency: 19, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.staging_bug_seen && !char.flags.staging_bug_diagnosed,
+        options: [
+          { key: 'options', label: "What are our options?",
+            reply: "okay. what are our options?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_bug_diagnosed = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "hotfix — i swap the env var and redeploy. 5 minutes but if prod hiccups during deploy we could end up with a corrupted state. or maintenance page, fix it clean, back up in 30. or we wait — peak traffic is tonight, most people haven't opened the email yet.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_staging_bug_decide', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "ready to move. what's the call?",
+        urgency: 19, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.staging_bug_diagnosed && !char.flags.staging_done,
+        options: [
+          { key: 'hotfix', label: 'Push the hotfix — 5 minutes of risk',
+            reply: "push it. 5 minutes of risk is better than 30 minutes of downtime.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              char.flags.did_hotfix = true;
+              s.launch_time = '11AM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "deploying.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "done. pointed at prod. pipeline's running. first real matches should show up in the next few minutes.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'takedown', label: 'Take it down — fix it cleanly',
+            reply: "take it down. fix it right. i'd rather have 30 minutes of downtime than a corrupted state.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              s.press_bounce = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "maintenance page up. fixing the env var. back up in 20-30 min.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "back online. took 25 minutes. env is correct, pipeline is running. some early visitors hit the maintenance page.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: '11:30AM', seq: e._seq++,
+              });
+              s.launch_time = '12PM';
+              return null;
+            } },
+          { key: 'wait', label: "Wait — peak traffic is tonight",
+            reply: "wait. peak traffic is tonight. we fix it properly this afternoon before people actually open the app.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              s.press_bounce = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "ok. every signup right now is in limbo but nobody knows it yet. let's hope nobody tries to use it before we fix it.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles_notice', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "hey — while i was swapping the env var i was looking at the db schema to make sure the migration ran clean. we still have test accounts in there.",
+        urgency: 18, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return s.focus && s.focus.id === 'launch' && char.flags.did_hotfix && jordan && jordan.flags.hustle_done && !char.flags.test_profiles_seen;
+        },
+        options: [
+          { key: 'how_many', label: 'How many?',
+            reply: "how many test accounts?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_seen = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "checking.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles_scope', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been live since beta. she matched with 3 real users. two of them already sent her messages. she replied with lorem ipsum filler from when we seeded the db.",
+        urgency: 18, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.test_profiles_seen && !char.flags.test_profiles_scoped,
+        options: [
+          { key: 'damage', label: 'Have they figured out she\'s fake?',
+            reply: "do the users know she's a test account?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_scoped = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets lorem ipsum back, it's going to be obvious. what do you want to do?",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles_decide', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "i can delete all 6 right now. or we tell those two users what happened. or we leave it and hope nobody notices.",
+        urgency: 18, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.test_profiles_scoped && !char.flags.test_profiles_done,
+        options: [
+          { key: 'disclose', label: 'Email the affected users — be honest',
+            reply: "email them both. apologize, explain what happened, give them a free month.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_done = true;
+              s.honest_launch = true;
+              s.launch_time = '4PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "done. two emails out, deleted all 6 test accounts. one user already replied — said he appreciated us catching it. the other hasn't opened it yet.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'delete', label: 'Quietly delete them — nobody will know',
+            reply: "just delete all of them now. those matches weren't real anyway.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_done = true;
+              s.silent_delete = true;
+              s.launch_time = '4PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "deleted. those two users just lost a match without knowing why.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              e.pending.push({
+                fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
+                text: "one of the users who matched with sarah_test_003 just reached out — they want to know why their match disappeared. what do i tell them?",
+                cancel: (st) => !st.silent_delete,
+              });
+              return null;
+            } },
+          { key: 'nothing', label: 'Leave them — not worth the disruption on day one',
+            reply: "leave them for now. we'll clean it up tonight. one fake profile isn't worth disrupting real users mid-launch.",
+            journal: null,
+            execute(s, char) {
+              char.flags.test_profiles_done = true;
+              s.test_profiles_live = true;
+              s.launch_time = '4PM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_stripe_sting_discover', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "first upgrade attempt. user in SF hit the premium button. stripe rejected it — 'your account cannot currently make live charges.' we built the whole payment flow, tested it perfectly, but never finished the business verification. we literally cannot accept money right now.",
+        urgency: 16, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          const abuser_resolved = s.jordan_left_watch || (jordan && jordan.flags.abuser_done);
+          return s.focus && s.focus.id === 'launch' && char.flags.staging_done && abuser_resolved && !char.flags.stripe_contacted;
+        },
+        options: [
+          { key: 'fix', label: 'Fix it — what do we need to do?',
+            reply: "fix it. what do we need?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.stripe_contacted = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "on it. reading the stripe activation docs and getting someone on their support chat.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_stripe_sting_research', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "okay so. i got someone on stripe's support chat. we need to submit: business type, EIN, bank account for payouts, and they run an identity check on whoever owns the account. i read through the full verification docs while i was waiting.",
+        urgency: 16, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.stripe_contacted && !char.flags.stripe_researched,
+        options: [
+          { key: 'timeline', label: 'How long does verification take?',
+            reply: "how long does it take once we submit?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.stripe_researched = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "stripe says 1 to 3 business days. minimum. and that's after we submit everything, which i don't have ready right now. so realistically — not today. she's been sitting on a failed payment for 20 minutes.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_stripe_sting_decide', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "what do we tell the user?",
+        urgency: 16, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.stripe_researched && !char.flags.stripe_done,
+        options: [
+          { key: 'fix_now', label: 'Tell her honestly — she\'ll be first when it\'s live',
+            reply: "email her. be honest — our fault, payment system isn't activated yet. she'll be first to retry when it is.",
+            journal: null,
+            execute(s, char) {
+              char.flags.stripe_done = true;
+              s.first_paid = true;
+              s.launch_time = '6PM';
+              return null;
+            } },
+          { key: 'free_month', label: 'Give her a free month — she earned it',
+            reply: "email her. apologize. give her a free month while we get the account activated.",
+            journal: null,
+            execute(s, char) {
+              char.flags.stripe_done = true;
+              s.launch_time = '6PM';
+              return null;
+            } },
+          { key: 'wait', label: 'Say nothing — hope she retries herself',
+            reply: "say nothing for now. she probably just thinks her card failed. she might retry on her own.",
+            journal: null,
+            execute(s, char) {
+              char.flags.stripe_done = true;
+              s.first_churn = true;
+              s.launch_time = '6PM';
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_inbox_question', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "first support email just hit the inbox — 'i signed up but i don't understand how matching works. when will i get someone?' what should i tell her?",
+        urgency: 18.5, patience: Infinity,
+        available: (s, char, e) => {
+          const jordan = e.chars.get('jordan');
+          return s.focus && s.focus.id === 'launch' && jordan && jordan.flags.first_signup_live_done && !char.flags.inbox_question_done;
+        },
+        options: [
+          { key: 'personal', label: 'Reply personally',
+            reply: "reply from me personally. first user gets a real answer.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.inbox_question_done = true;
+              s.launch_time = '12PM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "done. she responded: 'omg the founder replied — so cool!'",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'faq', label: 'Write a 3-line FAQ answer',
+            reply: "write a quick faq answer. we'll need the template anyway.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.inbox_question_done = true;
+              s.launch_time = '12PM';
+              s.faq_started = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "wrote 3 lines, sent it. she said 'thanks!' — first ticket closed.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'wait', label: "Leave it — the product should explain itself",
+            reply: "leave it. if the product needs a manual, that's the real problem.",
+            journal: null,
+            execute(s, char) {
+              char.flags.inbox_question_done = true;
+              s.launch_time = '12PM';
+              return null;
+            } },
+        ],
+      },
+
       {
         id: 'alex_wants_rebuild', cat: 'p', from: 'Alex',
         body: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",

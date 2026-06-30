@@ -114,6 +114,7 @@
   .out .bubble{background:linear-gradient(180deg,var(--out1),var(--out2));color:#fff;border-bottom-right-radius:6px}
   .subtext{align-self:flex-start;max-width:74%;color:var(--faint);font-size:12px;
     font-style:italic;margin:1px 0 4px 6px}
+  .lt{font-size:10px;color:var(--faint);align-self:flex-end;padding:0 6px;white-space:nowrap;letter-spacing:.02em}
   .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
   .chat-empty{margin:auto;color:var(--faint);font-size:13px;text-align:center;padding:20px}
   .chat-blocked{align-self:center;margin:20px 0 8px;font-size:12px;color:var(--faint);
@@ -219,10 +220,11 @@
   .hand-plays .dot{width:12px;height:12px}
   .hand-end{
     border:0;background:var(--ink);color:#fff;font-weight:600;font-size:12px;
-    padding:7px 14px;border-radius:11px;cursor:pointer;transition:.15s;
+    padding:7px 14px;border-radius:11px;cursor:pointer;transition:.15s;align-self:flex-end;
   }
   .hand-end:hover{transform:translateY(-1px);opacity:.92}
   .hand-end:disabled{opacity:.4;cursor:default;transform:none}
+  .hand-panel.focus-active .hand-end{align-self:center;margin-top:4px}
   .hand-cards{
     display:flex;gap:12px;align-items:flex-end;justify-content:center;
     min-height:var(--card-h);overflow-x:auto;padding-top:6px;
@@ -514,6 +516,9 @@
 
   /* growth chart (users-over-time) */
   .growth-chart{width:100%;height:200px}
+  .growth-meta{padding:8px 12px 2px;display:flex;flex-direction:column;gap:4px}
+  .growth-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  .growth-row b{color:var(--ink);font-weight:700}
   .growth-legend{display:flex;gap:14px;justify-content:center;padding:8px 0 4px;font-size:11px;color:var(--muted)}
   .growth-legend span{display:flex;align-items:center;gap:5px}
   .growth-swatch{width:14px;height:3px;border-radius:2px}
@@ -579,6 +584,120 @@
   .bank-empty{color:var(--faint);font-size:13px;text-align:center;padding:24px 10px;line-height:1.6}
 
   ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#d3d3da;border-radius:9px;border:2px solid var(--panel)}
+
+  /* ── Focus / war-room (e.g. the equity sit-down) ─────────────────────────── */
+  /* On-hold contacts dim out while a focus arc runs — the world recedes, the
+     argument with the co-founders plays out 1:1 in their own threads. */
+  .conv.onhold{opacity:.3;filter:grayscale(.65);pointer-events:none;transition:opacity .45s ease,filter .45s ease}
+  .hand-lbl{transition:color .3s ease}
+
+  /* ── FOCUS mode panel ───────────────────────────────────────────────────── */
+  .hand-panel{transition:background .35s ease,border-color .35s ease,box-shadow .35s ease}
+  .hand-panel.focus-active{
+    background:linear-gradient(175deg,#1b0a30 0%,#0d0520 100%);
+    border:1px solid rgba(160,90,255,.4);
+    box-shadow:0 0 0 1px rgba(160,90,255,.1),0 8px 32px rgba(90,30,180,.3);
+  }
+  #focusSplash{
+    display:none;flex-direction:row;align-items:center;justify-content:center;
+    gap:20px;padding:6px 0 2px;
+  }
+  .hand-panel.focus-active #focusSplash{display:flex}
+  .focus-brain-wrap{
+    position:relative;width:60px;height:60px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .focus-brain{
+    font-size:38px;line-height:1;
+    filter:drop-shadow(0 0 10px rgba(160,90,255,.9));
+    animation:fBrainPulse 2.2s ease-in-out infinite;
+  }
+  .focus-bolt{
+    position:absolute;font-size:18px;
+    animation:fBoltZap 1.7s ease-in-out infinite;
+    filter:drop-shadow(0 0 5px rgba(255,230,50,1));
+  }
+  .fb1{top:-4px;left:-12px;animation-delay:0s}
+  .fb2{top:-4px;right:-12px;animation-delay:.55s}
+  .fb3{bottom:-4px;left:-10px;animation-delay:1.1s}
+  .fb4{bottom:-4px;right:-10px;animation-delay:.3s}
+  .focus-word{
+    font-size:64px;font-weight:900;letter-spacing:10px;color:#fff;line-height:1;
+    text-shadow:0 0 16px rgba(170,100,255,1),0 0 48px rgba(150,80,255,.7),0 0 90px rgba(130,60,255,.4);
+    animation:fWordGlow 2.2s ease-in-out infinite;
+  }
+  @keyframes fBrainPulse{
+    0%,100%{filter:drop-shadow(0 0 10px rgba(160,90,255,.9));transform:scale(1)}
+    50%{filter:drop-shadow(0 0 18px rgba(180,110,255,1));transform:scale(1.07)}
+  }
+  @keyframes fBoltZap{
+    0%,100%{opacity:.4;transform:scale(.9)}
+    45%{opacity:1;transform:scale(1.4)}
+  }
+  @keyframes fWordGlow{
+    0%,100%{text-shadow:0 0 16px rgba(170,100,255,1),0 0 48px rgba(150,80,255,.7),0 0 90px rgba(130,60,255,.4)}
+    50%{text-shadow:0 0 22px rgba(210,150,255,1),0 0 64px rgba(175,105,255,.9),0 0 110px rgba(150,80,255,.5)}
+  }
+  .hand-panel.focus-active .hand-empty{color:rgba(160,90,255,.65)}
+  .hand-panel.focus-active .hcard{
+    box-shadow:0 4px 18px rgba(0,0,0,.45),0 0 0 1px rgba(160,90,255,.25);
+  }
+  /* ── signing mode (inside FOCUS panel) ─────────────────── */
+  .focus-sign{display:flex;flex-direction:column;align-items:center;gap:14px;padding:10px 24px 4px;width:100%}
+  .focus-sign-icon{font-size:36px;line-height:1;filter:drop-shadow(0 0 10px rgba(160,90,255,.8))}
+  .focus-sign-body{
+    font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.55;
+    text-align:center;max-width:520px;
+  }
+  .focus-sign-opts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+  .focus-chip{
+    border:1px solid rgba(160,90,255,.5);background:rgba(160,90,255,.12);
+    color:#e8d8ff;padding:10px 18px;border-radius:13px;cursor:pointer;
+    font-size:14px;transition:.13s;line-height:1.3;
+  }
+  .focus-chip:hover{border-color:rgba(180,110,255,.8);background:rgba(160,90,255,.28);transform:translateY(-1px)}
+  /* ── LAUNCH DAY focus panel ─────────────────────────────────────────────── */
+  .hand-panel.launch-active{
+    transition:background .8s ease,border-color .8s ease,box-shadow .8s ease;
+    border:1px solid rgba(100,160,255,.35);
+    box-shadow:0 0 0 1px rgba(100,160,255,.1),0 8px 32px rgba(20,60,140,.3);
+  }
+  .hand-panel.launch-active .hand-end{align-self:center;margin-top:4px}
+  .hand-panel.launch-active .hand-empty{color:rgba(100,180,255,.65)}
+  .hand-panel.launch-active #focusSplash{display:flex}
+  .focus-launch{display:flex;flex-direction:column;align-items:center;gap:0;padding:4px 0}
+  .focus-launch-label{
+    font-size:13px;font-weight:700;letter-spacing:6px;text-transform:uppercase;
+    color:rgba(255,255,255,.38);
+  }
+  .focus-launch-time{
+    font-size:76px;font-weight:900;letter-spacing:-2px;line-height:1;color:#fff;
+    text-shadow:0 0 30px currentColor;font-variant-numeric:tabular-nums;
+  }
+  /* ── launch day cinematic overlay ────────────────────────────────────────── */
+  #launchCinematic{
+    position:fixed;inset:0;z-index:9999;
+    background:#000;
+    display:flex;align-items:center;justify-content:center;
+    opacity:0;pointer-events:none;
+    transition:opacity 1.4s ease;
+  }
+  #launchCinematic.show{opacity:1;pointer-events:all}
+  .lc-inner{text-align:center;max-width:480px;padding:0 32px}
+  .lc-line{
+    font-family:'Georgia',serif;
+    font-size:26px;color:rgba(255,255,255,0);
+    letter-spacing:.04em;line-height:2.1;
+    transition:color 1.1s ease;
+  }
+  .lc-line.vis{color:rgba(255,255,255,.88)}
+  .lc-skip{
+    position:absolute;bottom:36px;right:40px;
+    color:rgba(255,255,255,.25);font-size:11px;
+    cursor:pointer;letter-spacing:.08em;
+    transition:color .3s;
+  }
+  #launchCinematic:hover .lc-skip{color:rgba(255,255,255,.5)}
 </style>
 </head>
 <body>
@@ -630,13 +749,23 @@
 
       <div class="hand-panel" id="handPanel">
         <div class="hand-detail" id="handDetail" style="display:none"></div>
+        <div id="focusSplash">
+          <div class="focus-brain-wrap">
+            <span class="focus-bolt fb1">⚡</span>
+            <span class="focus-bolt fb2">⚡</span>
+            <span class="focus-bolt fb3">⚡</span>
+            <span class="focus-bolt fb4">⚡</span>
+            <span class="focus-brain">🧠</span>
+          </div>
+          <div class="focus-word">FOCUS</div>
+        </div>
         <div class="hand-top">
           <span class="hand-lbl">This week · pick 2</span>
           <span class="hand-hint" id="handHint"></span>
           <span class="hand-plays" id="handPlays"></span>
-          <button class="hand-end" id="handEnd" style="display:none">End week →</button>
         </div>
         <div class="hand-cards" id="handCards"></div>
+        <button class="hand-end" id="handEnd" style="display:none">End week →</button>
       </div>
     </div>
   </div>
@@ -667,6 +796,7 @@
     <span id="debug-lbl">⚡ skip to</span>
     <button data-week="8">Wk 8 · build</button>
     <button data-week="14">Wk 14 · launch</button>
+    <button id="dbg-launch-day">Launch Day</button>
     <button data-week="20">Wk 20 · investors</button>
     <button data-week="28">Wk 28 · late game</button>
     <button data-step="5">+5 wk</button>
@@ -680,6 +810,12 @@
 
   <div class="overlay" id="overlay">
     <div class="card-modal" id="modal"></div>
+  </div>
+
+  <!-- cinematic overlay: launch entry / exit narration -->
+  <div id="launchCinematic">
+    <div class="lc-inner" id="lcInner"></div>
+    <span class="lc-skip" id="lcSkip">tap to continue</span>
   </div>
 
   <!-- full-size viewer for chat photo attachments (prototype mockups) -->
@@ -712,6 +848,7 @@
   <script src="roles/analytics.js"></script>
   <script src="roles/twitter.js"></script>
   <script src="roles/tom.js"></script>
+  <script src="roles/growth.js"></script>
   <script src="engine.js"></script>
   <script>
   (function(){
@@ -739,6 +876,7 @@
       analytics:   { color:"#5856d6", initials:"📈" },
       twitter:     { color:"#1da1f2", initials:"𝕏"  },
       tom:         { color:"#34c759", initials:"T"  },
+      growth:      { color:"#30d158", initials:"🚀" },
       founder:     { color:"#8e8e93", initials:"Me" },
     };
     // Category presentation for the hand cards (p/t/e/c/f).
@@ -833,13 +971,16 @@
 
     // ── sidebar (chat characters, not the journal) ───────
     function renderRail(){
+      const inFocus = !!engine.stats().focus;
       const convs = engine.conversations().filter(c => !c.isJournal);
       $("convs").innerHTML = convs.map(c=>{
         // Blue dot = an unrevealed *incoming* message waits (your own replies don't count).
         const unread = engine.threads[c.id].slice(shown[c.id]).some(e => e.type === "incoming");
         const dot = unread ? '<span class="badge"></span>' : '';
         const st = styleFor(c.id);
-        return `<div class="conv ${c.id===active?'active':''}" data-id="${c.id}">
+        // During a focus arc, non-participant contacts dim out (held).
+        const onhold = c.onHold ? ' onhold' : '';
+        return `<div class="conv ${c.id===active?'active':''}${onhold}" data-id="${c.id}">
           <div class="avatar" style="background:${st.color}">${st.initials}</div>
           <div class="conv-body">
             <div class="conv-top"><span class="conv-name">${c.name}</span>${dot}</div>
@@ -848,7 +989,13 @@
         </div>`;
       }).join("");
       [...document.querySelectorAll(".conv")].forEach(el=>{
-        el.onclick = ()=>{ if(revealing) return; active = el.dataset.id; openConversation(); };
+        // During a focus arc you can still move between the participants' 1:1 threads
+        // (Alex / Jordan / founder); only the on-hold (non-participant) contacts are locked.
+        el.onclick = ()=>{
+          if (revealing) return;
+          if (inFocus && el.classList.contains("onhold")) return;
+          active = el.dataset.id; openConversation();
+        };
       });
     }
 
@@ -904,7 +1051,8 @@
         const wrap = document.createElement("div");
         const row = document.createElement("div");
         row.className = "row in";
-        row.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+        row.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`
+          + (e.launchTime ? `<span class="lt">${escapeHtml(e.launchTime)}</span>` : "");
         wrap.appendChild(row);
         if (e.subtext){
           const st = document.createElement("div");
@@ -929,7 +1077,8 @@
       // reply (player's blue bubble); outcomes are not shown in chat
       const d = document.createElement("div");
       d.className = "row out";
-      d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+      d.innerHTML = (e.launchTime ? `<span class="lt">${escapeHtml(e.launchTime)}</span>` : "")
+        + `<div class="bubble">${escapeHtml(e.body)}</div>`;
       return d;
     }
 
@@ -1059,6 +1208,74 @@
       renderRail(); renderStats(); renderHand(); renderThreadResponse();
     }
 
+    // ── focus / war-room (equity sit-down) ───────────────
+    // The arc plays out in the co-founders' own 1:1 threads — a direct, visceral
+    // argument. Focus mode only (a) dims the rest of the world (rail on-hold),
+    // (b) makes the beats free (no action cost), and (c) chains them mid-week:
+    // after each answer the engine surfaces the next beat and the UI jumps to
+    // whoever just spoke up, so the fight flows in one sitting, not one card a week.
+    function liveFocusAction(){
+      const f = engine.stats().focus;
+      if (!f) return null;
+      const acts = engine.openActions().filter(x => x.focus === f.id && !x.onHold);
+      // a co-founder's beat first; the founder's own signing move (no thread) last
+      return acts.find(x => x.charId !== "founder") || acts[0] || null;
+    }
+    // After a focus-arc beat, reveal new messages in the current thread and fire
+    // toast notifications for messages that arrived in non-active threads.
+    // (Normal gameplay uses revealTurnEnd() for toasts; focus beats bypass turn-end,
+    // so we notify here and advance notified[] to prevent double-firing at week-end.)
+    function followFocusBeat(){
+      renderRail(); renderStats(); renderHand();
+
+      // Active thread: messages are revealed inline — advance notified without toasting.
+      if (active && engine.threads[active]) notified[active] = engine.threads[active].length;
+
+      const sideNotes = [];
+      for (const charId of engine.order) {
+        if (charId === active || charId === "founder") continue;
+        const thread = engine.threads[charId] || [];
+        for (let i = notified[charId] || 0; i < thread.length; i++) {
+          const e = thread[i];
+          if (e.type === "incoming") sideNotes.push({ charId, from: e.from, body: e.body });
+        }
+        notified[charId] = thread.length;
+      }
+      if (sideNotes.length) queueNotifications(sideNotes);
+
+      const newMsgs = active && (shown[active] || 0) < (engine.threads[active] || []).length;
+      if (newMsgs) openConversation();
+      else renderThreadResponse();
+    }
+
+    // ── cinematic overlay for launch arc entry / exit ─────────────────────────
+    function showLaunchCinematic(lines, onDone) {
+      const el   = document.getElementById("launchCinematic");
+      const box  = document.getElementById("lcInner");
+      const skip = document.getElementById("lcSkip");
+
+      box.innerHTML = lines.map(t => `<p class="lc-line">${t}</p>`).join("");
+      el.classList.add("show");
+
+      const nodes = box.querySelectorAll(".lc-line");
+      nodes.forEach((n, i) => setTimeout(() => n.classList.add("vis"), 600 + i * 1300));
+
+      const dismiss = () => {
+        el.classList.remove("show");
+        box.innerHTML = "";
+        skip.onclick = null;
+        el.onclick   = null;
+        setTimeout(onDone, 1400);
+      };
+
+      const totalMs = 600 + (nodes.length - 1) * 1300 + 1800;
+      let timer = setTimeout(dismiss, totalMs);
+
+      const skipNow = () => { clearTimeout(timer); dismiss(); };
+      skip.onclick = skipNow;
+      el.onclick   = skipNow;
+    }
+
     function clearThreadResponse(){
       const box = $("thread");
       [...box.querySelectorAll(".chat-cta, .thread-card, .chat-blocked")].forEach(el => el.remove());
@@ -1142,7 +1359,7 @@
     function renderThreadResponse(){
       clearThreadResponse();
       if (active === "founder" || NOCHAT.has(active)) return;
-      if (active === "jordan" && engine.s.jordan_resolved) {
+      if (active === "jordan" && engine.s.jordan_resolved && !engine.stats().focus) {
         const box = $("thread");
         const b = document.createElement("div");
         b.className = "chat-blocked";
@@ -1156,7 +1373,8 @@
       const opts = engine.options(cardId);
       if (!opts.length) return;
       const box = $("thread");
-      const spent = engine.stats().actionsLeft <= 0;
+      // While focused, the active thread's open beat is part of the (free) arc.
+      const spent = engine.stats().focus ? false : engine.stats().actionsLeft <= 0;
 
       if (selectedCard === cardId && !spent){
         const a = engine.openActions().find(x => x.cardId === cardId);
@@ -1200,14 +1418,137 @@
       if (charId === "founder" || NOCHAT.has(charId)) return true;   // no thread to read
       return shown[charId] >= engine.threads[charId].length;
     }
+    // Time-of-day → panel background gradient for the launch focus arc
+    const LAUNCH_PANEL = {
+      '8AM':  { bg: 'linear-gradient(175deg,#0a1628 0%,#050e1a 100%)', tc: 'rgba(150,200,255,.9)' },
+      '9AM':  { bg: 'linear-gradient(175deg,#0c1a2e 0%,#07101e 100%)', tc: 'rgba(165,210,255,.9)' },
+      '10AM': { bg: 'linear-gradient(175deg,#0d1c30 0%,#081120 100%)', tc: 'rgba(180,215,255,.9)' },
+      '11AM': { bg: 'linear-gradient(175deg,#0e1e32 0%,#091222 100%)', tc: 'rgba(200,225,255,.9)' },
+      '12PM': { bg: 'linear-gradient(175deg,#0f1f34 0%,#091323 100%)', tc: 'rgba(220,235,255,.9)' },
+      '1PM':  { bg: 'linear-gradient(175deg,#0f1e30 0%,#091220 100%)', tc: 'rgba(220,235,255,.9)' },
+      '4PM':  { bg: 'linear-gradient(175deg,#131520 0%,#0a0f18 100%)', tc: 'rgba(255,245,220,.9)' },
+      '6PM':  { bg: 'linear-gradient(175deg,#1c1005 0%,#100900 100%)', tc: 'rgba(255,200,100,.9)' },
+      '9PM':  { bg: 'linear-gradient(175deg,#000a18 0%,#00050f 100%)', tc: 'rgba(120,170,255,.9)' },
+      '11PM': { bg: 'linear-gradient(175deg,#000510 0%,#000208 100%)', tc: 'rgba(100,150,255,.85)' },
+    };
+
+    // ── Launch time ticker ────────────────────────────────────────────────────
+    let _ltAnim = null;          // setInterval handle
+    let _ltShown = null;         // time string currently visible in the panel
+
+    function _parseLaunchMins(t) {
+      const m = (t || '').match(/^(\d+)(AM|PM)$/i);
+      if (!m) return 0;
+      let h = parseInt(m[1], 10);
+      if (m[2].toUpperCase() === 'PM' && h !== 12) h += 12;
+      if (m[2].toUpperCase() === 'AM' && h === 12) h = 0;
+      return h * 60;
+    }
+    function _fmtMins(mins) {
+      const h24 = Math.floor(mins / 60) % 24;
+      const mm  = mins % 60;
+      const h12 = h24 % 12 || 12;
+      const ap  = h24 >= 12 ? 'PM' : 'AM';
+      return mm === 0 ? h12 + ap : h12 + ':' + String(mm).padStart(2, '0');
+    }
+    function tickLaunchTime(fromStr, toStr) {
+      if (_ltAnim) { clearInterval(_ltAnim); _ltAnim = null; }
+      const el = document.querySelector('.focus-launch-time');
+      if (!el) { _ltShown = toStr; return; }
+      const fromM = _parseLaunchMins(fromStr);
+      const toM   = _parseLaunchMins(toStr);
+      if (toM <= fromM) { el.textContent = toStr; _ltShown = toStr; return; }
+      const step = Math.max(1, Math.round((toM - fromM) / 24));
+      const lc   = LAUNCH_PANEL[toStr] || LAUNCH_PANEL['8AM'];
+      let cur    = fromM;
+      _ltAnim = setInterval(() => {
+        cur = Math.min(cur + step, toM);
+        if (cur >= toM) {
+          clearInterval(_ltAnim); _ltAnim = null;
+          if (el.isConnected) { el.textContent = toStr; el.style.color = lc.tc; }
+          _ltShown = toStr;
+        } else if (el.isConnected) {
+          el.textContent = _fmtMins(cur);
+        }
+      }, 55);
+    }
+
     function renderHand(){
+      const focus = engine.stats().focus;
+      const isLaunch = focus && focus.id === 'launch';
+      const isEquity = focus && focus.id !== 'launch';
+      const panel = $("handPanel");
+      const handTop = document.querySelector(".hand-top");
+
+      // Panel class and background — launch-active and focus-active are mutually exclusive
+      panel.classList.toggle("launch-active", !!isLaunch);
+      panel.classList.toggle("focus-active",  !!isEquity);
+      handTop.style.display = (isLaunch || isEquity) ? "none" : "";
+      if (isLaunch) {
+        const lc = LAUNCH_PANEL[engine.s.launch_time] || LAUNCH_PANEL['8AM'];
+        panel.style.background = lc.bg;
+      } else {
+        panel.style.background = '';
+      }
+
+      // Focus splash content
+      const $splash = $("focusSplash");
+      if (!isLaunch) {
+        // Leaving launch arc — cancel any running ticker and reset tracker
+        if (_ltAnim) { clearInterval(_ltAnim); _ltAnim = null; }
+        _ltShown = null;
+      }
+      if (isLaunch) {
+        const newTime = engine.s.launch_time || '8AM';
+        const lc = LAUNCH_PANEL[newTime] || LAUNCH_PANEL['8AM'];
+        if (!$splash.querySelector('.focus-launch')) {
+          // First render of the arc — build structure and set time immediately
+          $splash.innerHTML =
+            `<div class="focus-launch">` +
+            `<div class="focus-launch-label">LAUNCH DAY</div>` +
+            `<div class="focus-launch-time" style="color:${lc.tc}">${escapeHtml(newTime)}</div>` +
+            `</div>`;
+          _ltShown = newTime;
+        } else if (newTime !== _ltShown && !_ltAnim) {
+          // Time advanced — animate the counter in place
+          tickLaunchTime(_ltShown, newTime);
+        }
+      } else if (isEquity) {
+        const live = liveFocusAction();
+        if (live && (live.charId === "founder" || live.noChat)) {
+          $splash.innerHTML =
+            `<div class="focus-sign">` +
+            `<div class="focus-sign-icon">✍️</div>` +
+            `<div class="focus-sign-body">${escapeHtml(live.body)}</div>` +
+            `<div class="focus-sign-opts">${live.options.map(o =>
+              `<button class="focus-chip" data-card="${escapeHtml(live.cardId)}" data-key="${escapeHtml(o.key)}">${escapeHtml(o.label)}</button>`
+            ).join("")}</div>` +
+            `</div>`;
+          [...$splash.querySelectorAll(".focus-chip")].forEach(btn => {
+            btn.onclick = () => { if (!busy()) commitCard(btn.dataset.card, btn.dataset.key); };
+          });
+        } else {
+          $splash.innerHTML =
+            `<div class="focus-brain-wrap">` +
+            `<span class="focus-bolt fb1">⚡</span><span class="focus-bolt fb2">⚡</span>` +
+            `<span class="focus-bolt fb3">⚡</span><span class="focus-bolt fb4">⚡</span>` +
+            `<span class="focus-brain">🧠</span></div>` +
+            `<div class="focus-word">FOCUS</div>`;
+        }
+      } else {
+        $splash.innerHTML = '';
+      }
       const actions = engine.openActions();
       // Only show a card once its source message has been read — unread asks stay
       // hidden, so the player has to discover them by reading threads (the bell /
       // blue dots / notifications point the way). Founder "moves" are always shown.
-      const visible = actions.filter(a => cardReadable(a.charId));
+      // During a focus arc the panel is replaced by the FOCUS visual; cards are played
+      // inline from the chat threads instead.
+      let visible = actions.filter(a => cardReadable(a.charId));
+      if (focus) visible = [];   // hide all cards; interaction happens in-thread
       const s = engine.stats();
-      const spent = s.actionsLeft <= 0;
+      const spent = focus ? false : s.actionsLeft <= 0;  // focus beats are free
+      document.querySelector(".hand-lbl").textContent = "This week · pick 2";
 
       // plays-left dots
       $("handPlays").innerHTML =
@@ -1215,19 +1556,23 @@
         `<div class="dot${s.actionsLeft>=2?' full':''}"></div>` +
         `<span style="margin-left:4px">${s.actionsLeft} of 2 left</span>`;
 
-      // hint: actionable messages still waiting to be read (their cards stay hidden)
-      const unread = actions.length - visible.length;
-      $("handHint").textContent = unread > 0
+      // hint: actionable messages still waiting to be read (their cards stay hidden).
+      const unread = focus ? 0 : actions.length - visible.length;
+      $("handHint").textContent = !focus && unread > 0
         ? `· ${unread} unread message${unread===1?'':'s'} — open a chat to reveal more`
-        : (spent ? "· no actions left this week" : "");
+        : (!focus && spent ? "· no actions left this week" : "");
 
-      // Fallback advance: the week normally ends implicitly after 2 actions, but on a
-      // thin week (no playable card left) surface an explicit "End week" so you're
-      // never stuck. Hidden whenever a card is available or the turn is mid-reveal.
+      // Fallback advance: surface an explicit "End week" when nothing is left to do.
+      // In focus mode show it when there's no pending focus card (waiting for next week).
       const endBtn = $("handEnd");
-      endBtn.style.display = (!spent && visible.length === 0 && !busy()) ? "" : "none";
+      if (focus){
+        endBtn.style.display = (!liveFocusAction() && !busy()) ? "" : "none";
+      } else {
+        endBtn.style.display = (!spent && visible.length === 0 && !busy()) ? "" : "none";
+      }
 
       const box = $("handCards");
+      box.style.display = focus ? "none" : "";
       if (!visible.length){
         box.innerHTML = unread > 0
           ? `<div class="hand-empty">📨 ${unread} unread message${unread===1?'':'s'} — read them to see your options</div>`
@@ -1267,7 +1612,8 @@
 
       [...box.querySelectorAll(".hcard")].forEach(el=>{
         el.onclick = ()=>{
-          if (busy() || engine.stats().actionsLeft <= 0) return;
+          // Focus-arc beats (equity) are free → clickable even with no actions left.
+          if (busy() || (!engine.stats().focus && engine.stats().actionsLeft <= 0)) return;
           selectCard(el.dataset.card);
         };
       });
@@ -1331,14 +1677,55 @@
     // reveals nothing. Every consequence (the reply bubble, the journal outcome, the
     // delayed text back) surfaces at turn end as notifications + journal ink.
     function commitCard(cardId, key){
-      if (busy() || engine.stats().actionsLeft <= 0) return;
+      if (busy()) return;
+      const a = engine.openActions().find(x => x.cardId === cardId);
+      const isFocusCard = !!(a && a.focus);
+      // Focus-arc beats are free, so they're playable even with no actions left.
+      if (!isFocusCard && engine.stats().actionsLeft <= 0) return;
       selectedCard = null; hideDetail(); clearThreadResponse();
 
-      engine.act(cardId, key);   // state + entries change, but we reveal nothing now
+      const wasFocusId = engine.stats().focus?.id ?? null;
+      engine.act(cardId, key);   // state + entries change
+      const nowFocusId = engine.stats().focus?.id ?? null;
 
+      // Entering launch arc for the first time → cinematic before first beat
+      if (!wasFocusId && nowFocusId === "launch") {
+        renderStats();
+        showLaunchCinematic([
+          "Launch Day.",
+          "The code is live.",
+          "Now you find out if anyone cares."
+        ], followFocusBeat);
+        return;
+      }
+
+      // Still inside a focus arc: reveal the next beat immediately.
+      if (nowFocusId) { followFocusBeat(); return; }
+
+      // Launch arc just ended → exit cinematic, then restore the world
+      if (wasFocusId === "launch") {
+        showLaunchCinematic([
+          "Day 1 is over.",
+          "You're a different founder now."
+        ], () => {
+          renderRail(); renderStats(); renderHand();
+          openConversation();
+          revealJournalFrom(jShown);
+        });
+        return;
+      }
+
+      // Just signed (equity focus ended): restore the world and ink the negotiation's
+      // outcomes into the journal.
+      if (wasFocusId) {
+        renderRail(); renderStats(); renderHand();
+        openConversation();
+        revealJournalFrom(jShown);   // fires the act-1 overlay when equity locks in
+        return;
+      }
+
+      // normal (non-focus) path: reveal nothing now; consequences surface at week end
       renderRail(); renderStats(); renderHand(); renderThreadResponse();
-
-      // out of actions → the week ends, which plays the turn-end reveal
       if (engine.stats().actionsLeft <= 0) setTimeout(advanceWeek, 600);
     }
 
@@ -1389,20 +1776,24 @@
       matching_engine_choice:"build",    // build the core ourselves
       analytics_choice:      "buy",      // buy analytics → see the pivot
     };
-    function debugStep(opts){
-      // resolve up to the weekly action budget with the preferred (or first) option
+    // breakIf: optional fn — if it returns true after an act(), stop immediately
+    // without advancing the week. Returns true when the break condition fired.
+    function debugStep(opts, breakIf){
       let safety = 0;
       while (engine.stats().actionsLeft > 0 && safety++ < 12){
+        if (breakIf && breakIf()) return true;
         const actions = engine.openActions();
         if (!actions.length) break;
-        const a = actions[0];                       // openActions is urgency-sorted
+        const a = actions[0];
         const pref = opts[a.cardId];
         const key = (pref && a.options.some(o => o.key === pref))
           ? pref : (a.options[0] && a.options[0].key);
         if (!key) break;
         engine.act(a.cardId, key);
+        if (breakIf && breakIf()) return true;
       }
       engine.nextWeek();
+      return false;
     }
     function debugSkip(targetWeek){
       if (busy()) return;
@@ -1431,6 +1822,37 @@
 
       bar.classList.remove("skipping");
       if (engine.s.game_over) setTimeout(showGameOver, 400);
+    }
+
+    function debugSkipToLaunch(){
+      if (busy()) return;
+      const bar = $("debug-bar"); bar.classList.add("skipping");
+      $("overlay").classList.remove("show");
+      closePops();
+      [...$("notes").children].forEach(el => el.remove());
+
+      // Play up to good_enough_launch, then stop so the player can choose ship/wait
+      const prefs = { ...DBG_PREFS };
+      const hasLaunchCard = () => engine.openActions().some(a => a.cardId === 'good_enough_launch');
+      let guard = 0;
+      while (!hasLaunchCard() && !engine.s.game_over && !engine.s.game_won && guard++ < 400){
+        if (debugStep(prefs, hasLaunchCard)) break;
+      }
+
+      for (const id of engine.order){
+        shown[id]    = engine.threads[id].length;
+        notified[id] = engine.threads[id].length;
+      }
+      weekNotes = []; notesSeen = true;
+      if (engine.stats().act1Complete) window.__act1shown = true;
+
+      renderJournalCatchup();
+      updateBell();
+      // Open Alex's thread — that's where good_enough_launch lands
+      active = "alex";
+      openConversation();
+
+      bar.classList.remove("skipping");
     }
 
     // ── turn-end reveal: calm journal ink + iPhone-style notifications ───
@@ -1702,8 +2124,25 @@
       }
       const latest = hist[hist.length - 1];
       const hasAnalytics = !!engine.s.analytics_live;
-      pop.innerHTML = `<div class="dm-hdr">Growth<span style="font-weight:800;color:var(--ink);font-size:12px">${latest.users} signups</span></div>
-        <canvas class="growth-chart" id="growthCanvas"></canvas>
+      const s = engine.s;
+      const mrr = (s.customers || 0) * 50;
+      const CH_LABELS = {
+        referrals: "Referral loop", creators: "TikTok creators",
+        community: "Communities", paid: "Paid ads", mixed: "Unfocused (all channels)",
+      };
+      const chId = s.primary_channel;
+      const ch = chId ? (s.channels[chId] || {}) : null;
+      // Revenue + the channel you're betting on — the resource-management readout.
+      const metaRows =
+        `<div class="growth-meta">`
+        + `<div class="growth-row"><span>MRR</span><b>$${mrr.toLocaleString()}/mo</b></div>`
+        + (chId
+            ? `<div class="growth-row"><span>Channel</span><b>${CH_LABELS[chId] || chId}${ch.cac ? ` · ~$${ch.cac} CAC` : ""}</b></div>`
+            : `<div class="growth-row"><span>Channel</span><b style="color:#8a8a8e">not yet found</b></div>`)
+        + `</div>`;
+      pop.innerHTML = `<div class="dm-hdr">Growth<span style="font-weight:800;color:var(--ink);font-size:12px">${latest.users} signups</span></div>`
+        + metaRows
+        + `<canvas class="growth-chart" id="growthCanvas"></canvas>
         <div class="growth-legend">
           <span><span class="growth-swatch" style="background:#0b84ff"></span>Signups</span>`
         + (hasAnalytics
@@ -1854,6 +2293,7 @@
 
     // debug skip bar (testing) — absolute targets + a relative +N step
     [...document.querySelectorAll("#debug-bar button")].forEach(btn=>{
+      if (btn.id === "dbg-launch-day") { btn.onclick = debugSkipToLaunch; return; }
       btn.onclick = ()=>{
         if (busy()) return;
         const target = btn.dataset.step

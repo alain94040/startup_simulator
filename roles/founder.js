@@ -19,6 +19,7 @@
       "founder_solo_discover",
       "founder_solo_growth",
       "founder_user_depth",
+      "dont_scale_seed",
       "first_customer_offer",
       "reference_checkin",
       "website_social_proof",
@@ -67,7 +68,7 @@
 
       // ── EQUITY SIGNING: surfaces after the counter-offer arc resolves ──────
       {
-        id: 'equity_signing', cat: 'e', from: 'You',
+        id: 'equity_signing', cat: 'e', from: 'You', focus: 'equity',
         body: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           const split = (jordan && jordan.flags.equity_proposal) || '40/40/20';
@@ -85,23 +86,22 @@
             journal: "We signed the founder agreement. The split's locked in. Nobody set up vesting schedules — it felt unnecessary between friends. I hope that's not something I regret.",
             execute(s, char, e) {
               s.jordan_equity = true;
+              s.equity_week = s.week;
               s.jordan_cleanup_needed = true;
-              const jordan = e.chars.get('jordan');
-              const split = (jordan && jordan.flags.equity_proposal) || '40/40/20';
+              s.focus = null;  // exit the equity focus arc — the world un-holds
+              // Morale/trust were already settled by the proposal + counter beats;
+              // signing is pure ceremony so the deltas aren't double-counted here.
               const alex = e.chars.get('alex');
-              if (alex) {
-                alex.flags.equity_set = true;
-                if (split === '33/33/33') alex.morale = clamp(alex.morale - 8, 0, 100);
-                else if (split === '50/25/25') alex.morale = clamp(alex.morale - 3, 0, 100);
-                else alex.morale = clamp(alex.morale + 5, 0, 100);
-              }
+              if (alex) alex.flags.equity_set = true;
               return "split locked in. documents signed. nobody set up vesting schedules — it felt unnecessary between friends.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char, e) {
           s.jordan_equity = true;
+          s.equity_week = s.week;
           s.jordan_cleanup_needed = true;
+          s.focus = null;  // never leave focus stuck if signing is ignored
           const alex = e && e.chars && e.chars.get('alex');
           if (alex) alex.flags.equity_set = true;
         },
@@ -458,6 +458,51 @@
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
       },
+      // ── DO THINGS THAT DON'T SCALE (PG): hand-make the early magic ───────────
+      {
+        id: 'dont_scale_seed', cat: 'c', from: 'You',
+        body: "the app is live but the early matches are thin — a real chicken-and-egg. paul graham's voice in your head: do things that don't scale. you could manufacture the magic for the first users by hand, just to get the flywheel turning.",
+        urgency: 1, weeks: 1,
+        available: (s) => s.launched && !s.dont_scale_done && s.users >= 3 && !s.pivot_shipped,
+        options: [
+          { label: 'Hand-match the first users yourself', key: 'concierge',
+            journal: "Spent the week as a one-person matching engine — read every new profile, made introductions by hand, texted people when someone good showed up. Doesn't scale even slightly. Two of them went on dates this weekend. Worth every hour.",
+            execute(s) {
+              s.dont_scale_done = true;
+              s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              s.signal = clamp(s.signal + 4, 0, 100);
+              // Hand-picking your happiest early user jump-starts the testimonial chain.
+              if (s.customers === 0 && !s.reference_customer) {
+                s.reference_customer = true;
+                s.reference_customer_week = s.week;
+              }
+              return "Became the matching engine for a week — introductions by hand, nudges by text. Two first dates out of it, and one user who now thinks you hung the moon. It doesn't scale. It doesn't have to yet.";
+            } },
+          { label: 'Host a singles night — make the first match in the room', key: 'mixer',
+            journal: "Threw a small singles night for early users — manufactured the first real match in person. Doesn't scale, but I walked away with a story I can actually sell and a room full of believers.",
+            execute(s) {
+              s.dont_scale_done = true;
+              s.cash = clamp(s.cash - 300, 0, 9999999);
+              s.users += 5;
+              s.signal = clamp(s.signal + 8, 0, 100);
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              if (s.customers === 0 && !s.reference_customer) {
+                s.reference_customer = true;
+                s.reference_customer_week = s.week;
+              }
+              return "Twelve early users in a room, two drinks in, one introduction that actually clicked. $300 on snacks and a story you can tell every investor for the next year. Five of them invited friends on the spot.";
+            } },
+          { label: 'Let the algorithm do its thing', key: 'wait',
+            journal: "Decided not to put my thumb on the scale — let the matching run on its own. Cleaner, more honest. Also colder: the cold-start stayed cold.",
+            execute(s) {
+              s.dont_scale_done = true;
+              return "Stayed hands-off and let the system run. Fewer awkward DMs from the founder — and a lot fewer matches. The cold-start stayed cold.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { s.dont_scale_done = true; },
+      },
+
       // ── CHAIN: reference selling → testimonial → website social proof ────────
       {
         id: 'first_customer_offer', cat: 'c', from: 'You',
