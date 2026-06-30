@@ -82,9 +82,13 @@
       "good_enough_launch",
       "launch_preflight",
       "launch_email_pulse",
-      "launch_staging_bug",
+      "launch_staging_bug_discover",
+      "launch_staging_bug_found",
+      "launch_staging_bug_decide",
       "launch_inbox_question",
-      "launch_test_profiles",
+      "launch_test_profiles_notice",
+      "launch_test_profiles_scope",
+      "launch_test_profiles_decide",
       "launch_stripe_sting",
       "alex_wants_rebuild",
       "arch_refactor_done",
@@ -1177,7 +1181,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "i'm keeping an eye on the site.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -1191,12 +1195,12 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "i'm keeping an eye on the site.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
                 body: "oh no. subject line on the blast says 'test - do not send'. went to all 847 people.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               // deferred: Alex mentions unsubscribes next week
               e.pending.push({
@@ -1224,7 +1228,7 @@
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
                 body: "47 opens, 8 click-throughs. rate's holding at 19%. most people haven't seen it yet — opens usually spike after lunch.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -1240,52 +1244,23 @@
       },
 
       {
-        id: 'launch_staging_bug', cat: 'e', from: 'Alex', focus: 'launch',
-        body: "something's off — nobody's matching. pulled the logs: we're still pointed at the staging database. what do you want to do?",
+        id: 'launch_staging_bug_discover', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "hold on. signups are coming in but the match pipeline is completely silent — not a single match in 45 minutes. something is wrong. pulling logs.",
         urgency: 19, patience: Infinity,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
-          return s.focus && s.focus.id === 'launch' && char.flags.preflight_done && jordan && jordan.flags.first_bounce_done && !char.flags.staging_done;
+          return s.focus && s.focus.id === 'launch' && char.flags.preflight_done && jordan && jordan.flags.first_bounce_done && !char.flags.staging_bug_seen;
         },
         options: [
-          { key: 'hotfix', label: 'Push a hotfix now',
-            reply: "push the hotfix. do it now.",
+          { key: 'check', label: "What's happening?",
+            reply: "what's wrong?",
             journal: null,
             execute(s, char, e) {
-              char.flags.staging_done = true;
-              s.launch_time = '11AM';
+              char.flags.staging_bug_seen = true;
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
-                body: "pushed. prod is live on the real database. fingers crossed nothing breaks.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
-              });
-              return null;
-            } },
-          { key: 'takedown', label: 'Take it offline — fix it properly',
-            reply: "put up a maintenance page. fix it properly.",
-            journal: null,
-            execute(s, char, e) {
-              char.flags.staging_done = true;
-              s.launch_time = '11AM';
-              s.press_bounce = true;
-              e.threads.alex.push({
-                type: 'incoming', from: 'Alex',
-                body: "maintenance page up. fixed. back online — took 30 minutes. some early visitors bounced.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
-              });
-              return null;
-            } },
-          { key: 'wait', label: 'Wait — most people won\'t open it for hours',
-            reply: "wait. most people won't open the app until tonight. we'll fix it properly then.",
-            journal: null,
-            execute(s, char, e) {
-              char.flags.staging_done = true;
-              s.launch_time = '11AM';
-              s.press_bounce = true;
-              e.threads.alex.push({
-                type: 'incoming', from: 'Alex',
-                body: "ok. hoping nobody important tries to match in the next 8 hours.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                body: "one sec.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -1293,16 +1268,140 @@
       },
 
       {
-        id: 'launch_test_profiles', cat: 'e', from: 'Alex', focus: 'launch',
-        body: "while i was in the database fixing staging i noticed something — we never deleted the test profiles. sarah_test_003 already matched with 3 real users and 2 of them messaged her.",
+        id: 'launch_staging_bug_found', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "oh no. oh no oh no. we're on the staging database. the env var is pointing at staging. every signup since 8am has been going into the test environment — none of them can see each other. we have real users in a ghost app.",
+        urgency: 19, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.staging_bug_seen && !char.flags.staging_bug_diagnosed,
+        options: [
+          { key: 'options', label: "What are our options?",
+            reply: "okay. what are our options?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_bug_diagnosed = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "hotfix — i swap the env var and redeploy. 5 minutes but if prod hiccups during deploy we could end up with a corrupted state. or maintenance page, fix it clean, back up in 30. or we wait — peak traffic is tonight, most people haven't opened the email yet.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_staging_bug_decide', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "ready to move. what's the call?",
+        urgency: 19, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.staging_bug_diagnosed && !char.flags.staging_done,
+        options: [
+          { key: 'hotfix', label: 'Push the hotfix — 5 minutes of risk',
+            reply: "push it. 5 minutes of risk is better than 30 minutes of downtime.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              char.flags.did_hotfix = true;
+              s.launch_time = '11AM';
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "deploying.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "done. pointed at prod. pipeline's running. first real matches should show up in the next few minutes.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'takedown', label: 'Take it down — fix it cleanly',
+            reply: "take it down. fix it right. i'd rather have 30 minutes of downtime than a corrupted state.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              s.press_bounce = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "maintenance page up. fixing the env var. back up in 20-30 min.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "back online. took 25 minutes. env is correct, pipeline is running. some early visitors hit the maintenance page.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: '11:30AM', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'wait', label: "Wait — peak traffic is tonight",
+            reply: "wait. peak traffic is tonight. we fix it properly this afternoon before people actually open the app.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.staging_done = true;
+              s.launch_time = '11AM';
+              s.press_bounce = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "ok. every signup right now is in limbo but nobody knows it yet. let's hope nobody tries to use it before we fix it.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles_notice', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "hey — while i was swapping the env var i was looking at the db schema to make sure the migration ran clean. we still have test accounts in there.",
         urgency: 18, patience: Infinity,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
-          return s.focus && s.focus.id === 'launch' && char.flags.staging_done && jordan && jordan.flags.hustle_done && !char.flags.test_profiles_done;
+          return s.focus && s.focus.id === 'launch' && char.flags.did_hotfix && jordan && jordan.flags.hustle_done && !char.flags.test_profiles_seen;
         },
         options: [
+          { key: 'how_many', label: 'How many?',
+            reply: "how many test accounts?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_seen = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "checking.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles_scope', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been live since beta. she matched with 3 real users. two of them already sent her messages. she replied with lorem ipsum filler from when we seeded the db.",
+        urgency: 18, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.test_profiles_seen && !char.flags.test_profiles_scoped,
+        options: [
+          { key: 'damage', label: 'Have they figured out she\'s fake?',
+            reply: "do the users know she's a test account?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.test_profiles_scoped = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets lorem ipsum back, it's going to be obvious. what do you want to do?",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_test_profiles_decide', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "i can delete all 6 right now. or we tell those two users what happened. or we leave it and hope nobody notices.",
+        urgency: 18, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.test_profiles_scoped && !char.flags.test_profiles_done,
+        options: [
           { key: 'disclose', label: 'Email the affected users — be honest',
-            reply: "email all three. apologize, explain what happened, give them a free month.",
+            reply: "email them both. apologize, explain what happened, give them a free month.",
             journal: null,
             execute(s, char, e) {
               char.flags.test_profiles_done = true;
@@ -1310,13 +1409,13 @@
               s.launch_time = '4PM';
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
-                body: "done. three emails out. deleted sarah_test_003. two users already replied — they appreciated the honesty.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                body: "done. two emails out, deleted all 6 test accounts. one user already replied — said he appreciated us catching it. the other hasn't opened it yet.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
           { key: 'delete', label: 'Quietly delete them — nobody will know',
-            reply: "just delete the test profiles. those matches weren't real anyway.",
+            reply: "just delete all of them now. those matches weren't real anyway.",
             journal: null,
             execute(s, char, e) {
               char.flags.test_profiles_done = true;
@@ -1324,8 +1423,8 @@
               s.launch_time = '4PM';
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
-                body: "deleted. those three users just lost a match without knowing why.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                body: "deleted. those two users just lost a match without knowing why.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               e.pending.push({
                 fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
@@ -1334,8 +1433,8 @@
               });
               return null;
             } },
-          { key: 'nothing', label: 'Leave them — not worth disrupting day one',
-            reply: "leave them. one fake profile isn't worth disrupting real users on day one.",
+          { key: 'nothing', label: 'Leave them — not worth the disruption on day one',
+            reply: "leave them for now. we'll clean it up tonight. one fake profile isn't worth disrupting real users mid-launch.",
             journal: null,
             execute(s, char) {
               char.flags.test_profiles_done = true;
@@ -1353,7 +1452,7 @@
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           const abuser_resolved = s.jordan_left_watch || (jordan && jordan.flags.abuser_done);
-          return s.focus && s.focus.id === 'launch' && char.flags.test_profiles_done && abuser_resolved && !char.flags.stripe_done;
+          return s.focus && s.focus.id === 'launch' && char.flags.staging_done && abuser_resolved && !char.flags.stripe_done;
         },
         options: [
           { key: 'tell', label: 'Tell her honestly — our mistake',
@@ -1418,7 +1517,7 @@
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
                 body: "done. she responded: 'omg the founder replied — so cool!'",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -1432,7 +1531,7 @@
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
                 body: "wrote 3 lines, sent it. she said 'thanks!' — first ticket closed.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },

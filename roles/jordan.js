@@ -363,7 +363,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "tested on my phone — page loads clean, 1.4s, no errors. they just weren't ready to commit on a first glance.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -378,7 +378,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: msg,
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -403,7 +403,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "she completed her profile — 3 photos, full bio. she's now checking for matches.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -416,7 +416,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "sent. she replied 'omg i didn't expect to hear from you!' — she's filling out her profile now.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -443,10 +443,15 @@
           { key: 'go', label: 'Go for it — hustle for more signups',
             reply: "yes, go post. let's hustle for signups.",
             journal: null,
-            execute(s, char) {
+            execute(s, char, e) {
               char.flags.hustle_done = true;
               s.jordan_left_watch = true;
               s.launch_time = '1PM';
+              e.threads.jordan.push({
+                type: 'incoming', from: 'Jordan',
+                body: "on it. writing a great post and pinging all my contacts. back in a couple hours.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
               return null;
             } },
           { key: 'stay', label: 'Stay in the app — watch real users',
@@ -480,7 +485,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "done. he's off the platform. the woman who complained sent a thank you.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -503,7 +508,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "checked — he sent the same message to 15 women. nothing explicitly offensive, just copy-pasted. sent him a warning for now.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -525,24 +530,28 @@
             journal: null,
             execute(s, char, e) {
               char.flags.going_home_done = true;
-              s.launch_time = s.moderation_warned ? '9PM' : '11PM';
+              s.launch_time = (s.moderation_warned || s.jordan_left_watch) ? '9PM' : '11PM';
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
                 body: "same. grabbing dinner. 19 signups honestly isn't bad. more tomorrow.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
         ],
       },
 
-      // Only fires if abuser was warned (not banned) — s.moderation_warned.
+      // Fires if abuser was warned (not banned) OR Jordan was on LinkedIn all day.
+      // Warned path: he came back. LinkedIn path: Jordan had no idea until victims DM'd her.
       // Both people are home; the constraint is emotional, not logistical.
       {
         id: 'launch_9pm_crisis', cat: 'e', from: 'Jordan', focus: 'launch',
-        body: "hey — i know we said we were done. the guy i warned is back. messaged 5 more women tonight. one of them is threatening to post publicly about it. alex says he doesn't have his laptop.",
+        body: (s) => s.jordan_left_watch && !s.moderation_warned
+          ? "hey — just got DMs from 3 women who signed up today. one guy's been sending the same opener to everyone while i was posting on linkedin. one of them is about to go public. i had no idea this was happening."
+          : "hey — i know we said we were done. the guy i warned is back. messaged 5 more women tonight. one of them is threatening to post publicly about it. alex says he doesn't have his laptop.",
         urgency: 13, patience: Infinity,
-        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.going_home_done && !!s.moderation_warned && !char.flags.crisis_done,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.going_home_done
+          && (!!s.moderation_warned || !!s.jordan_left_watch) && !char.flags.crisis_done,
         options: [
           { key: 'ban', label: 'Ban him now',
             reply: "ban him now. should have done it this afternoon.",
@@ -553,7 +562,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "done. banned. reached out to the victim — she's still upset but said thank you. we need a real ToS.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -566,7 +575,7 @@
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "messaged her. she softened when we apologized. banned him. she said she'll hold off on posting.",
-                week: s.week, isNew: true, focus: 'launch', seq: e._seq++,
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
               });
               return null;
             } },
@@ -592,7 +601,7 @@
         body: "hey — i know it's late. just got a DM. two users matched and they're already texting each other. 😭 this is actually real.",
         urgency: 12, patience: Infinity,
         available: (s, char) => {
-          const needCrisis = !!s.moderation_warned;
+          const needCrisis = !!s.moderation_warned || !!s.jordan_left_watch;
           return s.focus && s.focus.id === 'launch' && char.flags.going_home_done && (!needCrisis || char.flags.crisis_done) && !char.flags.signal_done;
         },
         options: [

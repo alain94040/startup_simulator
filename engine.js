@@ -316,6 +316,7 @@
           week: this.s.week,
           isNew: true,
           focus: card.focus || null,   // tags arc messages so the UI can build the room
+          launchTime: card.focus === 'launch' ? (this.s.launch_time || null) : null,
           seq: this._seq++,
         });
         this.log.push({ week: this.s.week, charId, surfaced: card.id });
@@ -358,6 +359,7 @@
           week: this.s.week,
           isNew: true,
           focus: o.def.focus || null,
+          launchTime: o.def.focus === 'launch' ? (this.s.launch_time || null) : null,
           seq: this._seq++,
         });
       }

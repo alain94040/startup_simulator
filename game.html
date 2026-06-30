@@ -114,6 +114,7 @@
   .out .bubble{background:linear-gradient(180deg,var(--out1),var(--out2));color:#fff;border-bottom-right-radius:6px}
   .subtext{align-self:flex-start;max-width:74%;color:var(--faint);font-size:12px;
     font-style:italic;margin:1px 0 4px 6px}
+  .lt{font-size:10px;color:var(--faint);align-self:flex-end;padding:0 6px;white-space:nowrap;letter-spacing:.02em}
   .dbg-card{font-size:10px;color:#aaa;font-family:monospace;margin:1px 0 2px 6px;user-select:all}
   .chat-empty{margin:auto;color:var(--faint);font-size:13px;text-align:center;padding:20px}
   .chat-blocked{align-self:center;margin:20px 0 8px;font-size:12px;color:var(--faint);
@@ -671,7 +672,7 @@
   }
   .focus-launch-time{
     font-size:76px;font-weight:900;letter-spacing:-2px;line-height:1;color:#fff;
-    text-shadow:0 0 30px currentColor;
+    text-shadow:0 0 30px currentColor;font-variant-numeric:tabular-nums;
   }
 </style>
 </head>
@@ -1020,7 +1021,8 @@
         const wrap = document.createElement("div");
         const row = document.createElement("div");
         row.className = "row in";
-        row.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+        row.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`
+          + (e.launchTime ? `<span class="lt">${escapeHtml(e.launchTime)}</span>` : "");
         wrap.appendChild(row);
         if (e.subtext){
           const st = document.createElement("div");
@@ -1045,7 +1047,8 @@
       // reply (player's blue bubble); outcomes are not shown in chat
       const d = document.createElement("div");
       d.className = "row out";
-      d.innerHTML = `<div class="bubble">${escapeHtml(e.body)}</div>`;
+      d.innerHTML = (e.launchTime ? `<span class="lt">${escapeHtml(e.launchTime)}</span>` : "")
+        + `<div class="bubble">${escapeHtml(e.body)}</div>`;
       return d;
     }
 
@@ -1371,6 +1374,47 @@
       '11PM': { bg: 'linear-gradient(175deg,#000510 0%,#000208 100%)', tc: 'rgba(100,150,255,.85)' },
     };
 
+    // ── Launch time ticker ────────────────────────────────────────────────────
+    let _ltAnim = null;          // setInterval handle
+    let _ltShown = null;         // time string currently visible in the panel
+
+    function _parseLaunchMins(t) {
+      const m = (t || '').match(/^(\d+)(AM|PM)$/i);
+      if (!m) return 0;
+      let h = parseInt(m[1], 10);
+      if (m[2].toUpperCase() === 'PM' && h !== 12) h += 12;
+      if (m[2].toUpperCase() === 'AM' && h === 12) h = 0;
+      return h * 60;
+    }
+    function _fmtMins(mins) {
+      const h24 = Math.floor(mins / 60) % 24;
+      const mm  = mins % 60;
+      const h12 = h24 % 12 || 12;
+      const ap  = h24 >= 12 ? 'PM' : 'AM';
+      return mm === 0 ? h12 + ap : h12 + ':' + String(mm).padStart(2, '0');
+    }
+    function tickLaunchTime(fromStr, toStr) {
+      if (_ltAnim) { clearInterval(_ltAnim); _ltAnim = null; }
+      const el = document.querySelector('.focus-launch-time');
+      if (!el) { _ltShown = toStr; return; }
+      const fromM = _parseLaunchMins(fromStr);
+      const toM   = _parseLaunchMins(toStr);
+      if (toM <= fromM) { el.textContent = toStr; _ltShown = toStr; return; }
+      const step = Math.max(1, Math.round((toM - fromM) / 24));
+      const lc   = LAUNCH_PANEL[toStr] || LAUNCH_PANEL['8AM'];
+      let cur    = fromM;
+      _ltAnim = setInterval(() => {
+        cur = Math.min(cur + step, toM);
+        if (cur >= toM) {
+          clearInterval(_ltAnim); _ltAnim = null;
+          if (el.isConnected) { el.textContent = toStr; el.style.color = lc.tc; }
+          _ltShown = toStr;
+        } else if (el.isConnected) {
+          el.textContent = _fmtMins(cur);
+        }
+      }, 55);
+    }
+
     function renderHand(){
       const focus = engine.stats().focus;
       const isLaunch = focus && focus.id === 'launch';
@@ -1391,13 +1435,26 @@
 
       // Focus splash content
       const $splash = $("focusSplash");
+      if (!isLaunch) {
+        // Leaving launch arc — cancel any running ticker and reset tracker
+        if (_ltAnim) { clearInterval(_ltAnim); _ltAnim = null; }
+        _ltShown = null;
+      }
       if (isLaunch) {
-        const lc = LAUNCH_PANEL[engine.s.launch_time] || LAUNCH_PANEL['8AM'];
-        $splash.innerHTML =
-          `<div class="focus-launch">` +
-          `<div class="focus-launch-label">LAUNCH DAY</div>` +
-          `<div class="focus-launch-time" style="color:${lc.tc}">${escapeHtml(engine.s.launch_time || '8AM')}</div>` +
-          `</div>`;
+        const newTime = engine.s.launch_time || '8AM';
+        const lc = LAUNCH_PANEL[newTime] || LAUNCH_PANEL['8AM'];
+        if (!$splash.querySelector('.focus-launch')) {
+          // First render of the arc — build structure and set time immediately
+          $splash.innerHTML =
+            `<div class="focus-launch">` +
+            `<div class="focus-launch-label">LAUNCH DAY</div>` +
+            `<div class="focus-launch-time" style="color:${lc.tc}">${escapeHtml(newTime)}</div>` +
+            `</div>`;
+          _ltShown = newTime;
+        } else if (newTime !== _ltShown && !_ltAnim) {
+          // Time advanced — animate the counter in place
+          tickLaunchTime(_ltShown, newTime);
+        }
       } else if (isEquity) {
         const live = liveFocusAction();
         if (live && (live.charId === "founder" || live.noChat)) {
