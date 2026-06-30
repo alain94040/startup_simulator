@@ -399,7 +399,6 @@
             journal: null,
             execute(s, char, e) {
               char.flags.first_signup_live_done = true;
-              s.launch_time = '11AM';
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "she completed her profile — 3 photos, full bio. she's now checking for matches.",
@@ -412,7 +411,6 @@
             journal: null,
             execute(s, char, e) {
               char.flags.first_signup_live_done = true;
-              s.launch_time = '11AM';
               e.threads.jordan.push({
                 type: 'incoming', from: 'Jordan',
                 body: "sent. she replied 'omg i didn't expect to hear from you!' — she's filling out her profile now.",
@@ -425,7 +423,6 @@
             journal: null,
             execute(s, char) {
               char.flags.first_signup_live_done = true;
-              s.launch_time = '11AM';
               return null;
             } },
         ],

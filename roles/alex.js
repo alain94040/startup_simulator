@@ -89,7 +89,9 @@
       "launch_test_profiles_notice",
       "launch_test_profiles_scope",
       "launch_test_profiles_decide",
-      "launch_stripe_sting",
+      "launch_stripe_sting_discover",
+      "launch_stripe_sting_research",
+      "launch_stripe_sting_decide",
       "alex_wants_rebuild",
       "arch_refactor_done",
       "alex_decision",
@@ -1330,6 +1332,7 @@
                 body: "back online. took 25 minutes. env is correct, pipeline is running. some early visitors hit the maintenance page.",
                 week: s.week, isNew: true, focus: 'launch', launchTime: '11:30AM', seq: e._seq++,
               });
+              s.launch_time = '12PM';
               return null;
             } },
           { key: 'wait', label: "Wait — peak traffic is tonight",
@@ -1446,17 +1449,59 @@
       },
 
       {
-        id: 'launch_stripe_sting', cat: 'e', from: 'Alex', focus: 'launch',
-        body: "first upgrade — user in SF tried to go premium. payment failed. we're still on stripe test mode. she thinks the app is broken.",
+        id: 'launch_stripe_sting_discover', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "first upgrade attempt. user in SF hit the premium button. stripe rejected it — 'your account cannot currently make live charges.' we built the whole payment flow, tested it perfectly, but never finished the business verification. we literally cannot accept money right now.",
         urgency: 16, patience: Infinity,
         available: (s, char, e) => {
           const jordan = e.chars.get('jordan');
           const abuser_resolved = s.jordan_left_watch || (jordan && jordan.flags.abuser_done);
-          return s.focus && s.focus.id === 'launch' && char.flags.staging_done && abuser_resolved && !char.flags.stripe_done;
+          return s.focus && s.focus.id === 'launch' && char.flags.staging_done && abuser_resolved && !char.flags.stripe_contacted;
         },
         options: [
-          { key: 'tell', label: 'Tell her honestly — our mistake',
-            reply: "email her. be honest — it was our mistake. fix it now and let her retry.",
+          { key: 'fix', label: 'Fix it — what do we need to do?',
+            reply: "fix it. what do we need?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.stripe_contacted = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "on it. reading the stripe activation docs and getting someone on their support chat.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_stripe_sting_research', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "okay so. i got someone on stripe's support chat. we need to submit: business type, EIN, bank account for payouts, and they run an identity check on whoever owns the account. i read through the full verification docs while i was waiting.",
+        urgency: 16, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.stripe_contacted && !char.flags.stripe_researched,
+        options: [
+          { key: 'timeline', label: 'How long does verification take?',
+            reply: "how long does it take once we submit?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.stripe_researched = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "stripe says 1 to 3 business days. minimum. and that's after we submit everything, which i don't have ready right now. so realistically — not today. she's been sitting on a failed payment for 20 minutes.",
+                week: s.week, isNew: true, focus: 'launch', launchTime: s.launch_time || null, seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+
+      {
+        id: 'launch_stripe_sting_decide', cat: 'e', from: 'Alex', focus: 'launch',
+        body: "what do we tell the user?",
+        urgency: 16, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.stripe_researched && !char.flags.stripe_done,
+        options: [
+          { key: 'fix_now', label: 'Tell her honestly — she\'ll be first when it\'s live',
+            reply: "email her. be honest — our fault, payment system isn't activated yet. she'll be first to retry when it is.",
             journal: null,
             execute(s, char) {
               char.flags.stripe_done = true;
@@ -1464,31 +1509,16 @@
               s.launch_time = '6PM';
               return null;
             } },
-          { key: 'fix_charge', label: 'Quietly fix it and re-charge her card',
-            reply: "switch stripe to live mode and retry the charge quietly.",
-            journal: null,
-            execute(s, char, e) {
-              char.flags.stripe_done = true;
-              s.launch_time = '6PM';
-              // unauthorized re-charge risk
-              e.pending.push({
-                fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
-                text: "the SF user filed a chargeback — she didn't authorize the retry. stripe flagged the account.",
-                fx(st) { st.cash = clamp(st.cash - 300, 0, 9999999); },
-                cancel: (st) => !!st.first_paid,
-              });
-              return null;
-            } },
-          { key: 'free_month', label: 'Fix it and give her a free month',
-            reply: "switch to live mode and comp her a free month — she earned it.",
+          { key: 'free_month', label: 'Give her a free month — she earned it',
+            reply: "email her. apologize. give her a free month while we get the account activated.",
             journal: null,
             execute(s, char) {
               char.flags.stripe_done = true;
               s.launch_time = '6PM';
               return null;
             } },
-          { key: 'wait', label: 'Wait and see if she reaches out',
-            reply: "let's wait — she might reach out.",
+          { key: 'wait', label: 'Say nothing — hope she retries herself',
+            reply: "say nothing for now. she probably just thinks her card failed. she might retry on her own.",
             journal: null,
             execute(s, char) {
               char.flags.stripe_done = true;
