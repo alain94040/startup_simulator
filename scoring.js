@@ -1,9 +1,10 @@
 // scoring.js — endgame scorecard. Pure logic, no DOM.
-// When the YC verdict arrives the game ends and the player is graded on ten
-// dimensions, each tied to specific card choices and anchored to a canonical
+// When the YC verdict arrives the game ends and the player is graded on six
+// lessons, each tied to specific card choices and anchored to a canonical
 // piece of startup writing (the 📚 ref). scoreGame(engine) is safe to call at
-// any point in any game — categories the player never got to face come back
-// with score:null and an explanatory line instead of a fake grade.
+// any point in any game — a category the player never got to face comes back
+// with score:null and an explanatory line instead of a fake grade, and merged
+// categories degrade to the half that was always available.
 (function () {
 
   function grade(score) {
@@ -52,8 +53,9 @@
 
     const cats = [];
 
-    // ── 1. Have the Hard Conversation (equity) ───────────────────────────────
+    // ── 1. Have the Hard Conversations (the equity talk + firing Jordan) ─────
     {
+      // Part A — the equity conversation (always gradable: dodging IS the failure)
       const EQ = ["jordan_equity_mention", "jordan_equity_worry", "jordan_equity_counter_jordan",
         "jordan_equity_5050_interject", "jordan_equity_split", "jordan_equity_alex",
         "jordan_equity_alex_why", "jordan_equity_counter_alex", "jordan_equity_counter_alex_50",
@@ -64,29 +66,60 @@
       const split = jordan && jordan.flags.equity_proposal;
       const brokePromise = jordan && jordan.flags.reassured && chose("jordan_equity_counter_jordan", "hold_40");
 
-      let score = 0, detail;
+      let eqScore = 0, eqDetail;
       if (!s.jordan_equity) {
-        score = answered > 0 ? 20 : 5;
-        detail = "You never signed a founder agreement. Every week without one, the ambiguity compounded" +
-          (s.jordan_resolved ? " — and when Jordan left, Alex asked what you were even building on." : ".");
+        eqScore = answered > 0 ? 20 : 5;
+        eqDetail = "You never signed a founder agreement — every week without one, the ambiguity compounded" +
+          (s.jordan_resolved ? ", and when Jordan left, Alex asked what you were even building on." : ".");
       } else {
-        score = 40;                                        // it got signed
-        score += Math.round(30 * (answered / Math.max(1, answered + dodged)));
-        if (skipped) { score = Math.min(score, 35); }
-        if (answered >= 3 && !skipped) score += 15;        // you actually sat in the conversation
-        if (split === "40/40/20") score += 10;             // matched risk to reward and said it out loud
-        if (split === "50/25/25") score -= 10;             // grabbed half before there was anything to grab
-        if (brokePromise) score -= 20;                     // "you're an equal partner" … then held her at 20%
-        detail = skipped
-          ? "You went quiet and the split defaulted to equal thirds — the conversation happened without you."
-          : `You settled on ${split || "a split"} and signed${brokePromise ? " — after telling Jordan she was an equal partner, then holding her at 20%. She remembered." : "."}` +
+        eqScore = 40;                                        // it got signed
+        eqScore += Math.round(30 * (answered / Math.max(1, answered + dodged)));
+        if (skipped) { eqScore = Math.min(eqScore, 35); }
+        if (answered >= 3 && !skipped) eqScore += 15;        // you actually sat in the conversation
+        if (split === "40/40/20") eqScore += 10;             // matched risk to reward and said it out loud
+        if (split === "50/25/25") eqScore -= 10;             // grabbed half before there was anything to grab
+        if (brokePromise) eqScore -= 20;                     // "you're an equal partner" … then held her at 20%
+        eqDetail = skipped
+          ? "You went quiet on equity and the split defaulted to equal thirds — that conversation happened without you."
+          : `You settled equity at ${split || "a split"} and signed${brokePromise ? " — after telling Jordan she was an equal partner, then holding her at 20%. She remembered." : "."}` +
             " Nobody set up vesting — the omission every founder regrets.";
+        eqScore = clamp(eqScore, 0, 100);
       }
+
+      // Part B — the other conversation founders dodge: the half-committed co-founder
+      const jordanFaced = !!(s.jordan_drifting || s.jordan_resolved);
+      let jScore = null, jDetail = "";
+      if (!jordanFaced) {
+        jDetail = " Jordan's commitment problem never came to a head — you ran out of road before that one.";
+      } else if (s.jordan_resolved) {
+        jScore = 55;
+        const fireW = choseWeek("jordan_confrontation", "fire");
+        const driftW = surfacedW.get("jordan_drift_start");
+        const drag = fireW != null && driftW != null ? fireW - driftW : null;
+        if (chose("jordan_fulltime_ask", "pressure")) jScore += 10;  // named the dealbreaker out loud
+        if (drag != null && drag <= 4) jScore += 15;
+        else if (drag != null && drag <= 8) jScore += 8;
+        if (chose("jordan_confrontation", "defer")) jScore -= 10;    // "one more sprint" — you both knew
+        if (!s.jordan_cleanup_needed) jScore += 20;                  // lawyer, buyback, clean cap table
+        jScore = clamp(jScore, 0, 100);
+        jDetail = " And when Jordan stopped earning her stake, you had that conversation too" +
+          (drag != null && drag > 8 ? ` — though only after ${drag} weeks of Alex covering for her` : "") +
+          (s.jordan_cleanup_needed
+            ? "; her equity is still on the cap table, and every investor who looks will ask."
+            : ", then paid the lawyer and cleaned the cap table.");
+      } else {
+        jScore = jordan && jordan.flags.confrontation_done ? 5 : 15; // Alex forced it and you ducked
+        jDetail = jordan && jordan.flags.confrontation_done
+          ? " But when Alex brought you the Jordan conversation, you never had it — he stopped asking, and that silence was expensive."
+          : " But Jordan drifted for weeks and the confrontation never happened — avoiding the decision was a decision.";
+      }
+
+      const score = jScore == null ? eqScore : Math.round(eqScore * 0.6 + jScore * 0.4);
       cats.push({
-        key: "equity", label: "Have the Hard Conversation",
-        score: clamp(score, 0, 100), detail,
-        lesson: "Dodging the equity talk doesn't make the split fair — it makes it explode later. And always set up vesting.",
-        ref: "Noam Wasserman, The Founder's Dilemmas",
+        key: "hard_conversations", label: "Have the Hard Conversations",
+        score: clamp(score, 0, 100), detail: eqDetail + jDetail,
+        lesson: "The equity talk, the firing — dodging a hard conversation doesn't resolve it, it just moves it somewhere more expensive. And always set up vesting.",
+        ref: "Noam Wasserman, The Founder's Dilemmas; Michael Seibel on co-founder breakups",
       });
     }
 
@@ -120,126 +153,90 @@
       });
     }
 
-    // ── 3. Face the Wrong Co-founder (Jordan) ────────────────────────────────
+    // ── 3. Build Something People Want ───────────────────────────────────────
+    // The core loop as one lesson: talk to users, scope small and ship, then
+    // let what they do (not what they say) redirect you to the real product.
     {
-      let score = null, detail;
-      if (!s.jordan_drifting && !s.jordan_resolved) {
-        detail = "Jordan's commitment problem never came to a head — you ran out of road before the hard part.";
-      } else if (s.jordan_resolved) {
-        score = 55;
-        const fireW = choseWeek("jordan_confrontation", "fire");
-        const driftW = surfacedW.get("jordan_drift_start");
-        const drag = fireW != null && driftW != null ? fireW - driftW : null;
-        if (chose("jordan_fulltime_ask", "pressure")) score += 10;   // named the dealbreaker out loud
-        if (drag != null && drag <= 4) score += 15;
-        else if (drag != null && drag <= 8) score += 8;
-        if (chose("jordan_confrontation", "defer")) score -= 10;     // "one more sprint" — you both knew
-        if (!s.jordan_cleanup_needed) score += 20;                   // lawyer, buyback, clean cap table
-        detail = "You had the conversation and let Jordan go" +
-          (drag != null && drag > 8 ? ` — but only after ${drag} weeks of Alex covering for her.` : ".") +
-          (s.jordan_cleanup_needed
-            ? " Her stake is still on the cap table; every investor who looks will ask."
-            : " Then you paid the lawyer and cleaned the cap table.");
-      } else {
-        score = jordan && jordan.flags.confrontation_done ? 5 : 15;  // Alex forced it and you ducked
-        detail = jordan && jordan.flags.confrontation_done
-          ? "Alex brought you the conversation and you never had it. He stopped asking — that silence was expensive."
-          : "Jordan drifted for weeks and the confrontation never happened. Avoiding the decision was a decision.";
+      // Part A — "people want", before launch: get out of the building
+      let disc = 0;
+      const bits = [];
+      if (founder && founder.flags.interviews_done) {
+        const w = choseWeek("founder_first_interviews", "interview");
+        disc += 30 + (w != null && w <= 3 ? 5 : 0);
+        bits.push(`ran customer interviews${w != null ? ` in week ${w}` : ""}`);
       }
-      cats.push({
-        key: "jordan", label: "Face the Wrong Co-founder",
-        score: score == null ? null : clamp(score, 0, 100), detail,
-        lesson: "A half-committed co-founder is a decision you're avoiding. Make the break early and cleanly — this is what vesting was for.",
-        ref: "PG, “18 Mistakes” (A Half-Hearted Effort); Michael Seibel on co-founder breakups",
-      });
-    }
+      if (s.met_priya) { disc += 20; bits.push("met Priya at the meetup"); }
+      disc += Math.min(20, (s.user_depth_count || 0) * 10);
+      if (s.user_depth_count) bits.push("watched real users use the product");
+      if (chose("alex_sync_discover")) { disc += 10; bits.push("spent sprints on discovery"); }
+      if (s.dont_scale_done) { disc += 10; bits.push("hand-made the first matches yourself"); }
+      if (chose("waitlist_cold", "reach")) { disc += 5; bits.push("kept the waitlist warm"); }
+      disc = clamp(disc, 0, 100);
+      const discDetail = bits.length
+        ? "You " + bits.join(", ") + "."
+        : "You never talked to a user — everything you built was a guess, and the guesses compounded.";
 
-    // ── 4. Ask for Money Early (friends & family) ────────────────────────────
-    {
-      const asks = [];
-      if (chose("ff_family", "ask") || chose("ff_family_2", "ask") || chose("ff_family_3", "ask"))
-        asks.push({ who: "your parents", week: choseWeek("ff_family", "ask") ?? choseWeek("ff_family_2", "ask") ?? choseWeek("ff_family_3", "ask") });
-      if (chose("ff_friend_ask", "ask")) asks.push({ who: "Jamie", week: choseWeek("ff_friend_ask", "ask") });
-      if (chose("ff_mentor_pitch", "pitch")) asks.push({ who: "David", week: choseWeek("ff_mentor_pitch", "pitch") });
-
-      let score = asks.length * 25;
-      const firstAsk = asks.length ? Math.min(...asks.map((a) => a.week ?? 99)) : null;
-      if (firstAsk != null) score += firstAsk <= 4 ? 25 : firstAsk <= 8 ? 15 : 5;
-      score = clamp(score, 0, 100);
-      const detail = asks.length === 0
-        ? "You never asked anyone. The people who already believed in you were the cheapest money you'll ever not raise."
-        : `You asked ${asks.map((a) => a.who).join(", ")} — first ask in week ${firstAsk}. ` +
-          (asks.length === 3 ? "Every early door, knocked on." : "There were doors you never knocked on.");
-      cats.push({
-        key: "ffmoney", label: "Ask for Money Early",
-        score, detail,
-        lesson: "Swallow the embarrassment and raise from people who trust you — before you need it, not when the account hits zero.",
-        ref: "Paul Graham, “How to Fund a Startup”",
-      });
-    }
-
-    // ── 5. Read Your Investors (leads vs followers) ──────────────────────────
-    {
-      let score = null, detail;
-      if (!faced("investor_intro_warm") && !s.marcusCommitted) {
-        detail = "No real investor ever reached out — your network never got warm enough to produce one.";
-      } else if (s.marcusCommitted) {
-        score = s.followerCommitted ? 100 : 88;
-        detail = s.followerCommitted
-          ? "You landed Marcus — and the moment he committed, Fatima 'decided' too. That ordering was never a coincidence."
-          : "You landed Marcus, the one investor in your pipeline who actually leads.";
-      } else {
-        score = 20;
-        if (chose("investor_intro_warm", "call")) score += 20;
-        if (s.deck_ready) score += 20;
-        if (chose("investor_ready", "meet")) score += 10;
-        const marcusFlags = chars.get("marcus") ? chars.get("marcus").flags : {};
-        if (marcusFlags.intro_moved_on) score -= 20;
-        if ((s.investor_warmth || 0) < 30) score -= 10;
-        const chasedFollowers = (chose("fatima_deck") || chose("fatima_meeting")) && marcusFlags.intro_moved_on;
-        detail = marcusFlags.intro_moved_on
-          ? "Marcus — your only lead — moved on while you " + (chasedFollowers ? "took meeting after meeting with Fatima, who never invests first." : "left his messages sitting.")
-          : "You worked the investor pipeline but never got your lead to commit" +
-            (chose("fatima_deck") ? " — and Fatima, however interested she sounded, was always waiting for someone else to go first." : ".");
-      }
-      cats.push({
-        key: "investors", label: "Read Your Investors",
-        score: score == null ? null : clamp(score, 0, 100), detail,
-        lesson: "Investors are a herd: most follow, few lead. Find your lead; every hour spent pitching followers first is wasted.",
-        ref: "Paul Graham, “How to Raise Money”",
-      });
-    }
-
-    // ── 6. Scope Lean, Launch Fast ───────────────────────────────────────────
-    {
-      let score, detail;
+      // Part B — "build something": scope small, ship it
+      let scope, scopeDetail;
       const waits = (acted.get("good_enough_launch") || []).filter((a) => a.option === "wait").length;
       if (s.dev_plan == null) {
-        score = 15;
-        detail = "You never locked a build plan — the roadmap drifted and the product was never ready for the market to judge.";
+        scope = 15;
+        scopeDetail = "No build plan ever got locked, the roadmap drifted, and the market never got a vote.";
       } else if (s.dev_plan === "full") {
-        score = 25;
-        detail = "You picked the full plan: twice the scope, twice the weeks, zero extra learning. The market never got a vote.";
+        scope = 25;
+        scopeDetail = "You picked the full plan: twice the scope, twice the weeks, zero extra learning.";
       } else {
-        score = 75;
-        if (chose("dev_planning_session", "sprint")) score += 5;   // saw through the 'do it all in sprints' decoy
-        if (s.launched) score += 15; else score = Math.min(score, 45);
-        score -= waits * 8;                                        // "two more weeks" — the polish trap
-        detail = "You scoped lean" + (s.launched
-          ? (waits ? ` but stalled ${waits} time${waits === 1 ? "" : "s"} at the launch door before shipping.` : " and shipped the moment it was good enough.")
+        scope = 75;
+        if (chose("dev_planning_session", "sprint")) scope += 5;   // saw through the 'do it all in sprints' decoy
+        if (s.launched) scope += 15; else scope = Math.min(scope, 45);
+        scope -= waits * 8;                                        // "two more weeks" — the polish trap
+        scopeDetail = "You scoped lean" + (s.launched
+          ? (waits ? ` but stalled ${waits} time${waits === 1 ? "" : "s"} at the launch door.` : " and shipped the moment it was good enough.")
           : " but never launched — a perfect product nobody used.");
       }
-      // panic-copying the funded competitor (Flare) is scope creep, whatever the plan
-      if (chose("competitor_launch", "copy")) score -= 15;
+      if (chose("competitor_launch", "copy")) { scope -= 15; scopeDetail += " Then Flare raised and you panic-copied their features — scope creep with a press release."; }
+      scope = clamp(scope, 0, 100);
+
+      // Part C — "people want", after launch: hear the signal and pivot
+      const pivotFaced = s.launched || faced("pivot_open") || faced("pivot_alex_pushback") ||
+        faced("post_match_dropoff") || s.activities_pivot || s.pivot_shipped;
+      let piv = null, pivDetail;
+      if (!pivotFaced) {
+        pivDetail = "The market never got the chance to tell you Plan A was wrong.";
+      } else {
+        piv = 0;
+        if (chose("post_match_dropoff")) piv += 20;               // read the analytics signal, didn't scroll past
+        if (chose("churn_interview", "call")) piv += 10;          // called the churned subscriber
+        if (chose("feature_cluster", "build")) piv += 10;         // three unprompted asks = signal
+        if (chose("feature_request_custom", "decline") || chose("feature_request_custom", "negotiate")) piv += 5;
+        if (chose("feature_request_custom", "build")) piv -= 10;  // built a one-off for one loud user
+        if (s.activities_pivot) piv += 30;
+        if (s.pivot_deferred) piv -= 20;
+        if (s.pivot_direction_game === "ship" && !s.activities_pivot) piv -= 10;
+        if (s.pivot_shipped) piv += 25;
+        piv = clamp(piv, 0, 100);
+        pivDetail = s.pivot_shipped
+          ? "When the data said matches were going nowhere, you pivoted and shipped v2 — the product users had been describing all along."
+          : s.activities_pivot
+            ? "You committed to the pivot but v2 never shipped — the insight died in the backlog."
+            : s.pivot_deferred || s.pivot_direction_game === "ship"
+              ? "The signal was there — matches going nowhere — and you shipped Plan A anyway."
+              : "The drop-off data and the churn calls were pointing somewhere; you never followed them.";
+      }
+
+      const score = piv == null
+        ? Math.round(disc * 0.5 + scope * 0.5)
+        : Math.round(disc * 0.3 + scope * 0.3 + piv * 0.4);
       cats.push({
-        key: "lean", label: "Scope Lean, Launch Fast",
-        score: clamp(score, 0, 100), detail,
-        lesson: "If you're not embarrassed by v1, you launched too late. Over-scoping is how startups die before touching reality.",
-        ref: "Paul Graham, “Startups in 13 Sentences”; Reid Hoffman",
+        key: "mspw", label: "Build Something People Want",
+        score: clamp(score, 0, 100),
+        detail: `${discDetail} ${scopeDetail} ${pivDetail}`,
+        lesson: "The whole game in one line: talk to users, scope small, ship fast — and when what they do contradicts your plan, the plan is what's wrong. Product-market fit is the only thing that matters.",
+        ref: "Paul Graham / YC: “Make something people want”; Steve Blank; Marc Andreessen; Eric Ries",
       });
     }
 
-    // ── 7. Build Your Edge, Buy the Rest ─────────────────────────────────────
+    // ── 4. Build Your Edge, Buy the Rest ─────────────────────────────────────
     {
       const subs = [];
       if (faced("auth_build_buy")) {
@@ -282,74 +279,60 @@
       });
     }
 
-    // ── 8. Get Out of the Building ───────────────────────────────────────────
+    // ── 5. Raise Early, Find Your Lead ───────────────────────────────────────
     {
-      let score = 0;
-      const bits = [];
-      if (founder && founder.flags.interviews_done) {
-        const w = choseWeek("founder_first_interviews", "interview");
-        score += 30 + (w != null && w <= 3 ? 5 : 0);
-        bits.push(`ran customer interviews${w != null ? ` in week ${w}` : ""}`);
-      }
-      if (s.met_priya) { score += 20; bits.push("went to the meetup and met Priya"); }
-      score += Math.min(20, (s.user_depth_count || 0) * 10);
-      if (s.user_depth_count) bits.push("sat and watched real users use the product");
-      if (chose("alex_sync_discover")) { score += 10; bits.push("spent sprints on discovery"); }
-      if (s.dont_scale_done) { score += 10; bits.push("did the unscalable thing to make the first matches happen"); }
-      if (chose("waitlist_cold", "reach")) { score += 5; bits.push("kept the waitlist warm"); }
-      score = clamp(score, 0, 100);
-      const missed = [];
-      if (!(founder && founder.flags.interviews_done)) missed.push("the customer interviews");
-      if (!s.met_priya) missed.push("the founder meetup (and Priya)");
-      if (!s.user_depth_count) missed.push("watching users work");
-      const detail = bits.length
-        ? "You " + bits.join(", ") + "." +
-          (missed.length && score < 55 ? ` But you skipped ${missed.join(", ")} — the cheapest learning in the game.` : "")
-        : "You never talked to a user. Everything you built was a guess, and the guesses compounded.";
-      cats.push({
-        key: "discovery", label: "Get Out of the Building",
-        score, detail,
-        lesson: "Everything you think you know about users is a guess until you've talked to them — and their compliments are lies; watch what they do.",
-        ref: "Steve Blank; Rob Fitzpatrick, The Mom Test",
-      });
-    }
+      // Part A — friends & family, before you need it
+      const asks = [];
+      if (chose("ff_family", "ask") || chose("ff_family_2", "ask") || chose("ff_family_3", "ask"))
+        asks.push({ who: "your parents", week: choseWeek("ff_family", "ask") ?? choseWeek("ff_family_2", "ask") ?? choseWeek("ff_family_3", "ask") });
+      if (chose("ff_friend_ask", "ask")) asks.push({ who: "Jamie", week: choseWeek("ff_friend_ask", "ask") });
+      if (chose("ff_mentor_pitch", "pitch")) asks.push({ who: "David", week: choseWeek("ff_mentor_pitch", "pitch") });
 
-    // ── 9. Find the Real Product (the pivot) ─────────────────────────────────
-    {
-      const arcFaced = s.launched || faced("pivot_open") || faced("pivot_alex_pushback") ||
-        faced("post_match_dropoff") || s.activities_pivot || s.pivot_shipped;
-      let score = null, detail;
-      if (!arcFaced) {
-        detail = "You never launched, so the market never got the chance to tell you Plan A was wrong.";
+      let ff = asks.length * 25;
+      const firstAsk = asks.length ? Math.min(...asks.map((a) => a.week ?? 99)) : null;
+      if (firstAsk != null) ff += firstAsk <= 4 ? 25 : firstAsk <= 8 ? 15 : 5;
+      ff = clamp(ff, 0, 100);
+      const ffDetail = asks.length === 0
+        ? "You never asked friends or family — the people who already believed in you were the cheapest money you'll ever not raise."
+        : `You asked ${asks.map((a) => a.who).join(", ")} — first ask in week ${firstAsk}.` +
+          (asks.length === 3 ? " Every early door, knocked on." : "");
+
+      // Part B — the seed round: leads vs followers
+      const invFaced = faced("investor_intro_warm") || s.marcusCommitted;
+      let inv = null, invDetail;
+      if (!invFaced) {
+        invDetail = " No real investor ever surfaced — your network never got warm enough to produce one.";
+      } else if (s.marcusCommitted) {
+        inv = s.followerCommitted ? 100 : 88;
+        invDetail = s.followerCommitted
+          ? " Then you landed Marcus — and the moment he committed, Fatima 'decided' too. That ordering was never a coincidence."
+          : " Then you landed Marcus, the one investor in your pipeline who actually leads.";
       } else {
-        score = 0;
-        if (chose("post_match_dropoff")) score += 20;               // read the analytics signal, didn't scroll past
-        if (chose("churn_interview", "call")) score += 10;          // called the churned subscriber
-        if (chose("feature_cluster", "build")) score += 10;         // three unprompted asks = signal
-        if (chose("feature_request_custom", "decline") || chose("feature_request_custom", "negotiate")) score += 5;
-        if (chose("feature_request_custom", "build")) score -= 10;  // built a one-off for one loud user
-        if (s.activities_pivot) score += 30;
-        if (s.pivot_deferred) score -= 20;
-        if (s.pivot_direction_game === "ship" && !s.activities_pivot) score -= 10;
-        if (s.pivot_shipped) score += 25;
-        score = clamp(score, 0, 100);
-        detail = s.pivot_shipped
-          ? "You heard the signal, committed to the pivot, and shipped v2 — the product users had been describing all along."
-          : s.activities_pivot
-            ? "You committed to the pivot but v2 never shipped — the insight died in the backlog."
-            : s.pivot_deferred || s.pivot_direction_game === "ship"
-              ? "The signal was there — matches going nowhere — and you shipped Plan A anyway."
-              : "The drop-off data and the churn calls were pointing somewhere. You never followed them.";
+        inv = 20;
+        if (chose("investor_intro_warm", "call")) inv += 20;
+        if (s.deck_ready) inv += 20;
+        if (chose("investor_ready", "meet")) inv += 10;
+        const marcusFlags = chars.get("marcus") ? chars.get("marcus").flags : {};
+        if (marcusFlags.intro_moved_on) inv -= 20;
+        if ((s.investor_warmth || 0) < 30) inv -= 10;
+        inv = clamp(inv, 0, 100);
+        const chasedFollowers = (chose("fatima_deck") || chose("fatima_meeting")) && marcusFlags.intro_moved_on;
+        invDetail = marcusFlags.intro_moved_on
+          ? " Marcus — your only lead — moved on while you " + (chasedFollowers ? "took meeting after meeting with Fatima, who never invests first." : "left his messages sitting.")
+          : " You worked the investor pipeline but never got your lead to commit" +
+            (chose("fatima_deck") ? " — and Fatima, however interested she sounded, was always waiting for someone else to go first." : ".");
       }
+
+      const score = inv == null ? ff : Math.round(ff * 0.5 + inv * 0.5);
       cats.push({
-        key: "pivot", label: "Find the Real Product",
-        score, detail,
-        lesson: "Plan A never survives contact with users. Product-market fit is the only thing that matters — hear the signal, pivot, ship.",
-        ref: "Marc Andreessen, “The Only Thing That Matters”; Eric Ries, The Lean Startup",
+        key: "fundraising", label: "Raise Early, Find Your Lead",
+        score: clamp(score, 0, 100), detail: ffDetail + invDetail,
+        lesson: "Raise from people who trust you before you need it. Then find the investor who leads — the rest are a herd, and the herd follows the first commitment.",
+        ref: "Paul Graham, “How to Fund a Startup” + “How to Raise Money”",
       });
     }
 
-    // ── 10. Stay Default Alive ───────────────────────────────────────────────
+    // ── 6. Stay Default Alive ────────────────────────────────────────────────
     {
       let score = 100;
       const hires = [];
@@ -412,7 +395,7 @@
     };
   }
 
-  const api = { scoreGame };
+  const api = { scoreGame, CATEGORY_COUNT: 6 };
   if (typeof module !== "undefined") module.exports = api;
   else window.Scoring = api;
 })();

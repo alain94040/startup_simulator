@@ -26,7 +26,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { Engine } = require("../engine.js");
-const { scoreGame } = require("../scoring.js");
+const { scoreGame, CATEGORY_COUNT } = require("../scoring.js");
 
 const WEEK_CAP = 120;            // hard stop so a stalled game can't loop forever
 const DEFAULT_GAMES = 300;       // per driver
@@ -301,12 +301,13 @@ function playGame(seed, driver, trace) {
     if (seen.customers) c.customers++;
 
     // Endgame scorecard smoke check: whatever state the game ended in (early
-    // bankruptcy, YC verdict, timeout), scoreGame must return 10 well-formed
-    // categories — each graded or explicitly "never faced" — without throwing.
+    // bankruptcy, YC verdict, timeout), scoreGame must return its full set of
+    // well-formed categories — each graded or explicitly "never faced" —
+    // without throwing.
     try {
       const sc = scoreGame(e);
-      if (!sc || !Array.isArray(sc.categories) || sc.categories.length !== 10)
-        scoringFailures.push({ seed, driver, why: `expected 10 categories, got ${sc && sc.categories ? sc.categories.length : "none"}` });
+      if (!sc || !Array.isArray(sc.categories) || sc.categories.length !== CATEGORY_COUNT)
+        scoringFailures.push({ seed, driver, why: `expected ${CATEGORY_COUNT} categories, got ${sc && sc.categories ? sc.categories.length : "none"}` });
       else for (const cat of sc.categories) {
         const ok = cat.label && cat.detail && cat.lesson && cat.ref &&
           (cat.score == null ? cat.grade == null
@@ -366,7 +367,7 @@ function report(games, drivers, verbose) {
   }
 
   console.log("\n── Endgame scorecard (scoring.js smoke check) ──────────────");
-  if (!scoringFailures.length) console.log("  ok   scoreGame returned 10 well-formed categories at every game end");
+  if (!scoringFailures.length) console.log(`  ok   scoreGame returned ${CATEGORY_COUNT} well-formed categories at every game end`);
   for (const f of scoringFailures.slice(0, 5))
     console.log(`  FAIL seed ${f.seed} · ${f.driver} — ${f.why}`);
   if (scoringFailures.length > 5) console.log(`  … and ${scoringFailures.length - 5} more`);
