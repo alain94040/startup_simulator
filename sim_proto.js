@@ -681,6 +681,13 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
 
     // Advance the week (burn, passive contributions, conversions, win/loss checks).
     e.nextWeek();
+    // --no-yc: a natural rejection is now game-ending (s.ycRejected → game_over);
+    // neutralize it too so this mode keeps exercising the angel arc.
+    if (noYC && e.s.ycRejected) {
+      e.s.ycRejected = false;
+      e.s.game_over = e.s.cash <= 0;
+      e.ycWeek = e.s.week + 12;
+    }
     if (launchWeek == null && e.s.launched) launchWeek = e.s.week;
 
     if (verbose) {

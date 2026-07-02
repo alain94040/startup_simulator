@@ -111,6 +111,7 @@ function drive(e, driver) {
 // ── one game → a record of when each beat happened ────────────────────────────
 function classifyOutcome(s) {
   if (s.game_won) return s.ycAccepted ? "won_yc" : "won_angels";
+  if (s.ycRejected) return "yc_rejected";    // YC verdict is final — run ends there
   if (s.game_over) return "bankrupt";        // cash <= 0
   return "timeout";                          // hit WEEK_CAP still playing
 }
@@ -197,12 +198,12 @@ function report(records, opts) {
     console.log(`(only ${winners.length} winning game(s) — too few for a winners-only cohort, so timing is over all games)`);
 
   // ── outcome mix ──
-  const outcomes = { won_yc: 0, won_angels: 0, bankrupt: 0, timeout: 0 };
+  const outcomes = { won_yc: 0, won_angels: 0, yc_rejected: 0, bankrupt: 0, timeout: 0 };
   for (const r of all) outcomes[r.outcome]++;
   const endByOutcome = {};
   for (const r of all) (endByOutcome[r.outcome] ||= []).push(r.endWeek);
   console.log("\n── Outcomes ────────────────────────────────────────────────");
-  for (const k of ["won_yc", "won_angels", "bankrupt", "timeout"]) {
+  for (const k of ["won_yc", "won_angels", "yc_rejected", "bankrupt", "timeout"]) {
     const ended = (endByOutcome[k] || []).sort((a, b) => a - b);
     console.log(`  ${pad(k, 12)} ${padL(outcomes[k], 5)}  ${padL(pct(outcomes[k], all.length), 4)}` +
                 `   median end wk ${r1(quantile(ended, 0.5))}`);

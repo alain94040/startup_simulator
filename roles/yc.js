@@ -23,7 +23,8 @@
               // The decision resolver lives here as a pending event (was lost from
               // engine.js in the chat-engine refactor). Three weeks out, YC rolls a
               // verdict — better odds if we qualified (launched + 10+ subscribers).
-              // Accept → $500k + win; reject → reapply opens in ~12 weeks.
+              // Either way the verdict ends the game: accept → $500k + win;
+              // reject → s.ycRejected, engine flips game_over, the scorecard shows.
               e.pending.push({
                 fireWeek: s.week + 3, from: 'Y Combinator',
                 cancel: (st) => st.ycAccepted,        // already in — nothing to decide
@@ -39,8 +40,8 @@
                     post("You're in. Welcome to the batch — $500k for 7%. See you at kickoff.");
                   } else {
                     st.ycApplied = false;
-                    en.ycWeek = st.week + 26;          // reapply window reopens (next batch ~6 months)
-                    post("Thanks for applying — we're passing this batch. The bar was tight; reapply next cycle (~6 months).");
+                    st.ycRejected = true;              // final — the run ends at the verdict
+                    post("Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever kindred becomes, this application wasn't the end of it.");
                   }
                 },
               });

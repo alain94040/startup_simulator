@@ -597,6 +597,8 @@
         if (this.s.marcusCommitted && this.s.followerCommitted) this.s.game_won = true;
       }
 
+      // A YC rejection is final — the run ends at the verdict (see roles/yc.js).
+      if (this.s.ycRejected) this.s.game_over = true;
       if (this.s.cash <= 0) this.s.game_over = true;
 
       this._poll();
@@ -716,6 +718,8 @@
         equitySigned: !!this.s.jordan_equity,
         act1Complete: this.act1Complete,
         gameOver: this.s.game_over,
+        gameWon: this.s.game_won,
+        ycRejected: !!this.s.ycRejected,
         focus: this.s.focus,   // { id, charIds } while a war-room arc is active, else null
       };
     }

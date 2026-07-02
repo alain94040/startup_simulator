@@ -429,6 +429,28 @@
   .card-modal button{border:0;background:var(--ink);color:#fff;font-weight:600;padding:11px 22px;
     border-radius:13px;cursor:pointer;font-size:14px}
 
+  /* ── endgame scorecard (YC verdict) ──────────────────── */
+  .card-modal.endgame{max-width:640px;width:min(640px,92vw);text-align:left;padding:26px 28px 22px;
+    max-height:88vh;overflow:auto}
+  .card-modal.endgame .em{font-size:36px;text-align:center}
+  .card-modal.endgame h3{font-size:23px;margin:8px 0 4px;text-align:center}
+  .card-modal.endgame .verdict-sub{font-size:13.5px;margin:0 0 14px;text-align:center}
+  .eg-overall{display:flex;align-items:center;gap:14px;margin:0 0 6px;padding:12px 16px;
+    background:rgba(120,120,140,.10);border-radius:14px}
+  .eg-overall .big-grade{font-size:34px;font-weight:800;line-height:1}
+  .eg-overall .eg-overall-note{color:var(--muted);font-size:13px}
+  .score-row{padding:11px 0;border-top:1px solid rgba(120,120,140,.16)}
+  .score-row:first-of-type{border-top:0}
+  .score-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .score-label{font-weight:700;font-size:14px}
+  .grade{font-weight:800;font-size:12.5px;padding:2px 11px;border-radius:999px;color:#fff;flex:none}
+  .gA{background:#34c759}.gB{background:#30b0c7}.gC{background:#ffcc00;color:#4a3b00}
+  .gD{background:#ff9f0a}.gF{background:#ff3b30}.gN{background:rgba(120,120,140,.35)}
+  .score-detail{color:var(--muted);font-size:13px;margin-top:4px;line-height:1.5}
+  .score-lesson{font-size:12.5px;margin-top:5px;line-height:1.45}
+  .score-ref{font-size:11.5px;color:var(--muted);opacity:.85;margin-top:2px}
+  .card-modal.endgame .eg-actions{text-align:center;margin-top:16px}
+
   @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
   @keyframes inkin{from{opacity:0;filter:blur(1.5px)}to{opacity:1;filter:blur(0)}}
   @keyframes stampin{0%{opacity:0;transform:rotate(-7deg) scale(2.2)}60%{opacity:.92}100%{opacity:.78;transform:rotate(-7deg) scale(1)}}
@@ -850,6 +872,7 @@
   <script src="roles/tom.js"></script>
   <script src="roles/growth.js"></script>
   <script src="engine.js"></script>
+  <script src="scoring.js"></script>
   <script>
   (function(){
     const engine = new Engine();
@@ -1821,7 +1844,8 @@
       openConversation();       // re-render the active chat + rail + stats + hand
 
       bar.classList.remove("skipping");
-      if (engine.s.game_over) setTimeout(showGameOver, 400);
+      if (engine.s.ycAccepted || engine.s.ycRejected) setTimeout(showEndgame, 400);
+      else if (engine.s.game_over) setTimeout(showGameOver, 400);
     }
 
     function debugSkipToLaunch(){
@@ -1904,7 +1928,11 @@
             if (active !== "founder" && shown[active] < engine.threads[active].length) openConversation();
           }, delay);
         }
-        if (engine.stats().gameOver) setTimeout(showGameOver, 800);
+        // The YC verdict ends the run with the scorecard; let its chat bubble
+        // buzz in first, then bring up the report card. Bankruptcy keeps the
+        // plain out-of-runway modal.
+        if (engine.s.ycAccepted || engine.s.ycRejected) setTimeout(showEndgame, notes.length ? 1800 : 800);
+        else if (engine.stats().gameOver) setTimeout(showGameOver, 800);
       };
 
       // Journal first (with glow); a short beat after it finishes, the notifications buzz.
@@ -2272,6 +2300,35 @@
       $("overlay").classList.add("show");
       $("closeModal").onclick = ()=> location.reload();
     }
+    // The YC verdict — either way — ends the run with the founder's report card.
+    function showEndgame(){
+      const r = Scoring.scoreGame(engine);
+      const em = r.outcome === "yc_accepted" ? "🚀" : "📬";
+      const verdict = r.verdict || { title: "The run is over.", sub: "" };
+      const rows = r.categories.map(c=>{
+        const chip = c.grade
+          ? `<span class="grade g${c.grade}">${c.grade}</span>`
+          : `<span class="grade gN">—</span>`;
+        return `<div class="score-row">
+           <div class="score-head"><span class="score-label">${escapeHtml(c.label)}</span>${chip}</div>
+           <div class="score-detail">${escapeHtml(c.detail)}</div>
+           <div class="score-lesson">${escapeHtml(c.lesson)}</div>
+           <div class="score-ref">📚 ${escapeHtml(c.ref)}</div>
+         </div>`;
+      }).join("");
+      $("modal").className = "card-modal endgame";
+      $("modal").innerHTML =
+        `<div class="em">${em}</div><h3>${escapeHtml(verdict.title)}</h3>
+         <p class="verdict-sub">${escapeHtml(verdict.sub)}</p>
+         <div class="eg-overall">
+           <span class="big-grade">${r.overall.grade}</span>
+           <span class="eg-overall-note">Founder report card — graded on the calls you actually made, week by week. The reading list under each line is where the lesson comes from.</span>
+         </div>
+         ${rows}
+         <div class="eg-actions"><button id="closeModal">Run it back</button></div>`;
+      $("overlay").classList.add("show");
+      $("closeModal").onclick = ()=> location.reload();
+    }
 
     // ── utils ────────────────────────────────────────────
     function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
@@ -2290,6 +2347,10 @@
         c.classList.remove("show");
       }
     });
+
+    // test hook (used by automated checks alongside the debug bar): reach the
+    // engine and the endgame/game-over modals from the page console.
+    window.__debug = { engine, showEndgame, showGameOver, debugSkip };
 
     // debug skip bar (testing) — absolute targets + a relative +N step
     [...document.querySelectorAll("#debug-bar button")].forEach(btn=>{

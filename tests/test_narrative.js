@@ -26,6 +26,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { Engine } = require("../engine.js");
+const { scoreGame } = require("../scoring.js");
 
 const WEEK_CAP = 120;            // hard stop so a stalled game can't loop forever
 const DEFAULT_GAMES = 300;       // per driver
@@ -143,6 +144,7 @@ const ALLOW = new Set([
 const layerA = new Map();   // invariantName -> { count, byDriver, first }
 const layerB = new Map();   // `${rule}|${cardId}` -> { count, byDriver, first }
 let totalViolations = 0;
+const scoringFailures = []; // endgame scorecard smoke check — { seed, driver, why }
 
 // Coverage — proves the drivers actually exercise the states we care about, so a
 // clean result means "checked and consistent", not "never reached".
@@ -297,6 +299,23 @@ function playGame(seed, driver, trace) {
     if (seen.pivot) c.pivot++;
     if (seen.pivotPrelaunch) c.pivotPrelaunch++;
     if (seen.customers) c.customers++;
+
+    // Endgame scorecard smoke check: whatever state the game ended in (early
+    // bankruptcy, YC verdict, timeout), scoreGame must return 10 well-formed
+    // categories — each graded or explicitly "never faced" — without throwing.
+    try {
+      const sc = scoreGame(e);
+      if (!sc || !Array.isArray(sc.categories) || sc.categories.length !== 10)
+        scoringFailures.push({ seed, driver, why: `expected 10 categories, got ${sc && sc.categories ? sc.categories.length : "none"}` });
+      else for (const cat of sc.categories) {
+        const ok = cat.label && cat.detail && cat.lesson && cat.ref &&
+          (cat.score == null ? cat.grade == null
+            : typeof cat.score === "number" && cat.score >= 0 && cat.score <= 100 && /^[ABCDF]$/.test(cat.grade));
+        if (!ok) scoringFailures.push({ seed, driver, why: `malformed category ${cat.key || "?"} (score=${cat.score}, grade=${cat.grade})` });
+      }
+    } catch (err) {
+      scoringFailures.push({ seed, driver, why: `scoreGame threw: ${err.message}` });
+    }
   });
 }
 
@@ -346,6 +365,12 @@ function report(games, drivers, verbose) {
     console.log("\n(— verbose: first example per group shown above; counts are total occurrences —)");
   }
 
+  console.log("\n── Endgame scorecard (scoring.js smoke check) ──────────────");
+  if (!scoringFailures.length) console.log("  ok   scoreGame returned 10 well-formed categories at every game end");
+  for (const f of scoringFailures.slice(0, 5))
+    console.log(`  FAIL seed ${f.seed} · ${f.driver} — ${f.why}`);
+  if (scoringFailures.length > 5) console.log(`  … and ${scoringFailures.length - 5} more`);
+
   const realB = [...layerB.values()].filter(realistic).length;
   const realA = [...layerA.values()].filter(realistic).length;
   console.log(`\n${totalViolations ? "VIOLATIONS FOUND" : "ALL NARRATIVE CHECKS PASSED"} ` +
@@ -366,7 +391,7 @@ function main() {
     console.log(`Replay — seed ${seedArg}, driver ${driver}`);
     playGame(parseInt(seedArg, 10), driver, true);
     report(1, [driver], true);
-    process.exit(totalViolations ? 1 : 0);
+    process.exit(totalViolations || scoringFailures.length ? 1 : 0);
   }
 
   const games = parseInt(argv.find(a => /^\d+$/.test(a)) || DEFAULT_GAMES, 10);
@@ -378,7 +403,7 @@ function main() {
     for (let i = 0; i < games; i++) playGame(seed++, driver, false);
   }
   report(games, drivers, verbose);
-  process.exit(totalViolations ? 1 : 0);
+  process.exit(totalViolations || scoringFailures.length ? 1 : 0);
 }
 
 main();
