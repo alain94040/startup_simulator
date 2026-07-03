@@ -1,5 +1,5 @@
 // scoring.js — endgame scorecard. Pure logic, no DOM.
-// When the YC verdict arrives the game ends and the player is graded on six
+// When the YC verdict arrives the game ends and the player is graded on seven
 // lessons, each tied to specific card choices and anchored to a canonical
 // piece of startup writing (the 📚 ref). scoreGame(engine) is safe to call at
 // any point in any game — a category the player never got to face comes back
@@ -194,7 +194,6 @@
           ? (waits ? ` but stalled ${waits} time${waits === 1 ? "" : "s"} at the launch door.` : " and shipped the moment it was good enough.")
           : " but never launched — a perfect product nobody used.");
       }
-      if (chose("competitor_launch", "copy")) { scope -= 15; scopeDetail += " Then Flare raised and you panic-copied their features — scope creep with a press release."; }
       scope = clamp(scope, 0, 100);
 
       // Part C — "people want", after launch: hear the signal and pivot
@@ -205,11 +204,8 @@
         pivDetail = "The market never got the chance to tell you Plan A was wrong.";
       } else {
         piv = 0;
-        if (chose("post_match_dropoff")) piv += 20;               // read the analytics signal, didn't scroll past
-        if (chose("churn_interview", "call")) piv += 10;          // called the churned subscriber
-        if (chose("feature_cluster", "build")) piv += 10;         // three unprompted asks = signal
-        if (chose("feature_request_custom", "decline") || chose("feature_request_custom", "negotiate")) piv += 5;
-        if (chose("feature_request_custom", "build")) piv -= 10;  // built a one-off for one loud user
+        if (chose("post_match_dropoff")) piv += 25;               // read the analytics signal, didn't scroll past
+        if (chose("churn_interview", "call")) piv += 15;          // called the churned subscriber
         if (s.activities_pivot) piv += 30;
         if (s.pivot_deferred) piv -= 20;
         if (s.pivot_direction_game === "ship" && !s.activities_pivot) piv -= 10;
@@ -236,7 +232,91 @@
       });
     }
 
-    // ── 4. Build Your Edge, Buy the Rest ─────────────────────────────────────
+    // ── 4. Features Won't Save You ───────────────────────────────────────────
+    // The post-launch flailing traps: when traction stalls, the wrong answers
+    // are one more feature and your competitor's roadmap. Each trap the player
+    // actually faced contributes its weight; never tempted → "never faced".
+    {
+      const comp = [];   // { w: weight, v: 0–100, txt: detail clause }
+      if (faced("competitor_launch")) {
+        let v, txt;
+        if (s.copied_competitor) {
+          v = 5; txt = "When Flare raised $3M you copied their features — building for their users, not yours; Twitter called you a clone";
+        } else if (s.competitive_intel) {
+          v = 100; txt = "When Flare raised $3M you studied them instead of copying — their breadth became your wedge";
+          if (s.moat_answered && chose("investor_moat_question", "niche"))
+            txt += ", and that homework won the investor's moat question";
+        } else if (chose("competitor_launch", "compare")) {
+          v = 70; txt = "You answered Flare's launch with a comparison piece and held your position";
+        } else if (chose("competitor_launch", "ignore")) {
+          v = 60; txt = "You ignored Flare's launch and stayed on your roadmap";
+        } else {
+          v = 35; txt = "Flare launched into your space and you never even formed a response";
+        }
+        comp.push({ w: 30, v, txt });
+      }
+      if (faced("competitor_growing")) {
+        let v, txt;
+        if (chose("competitor_growing", "calls")) {
+          v = 100; txt = "When your own subscribers asked for Flare's video dates, you called them and found the real need underneath";
+        } else if (chose("competitor_growing", "discount")) {
+          v = 55; txt = "You answered the Flare pressure with discounts — loyalty bought, question dodged";
+        } else if (chose("competitor_growing", "ignore")) {
+          v = 40; txt = "You waved off your subscribers' Flare questions and lost a couple of them";
+        } else {
+          v = 15; txt = "Your subscribers asked about Flare's features and heard nothing back";
+        }
+        comp.push({ w: 20, v, txt });
+      }
+      if (faced("feature_request_custom")) {
+        let v, txt;
+        if (chose("feature_request_custom", "build")) {
+          v = 10; txt = "You built video dates for one loud power user — weeks of WebRTC for one person's workflow";
+        } else if (chose("feature_request_custom", "negotiate")) {
+          v = 85; txt = "You turned a one-off feature demand into a lightweight version everyone used";
+        } else if (chose("feature_request_custom", "decline")) {
+          v = 100; txt = "You said no to the pay-double feature ask and let the customer churn — clarity on what NOT to build";
+        } else {
+          v = 30; txt = "The power user's feature ask sat unanswered until they left for Flare";
+        }
+        comp.push({ w: 20, v, txt });
+      }
+      if (faced("feature_spree")) {
+        const held = chose("feature_spree", "no");
+        comp.push({
+          w: 20, v: held ? 100 : 10,
+          txt: held
+            ? "And when the graph went flat, you held the roadmap until you knew why users leave"
+            : "And when the graph went flat, you let Alex ship streaks-by-Friday — the numbers didn't move",
+        });
+      }
+      if (faced("feature_cluster")) {
+        const built = chose("feature_cluster", "build");
+        comp.push({
+          w: 10, v: built ? 100 : 30,
+          txt: built
+            ? "But when three strangers asked for the same thing unprompted, you built it — that one was signal, not noise"
+            : "Three strangers asked for the same thing unprompted and you let it slide — that one was real signal",
+        });
+      }
+
+      let score = null, detail;
+      if (comp.length === 0) {
+        detail = "You never got far enough for the temptations to show up — Flare, the feature asks, the flat-graph panic all live past launch.";
+      } else {
+        const wSum = comp.reduce((t, c) => t + c.w, 0);
+        score = Math.round(comp.reduce((t, c) => t + c.v * c.w, 0) / wSum);
+        detail = comp.map((c) => c.txt).join(". ") + ".";
+      }
+      cats.push({
+        key: "focus", label: "Features Won't Save You",
+        score: score == null ? null : clamp(score, 0, 100), detail,
+        lesson: "When traction stalls, the answer is never one more feature and never your competitor's roadmap — it's understanding your users. Say no by default; build what clusters.",
+        ref: "Jason Fried & DHH, Getting Real (“say no by default”); Jeff Bezos: obsess over customers, not competitors",
+      });
+    }
+
+    // ── 5. Build Your Edge, Buy the Rest ─────────────────────────────────────
     {
       const subs = [];
       if (faced("auth_build_buy")) {
@@ -279,7 +359,7 @@
       });
     }
 
-    // ── 5. Raise Early, Find Your Lead ───────────────────────────────────────
+    // ── 6. Raise Early, Find Your Lead ───────────────────────────────────────
     {
       // Part A — friends & family, before you need it
       const asks = [];
@@ -332,7 +412,7 @@
       });
     }
 
-    // ── 6. Stay Default Alive ────────────────────────────────────────────────
+    // ── 7. Stay Default Alive ────────────────────────────────────────────────
     {
       let score = 100;
       const hires = [];
@@ -395,7 +475,7 @@
     };
   }
 
-  const api = { scoreGame, CATEGORY_COUNT: 6 };
+  const api = { scoreGame, CATEGORY_COUNT: 7 };
   if (typeof module !== "undefined") module.exports = api;
   else window.Scoring = api;
 })();

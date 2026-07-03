@@ -77,6 +77,7 @@
       "pivot_alex_pushback",
       "pivot_counter_alex",
       "bad_retention",
+      "feature_spree",
       "pivot_relaunch",
       "proto_to_product",
       "good_enough_launch",
@@ -1075,6 +1076,45 @@
           s.market_fit = clamp(s.market_fit - 25, 0, 100);
           s.signal = clamp(s.signal - 25, 0, 100);
           char.morale = clamp(char.morale - 15, 0, 100);
+        },
+      },
+      {
+        // The post-launch flailing trap: traction is flat and Alex offers to
+        // throw features at the graph. Saying yes ships noise; the right call
+        // holds the roadmap until you know why users leave. Low urgency on
+        // purpose — it surfaces in a lull, not during the launch-week flood.
+        // Scored by scoring.js ("Features Won't Save You").
+        id: 'feature_spree', cat: 'p', from: 'Alex',
+        body: "signups are flat this week and i keep staring at the graph. i could bang out group events, profile badges, maybe streaks — pick one and it's live by friday. something will stick, right?",
+        urgency: 2, weeks: 1,
+        available: (s, char) => s.launched && !s.pivot_shipped && s.users >= 3
+          && !char.flags.feature_spree_done,
+        options: [
+          { label: 'Pick one and ship it — something will stick', key: 'spree',
+            journal: "Let Alex ship streaks by Friday. It was live, it was shiny, and the graph didn't move. We're guessing.",
+            execute(s, char) {
+              char.flags.feature_spree_done = true;
+              s.feature_spree = true;
+              s.market_fit = clamp(s.market_fit - 6, 0, 100);
+              s.signal = clamp(s.signal - 4, 0, 100);
+              return "Streaks shipped by Friday. A handful of users tapped it once. The graph didn't move — you're not learning, you're guessing.";
+            } },
+          { label: "Nothing new ships until we know why they leave", key: 'no',
+            journal: "Told Alex nothing new ships until we know why users leave. He grumbled, then admitted the streaks idea was a dice roll.",
+            execute(s, char) {
+              char.flags.feature_spree_done = true;
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              char.morale = clamp(char.morale - 4, 0, 100);
+              return "You held the line: no new features until you know why users leave. Alex grumbled, then admitted the streaks idea was a dice roll.";
+            } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "went ahead and shipped streaks while you were quiet. a few taps, then nothing. the graph didn't move.",
+        dropCancel: (s, char) => char.flags.feature_spree_done,
+        dropFx(s, char) {
+          char.flags.feature_spree_done = true;
+          s.feature_spree = true;
+          s.market_fit = clamp(s.market_fit - 4, 0, 100);
         },
       },
       {
