@@ -230,7 +230,11 @@
   .hand-panel.focus-active .hand-end{align-self:center;margin-top:4px}
   .hand-cards{
     display:flex;gap:12px;align-items:flex-end;justify-content:center;
-    min-height:var(--card-h);overflow-x:auto;padding-top:6px;
+    min-height:var(--card-h);overflow-x:auto;overflow-y:hidden;
+    /* headroom for the hover/selected lift (16–20px) — the scroll container clips
+       anything above its padding box, so without it a raised card's top is cut off.
+       The negative margin gives the headroom back so the panel keeps its height. */
+    padding-top:26px;margin-top:-20px;
   }
   .hand-empty{margin:auto;color:var(--faint);font-size:13px}
 
@@ -1689,43 +1693,60 @@
         if (selectedCard && !actions.some(a => a.cardId === selectedCard)){ selectedCard = null; hideDetail(); }
         return;
       }
-      box.innerHTML = visible.map((a, idx)=>{
-        const cat = catFor(a.cat);
-        const st = styleFor(a.charId);
-        const u = a.urgency;
-        const urgCls = u >= 3 ? "urg-3" : u >= 2 ? "urg-2" : "urg-1";
-        const cls = ["hcard"];
-        if (spent) cls.push("played");
-        // ring the card tied to the conversation currently on screen
-        if (!spent && a.charId === active && a.cardId !== selectedCard) cls.push("linked");
-        if (a.cardId === selectedCard) cls.push("selected");
-        const preview = (a.body || "").slice(0, 110) + ((a.body||"").length > 110 ? "…" : "");
-        return `<div class="${cls.join(' ')}" data-card="${a.cardId}" data-char="${a.charId}" style="animation-delay:${idx*0.05}s">
-          <div class="hcard-stripe" style="background:${cat.color}"></div>
-          <div class="hcard-inner">
-            <div class="hcard-av-row">
-              <div class="hcard-av" style="background:${st.color}">${st.initials}</div>
-              <div class="hcard-sender">
-                <div class="hcard-from">${escapeHtml(a.name)}</div>
-                <div class="hcard-role">${escapeHtml(a.role)}</div>
+      // Same deck already on screen → sync the state classes in place. Rebuilding
+      // the DOM would replay the deal-in animation and make the whole hand jump
+      // every time a card is selected or a conversation is opened.
+      const prevIds = [...box.querySelectorAll(".hcard")].map(el => el.dataset.card);
+      const sameDeck = prevIds.length === visible.length &&
+        visible.every((a, i) => a.cardId === prevIds[i]);
+      if (sameDeck){
+        [...box.querySelectorAll(".hcard")].forEach(el=>{
+          const a = visible.find(v => v.cardId === el.dataset.card);
+          el.classList.toggle("played", spent);
+          el.classList.toggle("linked", !spent && a.charId === active && a.cardId !== selectedCard);
+          el.classList.toggle("selected", a.cardId === selectedCard);
+        });
+      } else {
+        box.innerHTML = visible.map((a, idx)=>{
+          const cat = catFor(a.cat);
+          const st = styleFor(a.charId);
+          const u = a.urgency;
+          const urgCls = u >= 3 ? "urg-3" : u >= 2 ? "urg-2" : "urg-1";
+          const cls = ["hcard"];
+          if (spent) cls.push("played");
+          // ring the card tied to the conversation currently on screen
+          if (!spent && a.charId === active && a.cardId !== selectedCard) cls.push("linked");
+          if (a.cardId === selectedCard) cls.push("selected");
+          const preview = (a.body || "").slice(0, 110) + ((a.body||"").length > 110 ? "…" : "");
+          // only deal-in cards that are new to the hand — survivors keep their place
+          const deal = prevIds.includes(a.cardId) ? "animation:none" : `animation-delay:${idx*0.05}s`;
+          return `<div class="${cls.join(' ')}" data-card="${a.cardId}" data-char="${a.charId}" style="${deal}">
+            <div class="hcard-stripe" style="background:${cat.color}"></div>
+            <div class="hcard-inner">
+              <div class="hcard-av-row">
+                <div class="hcard-av" style="background:${st.color}">${st.initials}</div>
+                <div class="hcard-sender">
+                  <div class="hcard-from">${escapeHtml(a.name)}</div>
+                  <div class="hcard-role">${escapeHtml(a.role)}</div>
+                </div>
               </div>
+              <div class="hcard-preview">${escapeHtml(preview)}</div>
             </div>
-            <div class="hcard-preview">${escapeHtml(preview)}</div>
-          </div>
-          <div class="hcard-foot">
-            <span class="hcard-cat-badge" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
-            <span class="hcard-urg ${urgCls}"></span>
-          </div>
-        </div>`;
-      }).join("");
+            <div class="hcard-foot">
+              <span class="hcard-cat-badge" style="background:${cat.bg};color:${cat.tc}">${cat.label}</span>
+              <span class="hcard-urg ${urgCls}"></span>
+            </div>
+          </div>`;
+        }).join("");
 
-      [...box.querySelectorAll(".hcard")].forEach(el=>{
-        el.onclick = ()=>{
-          // Focus-arc beats (equity) are free → clickable even with no actions left.
-          if (busy() || (!engine.stats().focus && engine.stats().actionsLeft <= 0)) return;
-          selectCard(el.dataset.card);
-        };
-      });
+        [...box.querySelectorAll(".hcard")].forEach(el=>{
+          el.onclick = ()=>{
+            // Focus-arc beats (equity) are free → clickable even with no actions left.
+            if (busy() || (!engine.stats().focus && engine.stats().actionsLeft <= 0)) return;
+            selectCard(el.dataset.card);
+          };
+        });
+      }
 
       // keep the founder / no-chat popup in sync; chat cards use the inline thread response
       const sel = selectedCard ? actions.find(a => a.cardId === selectedCard) : null;
