@@ -15,6 +15,7 @@ function handFromEngine(e) {
     id: a.cardId, _charId: a.charId, cat: a.cat,
     urgency: a.urgency, options: a.options,   // options: [{ key, label }]
     body: a.body, from: a.name,
+    focus: a.focus, onHold: a.onHold,
   }));
 }
 
@@ -27,6 +28,22 @@ function actTurn(e, ids, opts) {
     if (out) results.push(out);
   }
   return results;
+}
+
+// Play out any active focus arc (equity talk, launch day). Arc beats cost no
+// actions and the engine re-polls mid-week after each answer, so a real player
+// plays them out in one sitting; mirror that by answering the arc's live beats
+// until the arc releases focus or its next beat is deferred to a later week.
+function drainFocus(e, strategy, results) {
+  let guard = 0;
+  while (e.s.focus && !e.s.game_won && !e.s.game_over && guard++ < 60) {
+    const beats = handFromEngine(e).filter(c => c.focus === e.s.focus.id && !c.onHold);
+    if (!beats.length) break;
+    const beat = beats[0];   // openActions is urgency-sorted; take the top beat
+    const opts = pickOptions(beats, [beat.id], strategy, e.s);
+    const out = e.act(beat.id, opts[beat.id]);
+    if (out && results) results.push(out);
+  }
 }
 
 // ─── Strategy helpers ────────────────────────────────────────────────────────
@@ -603,6 +620,13 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
       else if (action === 'force_drop')
         ids = ids.filter(id => id !== cardId);
     }
+    // The equity talk (week 2–5) gates dev planning since the focus-arc rework:
+    // a real player always sits down for it, so every deterministic driver opens
+    // the arc when it appears; the focus drain below then plays it out in one
+    // sitting. Random drivers keep their chance-based pick.
+    const isRandomDriver = strategy === 'random' || strategy === 'rand_fulltime' || strategy === 'rand_parttime';
+    if (!isRandomDriver && !ids.includes('jordan_equity_mention') && hand.some(c => c.id === 'jordan_equity_mention'))
+      ids.unshift('jordan_equity_mention');
     ids = ids.slice(0, 2);     // the week has 2 actions
     const opts = pickOptions(hand, ids, optStrategy, e.s);
 
@@ -653,6 +677,14 @@ function runGame(strategy, maxWeek = 120, verbose = false, noYC = false, cardOve
       results = actTurn(e, ids, opts);   // resolve the chosen cards (does not advance)
     } catch(err) {
       log.push(`ERROR resolving actions turn ${turn}: ${err.message}`);
+      errorCount++;
+      break;
+    }
+
+    try {
+      drainFocus(e, optStrategy, results);
+    } catch(err) {
+      log.push(`ERROR in focus arc turn ${turn}: ${err.message}`);
       errorCount++;
       break;
     }
@@ -1700,11 +1732,15 @@ if (WINNERS_FLAG) {
           let ids = selectCards(hand, 'lean_loop', e.s);
           if (hand.some(c => c.id === 'alex_commitment') && !ids.includes('alex_commitment'))
             ids.unshift('alex_commitment');   // force, and keep within the 2-action cap
+          // Equity gates dev planning (and thus the demo) — open the arc like a player would.
+          if (hand.some(c => c.id === 'jordan_equity_mention') && !ids.includes('jordan_equity_mention'))
+            ids.unshift('jordan_equity_mention');
           ids = ids.slice(0, 2);
           const opts = pickOptions(hand, ids, 'lean_loop', e.s);
           if (ids.includes('alex_commitment')) opts['alex_commitment'] = commitmentKey;
           const weekBefore = e.s.week;
           actTurn(e, ids, opts);
+          drainFocus(e, 'lean_loop');
           if (e.s.has_demo) { weeks.push(weekBefore); break; }
           e.nextWeek();
         }
