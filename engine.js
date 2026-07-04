@@ -720,6 +720,10 @@
         gameOver: this.s.game_over,
         gameWon: this.s.game_won,
         ycRejected: !!this.s.ycRejected,
+        ycWeek: this.ycWeek,
+        ycApplied: !!this.s.ycApplied,
+        ycDeciding: !!this.s.ycDeciding,
+        ycAccepted: !!this.s.ycAccepted,
         focus: this.s.focus,   // { id, charIds } while a war-room arc is active, else null
       };
     }
