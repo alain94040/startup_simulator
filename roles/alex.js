@@ -67,19 +67,19 @@
       s.alex_converted = true;
       e.threads.alex.push({
         type: 'incoming', from: 'Alex',
-        body: "…yeah. put that next to the cohort. i'm going to go quietly erase half my column.",
+        body: "…yeah. her words, next to my numbers, saying the same thing. i'm going to go quietly erase half my whiteboard.",
         week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
       });
     } else if (key === 'circle') {
       e.threads.alex.push({
         type: 'incoming', from: 'Alex',
-        body: "…the circle. i keep forgetting our best density experiment already ran, and density lost.",
+        body: "…yeah. twelve friends and almost every match stuck at 'hey'. more users just means more people stuck at 'hey'.",
         week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
       });
     } else if (human) {
       e.threads.alex.push({
         type: 'incoming', from: 'Alex',
-        body: "that's a real data point and it stings. i just wish i could test it at scale — one quote against one theory isn't a cohort.",
+        body: "that's real, and it stings. i just wish we had numbers to check it against. one person's story is a clue, not proof.",
         week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
       });
     } else {
@@ -436,7 +436,7 @@
       // early — the pivot signal. Building it leaves you blind until it's too late.
       {
         id: 'analytics_choice', cat: 'p', from: 'Alex',
-        body: "demo night bugged me. the only reason i saw her session at all is that i was tailing logs by hand. the testflight circle is a dozen people and i can't tell you what a single one of them does in the app — and on launch day it'll be hundreds of strangers. i can wire an analytics SDK in a day — $30/wk, dashboards tomorrow. or i build our own event pipeline: a week of my time, free forever, and i kind of want to own our data anyway.",
+        body: "demo night bugged me. the only reason i saw her session at all is that i was tailing logs by hand. the testflight group is a dozen people and i can't tell you what a single one of them does in the app — and on launch day it'll be hundreds of strangers. i can wire an analytics SDK in a day — $30/wk, dashboards tomorrow. or i build our own event pipeline: a week of my time, free forever, and i kind of want to own our data anyway.",
         urgency: 12, weeks: 1,
         available: (s, char) => s.has_demo && !s.launched && !char.flags.analytics_choice_done,
         options: [
@@ -1237,7 +1237,7 @@
       },
       {
         id: 'demo_first_message', cat: 'p', from: 'Alex', focus: 'demo',
-        body: "ok. she finished the profile. matched with one of the seed-cohort guys. she just sent the first message and i have to read it to you verbatim: 'so what happens now?' …i've been staring at it for five minutes. i don't know what our app answers to that.",
+        body: "ok. she finished the profile. matched with one of the guys we seeded the app with. she just sent the first message and i have to read it to you verbatim: 'so what happens now?' …i've been staring at it for five minutes. i don't know what our app answers to that.",
         urgency: 18, patience: Infinity,
         available: (s, char) => s.focus && s.focus.id === 'demo' && char.flags.demo_bug_done && !char.flags.demo_arc_done,
         options: [
@@ -1316,9 +1316,9 @@
         // only exists if the player banked pre-launch evidence.
         id: 'slide_alex_thesis', cat: 'p', from: 'Alex',
         body: (s) => {
-          const base = `before anyone says the p-word: look at it from the marketplace side. ${Math.max(5, s.users)} accounts. in one city that's not a dating pool, it's a dinner party. matching is throwing darts — of course people bounce off three mediocre options and an empty screen. hinge's week three looked exactly like this. this is a density problem. the mixer, campus seeding, referrals — that's the fix. you don't redesign the menu because the restaurant is empty.`;
+          const base = `before anyone panics: we have ${Math.max(5, s.users)} users. with ${Math.max(5, s.users)} users, everyone gets shown the same three faces and an empty screen — of course they leave. the problem isn't the app, it's the empty room. the fix is more people: the mixer, referrals, flyers where our users actually hang out. you don't rewrite the menu because the restaurant is empty.`;
           return s.funnel_first
-            ? base + " and monday you were the one asking for a traffic push — so part of you already agrees with me."
+            ? base + " and monday you were the one asking for more signups — so part of you already agrees with me."
             : base;
         },
         urgency: 12, weeks: 1,
@@ -1328,15 +1328,15 @@
         options: [
           { label: "Fair read — draft the growth plan", key: 'hear_him',
             reply: "it's a fair read. get me the growth plan — but i'm watching what happens *after* a match, not just how many we make.",
-            journal: "Alex made the density case: too few users for matching to work, fix the room before you blame the menu. It's a fair read. I asked for the growth plan — and I'm watching what happens after a match.",
+            journal: "Alex made his case: too few users for matching to work — fill the room before you blame the menu. It's a fair read. I asked for the growth plan — and I'm watching what happens after a match.",
             execute(s, char) {
               char.flags.thesis_done = true;
               return "He's drafting the growth plan. You're watching the after-match numbers.";
             } },
-          { label: 'The TestFlight circle says otherwise', key: 'push_back',
-            reply: "the testflight circle was a dozen people who all knew each other — a full room, by your own logic. 11 of 14 matches still died. explain that with darts.",
+          { label: 'Our test group was a full room', key: 'push_back',
+            reply: "our testflight group was twelve people who all knew each other — a full room, by your own logic. 11 of their 14 matches still went nowhere. explain that.",
             available: (s) => s.analytics_dropoff_seen || s.demo_question_seen,
-            journal: "Alex made the density case and I hit him with the TestFlight circle: a dozen people who all knew each other, and 11 of 14 matches still died. He didn't have a clean answer. First crack in the wall.",
+            journal: "Alex blamed the empty room and I hit him with the TestFlight group: twelve people who all knew each other, and 11 of 14 matches still went nowhere. He didn't have an answer. First crack in the wall.",
             execute(s, char, e) {
               char.flags.thesis_done = true;
               s.alex_crack = true;
@@ -1360,7 +1360,7 @@
       // patience Infinity, chained by flags across alex/priya threads.
       {
         id: 'pivot_day_open', cat: 'p', from: 'Alex', focus: 'pivot',
-        body: "saturday. office. i got here early and covered the whiteboard — two columns: DENSITY PROBLEM / PRODUCT PROBLEM. before priya shows up i want one thing said founder-to-founder: i'm going to argue my column as hard as i can today, because someone has to. but whatever you decide at 6pm, i build it. deal?",
+        body: "saturday. office. i got here early and split the whiteboard in two: NOT ENOUGH USERS / WRONG PRODUCT. before priya shows up, one thing founder-to-founder: i'm going to argue my side as hard as i can today, because someone has to. but whatever you decide at 6pm, i build it. deal?",
         urgency: 20, patience: Infinity,
         available: (s, char) => s.focus && s.focus.id === 'pivot' && !char.flags.pd_open_done,
         options: [
@@ -1372,30 +1372,30 @@
       },
       {
         id: 'pivot_day_alex_case', cat: 'p', from: 'Alex', focus: 'pivot',
-        body: (s) => `opening statement. ${Math.max(5, s.users)} accounts. a dating app under a few hundred users per city isn't a product yet — it's a raffle with bad odds. every user who left saw the same thing: three so-so matches, an empty discovery screen, silence. that experience drives people out of *hinge*, and hinge works. the mixer, campus ambassadors, a referral loop — six weeks, call it $1,500, and we're at 300 users and rerun the numbers. rebuilding the product off launch week's behavior is reading tea leaves and calling it data.`,
+        body: (s) => `my case. ${Math.max(5, s.users)} users. everyone who left saw the same thing: three so-so matches, an empty screen, silence. that would drive people out of *hinge*, and hinge works. give me six weeks and $1,500 — the mixer, referrals, campus flyers — and we're at 300 users. THEN we'll know if something's actually broken. rebuilding the app because a handful of people got bored isn't strategy, it's panic.`,
         urgency: 19.5, patience: Infinity,
         available: (s, char) => s.focus && s.focus.id === 'pivot' && char.flags.pd_open_done && !char.flags.pd_case_done,
         options: [
-          { key: 'probe', label: 'What would prove you wrong?',
-            reply: "steelman it for me then. what result would prove you wrong?",
+          { key: 'probe', label: 'What would change your mind?',
+            reply: "before i argue back: what result would change your mind?",
             journal: null,
             execute(s, char, e) {
               char.flags.pd_case_done = true;
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
-                body: "…fine. if the matches that were GOOD also died. good match, both active, conversation starts — and still nothing. density explains bad matches. it can't explain good ones going nowhere.",
+                body: "…fine. if the GOOD matches also died. two people who liked each other, started talking — and still nothing. an empty room explains bad matches. it can't explain good ones going nowhere.",
                 week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
               });
               return null;
             } },
           { key: 'challenge', label: 'When do we find out you were wrong?',
-            reply: "your fix costs six weeks and the runway math doesn't have six spare. say your plan works — when do we find out it didn't?",
+            reply: "your plan takes six weeks. we don't have six spare. if you're wrong — when do we find out?",
             journal: null,
             execute(s, char, e) {
               char.flags.pd_case_done = true;
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
-                body: "…yeah. the math is the weakest part of my column.",
+                body: "…yeah. the money is the weak part of my side. i know.",
                 week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
               });
               return null;
@@ -1411,8 +1411,8 @@
           const priya = e && e.chars && e.chars.get('priya');
           const asked = priya && priya.flags.pd_priya_done;
           const core = s.analytics_live
-            ? "…okay. top-decile matches. mutual like, both users active, high score. eleven since launch. ten went: match — 'hey' — 'hey' — nothing. number eleven made it to five messages and died when he asked 'so what does your week look like?' and she never answered. …that's not a density failure. that's the app going silent at the exact moment it was supposed to have an answer."
-            : "i can't split matches by quality. we never instrumented it — i've got total counts and my own memory of watching the logs. you're going to have to make this call on conviction, because i can't make it on data.";
+            ? "…okay. pulled our eleven best matches since launch — both people liked each other, both still using the app. ten of them went: match — 'hey' — 'hey' — nothing. the eleventh made it to five messages and died when he asked 'so what does your week look like?' and she never answered. …that's not an empty-room problem. the app goes silent at the exact moment it's supposed to help."
+            : "i can't answer that. we never set up analytics — all i have is totals and what i remember from watching the logs. you'll have to make this call on gut, because i can't make it on data.";
           return s.jordan_resolved
             ? core + "\n\nfor the record: jordan called this in testflight. before everything. i argued with her too."
             : core;
@@ -1424,7 +1424,7 @@
         },
         options: [
           { key: 'maya', label: "Maya's call — she liked her match",
-            reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. kindred made me feel worse.' we didn't lose her to thin supply. we lost her after we delivered.",
+            reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. kindred made me feel worse.' we didn't lose her because the room was empty. we lost her after the match — the part that's ours.",
             available: (s) => !!s.maya_quote,
             journal: null,
             execute(s, char, e) { pdPlayChip(s, char, e, 'maya'); return null; } },
@@ -1438,8 +1438,8 @@
             available: (s) => !!s.demo_question_seen,
             journal: null,
             execute(s, char, e) { pdPlayChip(s, char, e, 'demo'); return null; } },
-          { key: 'circle', label: 'TestFlight circle — 11 of 14 died',
-            reply: "and the testflight circle kills the density theory outright — twelve people, all friends of friends, everyone knew everyone. 11 of 14 matches died anyway.",
+          { key: 'circle', label: 'Test group — 11 of 14 went nowhere',
+            reply: "and our testflight group settles it — twelve people, all friends of friends, everyone knew everyone. a full room. 11 of their 14 matches still went nowhere.",
             available: (s) => !!s.analytics_dropoff_seen,
             journal: null,
             execute(s, char, e) { pdPlayChip(s, char, e, 'circle'); return null; } },
@@ -1453,7 +1453,7 @@
         id: 'pivot_day_cost', cat: 'p', from: 'Alex', focus: 'pivot',
         body: (s, char, e) => {
           const weeks = Math.max(0, Math.floor((s.cash - 2000) / (e ? e.burnPerWeek : 500)));
-          return `cost column, because someone has to write it. rebuild: three weeks, call it $2k all-in. that leaves us relaunching with ${weeks} weeks of cash — i did the division twice hoping i'd made an error. if we pivot and i was right about density — we die having built two products nobody used. if we push growth and priya's right — we spend our last dollars marketing a dead end. wrong in either direction is the same grave. it just has different flowers.`;
+          return `the price, because someone has to say it. rebuild: three weeks, about $2k. that leaves us relaunching with ${weeks} weeks of cash — i did the math twice hoping i was wrong. if we rebuild and it turns out we just needed more users — we die with two apps nobody used. if we chase users and priya's right — we spend our last dollars promoting a dead end. wrong either way is the same grave. different flowers.`;
         },
         urgency: 18, patience: Infinity,
         available: (s, char, e) => {
@@ -1469,7 +1469,7 @@
       },
       {
         id: 'pivot_day_decide', cat: 'p', from: 'Alex', focus: 'pivot',
-        body: "6pm. board's full. both columns argued. your company, your call: what are we building monday morning?",
+        body: "6pm. whiteboard's full. both sides made their case. your company, your call: what are we building monday morning?",
         urgency: 17, patience: Infinity,
         available: (s, char) => s.focus && s.focus.id === 'pivot' && char.flags.pd_cost_done && !char.flags.pd_decide_done,
         options: [
@@ -1494,7 +1494,7 @@
                 s.pivot_effort_base = te - 1.0;
                 e.threads.alex.push({
                   type: 'incoming', from: 'Alex',
-                  body: "yeah. honestly? i got there around 4 o'clock — number eleven did it. monday. erase my column.",
+                  body: "yeah. honestly? i got there around 4 o'clock — match eleven did it. monday. erase my side of the board.",
                   week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
                 });
               } else {
@@ -1507,9 +1507,9 @@
               }
               return null;
             } },
-          { key: 'growth', label: "Alex is right — all-in on density",
-            reply: "alex is right — the room's just empty. we don't touch the product. all-in on density: mixer, ambassadors, referrals.",
-            journal: "Pivot day, 6pm. I sided with Alex: it's a density problem. We don't touch the product — mixer, ambassadors, referrals. Priya left me one number to watch: of the next 50 matches, how many turn into a plan to meet.",
+          { key: 'growth', label: "Alex is right — get more users",
+            reply: "alex is right — the room's just empty. we don't touch the product. everything goes into getting users: the mixer, referrals, all of it.",
+            journal: "Pivot day, 6pm. I sided with Alex: the product is fine, the room is empty. We don't touch the app — mixer, referrals, all of it. Priya left me one number to watch: of the next 50 matches, how many turn into a plan to meet.",
             execute(s, char, e) {
               char.flags.pd_decide_done = true;
               s.pivot_summit_done = true;
@@ -1568,7 +1568,7 @@
         // at a price — later, costlier, with runway nearly spent.
         id: 'pivot_fifty_verdict', cat: 'p', from: 'Alex',
         body: (s) => {
-          const core = "i kept priya's tally on the whiteboard. we're at 61 new signups since the summit — the growth push worked, you were right about that part. matches since the summit: 54. plans to meet: zero. not low. zero. i erased my column this morning. how much runway do we have left?";
+          const core = "i kept priya's tally on the whiteboard. 61 new signups since that saturday — the growth push worked, you were right about that part. matches since then: 54. actual dates planned: zero. not low. zero. i erased my side of the board this morning. how much cash do we have left?";
           return s.pivot_choice === 'hedge'
             ? core + " and the events tab has 9 views. the deck is still the front door. half-pivots don't count — i checked."
             : core;

@@ -83,7 +83,7 @@
       {
         // Beat 3: she doesn't argue back — she raises the stakes on evidence.
         id: 'pivot_day_priya_case', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
-        body: "my turn, and i'll keep it short because i'd rather look at data than trade speeches. 'the metrics will fix themselves when we're bigger' is the most expensive sentence in consumer software. i've said it myself. sometimes it's even true — that's what makes it dangerous. so let's not vote on vibes. alex: your instrumentation scores match quality, right? pull the good ones. matches you'd defend as excellent. show me what happened to them.",
+        body: "my turn. short version. 'it'll get better when we're bigger' is the most expensive sentence in this business — i've said it myself, and it cost me a year. sometimes it's even true. that's what makes it dangerous. so let's not argue opinions. alex: your analytics score every match, right? pull up the best ones — the matches that *should* have worked. show me what happened to them.",
         urgency: 19.5, patience: Infinity,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -99,15 +99,15 @@
       {
         // Beat 5: what "pivot" even means — a reframe, not a feature.
         id: 'pivot_day_shape', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
-        body: "so say it's the product. here's the trap not to fall in: do NOT bolt an 'events tab' onto a swipe app. that's what every dying dating app ships in year two and it smells like desperation from the app store screenshot. flip the object. the thing you browse isn't a person — it's a plan. 'thursday. climbing gym. six of us, two spots open.' matching becomes 'who's going,' not 'who's hot.' the first message is never 'hey' again — it's 'i'm in.' kindred stops being a chat app with dead ends and becomes a calendar with people attached.",
+        body: "so say it's the product. one warning first: don't just bolt an 'events tab' onto the app. every dying dating app does that, and users can smell it. flip the whole thing instead. you don't browse people — you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again — it's 'i'm in.' kindred stops being a chat app full of dead ends and becomes a calendar with people on it.",
         urgency: 18.5, patience: Infinity,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
           return s.focus && s.focus.id === 'pivot' && alex && alex.flags.pd_evidence_done && !char.flags.pd_shape_done;
         },
         options: [
-          { key: 'flip', label: 'Flip the object — browse plans, not people',
-            reply: "flip the object. you browse a plan, not a person. write it in the product column.",
+          { key: 'flip', label: 'Browse plans, not people',
+            reply: "that's it. you browse a plan, not a person. write it on the board.",
             journal: null,
             execute(s, char, e) {
               char.flags.pd_shape_done = true;
@@ -115,8 +115,8 @@
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',
                 body: s.matching_licensed
-                  ? "here's where i get to be mad at a decision from months ago: matchkit can't do this. it ranks singles, period, and we can't see inside it. it has to come out — all of it, the integration too. we'd be paying to remove the thing we paid to add."
-                  : "…the brutal-slash-beautiful part: the scoring core survives. ranking people for a plan is the same math with a different target — i can re-aim it in a week. what dies is the entire screen flow. the deck, the chat-first layout. all of it.",
+                  ? "here's where i get to be mad about a months-old decision: matchkit can't do this. it matches singles, that's all it does, and we can't touch its insides. it has to come out — all of it. we'd be paying to remove the thing we paid to add."
+                  : "…the weird part: the matching engine survives. picking people for a plan is the same math — i can repoint it in a week. what dies is everything you can see. every screen. all of it.",
                 week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
               });
               return null;
@@ -127,7 +127,7 @@
         // Beat 8: night. Closes the focus arc — the world resumes.
         id: 'pivot_day_close', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
         body: (s) => s.pivot_choice === 'pivot'
-          ? "one more thing before i go. most founders can't do what you did today — kill a thing that works in favor of a thing that's true. that's the whole job, and almost nobody does it while there's still runway to survive it. text me the second v2 is live. i want to be user #1."
+          ? "one more thing before i go. most founders can't do what you did today — kill a thing that works in favor of a thing that's true. that's the whole job, and almost nobody does it while there's still enough cash to survive it. text me the second v2 is live. i want to be user #1."
           : s.pivot_choice === 'growth'
             ? "good fight today. it's your company and it was a real argument. watch one number for me: of your next 50 matches, how many turn into a plan to meet. zero at fifty and you move — no second summit. deal?"
             : "that's not a strategy, it's a hedge — and hedges ship late and mediocre twice. i said it once, and now i'll respect your call. for what it's worth, i hope i'm wrong. i'm usually not about this one.",

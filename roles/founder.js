@@ -236,7 +236,7 @@
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
       {
         id: 'founder_build_onboarding', cat: 'p', from: 'You',
-        body: "you mapped onboarding from demo night and the testflight circle — where people stall is profile setup, every time. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
+        body: "you mapped onboarding from demo night and the testflight group — where people stall is profile setup, every time. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -262,7 +262,7 @@
       },
       {
         id: 'founder_build_empty_states', cat: 'p', from: 'You',
-        body: "every first session opens on empty screens — an empty matches tab, an empty inbox — and the app looks broken. half the testflight circle said so within a day of getting the build. two hours of work.",
+        body: "every first session opens on empty screens — an empty matches tab, an empty inbox — and the app looks broken. half the testflight group said so within a day of getting the build. two hours of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -278,7 +278,7 @@
               if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
               if (jordan) jordan.morale = clamp(jordan.morale + 5, 0, 100);
               return s.waitlist > 0 || s.users > 0
-                ? "Added helpful empty states to every screen. Small fix, big impact — the TestFlight circle stopped asking 'is the app broken?'"
+                ? "Added helpful empty states to every screen. Small fix, big impact — the TestFlight group stopped asking 'is the app broken?'"
                 : "Added helpful empty states to every screen. Ready before anyone hits them.";
             } },
           { label: 'Add it to the backlog', key: 'pass',
@@ -411,7 +411,7 @@
       // long enough and pivot_deferred sets silently — the default won.
       {
         id: 'pivot_summit_call', cat: 'p', from: 'You',
-        body: (s, char, e) => `Three weeks of data, two theories, one whiteboard. Alex says density: the product is fine, the room is empty. Priya says retention: the room doesn't matter if every match hits a dead end. You cannot build both. ${e ? e.runwayWeeks : 10} weeks of runway says you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.`,
+        body: (s, char, e) => `Three weeks since launch and the graph is flat. Two explanations on the table. Alex: the product is fine, there just aren't enough users yet. Priya: more users won't help — every match hits a dead end. You can't chase both. With ${e ? e.runwayWeeks : 10} weeks of cash left, you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.`,
         urgency: 14, weeks: 1, patience: 3,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -423,7 +423,7 @@
         },
         options: [
           { label: 'Call it — Saturday, whiteboard', key: 'call_it',
-            journal: "Called the summit. Saturday, whiteboard, nobody leaves until we know what we're building Monday. Alex is bringing the density case; Priya's bringing four years of scar tissue.",
+            journal: "Called the summit. Saturday, whiteboard, nobody leaves until we know what we're building Monday. Alex will argue we just need more users; Priya's bringing four years of scar tissue.",
             execute(s, char, e) {
               s.focus = { id: 'pivot', charIds: ['alex', 'priya'] };
               return "Saturday. Whiteboard. Nobody leaves until you know what you're building Monday.";

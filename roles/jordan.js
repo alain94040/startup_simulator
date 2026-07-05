@@ -505,8 +505,8 @@
       {
         id: 'pivot_open', cat: 'p', from: 'Jordan',
         body: (s) => s.demo_question_seen
-          ? "been going through the testflight circle's feedback. remember demo night — 'so what happens now?' it wasn't a one-off. three more people in the circle used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. thought i'd flag it before we get closer to launch."
-          : "been going through the testflight circle's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
+          ? "been going through the testflight group's feedback. remember demo night — 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. thought i'd flag it before we get closer to launch."
+          : "been going through the testflight group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
         // Spine band: post-demo this *is* the central storyline — it can't sit
         // behind the sprint chatter the way it could when weeks were quiet.
         urgency: 12,
@@ -517,7 +517,7 @@
         options: [
           { label: "Good flag — write it down verbatim", key: "open",
             reply: "write it down, word for word. 'i matched, but then what.' if it's still true with strangers, we'll know exactly where to look.",
-            journal: "Jordan flagged a pattern from the TestFlight circle: people keep saying 'I matched, but then what?' Wrote it down verbatim. Launch will tell us if it's noise or the whole story.",
+            journal: "Jordan flagged a pattern from the TestFlight group: people keep saying 'I matched, but then what?' Wrote it down verbatim. Launch will tell us if it's noise or the whole story.",
             execute(s, char) {
               char.flags.pivot_open_done = true;
               s.pivot_flagged = true;
@@ -537,7 +537,7 @@
       // drifting or gone by now, and the summit never depends on her.
       {
         id: 'slide_jordan_echo', cat: 'c', from: 'Jordan',
-        body: "not my lane anymore maybe. but i've been lurking the support inbox. 'i matched, but then what' — that's the circle feedback again, word for word, from strangers this time. same shape. anyway.",
+        body: "not my lane anymore maybe. but i've been lurking the support inbox. 'i matched, but then what' — that's the test group's feedback again, word for word, from strangers this time. same shape. anyway.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
           && !s.pivot_summit_done && s.jordan_active && !s.jordan_resolved

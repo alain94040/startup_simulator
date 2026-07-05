@@ -37,10 +37,10 @@
               return "You wrote back: 'You're not missing anything — tell me what you hoped would happen?' Rachel's answer, verbatim: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.";
             } },
           { label: 'Add it to the FAQ pile', key: 'faq',
-            journal: "A user asked what's supposed to happen after a match. Sent the standard answer — 'check back as more people join.' The density answer, given reflexively.",
+            journal: "A user asked what's supposed to happen after a match. Sent the standard answer — 'check back as more people join.' The just-wait-for-more-users answer, given without thinking.",
             execute(s, char) {
               char.flags.first_echo_done = true;
-              return "Filed under FAQ: 'check back as more people join.' The density answer, given reflexively.";
+              return "Filed under FAQ: 'check back as more people join.' The just-wait-for-more-users answer, given without thinking.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
