@@ -60,6 +60,25 @@
   .actions-budget .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
   .dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent);transition:.2s}
   .dot.full{background:var(--accent)}
+  /* Frozen-moment pill: while a focus arc runs the weekly 2-action budget is lifted,
+     so the dots give way to a pulsing "time paused · moves free" badge. */
+  .ab-frozen{display:none}
+  .actions-budget.frozen{gap:0;--ab-accent:rgba(180,120,255,1)}
+  .actions-budget.frozen .lbl,.actions-budget.frozen .dot{display:none}
+  .actions-budget.frozen .ab-frozen{
+    display:inline-flex;align-items:center;gap:5px;
+    font-size:10.5px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+    color:var(--ab-accent);
+    padding:3px 10px;border-radius:999px;
+    border:1px solid color-mix(in srgb,var(--ab-accent) 55%,transparent);
+    background:color-mix(in srgb,var(--ab-accent) 14%,transparent);
+    animation:abFrozenPulse 2s ease-in-out infinite;white-space:nowrap;
+  }
+  .ab-frozen .ab-ico{font-size:11px;line-height:1}
+  @keyframes abFrozenPulse{
+    0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ab-accent) 45%,transparent);opacity:.92}
+    50%{box-shadow:0 0 12px 1px color-mix(in srgb,var(--ab-accent) 40%,transparent);opacity:1}
+  }
 
   /* ── main split ──────────────────────────────────────── */
   .main{flex:1;display:flex;flex-direction:column;gap:12px;min-height:0}
@@ -756,6 +775,10 @@
     transition:color 1.1s ease;
   }
   .lc-line.vis{color:rgba(255,255,255,.88)}
+  /* First line of a focus interstitial is the arc's title — tinted to its accent
+     so equity (purple), demo (amber) and launch (blue) read as distinct moments. */
+  .lc-line.lc-title{font-weight:700;letter-spacing:.06em}
+  .lc-line.lc-title.vis{color:var(--lc-accent,rgba(255,255,255,.95))}
   .lc-skip{
     position:absolute;bottom:36px;right:40px;
     color:rgba(255,255,255,.25);font-size:11px;
@@ -785,10 +808,11 @@
         </div>
       </div>
       <div class="stats" id="stats"></div>
-      <div class="actions-budget">
+      <div class="actions-budget" id="actionsBudget">
         <span class="lbl">Actions</span>
         <div class="dot full" id="dot0"></div>
         <div class="dot full" id="dot1"></div>
+        <span class="ab-frozen"><span class="ab-ico">⏸</span><span id="abFrozenLbl">Time paused · moves free</span></span>
       </div>
       <button class="hdr-btn" id="roadmapBtn" title="Build roadmap" disabled style="display:none">🗺️</button>
       <button class="bell" id="bell" title="This week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
@@ -1080,6 +1104,17 @@
         el.onclick = (ev) => { ev.stopPropagation(); toggleGrowth(); };
       $("dot0").className = "dot" + (s.actionsLeft>=1?" full":"");
       $("dot1").className = "dot" + (s.actionsLeft>=2?" full":"");
+      // Frozen-moment badge: while a focus arc runs the weekly 2-action limit is lifted,
+      // so the budget dots give way to a "time paused · moves free" pill in the arc's hue.
+      const ab = $("actionsBudget");
+      const focus = engine.s.focus;
+      if (focus) {
+        ab.classList.add("frozen");
+        const cine = FOCUS_CINEMATIC[focus.id];
+        ab.style.setProperty("--ab-accent", (cine && cine.accent) || "rgba(180,120,255,1)");
+      } else {
+        ab.classList.remove("frozen");
+      }
       // Roadmap button appears once Alex/Jordan have a build plan in motion.
       const hasPlan = !!engine.s.items;
       const rb = $("roadmapBtn");
@@ -1367,13 +1402,60 @@
       else renderThreadResponse();
     }
 
-    // ── cinematic overlay for launch arc entry / exit ─────────────────────────
-    function showLaunchCinematic(lines, onDone) {
+    // ── focus-arc interstitials ───────────────────────────────────────────────
+    // Every focus arc is bookended by the same cinematic hand-off: a full-screen
+    // fade that marks the switch OUT of the weekly cadence (2 actions/week) INTO a
+    // frozen moment where the clock stops and every beat is free — and back again.
+    // Launch had this; equity and demo now share it. `accent` tints the title line
+    // and the top-bar "time paused" pill to each arc's identity.
+    const FOCUS_CINEMATIC = {
+      equity: {
+        accent: "rgba(190,130,255,1)",
+        enter: [
+          "The equity conversation.",
+          "This is the one you can't rush.",
+          "The week stops here — take all the time you need.",
+        ],
+        exit: [
+          "It's settled.",
+          "The clock starts again.",
+        ],
+      },
+      demo: {
+        accent: "rgba(255,190,120,1)",
+        enter: [
+          "Demo night.",
+          "A stranger is about to use what you built.",
+          "Forget the week. Just watch.",
+        ],
+        exit: [
+          "She closed the laptop and left.",
+          "Back to the grind — but something's different now.",
+        ],
+      },
+      launch: {
+        accent: "rgba(120,180,255,1)",
+        enter: [
+          "Launch Day.",
+          "The code is live.",
+          "Now you find out if anyone cares.",
+        ],
+        exit: [
+          "Day 1 is over.",
+          "You're a different founder now.",
+        ],
+      },
+    };
+
+    // ── cinematic overlay for focus-arc entry / exit ──────────────────────────
+    function showFocusCinematic(lines, onDone, accent) {
       const el   = document.getElementById("launchCinematic");
       const box  = document.getElementById("lcInner");
       const skip = document.getElementById("lcSkip");
 
-      box.innerHTML = lines.map(t => `<p class="lc-line">${t}</p>`).join("");
+      el.style.setProperty("--lc-accent", accent || "rgba(255,255,255,.95)");
+      box.innerHTML = lines.map((t, i) =>
+        `<p class="lc-line${i === 0 ? " lc-title" : ""}">${t}</p>`).join("");
       el.classList.add("show");
 
       const nodes = box.querySelectorAll(".lc-line");
@@ -1807,39 +1889,33 @@
       engine.act(cardId, key);   // state + entries change
       const nowFocusId = engine.stats().focus?.id ?? null;
 
-      // Entering launch arc for the first time → cinematic before first beat
-      if (!wasFocusId && nowFocusId === "launch") {
+      // Entering a focus arc (equity / demo / launch) → the world freezes. Play the
+      // arc's entry interstitial (the visible hand-off out of weekly cadence), then
+      // its first beat. renderStats() first so the top-bar budget already reads
+      // "paused" when the overlay fades away.
+      if (!wasFocusId && nowFocusId) {
         renderStats();
-        showLaunchCinematic([
-          "Launch Day.",
-          "The code is live.",
-          "Now you find out if anyone cares."
-        ], followFocusBeat);
+        const cine = FOCUS_CINEMATIC[nowFocusId];
+        if (cine && cine.enter) { showFocusCinematic(cine.enter, followFocusBeat, cine.accent); return; }
+        followFocusBeat();
         return;
       }
 
       // Still inside a focus arc: reveal the next beat immediately.
       if (nowFocusId) { followFocusBeat(); return; }
 
-      // Launch arc just ended → exit cinematic, then restore the world
-      if (wasFocusId === "launch") {
-        showLaunchCinematic([
-          "Day 1 is over.",
-          "You're a different founder now."
-        ], () => {
+      // Leaving a focus arc → the clock restarts. Play the exit interstitial (if any),
+      // then restore the world and ink the arc's outcomes into the journal (this also
+      // fires the act-1 overlay when equity locks in).
+      if (wasFocusId) {
+        const restoreWorld = () => {
           renderRail(); renderStats(); renderHand();
           openConversation();
           revealJournalFrom(jShown);
-        });
-        return;
-      }
-
-      // Just signed (equity focus ended): restore the world and ink the negotiation's
-      // outcomes into the journal.
-      if (wasFocusId) {
-        renderRail(); renderStats(); renderHand();
-        openConversation();
-        revealJournalFrom(jShown);   // fires the act-1 overlay when equity locks in
+        };
+        const cine = FOCUS_CINEMATIC[wasFocusId];
+        if (cine && cine.exit) { showFocusCinematic(cine.exit, restoreWorld, cine.accent); return; }
+        restoreWorld();
         return;
       }
 
