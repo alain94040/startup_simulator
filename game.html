@@ -573,7 +573,7 @@
 
   /* topbar icon button (roadmap), matches .bell */
   .hdr-btn{
-    border:1px solid var(--line);background:var(--rail);
+    position:relative;border:1px solid var(--line);background:var(--rail);
     width:38px;height:38px;border-radius:11px;cursor:pointer;font-size:16px;
     display:grid;place-items:center;transition:.13s;
   }
@@ -814,7 +814,7 @@
         <div class="dot full" id="dot1"></div>
         <span class="ab-frozen"><span class="ab-ico">⏸</span><span id="abFrozenLbl">Time paused · moves free</span></span>
       </div>
-      <button class="hdr-btn" id="roadmapBtn" title="Build roadmap" disabled style="display:none">🗺️</button>
+      <button class="hdr-btn" id="roadmapBtn" title="Build roadmap" disabled style="display:none">🗺️<span class="bell-badge" id="roadmapBadge" style="display:none"></span></button>
       <button class="bell" id="bell" title="This week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
     </div>
 
@@ -1120,6 +1120,7 @@
       const rb = $("roadmapBtn");
       rb.style.display = hasPlan ? "" : "none";
       rb.disabled = !hasPlan;
+      updateRoadmapBadge();
       refreshPops();
     }
 
@@ -2240,6 +2241,30 @@
     const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
     const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","video_dates","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui"];
     const RM_ORDER_FULL = RM_ORDER_LEAN.concat(["_hdr_scope","_scope_group"]);
+
+    // How many roadmap rows have a direction card sitting open in a chat — i.e. the
+    // "needs your call" badges that renderRoadmap draws. Drives the button counter.
+    function countRoadmapPending(){
+      const s = engine.s;
+      if (!s.items) return 0;
+      const order = !s.dev_plan ? RM_ORDER_PRE : (s.dev_plan === "full" ? RM_ORDER_FULL : RM_ORDER_LEAN);
+      let n = 0;
+      for (const key of order){
+        const meta = RM_ITEM_META[key];
+        if (!meta || meta.header || meta.scopeGroup) continue;
+        if (!s.items[key]) continue;
+        for (const [cid] of (meta.decide || [])){
+          if (engine.isOpen(cid)){ n++; break; }
+        }
+      }
+      return n;
+    }
+    function updateRoadmapBadge(){
+      const badge = $("roadmapBadge");
+      const n = countRoadmapPending();
+      if (n > 0){ badge.textContent = n; badge.style.display = "grid"; }
+      else badge.style.display = "none";
+    }
 
     function renderRoadmap(){
       const s = engine.s;
