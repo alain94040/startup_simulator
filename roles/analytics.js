@@ -18,18 +18,18 @@
       // Pre-launch: bought analytics surfaces the post-match drop-off — the pivot signal.
       {
         id: 'post_match_dropoff', cat: 'c', from: 'Analytics',
-        body: "looked at the beta cohort — people match in the demo, open the thread… and stop. ~80% of matches never get past 'hey.' it's not the matching that's losing them — it's what comes after a match. there's nowhere for them to go.",
+        body: "first real pattern out of the instrumentation. the testflight circle is tiny — a dozen people, 14 matches between them since the demo build went out. 11 of those matches never got past 'hey.' small numbers, loud shape: it's not the matching that loses people, it's what comes after a match. there's nowhere for them to go.",
         urgency: 3, weeks: 1,
         available: (s, char) => s.analytics_live && s.has_demo && !s.launched && !char.flags.dropoff_done,
         options: [
           { label: 'Dig into the drop-off', key: 'dig',
-            journal: "Pulled the early cohort apart. Matches that never become conversations, conversations that never become dates. The instrumentation paid for itself — I can see the pivot from here.",
+            journal: "Pulled the test circle's numbers apart. Matches that never become conversations, conversations that never become dates — twelve people is a small sample and an unambiguous one. The instrumentation paid for itself before launch: I can see the pivot from here.",
             execute(s, char) {
               char.flags.dropoff_done = true;
               s.analytics_dropoff_seen = true;
               s.market_fit = clamp(s.market_fit + 8, 0, 100);
               s.signal = clamp(s.signal + 4, 0, 100);
-              return "Pulled the cohort apart. The story's unambiguous — matches that never become conversations, conversations that never become dates. You can see the pivot from here, with time to act on it.";
+              return "Pulled the circle's numbers apart. The story's unambiguous even at twelve people — matches that never become conversations, conversations that never become dates. You can see the pivot from here, with time to act on it before a single stranger signs up.";
             } },
         ],
         dropDelay: 0, dropMsg: null,

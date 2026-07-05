@@ -57,14 +57,17 @@
   // Cumulative team build-effort needed to silently finish one over-scope ("auto")
   // roadmap item. The full/A plan carries ~2x these items, so it takes ~2x longer to
   // reach product-ready (the over-scope penalty; see roles/alex.js expandItems).
-  const AUTO_BUILD_INCREMENT = 6.5;
+  // Tuned up from 6.5 when direction-card answers started granting buildEffort
+  // (see roles/*_dir_* cards) — team effort now accrues ~2x faster, and the full
+  // plan must still miss the wk-30 YC window and die by runway.
+  const AUTO_BUILD_INCREMENT = 11;
 
   class Engine {
     constructor() {
       // Mirrors the initial-state shape of the legacy engine so every slice
       // card finds the field it reads. Unused fields are harmless.
       this.s = {
-        cash: 8000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
+        cash: 10000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
         signal: 28, market_fit: 0, launched: false, deck_ready: false,
         productPhase: "proto",
         has_demo: false, tech_debt: 0,
@@ -172,18 +175,18 @@
     // Slot rank: a `fallback` card (-1) only wins when nothing else is available;
     // otherwise the card's own `urgency` decides. There is a single ranking axis —
     // arc-continuation cards just use a higher urgency band (e.g. 11-23).
-    _rankVal(card) {
-      return card.fallback ? -1 : (this._urgency(card) || 0);
+    _rankVal(card, char) {
+      return card.fallback ? -1 : (this._urgency(card, char) || 0);
     }
     // Does card `a` outrank `b` for the single slot?
-    _better(a, b) {
-      return this._rankVal(a) > this._rankVal(b);
+    _better(a, b, char) {
+      return this._rankVal(a, char) > this._rankVal(b, char);
     }
     // Select-by-urgency API: the best currently-available card from `cards`, or null.
     pick(cards, char) {
       const avail = cards.filter(c => c.available(this.s, char, this));
       if (!avail.length) return null;
-      avail.sort((a, b) => this._rankVal(b) - this._rankVal(a));
+      avail.sort((a, b) => this._rankVal(b, char) - this._rankVal(a, char));
       return avail[0];
     }
     // ── awareness: lets a character read whether it was answered ────────────────
@@ -226,7 +229,7 @@
         if (avail && !(hasConseq && waited >= patience)) {
           if (!hasConseq) {
             const best = this.pick(this.sliceCards(def), char);
-            if (best && best.id !== card.id && this._better(best, card)) return best;
+            if (best && best.id !== card.id && this._better(best, card, char)) return best;
           }
           return card; // still relevant — hold the slot, don't repost
         }
@@ -323,8 +326,10 @@
       }
     }
 
-    _urgency(def) {
-      return (typeof def.urgency === "function") ? def.urgency(this.s, this.chars.get("alex")) : def.urgency;
+    _urgency(def, char) {
+      // Dynamic urgency gets the owning character when the caller knows it;
+      // fall back to alex only for legacy call sites without an owner.
+      return (typeof def.urgency === "function") ? def.urgency(this.s, char || this.chars.get("alex")) : def.urgency;
     }
 
     // ── player action ───────────────────────────────────────────────────────────
@@ -536,11 +541,21 @@
           this.s.items.plans_ui.status = "done";
       }
 
-      if (this.s.video_dates_effort_target != null && this.s.items && this.s.items.video_dates
-          && this.s.items.video_dates.status === "active") {
-        const alex = this.chars.get("alex");
-        if (alex && (alex.buildEffort || 0) >= this.s.video_dates_effort_target)
-          this.s.items.video_dates.status = "done";
+      // Generic per-item effort completion: any roadmap item carrying
+      // { effortTarget, owner } flips to done once its owner's cumulative
+      // buildEffort passes the target. Direction cards in roles/* write
+      // effortStart/effortTarget when a call is made, so the roadmap panel
+      // can show week-by-week progress toward each decision's delivery.
+      if (this.s.items) {
+        for (const k of Object.keys(this.s.items)) {
+          const it = this.s.items[k];
+          if (!it || it.status !== "active" || it.effortTarget == null || !it.owner) continue;
+          const ownerChar = this.chars.get(it.owner);
+          if (ownerChar && (ownerChar.buildEffort || 0) >= it.effortTarget) {
+            it.status = "done";
+            it.quality = it.quality || "solid";
+          }
+        }
       }
 
       // Launch day: convert waitlist to users
@@ -690,7 +705,7 @@
           role: def.role || "",
           cat: card.cat || "e",
           noChat: !!def.noChat,
-          urgency: this._rankVal(card),
+          urgency: this._rankVal(card, char),
           body: this._resolveBody(card, char),
           subtext: card.subtext || null,
           options: opts,

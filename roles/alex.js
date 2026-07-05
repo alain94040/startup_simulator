@@ -46,6 +46,16 @@
     s.items.plans_ui       = { status: 'todo',   quality: null, assignee: s.jordan_resolved ? null : 'jordan' };
   }
 
+  // Direction decisions move the build: answering a co-founder's direction ask
+  // grants immediate buildEffort on top of the passive weekly accrual, so an
+  // engaged founder ships weeks faster than one who leaves chats on read.
+  // Alex's grants shrink while he's part-time (committed_fulltime lifts it) so
+  // the commitment lesson survives the compressed dev arc.
+  function grantEffort(char, amt) {
+    const pt = (char.archetypeId === 'alex' && !char.flags.committed_fulltime) ? 0.6 : 1.0;
+    char.buildEffort = (char.buildEffort || 0) + amt * pt;
+  }
+
   const def = {
     id: 'alex', name: 'Alex', type: 'cofounder',
 
@@ -55,7 +65,6 @@
       "dev_planning_session",
       "alex_commitment",
       "early_name",
-      "early_tech_stack",
       "early_customer_target",
       "early_funding_goal",
       "vision_mismatch",
@@ -71,8 +80,13 @@
       "alex_sync_build",
       "alex_sync_pitch",
       "alex_demo_ready",
+      "demo_live_watch",
+      "demo_live_bug",
+      "demo_first_message",
       "auth_build_buy",
       "auth_buy_forced",
+      "alex_dir_ranking",
+      "alex_dir_seed_strategy",
       "analytics_choice",
       "pivot_alex_pushback",
       "pivot_counter_alex",
@@ -178,14 +192,17 @@
       {
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
         body: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
-        urgency: 2, weeks: 2, patience: 4,
+        // urgency 12: the plan choice is the dev arc's opening headline — it starts the
+        // clock (s.dev_start_week) that every sprint-direction card keys off, so it can't
+        // sit behind flavor cards. Window rides the equity signing instead of a fixed wk8.
+        urgency: 12, weeks: 2, patience: 4,
         available: (s, char, e) => {
           if (!char.flags.prototype_kicked || char.flags.plan_done) return false;
           if (!s.jordan_equity) return false;
           const jordan = e.chars.get('jordan');
           const isAlexHappy = jordan && jordan.flags.equity_proposal === '40/40/20';
           const delay = isAlexHappy ? 0 : 1;
-          return s.week >= (s.equity_week || 0) + delay && s.week <= 8;
+          return s.week >= (s.equity_week || 0) + delay && s.week <= Math.max(8, (s.equity_week || 0) + 4);
         },
         // Browser-only: Alex texts three phone mockups (iMessage-style photos the
         // player taps to view full-size). No cost/time labels — the player has to
@@ -203,6 +220,7 @@
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'full';
+              s.dev_start_week = s.week;
               expandItems(s, 'full');
               return "Three-hour session. Whiteboard filled. Twenty-plus items in the backlog. Jordan's excited. Alex is skeptical but admits it looks thorough.";
             } },
@@ -212,6 +230,7 @@
             execute(s, char) {
               char.flags.plan_done = true;
               s.dev_plan = 'lean';
+              s.dev_start_week = s.week;
               expandItems(s, 'lean');
               return "Ninety minutes. Five items on the board. Alex seemed relieved.";
             } },
@@ -223,6 +242,7 @@
               // Hidden binary: C resolves to the same lean plan as B. The only real
               // decision here is avoiding A (the over-scoped build).
               s.dev_plan = 'lean';
+              s.dev_start_week = s.week;
               expandItems(s, 'lean');
               return "Ninety minutes. Five items on the board. Alex seemed relieved.";
             } },
@@ -235,7 +255,7 @@
       // worse — he runs late, you buy anyway (same +$30/wk) AND lose ~2 weeks.
       {
         id: 'auth_build_buy', cat: 'p', from: 'Alex',
-        body: "we need login, account creation, password reset, social sign-in. i can build our own auth — couple days, tops. why pay a monthly fee for something this basic? or we just wire up a hosted provider. your call.",
+        body: "sprint 1 planning. first brick is accounts — login, account creation, password reset, social sign-in. i can hand-roll it, couple days tops, and we own it forever. or i wire up a hosted provider in an afternoon and we pay $30/wk for the privilege. your call — i genuinely don't mind building it. kind of want to, actually.",
         // urgency 13: surfaces and gets answered early (alongside the commitment/vision
         // arc) so it doesn't linger in Alex's slot and floor the demo — that's what lets
         // part-time vs full-time Alex differ on demo timing again. Wide window so it lands.
@@ -249,8 +269,9 @@
               char.flags.auth_resolved = true;
               s.extra_burn += 30;
               s.saas.push({ label: "Auth provider", cost: 30 });
-              if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; }
-              return "Hosted auth wired up in an afternoon — login, signup, reset, social sign-in. $30/wk for it, but it's done and it's solid. Alex grumbled about the fee.";
+              if (s.items && s.items.auth) { s.items.auth.status = 'done'; s.items.auth.quality = 'bought'; s.items.auth.assignee = null; s.items.auth.note = "Bought: hosted provider · $30/wk"; }
+              grantEffort(char, 1.0);  // afternoon of wiring, rest of the sprint goes to the core
+              return "Hosted auth wired up in an afternoon — login, signup, reset, social sign-in. $30/wk for it, but it's done and it's solid. Alex grumbled about the fee, then spent the rest of the sprint on the matching engine.";
             } },
           { label: 'Let Alex build it himself', key: 'build',
             reply: "ok — build it, if you're sure it's just a few days.",
@@ -258,7 +279,7 @@
               char.flags.auth_building = true;
               char.flags.auth_build_start = s.week;
               char.morale = clamp(char.morale + 4, 0, 100);
-              if (s.items && s.items.auth) { s.items.auth.status = 'active'; s.items.auth.assignee = 'alex'; }
+              if (s.items && s.items.auth) { s.items.auth.status = 'active'; s.items.auth.assignee = 'alex'; s.items.auth.note = "Building our own"; }
               return "Alex is building our own auth. He's sure it's a few days of work.";
             } },
         ],
@@ -303,13 +324,78 @@
         },
       },
 
+      // ── DIRECTION: WHAT DO WE RANK ON? (the core-IP question) ────────────────
+      // Only exists if you kept the matching engine (s.matching_owned). The C-option
+      // is research-gated: interviews, the reframe, or fresh waitlist calls unlock
+      // the conversation-odds thesis — GOALS.md's "research → better build options".
+      {
+        id: 'alex_dir_ranking', cat: 'p', from: 'Alex',
+        body: "matching engine update: it runs end to end — profiles in, pairs out. one problem. the scoring function is literally `return Math.random()`. before i write the real one i need product direction, not code: what makes two people a good kindred match?",
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.matching_owned && char.flags.plan_done && !char.flags.ranking_done
+          && !s.has_demo && !s.launched,
+        options: [
+          { label: 'Distance, age, availability — the standard stack', key: 'proximity',
+            reply: "keep it simple. distance, age range, shared availability — the stuff every app ranks on. it works.",
+            execute(s, char) {
+              char.flags.ranking_done = true;
+              grantEffort(char, 1.2);
+              s.market_fit = clamp(s.market_fit + 2, 0, 100);
+              if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks distance + availability";
+              return "Alex shipped the standard ranking in two days. It works. It's also exactly what every other app does.";
+            } },
+          { label: 'Shared interests — climbers see climbers first', key: 'interests',
+            reply: "interest overlap. two people who both climb at 7am should see each other first.",
+            execute(s, char) {
+              char.flags.ranking_done = true;
+              grantEffort(char, 1.2);
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks interest overlap";
+              return "Interest-overlap scoring went in over the weekend. Reasonable, defensible — and still a guess about what makes matches actually work.";
+            } },
+          { label: 'Rank on conversation odds — the research answered this', key: 'conversation',
+            available: (s, char, e) => {
+              const f = e.chars.get('founder');
+              const fresh = f && f.flags.recent_user_signal_week != null && s.week <= f.flags.recent_user_signal_week + 6;
+              return !!((f && f.flags.interviews_done) || char.flags.reframe_resolved || fresh);
+            },
+            reply: "neither. every conversation with users says the same thing — matches don't fail at the match, they die in the chat. rank on conversation odds: profile specificity, question-askers, people who actually reply. optimize the first message, not the first look.",
+            journal: "Gave Alex the ranking thesis straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a thesis.' The engine ranks conversation odds now — nobody else's does.",
+            execute(s, char, e) {
+              char.flags.ranking_done = true;
+              char.flags.ranking_thesis = true;
+              grantEffort(char, 1.2);
+              s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              s.signal = clamp(s.signal + 4, 0, 100);
+              if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks conversation odds (from research)";
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "huh. that's… actually a thesis. i can proxy it — specificity score on the profile text now, response-rate signal once we have real data. writing it tonight.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "The ranking thesis came straight out of the research: optimize the first message, not the first look. Alex is proxying it with profile-text specificity until there's real response data. No other app ranks on this.";
+            } },
+        ],
+        // Ignored: Alex guesses — competently, but generically.
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.ranking_done = true;
+          char.morale = clamp(char.morale - 4, 0, 100);
+          if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks distance (Alex's default)";
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+            text: "fyi — i shipped distance-based ranking because we never talked about it. it works. it's also exactly what every other app does.",
+          });
+        },
+      },
+
       // ── BUILD vs BUY: ANALYTICS (commodity → buy is right; buying buys you sight) ─
       // Buying instrumentation surfaces the "users match, then go silent" drop-off
       // early — the pivot signal. Building it leaves you blind until it's too late.
       {
         id: 'analytics_choice', cat: 'p', from: 'Alex',
-        body: "we're flying blind — no analytics. i can build us a proper dashboard, or we drop in an off-the-shelf SDK and have funnels and retention curves today. building it ourselves is more work but no monthly fee.",
-        urgency: 3, weeks: 1,
+        body: "demo night bugged me. the only reason i saw her session at all is that i was tailing logs by hand. the testflight circle is a dozen people and i can't tell you what a single one of them does in the app — and on launch day it'll be hundreds of strangers. i can wire an analytics SDK in a day — $30/wk, dashboards tomorrow. or i build our own event pipeline: a week of my time, free forever, and i kind of want to own our data anyway.",
+        urgency: 12, weeks: 1,
         available: (s, char) => s.has_demo && !s.launched && !char.flags.analytics_choice_done,
         options: [
           { label: 'Drop in an analytics SDK', key: 'buy',
@@ -319,7 +405,8 @@
               s.analytics_live = true;
               s.extra_burn += 30;
               s.saas.push({ label: "Analytics SDK", cost: 30 });
-              if (s.items && s.items.analytics) { s.items.analytics.status = 'done'; s.items.analytics.quality = 'bought'; s.items.analytics.assignee = null; }
+              if (s.items && s.items.analytics) { s.items.analytics.status = 'done'; s.items.analytics.quality = 'bought'; s.items.analytics.assignee = null; s.items.analytics.note = "Bought: SDK · $30/wk"; }
+              grantEffort(char, 1.0);  // a day of wiring, the sprint stays on product
               return "Analytics SDK live in a day — funnels, retention, event tracking. Now we can see what's actually happening instead of guessing.";
             } },
           { label: 'Build our own dashboard', key: 'build',
@@ -327,7 +414,7 @@
             execute(s, char) {
               char.flags.analytics_choice_done = true;
               char.buildEffort = Math.max(0, (char.buildEffort || 0) - 2.0);
-              if (s.items && s.items.analytics) { s.items.analytics.status = 'active'; s.items.analytics.assignee = 'alex'; }
+              if (s.items && s.items.analytics) { s.items.analytics.status = 'active'; s.items.analytics.assignee = 'alex'; s.items.analytics.note = "Building our own pipeline"; }
               return "Alex started building an analytics dashboard. His plate was already full — and we're flying half-blind until it's done.";
             } },
         ],
@@ -338,12 +425,92 @@
         },
       },
 
+      // ── DIRECTION: WHERE DO WE SHIP? (cold-start density, made visible by data) ─
+      // Supersedes growth.js's beachhead_choice by setting s.beachhead before launch
+      // (that card only fires while s.beachhead == null). The dilemma itself is
+      // research-gated: without analytics / waitlist calls / community engagement,
+      // Alex can't see past the hometown default — buying analytics literally makes
+      // this decision visible.
+      {
+        id: 'alex_dir_seed_strategy', cat: 'p', from: 'Alex',
+        body: (s, char, e) => {
+          const f = e.chars.get('founder');
+          const informed = s.analytics_live || (s.community_engaged_count || 0) >= 2
+            || (f && f.flags.recent_user_signal_week != null);
+          return informed
+            ? "launch mechanics. we always assumed we launch here — we live here, we can seed the first hundred by hand, jordan can host a mixer. but i pulled the waitlist by city and… austin has almost three times as many people on it as our own city. none of us has ever set foot in austin. do we launch where we live, or where the demand is?"
+            : "launch mechanics. a dating app opening to an empty room is a ghost town — first person in sees an empty deck, closes the app, never comes back. one city to start, right? here at home, where we can seed the room by hand. or do we just open the doors everywhere and pray?";
+        },
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.has_demo && !s.launched && !char.flags.seed_strategy_done
+          && s.beachhead == null && char.flags.analytics_choice_done,
+        options: [
+          { label: 'Launch here — hometown advantage', key: 'local',
+            reply: "here. hometown advantage is real — we seed the first hundred by hand, host the mixer, fix things in person.",
+            execute(s, char) {
+              char.flags.seed_strategy_done = true;
+              s.beachhead = 'narrow';
+              s.seed_strategy = 'local';
+              grantEffort(char, 0.8);
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              return "One city: ours. Invite waves by neighborhood, a launch mixer you can drive to, bugs fixed across a coffee table. Small top line, dense room.";
+            } },
+          { label: 'Open everywhere — momentum is the story', key: 'everywhere',
+            reply: "open it everywhere. momentum is the story — we densify later.",
+            execute(s, char) {
+              char.flags.seed_strategy_done = true;
+              s.beachhead = 'broad';
+              s.seed_strategy = 'open';
+              grantEffort(char, 0.8);
+              s.signal = clamp(s.signal + 5, 0, 100);
+              return "Open signups, no gates. The launch-day number will look great. Whether anyone finds a match within 50 miles is a different question.";
+            } },
+          { label: 'Launch where the waitlist lives — Austin', key: 'waitlist_city',
+            available: (s, char, e) => {
+              const f = e.chars.get('founder');
+              return !!(s.analytics_live || (s.community_engaged_count || 0) >= 2
+                || (f && f.flags.recent_user_signal_week != null));
+            },
+            reply: "austin. the waitlist already voted — demand beats home-field advantage. we run it remote, fly out for launch week, and every invite lands somewhere dense.",
+            journal: "The waitlist data made the launch call for us: Austin, where our signups actually are — three times our home city. We're launching a dating app in a city none of us has set foot in, because that's where the demand lives.",
+            execute(s, char, e) {
+              char.flags.seed_strategy_done = true;
+              s.beachhead = 'narrow';
+              s.seed_strategy = 'austin';
+              s.launch_city = 'Austin';
+              grantEffort(char, 0.8);
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              s.waitlist += 4;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "booked two flights to austin for launch week. jordan found a bar for the mixer on yelp. this is either very smart or very funny.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "Austin it is — invite waves by neighborhood, launch-week flights booked, a mixer venue picked off Yelp. Every invite lands somewhere dense enough to matter.";
+            } },
+        ],
+        // Ignored: Alex plans around home by default — without ever checking the data.
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.seed_strategy_done = true;
+          s.beachhead = 'narrow';
+          s.seed_strategy = 'local';
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+            text: "we never picked a launch city so i'm planning around here. hope that's right — nobody ever actually checked where the waitlist lives.",
+          });
+        },
+      },
+
       // ── EARLY: RELATIONSHIP ──────────────────────────────────────────────────
       {
         id: 'alex_commitment', cat: 't', from: 'Alex',
         body: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
         urgency: 13, weeks: 1,
-        available: (s, char) => s.week >= 2 && s.week <= 5 && char.flags.plan_done && !char.flags.commitment_resolved,
+        // Rides the dev clock: the quit-my-job talk lands right as the sprint cadence
+        // starts making his evenings-and-weekends pace visible.
+        available: (s, char) => s.dev_start_week != null && s.week <= s.dev_start_week + 3
+          && char.flags.plan_done && !char.flags.commitment_resolved,
         options: [
           { label: 'Agree — part-time for now', key: 'accept',
             reply: "that's fair. evenings and weekends works for now. let's set a milestone to revisit — once we hit traction, we talk again.",
@@ -564,8 +731,12 @@
       {
         id: 'vision_mismatch', cat: 't', from: 'Alex',
         body: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
-        urgency: 13, weeks: 1,
-        available: (s, char) => s.week >= 4 && s.week <= 10 && !s.has_demo && char.flags.commitment_resolved && !char.flags.vision_resolved,
+        // urgency 12 + dev-clock window so it fills a gap in the sprint spine instead
+        // of colliding head-on with the direction asks in the same 13 band.
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.dev_start_week != null && s.week >= s.dev_start_week + 2
+          && s.week <= s.dev_start_week + 8 && !s.has_demo
+          && char.flags.commitment_resolved && !char.flags.vision_resolved,
         options: [
           { label: "Go with casual dating", key: 'alex',
             reply: "you're right, casual is the bigger market. let's go with your framing — 'casual dating done right.'",
@@ -669,19 +840,22 @@
         id: 'alex_sync_discover', cat: 't', from: 'Alex', ignoreForTrust: true,
         body: (s, char) => {
           if (!char.flags.discoveryEverAgreed)
-            return "we've been heads-down building without talking to anyone outside. should we shift to customer discovery for a sprint or two?";
+            return "offer: i can take this sprint for user calls instead of code. the build slips a week — that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
           const weeksAgo = s.week - (char.flags.lastDiscoveryWeek || 0);
           return weeksAgo >= 12
             ? `it's been ${weeksAgo} weeks since we last did discovery. things shift — worth a sprint to check if we're still solving the right problem?`
             : "we're back in build mode. it's only been a few weeks since we last talked to customers, but the queue keeps growing. do another round or keep building?";
         },
         urgency: 1, weeks: 1,
-        available: (s, char) => !s.launched && s.week >= 6 && char.focus === 'build' && char.focusSprints >= 3
+        // The build-vs-research trade stated as a standing offer from the start of the
+        // dev arc (the old triple-gate meant it rarely surfaced before the demo).
+        available: (s, char) => !s.launched && s.dev_start_week != null
+          && s.week >= s.dev_start_week + 1 && char.focus === 'build'
           && s.market_fit < 80
-          && s.week >= (char.flags.lastSyncToDiscover || 0) + 8,
+          && s.week >= (char.flags.lastSyncToDiscover || 0) + 4,
         options: [
-          { label: 'Yes — shift to discovery', key: 'discover',
-            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; char.flags.lastSyncToDiscover = s.week; char.flags.discoveryEverAgreed = true; char.flags.lastDiscoveryWeek = s.week; return "Agreed. Alex on customer discovery this sprint."; } },
+          { label: 'Yes — take the sprint for user calls', key: 'discover',
+            execute(s, char) { char.focus = 'discover'; char.focusSprints = 1; char.flags.lastSyncToDiscover = s.week; char.flags.discoveryEverAgreed = true; char.flags.lastDiscoveryWeek = s.week; return "Agreed. Alex is on user calls this sprint — the build slows while he listens."; } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char) { char.flags.lastSyncToDiscover = s.week; },
@@ -722,20 +896,6 @@
             execute(s, char) { char.flags.name_done = true; s.market_fit = clamp(s.market_fit + 2, 0, 100); return "Name locked. Distinctive, hard to confuse with anything else. Grows on people once they try it."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.name_done = true; },
-      },
-      {
-        id: 'early_tech_stack', cat: 'e', from: 'Alex', ignoreForTrust: true,
-        body: "the matching algorithm is fine for 100 users. at 10,000 it'll fall apart. i can build it to scale properly — takes twice as long. or i ship something that works now and we fix it when it matters.",
-        urgency: 1, weeks: 1,
-        available: (s, char) => s.dev_plan != null && s.week <= 6 && !char.flags.stack_done,
-        options: [
-          { label: 'Ship now — fix the algorithm later', key: 'fast',
-            journal: "Decided to ship the fast version of the matching algorithm and fix scale later. The 10,000-user problem is a good problem to have.",
-            execute(s, char) { char.flags.stack_done = true; return "Shipping with the fast version. Alex moving immediately. The 10,000-user problem is a good problem to have."; } },
-          { label: 'Build it to scale from the start', key: 'scalable',
-            execute(s, char) { char.flags.stack_done = true; s.tech_debt -= 5; return "Slower start, cleaner foundation. Alex is happy — he hates rewriting things."; } },
-        ],
-        dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.stack_done = true; },
       },
       {
         id: 'early_customer_target', cat: 't', from: 'Alex', ignoreForTrust: true,
@@ -911,7 +1071,8 @@
           && (s.matching_owned || s.matching_licensed || !(e.chars.get('jordan') && e.chars.get('jordan').active)),
         options: [
           { label: 'Show it rough — learn fast', key: 'rough',
-            execute(s) {
+            reply: "show it rough. tonight. i'd rather watch someone hit a wall than polish a guess.",
+            execute(s, char, e) {
               s.has_demo = true; s.tech_debt += 12;
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 8, 0, 100);
               if (s.items) {
@@ -919,10 +1080,19 @@
                 if (s.items.api_design) s.items.api_design.status = 'active';
                 if (!s.items.analytics) s.items.analytics = { status: 'todo', quality: null, assignee: null };
               }
-              return "Three contacts in the room. Two hit bugs immediately. One leaned forward: 'Show me that again — I've been on every app and none of them work like this.' You know what to build next.";
+              // Demo night: the first true stranger uses the app while Alex watches
+              // the session live — a short focus arc (free beats, like launch day).
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "ok. jordan found us a real first tester — her sister's friend. total stranger, never seen the app. she's on tonight at 8 and i'm watching the session live. don't make plans.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              s.focus = { id: 'demo', charIds: ['alex'] };
+              return "Demo's out — rough edges and all. Tonight it goes in front of a total stranger for the first time, live, while Alex watches the session logs.";
             } },
           { label: 'One sprint to polish it first', key: 'polish',
-            execute(s) {
+            reply: "one sprint of polish first. if the first stranger hits a crash in minute one we learn nothing.",
+            execute(s, char, e) {
               s.has_demo = true; s.tech_debt += 3;
               s.waitlist += 2; s.market_fit = clamp(s.market_fit + 4, 0, 100); s.signal = clamp(s.signal + 4, 0, 100);
               if (s.items) {
@@ -930,7 +1100,13 @@
                 if (s.items.api_design) s.items.api_design.status = 'active';
                 if (!s.items.analytics) s.items.analytics = { status: 'todo', quality: null, assignee: null };
               }
-              return "Spent the sprint cleaning up the worst rough edges. Demo ran cleanly. Contacts were impressed — but one extra sprint of polish is one sprint of not hearing 'I'd pay for that.'";
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "polish sprint done — worst edges are gone. and jordan lined up our first true stranger: her sister's friend, tonight at 8. i'm watching the session live. don't make plans.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              s.focus = { id: 'demo', charIds: ['alex'] };
+              return "One sprint of cleanup, then out the door. Tonight the polished demo goes in front of a total stranger for the first time, live, while Alex watches the session logs.";
             } },
         ],
         dropDelay: 2, dropFrom: 'Alex',
@@ -944,6 +1120,111 @@
           }
         },
       },
+
+      // ── DEMO NIGHT FOCUS ARC (triggered by alex_demo_ready → rough/polish) ────
+      // The first true stranger uses the app while Alex live-narrates the session.
+      // Three free beats (focus:'demo', launch-arc pattern). The last one plants the
+      // pivot seed as story: her first message is "so what happens now?" —
+      // s.demo_question_seen lets pivot_open (jordan.js) echo it later.
+      {
+        id: 'demo_live_watch', cat: 'p', from: 'Alex', focus: 'demo',
+        body: "she's in. no idea we're watching. she's been on the intake screen for 90 seconds — is that good or bad? i genuinely can't tell. nobody has ever used this without one of us narrating over their shoulder.",
+        urgency: 19, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'demo' && !char.flags.demo_watch_done,
+        options: [
+          { key: 'watch', label: 'Say nothing — watch what she does',
+            reply: "don't touch anything. watch what she does with it.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.demo_watch_done = true;
+              s.signal = clamp(s.signal + 3, 0, 100);
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "she typed an answer, deleted it, typed it again. four minutes on question 2. she's taking it seriously.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'hint', label: 'Message her — she can skip ahead',
+            reply: "ping her that it's ok to skip anything. i don't want to lose her on question 2.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.demo_watch_done = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "she skipped straight to the matches. faster — but now we'll never know if the questions were landing or losing her.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+      {
+        id: 'demo_live_bug', cat: 'p', from: 'Alex', focus: 'demo',
+        body: "problem. she's trying to upload a photo from her camera roll — it's a HEIC file and the uploader just spins. she's retried twice. do i push a converter hotfix while she's mid-session, or note it and let her hit the wall?",
+        urgency: 18.5, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'demo' && char.flags.demo_watch_done && !char.flags.demo_bug_done,
+        options: [
+          { key: 'hotfix', label: 'Hotfix it live — she never knows',
+            reply: "fix it now, while she's in there. first impressions don't get a second take.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.demo_bug_done = true;
+              s.tech_debt += 4;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "pushed the converter mid-session. her third retry just worked — she thinks it was her wifi. also: we had zero HEIC handling, which is every iphone since 2017. adding it to the list.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'note', label: 'Note it — see if she pushes through',
+            reply: "leave it. i want to see what she does when it doesn't work.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.demo_bug_done = true;
+              s.signal = clamp(s.signal + 4, 0, 100);
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "she gave up on the photo and kept going anyway. still filling everything in. honestly? someone fighting through a broken uploader to finish a profile is the most encouraging bug report we will ever get.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+      {
+        id: 'demo_first_message', cat: 'p', from: 'Alex', focus: 'demo',
+        body: "ok. she finished the profile. matched with one of the seed-cohort guys. she just sent the first message and i have to read it to you verbatim: 'so what happens now?' …i've been staring at it for five minutes. i don't know what our app answers to that.",
+        urgency: 18, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'demo' && char.flags.demo_bug_done && !char.flags.demo_arc_done,
+        options: [
+          { key: 'note', label: 'Write it down — verbatim',
+            reply: "write it down exactly like that. 'so what happens now?' that one goes on the wall.",
+            journal: "Demo night. A total stranger finished the flow, matched, and her first message was 'so what happens now?' Wrote it on a post-it and stuck it on the monitor. The product answered every question except the one that matters.",
+            execute(s, char, e) {
+              char.flags.demo_arc_done = true;
+              s.demo_question_seen = true;
+              s.market_fit = clamp(s.market_fit + 6, 0, 100);
+              s.focus = null;  // demo night ends — the world un-holds
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "post-it's on the monitor. good night. weird night. the app works and i can't stop thinking about her question.",
+                week: s.week, isNew: true, focus: 'demo', seq: e._seq++,
+              });
+              // Establishes the pre-launch fiction: a hand-recruited TestFlight
+              // circle — a dozen friends-of-friends, explicitly NOT a launch. Every
+              // pre-launch "tester" reference reads from this circle; real strangers
+              // only arrive on launch day.
+              e.pending.push({
+                fireWeek: s.week + 1, from: 'Jordan', charId: 'jordan',
+                text: "put the demo build on testflight for my sister's friend group — a dozen people, all vouched for. not a launch, just eyes on it while we build.",
+              });
+              return null;
+            } },
+        ],
+      },
+
       // ── PIVOT DISCUSSION (card 2 of 3: Alex pushes back on Jordan's flag) ──────
       {
         id: 'pivot_alex_pushback', cat: 'p', from: 'Alex',
@@ -953,7 +1234,7 @@
             ? base + " priya pushed back on me — she said she's seen this kind of signal get ignored before. i respect her, but she didn't build this."
             : base;
         },
-        urgency: 2, weeks: 1,
+        urgency: 12, weeks: 1,
         available: (s, char, e) => {
           const jordan = e.chars.get("jordan");
           return jordan && jordan.flags.pivot_open_done && !char.flags.pivot_direction_set
@@ -999,7 +1280,7 @@
       {
         id: 'pivot_counter_alex', cat: 'p', from: 'Alex',
         body: "i still think you're wrong. we built the right product — the matching engine is solid. i'll build whatever you decide. but i want it on the record: we're adding scope we already said no to.",
-        urgency: 2, weeks: 1,
+        urgency: 12, weeks: 1,
         available: (s, char) => char.flags.pivot_direction === "pivot" && !s.pivot_resolved_flag
           && !s.met_priya && s.week <= 22,
         options: [
@@ -1148,23 +1429,31 @@
       },
       {
         id: 'proto_to_product', cat: 'p', from: 'Alex',
-        body: "the demo held together long enough to learn what we needed. but we both know it's duct tape. real users will break it in a week. i want to build this properly.",
-        urgency: 2, weeks: 1,
+        body: "before we point real strangers at this: honesty hour. password-reset emails land in spam. the match queue crashes on profiles with zero photos. and i'm about 80% sure you can see other people's photos by editing a url. one hardening week and i can sleep at night. or we ship as-is and firefight.",
+        urgency: 12, weeks: 1,
         available: (s, char) => s.has_demo && !char.flags.rebuild_triggered
           && s.week >= (char.flags.rebuild_last || 0) + 4,
         options: [
-          { label: "Let's build it for real", key: 'commit',
+          { label: 'Take the hardening week', key: 'commit',
+            reply: "take the week. fix the resets, the crash, and for god's sake the photo urls. then we point strangers at it.",
             execute(s, char) {
               char.flags.rebuild_triggered = true;
               s.productPhase = "product";
+              s.tech_debt = Math.max(0, s.tech_debt - 8);
               s.waitlist += 5; s.market_fit = clamp(s.market_fit + 8, 0, 100);
-              return "Keeping what worked, scrapping the rest. We know the core flow — now we build it properly. Word's getting around — 5 people already asked for early access.";
+              grantEffort(char, 1.0);
+              return "One week of deeply unglamorous work: spam headers fixed, the zero-photo crash squashed, photo urls signed. Nothing to demo, everything to trust. Word's getting around — 5 people asked for early access.";
             } },
-          { label: 'Not yet — keep polishing the demo', key: 'delay',
-            journal: "Not ready to rebuild yet — still learning from the demo. Alex nods, but I can tell he wants to move on.",
+          { label: "Ship as-is — we'll firefight", key: 'delay',
+            reply: "no hardening week. we ship with the bugs and firefight — write them on the whiteboard so we at least know our own landmines.",
+            journal: "Skipped the hardening week — the bugs are on the whiteboard under the heading 'known landmines.' Alex didn't argue. He just circled the photo-url one twice.",
             execute(s, char) {
-              char.flags.rebuild_last = s.week;
-              return "Still things to learn from the demo. Alex nods, but you can tell he's ready to move on.";
+              char.flags.rebuild_triggered = true;
+              s.productPhase = "product";
+              s.tech_debt += 5;
+              char.morale = clamp(char.morale - 3, 0, 100);
+              grantEffort(char, 0.6);
+              return "No hardening week. The known bugs went up on the whiteboard under 'landmines.' Alex didn't argue — he just circled the photo-url one twice.";
             } },
         ],
         dropFx(s, char) { char.flags.rebuild_last = s.week; },
@@ -1418,7 +1707,7 @@
 
       {
         id: 'launch_test_profiles_scope', cat: 'e', from: 'Alex', focus: 'launch',
-        body: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been live since beta. she matched with 3 real users. two of them already sent her messages. she replied with lorem ipsum filler from when we seeded the db.",
+        body: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with lorem ipsum filler from when we seeded the db.",
         urgency: 18, patience: Infinity,
         available: (s, char) => s.focus && s.focus.id === 'launch' && char.flags.test_profiles_seen && !char.flags.test_profiles_scoped,
         options: [
@@ -1719,7 +2008,9 @@
       {
         id: 'jordan_drift_start', cat: 't', from: 'Alex',
         body: "jordan's been slower this week. said she's swamped at work. i covered the iOS push — took me two days. not complaining, just flagging it.",
-        urgency: 2, weeks: 1,
+        // Spine band: the drift arc gates the launch, so it can't queue for weeks
+        // behind direction cards the way urgency 2 now would.
+        urgency: 12, weeks: 1,
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
           return s.jordan_active && !s.jordan_drifting && s.week >= 8 && !j.flags.drift_start_done;
@@ -1760,7 +2051,7 @@
         body: (s, char, e) => ((e.chars.get('jordan').flags.drag_count || 0) === 0)
           ? "pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday. i've covered it, but this is the second time this sprint."
           : "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. i've been waiting two days. this can't keep going.",
-        urgency: 2, weeks: 1,
+        urgency: 12, weeks: 1,
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
           return s.jordan_drifting && !s.jordan_resolved

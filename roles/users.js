@@ -80,12 +80,12 @@
             journal: "Built video dates for our power user. They doubled their plan — but it's really built around one person's workflow.",
             execute(s, char, e) {
               char.flags.custom_request_done = true;
-              if (s.items) s.items.video_dates = { status: 'active', quality: null, assignee: 'alex' };
               const alex = e.chars.get('alex');
-              if (alex) {
-                s.video_dates_effort_target = (alex.buildEffort || 0) + 3.0;
-                if (alex.active) alex.morale = clamp(alex.morale - 8, 0, 100);
-              }
+              const eff = alex ? (alex.buildEffort || 0) : 0;
+              // owner/effortTarget: the engine's generic effort completion flips this
+              // to done once Alex's cumulative buildEffort passes the target.
+              if (s.items) s.items.video_dates = { status: 'active', quality: null, assignee: 'alex', owner: 'alex', effortStart: eff, effortTarget: eff + 3.0 };
+              if (alex && alex.active) alex.morale = clamp(alex.morale - 8, 0, 100);
               return "Said yes. Alex is heads-down on video infrastructure — WebRTC, TURN servers, recording consent.";
             } },
           { label: 'Decline — stay on roadmap', key: 'decline',

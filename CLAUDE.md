@@ -116,37 +116,75 @@ e.pending.push({
 
 This is the mechanism for delayed consequences. (The engine no longer auto-queues a delayed drop; a card that wants a delayed follow-up pushes its own pending event from `dropFx`/`execute`.)
 
-## Build arc — engineering decisions
+## Build arc — the direction-decision spine
 
-After the dev-plan scope choice (`dev_planning_session`: A/full vs B/lean vs C/decoy-lean) the build
-phase is a sequence of **build-vs-buy** decisions teaching *buy commodity, build your edge* (not
-"always buy"):
+The dev-plan scope choice (`dev_planning_session`: A/full vs B/lean vs C/decoy-lean) stamps
+**`s.dev_start_week`** — the clock every dev-arc card rides (windows are `dev_start_week + n`,
+not fixed weeks). From there to launch-ready is a **~7–9 week spine of direction questions**
+(urgency band 12–13) where Alex and Jordan alternate asking for real product calls; flavor and
+relationship cards stay in band 1–3 and fill the gaps.
 
-- **Auth** (`auth_build_buy` → `auth_buy_forced`, Alex) — **buy** is right (+$30/wk `s.extra_burn`).
-  Letting Alex build it is strictly worse: he runs late, you buy anyway (same fee) *and* lose ~2 weeks
-  (`buildEffort` hit). If the card is ignored, Alex optimistically starts building by default.
-- **Matching engine** (`matching_engine_choice`, **Jordan**) — **build** is right; it's the core IP.
-  Jordan proposing to license it is an early red flag she's the wrong co-founder. Licensing
-  (`s.matching_licensed`) caps market-fit and is penalized at the pivot (`applyActivitiesPivot` rips out
-  the black box). Building (`s.matching_owned`) makes the `founder_codebuild` pairing card advance the
-  algorithm (research-gated via `interviews_done`/discovery focus).
-- **Analytics** (`analytics_choice`, Alex) — **buy** is right (+$30/wk); sets `s.analytics_live`, which
-  unlocks the pre-launch post-match drop-off card (`roles/analytics.js`) that reveals the pivot signal.
+**Decisions are the throttle.** Answering a direction card grants its owner immediate
+`buildEffort` (`grantEffort` helper, duplicated in `roles/alex.js` and `roles/jordan.js`; Alex's
+grants ×0.6 while part-time so the commitment lesson survives) on top of the passive weekly
+accrual. An engaged player reaches the demo (`alex_demo_ready`, `buildEffort >= 6`) ~4 weeks
+after the plan; ignoring co-founders means today's crawl *plus* rework `dropFx` (item
+`quality:'rough'`, −buildEffort, a pending "built the wrong thing" message) — and every ignore
+feeds scoring lesson 2 and `alex_leaving_threat`.
+
+**The build-vs-buy trio** (teaching *buy commodity, build your edge*) is folded into the spine:
+
+- **Auth** (`auth_build_buy` → `auth_buy_forced`, Alex, ~P+1) — **buy** is right (+$30/wk
+  `s.extra_burn`). Letting Alex build it is strictly worse: he runs late, you buy anyway (same
+  fee) *and* lose ~2 weeks. If ignored, Alex optimistically starts building.
+- **Matching engine** (`matching_engine_choice`, **Jordan**, `dev_start+2`) — **build** is right;
+  it's the core IP and Jordan proposing to license it is the early red flag. Licensing
+  (`s.matching_licensed`) is penalized at the pivot (`applyActivitiesPivot` rips out the black
+  box). Building (`s.matching_owned`) unlocks `alex_dir_ranking` and makes `founder_codebuild`
+  advance the algorithm.
+- **Analytics** (`analytics_choice`, Alex, post-demo) — **buy** is right (+$30/wk); sets
+  `s.analytics_live` → the post-match drop-off card (`roles/analytics.js`, the pivot signal)
+  *and* reveals the waitlist-by-city data behind `alex_dir_seed_strategy`'s best option.
+
+**Research-gated direction cards** (GOALS.md: research → better build options). Each `*_dir_*`
+card has two plausible generic options plus a strictly-better C-option whose per-option
+`available()` checks what the player learned: `jordan_dir_first_screen` (C ←
+`founder.flags.interviews_done`), `alex_dir_ranking` (C ← interviews / `reframe_resolved` /
+fresh waitlist calls), `jordan_dir_trust_safety` (C ← `s.community_engaged_count >= 2`),
+`alex_dir_seed_strategy` (C ← analytics/community/waitlist data; sets `s.beachhead` pre-launch,
+superseding growth.js's `beachhead_choice`). The research supply: `founder_first_interviews`,
+recurring `founder_waitlist_calls` (refreshes `founder.flags.recent_user_signal_week` — research
+must stay *fresh*), community chains in `roles/hacker_news.js` (every `engage` increments
+`s.community_engaged_count`), and `alex_sync_discover` sprints. The 2-actions-per-week economy is
+the balancing tension between building and researching.
+
+**Demo night** (`demo_live_watch` → `demo_live_bug` → `demo_first_message`): answering
+`alex_demo_ready` opens a 3-beat focus arc (`focus:'demo'`, free actions, launch-day pattern) —
+a stranger uses the app live and her first message, *"so what happens now?"*, plants the pivot
+seed as story (`s.demo_question_seen`; `pivot_open` echoes it).
 
 **Recurring SaaS cost.** Bought commodity adds to `s.extra_burn` (folded into `burnPerWeek`) — the
 perceived ongoing downside that tempts the wrong build choice. Keep these modest so correct play stays
 winnable (tune with `tests/phase_map.js`).
 
-**Lean vs full = scope *volume*.** The build-vs-buy decisions fire on both plans. The over-scoped
-`full` plan additionally carries ~2× inert **auto items** (`expandItems` adds `{ auto:true }` `scope_*`
+**Lean vs full = scope *volume*.** The direction spine fires on both plans. The over-scoped
+`full` plan additionally carries inert **auto items** (`expandItems` adds `{ auto:true }` `scope_*`
 items, no cards); the engine's build burn-down in `nextWeek()` flips them to `done` as cumulative team
-`buildEffort` passes `AUTO_BUILD_INCREMENT`, so full takes ~2× longer to reach launch-ready
-(`allScopeBuilt` gates `good_enough_launch`). There are no per-sprint "build properly / lean / defer"
-cards. There is no separate beta phase — the game goes directly from demo to launch.
+`buildEffort` passes `AUTO_BUILD_INCREMENT` — tuned so full-plan players miss the wk-30 YC window and
+die by runway (`allScopeBuilt` gates `good_enough_launch`). There are no per-sprint "build properly /
+lean / defer" cards. There is no separate beta phase — the game goes directly from demo (night) to
+launch.
 
-**Roadmap (`game.html`)** renders `s.items` (the 🗺️ panel): `quality:'bought'` → **SaaS** pill,
-`quality:'generic'` (licensed matching) → **licensed** pill; auto `scope_*` rows appear on the full plan
-only and burn down visibly.
+**Per-item effort completion.** Any `s.items[k]` carrying `{ owner, effortStart, effortTarget }`
+is flipped to `done` by `nextWeek()` once the owner's cumulative `buildEffort` passes the target
+(e.g. `video_dates` in `roles/users.js`). Cards write these fields so progress is visible weekly.
+
+**Roadmap (`game.html`)** mirrors the chat: each `RM_ITEM_META` row lists its `decide` cards —
+an open one renders a pulsing **needs your call** badge and clicking jumps to that chat;
+`item.note` (written by the card's `execute`/`dropFx`) shows the decision made;
+`effortStart/effortTarget` items render a weekly-ticking progress bar; the full plan's `scope_*`
+rows collapse into one "Extra scope · n/N built" burn-down row. `quality:'bought'` → **SaaS**
+pill, `quality:'generic'` (licensed matching) → **licensed** pill.
 
 ## Coding conventions
 

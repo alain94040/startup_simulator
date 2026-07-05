@@ -7,6 +7,7 @@
     slice: [
       "founder_landing",
       "founder_first_interviews",
+      "founder_waitlist_calls",
       "equity_signing",
       "founder_meetup",
       "founder_codebuild",
@@ -57,13 +58,56 @@
         id: 'founder_first_interviews', cat: 'c', from: 'You',
         body: "you've been building without a single structured conversation with someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
         urgency: 2, weeks: 1,
-        available: (s, char) => !s.launched && !char.flags.interviews_done && s.week <= 8,
+        // Window rides the dev clock: the co-founders' direction questions start
+        // landing at dev_start+1, and their research-gated options need this done.
+        available: (s, char) => !s.launched && !char.flags.interviews_done
+          && s.week <= Math.max(8, (s.dev_start_week || 0) + 3),
         options: [
           { label: 'Block off this week for 5 customer interviews', key: 'interview',
             journal: "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
-            execute(s, char) { char.flags.interviews_done = true; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.waitlist += 1; return "5 calls done. Two insights you didn't expect. One person said they'd pay right now if it existed. Signal much clearer."; } },
+            execute(s, char) { char.flags.interviews_done = true; char.flags.recent_user_signal_week = s.week; s.signal = clamp(s.signal + 15, 0, 100); s.market_fit = clamp(s.market_fit + 12, 0, 100); s.waitlist += 1; return "5 calls done. Two insights you didn't expect. One person said they'd pay right now if it existed. Signal much clearer."; } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,
+      },
+
+      // ── RECURRING: call the waitlist (keeps the research *fresh*) ────────────
+      // Later direction cards' best options check recent_user_signal_week — research
+      // is a habit you maintain, not a week-2 checkbox. Costs an action every time;
+      // that's the build-vs-research tension in the 2-action week.
+      {
+        id: 'founder_waitlist_calls', cat: 'c', from: 'You',
+        body: (s) => `there are ${Math.max(5, (s.waitlist || 0) + 5)} people between the waitlist and your early-access DMs, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.`,
+        urgency: 2, weeks: 1,
+        available: (s, char) => !s.launched && s.dev_start_week != null
+          && s.week >= s.dev_start_week + 2
+          && (s.waitlist >= 3 || char.flags.interviews_done)
+          && (char.flags.waitlist_calls_count || 0) < 3
+          && s.week >= (char.flags.waitlist_calls_last || 0) + 4,
+        options: [
+          { label: 'Call five of them', key: 'call',
+            journal: "Called five people from the waitlist. One woman keeps a spreadsheet of her matches across four apps — the HN thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
+            execute(s, char) {
+              char.flags.waitlist_calls_last = s.week;
+              char.flags.recent_user_signal_week = s.week;
+              s.signal = clamp(s.signal + 6, 0, 100);
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              const n = (char.flags.waitlist_calls_count = (char.flags.waitlist_calls_count || 0) + 1);
+              const rounds = [
+                "Five calls. One woman keeps a spreadsheet of her matches across four apps — the HN thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
+                "Five more calls. A teacher who deleted every app twice. A guy who wrote three drafts of a first message and sent none. The pattern doesn't move: getting matches isn't the problem — what comes after is.",
+                "Another round of calls. Someone asked, dead serious, if kindred could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
+              ];
+              return rounds[(n - 1) % rounds.length];
+            } },
+          { label: 'Not this week — the build needs you', key: 'skip',
+            journal: "Skipped the waitlist calls this week. The build needed me — but the research is going stale.",
+            execute(s, char) {
+              char.flags.waitlist_calls_last = s.week;
+              return "Skipped. The build got the afternoon instead — and the user signal gets a week staler.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.waitlist_calls_last = s.week; },
       },
 
       // ── EQUITY SIGNING: surfaces after the counter-offer arc resolves ──────
@@ -190,7 +234,7 @@
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────
       {
         id: 'founder_build_onboarding', cat: 'p', from: 'You',
-        body: "you mapped onboarding based on where testers get stuck — most drop off during profile setup. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
+        body: "you mapped onboarding from demo night and the testflight circle — where people stall is profile setup, every time. it's a 3-step wizard, within your abilities to build. alex is maxed on the matching algorithm.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -216,7 +260,7 @@
       },
       {
         id: 'founder_build_empty_states', cat: 'p', from: 'You',
-        body: "new users hit empty screens on their first session — an empty matches tab, an empty inbox — and assume the app is broken. two hours of work.",
+        body: "every first session opens on empty screens — an empty matches tab, an empty inbox — and the app looks broken. half the testflight circle said so within a day of getting the build. two hours of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
@@ -232,7 +276,7 @@
               if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
               if (jordan) jordan.morale = clamp(jordan.morale + 5, 0, 100);
               return s.waitlist > 0 || s.users > 0
-                ? "Added helpful empty states to every screen. Small fix, big impact — testers stopped asking 'is the app broken?'"
+                ? "Added helpful empty states to every screen. Small fix, big impact — the TestFlight circle stopped asking 'is the app broken?'"
                 : "Added helpful empty states to every screen. Ready before anyone hits them.";
             } },
           { label: 'Add it to the backlog', key: 'pass',
@@ -245,25 +289,27 @@
       },
       {
         id: 'founder_build_export', cat: 'p', from: 'You',
-        body: "four testers have messaged asking about photo verification. they're hesitant to upgrade without knowing their matches are real. a few days of work.",
+        // (Pre-launch, so the ask comes from the waitlist, not live users — the old
+        // users>=3 gate could never pass before launch and left this card dead.)
+        body: "three replies to your last waitlist update ask the same question: how do i know the matches are real? photo verification keeps coming up — nobody wants to join a dating app full of ghosts. a few days of work.",
         urgency: 2, weeks: 1,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');
-          return !s.launched && s.has_demo && (s.users >= 3 || s.customers >= 1) && !char.flags.export_built && alex && alex.active;
+          return !s.launched && s.has_demo && s.waitlist >= 5 && !char.flags.export_built && alex && alex.active;
         },
         options: [
           { label: 'Build photo verification yourself', key: 'build',
             execute(s, char) {
               char.flags.export_built = true;
               s.market_fit = clamp(s.market_fit + 6, 0, 100);
-              return "Photo verification shipped. All four users upgraded. One said it was the only thing holding them back.";
+              return "Photo verification shipped ahead of launch. You replied to all three with a screenshot; two wrote back variations of 'ok NOW i'm in.'";
             } },
           { label: 'Ask Alex to prioritize it', key: 'pass',
             execute(s, char, e) {
               char.flags.export_built = true;
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale - 3, 0, 100);
-              return "Alex added it to his sprint. Shipped two weeks later. Two of the four users had moved on.";
+              return "Alex added it to his sprint. It shipped two weeks later — one waitlist update too late to answer the people who asked.";
             } },
         ],
         dropDelay: 0, dropMsg: null, dropFx: null,

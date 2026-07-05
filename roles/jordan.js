@@ -1,6 +1,15 @@
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+  // Direction decisions move the build (mirror of the helper in roles/alex.js):
+  // answering a direction ask grants immediate buildEffort on top of the passive
+  // weekly accrual. Jordan has no part-time penalty — her drag is the lower
+  // build skill and, later, the drifting arc.
+  function grantEffort(char, amt) {
+    const pt = (char.archetypeId === 'alex' && !char.flags.committed_fulltime) ? 0.6 : 1.0;
+    char.buildEffort = (char.buildEffort || 0) + amt * pt;
+  }
+
   const def = {
     id: 'jordan', name: 'Jordan', type: 'cofounder',
 
@@ -11,8 +20,10 @@
       "jordan_equity_5050_interject",
       "early_working_style",
       "early_pricing",
+      "jordan_dir_first_screen",
       "matching_engine_choice",
       "jordan_ios_sprint",
+      "jordan_dir_trust_safety",
       "pivot_open",
       "jordan_fulltime_ask",
       "launch_first_bounce",
@@ -197,35 +208,73 @@
       {
         id: 'jordan_ios_sprint', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.ios_sprint_count || 0) === 0
-          ? "the iOS shell is coming together — profile screens, photo upload, the swipe deck. next sprint i wire it to the backend: login, the matching API, messaging."
+          ? "iOS milestone — the shell works: profile screens, photo upload, the first-screen flow. now i need a call on next sprint. i can polish what people will *see* at the demo, or i can start wiring the backend — login, the matching API, messaging. tempo or truth?"
           : "iOS is wired to the backend now — login, matching, and messaging all flowing through the API. same experience as web. ready to open it up.",
         urgency: 22, weeks: 1,
         available: (s, char) => {
           const count = char.flags.ios_sprint_count || 0;
+          // Sprint 1 waits for the first-screen direction call (the shell she
+          // describes *is* that flow) — answered, ignored past patience, or mooted.
+          if (count === 0 && !(char.flags.first_screen_done || s.has_demo)) return false;
           return s.jordan_active && !s.jordan_drifting && count < 2
             && (char.buildEffort || 0) >= (count === 0 ? 2 : 5);
         },
         options: [
-          { label: 'Good — keep the momentum', key: 'ack',
+          // Sprint 1 is a real trade-off: a smoother demo vs a faster launch path.
+          { label: 'Polish the demo surface', key: 'demo_polish',
+            available: (s, char) => (char.flags.ios_sprint_count || 0) === 0,
+            reply: "polish what they'll see. the demo has to feel good in someone's hand — we get one first impression.",
             execute(s, char) {
-              char.flags.ios_sprint_count = (char.flags.ios_sprint_count || 0) + 1;
-              s.signal = clamp(s.signal + 3, 0, 100);
-              if (char.flags.ios_sprint_count >= 2) {
-                s.ios_unblocked = true;
-                if (s.items) {
-                  if (s.items.ios_server) { s.items.ios_server.status = 'done'; s.items.ios_server.quality = 'solid'; }
-                }
-                return "iOS feature-complete — login, matching, and messaging all wired through the API. Same experience as web. Ready to open it up.";
-              }
+              char.flags.ios_sprint_count = 1;
+              grantEffort(char, 1.0);
+              s.signal = clamp(s.signal + 4, 0, 100);
+              s.market_fit = clamp(s.market_fit + 2, 0, 100);
               if (s.items) {
-                if (s.items.ios_ui) { s.items.ios_ui.status = 'done'; s.items.ios_ui.quality = 'solid'; }
+                if (s.items.ios_ui) { s.items.ios_ui.status = 'done'; s.items.ios_ui.quality = 'solid'; s.items.ios_ui.note = "Polished for the demo"; }
                 if (s.items.ios_server) s.items.ios_server.status = 'active';
               }
-              return "First iOS sprint done — profile screens, photo upload, and the swipe deck are working. One more sprint to wire it to auth and the matching API.";
+              return "Jordan spent the sprint on feel — transitions, haptics, the photo grid. The demo build is genuinely nice to hold. The backend wiring waits a week.";
+            } },
+          { label: 'Wire the backend first', key: 'wire_backend',
+            available: (s, char) => (char.flags.ios_sprint_count || 0) === 0,
+            reply: "wire the backend first. a pretty shell with fake data is a lie we'd be telling ourselves.",
+            execute(s, char) {
+              char.flags.ios_sprint_count = 1;
+              grantEffort(char, 1.4);
+              if (s.items) {
+                if (s.items.ios_ui) { s.items.ios_ui.status = 'done'; s.items.ios_ui.quality = 'solid'; }
+                if (s.items.ios_server) { s.items.ios_server.status = 'active'; s.items.ios_server.note = "Wiring first, polish later"; }
+              }
+              return "Jordan went straight at the integration — login, matching API, messaging. Less shine at the demo, but the app is real all the way down.";
+            } },
+          // Sprint 2: the wrap-up beat.
+          { label: 'Good — keep the momentum', key: 'ack',
+            available: (s, char) => (char.flags.ios_sprint_count || 0) >= 1,
+            execute(s, char) {
+              char.flags.ios_sprint_count = 2;
+              grantEffort(char, 1.0);
+              s.signal = clamp(s.signal + 3, 0, 100);
+              s.ios_unblocked = true;
+              if (s.items) {
+                if (s.items.ios_server) { s.items.ios_server.status = 'done'; s.items.ios_server.quality = 'solid'; }
+              }
+              return "iOS feature-complete — login, matching, and messaging all wired through the API. Same experience as web. Ready to open it up.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char) { char.flags.ios_sprint_count = (char.flags.ios_sprint_count || 0) + 1; },
+        dropFx(s, char) {
+          const count = (char.flags.ios_sprint_count || 0) + 1;
+          char.flags.ios_sprint_count = count;
+          // Ignored: she picks for herself and the milestone still lands — but you
+          // didn't answer, and the engine's ignore log remembers that.
+          if (count >= 2) {
+            s.ios_unblocked = true;
+            if (s.items && s.items.ios_server) { s.items.ios_server.status = 'done'; s.items.ios_server.quality = 'solid'; }
+          } else if (s.items) {
+            if (s.items.ios_ui) { s.items.ios_ui.status = 'done'; s.items.ios_ui.quality = 'rough'; }
+            if (s.items.ios_server) s.items.ios_server.status = 'active';
+          }
+        },
       },
 
       // ── EARLY CONVERSATIONS ──────────────────────────────────────────────────
@@ -260,6 +309,75 @@
         dropDelay: 0, dropMsg: null, dropFx(s, char) { char.flags.pricing_done = true; },
       },
 
+      // ── DIRECTION: THE FIRST SCREEN (what a stranger sees in 10 seconds) ──────
+      // The dev arc's first direction ask from Jordan. The C-option is research-gated
+      // on the founder's interviews — GOALS.md's "research → better build options".
+      {
+        id: 'jordan_dir_first_screen', cat: 'p', from: 'Jordan',
+        body: "first real iOS question. someone installs kindred, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in TestFlight friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.dev_plan != null && s.dev_start_week != null
+          && s.week >= s.dev_start_week + 1 && !char.flags.first_screen_done
+          && s.jordan_active && !s.jordan_drifting && !s.has_demo,
+        options: [
+          { label: 'Swipe deck — zero learning curve', key: 'deck',
+            reply: "deck. zero learning curve. don't make people think on day one.",
+            execute(s, char, e) {
+              char.flags.first_screen_done = true;
+              grantEffort(char, 1.0);
+              s.waitlist += 1;
+              if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Swipe deck first";
+              if (e && e.pending) e.pending.push({
+                fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
+                text: "deck build's in TestFlight. showed my sister and her roommate — same reaction from both: 'nice — so it's like hinge?' not wrong. not great either.",
+              });
+              return "Deck it is — in TestFlight by Friday, and everyone who opens it knows exactly what to do. Whether they know why it's different is another matter.";
+            } },
+          { label: 'Guided intake — five questions first', key: 'intake',
+            reply: "intake. five questions before any faces. we're not another swipe app.",
+            execute(s, char) {
+              char.flags.first_screen_done = true;
+              grantEffort(char, 1.0);
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Intake-first onboarding";
+              return "Intake-first. Riskier open — five questions before a single face — but nobody will mistake kindred for another swipe app.";
+            } },
+          { label: 'Intake — built from the interview questions', key: 'intake_interviews',
+            available: (s, char, e) => {
+              const f = e.chars.get('founder');
+              return !!(f && f.flags.interviews_done);
+            },
+            reply: "intake — and use the interview questions verbatim. open with 'how many matches went nowhere for you last month?' make them feel seen in ten seconds.",
+            journal: "Gave Jordan the first screen straight from the interviews: open with the question every user we talked to already answered — 'how many matches went nowhere last month?' She built it word for word.",
+            execute(s, char, e) {
+              char.flags.first_screen_done = true;
+              grantEffort(char, 1.2);
+              s.market_fit = clamp(s.market_fit + 7, 0, 100);
+              s.signal = clamp(s.signal + 3, 0, 100);
+              if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Intake-first (from interviews)";
+              if (e && e.pending) e.pending.push({
+                fireWeek: s.week + 1, from: 'Jordan', charId: 'jordan',
+                text: "intake flow is live in TestFlight. my sister answered question 3 and screenshotted it to her group chat. first organic share we've ever had.",
+              });
+              return "The interview questions became the first screen, word for word. Ten seconds in, a new user feels like the app already knows why they're here.";
+            } },
+        ],
+        // Ignored: she ships the deck by default — and the testers ask the question
+        // you never answered. Rework eats most of a sprint (GOALS lesson 2).
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.first_screen_done = true;
+          char.morale = clamp(char.morale - 6, 0, 100);
+          char.trust = clamp(char.trust - 4, 0, 100);
+          char.buildEffort = Math.max(0, (char.buildEffort || 0) - 1.0);
+          if (s.items && s.items.ios_ui) { s.items.ios_ui.quality = 'rough'; s.items.ios_ui.note = "Swipe deck (Jordan's default)"; }
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
+            text: "you never picked a first screen so i shipped the swipe deck. showed it to three friends this week and all three asked the same question: 'so how is this different from hinge?' i didn't have an answer. rebuilding the intake — there goes most of the sprint.",
+          });
+        },
+      },
+
       // ── BUILD vs BUY: MATCHING (the core → BUILD is right) ───────────────────
       // Jordan pushes to license the *core* matching engine from a vendor — an early
       // red flag that she's the wrong co-founder (she'd outsource the one thing that
@@ -269,12 +387,12 @@
       // reads/writes Alex via e.chars.get('alex').
       {
         id: 'matching_engine_choice', cat: 'p', from: 'Jordan',
-        body: "found something — MatchKit. they license a ready-made recommendation engine; we'd have matching working in days instead of building it from scratch. why reinvent the wheel? i say we plug it in.",
+        body: "sprint 2 direction, my two cents. found something — MatchKit. they license a ready-made recommendation engine; we'd have matching working in days instead of weeks. alex will hate this because he hand-rolls everything, that's what CTOs do. but why reinvent the wheel? i say we plug it in.",
         urgency: 12, weeks: 1,
-        // week>=6 so this (urgency 12) can't preempt the low-urgency equity opener
-        // (jordan_equity_mention, urgency 2, window wk2-5) and derail the equity arc.
+        // Rides the dev clock (dev_start_week implies equity is signed, so this can no
+        // longer preempt the equity arc the old week>=6 floor protected).
         available: (s, char) => s.dev_plan != null && !char.flags.matching_choice_done && !s.has_demo
-          && s.week >= 6 && s.week <= 14,
+          && s.dev_start_week != null && s.week >= s.dev_start_week + 1 && s.week <= s.dev_start_week + 6,
         options: [
           { label: "No — matching is the whole product, we build it", key: 'build',
             reply: "no. the matching engine *is* kindred — it's the one thing we can't outsource. we build it ourselves.",
@@ -284,7 +402,11 @@
               s.matching_owned = true;
               char.morale = clamp(char.morale - 3, 0, 100);
               const alex = e.chars.get('alex');
-              if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
+              if (alex) {
+                alex.morale = clamp(alex.morale + 5, 0, 100);
+                grantEffort(alex, 1.0);  // he dives straight into the core
+              }
+              if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — the IP";
               return "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the IP, the one thing we can't outsource. Alex was visibly relieved.";
             } },
           { label: "Good find — license it and ship faster", key: 'license',
@@ -298,8 +420,13 @@
               char.morale = clamp(char.morale + 5, 0, 100);
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale - 8, 0, 100);
-              if (s.items && s.items.matching_algo) { s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'generic'; s.items.matching_algo.assignee = null; }
-              return "Licensed MatchKit. Matching working in days — but it's a black box everyone else can rent too. Alex went quiet: 'It's our whole product and we just rented it.' $100/wk.";
+              if (s.items && s.items.matching_algo) { s.items.matching_algo.status = 'done'; s.items.matching_algo.quality = 'generic'; s.items.matching_algo.assignee = null; s.items.matching_algo.note = "Licensed: MatchKit · $100/wk"; }
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "saw the MatchKit contract go through. it's our whole product and we just rented it. hope the demo's worth it.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "Licensed MatchKit. Matching working in days — but it's a black box everyone else can rent too. $100/wk, and Alex went quiet.";
             } },
         ],
         // If ignored, Alex steps in and builds the core himself; Jordan's idea quietly dropped.
@@ -309,6 +436,63 @@
           s.matching_owned = true;
           const alex = e && e.chars && e.chars.get('alex');
           if (alex) alex.morale = clamp(alex.morale + 3, 0, 100);
+          if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — the IP";
+        },
+      },
+
+      // ── DIRECTION: TRUST & SAFETY (App Store review forces the safety call) ──
+      // Pre-launch there are no strangers in the app, so the forcing function is
+      // Apple's UGC-moderation requirements, not an incident. The C-option is gated
+      // on community engagement: the threads already told you fake profiles are the
+      // #1 complaint — engaged founders get to make safety the brand.
+      {
+        id: 'jordan_dir_trust_safety', cat: 'p', from: 'Jordan',
+        body: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story — user-generated content moderation, reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.has_demo && !s.launched && !char.flags.trust_safety_done
+          && s.jordan_active && !s.jordan_drifting,
+        options: [
+          { label: 'Report button this sprint, verify later', key: 'report_now',
+            reply: "report button this sprint. it answers apple honestly — verification can come after launch, we can't gate the release behind a feature we haven't built.",
+            execute(s, char) {
+              char.flags.trust_safety_done = true;
+              grantEffort(char, 1.0);
+              s.market_fit = clamp(s.market_fit + 2, 0, 100);
+              if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Report button pre-launch";
+              return "Report + block shipped in three days. Not deep, but real — the app review form has an honest answer now, and so does the first person who'll ever need that button.";
+            } },
+          { label: 'Full verification before launch', key: 'verify_first',
+            reply: "verification before launch. the day strangers show up is the day it has to already work — one bad first week and the women never come back.",
+            execute(s, char) {
+              char.flags.trust_safety_done = true;
+              grantEffort(char, 0.6);  // real scope — it costs build time
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              return "Photo verification goes in before launch. It costs a chunk of Jordan's sprint — the launch-ready date slips — but the safety story is real before a single stranger is in the app.";
+            } },
+          { label: 'Verification as THE feature — the threads called it', key: 'verify_flagship',
+            available: (s) => (s.community_engaged_count || 0) >= 2,
+            reply: "look at every dating thread we've been in — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
+            journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we engaged had fake profiles as complaint #1 — now it's our headline.",
+            execute(s, char) {
+              char.flags.trust_safety_done = true;
+              grantEffort(char, 1.2);
+              s.market_fit = clamp(s.market_fit + 6, 0, 100);
+              s.waitlist += 3;
+              if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Verified-only (from community)";
+              return "Verification became the headline: photo-verified at signup, checkmark on every card, 'no fakes' on the landing page. Three waitlist signups came in the day the copy changed.";
+            } },
+        ],
+        // Ignored: the app review deadline forces a bare minimum, shipped alone.
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char, e) {
+          char.flags.trust_safety_done = true;
+          char.morale = clamp(char.morale - 6, 0, 100);
+          char.trust = clamp(char.trust - 4, 0, 100);
+          s.market_fit = clamp(s.market_fit - 3, 0, 100);
+          if (e && e.pending) e.pending.push({
+            fireWeek: s.week + 2, from: 'Jordan', charId: 'jordan',
+            text: "app review wouldn't wait, so i shipped a bare report button on my own and submitted. it deserved an actual decision — this is the feature that decides whether women stay past week one.",
+          });
         },
       },
 
@@ -317,15 +501,19 @@
         id: 'pivot_open', cat: 'p', from: 'Jordan',
         body: (s, char) => (char.flags.pivot_dismissed || 0) >= 2
           ? "this has come up four separate times now. i'm not saying we pivot — i'm saying we need to have the conversation."
-          : "been going through demo feedback. three testers independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
-        urgency: (s, char) => (char.flags.pivot_dismissed || 0) >= 2 ? 3 : 2,
+          : (s.demo_question_seen
+            ? "been going through the testflight circle's feedback. remember demo night — 'so what happens now?' it wasn't a one-off. three more people in the circle used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. thought i'd flag it before we get closer to launch."
+            : "been going through the testflight circle's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch."),
+        // Spine band: post-demo this *is* the central storyline — it can't sit
+        // behind the sprint chatter the way it could when weeks were quiet.
+        urgency: (s, char) => (char.flags.pivot_dismissed || 0) >= 2 ? 13 : 12,
         weeks: 1,
         available: (s, char) => s.activities_cut && s.has_demo && s.market_fit >= 5
           && s.jordan_active && !s.jordan_resolved && !s.launched
           && !char.flags.pivot_open_done && s.week >= (char.flags.pivot_open_wait || 0),
         options: [
           { label: "Good flag — let's talk through it", key: "open",
-            journal: "Jordan flagged something from the early testers: users keep saying 'I matched, but then what?' Put it on the agenda.",
+            journal: "Jordan flagged something from the TestFlight circle: people keep saying 'I matched, but then what?' Put it on the agenda.",
             execute(s, char) {
               char.flags.pivot_open_done = true;
               return "On the agenda. Good that someone flagged it before launch.";

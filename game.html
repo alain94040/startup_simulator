@@ -606,7 +606,8 @@
   .dm-step-dot.st-obsolete{border-color:#e3b3bd}
   @keyframes dm-spin{to{transform:rotate(360deg)}}
   .dm-step-line{width:2px;background:var(--line);flex:1;min-height:7px;margin-top:3px}
-  .dm-step-body{flex:1;display:flex;align-items:center;gap:6px;padding-bottom:8px}
+  .dm-step-body{flex:1;display:flex;flex-direction:column;gap:1px;padding-bottom:8px;min-width:0}
+  .dm-step-row{display:flex;align-items:center;gap:6px}
   .dm-step-lbl{flex:1;font-size:12.5px}
   .dm-step-lbl.st-done{color:#15803d}
   .dm-step-lbl.st-active{color:#1d4ed8;font-weight:600}
@@ -616,6 +617,15 @@
   .dm-step-who{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0}
   .dm-step-tag{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px;background:#f0f0f3;color:#888;border:1px solid #e0e0e6}
   .dm-step-tag.tag-licensed{background:#fff1e6;color:#d2691e;border:1px solid #f6d3b3}
+  /* roadmap rows mirror the chat: decision notes, weekly progress, pending calls */
+  .dm-step-note{font-size:10.5px;color:#8a8a93;line-height:1.35}
+  .dm-progress{height:4px;border-radius:2px;background:#ececf1;margin:4px 0 2px;overflow:hidden;max-width:180px}
+  .dm-progress-fill{height:100%;border-radius:2px;background:#2563eb;transition:width .3s}
+  .dm-progress-fill.fill-scope{background:#d2691e}
+  .dm-pending{font-size:8px;font-weight:800;padding:2px 5px;border-radius:4px;flex-shrink:0;text-transform:uppercase;letter-spacing:.3px;background:#fee2e2;color:#dc2626;border:1px solid #fecaca;animation:dm-pulse 1.2s ease-in-out infinite}
+  @keyframes dm-pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  .dm-step.dm-click{cursor:pointer;border-radius:8px;margin:0 -4px;padding:0 4px}
+  .dm-step.dm-click:hover{background:var(--rail)}
   .dm-empty{color:var(--faint);font-size:13px;padding:6px 2px;line-height:1.5}
 
   /* bank statement — light theme port of game_cards .bank-* */
@@ -2126,24 +2136,25 @@
     }
 
     // ── build roadmap (🗺️): the dev-map stepper, ported from the card build ──
+    // Each row mirrors the chat: `decide` lists the direction cards that settle it
+    // (open card → pulsing "needs your call" badge; clicking jumps to that chat),
+    // `item.note` is the decision the player made (written by the card), and items
+    // carrying effortStart/effortTarget show a weekly-ticking progress bar.
     const RM_ITEM_META = {
       _hdr_backend:      { header:true, lbl:"Backend" },
-      matching_algo:     { lbl:"Matching engine · core", av:"AL" },
-      api_design:        { lbl:"API design",           av:"AL" },
-      auth:              { lbl:"Authentication",        av:"AL" },
-      analytics:         { lbl:"Analytics",             av:"AL" },
-      arch_refactor:     { lbl:"Arch refactor",        av:"AL" },
-      scope_social:      { lbl:"Social + push",        av:"—" },
-      scope_verification:{ lbl:"Profile verification", av:"—" },
-      video_dates:       { lbl:"Video dates",           av:"AL" },
-      plans_matching:    { lbl:"Plans matching",       av:"AL" },
+      matching_algo:     { lbl:"Matching engine · core", av:"AL", decide:[["matching_engine_choice","jordan"],["alex_dir_ranking","alex"]] },
+      api_design:        { lbl:"API design",           av:"AL", decide:[["proto_to_product","alex"]] },
+      auth:              { lbl:"Authentication",        av:"AL", decide:[["auth_build_buy","alex"],["auth_buy_forced","alex"]] },
+      analytics:         { lbl:"Analytics",             av:"AL", decide:[["analytics_choice","alex"]] },
+      arch_refactor:     { lbl:"Arch refactor",        av:"AL", decide:[["alex_wants_rebuild","alex"],["arch_refactor_done","alex"]] },
+      video_dates:       { lbl:"Video dates",           av:"AL", decide:[["feature_request_custom","users"]] },
+      plans_matching:    { lbl:"Plans matching",       av:"AL", decide:[["pivot_relaunch","alex"]] },
       _hdr_ios:          { header:true, lbl:"iOS app" },
-      ios_ui:            { lbl:"UI design",            av:"JO" },
-      ios_server:        { lbl:"Backend integration",  av:"JO" },
-      scope_premium:     { lbl:"Premium subscription", av:"—" },
-      scope_socialgraph: { lbl:"Social graph",         av:"—" },
-      scope_video:       { lbl:"Video dates",          av:"—" },
+      ios_ui:            { lbl:"UI design",            av:"JO", decide:[["jordan_dir_first_screen","jordan"],["jordan_dir_trust_safety","jordan"],["jordan_ios_sprint","jordan"]] },
+      ios_server:        { lbl:"Backend integration",  av:"JO", decide:[["jordan_ios_sprint","jordan"]] },
       plans_ui:          { lbl:"Plans UI",             av:"JO" },
+      _hdr_scope:        { header:true, lbl:"Over-scope (full plan)" },
+      _scope_group:      { scopeGroup:true },
     };
     const RM_AV_STYLE = {
       AL:"background:#e7f0ff;color:#2563eb",
@@ -2152,7 +2163,7 @@
     };
     const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
     const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","video_dates","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui"];
-    const RM_ORDER_FULL = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","scope_social","scope_verification","video_dates","plans_matching","_hdr_ios","ios_ui","ios_server","scope_premium","scope_socialgraph","scope_video","plans_ui"];
+    const RM_ORDER_FULL = RM_ORDER_LEAN.concat(["_hdr_scope","_scope_group"]);
 
     function renderRoadmap(){
       const s = engine.s;
@@ -2176,6 +2187,26 @@
         const meta = RM_ITEM_META[key];
         if (!meta) continue;
         if (meta.header){ html += `<div class="dm-grp">${meta.lbl}</div>`; continue; }
+
+        // The full plan's auto scope_* rows collapse into one burn-down row — the
+        // over-scope reads as a single visible mistake, not anonymous items.
+        if (meta.scopeGroup){
+          const autoKeys = Object.keys(s.items).filter(k => s.items[k] && s.items[k].auto);
+          if (!autoKeys.length) continue;
+          const done = autoKeys.filter(k => s.items[k].status === "done").length;
+          const allDone = done >= autoKeys.length;
+          const pct = Math.round(done / autoKeys.length * 100);
+          html += `<div class="dm-step">
+            <div class="dm-step-track"><div class="dm-step-dot st-${allDone?"done":"active"}">${allDone?"✓":""}</div></div>
+            <div class="dm-step-body">
+              <div class="dm-step-row"><span class="dm-step-lbl st-${allDone?"done":"active"}">Extra scope · ${done}/${autoKeys.length} built</span></div>
+              <div class="dm-step-note">Social, verification, premium, social graph, video — the full plan's extra weight.</div>
+              <div class="dm-progress"><div class="dm-progress-fill fill-scope" style="width:${pct}%"></div></div>
+            </div>
+          </div>`;
+          continue;
+        }
+
         const item = s.items[key];
         if (!item) continue;
         const st = item.status;
@@ -2186,12 +2217,48 @@
         const tag = item.quality==="bought" ? `<span class="dm-step-tag">SaaS</span>`
                   : item.quality==="generic" ? `<span class="dm-step-tag tag-licensed">licensed</span>` : "";
         const who = !tag && st==="active" && meta.av!=="—" ? `<span class="dm-step-who" style="${RM_AV_STYLE[meta.av]}">${meta.av}</span>` : "";
-        html += `<div class="dm-step">
+
+        // Is one of this row's direction cards sitting unanswered in a chat?
+        let pendingCard = null, pendingChar = null;
+        for (const [cid, chid] of (meta.decide || [])){
+          if (engine.isOpen(cid)){ pendingCard = cid; pendingChar = chid; break; }
+        }
+        const pending = pendingCard ? `<span class="dm-pending">needs your call</span>` : "";
+        const clickAttr = pendingCard ? ` data-open-card="${pendingCard}" data-open-char="${pendingChar}"` : "";
+
+        // The decision the player made, as the card wrote it.
+        const note = item.note ? `<div class="dm-step-note">${escapeHtml(item.note)}</div>` : "";
+
+        // Weekly-visible delivery progress for decision items with an effort target.
+        let prog = "";
+        const ownerId = item.owner || (st === "active" && item.effortTarget != null ? item.assignee : null);
+        if (st === "active" && item.effortTarget != null && item.effortStart != null && ownerId){
+          const ch = engine.chars.get(ownerId);
+          const eff = ch ? (ch.buildEffort || 0) : 0;
+          const span = Math.max(0.001, item.effortTarget - item.effortStart);
+          const pct = Math.max(0, Math.min(100, Math.round((eff - item.effortStart) / span * 100)));
+          prog = `<div class="dm-progress"><div class="dm-progress-fill" style="width:${pct}%"></div></div>`;
+        }
+
+        html += `<div class="dm-step${pendingCard?" dm-click":""}"${clickAttr}>
           <div class="dm-step-track"><div class="dm-step-dot st-${stCls}">${dot}</div>${line}</div>
-          <div class="dm-step-body"><span class="dm-step-lbl st-${stCls}">${escapeHtml(meta.lbl)}</span>${tag}${who}</div>
+          <div class="dm-step-body">
+            <div class="dm-step-row"><span class="dm-step-lbl st-${stCls}">${escapeHtml(meta.lbl)}</span>${tag}${who}${pending}</div>
+            ${note}${prog}
+          </div>
         </div>`;
       }
       pop.innerHTML = html;
+      // "Needs your call" rows jump to the chat holding the open question.
+      [...pop.querySelectorAll("[data-open-card]")].forEach(el=>{
+        el.onclick = ()=>{
+          const cardId = el.dataset.openCard, charId = el.dataset.openChar;
+          closePops();
+          if (busy()) return;
+          if (NOCHAT.has(charId)){ selectCard(cardId); return; }
+          active = charId; openConversation();
+        };
+      });
     }
 
     // ── bank statement (cash readout): week-by-week ledger from engine.ledger ──
