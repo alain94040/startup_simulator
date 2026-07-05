@@ -1893,6 +1893,19 @@
       // arc's entry interstitial (the visible hand-off out of weekly cadence), then
       // its first beat. renderStats() first so the top-bar budget already reads
       // "paused" when the overlay fades away.
+      // Entering pivot day (the summit) → cinematic before first beat. Checked ahead of
+      // the generic entry path below since pivot has no FOCUS_CINEMATIC entry (its exit
+      // line depends on the decision made, so it can't be a static dict lookup).
+      if (!wasFocusId && nowFocusId === "pivot") {
+        renderStats();
+        showFocusCinematic([
+          "Pivot Day.",
+          "Two columns on the whiteboard.",
+          "Nobody leaves until it's decided."
+        ], followFocusBeat, "rgba(255,140,140,1)");
+        return;
+      }
+
       if (!wasFocusId && nowFocusId) {
         renderStats();
         const cine = FOCUS_CINEMATIC[nowFocusId];
@@ -1913,6 +1926,18 @@
           openConversation();
           revealJournalFrom(jShown);
         };
+
+        // Pivot day just ended → exit cinematic keyed to the decision
+        if (wasFocusId === "pivot") {
+          const closing = engine.s.pivot_choice === "pivot"
+            ? ["The decision is made.", "Monday morning, the rebuild begins."]
+            : engine.s.pivot_choice === "growth"
+              ? ["The decision is made.", "The next fifty matches will tell you if it was right."]
+              : ["The decision is made.", "Half a pivot. Priya hopes she's wrong."];
+          showFocusCinematic(closing, restoreWorld, "rgba(255,140,140,1)");
+          return;
+        }
+
         const cine = FOCUS_CINEMATIC[wasFocusId];
         if (cine && cine.exit) { showFocusCinematic(cine.exit, restoreWorld, cine.accent); return; }
         restoreWorld();

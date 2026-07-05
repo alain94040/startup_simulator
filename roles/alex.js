@@ -1333,8 +1333,8 @@
               char.flags.thesis_done = true;
               return "He's drafting the growth plan. You're watching the after-match numbers.";
             } },
-          { label: 'The circle had maximum density', key: 'push_back',
-            reply: "the circle was a dozen people who all knew each other. maximum density. 11 of 14 matches still died. explain that with darts.",
+          { label: 'The TestFlight circle says otherwise', key: 'push_back',
+            reply: "the testflight circle was a dozen people who all knew each other — a full room, by your own logic. 11 of 14 matches still died. explain that with darts.",
             available: (s) => s.analytics_dropoff_seen || s.demo_question_seen,
             journal: "Alex made the density case and I hit him with the TestFlight circle: a dozen people who all knew each other, and 11 of 14 matches still died. He didn't have a clean answer. First crack in the wall.",
             execute(s, char, e) {
@@ -1438,8 +1438,8 @@
             available: (s) => !!s.demo_question_seen,
             journal: null,
             execute(s, char, e) { pdPlayChip(s, char, e, 'demo'); return null; } },
-          { key: 'circle', label: 'The circle had max density',
-            reply: "and the testflight circle kills the density theory outright — twelve people, all friends of friends, max density. 11 of 14 matches died anyway.",
+          { key: 'circle', label: 'TestFlight circle — 11 of 14 died',
+            reply: "and the testflight circle kills the density theory outright — twelve people, all friends of friends, everyone knew everyone. 11 of 14 matches died anyway.",
             available: (s) => !!s.analytics_dropoff_seen,
             journal: null,
             execute(s, char, e) { pdPlayChip(s, char, e, 'circle'); return null; } },
