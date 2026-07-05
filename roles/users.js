@@ -5,6 +5,7 @@
     id: 'users', name: 'Users', type: 'customer', noChat: true,
 
     slice: [
+      "slide_first_echo",
       "bug_reports",
       "churn_interview",
       "feature_request_custom",
@@ -16,6 +17,35 @@
     intro: "you have real users now. they're going to start talking.",
     unlockCondition: (s) => s.waitlist >= 5 || s.users >= 3 || s.customers >= 1,
     cards: [
+      {
+        // Slide week L+1: the demo-night question comes back from a stranger.
+        // Replying personally banks Rachel's answer — an evidence chip for
+        // pivot day ("a place to say yes to").
+        id: 'slide_first_echo', cat: 'c', from: 'Support inbox',
+        body: "support email, forwarded by alex: \"hi! i matched with two people this week. we both said hi. now the app just… shows me the same two chats. am i missing a feature? is something supposed to happen next? — rachel k.\"",
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
+          && s.week >= (s.launch_week || 0) + 1 && !char.flags.first_echo_done,
+        options: [
+          { label: 'Write her back yourself', key: 'reply_honest',
+            journal: "Rachel K. emailed support: 'is something supposed to happen next?' I wrote back myself and asked what she'd hoped would happen. Her answer, word for word: 'I hoped the app would give one of us an excuse. A place to say yes to.' Kept it.",
+            execute(s, char) {
+              char.flags.first_echo_done = true;
+              s.rachel_answer = true;
+              s.signal = clamp(s.signal + 3, 0, 100);
+              s.market_fit = clamp(s.market_fit + 3, 0, 100);
+              return "You wrote back: 'You're not missing anything — tell me what you hoped would happen?' Rachel's answer, verbatim: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.";
+            } },
+          { label: 'Add it to the FAQ pile', key: 'faq',
+            journal: "A user asked what's supposed to happen after a match. Sent the standard answer — 'check back as more people join.' The density answer, given reflexively.",
+            execute(s, char) {
+              char.flags.first_echo_done = true;
+              return "Filed under FAQ: 'check back as more people join.' The density answer, given reflexively.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.first_echo_done = true; },
+      },
       {
         id: 'bug_reports', cat: 'p', from: 'Users',
         body: (s) => s.bug_reports_last

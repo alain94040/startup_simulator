@@ -6,7 +6,7 @@
 
     slice: [
       "post_match_dropoff",
-      "silent_churn",
+      "slide_cohort",
     ],
 
     role: "Product data",
@@ -36,17 +36,33 @@
         dropFx(s, char) { char.flags.dropoff_done = true; s.analytics_dropoff_seen = true; },
       },
       {
-        id: 'silent_churn', cat: 'c', from: 'Analytics',
-        body: "free users are signing up, swiping through profiles for 20 minutes, and disappearing. they match with someone but never send a message. no explanation.",
-        urgency: 3, weeks: 1,
-        available: (s, char) => s.launched && s.users >= 3 && s.users < 30 && !char.flags.done && s.week >= (s.silent_churn_last || 0) + 8,
+        // The slide's Friday number (week L+2): the week-one cohort, delivered
+        // cold. Only exists if the player bought analytics — without it, Friday
+        // is just a feeling, and pivot day's evidence beat runs hollow.
+        id: 'slide_cohort', cat: 'c', from: 'Analytics',
+        body: (s) => {
+          const total = Math.max(8, s.users);
+          const matches = Math.max(10, Math.round(total * 1.4));
+          const opened = Math.max(3, Math.round(total * 0.26));
+          const convos = Math.max(2, Math.round(matches * 0.13));
+          return `week-one cohort is in. of ${total} launch-week signups, ${opened} opened the app this week. ${matches} matches created since launch; ${convos} conversations passed two messages; plans made to actually meet: 0. the shape is identical to the testflight circle — at 3x the size.`;
+        },
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.analytics_live && s.launched && !s.activities_pivot
+          && s.week >= (s.launch_week || 0) + 2 && !char.flags.cohort_done,
         options: [
-          { label: 'Call all three', key: 'call',
-            journal: "Called all 3 silent users. Found a critical onboarding gap. Fixed it. 2 came back.",
-            execute(s, char) { char.flags.done = true; s.silent_churn_last = s.week; s.signal = clamp(s.signal + 6, 0, 100); return "Called all 3. Found a critical onboarding gap. Fixed it. 2 came back."; } },
+          { label: 'Sit with the numbers', key: 'dig',
+            journal: "Friday. The week-one cohort came in and it's the TestFlight circle's shape at 3x the size: matches happen, conversations don't, plans to meet — zero. It's not that we don't know. It's that the number is now too big to un-know.",
+            execute(s, char) {
+              char.flags.cohort_done = true;
+              s.cohort_seen = true;
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              s.signal = clamp(s.signal + 2, 0, 100);
+              return "You sat with the cohort until the shape stopped being deniable: the drop-off is after the match, at every size you've ever measured.";
+            } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char) { char.flags.done = true; s.silent_churn_last = s.week; s.signal = clamp(s.signal - 12, 0, 100); s.users = clamp(s.users - 8, 0, 9999); },
+        dropFx(s, char) { char.flags.cohort_done = true; },
       },
     ],
   };

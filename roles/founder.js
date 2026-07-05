@@ -10,6 +10,8 @@
       "founder_waitlist_calls",
       "equity_signing",
       "founder_meetup",
+      "slide_maya_call",
+      "pivot_summit_call",
       "founder_codebuild",
       "founder_build_onboarding",
       "founder_build_empty_states",
@@ -369,6 +371,74 @@
         },
       },
 
+      // ── THE SLIDE (week L+2): the human beat — call the first churned user ───
+      {
+        id: 'slide_maya_call', cat: 'c', from: 'You',
+        body: "Maya — the first signup, launch day, Jordan watched her fill out her profile live — hasn't opened the app in 9 days. She matched with three people in week one. You have her number.",
+        urgency: 13, weeks: 1,
+        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
+          && s.week >= (s.launch_week || 0) + 2 && !char.flags.maya_done,
+        options: [
+          { label: 'Call her', key: 'call',
+            journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted Kindred because it made me feel worse, not better.'",
+            execute(s, char) {
+              char.flags.maya_done = true;
+              s.maya_quote = true;
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              s.signal = clamp(s.signal + 3, 0, 100);
+              return "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. Kindred made me feel worse, not better.' You wrote down every word.";
+            } },
+          { label: 'Send an email survey', key: 'survey',
+            journal: "Sent Maya (and the other quiet accounts) a churn survey. Two replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
+            execute(s, char) {
+              char.flags.maya_done = true;
+              s.market_fit = clamp(s.market_fit + 1, 0, 100);
+              return "Two survey replies, both polite, nothing quotable. Surveys get answers; calls get the truth.";
+            } },
+          { label: 'Churned users churn — focus forward', key: 'let_go',
+            journal: "Decided not to chase Maya. Churned users churn. Focus forward.",
+            execute(s, char) {
+              char.flags.maya_done = true;
+              return "Focused forward. Whatever Maya knew about why she left, she took with her.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) { char.flags.maya_done = true; },
+      },
+
+      // ── PIVOT DAY TRIGGER (week L+3): the founder calls the summit ───────────
+      // Drifting past this is itself the failure the scorecard names: ignore it
+      // long enough and pivot_deferred sets silently — the default won.
+      {
+        id: 'pivot_summit_call', cat: 'p', from: 'You',
+        body: (s, char, e) => `Three weeks of data, two theories, one whiteboard. Alex says density: the product is fine, the room is empty. Priya says retention: the room doesn't matter if every match hits a dead end. You cannot build both. ${e ? e.runwayWeeks : 10} weeks of runway says you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.`,
+        urgency: 14, weeks: 1, patience: 3,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          const priya = e.chars.get('priya');
+          return s.launched && s.activities_cut && !s.activities_pivot
+            && !s.pivot_summit_done && !s.pivot_deferred
+            && s.week >= (s.launch_week || 0) + 3
+            && alex && alex.active && priya && priya.active;
+        },
+        options: [
+          { label: 'Call it — Saturday, whiteboard', key: 'call_it',
+            journal: "Called the summit. Saturday, whiteboard, nobody leaves until we know what we're building Monday. Alex is bringing the density case; Priya's bringing four years of scar tissue.",
+            execute(s, char, e) {
+              s.focus = { id: 'pivot', charIds: ['alex', 'priya'] };
+              return "Saturday. Whiteboard. Nobody leaves until you know what you're building Monday.";
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s, char) {
+          // Never called the room: the default direction wins by inertia.
+          // No summit means no Priya tally either — the story just goes quiet,
+          // which is exactly what drifting into a default feels like.
+          s.pivot_deferred = true;
+          s.pivot_summit_done = true;
+        },
+      },
+
       // ── SOLO MODE: cards that unlock when Alex leaves ────────────────────────
       // Alex was the only one who could call a launch, drive product, and push
       // discovery. Without him, the founder inherits those jobs — slower, harder,
@@ -385,6 +455,7 @@
           { label: 'Ship it', key: 'ship',
             execute(s, char, e) {
               s.launched = true;
+              s.launch_week = s.week;
               s.signal = clamp(s.signal + 6, 0, 100);
               e.finishItemsAtLaunch();
               return "Launched solo. No fanfare. But it's live.";

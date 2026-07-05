@@ -196,28 +196,36 @@
       }
       scope = clamp(scope, 0, 100);
 
-      // Part C — "people want", after launch: hear the signal and pivot
-      const pivotFaced = s.launched || faced("pivot_open") || faced("pivot_alex_pushback") ||
-        faced("post_match_dropoff") || s.activities_pivot || s.pivot_shipped;
+      // Part C — "people want", after launch: hear the signal and pivot.
+      // The decision now lives on pivot day (the post-launch summit): credit for
+      // the listening that preceded it (analytics, Maya's call, evidence chips
+      // played in the room) and for deciding — decisively, not by hedge or drift.
+      const pivotFaced = s.launched || faced("pivot_open") ||
+        faced("post_match_dropoff") || faced("pivot_day_decide") ||
+        s.activities_pivot || s.pivot_shipped;
       let piv = null, pivDetail;
       if (!pivotFaced) {
         pivDetail = "The market never got the chance to tell you Plan A was wrong.";
       } else {
         piv = 0;
-        if (chose("post_match_dropoff")) piv += 25;               // read the analytics signal, didn't scroll past
-        if (chose("churn_interview", "call")) piv += 15;          // called the churned subscriber
+        if (chose("post_match_dropoff")) piv += 20;               // read the analytics signal, didn't scroll past
+        if (chose("slide_maya_call", "call")) piv += 15;          // called the first churned user
+        if (chose("churn_interview", "call")) piv += 10;          // called the churned subscriber
+        if (s.evidence_chip && s.evidence_chip !== "gut") piv += 15;  // argued pivot day with receipts, not vibes
         if (s.activities_pivot) piv += 30;
         if (s.pivot_deferred) piv -= 20;
-        if (s.pivot_direction_game === "ship" && !s.activities_pivot) piv -= 10;
+        if (s.pivot_hedged && !s.activities_pivot) piv -= 10;
         if (s.pivot_shipped) piv += 25;
         piv = clamp(piv, 0, 100);
         pivDetail = s.pivot_shipped
           ? "When the data said matches were going nowhere, you pivoted and shipped v2 — the product users had been describing all along."
           : s.activities_pivot
             ? "You committed to the pivot but v2 never shipped — the insight died in the backlog."
-            : s.pivot_deferred || s.pivot_direction_game === "ship"
-              ? "The signal was there — matches going nowhere — and you shipped Plan A anyway."
-              : "The drop-off data and the churn calls were pointing somewhere; you never followed them.";
+            : s.pivot_hedged
+              ? "At the summit you hedged — an activities tab bolted onto the deck — and got neither the pivot nor the focus."
+              : s.pivot_deferred
+                ? "The signal was there — matches going nowhere — and you rode Plan A anyway."
+                : "The drop-off data and the churn calls were pointing somewhere; you never followed them.";
       }
 
       const score = piv == null
@@ -288,6 +296,12 @@
           txt: held
             ? "And when the graph went flat, you held the roadmap until you knew why users leave"
             : "And when the graph went flat, you let Alex ship streaks-by-Friday — the numbers didn't move",
+        });
+      }
+      if (s.pivot_hedged) {
+        comp.push({
+          w: 20, v: 10,
+          txt: "When pivot day forced a direction, you hedged — an activities tab bolted onto the swipe deck, both halves mediocre",
         });
       }
       if (faced("feature_cluster")) {

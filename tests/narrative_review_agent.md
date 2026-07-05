@@ -102,7 +102,7 @@ All outcomes and stamps in chronological order. `✦` = milestone stamp. `[CharN
 |---|---|---|
 | Alex | Always (W1) | No messages after departure. `alex_sync_discover` wrong post-launch. |
 | Jordan | Always (W1) | Follow-ups after ignored equity cards should reference tension, not praise. |
-| Priya | After `founder_meetup` card is answered | No appearance before meetup outcome in journal. |
+| Priya | After `founder_meetup` is answered, or post-launch outreach (`launch_week + 2`) | No appearance before the meetup outcome in journal *or* launch week. Intro must match the path (meetup greeting vs. cold "you don't know me"). |
 | Marcus | W6+, `network.advisors >= 1` | "tried twice" follow-up must not appear same week as successful call. |
 | Fatima | W8+, `network.advisors >= 1` | "you went quiet" follow-up must not appear same week as successful meeting. |
 | Ryan | W8+, `network.advisors >= 1` | `ryan_checkin` body rotates 4 variants — should not repeat identically. |
@@ -110,7 +110,7 @@ All outcomes and stamps in chronological order. `✦` = milestone stamp. `[CharN
 | Brett (brand) | Pre-launch only | Flag if appears when `launched:true`. |
 | Kevin (growth) | Post-launch only | Flag if appears when `launched:false`. |
 | Tom (top user) | `customers >= 10` | Flag if `customers < 10` in state line at first appearance. |
-| Analytics | Post-launch, `users >= 3` | `silent_churn` must not fire with `launched:false` or `users:0`. |
+| Analytics | `analytics_live` (bought) or post-launch traffic | `slide_cohort` must not fire with `launched:false` or without `analytics_live`. |
 | HN / Reddit / Indie Hackers | Sequence: 3 pre-launch one-shots, then recurring post-launch | Out-of-order or wrong phase. |
 | YC | Fixed windows (W30, then every 12 wk) | "stats qualify" version wrong if `customers < 10`. |
 
@@ -152,7 +152,7 @@ Check each character's first CHAT entry against unlock conditions in the table a
 ### 7. Roadmap vs. card actions
 Cross-reference ROADMAP CHANGES with CHAT blocks:
 - `auth: done(bought)` but Alex's CHAT shows "build it himself" was chosen → contradiction.
-- `plans_matching` appears but no pivot card (`pivot_open`, `pivot_alex_pushback`, `pivot_priya_verdict`) in any CHAT → orphaned state change.
+- `plans_matching` appears but no pivot decision (`pivot_day_decide`, `pivot_fifty_verdict`) in any CHAT → orphaned state change.
 - `analytics: done(bought)` appears *after* an Analytics EVENTS card fires → used before set up.
 - `✦ Launched` in JOURNAL before `launched:true` in TIMELINE → ordering bug.
 

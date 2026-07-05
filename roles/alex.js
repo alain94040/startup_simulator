@@ -56,6 +56,42 @@
     char.buildEffort = (char.buildEffort || 0) + amt * pt;
   }
 
+  // Pivot-day beat 4: the player plays an evidence chip and Alex responds in
+  // character. Conversion rule: the cohort (bought analytics) plus one human
+  // quote — a face on the data — is what moves him off his own column.
+  function pdPlayChip(s, char, e, key) {
+    char.flags.pd_evidence_done = true;
+    s.evidence_chip = key;
+    const human = key === 'maya' || key === 'rachel' || key === 'demo';
+    if (human && s.analytics_live) {
+      s.alex_converted = true;
+      e.threads.alex.push({
+        type: 'incoming', from: 'Alex',
+        body: "…yeah. put that next to the cohort. i'm going to go quietly erase half my column.",
+        week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+      });
+    } else if (key === 'circle') {
+      e.threads.alex.push({
+        type: 'incoming', from: 'Alex',
+        body: "…the circle. i keep forgetting our best density experiment already ran, and density lost.",
+        week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+      });
+    } else if (human) {
+      e.threads.alex.push({
+        type: 'incoming', from: 'Alex',
+        body: "that's a real data point and it stings. i just wish i could test it at scale — one quote against one theory isn't a cohort.",
+        week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+      });
+    } else {
+      // 'gut' — Priya answers, gently.
+      e.threads.priya.push({
+        type: 'incoming', from: 'Priya',
+        body: "then we're guessing. i've won and lost on guesses. just know which one this is.",
+        week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+      });
+    }
+  }
+
   const def = {
     id: 'alex', name: 'Alex', type: 'cofounder',
 
@@ -88,9 +124,15 @@
       "alex_dir_ranking",
       "alex_dir_seed_strategy",
       "analytics_choice",
-      "pivot_alex_pushback",
-      "pivot_counter_alex",
-      "bad_retention",
+      "slide_hangover",
+      "slide_alex_thesis",
+      "pivot_day_open",
+      "pivot_day_alex_case",
+      "pivot_day_evidence",
+      "pivot_day_cost",
+      "pivot_day_decide",
+      "pivot_payoff_maya",
+      "pivot_fifty_verdict",
       "feature_spree",
       "pivot_relaunch",
       "proto_to_product",
@@ -1225,138 +1267,348 @@
         ],
       },
 
-      // ── PIVOT DISCUSSION (card 2 of 3: Alex pushes back on Jordan's flag) ──────
+      // ═══ THE SLIDE (weeks L+1..L+3): three weeks of gravity after launch ═══════
+      // Launch day ends on a high (launch_signal); these beats walk it back.
+      // Two competing diagnoses of the same flat graph — Alex's density thesis
+      // vs the retention failure — set up pivot day. Evidence banked here
+      // (s.maya_quote, s.rachel_answer, s.alex_crack) detonates at the summit.
       {
-        id: 'pivot_alex_pushback', cat: 'p', from: 'Alex',
-        body: (s) => {
-          const base = "heard what jordan flagged. i disagree. we cut activities for a reason — scope creep is what kills startups at our stage. we built a strong matching engine. users always want more features. three people saying 'i don't know what to do' doesn't mean we rip up the product right before we're ready to ship.";
-          return s.met_priya
-            ? base + " priya pushed back on me — she said she's seen this kind of signal get ignored before. i respect her, but she didn't build this."
-            : base;
-        },
+        id: 'slide_hangover', cat: 'c', from: 'Alex',
+        body: (s) => `morning-after math. we ended launch week at ${Math.max(4, s.users)} accounts. day one was the spike — yesterday 6 new, today 2. some comedown is normal: the email blast is spent, that traffic was never going to repeat. the number that actually matters is how many of them come back. i'll have a real answer friday.`,
         urgency: 12, weeks: 1,
-        available: (s, char, e) => {
-          const jordan = e.chars.get("jordan");
-          return jordan && jordan.flags.pivot_open_done && !char.flags.pivot_direction_set
-            && s.activities_cut && !s.jordan_resolved && s.week <= 22;
-        },
+        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
+          && s.week >= (s.launch_week || 0) + 1 && !char.flags.slide_hangover_done,
         options: [
-          { label: "Alex is right — ship what we have, add activities post-launch", key: "ship",
-            journal: "Sided with Alex — we ship what we have, add activities post-launch. Alex looked relieved. Jordan went quiet.",
+          { label: 'Watch retention, not signups', key: 'retention',
+            reply: "agreed — ignore the top of the funnel for now. friday, i want to know who came back.",
+            journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday — retention, not signups.",
             execute(s, char, e) {
-              char.flags.pivot_direction = "ship";
-              char.flags.pivot_direction_set = true;
-              s.pivot_direction_game = "ship";
-              char.morale = clamp(char.morale + 6, 0, 100);
-              const jordan = e.chars.get("jordan");
-              if (jordan) jordan.morale = clamp(jordan.morale - 5, 0, 100);
-              if (!s.met_priya) {
-                s.pivot_resolved_flag = true;
-                s.pivot_deferred = true;
-              }
-              return "Alex looked relieved. Jordan went quiet — she's not sure you're right, but she'll build the release checklist.";
+              char.flags.slide_hangover_done = true;
+              s.signal = clamp(s.signal + 2, 0, 100);
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "that's the correct question. most founders ask the other one.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "Friday it is. Whoever comes back is the real launch number.";
             } },
-          { label: "The signal is real — I think we should pivot", key: "pivot",
-            journal: "Told Alex the signal is real — we should pivot. He went quiet. 'Okay. It's your call.' He doesn't agree.",
-            execute(s, char) {
-              char.flags.pivot_direction = "pivot";
-              char.flags.pivot_direction_set = true;
-              s.pivot_direction_game = "pivot";
-              char.morale = clamp(char.morale - 8, 0, 100);
-              return "Alex went quiet. 'Okay. It's your call.' He doesn't agree.";
+          { label: 'We need another traffic push', key: 'funnel',
+            reply: "2 a day won't cut it. we need another traffic push this week.",
+            journal: "Told Alex to run another traffic push. It netted five signups and cost two days. He was polite about it, but the lesson was loud: the leak isn't at the top of the funnel.",
+            execute(s, char, e) {
+              char.flags.slide_hangover_done = true;
+              s.funnel_first = true;
+              s.users += 5;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "ran the re-blast plus a post in two local subreddits. five signups. cost us two days. the leak isn't at the top.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "Five signups for two days of work. The leak isn't at the top.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          char.flags.pivot_direction = "ship";
-          char.flags.pivot_direction_set = true;
-          s.pivot_direction_game = "ship";
-          const jordan = e && e.chars && e.chars.get("jordan");
-          if (jordan) jordan.morale = clamp(jordan.morale - 5, 0, 100);
-          if (!s.met_priya) { s.pivot_resolved_flag = true; s.pivot_deferred = true; }
-        },
+        dropFx(s, char) { char.flags.slide_hangover_done = true; },
       },
-      // ── PIVOT DISCUSSION (card 3 of 3: Alex counter, no-Priya pivot path) ────
       {
-        id: 'pivot_counter_alex', cat: 'p', from: 'Alex',
-        body: "i still think you're wrong. we built the right product — the matching engine is solid. i'll build whatever you decide. but i want it on the record: we're adding scope we already said no to.",
+        // Alex's rationalization of the flat graph — and it's *good*. The classic
+        // cold-start read: density, not product. The counter-argument (option B)
+        // only exists if the player banked pre-launch evidence.
+        id: 'slide_alex_thesis', cat: 'p', from: 'Alex',
+        body: (s) => {
+          const base = `before anyone says the p-word: look at it from the marketplace side. ${Math.max(5, s.users)} accounts. in one city that's not a dating pool, it's a dinner party. matching is throwing darts — of course people bounce off three mediocre options and an empty screen. hinge's week three looked exactly like this. this is a density problem. the mixer, campus seeding, referrals — that's the fix. you don't redesign the menu because the restaurant is empty.`;
+          return s.funnel_first
+            ? base + " and monday you were the one asking for a traffic push — so part of you already agrees with me."
+            : base;
+        },
         urgency: 12, weeks: 1,
-        available: (s, char) => char.flags.pivot_direction === "pivot" && !s.pivot_resolved_flag
-          && !s.met_priya && s.week <= 22,
+        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
+          && !s.pivot_summit_done && s.week >= (s.launch_week || 0) + 2
+          && char.flags.slide_hangover_done && !char.flags.thesis_done,
         options: [
-          { label: "I've made the call — we pivot", key: "confirm",
-            journal: "Confirmed the pivot over Alex's objection. Three weeks, $2k. We're rebuilding around activities.",
+          { label: "Fair read — draft the growth plan", key: 'hear_him',
+            reply: "it's a fair read. get me the growth plan — but i'm watching what happens *after* a match, not just how many we make.",
+            journal: "Alex made the density case: too few users for matching to work, fix the room before you blame the menu. It's a fair read. I asked for the growth plan — and I'm watching what happens after a match.",
+            execute(s, char) {
+              char.flags.thesis_done = true;
+              return "He's drafting the growth plan. You're watching the after-match numbers.";
+            } },
+          { label: 'The circle had maximum density', key: 'push_back',
+            reply: "the circle was a dozen people who all knew each other. maximum density. 11 of 14 matches still died. explain that with darts.",
+            available: (s) => s.analytics_dropoff_seen || s.demo_question_seen,
+            journal: "Alex made the density case and I hit him with the TestFlight circle: a dozen people who all knew each other, and 11 of 14 matches still died. He didn't have a clean answer. First crack in the wall.",
             execute(s, char, e) {
-              s.pivot_resolved_flag = true;
+              char.flags.thesis_done = true;
+              s.alex_crack = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "…i don't have a clean answer to that one. friday's numbers will tell us.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "He went quiet, then honest: no clean answer. Friday's numbers will tell.";
+            } },
+        ],
+        dropDelay: 1, dropFrom: 'Alex',
+        dropMsg: "taking the silence as agreement — starting on the growth plan. if you disagree, now's the time.",
+        dropCancel: (s, char) => char.flags.thesis_done,
+        dropFx(s, char) { char.flags.thesis_done = true; },
+      },
+
+      // ═══ PIVOT DAY — the summit focus arc (opened by pivot_summit_call) ════════
+      // One Saturday, one whiteboard: Alex argues density, Priya argues retention,
+      // the player decides. Launch-day machinery: focus:'pivot', free beats,
+      // patience Infinity, chained by flags across alex/priya threads.
+      {
+        id: 'pivot_day_open', cat: 'p', from: 'Alex', focus: 'pivot',
+        body: "saturday. office. i got here early and covered the whiteboard — two columns: DENSITY PROBLEM / PRODUCT PROBLEM. before priya shows up i want one thing said founder-to-founder: i'm going to argue my column as hard as i can today, because someone has to. but whatever you decide at 6pm, i build it. deal?",
+        urgency: 20, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'pivot' && !char.flags.pd_open_done,
+        options: [
+          { key: 'deal', label: 'Deal — argue hard',
+            reply: "deal. argue hard. i'd be worried if you didn't.",
+            journal: null,
+            execute(s, char) { char.flags.pd_open_done = true; return null; } },
+        ],
+      },
+      {
+        id: 'pivot_day_alex_case', cat: 'p', from: 'Alex', focus: 'pivot',
+        body: (s) => `opening statement. ${Math.max(5, s.users)} accounts. a dating app under a few hundred users per city isn't a product yet — it's a raffle with bad odds. every user who left saw the same thing: three so-so matches, an empty discovery screen, silence. that experience drives people out of *hinge*, and hinge works. the mixer, campus ambassadors, a referral loop — six weeks, call it $1,500, and we're at 300 users and rerun the numbers. rebuilding the product off launch week's behavior is reading tea leaves and calling it data.`,
+        urgency: 19.5, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'pivot' && char.flags.pd_open_done && !char.flags.pd_case_done,
+        options: [
+          { key: 'probe', label: 'What would prove you wrong?',
+            reply: "steelman it for me then. what result would prove you wrong?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.pd_case_done = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "…fine. if the matches that were GOOD also died. good match, both active, conversation starts — and still nothing. density explains bad matches. it can't explain good ones going nowhere.",
+                week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+              });
+              return null;
+            } },
+          { key: 'challenge', label: 'When do we find out you were wrong?',
+            reply: "your fix costs six weeks and the runway math doesn't have six spare. say your plan works — when do we find out it didn't?",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.pd_case_done = true;
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: "…yeah. the math is the weakest part of my column.",
+                week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+      {
+        // The hinge of the whole arc: what fires here depends entirely on what
+        // the player banked. With analytics Alex pulls the cohort and converts
+        // himself; without it the beat is hollow and the call runs on conviction.
+        id: 'pivot_day_evidence', cat: 'p', from: 'Alex', focus: 'pivot',
+        body: (s, char, e) => {
+          const priya = e && e.chars && e.chars.get('priya');
+          const asked = priya && priya.flags.pd_priya_done;
+          const core = s.analytics_live
+            ? "…okay. top-decile matches. mutual like, both users active, high score. eleven since launch. ten went: match — 'hey' — 'hey' — nothing. number eleven made it to five messages and died when he asked 'so what does your week look like?' and she never answered. …that's not a density failure. that's the app going silent at the exact moment it was supposed to have an answer."
+            : "i can't split matches by quality. we never instrumented it — i've got total counts and my own memory of watching the logs. you're going to have to make this call on conviction, because i can't make it on data.";
+          return s.jordan_resolved
+            ? core + "\n\nfor the record: jordan called this in testflight. before everything. i argued with her too."
+            : core;
+        },
+        urgency: 19, patience: Infinity,
+        available: (s, char, e) => {
+          const priya = e.chars.get('priya');
+          return s.focus && s.focus.id === 'pivot' && priya && priya.flags.pd_priya_done && !char.flags.pd_evidence_done;
+        },
+        options: [
+          { key: 'maya', label: "Maya's call — she liked her match",
+            reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. kindred made me feel worse.' we didn't lose her to thin supply. we lost her after we delivered.",
+            available: (s) => !!s.maya_quote,
+            journal: null,
+            execute(s, char, e) { pdPlayChip(s, char, e, 'maya'); return null; } },
+          { key: 'rachel', label: "Rachel's email — 'a place to say yes'",
+            reply: "rachel told me what she wanted, unprompted: 'i hoped the app would give one of us an excuse. a place to say yes to.' she wasn't asking for more matches.",
+            available: (s) => !!s.rachel_answer,
+            journal: null,
+            execute(s, char, e) { pdPlayChip(s, char, e, 'rachel'); return null; } },
+          { key: 'demo', label: "Demo night — 'so what happens now?'",
+            reply: "the first stranger who ever touched this app finished the flow, matched, and typed 'so what happens now?' we've had the question since demo night. we just never answered it.",
+            available: (s) => !!s.demo_question_seen,
+            journal: null,
+            execute(s, char, e) { pdPlayChip(s, char, e, 'demo'); return null; } },
+          { key: 'circle', label: 'The circle had max density',
+            reply: "and the testflight circle kills the density theory outright — twelve people, all friends of friends, max density. 11 of 14 matches died anyway.",
+            available: (s) => !!s.analytics_dropoff_seen,
+            journal: null,
+            execute(s, char, e) { pdPlayChip(s, char, e, 'circle'); return null; } },
+          { key: 'gut', label: 'A feeling and a flat graph',
+            reply: "i don't have clean data. i have a feeling and a flat graph.",
+            journal: null,
+            execute(s, char, e) { pdPlayChip(s, char, e, 'gut'); return null; } },
+        ],
+      },
+      {
+        id: 'pivot_day_cost', cat: 'p', from: 'Alex', focus: 'pivot',
+        body: (s, char, e) => {
+          const weeks = Math.max(0, Math.floor((s.cash - 2000) / (e ? e.burnPerWeek : 500)));
+          return `cost column, because someone has to write it. rebuild: three weeks, call it $2k all-in. that leaves us relaunching with ${weeks} weeks of cash — i did the division twice hoping i'd made an error. if we pivot and i was right about density — we die having built two products nobody used. if we push growth and priya's right — we spend our last dollars marketing a dead end. wrong in either direction is the same grave. it just has different flowers.`;
+        },
+        urgency: 18, patience: Infinity,
+        available: (s, char, e) => {
+          const priya = e.chars.get('priya');
+          return s.focus && s.focus.id === 'pivot' && priya && priya.flags.pd_shape_done && !char.flags.pd_cost_done;
+        },
+        options: [
+          { key: 'ack', label: 'Write it in red — then we decide',
+            reply: "noted. write it in red. now let's decide anyway — that's the job.",
+            journal: null,
+            execute(s, char) { char.flags.pd_cost_done = true; return null; } },
+        ],
+      },
+      {
+        id: 'pivot_day_decide', cat: 'p', from: 'Alex', focus: 'pivot',
+        body: "6pm. board's full. both columns argued. your company, your call: what are we building monday morning?",
+        urgency: 17, patience: Infinity,
+        available: (s, char) => s.focus && s.focus.id === 'pivot' && char.flags.pd_cost_done && !char.flags.pd_decide_done,
+        options: [
+          { key: 'pivot', label: 'We pivot — the plan is the product',
+            reply: "we pivot. the plan is the product — a match needs somewhere to go, and monday we start building the somewhere.",
+            journal: "Pivot day, 6pm. I called it: we pivot. The thing you browse won't be a person anymore — it'll be a plan. Three weeks, $2k, and Kindred becomes a calendar with people attached.",
+            execute(s, char, e) {
+              char.flags.pd_decide_done = true;
+              s.pivot_summit_done = true;
+              s.pivot_choice = 'pivot';
               s.activities_pivot = true;
               s.pivot_week = s.week;
               s.cash = clamp(s.cash - 2000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 15, 0, 100);
-              char.morale = clamp(char.morale - 10, 0, 100);
-              const jordan = e.chars.get("jordan");
-              if (jordan) jordan.morale = clamp(jordan.morale + 5, 0, 100);
               applyActivitiesPivot(s);
-              return "Alex went quiet. 'Okay.' Three weeks. $2k. Rebuilding around activities.";
+              const jordan = e.chars.get('jordan');
+              if (jordan && jordan.active) jordan.morale = clamp(jordan.morale + 5, 0, 100);
+              if (s.alex_converted) {
+                // He argued himself out of his own column — the rebuild starts
+                // committed, with a head start on the pivot effort clock.
+                const te = (char.buildEffort || 0) + (jordan && jordan.active ? (jordan.buildEffort || 0) : 0);
+                s.pivot_effort_base = te - 1.0;
+                e.threads.alex.push({
+                  type: 'incoming', from: 'Alex',
+                  body: "yeah. honestly? i got there around 4 o'clock — number eleven did it. monday. erase my column.",
+                  week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+                });
+              } else {
+                char.morale = clamp(char.morale - 10, 0, 100);
+                e.threads.alex.push({
+                  type: 'incoming', from: 'Alex',
+                  body: "okay. on the record: not convinced. but i said i'd build whatever you decide, and i meant it.",
+                  week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+                });
+              }
+              return null;
             } },
-          { label: "You're right — we ship as planned", key: "reverse",
-            journal: "Changed my mind — shipping as planned. Alex seemed relieved.",
-            execute(s, char) {
-              s.pivot_resolved_flag = true;
+          { key: 'growth', label: "Alex is right — all-in on density",
+            reply: "alex is right — the room's just empty. we don't touch the product. all-in on density: mixer, ambassadors, referrals.",
+            journal: "Pivot day, 6pm. I sided with Alex: it's a density problem. We don't touch the product — mixer, ambassadors, referrals. Priya left me one number to watch: of the next 50 matches, how many turn into a plan to meet.",
+            execute(s, char, e) {
+              char.flags.pd_decide_done = true;
+              s.pivot_summit_done = true;
+              s.pivot_choice = 'growth';
               s.pivot_deferred = true;
-              char.morale = clamp(char.morale + 5, 0, 100);
-              return "Alex seemed relieved. Shipping as planned.";
+              s.pivot_summit_week = s.week;
+              s.signal = clamp(s.signal + 4, 0, 100);
+              char.morale = clamp(char.morale + 6, 0, 100);
+              e.pending.push({
+                fireWeek: s.week + 2, from: 'Alex', charId: 'alex',
+                text: "mixer report: 40 rsvps, 19 showed, 11 installed on the spot. good night, honestly. i'm watching the after-match numbers like a hawk, like you asked.",
+                fx(st) { st.users += 20; },
+                cancel: (st) => st.activities_pivot,
+              });
+              return null;
+            } },
+          { key: 'hedge', label: 'Split it — tab, deck, and growth',
+            reply: "split it. keep the deck, add an activities tab, push growth too. cover every base.",
+            journal: "Pivot day, 6pm. I split the difference: keep the deck, bolt on an activities tab, push growth too. Priya said it out loud — that's not a strategy, it's a hedge. We'll see who's right.",
+            execute(s, char) {
+              char.flags.pd_decide_done = true;
+              s.pivot_summit_done = true;
+              s.pivot_choice = 'hedge';
+              s.pivot_hedged = true;
+              s.pivot_summit_week = s.week;
+              s.market_fit = clamp(s.market_fit + 5, 0, 100);
+              s.cash = clamp(s.cash - 800, 0, 9999999);
+              return null;
+            } },
+        ],
+      },
+
+      // ═══ AFTERMATH ═════════════════════════════════════════════════════════════
+      {
+        // The bookend — only exists if the player called Maya during the slide.
+        id: 'pivot_payoff_maya', cat: 'c', from: 'Alex',
+        body: "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
+        urgency: 3, weeks: 1,
+        available: (s, char) => s.pivot_shipped && !!s.maya_quote && !char.flags.maya_payoff_done,
+        options: [
+          { label: 'It is a different app now', key: 'ack',
+            reply: "it is a different app now. she told us exactly what was wrong with the old one — feels right that she's first back.",
+            journal: "Maya came back. The first launch-day signup, the one who told me the app made her feel worse — she RSVP'd to a Thursday climbing plan on her own. That's the whole pivot in one notification.",
+            execute(s, char) {
+              char.flags.maya_payoff_done = true;
+              s.signal = clamp(s.signal + 5, 0, 100);
+              return "The first churned user, back on her own. That's the whole pivot in one notification.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char) {
-          s.pivot_resolved_flag = true;
-          s.pivot_deferred = true;
-          char.morale = clamp(char.morale + 5, 0, 100);
-        },
+        dropFx(s, char) { char.flags.maya_payoff_done = true; },
       },
       {
-        id: 'bad_retention', cat: 'p', from: 'Alex',
-        body: "week two post-launch. signups are coming in but nobody's coming back. ran a quick survey — eight out of ten say the same thing: 'i matched with someone but then what?' they don't know what to do with a match. the retention curve is flat.",
+        // The redemption card: three weeks after choosing growth (or the hedge),
+        // Priya's number comes due. Being wrong is recoverable exactly once,
+        // at a price — later, costlier, with runway nearly spent.
+        id: 'pivot_fifty_verdict', cat: 'p', from: 'Alex',
+        body: (s) => {
+          const core = "i kept priya's tally on the whiteboard. we're at 61 new signups since the summit — the growth push worked, you were right about that part. matches since the summit: 54. plans to meet: zero. not low. zero. i erased my column this morning. how much runway do we have left?";
+          return s.pivot_choice === 'hedge'
+            ? core + " and the events tab has 9 views. the deck is still the front door. half-pivots don't count — i checked."
+            : core;
+        },
         urgency: 13, weeks: 1,
-        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
-          && !char.flags.bad_retention_seen && s.week >= 12,
+        available: (s, char) => (s.pivot_choice === 'growth' || s.pivot_choice === 'hedge')
+          && !s.activities_pivot && s.launched
+          && s.week >= (s.pivot_summit_week || 0) + 3 && !char.flags.fifty_done,
         options: [
-          { label: 'Add activity features now — two-sprint fix', key: 'fix',
-            journal: "Retrofitted activity features post-launch. More expensive and disruptive than doing it before, but users who stayed are responding.",
-            execute(s, char) {
-              char.flags.bad_retention_seen = true;
+          { label: 'Pivot now — late beats never', key: 'pivot_now',
+            reply: "zero at fifty. priya said we'd know, and we know. we pivot — now, with whatever runway is left.",
+            journal: "Zero plans to meet out of 54 matches. Alex erased his own column. We're pivoting late — $3k instead of $2k, with runway nearly spent. The lesson was on the whiteboard three weeks ago.",
+            execute(s, char, e) {
+              char.flags.fifty_done = true;
               s.activities_pivot = true;
               s.pivot_week = s.week;
               s.cash = clamp(s.cash - 3000, 0, 9999999);
               s.market_fit = clamp(s.market_fit + 8, 0, 100);
-              char.morale = clamp(char.morale + 3, 0, 100);
               applyActivitiesPivot(s);
-              return "Two sprints to retrofit activities post-launch. More expensive and disruptive than doing it before. Users who stayed are responding.";
+              const jordan = e.chars.get('jordan');
+              if (jordan && jordan.active) jordan.morale = clamp(jordan.morale + 3, 0, 100);
+              return "Pivoting three weeks late. $3k, less runway, same rebuild. Alex is already sketching the plans screen — he got there on his own this time.";
             } },
-          { label: "Run user calls — figure out what they actually need", key: 'calls',
-            journal: "Did 12 user calls this week. Every single one mentioned not knowing what to do after matching. The path forward is clear — just late.",
+          { label: 'Ride Plan A down', key: 'ride',
+            reply: "we made our call at the summit. we ride it.",
+            journal: "54 matches, zero plans to meet — and I chose to ride Plan A anyway. Alex went quiet. Priya stopped texting.",
             execute(s, char) {
-              char.flags.bad_retention_seen = true;
-              s.market_fit = clamp(s.market_fit + 4, 0, 100);
-              char.morale = clamp(char.morale - 3, 0, 100);
-              return "12 user calls this week. Every single one mentioned not knowing what to do after a match. The path forward is clear — it's just late.";
-            } },
-          { label: "Stay course — improve matching quality", key: 'stay',
-            journal: "Decided the problem was matching quality, not the post-match experience. Users keep churning. I think Alex is right that this was the wrong call.",
-            execute(s, char) {
-              char.flags.bad_retention_seen = true;
-              s.market_fit = clamp(s.market_fit - 20, 0, 100);
-              s.signal = clamp(s.signal - 20, 0, 100);
-              char.morale = clamp(char.morale - 15, 0, 100);
-              return "Decided the problem is matching quality. Users keep churning. Alex thinks this is the wrong call but goes along with it.";
+              char.flags.fifty_done = true;
+              s.market_fit = clamp(s.market_fit - 15, 0, 100);
+              s.signal = clamp(s.signal - 15, 0, 100);
+              char.morale = clamp(char.morale - 10, 0, 100);
+              return "Riding Plan A. The graph doesn't care about resolve.";
             } },
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s, char) {
-          char.flags.bad_retention_seen = true;
-          s.market_fit = clamp(s.market_fit - 25, 0, 100);
-          s.signal = clamp(s.signal - 25, 0, 100);
-          char.morale = clamp(char.morale - 15, 0, 100);
+          char.flags.fifty_done = true;
+          s.market_fit = clamp(s.market_fit - 15, 0, 100);
+          s.signal = clamp(s.signal - 15, 0, 100);
+          char.morale = clamp(char.morale - 12, 0, 100);
         },
       },
       {
@@ -1366,18 +1618,26 @@
         // purpose — it surfaces in a lull, not during the launch-week flood.
         // Scored by scoring.js ("Features Won't Save You").
         id: 'feature_spree', cat: 'p', from: 'Alex',
-        body: "signups are flat this week and i keep staring at the graph. i could bang out group events, profile badges, maybe streaks — pick one and it's live by friday. something will stick, right?",
-        urgency: 2, weeks: 1,
+        body: "signups are flat and i keep staring at the graph. i could bang out icebreaker prompts, streaks, read receipts — pick one and it's live by friday. something will stick, right?",
+        // Slide week 3: Alex's coping mechanism surfaces while the pivot idea
+        // hangs in the air — spine urgency so the trap is actually faced.
+        urgency: 12, weeks: 1,
         available: (s, char) => s.launched && !s.pivot_shipped && s.users >= 3
+          && s.week >= (s.launch_week || 0) + 3
           && !char.flags.feature_spree_done,
         options: [
           { label: 'Pick one and ship it — something will stick', key: 'spree',
+            reply: "pick one and ship it. motion beats meetings.",
             journal: "Let Alex ship streaks by Friday. It was live, it was shiny, and the graph didn't move. We're guessing.",
-            execute(s, char) {
+            execute(s, char, e) {
               char.flags.feature_spree_done = true;
               s.feature_spree = true;
               s.market_fit = clamp(s.market_fit - 6, 0, 100);
               s.signal = clamp(s.signal - 4, 0, 100);
+              e.pending.push({
+                fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
+                text: "streaks is live. daily active streak users: 1. it's me.",
+              });
               return "Streaks shipped by Friday. A handful of users tapped it once. The graph didn't move — you're not learning, you're guessing.";
             } },
           { label: "Nothing new ships until we know why they leave", key: 'no',
@@ -1471,7 +1731,7 @@
             reply: "ship it. we're launching.",
             journal: null,
             execute(s, char, e) {
-              s.launched = true; s.signal = clamp(s.signal + 12, 0, 100);
+              s.launched = true; s.launch_week = s.week; s.signal = clamp(s.signal + 12, 0, 100);
               e.finishItemsAtLaunch();
               e.threads.alex.push({
                 type: 'incoming', from: 'Alex',

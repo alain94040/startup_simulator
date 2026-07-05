@@ -186,6 +186,37 @@ an open one renders a pulsing **needs your call** badge and clicking jumps to th
 rows collapse into one "Extra scope · n/N built" burn-down row. `quality:'bought'` → **SaaS**
 pill, `quality:'generic'` (licensed matching) → **licensed** pill.
 
+## Post-launch arc — the slide and pivot day
+
+**The pivot decision lives post-launch only.** Launch always happens on Plan A
+(`good_enough_launch` stamps `s.launch_week`); pre-launch signals — demo night's question
+(`s.demo_question_seen`), the analytics drop-off (`s.analytics_dropoff_seen`), Jordan's flag
+(`pivot_open`, now pure foreshadowing: acknowledge banks `s.pivot_flagged`, no chain) — are
+**evidence the player banks** for pivot day, mirroring the dev arc's research-gated C-options.
+
+**The slide (L+1..L+3, urgency 12–13)**: three weeks of gravity after launch day's high.
+`slide_hangover` (Alex, day-after comedown), `slide_first_echo` (users.js — Rachel's support
+email; replying personally banks `s.rachel_answer`), `slide_cohort` (analytics.js, only if
+`s.analytics_live` — the Friday cohort number), `slide_alex_thesis` (Alex's *density* case —
+the respectable wrong diagnosis; the counter-option is evidence-gated), `slide_maya_call`
+(founder journal — calling the first churned user banks `s.maya_quote`), `feature_spree`
+(re-voiced into the slide, scored), `slide_priya_ping` + `slide_jordan_echo` (texture). Priya
+unlocks via the meetup **or** post-launch outreach (`launch_week + 2`, function `intro` in
+`roles/priya.js`) so the summit always has its second voice.
+
+**Pivot day** (`pivot_summit_call`, founder journal, L+3 → `s.focus = {id:'pivot',
+charIds:['alex','priya']}`): an 8-beat summit focus arc (launch-day machinery), Alex arguing
+density vs Priya arguing retention. The hinge is `pivot_day_evidence`: options are **evidence
+chips** gated on what was banked (`maya`/`rachel`/`demo`/`circle`/`gut`); cohort + one human
+quote sets `s.alex_converted` (no morale hit, rebuild head start via `s.pivot_effort_base`).
+`pivot_day_decide`: **pivot** (`applyActivitiesPivot`, −$2k, `s.activities_pivot`) / **growth**
+(`s.pivot_deferred`, arms `pivot_fifty_verdict` — the one $3k redemption card 3 weeks later) /
+**hedge** (`s.pivot_hedged`, feeds the features-won't-save-you lesson). Ignoring the summons
+sets `pivot_deferred` silently — drifting into the default is the scored failure.
+`pivot_payoff_maya` bookends a shipped pivot if Maya was called. Scoring's "build something
+people want" Part C reads the evidence trail (`slide_maya_call`, `s.evidence_chip`,
+`post_match_dropoff`) plus the decision flags.
+
 ## Coding conventions
 
 - 2-space indentation, double quotes, semicolons.

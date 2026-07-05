@@ -137,7 +137,6 @@ const ALLOW = new Set([
   "first_customer_offer",     // the convert-the-first-customer card — customers===0 by design
   "yc_discussion_early",      // YC criteria meta-message; literally says "not launched / <10 subscribers"
   "yc_apply",                 // YC application boilerplate referencing subscriber learnings
-  "pivot_priya_verdict",      // advisor *warning* about post-launch retention risk, not a current claim
 ]);
 
 // ── violation aggregation ─────────────────────────────────────────────────────

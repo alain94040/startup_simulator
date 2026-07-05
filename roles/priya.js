@@ -1,38 +1,27 @@
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
-  // Mirror of alex.js applyActivitiesPivot — the pivot rewrites the roadmap around
-  // activities. Duplicated here because the helper is scoped to alex.js's IIFE.
-  function pivotItems(s) {
-    if (!s.items) return;
-    if (s.items.matching_algo) s.items.matching_algo.status = "obsolete";
-    if (s.items.ios_ui)        s.items.ios_ui.status        = "obsolete";
-    ["scope_social", "scope_verification", "scope_premium", "scope_socialgraph", "scope_video"].forEach(k => {
-      if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
-    });
-    // Licensing the core (Jordan's call) bites here: a black box can't be re-tuned for
-    // the pivot — it has to be ripped out and rebuilt, costing extra cash and fit.
-    if (s.matching_licensed && !s.matching_blackbox_ripped) {
-      s.matching_blackbox_ripped = true;
-      s.cash = clamp(s.cash - 1500, 0, 9999999);
-      s.market_fit = clamp(s.market_fit - 10, 0, 100);
-    }
-    s.items.plans_matching = { status: "active", quality: null, assignee: "alex"   };
-    s.items.plans_ui       = { status: "todo",   quality: null, assignee: s.jordan_resolved ? null : "jordan" };
-  }
-
   const def = {
     id: 'priya', type: 'advisor',
 
     slice: [
       "mentor_competitor_bomb",
-      "pivot_priya_verdict",
+      "slide_priya_ping",
+      "pivot_day_priya_case",
+      "pivot_day_shape",
+      "pivot_day_close",
     ],
 
     role: "Advisor",
     name: "Priya",  // chat display name
-    intro: "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute.",
-    unlockCondition: (s) => s.met_priya === true && s.week >= s.met_priya_week + 2,
+    // Two ways in: the founder meetup (early), or — if the player never went —
+    // she reaches out herself once the launch makes Kindred visible. Either way
+    // the pivot summit always has its second voice.
+    intro: (s) => s.met_priya
+      ? "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute."
+      : "hey — you don't know me. priya. a friend sent me kindred's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
+    unlockCondition: (s) => (s.met_priya === true && s.week >= s.met_priya_week + 2)
+      || (s.launched && s.week >= (s.launch_week || 0) + 2),
     cards: [
       {
         id: 'mentor_competitor_bomb', cat: 'c', from: 'Priya (advisor)',
@@ -49,72 +38,114 @@
         dropFx(s, char) { s.signal = clamp(s.signal - 8, 0, 100); s.investor_warmth = clamp(s.investor_warmth - 8, 0, 100); },
       },
 
-      // ── PIVOT DISCUSSION (card 3 of 3: Priya weighs in when met_priya) ────────
+      // ── THE SLIDE (week L+2/L+3): Priya names the number that matters ─────────
       {
-        id: 'pivot_priya_verdict', cat: 'p', from: 'Priya (advisor)',
-        body: (s) => s.pivot_direction_game === "pivot"
-          ? "you're making the right call. alex will come around — founders always think the thing they built is the product. the users are telling you otherwise."
-          : "i've watched consumer startups ignore early retention signals and spend six months fixing it post-launch. alex built something technically excellent — that's not in question. the question is what users do with a match. 'nowhere to go' is a retention failure, not a feature request. you have time to fix this now. you won't after.",
-        urgency: 2, weeks: 1,
-        available: (s) => s.pivot_direction_game != null && !s.pivot_resolved_flag
-          && s.met_priya && s.week <= 22,
+        id: 'slide_priya_ping', cat: 'c', from: 'Priya (advisor)',
+        body: (s) => s.met_priya
+          ? "saw the launch — congrats, genuinely. that's the part most people never do. real talk though: how's week two? and i mean retention, not signups. those are different numbers and only one of them is real."
+          : "so — the coffee offer was half social. the real question: how's week two treating you? and i mean retention, not signups. those are different numbers and only one of them is real.",
+        urgency: 12, weeks: 1,
+        available: (s, char) => s.launched && s.activities_cut && !s.activities_pivot
+          && !s.pivot_summit_done && s.week >= (s.launch_week || 0) + 2
+          && !char.flags.ping_done,
         options: [
-          { label: "Priya's right — we pivot", key: "pivot",
-            journal: "Called Alex. 'I've made the decision — we're pivoting.' He went quiet, then: 'okay.' Three weeks, $2k. We're rebuilding around activities.",
+          { label: 'Give her the real numbers', key: 'real_numbers',
+            reply: "honestly? day one was great and it's been gravity ever since. matches happen, then nothing.",
+            journal: "Priya asked about week two — retention, not signups. I gave her the real answer: matches happen, then nothing. She said 'then nothing' is the whole ballgame, and offered to clear a Saturday.",
             execute(s, char, e) {
-              s.pivot_resolved_flag = true;
-              s.activities_pivot = true;
-              s.pivot_week = s.week;
-              s.cash = clamp(s.cash - 2000, 0, 9999999);
-              s.market_fit = clamp(s.market_fit + 15, 0, 100);
-              const alex = e.chars.get("alex");
-              if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
-              const jordan = e.chars.get("jordan");
-              if (jordan) jordan.morale = clamp(jordan.morale + 3, 0, 100);
-              pivotItems(s);
-              return "You called Alex. 'I've made the decision.' He went quiet, then: 'okay.' Three weeks. $2k.";
+              char.flags.ping_done = true;
+              char.flags.ping_honest = true;
+              e.threads.priya.push({
+                type: 'incoming', from: 'Priya',
+                body: "'then nothing' is the whole ballgame. when you're ready to take that seriously, i'll clear a saturday.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "'Then nothing' is the whole ballgame, she said. She's ready to clear a Saturday.";
             } },
-          { label: "Appreciate it — but we ship as planned", key: "ship",
-            journal: "Decided to ship as planned. Alex was relieved. Priya said 'okay — watch your week-two retention closely.' I'll remember that.",
+          { label: "Still reading the data", key: 'deflect',
+            reply: "still reading the data. early days.",
+            journal: "Priya asked about week-two retention and I deflected — 'still reading the data.' Her reply landed anyway: data doesn't read itself. The offer stands.",
             execute(s, char, e) {
-              s.pivot_resolved_flag = true;
-              s.pivot_deferred = true;
-              const jordan = e.chars.get("jordan");
-              if (jordan) jordan.morale = clamp(jordan.morale + 3, 0, 100);
-              return "Alex was relieved. Priya said 'okay — watch your week-two retention closely.'";
-            } },
-          { label: "Good — let's make it happen", key: "go",
-            journal: "Three weeks. $2k. Alex built it without comment. The product shifted underneath us — and it feels right.",
-            execute(s, char, e) {
-              s.pivot_resolved_flag = true;
-              s.activities_pivot = true;
-              s.pivot_week = s.week;
-              s.cash = clamp(s.cash - 2000, 0, 9999999);
-              s.market_fit = clamp(s.market_fit + 15, 0, 100);
-              const alex = e.chars.get("alex");
-              if (alex) alex.morale = clamp(alex.morale - 10, 0, 100);
-              const jordan = e.chars.get("jordan");
-              if (jordan) jordan.morale = clamp(jordan.morale + 3, 0, 100);
-              pivotItems(s);
-              return "Three weeks. $2k. Alex built it without comment. The product shifted.";
+              char.flags.ping_done = true;
+              e.threads.priya.push({
+                type: 'incoming', from: 'Priya',
+                body: "sure. data doesn't read itself though. offer stands.",
+                week: s.week, isNew: true, seq: e._seq++,
+              });
+              return "She didn't push. 'Data doesn't read itself though. Offer stands.'";
             } },
         ],
         dropDelay: 0, dropMsg: null,
-        dropFx(s, char, e) {
-          s.pivot_resolved_flag = true;
-          if (s.pivot_direction_game === "pivot") {
-            // Player already committed to pivot with Alex — execute it even without engaging Priya
-            s.activities_pivot = true;
-            s.pivot_week = s.week;
-            s.cash = clamp(s.cash - 2000, 0, 9999999);
-            s.market_fit = clamp(s.market_fit + 10, 0, 100);
-            pivotItems(s);
-          } else {
-            s.pivot_deferred = true;
-            const alex = e && e.chars && e.chars.get("alex");
-            if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
-          }
+        dropFx(s, char) { char.flags.ping_done = true; },
+      },
+
+      // ── PIVOT DAY — Priya's beats in the summit focus arc ─────────────────────
+      {
+        // Beat 3: she doesn't argue back — she raises the stakes on evidence.
+        id: 'pivot_day_priya_case', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
+        body: "my turn, and i'll keep it short because i'd rather look at data than trade speeches. 'the metrics will fix themselves when we're bigger' is the most expensive sentence in consumer software. i've said it myself. sometimes it's even true — that's what makes it dangerous. so let's not vote on vibes. alex: your instrumentation scores match quality, right? pull the good ones. matches you'd defend as excellent. show me what happened to them.",
+        urgency: 19.5, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'pivot' && alex && alex.flags.pd_case_done && !char.flags.pd_priya_done;
         },
+        options: [
+          { key: 'pull_it', label: 'Pull the best matches — watch the replay',
+            reply: "do it. best matches we've ever made. let's watch the replay.",
+            journal: null,
+            execute(s, char) { char.flags.pd_priya_done = true; return null; } },
+        ],
+      },
+      {
+        // Beat 5: what "pivot" even means — a reframe, not a feature.
+        id: 'pivot_day_shape', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
+        body: "so say it's the product. here's the trap not to fall in: do NOT bolt an 'events tab' onto a swipe app. that's what every dying dating app ships in year two and it smells like desperation from the app store screenshot. flip the object. the thing you browse isn't a person — it's a plan. 'thursday. climbing gym. six of us, two spots open.' matching becomes 'who's going,' not 'who's hot.' the first message is never 'hey' again — it's 'i'm in.' kindred stops being a chat app with dead ends and becomes a calendar with people attached.",
+        urgency: 18.5, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'pivot' && alex && alex.flags.pd_evidence_done && !char.flags.pd_shape_done;
+        },
+        options: [
+          { key: 'flip', label: 'Flip the object — browse plans, not people',
+            reply: "flip the object. you browse a plan, not a person. write it in the product column.",
+            journal: null,
+            execute(s, char, e) {
+              char.flags.pd_shape_done = true;
+              // Alex's engineering read — the old MatchKit decision bites or pays here.
+              e.threads.alex.push({
+                type: 'incoming', from: 'Alex',
+                body: s.matching_licensed
+                  ? "here's where i get to be mad at a decision from months ago: matchkit can't do this. it ranks singles, period, and we can't see inside it. it has to come out — all of it, the integration too. we'd be paying to remove the thing we paid to add."
+                  : "…the brutal-slash-beautiful part: the scoring core survives. ranking people for a plan is the same math with a different target — i can re-aim it in a week. what dies is the entire screen flow. the deck, the chat-first layout. all of it.",
+                week: s.week, isNew: true, focus: 'pivot', seq: e._seq++,
+              });
+              return null;
+            } },
+        ],
+      },
+      {
+        // Beat 8: night. Closes the focus arc — the world resumes.
+        id: 'pivot_day_close', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
+        body: (s) => s.pivot_choice === 'pivot'
+          ? "one more thing before i go. most founders can't do what you did today — kill a thing that works in favor of a thing that's true. that's the whole job, and almost nobody does it while there's still runway to survive it. text me the second v2 is live. i want to be user #1."
+          : s.pivot_choice === 'growth'
+            ? "good fight today. it's your company and it was a real argument. watch one number for me: of your next 50 matches, how many turn into a plan to meet. zero at fifty and you move — no second summit. deal?"
+            : "that's not a strategy, it's a hedge — and hedges ship late and mediocre twice. i said it once, and now i'll respect your call. for what it's worth, i hope i'm wrong. i'm usually not about this one.",
+        urgency: 16, patience: Infinity,
+        available: (s, char, e) => {
+          const alex = e.chars.get('alex');
+          return s.focus && s.focus.id === 'pivot' && alex && alex.flags.pd_decide_done && !char.flags.pd_close_done;
+        },
+        options: [
+          { key: 'night', label: 'Thank her — long day, right call',
+            reply: "thank you for today. whichever way it goes — that was the most useful room this company has ever been in.",
+            journal: "Pivot day ended after dark. Whiteboard full, coffee cold, decision made. Whatever happens next, that room was the most useful eight hours this company has spent.",
+            execute(s, char) {
+              char.flags.pd_close_done = true;
+              s.focus = null;  // pivot day is over — the world resumes
+              return null;
+            } },
+        ],
       },
     ],
   };
