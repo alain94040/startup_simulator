@@ -1349,10 +1349,10 @@
         if (useTyping){
           const t = document.createElement("div");
           t.className="row in"; t.innerHTML = `<div class="typing"><i></i><i></i><i></i></div>`;
-          box.appendChild(t); scrollDown();
-          setTimeout(()=>{ t.remove(); box.appendChild(buildChatEntry(e)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+          box.appendChild(t); scrollDown(true);
+          setTimeout(()=>{ t.remove(); box.appendChild(buildChatEntry(e)); scrollDown(true); i++; shown[charId]=i; step(); }, delay);
         } else {
-          setTimeout(()=>{ box.appendChild(buildChatEntry(e)); scrollDown(); i++; shown[charId]=i; step(); }, delay);
+          setTimeout(()=>{ box.appendChild(buildChatEntry(e)); scrollDown(true); i++; shown[charId]=i; step(); }, delay);
         }
       };
       step();
@@ -1596,9 +1596,9 @@
         box.appendChild(card);
         $("tcClose").onclick = ()=>{ if (busy()) return; selectedCard = null; renderThreadResponse(); renderHand(); };
         [...card.querySelectorAll(".chip")].forEach(btn=>{ btn.onclick = ()=> commitCard(btn.dataset.card, btn.dataset.key); });
-        // scroll the freshly-appended card fully into view, after layout settles
-        scrollDown();
-        requestAnimationFrame(()=>{ box.scrollTop = box.scrollHeight; });
+        // glide the freshly-appended card fully into view (target re-reads each
+        // frame, so it settles even as the card's own entrance animation runs)
+        scrollDown(true);
         return;
       }
 
@@ -1608,7 +1608,7 @@
       box.appendChild(cta);
       const b = cta.querySelector("button");
       if (b && !spent) b.onclick = ()=>{ if (busy()) return; selectedCard = cardId; renderThreadResponse(); renderHand(); };
-      scrollDown();
+      scrollDown(true);
     }
 
     // ── the hand (bottom action cards) ───────────────────
@@ -2560,7 +2560,32 @@
     }
 
     // ── utils ────────────────────────────────────────────
-    function scrollDown(){ const t=$("thread"); t.scrollTop = t.scrollHeight; }
+    // Scroll the thread to the newest message. `smooth` glides there with an
+    // eased rAF animation (old bubbles drift gently up while the new one eases in);
+    // omit it for context switches (opening a chat) where an instant landing at the
+    // bottom is expected. The target is re-read each frame so the scroll keeps
+    // following the bottom even as more content is appended mid-animation.
+    let _scrollAnim = null;
+    function scrollDown(smooth){
+      const t = $("thread");
+      if (_scrollAnim){ cancelAnimationFrame(_scrollAnim); _scrollAnim = null; }
+      const target = () => Math.max(0, t.scrollHeight - t.clientHeight);
+      if (!smooth){ t.scrollTop = target(); return; }
+      const start = t.scrollTop;
+      const dist0 = target() - start;
+      if (Math.abs(dist0) < 2){ t.scrollTop = target(); return; }
+      const dur = Math.min(520, Math.max(240, Math.abs(dist0) * 1.6));
+      const t0 = performance.now();
+      const ease = x => 1 - Math.pow(1 - x, 3);   // easeOutCubic
+      const frame = (now)=>{
+        const p = Math.min(1, (now - t0) / dur);
+        const tgt = target();
+        t.scrollTop = start + (tgt - start) * ease(p);
+        if (p < 1){ _scrollAnim = requestAnimationFrame(frame); }
+        else { t.scrollTop = tgt; _scrollAnim = null; }
+      };
+      _scrollAnim = requestAnimationFrame(frame);
+    }
     function escapeHtml(str){ return (str||"").replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m])); }
 
     $("bell").onclick = (ev)=>{ ev.stopPropagation(); toggleNoteCenter(); };
