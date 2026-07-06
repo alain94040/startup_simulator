@@ -135,7 +135,7 @@
       // One slot per character — a character shows at most one unanswered message.
       this.open = {};
 
-      this.ycWeek = 30;
+      this.ycWeek = 25;
       this.alexDepartureRisk = false;
       this.pending = [];
       this.history = [];
