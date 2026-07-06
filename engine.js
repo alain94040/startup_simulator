@@ -274,7 +274,10 @@
             if (def.intro) {
               this.threads[id].push({
                 type: "incoming", from: this._name(id),
-                body: def.intro, week: this.s.week, isNew: true,
+                // intro may be a function — a character can greet differently
+                // depending on *why* it unlocked (e.g. Priya: meetup vs launch).
+                body: typeof def.intro === "function" ? def.intro(this.s, char, this) : def.intro,
+                week: this.s.week, isNew: true,
               });
             }
           }

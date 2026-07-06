@@ -235,7 +235,6 @@ const CARD_PREFS = {
     community_product_hn:     'engage',
     community_product_reddit: 'engage',
     community_product_slack:  'engage',
-    silent_churn:             'call',
     public_complaint:         'respond',
     bug_reports:              'fix',
     feature_cluster:          'build',
@@ -259,10 +258,17 @@ const CARD_PREFS = {
     sprint_algo:              'defer',
     sprint_mono:              'defer',
     sprint_adv:               'defer',
-    // pivot arc — angel path trusts Alex, doesn't pivot on advice
+    // pivot arc — angel path needs real post-pivot traction for Marcus to
+    // commit: it pivots at the summit (no_pivot is the refusing strategy)
     pivot_open:               'open',
-    pivot_alex_pushback:      'ship',
-    pivot_priya_verdict:      'ship',
+    slide_hangover:           'retention',
+    slide_maya_call:          'call',
+    slide_alex_thesis:        'hear_him',
+    slide_priya_ping:         'real_numbers',
+    pivot_summit_call:        'call_it',
+    pivot_day_alex_case:      'probe',
+    pivot_day_decide:         'pivot',
+    pivot_relaunch:           'ship',
   },
   // Teach-the-lesson strategy: discover → build → engage → YC
   lean_loop: {
@@ -305,14 +311,20 @@ const CARD_PREFS = {
     community_product_hn:     'engage',
     community_product_reddit: 'engage',
     community_product_slack:  'engage',
-    silent_churn:             'call',
     public_complaint:         'respond',
     power_user_quiet:         'call',
     mentor_competitor_bomb:   'research',
     pivot_open:               'open',
-    pivot_alex_pushback:      'pivot',
-    pivot_counter_alex:       'confirm',
-    pivot_priya_verdict:      'go',
+    slide_hangover:           'retention',
+    slide_alex_thesis:        'push_back',
+    slide_maya_call:          'call',
+    slide_first_echo:         'reply_honest',
+    slide_priya_ping:         'real_numbers',
+    slide_jordan_echo:        'ack',
+    slide_cohort:             'dig',
+    pivot_summit_call:        'call_it',
+    pivot_day_alex_case:      'probe',
+    pivot_day_decide:         'pivot',
     bug_reports:              'fix',
     feature_cluster:          'build',
     waitlist_cold:            'reach',
@@ -385,7 +397,7 @@ function selectCards(current, strategy, state) {
     // Priority: YC cards > product > customer > external > team
     const order = ['jordan_confrontation','dev_planning_session','yc_apply','yc_discussion_ready','yc_discussion_early','seed_pitch',
                    'alex_demo_ready','proto_to_product',
-                   'good_enough_launch','bug_reports','feature_cluster','silent_churn',
+                   'good_enough_launch','bug_reports','feature_cluster',
                    'public_complaint','power_user_quiet','reporter_deadline','hn_thread'];
     const sorted = pool.slice().sort((a, b) => {
       // F&F cash is free runway — grab it whenever available
@@ -496,7 +508,7 @@ function selectCards(current, strategy, state) {
     const JORDAN_FORCED  = strategy === 'keep_jordan'
       ? new Set(['jordan_confrontation', 'jordan_fulltime_ask'])
       : new Set();
-    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation', 'dev_planning_session', 'pivot_open', 'pivot_alex_pushback', 'pivot_counter_alex', 'pivot_priya_verdict', 'bad_retention']);
+    const ALEX_CRITICAL  = new Set(['alex_commitment', 'alex_equity', 'vision_mismatch', 'alex_leaving_threat', 'jordan_confrontation', 'dev_planning_session', 'pivot_open', 'pivot_summit_call', 'pivot_day_decide', 'pivot_fifty_verdict']);
 
     const usable = pool.filter(c => !CONSULTANT_IDS.has(c.id) && !MEETUP_IDS.has(c.id));
     const candidates = usable.length > 0 ? usable : pool;
@@ -902,9 +914,9 @@ CARD_PREFS.plan_full = { ...CARD_PREFS.lean_loop, dev_planning_session: 'full' }
 CARD_PREFS.no_pivot = {
   ...CARD_PREFS.angel_path,
   pivot_open:          'open',
-  pivot_alex_pushback: 'ship',
-  pivot_priya_verdict: 'ship',
-  bad_retention:       'stay',
+  pivot_summit_call:   'call_it',
+  pivot_day_decide:    'growth',
+  pivot_fifty_verdict: 'ride',
 };
 CARD_PREFS.keep_jordan = {
   ...CARD_PREFS.lean_loop,
@@ -1483,9 +1495,11 @@ if (WINNERS_FLAG) {
     check(`alex_first.avgMoraleWk10 (${s.alex_first.avgMoraleWk10}) > 50 — engagement keeps morale healthy`,
           (s.alex_first.avgMoraleWk10 ?? 0) > 50);
 
-    // Meetup: skipping it must suppress Priya; win rates should stay comparable
-    check(`ignore_meetup.priyaSeen = ${s.ignore_meetup.priyaSeen}% (expected 0)`,
-          s.ignore_meetup.priyaSeen === 0);
+    // Meetup: skipping it no longer suppresses Priya — she reaches out herself
+    // post-launch (the pivot summit always has its second voice); win rates
+    // should stay comparable either way.
+    check(`ignore_meetup.priyaSeen (${s.ignore_meetup.priyaSeen}%) > 50% — Priya arrives via launch outreach`,
+          s.ignore_meetup.priyaSeen > 50);
     check(`ignore_meetup.wins (${s.ignore_meetup.wins}%) within 15pts of lean_loop.wins (${s.lean_loop.wins}%)`,
           Math.abs(s.ignore_meetup.wins - s.lean_loop.wins) <= 15);
 
@@ -1644,11 +1658,15 @@ if (WINNERS_FLAG) {
     }
 
     const priyaWithAttend = pct(attend, r => r.activeChars.includes('priya'));
-    const priyaWithSkip   = pct(skip,   r => r.activeChars.includes('priya'));
+    // Skipping the meetup no longer locks Priya out: the launch makes Kindred
+    // visible and she reaches out herself (launch_week + 2) — the pivot summit
+    // always has its second voice. Measure her post-launch arrival instead.
+    const skipLaunched    = skip.filter(r => r.launched);
+    const priyaWithSkip   = skipLaunched.length ? pct(skipLaunched, r => r.activeChars.includes('priya')) : 0;
     const p1 = priyaWithAttend > 50;
-    const p2 = priyaWithSkip === 0;
-    console.log(`  Priya unlock rate >50% when attended: ${p1 ? 'PASS' : 'FAIL'}  (${priyaWithAttend}%)`);
-    console.log(`  Priya never unlocks when skipped:     ${p2 ? 'PASS' : 'FAIL'}  (${priyaWithSkip}%)`);
+    const p2 = priyaWithSkip > 50;
+    console.log(`  Priya unlock rate >50% when attended:  ${p1 ? 'PASS' : 'FAIL'}  (${priyaWithAttend}%)`);
+    console.log(`  Priya arrives post-launch when skipped: ${p2 ? 'PASS' : 'FAIL'}  (${priyaWithSkip}% of launched games)`);
   })();
 
   // ── Planning strategy impact: lean vs full vs no planning ───────────────────
