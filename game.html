@@ -890,8 +890,9 @@
       padding: 5px 8px; font-family: -apple-system, system-ui, sans-serif;
       box-shadow: 0 4px 14px rgba(0,0,0,.3);
     }
-    #debug-bar #debug-lbl { font-size: 9px; font-weight: 700; letter-spacing: .04em;
+    #debug-bar .debug-lbl { font-size: 9px; font-weight: 700; letter-spacing: .04em;
       text-transform: uppercase; color: #f97316; margin-right: 2px; }
+    #debug-bar .debug-sep { width: 1px; align-self: stretch; background: #333; margin: 0 3px; }
     #debug-bar button {
       font-size: 10px; padding: 3px 9px; border-radius: 6px; cursor: pointer;
       background: #1a1a1a; color: #ddd; border: 1px solid #444; transition: all .12s;
@@ -901,13 +902,17 @@
     #debug-bar.skipping button { opacity: .5; pointer-events: none; }
   </style>
   <div id="debug-bar">
-    <span id="debug-lbl">⚡ skip to</span>
-    <button data-week="8">Wk 8 · build</button>
-    <button data-week="14">Wk 14 · launch</button>
-    <button id="dbg-launch-day">Launch Day</button>
-    <button data-week="20">Wk 20 · investors</button>
-    <button data-week="28">Wk 28 · late game</button>
+    <span class="debug-lbl">⚡ skip to</span>
+    <button data-week="8">Wk 8</button>
+    <button data-week="20">Wk 20</button>
+    <button data-week="28">Wk 28</button>
     <button data-step="5">+5 wk</button>
+    <span class="debug-sep"></span>
+    <span class="debug-lbl">🎬 arc</span>
+    <button data-card="jordan_equity_mention" data-char="jordan">Equity</button>
+    <button data-card="alex_demo_ready" data-char="alex">Demo Night</button>
+    <button data-card="good_enough_launch" data-char="alex">Launch</button>
+    <button data-card="pivot_summit_call" data-char="founder">Pivot</button>
   </div>
   <!-- notification center: this week's notifications, reopenable via the bell -->
   <div class="note-center" id="noteCenter"></div>
@@ -2078,19 +2083,21 @@
       else if (engine.s.game_over) setTimeout(showGameOver, 400);
     }
 
-    function debugSkipToLaunch(){
+    // Jump straight to the opening beat of a story arc: auto-play the decent
+    // strategy until the arc's trigger card is open (waiting for a reply), then
+    // stop *before* answering it so the player can experience the arc themselves.
+    // charId, if given, is the thread the trigger card lands in.
+    function debugSkipToCard(cardId, charId){
       if (busy()) return;
       const bar = $("debug-bar"); bar.classList.add("skipping");
       $("overlay").classList.remove("show");
       closePops();
       [...$("notes").children].forEach(el => el.remove());
 
-      // Play up to good_enough_launch, then stop so the player can choose ship/wait
-      const prefs = { ...DBG_PREFS };
-      const hasLaunchCard = () => engine.openActions().some(a => a.cardId === 'good_enough_launch');
+      const hasCard = () => engine.openActions().some(a => a.cardId === cardId);
       let guard = 0;
-      while (!hasLaunchCard() && !engine.s.game_over && !engine.s.game_won && guard++ < 400){
-        if (debugStep(prefs, hasLaunchCard)) break;
+      while (!hasCard() && !engine.s.game_over && !engine.s.game_won && guard++ < 400){
+        if (debugStep(DBG_PREFS, hasCard)) break;
       }
 
       for (const id of engine.order){
@@ -2102,11 +2109,13 @@
 
       renderJournalCatchup();
       updateBell();
-      // Open Alex's thread — that's where good_enough_launch lands
-      active = "alex";
+      // Open the thread the trigger card lands in so the arc is front and center.
+      if (charId && engine.order.includes(charId)) active = charId;
       openConversation();
 
       bar.classList.remove("skipping");
+      if (engine.s.ycAccepted || engine.s.ycRejected) setTimeout(showEndgame, 400);
+      else if (engine.s.game_over) setTimeout(showGameOver, 400);
     }
 
     // ── turn-end reveal: calm journal ink + iPhone-style notifications ───
@@ -2690,7 +2699,7 @@
 
     // debug skip bar (testing) — absolute targets + a relative +N step
     [...document.querySelectorAll("#debug-bar button")].forEach(btn=>{
-      if (btn.id === "dbg-launch-day") { btn.onclick = debugSkipToLaunch; return; }
+      if (btn.dataset.card) { btn.onclick = ()=> debugSkipToCard(btn.dataset.card, btn.dataset.char); return; }
       btn.onclick = ()=>{
         if (busy()) return;
         const target = btn.dataset.step
