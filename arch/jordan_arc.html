@@ -147,6 +147,20 @@
   She is part-time and will always refuse to go full-time. The question is when that becomes a crisis — and whether the cap table gets cleaned before investors look at it.
 </div>
 
+<div class="context-strip" style="background:#0c1006; border-color:#1e2a08; color:#7a903a;">
+  <b style="color:#98b840">Update — drift is now earned, and you can see it yourself.</b>
+  Jordan's day job ramps up: her <code style="font-size:10px">flags.effort_mult</code> slides to a 0.85 floor a
+  couple of weeks into the build (role hook <code style="font-size:10px">tick()</code>), so her iOS work visibly
+  trails Alex's. <b>jordan_drift_start</b> no longer fires on a bare <code style="font-size:10px">week ≥ 8</code> —
+  it waits until that slowdown is real (<code style="font-size:10px">effort_mult ≤ 0.85</code>, iOS backend lagging,
+  or you already saw it). New pre-drift card <b>founder_pair_jordan</b> (founder journal, fallback) lets you pair
+  a sprint with her and reach the conclusion firsthand — diagnostic only, it never turns her around. Any of these
+  banks <code style="font-size:10px">jordan_underperf_witnessed</code>, and the <b>fire</b> option on
+  jordan_confrontation is gated on it: you can't let her go without the under-performance having surfaced.
+  <br><b style="color:#98b840">Stale below:</b> the Phase-3 launch-blocker "product ≥ 50 / has_beta" gate no longer
+  exists (there is no beta phase); that card now gates on <code style="font-size:10px">allScopeBuilt(s) &amp;&amp; productPhase==='product'</code>.
+</div>
+
 <div class="timeline">
 
   <!-- ─── PHASE 1: iOS CONTRIBUTION ──────────────────────────────────────── -->

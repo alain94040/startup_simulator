@@ -179,6 +179,20 @@ launch.
 is flipped to `done` by `nextWeek()` once the owner's cumulative `buildEffort` passes the target
 (e.g. `video_dates` in `roles/users.js`). Cards write these fields so progress is visible weekly.
 
+**Jordan's drift is earned, not a timer.** A role may define `tick(s, char, e)` — an optional
+per-cofounder weekly hook the engine calls in `nextWeek()` before the passive-contribution pass.
+Jordan's `tick` (`roles/jordan.js`) ramps `char.flags.effort_mult` down (the engine honors it in the
+passive loop) so her build contribution visibly trails Alex's within a couple of weeks of
+`dev_start_week` — a shallow slide (floor `0.85`) that's enough to *show* on the roadmap and cross the
+drift threshold without swinging the balance. `jordan_drift_start` (`roles/alex.js`) then only fires
+once that slowdown is real (`effort_mult <= 0.85`, iOS backend lagging, or the founder already saw it),
+not on a bare `week >= 8`. The founder can also pair a sprint with Jordan
+(`founder_pair_jordan`, `roles/founder.js` — a **pre-drift fallback** card mirroring `founder_codebuild`,
+diagnostic only, never redeems her) to reach that conclusion firsthand. Any of these banks
+`s.jordan_underperf_witnessed`, and `jordan_confrontation`'s **`fire`** option is gated on it — so Jordan
+can never be let go without the under-performance first surfacing (guarded by the
+`jordan-fired-implies-witnessed` invariant in `tests/test_narrative.js`).
+
 **Roadmap (`game.html`)** mirrors the chat: each `RM_ITEM_META` row lists its `decide` cards —
 an open one renders a pulsing **needs your call** badge and clicking jumps to that chat;
 `item.note` (written by the card's `execute`/`dropFx`) shows the decision made;

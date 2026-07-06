@@ -490,6 +490,16 @@
         }
       }
 
+      // Per-cofounder weekly hook (runs once per week, before contributions so a
+      // role can adjust its own effort). Roles define def.tick(s, char, engine)
+      // to model slow-moving state like eroding availability; all narrative stays
+      // in the role. Optional — most roles omit it.
+      for (const [id, char] of this.chars) {
+        if (!char.active) continue;
+        const def = DEFS[id];
+        if (def && typeof def.tick === "function") def.tick(this.s, char, this);
+      }
+
       // Passive co-founder contributions (mirrors engine.js resolveTurn)
       for (const [id, char] of this.chars) {
         if (!char.active || !char.focus) continue;
@@ -497,8 +507,12 @@
         if (!def || def.type !== "cofounder") continue;
         const skill = (def.skills || {})[char.focus] || 1.0;
         const sideProjectMult = char.flags.side_project_active ? 0.7 : 1.0;
+        // Roles may set flags.effort_mult (0..1) to model a co-founder whose real
+        // hours erode over time (e.g. Jordan's day job ramping up). Generic here —
+        // the ramp lives in the role's tick; the engine just honors it.
+        const effortMult = typeof char.flags.effort_mult === "number" ? char.flags.effort_mult : 1.0;
         const trustFactor = "trust" in char ? char.trust / 100 : 1.0;
-        const base = 1.2 * skill * sideProjectMult * trustFactor;
+        const base = 1.2 * skill * sideProjectMult * effortMult * trustFactor;
         const ptMult = id === "alex" ? (char.flags.committed_fulltime ? 1.0 : 0.4) : 1.0;
         if (char.focus === "build") {
           char.buildEffort = (char.buildEffort || 0) + base * ptMult;

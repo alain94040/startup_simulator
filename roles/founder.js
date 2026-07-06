@@ -13,6 +13,7 @@
       "slide_maya_call",
       "pivot_summit_call",
       "founder_codebuild",
+      "founder_pair_jordan",
       "founder_build_onboarding",
       "founder_build_empty_states",
       "founder_build_export",
@@ -231,6 +232,73 @@
         ],
         dropDelay: 0, dropMsg: null,
         dropFx(s) { s.cobuild_last = s.week; },
+      },
+
+      // ── PAIR A SPRINT WITH JORDAN (the firsthand look) ───────────────────────
+      // The counterpart to founder_codebuild, but with Jordan. Its whole point is
+      // that you see for yourself — before Alex ever names it — that Jordan is
+      // spread thin: half-finished branches, standups she dials into from her day
+      // job, an iOS backend that keeps sliding. Diagnostic only: it informs the
+      // decision, it does not turn her around (last_engaged_week eases her slide by
+      // one tick but can't reverse it). Banks s.jordan_underperf_witnessed so the
+      // firing conversation can only offer "let her go" after you've actually seen
+      // the problem yourself or through Alex's flags.
+      {
+        id: 'founder_pair_jordan', cat: 'p', from: 'You', _cofounderEngagement: 'jordan',
+        body: (s, char, e) => {
+          const paired = char.flags.paired_jordan_count || 0;
+          return paired === 0
+            ? "the iOS backend keeps sliding a week at a time. instead of waiting on jordan, take a sprint and pair with her on it — you'll see the code, and how the work actually goes."
+            : "iOS is still lagging the web build. you could sit with jordan for another sprint and push it forward together.";
+        },
+        // Fallback (rank -1): it only takes the founder's single slot on a genuinely
+        // quiet week, so it never displaces build/research work in the 2-actions economy
+        // (that displacement tanks the knife-edge launch path). Capped at 2 — a look, not
+        // a job. Pre-drift only: the window to notice it *yourself*, before Alex flags it.
+        // The guaranteed under-performance trace is Alex's drift flag; this is the
+        // optional, player-driven way to reach the same conclusion by seeing it yourself.
+        urgency: 1, weeks: 1, fallback: true,
+        available: (s, char, e) => {
+          const j = e.chars.get('jordan');
+          if (!j || !j.active || !s.jordan_active || s.jordan_resolved || s.launched) return false;
+          if (s.dev_start_week == null) return false;
+          if (s.jordan_drifting) return false;                          // once she drifts, Alex owns it
+          if ((char.flags.paired_jordan_count || 0) >= 2) return false;  // you've seen enough
+          // Only once her slowdown is real — her hours have visibly eroded, or the
+          // iOS backend is lagging well into the dev clock (not just unstarted).
+          // Recurs on a cooldown while she's still around.
+          const slowed = typeof j.flags.effort_mult === "number" && j.flags.effort_mult <= 0.9;
+          const iosLagging = s.week >= s.dev_start_week + 5
+            && s.items && s.items.ios_server && s.items.ios_server.status !== 'done';
+          return (slowed || iosLagging) && s.week >= (s.pair_jordan_last || 0) + 3;
+        },
+        options: [
+          { label: 'Pair with Jordan this sprint', key: 'pair',
+            journal: "Paired with Jordan for a sprint on the iOS backend. She's clearly stretched — half-built branches, dialing into standup from her day job. Nice person, but she's not really here.",
+            execute(s, char, e) {
+              s.pair_jordan_last = s.week;
+              const paired = (char.flags.paired_jordan_count = (char.flags.paired_jordan_count || 0) + 1);
+              s.jordan_underperf_witnessed = true;
+              const j = e.chars.get('jordan');
+              if (j) {
+                j.morale = clamp(j.morale + 4, 0, 100);  // she appreciates the help — but it changes nothing
+                // A little real progress on the backend, but you carried it.
+                if (s.items && s.items.ios_server && s.items.ios_server.status === 'active') {
+                  s.items.ios_server.note = "Founder paired to push it forward";
+                }
+              }
+              if (paired === 1)
+                return "Spent the sprint pairing with Jordan on the iOS backend. You moved it forward — but you also saw it up close: half-finished branches, standups she takes from her desk at work. She's spread thin, and it isn't temporary. You're not sure she's really in this.";
+              const again = [
+                "Another sprint pairing with Jordan. Same picture — she's present when she can be, but her real week is somewhere else. The backend inches forward because you're pushing it.",
+                "More pairing with Jordan. She apologized twice for stepping out to take work calls. The code moves when you're driving; it stalls the moment you're not.",
+                "Sat with Jordan on iOS again. You know this stretch of the codebase better than she does now — which tells you everything about how much time she's actually putting in.",
+              ];
+              return again[(paired - 2) % again.length];
+            } },
+        ],
+        dropDelay: 0, dropMsg: null,
+        dropFx(s) { s.pair_jordan_last = s.week; },
       },
 
       // ── ONE-TIME: specific pre-launch dev tasks ──────────────────────────────

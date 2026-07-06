@@ -2271,9 +2271,20 @@
         // Spine band: the drift arc gates the launch, so it can't queue for weeks
         // behind direction cards the way urgency 2 now would.
         urgency: 12, weeks: 1,
+        // Earned, not on a timer: Alex only names the slowdown once it's observable —
+        // Jordan's hours have visibly eroded (flags.effort_mult) or her iOS backend is
+        // still unfinished well into the dev clock. The week>=8 floor keeps it from
+        // firing before the equity arc has settled. Note: this is driven purely by the
+        // observable slowdown, NOT by whether the player paired — pairing banks
+        // `witnessed` for the fire-gate but must not pull drift (and the launch gate
+        // that rides on it) forward.
         available: (s, char, e) => {
           const j = e.chars.get('jordan');
-          return s.jordan_active && !s.jordan_drifting && s.week >= 8 && !j.flags.drift_start_done;
+          if (!(s.jordan_active && !s.jordan_drifting && !j.flags.drift_start_done && s.week >= 8)) return false;
+          const slowed = typeof j.flags.effort_mult === "number" && j.flags.effort_mult <= 0.85;
+          const iosLagging = s.dev_start_week != null && s.week >= s.dev_start_week + 6
+            && s.items && s.items.ios_server && s.items.ios_server.status !== 'done';
+          return slowed || iosLagging;
         },
         options: [
           { label: 'Talk to Jordan directly', key: 'talk',
@@ -2282,6 +2293,7 @@
               const j = e.chars.get('jordan');
               j.flags.drift_start_done = true;
               s.jordan_drifting = true;
+              s.jordan_underperf_witnessed = true;
               j.focus = null;
               char.morale = clamp(char.morale - 5, 0, 100);
               return "Jordan was apologetic. Said it's temporary. You're not sure.";
@@ -2292,6 +2304,7 @@
               const j = e.chars.get('jordan');
               j.flags.drift_start_done = true;
               s.jordan_drifting = true;
+              s.jordan_underperf_witnessed = true;
               j.focus = null;
               char.morale = clamp(char.morale - 10, 0, 100);
               return "Alex nodded. He'll cover it. The iOS backlog keeps growing.";
@@ -2302,6 +2315,7 @@
           const j = e.chars.get('jordan');
           j.flags.drift_start_done = true;
           s.jordan_drifting = true;
+          s.jordan_underperf_witnessed = true;
           j.focus = null;
           char.morale = clamp(char.morale - 8, 0, 100);
         },
@@ -2407,6 +2421,11 @@
         },
         options: [
           { label: 'Have the conversation — let Jordan go', key: 'fire',
+            // Can't fire on a hunch: only offered once the under-performance is
+            // something you've actually seen — Alex's drift flags surfaced, or you
+            // paired with Jordan and saw it yourself (s.jordan_underperf_witnessed).
+            // Until then only "one more sprint" is available, which re-arms the card.
+            available: (s) => !!s.jordan_underperf_witnessed,
             execute(s, char, e) {
               const j = e.chars.get('jordan');
               j.flags.confrontation_done = true;

@@ -83,6 +83,12 @@ const STATE_INVARIANTS = [
   { name: "pivot-shipped-implies-pivot",
     holds: s => !s.pivot_shipped || s.activities_pivot,
     describe: s => `pivot_shipped but activities_pivot=${!!s.activities_pivot}` },
+  { name: "jordan-fired-implies-witnessed",
+    // You can never let Jordan go without the under-performance first surfacing —
+    // Alex's drift flag or the founder pairing with her (s.jordan_underperf_witnessed).
+    // This guards against the old bug: firing with no trace of the discussion.
+    holds: s => !s.jordan_resolved || !!s.jordan_underperf_witnessed,
+    describe: s => `jordan_resolved but the under-performance was never witnessed/surfaced` },
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────

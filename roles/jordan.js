@@ -38,6 +38,22 @@
 
     role: "Co-founder · iOS",
     skills: { build: 0.7 },
+
+    // Jordan's day job ramps up a few weeks into the build: her real hours erode,
+    // so her passive build contribution (the engine honors flags.effort_mult)
+    // trails Alex's within a couple of weeks. That lag is the *observable* signal —
+    // her iOS items stall on the roadmap — that the drift arc later names, so firing
+    // follows something the player could see rather than a bare timer. It's a shallow
+    // slide (floor 0.85): enough to be visible and to cross the drift threshold, not
+    // enough to swing the balance. Diagnostic only — nothing the player does reverses
+    // it (she's genuinely half-committed). Freezes once she drifts or the arc resolves.
+    tick(s, char, e) {
+      if (!s.jordan_active || s.jordan_drifting || s.jordan_resolved) return;
+      if (s.dev_start_week == null || s.week < s.dev_start_week + 1) return;
+      const cur = typeof char.flags.effort_mult === "number" ? char.flags.effort_mult : 1.0;
+      char.flags.effort_mult = clamp(cur - 0.08, 0.85, 1.0);
+    },
+
     cards: [
 
       // ── EQUITY ARC (focus mode — chains in one sitting, free of action cost) ──
@@ -835,7 +851,7 @@
       // ── FULL-TIME ASK ────────────────────────────────────────────────────────
       {
         id: 'jordan_fulltime_ask', cat: 't', from: 'Jordan',
-        body: "had a direct conversation with jordan about going full-time. she was apologetic but firm: 'i can't leave my job right now — i need the salary. i'll carve out more hours, i promise.' she hasn't.",
+        body: "i need to be straight with you about the full-time thing. i can't leave my job right now — i need the salary, i can't just walk away from it yet. i know that's not what you and alex need. i'll carve out more hours, i promise.",
         urgency: 2, weeks: 1,
         available: (s, char) => s.jordan_drifting && !s.jordan_resolved && !char.flags.fulltime_ask_done && s.week >= 10,
         options: [

@@ -62,6 +62,7 @@ const PHASES = [
   { key: "launched",       label: "Launched",          reached: s => !!s.launched },
   { key: "first_customer", label: "First customer",    reached: s => s.customers >= 1 },
   { key: "first_issue",    label: "First cust. issue", reached: null },  // card-event, set below
+  { key: "jordan_drift",   label: "Jordan drift seen",  reached: s => !!s.jordan_underperf_witnessed },
   { key: "jordan_fired",   label: "Jordan let go",     reached: s => !!s.jordan_resolved },
 ];
 
