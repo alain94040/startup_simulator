@@ -114,6 +114,14 @@
           : " But Jordan drifted for weeks and the confrontation never happened — avoiding the decision was a decision.";
       }
 
+      // When Alex first flagged the slowdown, letting him absorb it ("Alex can cover
+      // for now") instead of engaging is the small avoidance that sets the tone — a
+      // few points off the hard-conversations lesson, whatever happened afterward.
+      if (jScore != null && chose("jordan_drift_start", "cover")) {
+        jScore = clamp(jScore - 6, 0, 100);
+        jDetail += " And the first time Alex flagged it, you let him cover for her rather than step in.";
+      }
+
       const score = jScore == null ? eqScore : Math.round(eqScore * 0.6 + jScore * 0.4);
       cats.push({
         key: "hard_conversations", label: "Have the Hard Conversations",
