@@ -38,7 +38,7 @@
   /* Two stacked countdowns: cash runway (green) and weeks-to-YC (blue).
      Both bars share one week axis, so their lengths compare directly —
      does the green runway reach as far as the blue YC countdown? */
-  .runway{display:flex;flex-direction:column;gap:9px;min-width:230px;max-width:320px;flex:1}
+  .runway{display:flex;flex-direction:column;gap:1px;min-width:230px;max-width:320px;flex:1}
   .gauge{display:flex;flex-direction:column;gap:6px}
   .gauge-head{display:flex;align-items:baseline;gap:6px}
   .gauge-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
@@ -655,8 +655,13 @@
   .dm-empty{color:var(--faint);font-size:13px;padding:6px 2px;line-height:1.5}
 
   /* bank statement — light theme port of game_cards .bank-* */
-  .runway{cursor:pointer;border-radius:10px;transition:background .13s}
-  .runway:hover{background:var(--rail)}
+  /* Each gauge is its own click target: cash → bank history, YC → the open
+     YC application action (when there is one). */
+  .gauge{border-radius:8px;padding:4px 6px;transition:background .13s}
+  .gauge-cash{cursor:pointer}
+  .gauge-cash:hover{background:var(--rail)}
+  .gauge-yc.actionable{cursor:pointer}
+  .gauge-yc.actionable:hover{background:var(--rail)}
   .runway-cash{text-decoration:underline dotted var(--faint);text-underline-offset:3px}
   .bank-week{margin-bottom:14px}
   .bank-week-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:#a0a0a8;font-weight:700;margin-bottom:3px}
@@ -802,7 +807,7 @@
       <div class="avatar" style="background:linear-gradient(135deg,#ff6b9d,#c44bd6);width:38px;height:38px">K</div>
       <div class="brand"><b>Kindred</b><span id="weekSub">Week 1</span></div>
       <div class="runway" id="runway">
-        <div class="gauge gauge-cash">
+        <div class="gauge gauge-cash" id="cashGauge" title="Bank account history">
           <div class="gauge-head">
             <span class="gauge-lbl">Runway</span>
             <span class="gauge-num" id="runwayNum">20</span>
@@ -811,7 +816,7 @@
           </div>
           <div class="gauge-bar"><div class="gauge-fill" id="runwayFill"></div></div>
         </div>
-        <div class="gauge gauge-yc">
+        <div class="gauge gauge-yc" id="ycGauge">
           <div class="gauge-head">
             <span class="gauge-lbl" id="ycLbl">YC apps open in</span>
             <span class="gauge-num" id="ycNum">29</span>
@@ -1061,6 +1066,8 @@
         num.textContent = n; unit.textContent = n===1 ? "wk" : "wks";
       };
       $("runway").classList.remove("yc-open");
+      // The gauge is a live shortcut only while there's a YC action to answer.
+      $("ycGauge").classList.toggle("actionable", !!ycOpenAction());
 
       if (s.ycAccepted){
         lbl.textContent = "Y Combinator"; showNote("you're in 🎉");
@@ -1086,6 +1093,18 @@
       lbl.textContent = "YC apps open in"; showNum(wToYC);
       fill.style.width = Math.min(100, (wToYC / horizon) * 100) + "%";
       fill.style.background = "#5b6cff";
+    }
+    // The live YC-application action, if any: the "apps just opened" beat (Hacker
+    // News) or YC's own application-due card. Clicking the YC gauge jumps to it.
+    const YC_ACTION_CARDS = new Set(["yc_apply", "yc_discussion_ready", "yc_discussion_early"]);
+    function ycOpenAction(){
+      return engine.openActions().find(a => YC_ACTION_CARDS.has(a.cardId)) || null;
+    }
+    function openYcAction(){
+      const a = ycOpenAction();
+      if (!a) return;
+      closePops();                 // clear the bank/other dropdowns first
+      selectCard(a.cardId);        // same path as clicking the card in the hand
     }
     function setRunway(cash){
       const s = engine.s;
@@ -2647,7 +2666,8 @@
 
     $("bell").onclick = (ev)=>{ ev.stopPropagation(); toggleNoteCenter(); };
     $("roadmapBtn").onclick = (ev)=>{ ev.stopPropagation(); toggleRoadmap(); };
-    $("runway").onclick = (ev)=>{ ev.stopPropagation(); toggleBank(); };
+    $("cashGauge").onclick = (ev)=>{ ev.stopPropagation(); toggleBank(); };
+    $("ycGauge").onclick   = (ev)=>{ ev.stopPropagation(); openYcAction(); };
     $("handEnd").onclick = ()=>{ if (!busy()) advanceWeek(); };
     // click outside an open dropdown (and its trigger) closes it
     document.addEventListener("click", (ev)=>{
