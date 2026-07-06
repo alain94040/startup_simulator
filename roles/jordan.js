@@ -868,6 +868,7 @@
             execute(s, char, e) {
               char.flags.fulltime_ask_done = true;
               s.jordan_confrontation_triggered = true;
+              s.jordan_underperf_witnessed = true;  // she told you herself she's not going full-time
               const alex = e.chars.get('alex');
               if (alex) alex.morale = clamp(alex.morale + 5, 0, 100);
               return "Jordan went quiet. Said she'd think about it. She didn't change. The situation will need to be resolved.";

@@ -185,13 +185,17 @@ Jordan's `tick` (`roles/jordan.js`) ramps `char.flags.effort_mult` down (the eng
 passive loop) so her build contribution visibly trails Alex's within a couple of weeks of
 `dev_start_week` — a shallow slide (floor `0.85`) that's enough to *show* on the roadmap and cross the
 drift threshold without swinging the balance. `jordan_drift_start` (`roles/alex.js`) then only fires
-once that slowdown is real (`effort_mult <= 0.85`, iOS backend lagging, or the founder already saw it),
-not on a bare `week >= 8`. The founder can also pair a sprint with Jordan
-(`founder_pair_jordan`, `roles/founder.js` — a **pre-drift fallback** card mirroring `founder_codebuild`,
-diagnostic only, never redeems her) to reach that conclusion firsthand. Any of these banks
-`s.jordan_underperf_witnessed`, and `jordan_confrontation`'s **`fire`** option is gated on it — so Jordan
-can never be let go without the under-performance first surfacing (guarded by the
-`jordan-fired-implies-witnessed` invariant in `tests/test_narrative.js`).
+once that slowdown is real (`effort_mult <= 0.85` or iOS backend lagging), not on a bare `week >= 8`.
+That opens a **three-beat firing arc**: (1) Alex flags the slowdown (`jordan_drift_start`, sets
+`s.jordan_drifting`); (2) the founder pairs a sprint with Jordan to confirm firsthand
+(`founder_pair_jordan`, `roles/founder.js` — a one-shot post-drift beat mirroring `founder_codebuild`,
+diagnostic only, never redeems her); (3) the hard conversation, fire or defer (`jordan_confrontation`).
+Confirming banks `s.jordan_underperf_witnessed` and arms the confrontation — as do Alex's continued
+nagging (`jordan_drag`, answered or ignored-twice) and Jordan's own admission
+(`jordan_fulltime_ask`), so the arc still resolves if the player skips the pairing. `jordan_confrontation`'s
+**`fire`** option is gated on `s.jordan_underperf_witnessed` — so Jordan can never be let go without the
+under-performance first surfacing (guarded by the `jordan-fired-implies-witnessed` invariant in
+`tests/test_narrative.js`).
 
 **Roadmap (`game.html`)** mirrors the chat: each `RM_ITEM_META` row lists its `decide` cards —
 an open one renders a pulsing **needs your call** badge and clicking jumps to that chat;

@@ -2293,7 +2293,6 @@
               const j = e.chars.get('jordan');
               j.flags.drift_start_done = true;
               s.jordan_drifting = true;
-              s.jordan_underperf_witnessed = true;
               j.focus = null;
               char.morale = clamp(char.morale - 5, 0, 100);
               return "Jordan was apologetic. Said it's temporary. You're not sure.";
@@ -2304,7 +2303,6 @@
               const j = e.chars.get('jordan');
               j.flags.drift_start_done = true;
               s.jordan_drifting = true;
-              s.jordan_underperf_witnessed = true;
               j.focus = null;
               char.morale = clamp(char.morale - 10, 0, 100);
               return "Alex nodded. He'll cover it. The iOS backlog keeps growing.";
@@ -2315,7 +2313,6 @@
           const j = e.chars.get('jordan');
           j.flags.drift_start_done = true;
           s.jordan_drifting = true;
-          s.jordan_underperf_witnessed = true;
           j.focus = null;
           char.morale = clamp(char.morale - 8, 0, 100);
         },
@@ -2340,6 +2337,7 @@
               j.flags.drag_count = (j.flags.drag_count || 0) + 1;
               j.flags.drag_last = s.week;
               s.jordan_confrontation_triggered = true;
+              s.jordan_underperf_witnessed = true;  // covering for her repeatedly IS seeing it
               char.morale = clamp(char.morale + 5, 0, 100);
               return "Sat down with Jordan. She heard the weight of it. Alex noticed you followed up — the real conversation is coming.";
             } },
@@ -2353,6 +2351,7 @@
           if (count >= 2) {
             char.morale = 5; char.trust = clamp(char.trust - 20, 0, 100);
             s.jordan_confrontation_triggered = true;
+            s.jordan_underperf_witnessed = true;  // the evidence has surfaced twice, answered or not
             if (e && e.pending) e.pending.push({
               fireWeek: s.week + 1, from: 'Alex', charId: 'alex',
               text: "you've been aware of the jordan situation for weeks. i've been covering for her and saying nothing. it's been affecting me more than i let on.",
