@@ -509,15 +509,15 @@
   @keyframes fade{from{opacity:0}to{opacity:1}}
   @keyframes blink{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
   /* turn-end diff highlights (calm, in stable surfaces — no tab switching) */
-  /* a soft luminous halo around each new entry — a glow (blurred box-shadow), not a fill */
+  /* the letters themselves catch light — a warm glow radiating from the text, not a frame.
+     text-shadow blooms around the glyphs and the ink briefly warms, then settles to normal. */
   @keyframes jHighlight{
-    0%  {box-shadow:0 0 16px 5px rgba(255,176,46,.6)}
-    55% {box-shadow:0 0 9px 2px rgba(255,176,46,.28)}
-    100%{box-shadow:0 0 0 0 rgba(255,176,46,0)}
+    0%  {text-shadow:0 0 7px rgba(255,176,46,.95),0 0 18px rgba(255,150,20,.7);color:#c96a12}
+    45% {text-shadow:0 0 5px rgba(255,176,46,.55),0 0 12px rgba(255,150,20,.35)}
+    100%{text-shadow:0 0 0 rgba(255,176,46,0),0 0 0 rgba(255,150,20,0)}
   }
   .journal-entry.arrive,.journal-choice.arrive{
-    animation:inkin .5s ease both, jHighlight 1.9s ease .15s both;
-    border-radius:6px;
+    animation:inkin .5s ease both, jHighlight 2.1s ease .15s both;
   }
   /* while the journal inks in this week's outcomes, the whole column glows to pull the
      eye to the right BEFORE any chat notification buzzes */
@@ -573,7 +573,7 @@
 
   /* topbar icon button (roadmap), matches .bell */
   .hdr-btn{
-    border:1px solid var(--line);background:var(--rail);
+    position:relative;border:1px solid var(--line);background:var(--rail);
     width:38px;height:38px;border-radius:11px;cursor:pointer;font-size:16px;
     display:grid;place-items:center;transition:.13s;
   }
@@ -814,7 +814,7 @@
         <div class="dot full" id="dot1"></div>
         <span class="ab-frozen"><span class="ab-ico">⏸</span><span id="abFrozenLbl">Time paused · moves free</span></span>
       </div>
-      <button class="hdr-btn" id="roadmapBtn" title="Build roadmap" disabled style="display:none">🗺️</button>
+      <button class="hdr-btn" id="roadmapBtn" title="Build roadmap" disabled style="display:none">🗺️<span class="bell-badge" id="roadmapBadge" style="display:none"></span></button>
       <button class="bell" id="bell" title="This week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
     </div>
 
@@ -1120,6 +1120,7 @@
       const rb = $("roadmapBtn");
       rb.style.display = hasPlan ? "" : "none";
       rb.disabled = !hasPlan;
+      updateRoadmapBadge();
       refreshPops();
     }
 
@@ -2265,6 +2266,30 @@
     const RM_ORDER_PRE  = ["_hdr_backend","_hdr_ios"];
     const RM_ORDER_LEAN = ["_hdr_backend","matching_algo","api_design","auth","analytics","arch_refactor","video_dates","plans_matching","_hdr_ios","ios_ui","ios_server","plans_ui"];
     const RM_ORDER_FULL = RM_ORDER_LEAN.concat(["_hdr_scope","_scope_group"]);
+
+    // How many roadmap rows have a direction card sitting open in a chat — i.e. the
+    // "needs your call" badges that renderRoadmap draws. Drives the button counter.
+    function countRoadmapPending(){
+      const s = engine.s;
+      if (!s.items) return 0;
+      const order = !s.dev_plan ? RM_ORDER_PRE : (s.dev_plan === "full" ? RM_ORDER_FULL : RM_ORDER_LEAN);
+      let n = 0;
+      for (const key of order){
+        const meta = RM_ITEM_META[key];
+        if (!meta || meta.header || meta.scopeGroup) continue;
+        if (!s.items[key]) continue;
+        for (const [cid] of (meta.decide || [])){
+          if (engine.isOpen(cid)){ n++; break; }
+        }
+      }
+      return n;
+    }
+    function updateRoadmapBadge(){
+      const badge = $("roadmapBadge");
+      const n = countRoadmapPending();
+      if (n > 0){ badge.textContent = n; badge.style.display = "grid"; }
+      else badge.style.display = "none";
+    }
 
     function renderRoadmap(){
       const s = engine.s;
