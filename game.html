@@ -33,8 +33,8 @@
     background:var(--panel);border-radius:16px;padding:12px 18px;box-shadow:var(--shadow);
   }
   .brand{display:flex;flex-direction:column;line-height:1.1}
-  .brand b{font-size:17px;letter-spacing:.2px}
-  .brand span{font-size:12px;color:var(--muted)}
+  .brand b{font-size:15px;letter-spacing:.2px;color:var(--muted);font-weight:600}
+  .brand span{font-size:26px;font-weight:800;color:var(--ink);line-height:1.05;letter-spacing:.2px;font-variant-numeric:tabular-nums}
   /* Two stacked countdowns: cash runway (green) and weeks-to-YC (blue).
      Both bars share one week axis, so their lengths compare directly —
      does the green runway reach as far as the blue YC countdown? */
@@ -800,7 +800,7 @@
     <!-- top bar -->
     <div class="topbar">
       <div class="avatar" style="background:linear-gradient(135deg,#ff6b9d,#c44bd6);width:38px;height:38px">K</div>
-      <div class="brand"><b>Kindred</b><span id="weekSub">Week 1 · idea → seed</span></div>
+      <div class="brand"><b>Kindred</b><span id="weekSub">Week 1</span></div>
       <div class="runway" id="runway">
         <div class="gauge gauge-cash">
           <div class="gauge-head">
@@ -1119,7 +1119,7 @@
     // ── status bar ───────────────────────────────────────
     function renderStats(){
       const s = engine.stats();
-      $("weekSub").textContent = "Week " + s.week + " · idea → seed";
+      $("weekSub").textContent = "Week " + s.week;
       if (!runwayAnim) setRunway(s.cash);
       const st = engine.s;
       const traction = st.launched
