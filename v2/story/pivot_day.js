@@ -1,0 +1,370 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// v2/story/pivot_day.js — pivot day: one Saturday, one whiteboard. Alex argues
+// density, Priya argues retention, the player decides. A scene arc entered from
+// the founder's summit call; ignoring the call is itself the scored failure
+// (pivot_deferred sets silently — the default won).
+//
+// The hinge is pivot_day_evidence: the options are evidence chips gated on what
+// was banked during the demo/slide. The conversion rule: the cohort (bought
+// analytics) plus one human quote — a face on the data — is what moves Alex off
+// his own column (s.alex_converted → no morale hit, rebuild head start).
+//
+// Aftermath: pivot_relaunch (ship v2), pivot_fifty_verdict (the one redemption
+// card if you chose growth/hedge), pivot_payoff_maya (the bookend).
+// ─────────────────────────────────────────────────────────────────────────────
+
+(function () {
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  const SCOPE_ITEMS = ["scope_social", "scope_verification", "scope_premium", "scope_socialgraph", "scope_video"];
+  function applyActivitiesPivot(s) {
+    if (!s.items) return;
+    // Cross out the items built for profile-based matching.
+    if (s.items.matching_algo) s.items.matching_algo.status = "obsolete";
+    if (s.items.ios_ui) s.items.ios_ui.status = "obsolete";
+    SCOPE_ITEMS.forEach(k => {
+      if (s.items[k] && s.items[k].status === "todo") s.items[k].status = "obsolete";
+    });
+    // Licensing the core (Jordan's call) bites here: a black box can't be
+    // re-tuned — it's ripped out and rebuilt, costing extra cash and fit.
+    if (s.matching_licensed && !s.matching_blackbox_ripped) {
+      s.matching_blackbox_ripped = true;
+      s.cash = Math.max(0, s.cash - 1500);
+      s.market_fit = clamp(s.market_fit - 10, 0, 100);
+    }
+    s.items.plans_matching = { status: "active", quality: null, assignee: "alex" };
+    s.items.plans_ui = { status: "todo", quality: null, assignee: "jordan" };
+  }
+
+  // The player plays an evidence chip and Alex responds in character.
+  function playChip(s, e, key) {
+    s.evidence_chip = key;
+    const human = key === "maya" || key === "rachel" || key === "demo";
+    if (human && s.analytics_live) {
+      s.alex_converted = true;
+      e.say({ char: "alex", text: "…yeah. her words, next to my numbers, saying the same thing. i'm going to go quietly erase half my whiteboard." });
+    } else if (key === "circle") {
+      e.say({ char: "alex", text: "…yeah. twelve friends and almost every match stuck at 'hey'. more users just means more people stuck at 'hey'." });
+    } else if (human) {
+      e.say({ char: "alex", text: "that's real, and it stings. i just wish we had numbers to check it against. one person's story is a clue, not proof." });
+    } else {
+      // 'gut' — Priya answers, gently.
+      e.say({ char: "priya", text: "then we're guessing. i've won and lost on guesses. just know which one this is." });
+    }
+    return null;
+  }
+
+  const mod = {
+    arcs: [
+      {
+        id: "pivot",
+        scene: { cast: ["alex", "priya"] },
+        beats: [
+          {
+            id: "pivot_day_open", char: "alex",
+            text: "saturday. office. i got here early and split the whiteboard in two: NOT ENOUGH USERS / WRONG PRODUCT. before priya shows up, one thing founder-to-founder: i'm going to argue my side as hard as i can today, because someone has to. but whatever you decide at 6pm, i build it. deal?",
+            when: { took: ["pivot_summit_call:call_it"] },
+            choices: [
+              { key: "deal", label: "Deal — argue hard", reply: "deal. argue hard. i'd be worried if you didn't.", journal: null },
+            ],
+          },
+          {
+            id: "pivot_day_alex_case", char: "alex",
+            text: (s) => "my case. " + Math.max(5, s.users) + " users. everyone who left saw the same thing: three so-so matches, an empty screen, silence. that would drive people out of *hinge*, and hinge works. give me six weeks and $1,500 — the mixer, referrals, campus flyers — and we're at 300 users. THEN we'll know if something's actually broken. rebuilding the app because a handful of people got bored isn't strategy, it's panic.",
+            choices: [
+              {
+                key: "probe", label: "What would change your mind?",
+                reply: "before i argue back: what result would change your mind?", journal: null,
+                effects: { say: { char: "alex", text: "…fine. if the GOOD matches also died. two people who liked each other, started talking — and still nothing. an empty room explains bad matches. it can't explain good ones going nowhere." } },
+              },
+              {
+                key: "challenge", label: "When do we find out you were wrong?",
+                reply: "your plan takes six weeks. we don't have six spare. if you're wrong — when do we find out?", journal: null,
+                effects: { say: { char: "alex", text: "…yeah. the money is the weak part of my side. i know." } },
+              },
+            ],
+          },
+          {
+            // Priya doesn't argue back — she raises the stakes on evidence.
+            id: "pivot_day_priya_case", char: "priya",
+            text: "my turn. short version. 'it'll get better when we're bigger' is the most expensive sentence in this business — i've said it myself, and it cost me a year. sometimes it's even true. that's what makes it dangerous. so let's not argue opinions. alex: your analytics score every match, right? pull up the best ones — the matches that *should* have worked. show me what happened to them.",
+            when: { after: ["pivot_day_alex_case"] },
+            choices: [
+              { key: "pull_it", label: "Pull the best matches — watch the replay",
+                reply: "do it. best matches we've ever made. let's watch the replay.", journal: null },
+            ],
+          },
+          {
+            // The hinge: what fires here depends entirely on what was banked.
+            id: "pivot_day_evidence", char: "alex",
+            text: (s, e) => {
+              const core = s.analytics_live
+                ? "…okay. pulled our eleven best matches since launch — both people liked each other, both still using the app. ten of them went: match — 'hey' — 'hey' — nothing. the eleventh made it to five messages and died when he asked 'so what does your week look like?' and she never answered. …that's not an empty-room problem. the app goes silent at the exact moment it's supposed to help."
+                : "i can't answer that. we never set up analytics — all i have is totals and what i remember from watching the logs. you'll have to make this call on gut, because i can't make it on data.";
+              return core;
+            },
+            when: { after: ["pivot_day_priya_case"] },
+            choices: [
+              {
+                key: "maya", label: "Maya's call — she liked her match",
+                if: (s) => !!s.maya_quote,
+                reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. kindred made me feel worse.' we didn't lose her because the room was empty. we lost her after the match — the part that's ours.",
+                journal: null,
+                fx: (s, e) => playChip(s, e, "maya"),
+              },
+              {
+                key: "rachel", label: "Rachel's email — 'a place to say yes'",
+                if: (s) => !!s.rachel_answer,
+                reply: "rachel told me what she wanted, unprompted: 'i hoped the app would give one of us an excuse. a place to say yes to.' she wasn't asking for more matches.",
+                journal: null,
+                fx: (s, e) => playChip(s, e, "rachel"),
+              },
+              {
+                key: "demo", label: "Demo night — 'so what happens now?'",
+                if: (s) => !!s.demo_question_seen,
+                reply: "the first stranger who ever touched this app finished the flow, matched, and typed 'so what happens now?' we've had the question since demo night. we just never answered it.",
+                journal: null,
+                fx: (s, e) => playChip(s, e, "demo"),
+              },
+              {
+                key: "circle", label: "Test group — 11 of 14 went nowhere",
+                if: (s) => !!s.analytics_dropoff_seen,
+                reply: "and our testflight group settles it — twelve people, all friends of friends, everyone knew everyone. a full room. 11 of their 14 matches still went nowhere.",
+                journal: null,
+                fx: (s, e) => playChip(s, e, "circle"),
+              },
+              {
+                key: "gut", label: "A feeling and a flat graph",
+                reply: "i don't have clean data. i have a feeling and a flat graph.",
+                journal: null,
+                fx: (s, e) => playChip(s, e, "gut"),
+              },
+            ],
+          },
+          {
+            // What "pivot" even means — a reframe, not a feature.
+            id: "pivot_day_shape", char: "priya",
+            text: "so say it's the product. one warning first: don't just bolt an 'events tab' onto the app. every dying dating app does that, and users can smell it. flip the whole thing instead. you don't browse people — you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again — it's 'i'm in.' kindred stops being a chat app full of dead ends and becomes a calendar with people on it.",
+            when: { after: ["pivot_day_evidence"] },
+            choices: [
+              {
+                key: "flip", label: "Browse plans, not people",
+                reply: "that's it. you browse a plan, not a person. write it on the board.", journal: null,
+                fx(s, e) {
+                  // Alex's engineering read — the old MatchKit decision bites or pays here.
+                  e.say({
+                    char: "alex",
+                    text: s.matching_licensed
+                      ? "here's where i get to be mad about a months-old decision: matchkit can't do this. it matches singles, that's all it does, and we can't touch its insides. it has to come out — all of it. we'd be paying to remove the thing we paid to add."
+                      : "…the weird part: the matching engine survives. picking people for a plan is the same math — i can repoint it in a week. what dies is everything you can see. every screen. all of it.",
+                  });
+                  return null;
+                },
+              },
+            ],
+          },
+          {
+            id: "pivot_day_cost", char: "alex",
+            text: (s, e) => {
+              const weeks = Math.max(0, Math.floor((s.cash - 2000) / e.burnPerWeek));
+              return "the price, because someone has to say it. rebuild: three weeks, about $2k. that leaves us relaunching with " + weeks + " weeks of cash — i did the math twice hoping i was wrong. if we rebuild and it turns out we just needed more users — we die with two apps nobody used. if we chase users and priya's right — we spend our last dollars promoting a dead end. wrong either way is the same grave. different flowers.";
+            },
+            when: { after: ["pivot_day_shape"] },
+            choices: [
+              { key: "ack", label: "Write it in red — then we decide",
+                reply: "noted. write it in red. now let's decide anyway — that's the job.", journal: null },
+            ],
+          },
+          {
+            id: "pivot_day_decide", char: "alex",
+            text: "6pm. whiteboard's full. both sides made their case. your company, your call: what are we building monday morning?",
+            when: { after: ["pivot_day_cost"] },
+            choices: [
+              {
+                key: "pivot", label: "We pivot — the plan is the product",
+                reply: "we pivot. the plan is the product — a match needs somewhere to go, and monday we start building the somewhere.",
+                journal: "Pivot day, 6pm. I called it: we pivot. The thing you browse won't be a person anymore — it'll be a plan. Three weeks, $2k, and Kindred becomes a calendar with people attached.",
+                fx(s, e) {
+                  s.pivot_summit_done = true;
+                  s.pivot_choice = "pivot";
+                  s.activities_pivot = true;
+                  s.pivot_week = s.week;
+                  s.cash = Math.max(0, s.cash - 2000);
+                  s.market_fit = clamp(s.market_fit + 15, 0, 100);
+                  applyActivitiesPivot(s);
+                  const jordan = e.cast.get("jordan");
+                  if (jordan.active) jordan.morale = clamp(jordan.morale + 5, 0, 100);
+                  const alex = e.cast.get("alex");
+                  if (s.alex_converted) {
+                    // He argued himself out of his own column — the rebuild
+                    // starts committed, with a head start on the effort clock.
+                    const jordanEffort = jordan.active ? jordan.buildEffort : 0;
+                    s.pivot_effort_base = alex.buildEffort + jordanEffort - 1.0;
+                    e.say({ char: "alex", text: "yeah. honestly? i got there around 4 o'clock — match eleven did it. monday. erase my side of the board." });
+                  } else {
+                    alex.morale = clamp(alex.morale - 10, 0, 100);
+                    e.say({ char: "alex", text: "okay. on the record: not convinced. but i said i'd build whatever you decide, and i meant it." });
+                  }
+                  return null;
+                },
+              },
+              {
+                key: "growth", label: "Alex is right — get more users",
+                reply: "alex is right — the room's just empty. we don't touch the product. everything goes into getting users: the mixer, referrals, all of it.",
+                journal: "Pivot day, 6pm. I sided with Alex: the product is fine, the room is empty. We don't touch the app — mixer, referrals, all of it. Priya left me one number to watch: of the next 50 matches, how many turn into a plan to meet.",
+                effects: {
+                  signal: 4,
+                  flags: { pivot_summit_done: true, pivot_choice: "growth", pivot_deferred: true },
+                  char: { alex: { morale: 6 } },
+                  schedule: {
+                    in: 2, char: "alex", unless: (s) => s.activities_pivot,
+                    effects: { users: 20 },
+                    say: { char: "alex", text: "mixer report: 40 rsvps, 19 showed, 11 installed on the spot. good night, honestly. i'm watching the after-match numbers like a hawk, like you asked." },
+                  },
+                },
+              },
+              {
+                key: "hedge", label: "Split it — tab, deck, and growth",
+                reply: "split it. keep the deck, add an activities tab, push growth too. cover every base.",
+                journal: "Pivot day, 6pm. I split the difference: keep the deck, bolt on an activities tab, push growth too. Priya said it out loud — that's not a strategy, it's a hedge. We'll see who's right.",
+                effects: {
+                  cash: -800, marketFit: 5,
+                  flags: { pivot_summit_done: true, pivot_choice: "hedge", pivot_hedged: true },
+                },
+              },
+            ],
+          },
+          {
+            // Night. Closes the scene — the world resumes.
+            id: "pivot_day_close", char: "priya",
+            text: (s) => s.pivot_choice === "pivot"
+              ? "one more thing before i go. most founders can't do what you did today — kill a thing that works in favor of a thing that's true. that's the whole job, and almost nobody does it while there's still enough cash to survive it. text me the second v2 is live. i want to be user #1."
+              : s.pivot_choice === "growth"
+                ? "good fight today. it's your company and it was a real argument. watch one number for me: of your next 50 matches, how many turn into a plan to meet. zero at fifty and you move — no second summit. deal?"
+                : "that's not a strategy, it's a hedge — and hedges ship late and mediocre twice. i said it once, and now i'll respect your call. for what it's worth, i hope i'm wrong. i'm usually not about this one.",
+            when: { after: ["pivot_day_decide"] },
+            choices: [
+              {
+                key: "night", label: "Thank her — long day, right call",
+                reply: "thank you for today. whichever way it goes — that was the most useful room this company has ever been in.",
+                journal: "Pivot day ended after dark. Whiteboard full, coffee cold, decision made. Whatever happens next, that room was the most useful eight hours this company has spent.",
+                effects: { scene: null },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+
+    nodes: [
+      // ── THE SUMMIT CALL (founder journal, L+3) ───────────────────────────────
+      {
+        id: "pivot_summit_call", char: "founder",
+        text: (s, e) => "Three weeks since launch and the graph is flat. Two explanations on the table. Alex: the product is fine, there just aren't enough users yet. Priya: more users won't help — every match hits a dead end. You can't chase both. With " + e.runwayWeeks + " weeks of cash left, you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.",
+        when: {
+          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3,
+          if: (s, e) => !s.activities_pivot && !s.pivot_summit_done && !s.pivot_deferred
+            && e.cast.get("priya").active,
+        },
+        choices: [
+          {
+            key: "call_it", label: "Call it — Saturday, whiteboard",
+            journal: "Called the summit. Saturday, whiteboard, nobody leaves until we know what we're building Monday. Alex will argue we just need more users; Priya's bringing four years of scar tissue.",
+            effects: { scene: "pivot" },
+            fx: () => "Saturday. Whiteboard. Nobody leaves until you know what you're building Monday.",
+          },
+        ],
+        // Never called the room: the default direction wins by inertia. No summit
+        // means no Priya tally either — the story just goes quiet, which is
+        // exactly what drifting into a default feels like.
+        timeout: { weeks: 3, effects: { flags: { pivot_deferred: true, pivot_summit_done: true } } },
+      },
+
+      // ── AFTERMATH ────────────────────────────────────────────────────────────
+      {
+        id: "pivot_relaunch", char: "alex",
+        text: "activity features are live in staging. the matching is rebuilt around shared interests instead of profiles. this is a different product — ready to push it to users?",
+        when: {
+          cooldown: 4,
+          if: (s) => s.activities_pivot && s.launched && !s.pivot_shipped
+            && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
+            && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved),
+        },
+        choices: [
+          {
+            key: "ship", label: "Ship it — relaunch now",
+            journal: "Shipped the pivot. Different product under the same name. The first activity was created within an hour.",
+            effects: { signal: 15, marketFit: 20, flags: { pivot_shipped: true } },
+            fx: () => "Pushed to production. Existing users got the update. First activity was created within an hour. Retention will tell the real story over the next few weeks.",
+          },
+          {
+            key: "wait", label: "One more week of polish",
+            effects: { char: { alex: { morale: -8 } } },
+            fx: () => "Another week polishing. Alex thinks you're overthinking it.",
+          },
+        ],
+        timeout: { weeks: 3, effects: { char: { alex: { morale: -10 } } } },
+      },
+      {
+        // The redemption card: three weeks after choosing growth (or the hedge),
+        // Priya's number comes due. Being wrong is recoverable exactly once, at
+        // a price — later, costlier, with runway nearly spent.
+        id: "pivot_fifty_verdict", char: "alex",
+        text: (s) => {
+          const core = "i kept priya's tally on the whiteboard. 61 new signups since that saturday — the growth push worked, you were right about that part. matches since then: 54. actual dates planned: zero. not low. zero. i erased my side of the board this morning. how much cash do we have left?";
+          return s.pivot_choice === "hedge"
+            ? core + " and the events tab has 9 views. the deck is still the front door. half-pivots don't count — i checked."
+            : core;
+        },
+        when: {
+          took: ["pivot_day_decide:growth|hedge"], delay: 3,
+          if: (s) => !s.activities_pivot && s.launched,
+        },
+        choices: [
+          {
+            key: "pivot_now", label: "Pivot now — late beats never",
+            reply: "zero at fifty. priya said we'd know, and we know. we pivot — now, with whatever runway is left.",
+            journal: "Zero plans to meet out of 54 matches. Alex erased his own column. We're pivoting late — $3k instead of $2k, with runway nearly spent. The lesson was on the whiteboard three weeks ago.",
+            fx(s, e) {
+              s.activities_pivot = true;
+              s.pivot_week = s.week;
+              s.cash = Math.max(0, s.cash - 3000);
+              s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              applyActivitiesPivot(s);
+              const jordan = e.cast.get("jordan");
+              if (jordan.active) jordan.morale = clamp(jordan.morale + 3, 0, 100);
+              return "Pivoting three weeks late. $3k, less runway, same rebuild. Alex is already sketching the plans screen — he got there on his own this time.";
+            },
+          },
+          {
+            key: "ride", label: "Ride Plan A down",
+            reply: "we made our call at the summit. we ride it.",
+            journal: "54 matches, zero plans to meet — and I chose to ride Plan A anyway. Alex went quiet. Priya stopped texting.",
+            effects: { marketFit: -15, signal: -15, char: { alex: { morale: -10 } } },
+            fx: () => "Riding Plan A. The graph doesn't care about resolve.",
+          },
+        ],
+        timeout: { weeks: 3, effects: { marketFit: -15, signal: -15, char: { alex: { morale: -12 } } } },
+      },
+      {
+        // The bookend — only exists if the player called Maya during the slide.
+        id: "pivot_payoff_maya", char: "alex", ambient: true,
+        text: "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
+        when: { if: (s) => s.pivot_shipped && !!s.maya_quote },
+        choices: [
+          {
+            key: "ack", label: "It is a different app now",
+            reply: "it is a different app now. she told us exactly what was wrong with the old one — feels right that she's first back.",
+            journal: "Maya came back. The first launch-day signup, the one who told me the app made her feel worse — she RSVP'd to a Thursday climbing plan on her own. That's the whole pivot in one notification.",
+            effects: { signal: 5 },
+            fx: () => "The first churned user, back on her own. That's the whole pivot in one notification.",
+          },
+        ],
+        timeout: { weeks: 3 },
+      },
+    ],
+  };
+
+  if (typeof module !== "undefined" && module.exports) module.exports = mod;
+  else (window.V2STORY = window.V2STORY || []).push(mod);
+})();
