@@ -8,8 +8,11 @@
 // via effects.char.jordan / e.cast.get("jordan").
 //
 // v2 timing note: the old arc could start at week 8, mid-dev-spine, silently
-// disabling Jordan's own direction cards. Here the drift waits until her iOS
-// milestones are done (or launch), so the dev arc she owns plays out first.
+// disabling Jordan's own direction cards. Here the drift waits until pivot day
+// has resolved — the pivot marks her iOS work obsolete, and THEN she checks
+// out. This keeps the dev arc she owns intact, keeps her present for the
+// launch scene (whose beats need her), and keeps the drift from eating the
+// slide's evidence weeks.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -21,9 +24,8 @@
         id: "jordan_drift_start", char: "alex",
         text: "jordan's been slower this week. said she's swamped at work. i covered the iOS push — took me two days. not complaining, just flagging it.",
         when: {
-          if: (s, e) => !s.jordan_drifting && !s.jordan_resolved
-            && (s.ios_unblocked || e.took("ios_sprint_2:@ignored"))
-            && (s.launched || s.week >= 12),
+          if: (s) => !s.jordan_drifting && !s.jordan_resolved
+            && s.launched && (s.pivot_summit_done || s.pivot_deferred),
         },
         choices: [
           {
@@ -132,8 +134,12 @@
         },
         when: {
           cooldown: 4,
-          if: (s) => s.jordan_drifting && !s.jordan_resolved
-            && (s.jordan_confrontation_triggered || s.week >= (s.jordan_confrontation_defer_until || 20)),
+          // Triggered by following up on the drag — or, if the drag was left to
+          // fester, by inertia ~8 weeks into the drift (relative, not the old
+          // absolute week-20 gate, which predates the drift's post-pivot timing).
+          if: (s, e) => s.jordan_drifting && !s.jordan_resolved
+            && (s.jordan_confrontation_triggered
+              || (e.weeksSince("jordan_drift_start") >= 8 && s.week >= (s.jordan_confrontation_defer_until || 0))),
         },
         choices: [
           {

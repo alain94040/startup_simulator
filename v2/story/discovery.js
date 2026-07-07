@@ -129,7 +129,7 @@
 
       // ── POST-LAUNCH RESEARCH HABIT ───────────────────────────────────────────
       {
-        id: "founder_user_depth", char: "founder",
+        id: "founder_user_depth", char: "founder", ambient: true,
         text: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on kindred — are they going on dates? are they happy with their matches?",
         when: {
           cooldown: 6,
@@ -154,7 +154,7 @@
 
       // ── THE REFERENCE CHAIN: testimonial → website social proof ─────────────
       {
-        id: "reference_checkin", char: "founder",
+        id: "reference_checkin", char: "founder", ambient: true,
         text: "your reference user has been on kindred for 3 weeks. they've been on two dates. time to collect that story while the experience is fresh.",
         when: {
           if: (s, e) => s.reference_customer && !s.testimonial
@@ -173,10 +173,9 @@
             fx: () => "They sent a short paragraph. Honest and usable. Not as rich as a call, but it's real.",
           },
         ],
-        timeout: { weeks: 3 },
       },
       {
-        id: "website_social_proof", char: "founder",
+        id: "website_social_proof", char: "founder", ambient: true,
         text: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of kindred. features tell, stories sell.",
         when: { if: (s) => !!s.testimonial && !s.website_updated },
         choices: [
@@ -186,7 +185,6 @@
             fx: () => "Website rebuilt. Hero section is now the customer quote. Features moved to a second page. Conversion on the signup form jumped immediately.",
           },
         ],
-        timeout: { weeks: 3 },
       },
 
       // ── PAIRING WITH ALEX (the recurring build-together card) ────────────────

@@ -12,7 +12,8 @@
 // "no urgency anywhere" schema check.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const { Game } = require("./engine.js");
+const { Game } = require("../engine.js");
+const { ANSWER_ORDER, actPriority, PREF, decent, playGame } = require("./harness.js");
 
 let failures = 0, checks = 0;
 function ok(cond, label) {
@@ -21,128 +22,12 @@ function ok(cond, label) {
   else console.log("  ✓ " + label);
 }
 
-// Answer preference order (which open message a driver replies to first) and
-// preferred keys. A key that isn't currently offered falls back to the next
-// preference, then the first available option.
-// Priority for spending the 2 weekly actions (what a decent player would answer
-// first when the week is crowded): parallel scene beats, then the slide's
-// evidence beats, then the summit. Everything else falls back to rail order.
-const ANSWER_ORDER = [
-  "equity_worry", "equity_5050_interject", "interviews", "waitlist_cold",
-  "slide_maya_call", "slide_cohort", "slide_first_echo",
-  "slide_alex_thesis", "slide_priya_ping", "pivot_summit_call", "feature_spree",
-  "yc_window_ready", "yc_window_early", "yc_apply",
-];
-// Community threads only get spare actions (a decent player prioritizes the team).
-const actPriority = (a) => {
-  const i = ANSWER_ORDER.indexOf(a.nodeId);
-  return i >= 0 ? i : a.charId === "hacker_news" ? 500 : 99;
-};
-const PREF = {
-  start_prototype: ["build"], incorporate: ["atlas"], incorporate_again: ["atlas"],
-  equity_open: ["open"], equity_alex: ["probe"], equity_alex_why: ["propose_40"],
-  equity_worry: ["reassure"], equity_counter_jordan: ["cave_33"],
-  equity_counter_alex: ["cave_40"], equity_counter_alex_50: ["give_alex"],
-  equity_5050_interject: ["ack"], equity_signing: ["sign"],
-  dev_plan: ["lean"], auth_choice: ["buy"], auth_forced: ["buy"],
-  interviews: ["interview"], first_screen: ["intake_interviews", "intake"],
-  ff_family: ["ask"], ff_family_2: ["ask"], ff_family_3: ["ask"],
-  founder_reflect: ["review"],
-  alex_commitment: ["accept"], vision_mismatch: ["test"],
-  matching_choice: ["build"], ranking: ["conversation", "interests"],
-  ios_sprint_1: ["wire_backend"], ios_sprint_2: ["ack"],
-  demo_ready: ["rough"], demo_watch: ["watch"], demo_bug: ["note"], demo_first_message: ["note"],
-  analytics_choice: ["buy"], seed_strategy: ["waitlist_city", "local"],
-  trust_safety: ["report_now"], waitlist_calls: ["call"], waitlist_cold: ["reach"],
-  alex_sync_build: ["build"],
-  proto_to_product: ["commit"], good_enough_launch: ["ship"],
-  launch_preflight: ["review"], launch_email_pulse: ["yes"], launch_first_bounce: ["normal"],
-  launch_staging_discover: ["check"], launch_staging_found: ["options"], launch_staging_decide: ["hotfix"],
-  launch_first_signup: ["watch"], launch_inbox_question: ["personal"], launch_hustle: ["stay"],
-  launch_test_profiles: ["how_many"], launch_test_profiles_scope: ["damage"], launch_test_profiles_decide: ["disclose"],
-  launch_abuser: ["ban"], launch_stripe_discover: ["fix"], launch_stripe_research: ["timeline"],
-  launch_stripe_decide: ["fix_now"], launch_going_home: ["ack"], launch_9pm_crisis: ["victim_first"],
-  launch_signal: ["ack"],
-  founder_meetup: ["go"], mentor_competitor_bomb: ["research"],
-  post_match_dropoff: ["dig"], pivot_open: ["open"],
-  slide_hangover: ["retention"], slide_first_echo: ["reply_honest"], slide_cohort: ["dig"],
-  slide_alex_thesis: ["push_back", "hear_him"], slide_priya_ping: ["real_numbers"],
-  slide_maya_call: ["call"], slide_jordan_echo: ["ack"], feature_spree: ["no"],
-  pivot_summit_call: ["call_it"], pivot_day_open: ["deal"], pivot_day_alex_case: ["probe"],
-  pivot_day_priya_case: ["pull_it"], pivot_day_evidence: ["maya", "circle", "gut"],
-  pivot_day_shape: ["flip"], pivot_day_cost: ["ack"], pivot_day_decide: ["pivot"],
-  pivot_day_close: ["night"], pivot_relaunch: ["ship"], pivot_fifty_verdict: ["pivot_now"],
-  pivot_payoff_maya: ["ack"],
-  // pass 3: fundraising, YC, growth
-  marcus_intro: ["call"], prep_deck: ["build"], investor_meetings: ["meet"], seed_pitch: ["pitch"],
-  fatima_intro: ["call"], fatima_meeting: ["meet"], fatima_deck: ["walk"], fatima_commit: ["welcome"],
-  ryan_intro: ["meet"], ryan_checkin: ["update"], sarah_intro: ["reply"],
-  yc_window_ready: ["skip"], yc_window_early: ["skip"], yc_apply: ["submit"],
-  beachhead_choice: ["narrow"], launch_surface: ["quiet"], launch_scramble: ["firefight"],
-  channel_test: ["referrals", "creators", "community", "paid"], channel_double_down: ["referrals"],
-  dont_scale_seed: ["concierge"], first_customer_offer: ["pitch"], pricing_experiment: ["prompt"],
-  bug_reports: ["fix"], churn_interview: ["call"], feature_request_custom: ["negotiate"],
-  feature_cluster: ["build"],
-  // pass 3.5: jordan arc, press, relationship texture, discovery, solo
-  jordan_drift_start: ["talk"], jordan_drag: ["talk"], jordan_launch_blocker: ["confront"],
-  jordan_confrontation: ["fire"], jordan_cap_table: ["lawyer"],
-  competitor_launch: ["study"], competitor_growing: ["calls"], investor_moat_question: ["niche"],
-  public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
-  consultant_growth: "SKIP", consultant_brand: "SKIP",
-  ff_friend: ["tell"], ff_friend_ask: ["ask"], ff_mentor: ["lunch"], ff_mentor_pitch: ["pitch"],
-  early_name: ["catchy"], early_customer_target: ["individuals"], early_funding_goal: ["profitable"],
-  alex_side_project: ["pause"], alex_side_project_escalation: ["talk"], alex_quiet: ["checkin"],
-  alex_equity_regret: ["fair"], family_doubt: ["talk"],
-  alex_decision: ["ship"], alex_wants_rebuild: ["refactor"], arch_refactor_done: ["review"],
-  alex_leaving_threat: ["talk"],
-  first_interview_shock: ["pivot"], cold_silence: ["rewrite"], random_reframe: ["test"],
-  pivot_insight_1: ["pivot"], pivot_insight_2: ["pivot"], pmf_lock: ["lock"],
-  founder_user_depth: ["deep"], reference_checkin: ["call"], website_social_proof: ["rebuild"],
-  founder_codebuild: "SKIP",
-};
-
+// Thin wrapper over the shared harness loop (keeps the block signatures below).
 function run(seed, chooser, weeks, opts) {
-  const game = new Game({ seed });
-  const seen = {}; // nodeId -> options offered when first surfaced (for gating asserts)
-  for (let w = 0; w < weeks && !game.s.game_over; w++) {
-    // Test-only stipend standing in for the not-yet-ported funding arcs
-    // (investors/YC) — lets narrative-path runs outlive the pre-seed burn.
-    if (opts && opts.subsidy) game.s.cash += opts.subsidy;
-    let guard = 0;
-    for (;;) {
-      if (guard++ > 60) throw new Error("driver stuck in week " + game.s.week);
-      const acts = game.openActions().filter(a => !a.onHold);
-      for (const a of acts) if (!seen[a.nodeId]) seen[a.nodeId] = a.options.map(o => o.key);
-      const pri = (opts && opts.priority) || actPriority;
-      acts.sort((a, b) => pri(a) - pri(b));
-      let did = false;
-      for (const a of acts) {
-        const key = chooser(a, game);
-        if (!key) continue;
-        const free = a.scene && game.scene && game.scene.id === a.scene;
-        if (game.actionsLeft <= 0 && !free) continue;
-        const offered = a.options.map(o => o.key);
-        const k = [].concat(key).find(x => offered.includes(x)) || offered[0];
-        game.act(a.nodeId, k);
-        did = true;
-        break; // re-read: a scene answer surfaces the next beat immediately
-      }
-      if (!did) break;
-    }
-    game.nextWeek();
-  }
-  game.seenOptions = seen;
-  return game;
+  return playGame(seed, chooser, { weeks, ...(opts || {}) });
 }
 
-// decent play leaves the build-vs-discover standing offer alone (Alex stays on
-// build), and lets "SKIP" entries (consultants, pairing) sit unanswered.
-const decent = (a) => {
-  if (a.nodeId === "alex_sync_discover") return null;
-  const p = PREF[a.nodeId];
-  if (p === "SKIP") return null;
-  return p || a.options[0].key;
-};
+
 // same play, but pushes Alex full-time at the commitment talk.
 const decentFT = (a) => a.nodeId === "alex_commitment" ? ["push"] : decent(a);
 const ignore = () => null;
@@ -392,13 +277,16 @@ console.log("summit-ignored driver (seed 42)");
 }
 
 // ── pass 3: the angel round — the non-YC win ─────────────────────────────────
-console.log("angel-round driver (seed 3, 48 weeks, subsidized)");
+console.log("angel-round driver (seed 4, 48 weeks, subsidized)");
 {
-  // A run about fundraising: the investor chain (and its two keys — the meetup
-  // and Priya's competitive-analysis ask) gets first call on actions.
-  // (Seed 3: Marcus's commit roll is seeded; 42 happens to roll a "come back
-  // in 2 months" — most seeds close the round.)
-  const g = run(3, decent, 48, {
+  // A run about fundraising: skip the YC windows (decent now applies by
+  // default) and give the investor chain (plus its two keys — the meetup and
+  // Priya's competitive-analysis ask) first call on actions.
+  // (Seed 4: Marcus's commit roll is seeded — most seeds close the round; a
+  // few roll "come back in 2 months" into a warmth soft-lock.)
+  const angelChooser = (a, g2) => (a.nodeId === "yc_window_ready" || a.nodeId === "yc_window_early")
+    ? ["skip"] : decent(a, g2);
+  const g = run(4, angelChooser, 48, {
     subsidy: 500,
     priority: (a) => ["marcus", "fatima", "ryan"].includes(a.charId) ? -2
       : (a.nodeId === "founder_meetup" || a.nodeId === "mentor_competitor_bomb") ? -1
@@ -408,15 +296,13 @@ console.log("angel-round driver (seed 3, 48 weeks, subsidized)");
     "competitive deep-dive made Priya an advisor");
   ok(g.cast.get("marcus").active && g.took("marcus_intro:call"), "Marcus unlocked off the advisor network");
   ok(g.s.deck_ready, "deck built on Marcus's ask (before diligence needed it)");
-  ok(g.timesResolved("channel_test") >= 3, "ran the cheap channel tests");
-  ok(g.s.primary_channel === "referrals", "went all-in on the channel with legs");
   ok(g.s.customers >= 6, "customers compounded (" + g.s.customers + " by wk " + g.s.week + ")");
   ok(g.s.marcusCommitted, "Marcus led the round ($400k, wk " + g.weekOf("seed_pitch") + ")");
   ok(g.s.followerCommitted, "Fatima followed ($100k) — she never commits before the lead");
   ok(g.s.game_won, "two angels committed — game won");
 
   // Scoring smoke on a full run.
-  const Scoring = require("./scoring.js");
+  const Scoring = require("../scoring.js");
   const cats = Scoring.scoreGame(g);
   ok(cats.length === 7 && cats.every(c => c.score === null || (c.score >= 0 && c.score <= 100 && c.verdict)),
     "scorecard: 7 well-formed categories");
@@ -424,6 +310,20 @@ console.log("angel-round driver (seed 3, 48 weeks, subsidized)");
   ok(by["edge-vs-commodity"].score === 100, "edge-vs-commodity scored 100 (buy/build/buy)");
   ok(by["raise-early"].score >= 80, "raise-early scored high (" + by["raise-early"].score + ")");
   ok(by["default-alive"].score === 100, "default-alive: won");
+}
+
+// ── pass 3: the Bullseye loop, played to completion ──────────────────────────
+// (Both wins end runs before the channel loop finishes, so this driver skips
+// YC and the lead pitch to let the growth machinery run its full course.)
+console.log("bullseye driver (seed 42, 44 weeks, subsidized)");
+{
+  const bullseye = (a, g2) =>
+    (a.nodeId === "yc_window_ready" || a.nodeId === "yc_window_early") ? ["skip"]
+      : a.nodeId === "seed_pitch" ? null : decent(a, g2);
+  const g = run(42, bullseye, 44, { subsidy: 500 });
+  ok(g.timesResolved("channel_test") >= 3, "ran the cheap channel tests (" + g.timesResolved("channel_test") + ")");
+  ok(g.s.primary_channel === "referrals", "went all-in on the channel with legs");
+  ok(g.s.users >= 30, "the committed channel compounded (" + g.s.users + " users)");
 }
 
 // ── pass 3: the YC path — the verdict ends the run either way ────────────────
@@ -439,7 +339,7 @@ console.log("YC-path driver (seed 42, subsidized)");
   ok(g.s.game_won || g.s.game_over, "the YC verdict ended the run (" + (g.s.ycAccepted ? "accepted" : "rejected") + ")");
   ok(g.threads.founder.some(m => m.from === "Y Combinator" && /passing|You're in/.test(m.body || "")),
     "the verdict was posted to the journal");
-  const cats = require("./scoring.js").scoreGame(g);
+  const cats = require("../scoring.js").scoreGame(g);
   ok(cats.length === 7, "scorecard renders at the verdict");
 }
 
@@ -471,7 +371,7 @@ console.log("jordan firing arc (seed 42, 30 weeks, subsidized)");
   ok(!g.cast.get("jordan").active, "her thread went quiet");
   ok(g.took("jordan_cap_table:lawyer") && g.s.jordan_cleanup_needed === false,
     "lawyer cleaned up the un-vested stake ($2k)");
-  const cats = require("./scoring.js").scoreGame(g);
+  const cats = require("../scoring.js").scoreGame(g);
   const hard = cats.find(c => c.key === "hard-conversations");
   ok(hard.score >= 70, "firing counted toward hard-conversations (" + hard.score + ")");
 }
@@ -480,7 +380,7 @@ console.log("jordan firing arc (seed 42, 30 weeks, subsidized)");
 console.log("scoring on the ignore run (seed 42)");
 {
   const g = run(42, ignore, 18);
-  const cats = require("./scoring.js").scoreGame(g);
+  const cats = require("../scoring.js").scoreGame(g);
   const by = {}; for (const c of cats) by[c.key] = c;
   ok(by["hard-conversations"].score !== null && by["hard-conversations"].score < 40,
     "hard-conversations scored low — everything resolved by silence (" + by["hard-conversations"].score + ")");

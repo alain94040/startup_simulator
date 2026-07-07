@@ -67,6 +67,10 @@
       // decision completes the plans-first replacements (see story/pivot_day.js).
       if (s.activities_pivot && s.launched) {
         if (s.pivot_effort_base == null) s.pivot_effort_base = teamEffort;
+        // If the team shrinks after pivot day (Jordan fired, Alex walks), the
+        // active-cofounder effort sum drops below the recorded base — clamp the
+        // base down so the rebuild clock resumes instead of going negative.
+        if (teamEffort < s.pivot_effort_base) s.pivot_effort_base = teamEffort;
         const pivotEffort = teamEffort - s.pivot_effort_base;
         if (pivotEffort >= 3.0 && s.items.plans_matching && s.items.plans_matching.status === "active")
           s.items.plans_matching.status = "done";

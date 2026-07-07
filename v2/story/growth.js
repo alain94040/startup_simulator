@@ -165,7 +165,7 @@
 
       // ── HAND-MADE TRACTION (the founder's customer accelerators) ─────────────
       {
-        id: "dont_scale_seed", char: "founder",
+        id: "dont_scale_seed", char: "founder", ambient: true,
         text: "the app is live but the early matches are thin — a real chicken-and-egg. paul graham's voice in your head: do things that don't scale. you could manufacture the magic for the first users by hand, just to get the flywheel turning.",
         when: { if: (s) => s.launched && s.users >= 3 && !s.pivot_shipped },
         choices: [
@@ -191,10 +191,9 @@
             fx: () => "Stayed hands-off and let the system run. Fewer awkward DMs from the founder — and a lot fewer matches. The cold-start stayed cold.",
           },
         ],
-        timeout: { weeks: 3 },
       },
       {
-        id: "first_customer_offer", char: "founder",
+        id: "first_customer_offer", char: "founder", ambient: true,
         text: "free users show up every day but nobody's paying. one person has been swiping through profiles every single day for two weeks. time to convert the first subscriber.",
         when: { if: (s) => s.launched && s.users >= 3 && s.customers === 0 },
         choices: [
@@ -210,10 +209,9 @@
             fx: () => "Made the ask. They converted. First paying subscriber. $49/month — not much, but it's real.",
           },
         ],
-        timeout: { weeks: 3 },
       },
       {
-        id: "pricing_experiment", char: "founder",
+        id: "pricing_experiment", char: "founder", ambient: true,
         text: "free users open the app every day, swipe, and match — but haven't upgraded. the product clearly works. nobody's been asked to pay. time to test.",
         when: { if: (s) => s.launched && s.users >= 10 && s.customers >= 1 && s.pivot_shipped },
         choices: [
@@ -245,7 +243,6 @@
             fx: () => "Held off. Free users keep coming. The conversion problem isn't going anywhere.",
           },
         ],
-        timeout: { weeks: 3 },
       },
     ],
   };

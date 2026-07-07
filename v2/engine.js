@@ -561,6 +561,7 @@
           charId, nodeId: node.id,
           name: node.from || char.def.name, role: char.def.role || "",
           noChat: !!char.def.noChat,
+          kind: node.filler ? "filler" : node.ambient ? "ambient" : "story",
           body: this._text(node.text, char),
           subtext: node.subtext || null,
           options: opts, week: o.week,

@@ -57,6 +57,13 @@
   #over { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; }
   #over .card { background: #fff; border-radius: 14px; padding: 28px 34px; max-width: 420px; text-align: center; }
   #over h2 { margin-bottom: 8px; }
+
+  #debug { border-top: 1px solid var(--line); background: #1c1c1e; color: #ddd; font-size: 12px; }
+  #debug summary { padding: 4px 14px; cursor: pointer; color: #8e8e93; user-select: none; }
+  #debug .tools { padding: 6px 14px 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  #debug button { border: 1px solid #444; background: #2c2c2e; color: #ddd; border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer; }
+  #debug button:hover { background: #3a3a3c; }
+  #debug input { width: 70px; background: #2c2c2e; border: 1px solid #444; color: #ddd; border-radius: 6px; padding: 3px 6px; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -77,6 +84,24 @@
   </section>
 </main>
 <div id="over"><div class="card"><h2 id="overTitle"></h2><p id="overBody"></p></div></div>
+
+<details id="debug">
+  <summary>debug</summary>
+  <div class="tools">
+    seed <input id="dbgSeed" type="number" value="">
+    <button data-jump="equity_open">equity talk</button>
+    <button data-jump="dev_plan">dev plan</button>
+    <button data-jump="demo_ready">demo night</button>
+    <button data-jump="good_enough_launch">launch day</button>
+    <button data-jump="slide_hangover">the slide</button>
+    <button data-jump="pivot_summit_call">pivot day</button>
+    <button data-jump="pivot_relaunch">post-pivot</button>
+    <button data-jump="seed_pitch">fundraising</button>
+    <span style="margin-left:10px"></span>
+    <button id="dbgSkip">+5 weeks</button>
+    <button id="dbgRestart">restart</button>
+  </div>
+</details>
 
 <script src="cast.js"></script>
 <script src="story/opening.js"></script>
@@ -99,8 +124,10 @@
 <script src="scoring.js"></script>
 <script src="world.js"></script>
 <script src="engine.js"></script>
+<script src="tests/harness.js"></script>
 <script>
-  const game = new V2Engine({ seed: Date.now() % 100000 });
+  let seed = Date.now() % 100000;
+  let game = new V2Engine({ seed });
   let selected = "alex";
 
   const $ = id => document.getElementById(id);
@@ -166,6 +193,25 @@
   }
 
   $("endWeek").onclick = () => { game.nextWeek(); render(); };
+
+  // ── debug bar ──────────────────────────────────────────────────────────────
+  $("dbgSeed").value = seed;
+  const dbgSeed = () => {
+    const v = parseInt($("dbgSeed").value, 10);
+    return Number.isFinite(v) ? v : seed;
+  };
+  for (const btn of document.querySelectorAll("#debug [data-jump]")) {
+    btn.onclick = () => {
+      seed = dbgSeed();
+      // The subsidy keeps late jumps from dying of the (unbalanced) cash gap.
+      game = V2Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
+      $("over").style.display = "none";
+      render();
+    };
+  }
+  $("dbgSkip").onclick = () => { for (let i = 0; i < 5 && !game.s.game_over; i++) game.nextWeek(); render(); };
+  $("dbgRestart").onclick = () => { seed = dbgSeed(); game = new V2Engine({ seed }); $("over").style.display = "none"; render(); };
+
   render();
 </script>
 </body>

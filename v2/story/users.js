@@ -50,7 +50,7 @@
         },
       },
       {
-        id: "churn_interview", char: "users", from: "Customer",
+        id: "churn_interview", char: "users", ambient: true, from: "Customer",
         text: "a paying subscriber just canceled. they had 5 active conversations going 3 days ago — something changed. you have their number.",
         when: { if: (s) => s.launched && s.customers >= 1 },
         choices: [
@@ -75,7 +75,7 @@
         timeout: { weeks: 3 },
       },
       {
-        id: "feature_request_custom", char: "users", from: "Your most active subscriber",
+        id: "feature_request_custom", char: "users", ambient: true, from: "Your most active subscriber",
         text: "a power user who's been on 4 dates from kindred messaged this week: 'i'd pay double if you add video dates. i always need to move to FaceTime before i'm comfortable meeting someone. it breaks the flow.'",
         when: { if: (s) => s.launched && s.customers >= 3 },
         choices: [
@@ -109,7 +109,7 @@
         },
       },
       {
-        id: "feature_cluster", char: "users", from: "3 users (separately)",
+        id: "feature_cluster", char: "users", ambient: true, from: "3 users (separately)",
         text: "none of them know each other. all three asked for the same thing this week — a way to signal they're looking for something serious before matching. that's not coincidence.",
         when: { if: (s) => s.launched && (s.users >= 5 || s.customers >= 2) },
         choices: [

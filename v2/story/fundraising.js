@@ -13,7 +13,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   const CHECKIN_BODIES = [
-    "it's been a few weeks since you last touched base with Ryan. a short update on subscriber growth keeps you top of mind.",
+    "it's been a few weeks since you last touched base with Ryan. a short update on the numbers keeps you top of mind.",
     "you haven't sent Ryan anything in a while. investors go cold if you don't keep them warm.",
     "Ryan seemed genuinely interested in the dating app space. worth spending 20 minutes on a quick progress note.",
     "it's been over a month. a brief update — new subscribers, dates that happened, what's working — could be worth it.",
