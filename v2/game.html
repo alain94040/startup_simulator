@@ -85,7 +85,7 @@
   .m-in.dropped { opacity: .7; }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
   @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
-  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .recap-item { animation: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, .stat.changed { animation: none !important; transition: none !important; } }
   .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
   .note {
@@ -200,10 +200,6 @@
   .modal { background: var(--panel); border-radius: 16px; padding: 22px 26px; width: min(520px, 92%); max-height: 84vh; overflow-y: auto; box-shadow: 0 24px 70px rgba(10,10,20,.35); }
   .modal h2 { font-size: 18px; margin-bottom: 4px; }
   .modal .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 14px; }
-  .recap-item { display: flex; gap: 9px; padding: 6px 0; font-size: 13px; opacity: 0; animation: rise .35s ease forwards; align-items: baseline; }
-  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
-  .recap-item .ico { flex: none; width: 20px; text-align: center; }
-  .recap-item .sub2 { color: var(--dim); font-size: 11.5px; display: block; }
   .modal .ok { margin-top: 14px; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 0; font-weight: 600; }
   .grade-row { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--soft); font-size: 13px; }
   .grade { flex: none; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; position: relative; top: 4px; }
@@ -213,42 +209,48 @@
   .intro-step { font-size: 13.5px; line-height: 1.6; }
   .intro-step b { display: block; font-size: 16px; margin-bottom: 6px; }
 
-  /* ── iOS-style notifications ────────────────────────────────────────────── */
-  #notifs { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; width: 368px; pointer-events: none; }
+  /* ── iPhone-style notifications, anchored under the bell ────────────────── */
+  #notifs { position: fixed; top: 56px; right: 18px; z-index: 45; width: 330px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .notif {
-    pointer-events: auto; display: flex; gap: 10px; align-items: flex-start;
-    background: rgba(249,249,252,.9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-    border-radius: 18px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.24); cursor: pointer;
-    animation: ndrop .5s cubic-bezier(.2,.9,.3,1.15);
+    pointer-events: auto; display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
+    background: rgba(255,255,255,.93); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    border: 1px solid var(--line); border-radius: 16px; padding: 11px 13px;
+    box-shadow: 0 10px 34px rgba(0,0,0,.2); transition: transform .12s;
+    animation: noteIn .34s cubic-bezier(.2,.9,.3,1) both;
   }
-  .notif.hide { animation: nlift .28s ease forwards; }
-  @keyframes ndrop { from { transform: translateY(-90px); opacity: 0; } }
-  @keyframes nlift { to { transform: translateY(-24px); opacity: 0; } }
-  .notif .n-ico { width: 36px; height: 36px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .notif:hover { transform: translateY(-1px); }
+  .notif.hide { animation: noteOut .13s ease forwards; }
+  @keyframes noteIn { from { opacity: 0; transform: translateX(34px) scale(.96); } to { opacity: 1; transform: none; } }
+  @keyframes noteOut { to { opacity: 0; transform: translateX(34px); } }
+  .notif .n-ico { width: 34px; height: 34px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
   .notif .n-b { flex: 1; min-width: 0; }
   .notif .n-title { font-size: 12.5px; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
   .notif .n-time { color: #8b8b92; font-weight: 400; font-size: 10.5px; white-space: nowrap; }
   .notif .n-text { font-size: 12px; color: #3a3a40; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .bell { position: relative; border: 1px solid var(--line); background: var(--soft); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 15px; display: grid; place-items: center; transition: .13s; }
+  .bell:hover { background: #e8eaef; transform: translateY(-1px); }
+  .bell-badge { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #ff3b30; color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--panel); }
+  #noteCenter { position: fixed; top: 56px; right: 18px; z-index: 46; width: 330px; max-height: 64vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 50px rgba(0,0,0,.24); padding: 8px; display: none; }
+  #noteCenter.show { display: block; animation: noteIn .24s ease both; }
+  #noteCenter h4 { margin: 6px 9px; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--dim); }
+  .nc-item { display: flex; gap: 10px; align-items: flex-start; padding: 9px; border-radius: 12px; cursor: pointer; }
+  .nc-item:hover { background: var(--soft); }
+  .nc-empty { padding: 16px 10px; color: var(--dim); font-size: 13px; text-align: center; }
 
-  /* ── week flash + scene interstitial ────────────────────────────────────── */
-  #weekFlash {
-    position: fixed; inset: 0; background: #0d0d12; color: #fff; z-index: 74;
-    display: none; align-items: center; justify-content: center; flex-direction: column; gap: 8px; pointer-events: none;
+  /* ── focus-arc cinematic: staged lines, per-arc accent ──────────────────── */
+  #cine {
+    position: fixed; inset: 0; z-index: 72; background: #000;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity 1.2s ease;
   }
-  #weekFlash.on { display: flex; animation: wflash 1.15s ease forwards; }
-  @keyframes wflash { 0% { opacity: 0; } 18% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
-  #weekFlash .wf-kicker { font-size: 11px; letter-spacing: .4em; color: #9a9aa2; text-transform: uppercase; }
-  #weekFlash .wf-week { font-size: 40px; font-weight: 800; letter-spacing: .03em; }
-  #inter {
-    position: fixed; inset: 0; background: #000; z-index: 72; display: none;
-    align-items: center; justify-content: center; flex-direction: column; color: #fff; cursor: pointer;
-  }
-  #inter.on { display: flex; }
-  #inter .i-kicker { font: 700 12px ui-monospace, Menlo, monospace; letter-spacing: .4em; color: #f2c14e; text-transform: uppercase; animation: irise .8s ease both; }
-  #inter .i-title { font-size: 36px; font-weight: 800; letter-spacing: .05em; margin-top: 12px; animation: irise .8s .3s ease both; }
-  #inter .i-sub { margin-top: 12px; color: #9a9aa2; font-size: 13.5px; max-width: 440px; text-align: center; line-height: 1.5; animation: irise .8s .6s ease both; }
-  #inter .i-skip { position: absolute; bottom: 26px; font-size: 11px; color: #55555c; letter-spacing: .1em; }
-  @keyframes irise { from { opacity: 0; transform: translateY(16px); } }
+  #cine.show { opacity: 1; pointer-events: all; }
+  .lc-inner { text-align: center; max-width: 480px; padding: 0 32px; }
+  .lc-line { font-family: Georgia, serif; font-size: 26px; color: rgba(255,255,255,0); letter-spacing: .04em; line-height: 2.1; transition: color 1.1s ease; }
+  .lc-line.vis { color: rgba(255,255,255,.88); }
+  .lc-line.lc-title { font-weight: 700; letter-spacing: .06em; }
+  .lc-line.lc-title.vis { color: var(--lc-accent, rgba(255,255,255,.95)); }
+  .lc-skip { position: absolute; bottom: 36px; right: 40px; color: rgba(255,255,255,.28); font-size: 11px; cursor: pointer; letter-spacing: .08em; }
+  @keyframes fade { from { opacity: 0; } }
 
   /* typing indicator (scenes) */
   .typing { display: inline-flex; gap: 4px; background: #26262a; border-radius: 16px; padding: 12px 15px; align-self: flex-start; }
@@ -257,6 +259,163 @@
   .typing i:nth-child(3) { animation-delay: .4s; }
   @keyframes tblink { 40% { opacity: .25; } }
   .sc-in.msg-new, .sc-out.msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
+
+  /* journal-leads glow + arriving entries + stat pulses */
+  #sideCol { transition: box-shadow .45s ease; }
+  #sideCol.updating { box-shadow: inset 3px 0 0 rgba(255,179,64,.65), -8px 0 26px rgba(255,179,64,.28); }
+  @keyframes jHighlight {
+    0% { text-shadow: 0 0 7px rgba(255,176,46,.95), 0 0 18px rgba(255,150,20,.7); color: #c96a12; }
+    45% { text-shadow: 0 0 5px rgba(255,176,46,.55), 0 0 12px rgba(255,150,20,.35); }
+    100% { text-shadow: 0 0 0 rgba(255,176,46,0); }
+  }
+  .j-entry.arrive { animation: msgpop .5s ease both, jHighlight 2.1s ease .15s both; }
+  @keyframes statPulse { 0% { transform: scale(1); } 40% { transform: scale(1.13); box-shadow: 0 0 0 3px rgba(52,199,89,.3); } 100% { transform: scale(1); box-shadow: none; } }
+  .stat.changed { animation: statPulse .85s ease; }
+  .stats { display: flex; gap: 4px; font-size: 11px; color: var(--dim); }
+  .stats .stat { display: flex; flex-direction: column; align-items: center; border-radius: 8px; padding: 1px 7px; }
+  .stats .stat b { color: var(--ink); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+  .gauge.todo.call .g-lbl { color: var(--amber-ink); }
+  .endpill { display: block; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 8px 0; font-weight: 600; margin-bottom: 8px; animation: msgpop .3s ease; }
+  .cta-pill { display: block; margin: 4px auto 0; border: 1px solid var(--line); background: var(--panel); color: var(--blue); border-radius: 999px; padding: 8px 24px; font-weight: 600; font-size: 13px; box-shadow: 0 4px 14px rgba(20,20,40,.08); cursor: pointer; }
+  .cta-pill:disabled { color: var(--dim); }
+  .tc-close { float: right; border: 0; background: none; font-size: 16px; color: var(--dim); cursor: pointer; line-height: 1; }
+  .chat-blocked { align-self: center; color: var(--dim); font-size: 12px; padding: 8px 0 2px; font-style: italic; }
+  .mk-row { display: flex; gap: 10px; align-self: flex-start; margin: 2px 0 4px; }
+
+  /* ── prototype mockups + lightbox (ported verbatim from the old UI) ──────── */
+     and a ~250px image in the lightbox. Three variants: rich / minimal / generic. */
+  .mk-phone{
+    position:relative;width:13.5em;background:#fff;
+    border-radius:2.1em;overflow:hidden;display:flex;flex-direction:column;
+    border:1px solid rgba(20,8,30,.07);box-shadow:0 .3em 1.1em rgba(30,12,40,.18);
+    font-family:ui-rounded,"SF Pro Rounded","Nunito",-apple-system,system-ui,sans-serif;
+  }
+  .mk-notch{position:absolute;top:.55em;left:50%;transform:translateX(-50%);
+    width:2.9em;height:.55em;background:#15151b;border-radius:1em;z-index:9}
+  .mk-statusbar{display:flex;align-items:center;justify-content:space-between;
+    padding:.55em 1.1em .1em;font-size:.6em;font-weight:800;color:#1c1c22;flex:none}
+  .mk-statusbar .mk-sysicons{display:flex;gap:.32em;align-items:center}
+  .mk-statusbar .mk-sysicons i{width:.85em;height:.6em;border-radius:.12em;background:#1c1c22}
+  .mk-statusbar .mk-sysicons i.bat{width:1.35em;opacity:.9}
+
+  /* shared "photo": a warm gradient with an abstract silhouette, no image files */
+  .mk-portrait{position:absolute;inset:0;overflow:hidden;
+    background:
+      radial-gradient(58% 38% at 70% 14%, rgba(255,255,255,.22), transparent 60%),
+      linear-gradient(160deg,#ff9a35 0%,#ff5d63 34%,#f53197 64%,#8b1ec2 100%);
+  }
+  .mk-portrait::before{content:"";position:absolute;left:50%;bottom:-9%;width:86%;height:52%;
+    transform:translateX(-50%);border-radius:46% 46% 0 0;background:rgba(28,5,40,.30)}
+  .mk-portrait::after{content:"";position:absolute;left:50%;bottom:31%;width:30%;aspect-ratio:1;
+    transform:translateX(-50%);border-radius:50%;background:rgba(28,5,40,.30)}
+
+  /* ===== A · RICH — looks loaded with features ===== */
+  .v-rich .mk-rhead{display:flex;align-items:center;justify-content:space-between;padding:.15em 1em .55em}
+  .v-rich .mk-brand{font-size:1.15em;font-weight:800;letter-spacing:-.02em;
+    background:linear-gradient(92deg,#ff8a5b,#ff4f81);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .v-rich .mk-brand b{-webkit-text-fill-color:#ff4f81;color:#ff4f81;font-size:.72em;margin-left:.15em}
+  .v-rich .mk-rhead-ico{display:flex;gap:.6em;align-items:center}
+  .v-rich .mk-rhead-ico i{position:relative;width:1.05em;height:1.05em;border:.15em solid #adadb8;border-radius:.28em}
+  .v-rich .mk-rhead-ico i.ic-bell{border-radius:50% 50% .28em .28em}
+  .v-rich .mk-rhead-ico i.ic-bell em{position:absolute;top:-.42em;right:-.42em;min-width:1em;height:1em;border-radius:1em;
+    background:#ff4f81;color:#fff;font-size:.5em;font-style:normal;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 .15em}
+  .v-rich .mk-stories{display:flex;gap:.52em;padding:0 1em .55em}
+  .v-rich .st{width:2em;height:2em;border-radius:50%;flex:none;background:linear-gradient(150deg,#ff9d5c,#ff4f81);
+    box-shadow:0 0 0 .13em #fff,0 0 0 .27em #ff5e88}
+  .v-rich .st-you{background:#eef0f4;box-shadow:0 0 0 .13em #fff,0 0 0 .24em #d9dbe2}
+  .v-rich .mk-prof{position:relative;aspect-ratio:3/4;margin:0 .85em;border-radius:1.2em;overflow:hidden;
+    box-shadow:0 .45em 1.1em rgba(150,30,95,.26)}
+  .v-rich .mk-match{position:absolute;top:.6em;left:.6em;z-index:3;font-size:.52em;font-weight:800;color:#fff;
+    padding:.42em .7em;border-radius:1em;background:rgba(20,8,28,.32);backdrop-filter:blur(3px);border:1px solid rgba(255,255,255,.4)}
+  .v-rich .mk-verif{position:absolute;top:.55em;right:.55em;z-index:3;width:1.5em;height:1.5em;border-radius:50%;
+    background:#3897ff;color:#fff;font-size:.58em;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 .12em #fff}
+  .v-rich .mk-prof-info{position:absolute;left:0;right:0;bottom:0;z-index:3;padding:1.5em .8em .7em;
+    background:linear-gradient(transparent,rgba(18,5,24,.85));color:#fff}
+  .v-rich .mk-name{font-size:.86em;font-weight:800;display:flex;align-items:center;gap:.32em}
+  .v-rich .mk-name .vdot{width:.42em;height:.42em;border-radius:50%;background:#69e08a}
+  .v-rich .mk-sub{font-size:.55em;opacity:.92;margin-top:.12em}
+  .v-rich .mk-chips{display:flex;gap:.32em;margin-top:.5em}
+  .v-rich .mk-chips span{font-size:.49em;font-weight:700;padding:.42em .62em;border-radius:1em;
+    background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34)}
+  .v-rich .mk-actions{display:flex;align-items:center;justify-content:center;gap:.5em;padding:.75em 0 .55em;flex:none}
+  .v-rich .act{border:0;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;
+    box-shadow:0 .18em .5em rgba(40,12,40,.16);font-weight:800;line-height:1}
+  .v-rich .a-rewind{width:1.7em;height:1.7em;color:#ffb23e;font-size:.82em}
+  .v-rich .a-no{width:2.1em;height:2.1em;color:#ff5773;font-size:.92em}
+  .v-rich .a-super{width:1.7em;height:1.7em;color:#3897ff;font-size:.82em}
+  .v-rich .a-like{width:2.55em;height:2.55em;font-size:1.18em;color:#fff;
+    background:linear-gradient(150deg,#ff8a5b,#ff4f81);box-shadow:0 .25em .7em rgba(255,79,129,.5)}
+  .v-rich .a-boost{width:1.7em;height:1.7em;color:#a45cff;font-size:.78em}
+  .v-rich .mk-tabs5{display:flex;align-items:center;justify-content:space-around;padding:.5em .4em .65em;
+    background:#fff;border-top:1px solid #f0f0f4;flex:none}
+  .v-rich .tb{position:relative;font-style:normal;font-size:.8em;color:#c6c6ce;line-height:1}
+  .v-rich .tb.on{color:#ff4f81}
+  .v-rich .tb em{position:absolute;top:-.55em;right:-.7em;background:#ff4f81;color:#fff;font-size:.46em;font-style:normal;
+    min-width:1.5em;height:1.5em;padding:0 .2em;border-radius:1em;display:flex;align-items:center;justify-content:center;font-weight:800}
+
+  /* ===== B · MINIMAL — calm, confident, lots of air ===== */
+  .v-minimal{padding-bottom:.3em}
+  .v-minimal .mk-mhead{text-align:center;font-size:.8em;font-weight:800;letter-spacing:.4em;color:#1c1c22;padding:.45em 0 .1em}
+  .v-minimal .mk-mphoto{position:relative;aspect-ratio:4/5;margin:1.4em 1.5em 0;border-radius:1.6em;overflow:hidden;
+    box-shadow:0 .55em 1.4em rgba(40,12,50,.18)}
+  .v-minimal .mk-mmeta{text-align:center;padding:1em 1.5em .2em}
+  .v-minimal .mk-mname{font-size:.95em;font-weight:800;color:#1c1c22}
+  .v-minimal .mk-mbio{font-size:.58em;color:#9a9aa3;margin-top:.3em;letter-spacing:.01em}
+  .v-minimal .mk-mactions{display:flex;justify-content:center;align-items:center;gap:1.7em;padding:1em 0 1.3em}
+  .v-minimal .mact{width:2.6em;height:2.6em;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.05em;line-height:1}
+  .v-minimal .m-no{background:#fff;border:1.5px solid #e9e9ee;color:#bdbdc6}
+  .v-minimal .m-like{border:0;color:#fff;background:linear-gradient(150deg,#ff8a5b,#ff4f81);box-shadow:0 .3em .7em rgba(255,79,129,.42)}
+
+  /* ===== C · GENERIC — a competent, faceless dating-app clone ===== */
+  .v-generic .mk-ghead{display:flex;align-items:center;justify-content:space-between;padding:.2em 1.05em .6em}
+  .v-generic .mk-gbrand{font-size:1.02em;font-weight:800;color:#ff4f6d;letter-spacing:-.01em}
+  .v-generic .mk-ggear{width:1.1em;height:1.1em;border-radius:50%;border:.15em solid #c9c9d0}
+  .v-generic .mk-gcard{position:relative;aspect-ratio:5/7;margin:0 .9em;border-radius:1em;overflow:hidden;
+    box-shadow:0 .35em .9em rgba(40,12,40,.16)}
+  .v-generic .mk-ginfo{position:absolute;left:0;right:0;bottom:0;padding:1.4em .8em .65em;
+    background:linear-gradient(transparent,rgba(14,5,18,.78));color:#fff}
+  .v-generic .mk-gname{font-size:.82em;font-weight:800}
+  .v-generic .mk-gsub{font-size:.55em;opacity:.9;margin-top:.08em}
+  .v-generic .mk-gacts{display:flex;align-items:center;justify-content:center;gap:1.15em;padding:.85em 0 .6em}
+  .v-generic .gact{border:0;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 .16em .45em rgba(40,12,40,.14);font-weight:800;line-height:1}
+  .v-generic .g-no{width:2.1em;height:2.1em;color:#ff5773;font-size:.92em}
+  .v-generic .g-star{width:1.7em;height:1.7em;color:#3897ff;font-size:.82em}
+  .v-generic .g-like{width:2.1em;height:2.1em;color:#fff;background:#ff4f6d;font-size:.95em}
+  .v-generic .mk-gtabs{display:flex;align-items:center;justify-content:space-around;padding:.55em 1.4em .65em;
+    background:#fff;border-top:1px solid #f0f0f4}
+  .v-generic .gt{width:1.05em;height:1.05em;border-radius:.28em;background:#d4d4dc}
+  .v-generic .gt.on{background:#ff4f6d}
+
+  .mk-photos{display:flex;gap:9px;align-self:flex-start;max-width:88%;margin:8px 2px 2px;flex-wrap:wrap}
+  .mk-thumb{
+    position:relative;border:0;background:none;padding:0;cursor:pointer;font-size:8px;
+    border-radius:2.1em;transition:transform .15s,filter .15s;line-height:0;filter:saturate(1);
+  }
+  .mk-thumb:hover{transform:translateY(-3px)}
+  .mk-thumb:hover .mk-phone{box-shadow:0 .7em 1.7em rgba(40,12,50,.32)}
+  .mk-badge{
+    position:absolute;bottom:.7em;left:.7em;z-index:5;background:rgba(16,6,22,.62);color:#fff;
+    font-weight:800;border-radius:50%;width:2em;height:2em;display:flex;align-items:center;
+    justify-content:center;font-size:1.25em;backdrop-filter:blur(2px);line-height:1;box-shadow:0 0 0 1.5px rgba(255,255,255,.5)}
+
+  .lightbox{
+    position:fixed;inset:0;background:rgba(14,14,20,.82);backdrop-filter:blur(7px);
+    display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;z-index:60;
+  }
+  .lightbox.show{display:flex;animation:fade .25s ease}
+  .lb-close{
+    position:absolute;top:18px;right:22px;border:0;background:rgba(255,255,255,.16);color:#fff;
+    width:40px;height:40px;border-radius:50%;font-size:24px;cursor:pointer;line-height:1;
+  }
+  .lb-stage{position:relative;font-size:18px}
+  .lb-thumbs{display:flex;gap:10px}
+  .lb-dot{
+    width:30px;height:30px;border-radius:50%;border:0;background:rgba(255,255,255,.22);color:#fff;
+    font-weight:800;font-size:13px;cursor:pointer;transition:.13s;
+  }
+  .lb-dot.on{background:#fff;color:#1c1c1e}
+
 
   /* ── debug bar ──────────────────────────────────────────────────────────── */
   #debug { flex: none; border-top: 1px solid var(--line); background: #1c1c1e; color: #ddd; font-size: 12px; }
@@ -279,8 +438,9 @@
   <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
   <div class="gauge todo" id="gTodo"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
   <div class="hdr-right">
+    <div class="stats" id="stats"></div>
     <div class="dots" id="dots"></div>
-    <button id="endWeek">End week →</button>
+    <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
   </div>
   <div id="todoPop"></div>
 </header>
@@ -310,8 +470,9 @@
 </div>
 
 <div id="notifs"></div>
-<div id="weekFlash"><div class="wf-kicker">monday</div><div class="wf-week" id="wfWeek"></div></div>
-<div id="inter"><div class="i-kicker" id="iKicker"></div><div class="i-title" id="iTitle"></div><div class="i-sub" id="iSub"></div><span class="i-skip">CLICK TO SKIP</span></div>
+<div id="noteCenter"></div>
+<div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">tap to skip</span></div>
+<div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
 
@@ -373,17 +534,64 @@ const money = n => "$" + Math.round(n).toLocaleString();
 // Who renders where.
 const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
 const SELF = new Set(["founder", "growth"]);   // "your own moves" — acted in-column
-const AV_COLORS = { alex: "#4a6fa5", jordan: "#5f8ab5", priya: "#9c5fb5", mom: "#c47a9a", marcus: "#b59c5f", fatima: "#7a9a5f", ryan: "#5fa58f", sarah: "#a5745f", jamie: "#7a7ab5", david: "#8a6a4a", kevin: "#999", brett: "#999", tom: "#5f9aa5", lena: "#b55f5f", users: "#b5735f", analytics: "#1b1e24", yc: "#f26522" };
+// iOS palette + initials, ported from the old UI's STYLE map.
+const STYLE = {
+  alex: { color: "#0b84ff", initials: "A" }, jordan: { color: "#34c759", initials: "J" },
+  priya: { color: "#af52de", initials: "P" }, marcus: { color: "#ff9500", initials: "M" },
+  fatima: { color: "#ff6482", initials: "F" }, ryan: { color: "#5ac8fa", initials: "R" },
+  sarah: { color: "#ff2d55", initials: "S" }, brett: { color: "#8e8e93", initials: "B" },
+  kevin: { color: "#8e8e93", initials: "K" }, mom: { color: "#ffcc02", initials: "👩" },
+  jamie: { color: "#64d2ff", initials: "Ja" }, david: { color: "#30b0c7", initials: "D" },
+  hacker_news: { color: "#ff6600", initials: "📰" }, yc: { color: "#f26522", initials: "Y" },
+  lena: { color: "#bf5af2", initials: "L" }, techcrunch: { color: "#00c853", initials: "📊" },
+  users: { color: "#007aff", initials: "👥" }, analytics: { color: "#5856d6", initials: "📈" },
+  twitter: { color: "#1da1f2", initials: "𝕏" }, tom: { color: "#34c759", initials: "T" },
+  growth: { color: "#30d158", initials: "🚀" }, founder: { color: "#8e8e93", initials: "Me" },
+};
+const styleFor = id => STYLE[id] || { color: "#8e8e93", initials: "?" };
 const FEED_META = {
   hacker_news: { cls: "f-hn", src: "Y · HACKER NEWS" },
   techcrunch: { cls: "f-tc", src: "TC · TECHCRUNCH" },
   twitter: { cls: "f-tw", src: "𝕏 · TWITTER" },
 };
+// Each scene: a header (title/sub, shown in the room) + the bookend cinematics —
+// staged lines that fade in on enter, and a matching exit. `accent` tints the
+// title line. pivot's exit is a function of the decision made.
 const SCENE_META = {
-  equity: { kicker: "this can't wait", title: "The equity talk", sub: "the three of you, one call — nobody leaves until it's settled" },
-  demo: { kicker: "tonight · 8:00 PM", title: "Demo night", sub: "a total stranger is using the app. Alex is watching the session live." },
-  launch: { kicker: "8:00 AM", title: "Launch day", sub: "it's real. Alex works the machine, Jordan watches the humans." },
-  pivot: { kicker: "saturday", title: "Pivot day", sub: "whiteboard, two columns: NOT ENOUGH USERS / WRONG PRODUCT." },
+  equity: {
+    title: "The equity talk", sub: "the three of you, one call — nobody leaves until it's settled",
+    accent: "rgba(190,130,255,1)",
+    enter: ["The equity conversation.", "This is the one you can't rush.", "The week stops here — take all the time you need."],
+    exit: () => ["It's settled.", "The clock starts again."],
+  },
+  demo: {
+    title: "Demo night", sub: "a total stranger is using the app. Alex is watching the session live.",
+    accent: "rgba(255,190,120,1)",
+    enter: ["Demo night.", "A stranger is about to use what you built.", "Forget the week. Just watch."],
+    exit: () => ["She closed the laptop and left.", "Back to the grind — but something's different now."],
+  },
+  launch: {
+    title: "Launch day", sub: "it's real. Alex works the machine, Jordan watches the humans.",
+    accent: "rgba(120,180,255,1)",
+    enter: ["Launch Day.", "The code is live.", "Now you find out if anyone cares."],
+    exit: () => ["Day one is over.", "You're a different founder now."],
+  },
+  pivot: {
+    title: "Pivot day", sub: "whiteboard, two columns: NOT ENOUGH USERS / WRONG PRODUCT.",
+    accent: "rgba(255,140,140,1)",
+    enter: ["Pivot Day.", "Two columns on the whiteboard.", "Nobody leaves until it's decided."],
+    exit: (s) => s.pivot_choice === "pivot" ? ["The decision is made.", "Monday morning, the rebuild begins."]
+      : s.pivot_choice === "growth" ? ["The decision is made.", "The next fifty matches will tell you if it was right."]
+        : ["Half a pivot.", "Priya hopes she's wrong. She usually isn't."],
+  },
+};
+// launch-day background walks the time of day (ported from LAUNCH_PANEL)
+const LAUNCH_BG = {
+  "8AM": "linear-gradient(175deg,#0a1628,#050e1a)", "9AM": "linear-gradient(175deg,#0c1a2e,#07101e)",
+  "10AM": "linear-gradient(175deg,#0d1c30,#081120)", "11AM": "linear-gradient(175deg,#0e1e32,#091222)",
+  "12PM": "linear-gradient(175deg,#0f1f34,#091323)", "1PM": "linear-gradient(175deg,#0f1e30,#091220)",
+  "4PM": "linear-gradient(175deg,#131520,#0a0f18)", "6PM": "linear-gradient(175deg,#1c1005,#100900)",
+  "9PM": "linear-gradient(175deg,#000a18,#00050f)", "11PM": "linear-gradient(175deg,#000510,#000208)",
 };
 
 // ── the founder's to-do list: one checklist per stage of the company ─────────
@@ -440,17 +648,35 @@ let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
 let game = new V2Engine({ seed });
 let selected = "alex";
 let surface = "msgs";
-let lastSeen = {};              // charId -> thread length seen
 let feedSeenLen = {};           // feed charId -> entries seen
 let uiNotes = {};               // charId -> [{ idx, text, week }] inline outcome notes
-let threadRendered = {};        // charId -> entries already animated in
+let threadRendered = {};        // charId -> entries fully revealed (the read cursor)
 let sceneStartSeq = null;
 let inScene = false;
+let pendingStatPulse = [];      // stat keys that changed this turn, to pulse once
+let uiBusy = false;             // input lock while a reveal sequence plays
+let revealTimer = null;         // in-thread typing-reveal pacing
+let jShown = 0;                 // journal-mirror entries already inked in
+let jArrive = false;            // glow the newest journal entry while revealing
+let replyExpanded = false;      // the in-thread "Respond ↓" pill state
+let weekNotes = [];             // this week's notifications (the bell reopens them)
+let notesSeen = true;
+let noteQueue = [], noteTimer = null;
 
+// The journal mirror source: outcomes + stamps + orphan drops (founder thread).
+function journalMirror() {
+  return game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+}
 function resetUiState() {
-  lastSeen = {}; feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
+  feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
   selected = "alex"; surface = "msgs"; threadRendered = {};
-  for (const id of game.order) { lastSeen[id] = game.threads[id].length; feedSeenLen[id] = game.threads[id].length; }
+  uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
+  noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
+  jShown = journalMirror().length; jArrive = false;
+  for (const id of game.order) {
+    feedSeenLen[id] = game.threads[id].length;
+    threadRendered[id] = game.threads[id].length;
+  }
 }
 resetUiState();
 
@@ -494,7 +720,7 @@ function renderHeader() {
   $("hWeek").textContent = "Week " + st.week;
   $("gRunV").textContent = st.runway + " wks · " + money(st.cash);
   $("gRunB").style.width = Math.min(100, (st.runway / 20) * 100) + "%";
-  $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : "var(--amber)";
+  $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
   const ycIn = game.s.yc_week - st.week;
   if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "pending…"; $("gYcB").style.width = "100%"; }
   else if (ycIn > 0) { $("gYcL").textContent = "YC window"; $("gYcV").textContent = "in " + ycIn + " wks"; $("gYcB").style.width = Math.max(4, 100 - (ycIn / 25) * 100) + "%"; }
@@ -503,16 +729,28 @@ function renderHeader() {
   $("gTdL").textContent = "☑ " + stg.label + " ▾";
   $("gTdV").textContent = c.done + " of " + c.total;
   $("gTdB").style.width = (c.done / c.total) * 100 + "%";
+  // pulse the ☑ label while a needs-your-call item is open
+  $("gTodo").classList.toggle("call", game.openActions().some(a => !a.onHold && a.kind === "story"));
+  // compact traction stats, pulsing when they change
+  const sVals = { signal: st.signal, fit: st.marketFit, users: game.s.users, paying: game.s.customers };
+  $("stats").innerHTML = Object.entries({ signal: "signal", fit: "fit", users: "users", paying: "paying" })
+    .map(([k, lbl]) => '<div class="stat" data-stat="' + k + '"><b>' + sVals[k] + "</b>" + lbl + "</div>").join("");
+  for (const k of pendingStatPulse) {
+    const el = document.querySelector('.stat[data-stat="' + k + '"]');
+    if (el) { el.classList.add("changed"); }
+  }
+  pendingStatPulse = [];
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
-  $("dots").innerHTML = (game.scene ? '<span class="free-note">scene — moves are free</span>' : "actions ") + dots.join("");
+  $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
   // surface badges
   const msgActs = game.openActions().filter(a => !a.onHold && !FEED.has(a.charId)).length;
-  const unread = railChars().reduce((n, id) => n + (game.threads[id].length > (lastSeen[id] || 0) ? 1 : 0), 0);
+  const unread = railChars().reduce((n, id) => n + (game.threads[id].length > (threadRendered[id] || 0) ? 1 : 0), 0);
   setBadge("bMsgs", surface === "msgs" ? 0 : unread + msgActs);
   const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0)
     + game.openActions().filter(a => !a.onHold && FEED.has(a.charId)).length;
   setBadge("bFeed", surface === "feed" ? 0 : feedNew);
+  updateBell();
 }
 function setBadge(id, n) {
   const el = $(id);
@@ -529,19 +767,42 @@ function renderRail() {
     const last = t.length ? t[t.length - 1] : null;
     const a = acts.find(x => x.charId === id && !x.onHold);
     const left = weeksLeft(id);
-    const unread = t.length - (lastSeen[id] || 0);
+    const unread = t.length - (threadRendered[id] || 0);
     let tag = "";
     if (a && a.kind === "story") tag = '<span class="tag call">needs a call</span>';
     if (a && left != null && left <= 1) tag = '<span class="tag expiring">' + (left === 0 ? "last chance" : "1 wk") + "</span>";
     const ub = unread > 0 && id !== selected ? '<span class="tag unread">' + unread + "</span>" : "";
     const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : c.role;
+    const stl = styleFor(id);
     return '<div class="conv ' + (id === selected ? "cur" : "") + '" data-id="' + id + '">' +
-      '<div class="av" style="background:' + (AV_COLORS[id] || "#999") + '">' + esc(id === "analytics" ? "▚" : c.name[0]) + "</div>" +
+      '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
       '<div class="who"><b>' + esc(c.name) + " " + tag + ub + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
   }).join("");
   for (const el of document.querySelectorAll(".conv")) {
-    el.onclick = () => { selected = el.dataset.id; lastSeen[selected] = game.threads[selected].length; render(); };
+    el.onclick = () => { if (uiBusy) return; selected = el.dataset.id; replyExpanded = false; openThread(); };
   }
+}
+// Open a thread → reveal any unread messages with typing dots, like the old UI:
+// reading is an experience, not an instant dump.
+function openThread() {
+  const t = game.threads[selected];
+  const from = threadRendered[selected] || 0;
+  if (from >= t.length) { renderThread(); return; }
+  uiBusy = true; renderHeader();
+  clearTimeout(revealTimer);
+  const step = () => {
+    const cur = threadRendered[selected] || 0;
+    if (surface !== "msgs" || cur >= t.length) { uiBusy = false; renderThread(); render(); return; }
+    const e = t[cur];
+    const typing = e.type === "incoming";
+    renderThread({ typing });                 // draw a typing bubble before an incoming line
+    revealTimer = setTimeout(() => {
+      threadRendered[selected] = cur + 1;
+      renderThread();
+      revealTimer = setTimeout(step, typing ? 120 : 60);
+    }, typing ? 600 : 90);
+  };
+  step();
 }
 
 function threadEntryHtml(m, notes, idx, isNew, tail) {
@@ -551,47 +812,116 @@ function threadEntryHtml(m, notes, idx, isNew, tail) {
   else if (m.type === "incoming") {
     out = '<div class="m-in' + (tail ? " tail" : "") + (m.dropped ? " dropped" : "") + anim + '">' + esc(m.body) + "</div>" +
       (m.subtext ? '<div class="m-sub">' + esc(m.subtext) + "</div>" : "");
+    // the dev-plan message carries three CSS phone mockups → thumbnails + lightbox
+    if (m.mockups) out += mockupRowHtml(m.mockups);
   }
   for (const n of notes) if (n.idx === idx) out += '<div class="note' + anim + '">✎ ' + esc(n.text) + "</div>";
   return out;
 }
-function renderThread() {
+// opts.typing → append a typing bubble at the reveal frontier.
+function renderThread(opts) {
+  opts = opts || {};
   const c = game.cast.get(selected);
   if (!c) return;
   $("chatHead").innerHTML = "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + (c.active ? "" : " · gone") + "</span>";
   const t = game.threads[selected];
   const notes = uiNotes[selected] || [];
-  const prevN = threadRendered[selected] || 0;
+  const shown = threadRendered[selected] || 0;   // how far the read cursor has revealed
   let lastWk = null, html = "";
-  t.forEach((m, i) => {
+  t.slice(0, shown).forEach((m, i) => {
     if (m.week !== lastWk) { html += '<div class="m-wk">week ' + m.week + "</div>"; lastWk = m.week; }
-    // a bubble gets the iMessage tail when it's the last of its group
-    const next = t[i + 1];
+    const next = t[i + 1] && i + 1 < shown ? t[i + 1] : null;
     const tail = !next || next.type !== m.type || next.week !== m.week;
-    html += threadEntryHtml(m, notes, i, i >= prevN && prevN > 0, tail);
+    html += threadEntryHtml(m, notes, i, false, tail);
   });
-  threadRendered[selected] = t.length;
+  if (opts.typing) html += '<div class="row in"><div class="typing"><i></i><i></i><i></i></div></div>';
   const el = $("thread");
   el.innerHTML = html || '<div class="m-wk">no messages yet</div>';
-  if (prevN > 0 && t.length > prevN && el.scrollTo) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  else el.scrollTop = el.scrollHeight;
-
-  // reply chips for this thread's open node
-  const a = game.openActions().find(x => x.charId === selected);
-  if (a && !a.onHold) {
-    const left = weeksLeft(selected);
-    const gk = gatedKeys(a.nodeId);
-    const can = game.actionsLeft > 0;
-    $("reply").innerHTML = '<div class="hint">' +
-      (can ? "pick a reply (1 action)" : "no actions left — end the week") +
-      (left != null ? " · won't wait past " + left + " more wk" + (left === 1 ? "" : "s") : "") +
-      " · ⚑ = unlocked by what you've learned</div>" +
-      a.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" +
-        (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
-    for (const el of $("reply").querySelectorAll(".chip")) el.onclick = () => doAct(a.nodeId, el.dataset.k, selected);
-  } else {
-    $("reply").innerHTML = '<div class="hint">' + (a && a.onHold ? "on hold — something bigger is happening" : "nothing needs an answer here right now") + "</div>";
+  el.scrollTop = el.scrollHeight;
+  // wire mockup thumbnails → lightbox
+  for (const th of el.querySelectorAll(".mk-thumb")) {
+    const mk = t.find(m => m.mockups) && t.find(m => m.mockups).mockups;
+    if (mk) th.onclick = () => openMockupLightbox(mk, th.dataset.mk);
   }
+
+  // ── the response surface, in-flow at the bottom of the thread ──
+  const rbox = $("reply");
+  // Jordan blocks you once fired.
+  if (selected === "jordan" && game.s.jordan_resolved && !game.scene) {
+    rbox.innerHTML = '<div class="chat-blocked">This user blocked you.</div>';
+    return;
+  }
+  const a = game.openActions().find(x => x.charId === selected && !x.onHold);
+  const caughtUp = shown >= t.length;
+  if (!a || !caughtUp) {
+    rbox.innerHTML = a && !caughtUp ? '<div class="hint">…</div>'
+      : '<div class="hint">' + (a && a.onHold ? "on hold — something bigger is happening" : "nothing needs an answer here right now") + "</div>";
+    return;
+  }
+  const left = weeksLeft(selected);
+  const gk = gatedKeys(a.nodeId);
+  const can = game.actionsLeft > 0;
+  if (!replyExpanded) {
+    rbox.innerHTML = (left != null ? '<div class="hint">won\'t wait past ' + left + " more wk" + (left === 1 ? "" : "s") + "</div>" : "") +
+      '<button class="cta-pill"' + (can ? "" : " disabled") + ">" + (can ? "Respond ↓" : "No actions left this week") + "</button>";
+    const btn = rbox.querySelector(".cta-pill");
+    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); };
+    return;
+  }
+  rbox.innerHTML = '<div class="hint"><button class="tc-close">×</button>pick a reply · ⚑ = unlocked by what you\'ve learned</div>' +
+    a.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" +
+      (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
+  rbox.querySelector(".tc-close").onclick = () => { replyExpanded = false; renderThread(); };
+  for (const el2 of rbox.querySelectorAll(".chip")) el2.onclick = () => { replyExpanded = false; doAct(a.nodeId, el2.dataset.k, selected); };
+}
+
+// ── prototype phone mockups (ported from the old UI) ──────────────────────────
+const MK_STATUSBAR = '<div class="mk-statusbar"><span>9:41</span><span class="mk-sysicons"><i></i><i></i><i class="bat"></i></span></div>';
+function mkRich() {
+  return MK_STATUSBAR +
+    '<div class="mk-rhead"><span class="mk-brand">kindred<b>♥</b></span><span class="mk-rhead-ico"><i class="ic-sliders"></i><i class="ic-bell"><em>3</em></i></span></div>' +
+    '<div class="mk-stories"><span class="st st-you"></span><span class="st"></span><span class="st"></span><span class="st"></span><span class="st"></span></div>' +
+    '<div class="mk-prof"><div class="mk-portrait"></div><span class="mk-match">92% match</span><span class="mk-verif">✓</span>' +
+    '<div class="mk-prof-info"><div class="mk-name">Maya, 26 <span class="vdot"></span></div><div class="mk-sub">Photographer · 2 miles away</div>' +
+    '<div class="mk-chips"><span>Coffee</span><span>Film</span><span>Hiking</span></div></div></div>' +
+    '<div class="mk-actions"><button class="act a-rewind">↺</button><button class="act a-no">✕</button><button class="act a-super">★</button><button class="act a-like">♥</button><button class="act a-boost">⚡</button></div>' +
+    '<div class="mk-tabs5"><i class="tb on">♥</i><i class="tb">★<em>9</em></i><i class="tb">◷</i><i class="tb">✉</i><i class="tb">◍</i></div>';
+}
+function mkMinimal() {
+  return MK_STATUSBAR +
+    '<div class="mk-mhead">KINDRED</div><div class="mk-mphoto"><div class="mk-portrait"></div></div>' +
+    '<div class="mk-mmeta"><div class="mk-mname">Maya, 26</div><div class="mk-mbio">Photographer who\'d rather be hiking.</div></div>' +
+    '<div class="mk-mactions"><button class="mact m-no">✕</button><button class="mact m-like">♥</button></div>';
+}
+function mkGeneric() {
+  return MK_STATUSBAR +
+    '<div class="mk-ghead"><span class="mk-gbrand">Kindred</span><span class="mk-ggear"></span></div>' +
+    '<div class="mk-gcard"><div class="mk-portrait"></div><div class="mk-ginfo"><div class="mk-gname">Maya, 26</div><div class="mk-gsub">2 miles away</div></div></div>' +
+    '<div class="mk-gacts"><button class="gact g-no">✕</button><button class="gact g-star">★</button><button class="gact g-like">♥</button></div>' +
+    '<div class="mk-gtabs"><i class="gt on"></i><i class="gt"></i><i class="gt"></i></div>';
+}
+function mockupPhoneHtml(m) {
+  const body = m.variant === "rich" ? mkRich() : m.variant === "generic" ? mkGeneric() : mkMinimal();
+  return '<div class="mk-phone v-' + esc(m.variant || "minimal") + '"><span class="mk-notch"></span>' + body + "</div>";
+}
+function mockupRowHtml(mockups) {
+  const keys = Object.keys(mockups);
+  return '<div class="mk-row">' + keys.map(k =>
+    '<div class="mk-thumb" data-mk="' + esc(k) + '">' + mockupPhoneHtml(mockups[k]) +
+    '<span class="mk-badge">' + esc(mockups[k].tag || "") + "</span></div>").join("") + "</div>";
+}
+function openMockupLightbox(mockups, startKey) {
+  const keys = Object.keys(mockups);
+  const lb = $("lightbox");
+  const show = (k) => {
+    $("lbStage").innerHTML = '<div class="mk-large">' + mockupPhoneHtml(mockups[k]) + '<span class="mk-badge">' + esc(mockups[k].tag || "") + "</span></div>";
+    $("lbThumbs").innerHTML = keys.map(kk => '<button class="lb-dot' + (kk === k ? " on" : "") + '" data-k="' + esc(kk) + '">' + esc(mockups[kk].tag || "") + "</button>").join("");
+    for (const d of $("lbThumbs").querySelectorAll(".lb-dot")) d.onclick = () => show(d.dataset.k);
+  };
+  show(startKey);
+  lb.classList.add("show");
+  $("lbClose").onclick = () => lb.classList.remove("show");
+  lb.onclick = (ev) => { if (ev.target === lb) lb.classList.remove("show"); };
 }
 
 // ── the right column: triage + journal mirror ─────────────────────────────────
@@ -619,30 +949,42 @@ function renderSide() {
         '<button data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ' class="' + (gk.has(o.key) ? "gated" : "") + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("") + "</div></div>";
   };
 
-  let html = '<div class="tier"><h5>◉ Needs a call</h5>' +
+  // End-week fallback pill: actions remain but nothing story-tier is pending —
+  // an ambient-only week you can just skip (the turn otherwise auto-advances when
+  // both moves are spent).
+  const canSkip = !game.scene && !uiBusy && game.actionsLeft > 0 && move.length === 0 && story.length === 0
+    && !game.s.game_over && !game.s.game_won;
+  let html = canSkip ? '<button class="endpill" id="endPill">End week →</button>' : "";
+  html += '<div class="tier"><h5>◉ Needs a call</h5>' +
     (move.map(moveCard).join("") + story.map(linkCard).join("") || '<div class="empty-tier">nothing urgent — rare. enjoy it.</div>') + "</div>";
   html += '<div class="tier later"><h5>When you have a minute</h5>' +
     (later.map(linkCard).join("") || '<div class="empty-tier">quiet out there.</div>') + "</div>";
 
-  // journal mirror: outcomes + stamps + orphan drops from the founder thread
-  const jt = game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+  // journal mirror — only up to jShown (the turn-end reveal inks new entries one
+  // at a time); the newest inking entry glows via jArrive.
+  const jt = journalMirror().slice(0, jShown);
   const recent = jt.slice(-14).reverse();
-  html += '<div id="journalSec"><h5>✎ Journal</h5>' + recent.map((m, i) => {
-    const cls = "j-entry" + (i > 2 ? " old" : "");
+  const jent = (m, i, arrive) => {
+    const cls = "j-entry" + (i > 2 ? " old" : "") + (arrive ? " arrive" : "");
     if (m.type === "stamp") return '<div class="' + cls + '"><span class="j-wk">wk ' + m.week + ' ·</span> <span class="stamp ' + esc(m.stampClass || "green") + '">' + esc(m.label) + "</span></div>";
     const from = m.type === "incoming" ? (esc(m.from) + ": ") : "";
     return '<div class="' + cls + '"><span class="j-wk">wk ' + m.week + " ·</span> " + from + esc(m.body) + "</div>";
-  }).join("") + "</div>";
+  };
+  html += '<div id="journalSec"><h5>✎ Journal</h5>' +
+    recent.map((m, i) => jent(m, i, jArrive && i === 0)).join("") + "</div>";
 
   $("sideCol").innerHTML = html;
+  $("sideCol").classList.toggle("updating", jArrive);
+  const ep = $("endPill"); if (ep) ep.onclick = () => { if (!uiBusy) { uiBusy = true; renderHeader(); setTimeout(advanceWeek, 200); } };
   for (const el of $("sideCol").querySelectorAll(".h-card.link")) {
     el.onclick = () => {
+      if (uiBusy) return;
       if (el.dataset.feed === "1") setSurface("feed");
-      else { selected = el.dataset.char; setSurface("msgs"); lastSeen[selected] = game.threads[selected].length; render(); }
+      else { selected = el.dataset.char; replyExpanded = false; surface = "msgs"; syncSurfaceTabs(); openThread(); render(); }
     };
   }
   for (const el of $("sideCol").querySelectorAll(".mv-opts button")) {
-    el.onclick = () => doAct(el.dataset.n, el.dataset.k, "founder");
+    el.onclick = () => { if (!uiBusy) doAct(el.dataset.n, el.dataset.k, "founder"); };
   }
 }
 
@@ -716,6 +1058,7 @@ document.addEventListener("click", (e) => {
 
 // ── acting ────────────────────────────────────────────────────────────────────
 function doAct(nodeId, key, charId) {
+  if (uiBusy) return;
   const before = game.threads[charId || "founder"] ? game.threads[charId || "founder"].length : 0;
   const preScene = game.scene;
   const preSeq = game._seq;
@@ -723,45 +1066,53 @@ function doAct(nodeId, key, charId) {
   if (outcome && charId && !SELF.has(charId)) {
     (uiNotes[charId] = uiNotes[charId] || []).push({ idx: findReplyIdx(charId, before), text: outcome, week: game.s.week });
   }
-  if (charId) lastSeen[charId] = game.threads[charId].length;
-  if (!preScene && game.scene) enterScene(preSeq);
-  else if (inScene) pumpScene();
+  if (charId) threadRendered[charId] = game.threads[charId].length;
+  // your own mid-week choices ink into the journal mirror at once (ungLowed);
+  // only week-turn consequences get the reveal glow (advanceWeek captures jBefore here).
+  jShown = journalMirror().length;
+
+  // entering a scene → the world freezes; play its entry cinematic then the beats
+  if (!preScene && game.scene) { enterScene(preSeq); return; }
+  if (inScene) { pumpScene(); return; }
+
   render();
-  checkEndgame();
+  if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
+  // both moves spent → the week turns automatically (no End-week button)
+  if (game.actionsLeft <= 0) { uiBusy = true; renderHeader(); setTimeout(advanceWeek, 620); }
 }
 function findReplyIdx(charId, beforeLen) {
-  // the outcome note goes after the last entry added by this act (reply bubble
-  // or, failing that, the last message present)
   return Math.max(beforeLen, game.threads[charId].length - 1);
 }
 
-// ── scenes: interstitial in, beats typed out, one sitting ─────────────────────
-let lastSceneId = null, scRevealed = 0, scTimer = null, interTimer = null;
-
-function showInter(meta, done) {
-  $("iKicker").textContent = meta.kicker || "";
-  $("iTitle").textContent = (meta.title || "").toUpperCase();
-  $("iSub").textContent = meta.sub || "";
-  const iv = $("inter");
-  iv.classList.add("on");
-  let finished = false;
-  const fin = () => {
-    if (finished) return;
-    finished = true;
-    clearTimeout(interTimer);
-    iv.classList.remove("on");
-    iv.onclick = null;
-    done();
+// ── focus-arc cinematic: staged lines, per-arc accent, click-to-skip ──────────
+function showCine(lines, accent, done) {
+  const el = $("cine"), box = $("lcInner"), skip = $("lcSkip");
+  el.style.setProperty("--lc-accent", accent || "rgba(255,255,255,.95)");
+  box.innerHTML = lines.map((t, i) => '<p class="lc-line' + (i === 0 ? " lc-title" : "") + '">' + esc(t) + "</p>").join("");
+  el.classList.add("show");
+  const nodes = box.querySelectorAll(".lc-line");
+  nodes.forEach((n, i) => setTimeout(() => n.classList.add("vis"), 500 + i * 1250));
+  let done2 = false, timer = null;
+  const finish = () => {
+    if (done2) return; done2 = true;
+    if (timer) clearTimeout(timer); el.classList.remove("show"); skip.onclick = null; el.onclick = null;
+    setTimeout(done, 700);
   };
-  iv.onclick = fin;
-  interTimer = setTimeout(fin, 2200);
+  const total = 500 + (nodes.length - 1) * 1250 + 1500;
+  timer = setTimeout(finish, total);
+  skip.onclick = finish; el.onclick = finish;
 }
+
+// ── scenes: cinematic in, beats typed out, cinematic out — all one sitting ────
+let lastSceneId = null, scRevealed = 0, scTimer = null;
+
 function enterScene(startSeq) {
   inScene = true;
   sceneStartSeq = startSeq != null ? startSeq : 0;
   scRevealed = 0;
   lastSceneId = game.scene.id;
-  showInter(SCENE_META[lastSceneId] || {}, () => { $("scene").classList.add("on"); pumpScene(); });
+  const meta = SCENE_META[lastSceneId] || {};
+  showCine(meta.enter || [meta.title || ""], meta.accent, () => { $("scene").classList.add("on"); pumpScene(); });
 }
 function sceneEntries() {
   const arc = game.arcs.get(lastSceneId);
@@ -783,6 +1134,8 @@ function pumpScene() {
   $("scTitle").textContent = meta.title || "";
   $("scSub").textContent = meta.sub || "";
   $("scClock").textContent = (lastSceneId === "launch" && game.s.launch_time) ? game.s.launch_time : "";
+  // launch day: the room darkens/warms with the time of day
+  $("scene").style.background = (lastSceneId === "launch" && LAUNCH_BG[game.s.launch_time]) || "#101014";
   const entries = sceneEntries();
   if (scRevealed > entries.length) scRevealed = entries.length;
   const revealing = scRevealed < entries.length;
@@ -817,6 +1170,7 @@ function pumpScene() {
       $("scReply").innerHTML = '<div class="who-asks">…</div>';
     }
   } else {
+    // scene resolved → its exit cinematic, then back to the week
     $("scReply").innerHTML = '<button id="scDone" style="display:block">Back to the week →</button>';
     $("scDone").onclick = exitScene;
   }
@@ -826,18 +1180,121 @@ function beatChar(nodeId) {
   return null;
 }
 function exitScene() {
-  inScene = false;
   clearTimeout(scTimer);
   $("scene").classList.remove("on");
-  for (const id of game.order) {
-    lastSeen[id] = Math.max(lastSeen[id] || 0, game.threads[id].length);
-    threadRendered[id] = game.threads[id].length;
-  }
-  render();
-  checkEndgame();
+  for (const id of game.order) threadRendered[id] = game.threads[id].length;
+  const meta = SCENE_META[lastSceneId] || {};
+  const lines = meta.exit ? meta.exit(game.s) : null;
+  const back = () => { inScene = false; jShown = journalMirror().length; render(); checkEndgame(); };
+  if (lines) showCine(lines, meta.accent, back); else back();
 }
 
-// ── end week: the Monday flash, then the phone lights up ─────────────────────
+// ── the week turn: the reveal, in the old order ──────────────────────────────
+// runway counts down → the journal beat LEADS (column glows, entries ink in) →
+// a beat later the phone buzzes, one notification every 750ms → the active
+// thread refreshes only after its own notification → changed stats pulse.
+function advanceWeek() {
+  clearTimeout(noteTimer); noteTimer = null; noteQueue = [];
+  const beforeTodo = todoSnapshot();
+  const beforeLens = {};
+  for (const id of game.order) beforeLens[id] = game.threads[id].length;
+  const jBefore = journalMirror().length;
+  const cashBefore = game.stats().cash;
+  const sig = game.stats().signal, fit = game.stats().marketFit, us = game.s.users, pay = game.s.customers;
+
+  game.nextWeek();
+
+  pendingStatPulse = [];
+  if (game.stats().signal !== sig) pendingStatPulse.push("signal");
+  if (game.stats().marketFit !== fit) pendingStatPulse.push("fit");
+  if (game.s.users !== us) pendingStatPulse.push("users");
+  if (game.s.customers !== pay) pendingStatPulse.push("paying");
+
+  // gather this week's notifications (todo check-offs first, then arrivals)
+  weekNotes = [];
+  const afterTodo = todoSnapshot();
+  for (const key of afterTodo) if (!beforeTodo.has(key)) {
+    weekNotes.push({ ico: "✓", color: "#1d8f3c", title: "Reminders", text: "Checked off: " + key.split("|")[1],
+      go: () => { renderTodo(); $("todoPop").classList.add("on"); } });
+  }
+  for (const id of game.order) {
+    const fresh = game.threads[id].slice(beforeLens[id]).filter(m => m.type === "incoming");
+    if (!fresh.length) continue;
+    const feed = FEED.has(id), def = game.cast.get(id).def, stl = styleFor(id);
+    const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
+    const dropped = fresh.some(m => m.dropped);
+    weekNotes.push({
+      ico: stl.initials, color: feed ? "#3a3a40" : stl.color, charId: id, feed,
+      title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
+      text: String(fresh[fresh.length - 1].body || ""),
+      go: feed ? () => setSurface("feed")
+        : () => { selected = id; replyExpanded = false; threadRendered[id] = game.threads[id].length; surface = "msgs"; syncSurfaceTabs(); openThread(); render(); },
+    });
+  }
+  notesSeen = weekNotes.length === 0;
+
+  // 1) runway counts down, header refreshes to "week N"
+  animateRunway(cashBefore, game.stats().cash, () => {
+    // 2) the journal beat leads: ink the mirror entries in one at a time, glowing
+    revealJournal(jBefore, () => {
+      // 3) a beat later, the notifications buzz
+      setTimeout(startNotifications, 420);
+    });
+  });
+
+  function startNotifications() {
+    updateBell();
+    queueNotifications(weekNotes);
+    // the active thread refreshes only after its own notification shows
+    if (surface === "msgs" && threadRendered[selected] < game.threads[selected].length) {
+      const idx = weekNotes.findIndex(n => n.charId === selected);
+      const delay = idx >= 0 ? idx * 750 + 650 : 380;
+      setTimeout(() => { if (surface === "msgs") openThread(); }, delay);
+    }
+    // the run may have ended this week
+    if (game.s.game_won || game.s.game_over) {
+      setTimeout(checkEndgame, weekNotes.length ? 1700 : 700);
+    }
+    uiBusy = false;
+  }
+}
+// runway digit + bar count from → to (fast, ~500ms)
+function animateRunway(fromCash, toCash, done) {
+  const steps = 16; let i = 0;
+  const tick = () => {
+    i++;
+    const cash = Math.round(fromCash + (toCash - fromCash) * (i / steps));
+    const runway = Math.floor(cash / game.burnPerWeek);
+    $("hWeek").textContent = "Week " + game.s.week;
+    $("gRunV").textContent = runway + " wks · " + money(cash);
+    $("gRunB").style.width = Math.min(100, (runway / 20) * 100) + "%";
+    $("gRunB").style.background = runway <= 4 ? "var(--red)" : runway <= 8 ? "var(--amber)" : "var(--green)";
+    if (i < steps) revealTimer = setTimeout(tick, 30); else done();
+  };
+  tick();
+}
+// ink the journal-mirror entries in one at a time (340ms; stamps 480ms), glowing
+function revealJournal(from, done) {
+  const total = journalMirror().length;
+  if (from >= total) { jShown = total; renderSide(); done(); return; }
+  let i = from;
+  const step = () => {
+    if (i >= total) { jShown = total; jArrive = false; renderSide(); renderHeader(); done(); return; }
+    const m = journalMirror()[i];
+    jShown = i + 1; jArrive = true;
+    renderSide();
+    revealTimer = setTimeout(() => { i++; step(); }, m.type === "stamp" ? 480 : 340);
+  };
+  step();
+}
+
+// ── iPhone notifications, anchored under the bell ─────────────────────────────
+function queueNotifications(list) { noteQueue = noteQueue.concat(list); if (!noteTimer) pumpNotifications(); }
+function pumpNotifications() {
+  if (!noteQueue.length) { noteTimer = null; return; }
+  showNotif(noteQueue.shift());
+  noteTimer = setTimeout(pumpNotifications, 750);
+}
 function showNotif(n) {
   const el = document.createElement("div");
   el.className = "notif";
@@ -846,55 +1303,34 @@ function showNotif(n) {
     '<div class="n-text">' + esc(n.text) + "</div></div>";
   let gone = false;
   const dismiss = () => { if (gone) return; gone = true; el.classList.add("hide"); setTimeout(() => el.remove(), 300); };
-  el.onclick = () => { dismiss(); if (n.go) n.go(); };
+  el.onclick = () => { dismiss(); if (!uiBusy && n.go) n.go(); };
   $("notifs").appendChild(el);
-  setTimeout(dismiss, 4800);
+  setTimeout(dismiss, 6500);
 }
-function notify(list) {
-  list.forEach((n, i) => setTimeout(() => showNotif(n), 400 + i * 480));
+// the bell reopens this week's notifications (the notification center)
+function updateBell() {
+  const b = $("bellBadge");
+  if (weekNotes.length && !notesSeen) { b.textContent = weekNotes.length; b.style.display = "grid"; }
+  else b.style.display = "none";
 }
-
-$("endWeek").onclick = () => {
-  if (game.s.game_over || game.s.game_won || game.scene) return;
-  const beforeTodo = todoSnapshot();
-  const beforeLens = {};
-  for (const id of game.order) beforeLens[id] = game.threads[id].length;
-
-  game.nextWeek();
-  render();
-  if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
-
-  // Monday flash…
-  const wf = $("weekFlash");
-  $("wfWeek").textContent = "WEEK " + game.s.week;
-  wf.classList.remove("on"); void wf.offsetWidth; wf.classList.add("on");
-  setTimeout(() => wf.classList.remove("on"), 1200);
-
-  // …then the phone lights up.
-  const list = [];
-  const afterTodo = todoSnapshot();
-  for (const key of afterTodo) if (!beforeTodo.has(key)) {
-    list.push({ ico: "✓", color: "#1d8f3c", title: "Reminders", text: "Checked off: " + key.split("|")[1],
-      go: () => { renderTodo(); $("todoPop").classList.add("on"); } });
-  }
-  for (const id of game.order) {
-    const fresh = game.threads[id].slice(beforeLens[id]).filter(m => m.type === "incoming");
-    if (!fresh.length) continue;
-    const feed = FEED.has(id);
-    const def = game.cast.get(id).def;
-    const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
-    const dropped = fresh.some(m => m.dropped);
-    list.push({
-      ico: feed ? "📰" : def.name[0],
-      color: feed ? "#3a3a40" : (AV_COLORS[id] || "#8a8a92"),
-      title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
-      text: String(fresh[fresh.length - 1].body || ""),
-      go: feed ? () => setSurface("feed")
-        : () => { selected = id; lastSeen[id] = game.threads[id].length; setSurface("msgs"); },
-    });
-  }
-  notify(list.slice(0, 8));
-};
+function toggleNoteCenter() {
+  const c = $("noteCenter");
+  if (c.classList.contains("show")) { c.classList.remove("show"); return; }
+  if (!weekNotes.length) { c.innerHTML = '<h4>This week</h4><div class="nc-empty">No notifications this week.</div>'; }
+  else c.innerHTML = '<h4>This week · ' + weekNotes.length + " notification" + (weekNotes.length === 1 ? "" : "s") + "</h4>" +
+    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="width:34px;height:34px;border-radius:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+      '<div class="n-b"><div class="n-title">' + esc(n.title) + '</div><div class="n-text" style="font-size:12px;color:#3a3a40">' + esc(n.text) + "</div></div></div>").join("");
+  c.classList.add("show");
+  notesSeen = true; updateBell();
+  for (const el of c.querySelectorAll(".nc-item")) el.onclick = () => {
+    const n = weekNotes[+el.dataset.i]; c.classList.remove("show");
+    if (!uiBusy && n && n.go) n.go();
+  };
+}
+$("bell").onclick = (e) => { e.stopPropagation(); toggleNoteCenter(); };
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#noteCenter") && !e.target.closest("#bell")) $("noteCenter").classList.remove("show");
+});
 
 // ── endgame ───────────────────────────────────────────────────────────────────
 const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] : s >= 70 ? ["B", "#4a9a4a"] : s >= 55 ? ["C", "#c9922a"] : s >= 40 ? ["D", "#c96a2a"] : ["F", "#c0392b"];
@@ -939,12 +1375,16 @@ function showIntro() {
 if (!localStorage.getItem("kindred_intro")) showIntro();
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
+function syncSurfaceTabs() {
+  for (const b of document.querySelectorAll("nav.surfaces button")) b.classList.toggle("cur", b.dataset.surface === surface);
+  $("msgsSurface").classList.toggle("cur", surface === "msgs");
+  $("feedSurface").classList.toggle("cur", surface === "feed");
+  $("bankSurface").classList.toggle("cur", surface === "bank");
+}
 function setSurface(sf) {
-  surface = sf;
-  for (const b of document.querySelectorAll("nav.surfaces button")) b.classList.toggle("cur", b.dataset.surface === sf);
-  $("msgsSurface").classList.toggle("cur", sf === "msgs");
-  $("feedSurface").classList.toggle("cur", sf === "feed");
-  $("bankSurface").classList.toggle("cur", sf === "bank");
+  if (uiBusy) return;
+  surface = sf; syncSurfaceTabs();
+  if (sf === "msgs") openThread();   // reveal any unread on entry
   render();
 }
 for (const b of document.querySelectorAll("nav.surfaces button")) b.onclick = () => setSurface(b.dataset.surface);
@@ -961,19 +1401,24 @@ function render() {
 // ── debug ─────────────────────────────────────────────────────────────────────
 $("dbgSeed").value = seed;
 const dbgSeed = () => { const v = parseInt($("dbgSeed").value, 10); return Number.isFinite(v) ? v : seed; };
+function dbgReset() {
+  clearTimeout(revealTimer); clearTimeout(noteTimer); noteTimer = null;
+  $("scene").classList.remove("on"); $("cine").classList.remove("show");
+  $("endOv").classList.remove("on"); $("noteCenter").classList.remove("show");
+  [...$("notifs").children].forEach(e => e.remove());
+}
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   btn.onclick = () => {
     seed = dbgSeed();
     game = V2Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
-    resetUiState();
+    resetUiState(); dbgReset();
     // leave fresh arrivals unread so the state reads naturally
-    for (const id of game.order) lastSeen[id] = Math.max(0, game.threads[id].length - 2);
-    $("endOv").classList.remove("on");
+    for (const id of game.order) threadRendered[id] = Math.max(0, game.threads[id].length - 2);
     render();
   };
 }
-$("dbgSkip").onclick = () => { for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); render(); checkEndgame(); };
-$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new V2Engine({ seed }); resetUiState(); $("endOv").classList.remove("on"); render(); };
+$("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
+$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new V2Engine({ seed }); resetUiState(); dbgReset(); render(); };
 
 render();
 </script>
