@@ -779,12 +779,21 @@ function renderHeader() {
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
   $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
-  // surface badges
-  const msgActs = game.openActions().filter(a => !a.onHold && !FEED.has(a.charId)).length;
-  const unread = railChars().reduce((n, id) => n + (game.threads[id].length > (threadRendered[id] || 0) ? 1 : 0), 0);
-  setBadge("bMsgs", surface === "msgs" ? 0 : unread + msgActs);
-  const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0)
-    + game.openActions().filter(a => !a.onHold && FEED.has(a.charId)).length;
+  // surface badges — count each conversation/item once. A thread that is both
+  // unread and unanswered is one thing needing attention, not two; the founder's
+  // own "Your move" lives in the side rail, not Messages, so it doesn't count.
+  const rail = new Set(railChars());
+  const msgAttn = new Set();
+  for (const id of rail) if (game.threads[id].length > (threadRendered[id] || 0)) msgAttn.add(id);
+  for (const a of game.openActions()) if (!a.onHold && rail.has(a.charId)) msgAttn.add(a.charId);
+  setBadge("bMsgs", surface === "msgs" ? 0 : msgAttn.size);
+  // feed: unseen entries, plus a pending action once everything's been seen —
+  // without counting a new-and-actionable item twice.
+  const feedNew = [...FEED].reduce((n, id) => {
+    const unseen = Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0));
+    const acting = game.openActions().some(a => !a.onHold && a.charId === id);
+    return n + (unseen > 0 ? unseen : (acting ? 1 : 0));
+  }, 0);
   setBadge("bFeed", surface === "feed" ? 0 : feedNew);
   updateBell();
 }
