@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kindred</title>
+<style>
+  /* ── tokens ─────────────────────────────────────────────────────────────── */
+  :root {
+    --bg: #f2f2f5; --panel: #fff; --line: #e2e2e7; --soft: #f0f0f4;
+    --ink: #17171a; --dim: #8b8b92; --blue: #2f6bff; --blue-soft: #eaf1ff;
+    --amber: #f59e0b; --amber-ink: #9a4b00; --red: #d64545; --green: #34a853;
+    --journal: #8a4b38; --journal-bg: #fdf9ee; --journal-line: #eee3c2;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif;
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+  button { font: inherit; cursor: pointer; }
+  button:disabled { cursor: default; opacity: .55; }
+
+  /* ── header ─────────────────────────────────────────────────────────────── */
+  header {
+    flex: none; display: flex; align-items: center; gap: 18px;
+    background: var(--panel); border-bottom: 1px solid var(--line); padding: 8px 16px;
+    position: relative; z-index: 20;
+  }
+  .logo { font-weight: 700; font-size: 15px; }
+  .logo small { color: var(--dim); font-weight: 500; margin-left: 6px; }
+  nav.surfaces { display: flex; gap: 4px; }
+  nav.surfaces button { border: 0; background: none; color: #6b6b74; border-radius: 8px; padding: 6px 12px; font-weight: 500; }
+  nav.surfaces button.cur { background: var(--blue-soft); color: var(--blue); font-weight: 600; }
+  .n-badge { display: inline-block; min-width: 15px; text-align: center; background: #ff4d4d; color: #fff; border-radius: 8px; font-size: 10px; margin-left: 4px; padding: 0 3px; vertical-align: 1px; }
+  .gauge { display: flex; flex-direction: column; gap: 2px; min-width: 118px; font-size: 12.5px; }
+  .gauge .g-lbl { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
+  .gauge .g-val { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .gauge .g-bar { height: 4px; background: var(--soft); border-radius: 3px; overflow: hidden; }
+  .gauge .g-bar i { display: block; height: 100%; transition: width .6s ease; }
+  .gauge.todo { cursor: pointer; border-radius: 8px; padding: 2px 6px; margin: -2px -6px; }
+  .gauge.todo:hover { background: var(--blue-soft); }
+  .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .dots { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); transition: background .3s; }
+  .dot.spent { background: #d7d7de; }
+  .free-note { font-size: 11px; color: var(--amber-ink); font-weight: 600; }
+  #endWeek { background: var(--blue); color: #fff; border: 0; border-radius: 8px; padding: 7px 15px; font-weight: 600; }
+
+  /* ── layout ─────────────────────────────────────────────────────────────── */
+  main { flex: 1; display: flex; min-height: 0; }
+  .surface { flex: 1; display: none; min-width: 0; }
+  .surface.cur { display: flex; }
+
+  /* Messages: rail | thread */
+  #rail { width: 250px; flex: none; background: var(--panel); border-right: 1px solid var(--line); overflow-y: auto; }
+  .conv { display: flex; gap: 9px; padding: 9px 12px; border-bottom: 1px solid var(--soft); align-items: center; cursor: pointer; }
+  .conv:hover { background: #fafafc; }
+  .conv.cur { background: var(--blue-soft); }
+  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .conv .who { min-width: 0; flex: 1; }
+  .conv .who b { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .conv .who span { font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .tag { font-size: 8.5px; letter-spacing: .05em; border-radius: 4px; padding: 1px 5px; font-weight: 700; white-space: nowrap; }
+  .tag.call { background: #ffe2c2; color: var(--amber-ink); }
+  .tag.expiring { background: #ffd9d9; color: #a02020; }
+  .tag.unread { background: var(--blue); color: #fff; border-radius: 8px; min-width: 15px; text-align: center; }
+
+  #threadCol { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); }
+  #chatHead { flex: none; padding: 9px 20px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 13px; }
+  #chatHead b { font-size: 14px; }
+  #chatHead span { color: var(--dim); margin-left: 8px; }
+  #thread { flex: 1; overflow-y: auto; padding: 16px 22px; display: flex; flex-direction: column; gap: 7px; }
+  .m-in, .m-out { position: relative; max-width: 64%; padding: 8px 13px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
+  .m-in { background: #fff; box-shadow: 0 1px 1px rgba(20,20,40,.07); align-self: flex-start; }
+  .m-out { background: var(--blue); color: #fff; align-self: flex-end; }
+  /* iMessage tails — only on the last bubble of a group */
+  .m-in.tail { border-bottom-left-radius: 6px; }
+  .m-in.tail::after { content: ""; position: absolute; left: -6px; bottom: 0; width: 12px; height: 17px; background: #fff; border-bottom-right-radius: 14px 15px; }
+  .m-in.tail::before { content: ""; position: absolute; left: -12px; bottom: 0; width: 12px; height: 17px; background: var(--bg); border-bottom-right-radius: 10px; z-index: 1; }
+  .m-out.tail { border-bottom-right-radius: 6px; }
+  .m-out.tail::after { content: ""; position: absolute; right: -6px; bottom: 0; width: 12px; height: 17px; background: var(--blue); border-bottom-left-radius: 14px 15px; }
+  .m-out.tail::before { content: ""; position: absolute; right: -12px; bottom: 0; width: 12px; height: 17px; background: var(--bg); border-bottom-left-radius: 10px; z-index: 1; }
+  .m-in.dropped { opacity: .7; }
+  .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
+  @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
+  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .recap-item { animation: none !important; } }
+  .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
+  .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
+  .note {
+    align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
+    border-radius: 10px; padding: 7px 12px; font: italic 12px Georgia, serif; color: #6b6045;
+  }
+  #reply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
+  #reply .hint { font-size: 11px; color: var(--dim); margin-bottom: 4px; }
+  .chip { display: block; width: 100%; text-align: left; border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 18px; padding: 8px 14px; font-size: 13px; margin-top: 6px; }
+  .chip:hover:not(:disabled) { background: var(--blue-soft); }
+  .chip.gated { border-style: dashed; border-color: #b8860b; color: #96700a; }
+
+  /* right column: triage + journal mirror */
+  #sideCol { width: 312px; flex: none; background: var(--panel); border-left: 1px solid var(--line); overflow-y: auto; padding: 12px 14px; font-size: 12.5px; }
+  .tier h5 { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--amber-ink); margin: 10px 0 6px; }
+  .tier.later h5 { color: var(--dim); }
+  .h-card { border: 1px solid #e6e6ea; border-left: 3px solid var(--amber); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; background: #fffdf8; }
+  .h-card.link { cursor: pointer; }
+  .h-card.link:hover { border-color: var(--blue); }
+  .tier.later .h-card { border-left-color: #d7d7de; background: var(--panel); }
+  .h-card.move { border-left-color: var(--journal); background: #fbf7f2; }
+  .h-card b { font-size: 12px; display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
+  .h-card b .go { color: var(--blue); font-weight: 500; font-size: 10.5px; white-space: nowrap; }
+  .h-card b .left { color: #a02020; font-style: normal; font-size: 10px; font-weight: 600; white-space: nowrap; }
+  .h-card > span { color: #6b6b74; font-size: 11.5px; display: block; }
+  .h-card .mv-opts { display: flex; flex-direction: column; gap: 4px; margin-top: 7px; }
+  .h-card .mv-opts button { text-align: left; border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 13px; padding: 5px 11px; font-size: 12px; }
+  .h-card .mv-opts button.gated { border-style: dashed; border-color: #b8860b; color: #96700a; }
+  .empty-tier { color: var(--dim); font-size: 11.5px; font-style: italic; }
+  #journalSec { border-top: 1px solid var(--soft); margin-top: 12px; padding-top: 8px; }
+  #journalSec h5 { color: var(--journal); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+  .j-entry { font-family: Georgia, serif; font-size: 12px; color: #4a443c; line-height: 1.5; margin-bottom: 9px; }
+  .j-entry .j-wk { font-weight: 700; }
+  .j-entry.old { color: #8b8b92; }
+  .stamp { display: inline-block; border: 2px solid; border-radius: 4px; padding: 0 7px; font: 700 9.5px -apple-system, sans-serif; letter-spacing: .08em; text-transform: uppercase; transform: rotate(-1.5deg); }
+  .stamp.green { color: #1d8f3c; border-color: #1d8f3c; }
+  .stamp.blue { color: #2456c4; border-color: #2456c4; }
+  .stamp.red { color: #c0392b; border-color: #c0392b; }
+
+  /* ── News Feed surface ──────────────────────────────────────────────────── */
+  #feedSurface { flex-direction: column; align-items: center; overflow-y: auto; padding: 16px 0 30px; gap: 12px; background: #ececf0; }
+  .f-item { width: min(640px, 92%); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; flex: none; }
+  .f-item.expired { opacity: .62; }
+  .f-src { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 700; letter-spacing: .04em; padding: 7px 14px; }
+  .f-body { padding: 4px 14px 10px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
+  .f-act { display: flex; gap: 8px; padding: 0 14px 12px; flex-wrap: wrap; }
+  .f-btn { border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 14px; padding: 5px 12px; font-size: 12px; }
+  .f-done { padding: 0 14px 10px; font-size: 11.5px; color: var(--dim); font-style: italic; }
+  .f-hn .f-src { background: #ff6600; color: #fff; }
+  .f-tc .f-src { background: #0a9928; color: #fff; }
+  .f-tw .f-src { color: #536471; border-bottom: 1px solid #eff3f4; }
+  .f-expiry { margin-left: auto; font-size: 10px; color: #ffe9e9; font-weight: 600; }
+  .f-tw .f-expiry { color: #a02020; }
+  .f-wk { width: min(640px, 92%); font-size: 10.5px; color: #9a9aa2; text-align: center; flex: none; }
+
+  /* ── Bank surface ───────────────────────────────────────────────────────── */
+  #bankSurface { flex-direction: column; align-items: center; overflow-y: auto; padding: 18px 0 30px; gap: 12px; }
+  .stmt { width: min(560px, 92%); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; flex: none; }
+  .stmt h4 { font-size: 12px; color: var(--dim); display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .stmt h4 b { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .tx { display: flex; justify-content: space-between; font-size: 12.5px; padding: 3px 0; border-bottom: 1px dashed var(--soft); }
+  .tx .amt { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .tx .amt.pos { color: var(--green); }
+  .tx .amt.neg { color: var(--red); }
+  .tx .n { color: var(--dim); font-size: 11px; margin-left: 6px; }
+
+  /* ── to-do popover ──────────────────────────────────────────────────────── */
+  #todoPop {
+    position: absolute; top: 52px; left: 50%; transform: translateX(-50%); z-index: 30;
+    width: 470px; background: var(--panel); border: 1px solid #dcdce2; border-radius: 14px;
+    box-shadow: 0 18px 50px rgba(20,20,40,.22); padding: 14px 16px; display: none;
+  }
+  #todoPop.on { display: block; }
+  .td-stages { display: flex; gap: 4px; margin-bottom: 10px; font-size: 10.5px; flex-wrap: wrap; }
+  .td-stages span { border-radius: 999px; padding: 3px 9px; background: var(--soft); color: var(--dim); white-space: nowrap; }
+  .td-stages .done { color: #1d8f3c; background: #e9f6ec; }
+  .td-stages .cur { background: var(--ink); color: #fff; font-weight: 600; }
+  .td-row { display: flex; align-items: baseline; gap: 10px; padding: 6px 2px; border-bottom: 1px solid var(--soft); font-size: 13px; }
+  .td-box { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #c9c9d0; flex: none; position: relative; top: 2px; }
+  .td-row.done .td-box { background: #1d8f3c; border-color: #1d8f3c; }
+  .td-row.done .td-box::after { content: "✓"; color: #fff; font-size: 10px; position: absolute; left: 3.5px; top: -2px; }
+  .td-row.done .td-main { text-decoration: line-through; color: #9a9aa2; }
+  .td-main { flex: 1; }
+  .td-note { display: block; font-size: 10.5px; color: var(--dim); text-decoration: none !important; }
+  .td-foot { font-size: 11px; color: var(--dim); margin-top: 8px; }
+
+  /* ── scene takeover ─────────────────────────────────────────────────────── */
+  #scene {
+    position: fixed; inset: 0; background: #101014; color: #ececf0; z-index: 50;
+    display: none; flex-direction: column;
+  }
+  #scene.on { display: flex; animation: fadein .4s ease; }
+  @keyframes fadein { from { opacity: 0; } }
+  .sc-head { flex: none; text-align: center; padding: 16px 20px 10px; border-bottom: 1px solid #26262a; }
+  .sc-head .sc-title { font-size: 17px; font-weight: 700; }
+  .sc-head .sc-sub { font-size: 12px; color: #9a9aa2; margin-top: 2px; }
+  .sc-head .sc-clock { font: 700 13px ui-monospace, Menlo, monospace; color: #f2c14e; margin-top: 4px; }
+  #scThread { flex: 1; overflow-y: auto; padding: 18px 0; display: flex; flex-direction: column; gap: 7px; align-items: center; }
+  #scThread > div { width: min(680px, 92%); display: flex; flex-direction: column; gap: 2px; }
+  .sc-from { font-size: 10.5px; color: #8e8e93; margin-left: 8px; }
+  .sc-in { background: #26262a; align-self: flex-start; max-width: 78%; padding: 8px 13px; border-radius: 16px; border-bottom-left-radius: 5px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
+  .sc-out { background: var(--blue); color: #fff; align-self: flex-end; max-width: 78%; padding: 8px 13px; border-radius: 16px; border-bottom-right-radius: 5px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
+  #scReply { flex: none; padding: 10px 0 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  #scReply .who-asks { font-size: 11px; color: #9a9aa2; }
+  #scReply .chip { width: min(680px, 92%); background: #1a1a1e; }
+  #scReply .free { font-size: 10.5px; color: #f2c14e; }
+  #scDone { display: none; margin-top: 8px; background: #fff; color: #101014; border: 0; border-radius: 10px; padding: 9px 26px; font-weight: 700; }
+
+  /* ── recap / endgame / intro overlays ───────────────────────────────────── */
+  .overlay { position: fixed; inset: 0; background: rgba(12,12,18,.5); z-index: 60; display: none; align-items: center; justify-content: center; }
+  .overlay.on { display: flex; }
+  .modal { background: var(--panel); border-radius: 16px; padding: 22px 26px; width: min(520px, 92%); max-height: 84vh; overflow-y: auto; box-shadow: 0 24px 70px rgba(10,10,20,.35); }
+  .modal h2 { font-size: 18px; margin-bottom: 4px; }
+  .modal .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 14px; }
+  .recap-item { display: flex; gap: 9px; padding: 6px 0; font-size: 13px; opacity: 0; animation: rise .35s ease forwards; align-items: baseline; }
+  @keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
+  .recap-item .ico { flex: none; width: 20px; text-align: center; }
+  .recap-item .sub2 { color: var(--dim); font-size: 11.5px; display: block; }
+  .modal .ok { margin-top: 14px; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 0; font-weight: 600; }
+  .grade-row { display: flex; gap: 10px; align-items: baseline; padding: 7px 0; border-bottom: 1px solid var(--soft); font-size: 13px; }
+  .grade { flex: none; width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: #fff; position: relative; top: 4px; }
+  .grade-row .g-body { flex: 1; }
+  .grade-row .g-verdict { color: #55555c; font-size: 12px; }
+  .grade-row .g-ref { color: var(--dim); font-size: 10.5px; }
+  .intro-step { font-size: 13.5px; line-height: 1.6; }
+  .intro-step b { display: block; font-size: 16px; margin-bottom: 6px; }
+
+  /* ── iOS-style notifications ────────────────────────────────────────────── */
+  #notifs { position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 80; display: flex; flex-direction: column; gap: 8px; width: 368px; pointer-events: none; }
+  .notif {
+    pointer-events: auto; display: flex; gap: 10px; align-items: flex-start;
+    background: rgba(249,249,252,.9); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border-radius: 18px; padding: 10px 14px; box-shadow: 0 10px 30px rgba(0,0,0,.24); cursor: pointer;
+    animation: ndrop .5s cubic-bezier(.2,.9,.3,1.15);
+  }
+  .notif.hide { animation: nlift .28s ease forwards; }
+  @keyframes ndrop { from { transform: translateY(-90px); opacity: 0; } }
+  @keyframes nlift { to { transform: translateY(-24px); opacity: 0; } }
+  .notif .n-ico { width: 36px; height: 36px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .notif .n-b { flex: 1; min-width: 0; }
+  .notif .n-title { font-size: 12.5px; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+  .notif .n-time { color: #8b8b92; font-weight: 400; font-size: 10.5px; white-space: nowrap; }
+  .notif .n-text { font-size: 12px; color: #3a3a40; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+  /* ── week flash + scene interstitial ────────────────────────────────────── */
+  #weekFlash {
+    position: fixed; inset: 0; background: #0d0d12; color: #fff; z-index: 74;
+    display: none; align-items: center; justify-content: center; flex-direction: column; gap: 8px; pointer-events: none;
+  }
+  #weekFlash.on { display: flex; animation: wflash 1.15s ease forwards; }
+  @keyframes wflash { 0% { opacity: 0; } 18% { opacity: 1; } 78% { opacity: 1; } 100% { opacity: 0; } }
+  #weekFlash .wf-kicker { font-size: 11px; letter-spacing: .4em; color: #9a9aa2; text-transform: uppercase; }
+  #weekFlash .wf-week { font-size: 40px; font-weight: 800; letter-spacing: .03em; }
+  #inter {
+    position: fixed; inset: 0; background: #000; z-index: 72; display: none;
+    align-items: center; justify-content: center; flex-direction: column; color: #fff; cursor: pointer;
+  }
+  #inter.on { display: flex; }
+  #inter .i-kicker { font: 700 12px ui-monospace, Menlo, monospace; letter-spacing: .4em; color: #f2c14e; text-transform: uppercase; animation: irise .8s ease both; }
+  #inter .i-title { font-size: 36px; font-weight: 800; letter-spacing: .05em; margin-top: 12px; animation: irise .8s .3s ease both; }
+  #inter .i-sub { margin-top: 12px; color: #9a9aa2; font-size: 13.5px; max-width: 440px; text-align: center; line-height: 1.5; animation: irise .8s .6s ease both; }
+  #inter .i-skip { position: absolute; bottom: 26px; font-size: 11px; color: #55555c; letter-spacing: .1em; }
+  @keyframes irise { from { opacity: 0; transform: translateY(16px); } }
+
+  /* typing indicator (scenes) */
+  .typing { display: inline-flex; gap: 4px; background: #26262a; border-radius: 16px; padding: 12px 15px; align-self: flex-start; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: #8e8e93; animation: tblink 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay: .2s; }
+  .typing i:nth-child(3) { animation-delay: .4s; }
+  @keyframes tblink { 40% { opacity: .25; } }
+  .sc-in.msg-new, .sc-out.msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
+
+  /* ── debug bar ──────────────────────────────────────────────────────────── */
+  #debug { flex: none; border-top: 1px solid var(--line); background: #1c1c1e; color: #ddd; font-size: 12px; }
+  #debug summary { padding: 3px 14px; cursor: pointer; color: #8e8e93; user-select: none; }
+  #debug .tools { padding: 6px 14px 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  #debug button { border: 1px solid #444; background: #2c2c2e; color: #ddd; border-radius: 6px; padding: 3px 9px; font-size: 12px; }
+  #debug input { width: 74px; background: #2c2c2e; border: 1px solid #444; color: #ddd; border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Kindred<small id="hWeek"></small></div>
+  <nav class="surfaces">
+    <button class="cur" data-surface="msgs">Messages<span class="n-badge" id="bMsgs" style="display:none"></span></button>
+    <button data-surface="feed">News Feed<span class="n-badge" id="bFeed" style="display:none"></span></button>
+    <button data-surface="bank">Bank</button>
+  </nav>
+  <div class="gauge"><div class="g-lbl">Runway</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
+  <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
+  <div class="gauge todo" id="gTodo"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
+  <div class="hdr-right">
+    <div class="dots" id="dots"></div>
+    <button id="endWeek">End week →</button>
+  </div>
+  <div id="todoPop"></div>
+</header>
+
+<main>
+  <section class="surface cur" id="msgsSurface">
+    <nav id="rail"></nav>
+    <div id="threadCol">
+      <div id="chatHead"></div>
+      <div id="thread"></div>
+      <div id="reply"></div>
+    </div>
+  </section>
+  <section class="surface" id="feedSurface"></section>
+  <section class="surface" id="bankSurface"></section>
+  <aside id="sideCol"></aside>
+</main>
+
+<div id="scene">
+  <div class="sc-head">
+    <div class="sc-title" id="scTitle"></div>
+    <div class="sc-sub" id="scSub"></div>
+    <div class="sc-clock" id="scClock"></div>
+  </div>
+  <div id="scThread"></div>
+  <div id="scReply"></div>
+</div>
+
+<div id="notifs"></div>
+<div id="weekFlash"><div class="wf-kicker">monday</div><div class="wf-week" id="wfWeek"></div></div>
+<div id="inter"><div class="i-kicker" id="iKicker"></div><div class="i-title" id="iTitle"></div><div class="i-sub" id="iSub"></div><span class="i-skip">CLICK TO SKIP</span></div>
+<div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
+<div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
+
+<details id="debug">
+  <summary>debug</summary>
+  <div class="tools">
+    seed <input id="dbgSeed" type="number">
+    <button data-jump="equity_open">equity</button>
+    <button data-jump="dev_plan">dev plan</button>
+    <button data-jump="demo_ready">demo night</button>
+    <button data-jump="good_enough_launch">launch day</button>
+    <button data-jump="slide_hangover">the slide</button>
+    <button data-jump="pivot_summit_call">pivot day</button>
+    <button data-jump="pivot_relaunch">post-pivot</button>
+    <button data-jump="seed_pitch">fundraising</button>
+    <button id="dbgSkip">+5 weeks</button>
+    <button id="dbgRestart">restart</button>
+  </div>
+</details>
+
+<script src="cast.js"></script>
+<script src="story/opening.js"></script>
+<script src="story/equity.js"></script>
+<script src="story/dev_plan.js"></script>
+<script src="story/team.js"></script>
+<script src="story/dev_directions.js"></script>
+<script src="story/demo_night.js"></script>
+<script src="story/users.js"></script>
+<script src="story/launch_day.js"></script>
+<script src="story/slide.js"></script>
+<script src="story/pivot_day.js"></script>
+<script src="story/community.js"></script>
+<script src="story/fundraising.js"></script>
+<script src="story/growth.js"></script>
+<script src="story/jordan_arc.js"></script>
+<script src="story/discovery.js"></script>
+<script src="story/press.js"></script>
+<script src="story/ambient.js"></script>
+<script src="world.js"></script>
+<script src="engine.js"></script>
+<script src="scoring.js"></script>
+<script src="tests/harness.js"></script>
+<script>
+"use strict";
+/* ═══ Kindred v2 UI ═══════════════════════════════════════════════════════════
+   The interaction grammar:
+   - someone texted you        → answer in their thread (Messages)
+   - your own move             → act on the card in "This week" (founder/growth)
+   - the press said something  → engage inline in the News Feed
+   - progress                  → the ☑ to-do gauge (one checklist per stage)
+   - results                   → journal note inline in-thread + mirror in column
+   - big moments               → scene takeover; week ends → the recap reveal
+═══════════════════════════════════════════════════════════════════════════════ */
+
+const $ = id => document.getElementById(id);
+const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const money = n => "$" + Math.round(n).toLocaleString();
+
+// Who renders where.
+const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
+const SELF = new Set(["founder", "growth"]);   // "your own moves" — acted in-column
+const AV_COLORS = { alex: "#4a6fa5", jordan: "#5f8ab5", priya: "#9c5fb5", mom: "#c47a9a", marcus: "#b59c5f", fatima: "#7a9a5f", ryan: "#5fa58f", sarah: "#a5745f", jamie: "#7a7ab5", david: "#8a6a4a", kevin: "#999", brett: "#999", tom: "#5f9aa5", lena: "#b55f5f", users: "#b5735f", analytics: "#1b1e24", yc: "#f26522" };
+const FEED_META = {
+  hacker_news: { cls: "f-hn", src: "Y · HACKER NEWS" },
+  techcrunch: { cls: "f-tc", src: "TC · TECHCRUNCH" },
+  twitter: { cls: "f-tw", src: "𝕏 · TWITTER" },
+};
+const SCENE_META = {
+  equity: { kicker: "this can't wait", title: "The equity talk", sub: "the three of you, one call — nobody leaves until it's settled" },
+  demo: { kicker: "tonight · 8:00 PM", title: "Demo night", sub: "a total stranger is using the app. Alex is watching the session live." },
+  launch: { kicker: "8:00 AM", title: "Launch day", sub: "it's real. Alex works the machine, Jordan watches the humans." },
+  pivot: { kicker: "saturday", title: "Pivot day", sub: "whiteboard, two columns: NOT ENOUGH USERS / WRONG PRODUCT." },
+};
+
+// ── the founder's to-do list: one checklist per stage of the company ─────────
+const STAGES = [
+  { id: "demo", label: "Ship the demo", active: (s, g) => !s.has_demo, items: [
+    { t: "Kick off the build", done: (s, g) => g.done("start_prototype") },
+    { t: "Incorporate", done: s => !!s.incorporated, note: () => "Delaware C-corp · $500" },
+    { t: "Settle the equity split", done: s => !!s.jordan_equity, note: s => s.equity_proposal ? s.equity_proposal + " · nobody set up vesting" : null },
+    { t: "Pick the dev plan", done: (s, g) => g.done("dev_plan"), note: s => s.dev_plan === "lean" ? "lean — five items" : s.dev_plan === "full" ? "the works — 20+ items" : null },
+    { t: "Auth: build or buy", done: (s, g) => g.done("auth_choice"), note: (s, g) => g.took("auth_choice:buy") ? "bought · $30/wk" : g.done("auth_forced") ? "built, then bought anyway" : g.done("auth_choice") ? "Alex is hand-rolling it" : null },
+    { t: "Matching engine: ours or rented", done: (s, g) => g.done("matching_choice"), note: s => s.matching_owned ? "ours — the IP" : s.matching_licensed ? "licensed · $100/wk" : null },
+    { t: "Put it in front of a stranger", done: s => !!s.has_demo },
+  ]},
+  { id: "launch", label: "Get to launch", active: (s, g) => s.has_demo && !s.launched, items: [
+    { t: "Instrument the funnel", done: (s, g) => g.done("analytics_choice"), note: s => s.analytics_live ? "SDK · $30/wk — you can see" : null },
+    { t: "Pick the launch market", done: s => s.beachhead != null, note: s => s.seed_strategy === "austin" ? "Austin — where the waitlist lives" : s.beachhead === "narrow" ? "one dense market" : s.beachhead === "broad" ? "everywhere at once" : null },
+    { t: "Answer Apple on safety", done: (s, g) => g.done("trust_safety") },
+    { t: "iOS wired end-to-end", done: s => !!s.ios_unblocked },
+    { t: "The hardening week", done: s => s.productPhase === "product" },
+    { t: "Flip the switch", done: s => !!s.launched },
+  ]},
+  { id: "slide", label: "Survive the slide", active: (s, g) => s.launched && !s.pivot_summit_done && !s.pivot_deferred && !s.activities_pivot, items: [
+    { t: "Watch retention, not signups", done: (s, g) => g.done("slide_hangover") },
+    { t: "Call Maya", done: (s, g) => g.done("slide_maya_call"), note: s => s.maya_quote ? "her words, kept" : null },
+    { t: "Read the Friday cohort", done: (s, g) => g.done("slide_cohort") || !s.analytics_live, note: s => !s.analytics_live ? "no analytics — flying on gut" : null },
+    { t: "Hear Alex's thesis out", done: (s, g) => g.done("slide_alex_thesis") },
+    { t: "Get both sides in a room", done: s => !!s.pivot_summit_done },
+  ]},
+  { id: "v2", label: "Rebuild as v2", active: (s, g) => s.activities_pivot && !s.pivot_shipped, items: [
+    { t: "Call the pivot", done: s => !!s.activities_pivot, note: () => "plans, not profiles" },
+    { t: "Rip out the old screens", done: s => !!(s.items && s.items.matching_algo && s.items.matching_algo.status === "obsolete") },
+    { t: "Repoint the matching engine", done: s => !!(s.items && s.items.plans_matching && s.items.plans_matching.status === "done") },
+    { t: "The plans UI", done: s => !!(s.items && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved)) },
+    { t: "Relaunch to your users", done: s => !!s.pivot_shipped },
+  ]},
+  { id: "channel", label: "Prove a channel", active: (s, g) => s.pivot_shipped && !s.primary_channel, items: [
+    { t: "Test channels cheaply (3)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 3, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 3 tested" },
+    { t: "Go all-in on the one with legs", done: s => !!s.primary_channel, note: s => s.primary_channel ? "all chips on " + s.primary_channel : null },
+  ]},
+  { id: "round", label: "Fill the round", active: () => true, items: [
+    { t: "Take the friends & family money", done: (s, g) => g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") },
+    { t: "Bring on an advisor", done: s => !!s.priya_advising, note: s => s.priya_advising ? "Priya's officially advising" : null },
+    { t: "Have the deck ready", done: s => !!s.deck_ready },
+    { t: "Keep the investors warm", done: s => s.investor_warmth >= 50, note: s => "warmth " + Math.round(s.investor_warmth) },
+    { t: "Six paying subscribers", done: s => s.customers >= 6, note: s => s.customers + " of 6" },
+    { t: "Land the lead", done: s => !!s.marcusCommitted, note: s => s.marcusCommitted ? "Marcus · $400k" : null },
+    { t: "Close it — follower or YC", done: s => !!s.followerCommitted || !!s.ycAccepted },
+  ]},
+];
+
+// ── game + UI state ───────────────────────────────────────────────────────────
+const urlSeed = new URLSearchParams(location.search).get("seed");
+let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
+let game = new V2Engine({ seed });
+let selected = "alex";
+let surface = "msgs";
+let lastSeen = {};              // charId -> thread length seen
+let feedSeenLen = {};           // feed charId -> entries seen
+let uiNotes = {};               // charId -> [{ idx, text, week }] inline outcome notes
+let threadRendered = {};        // charId -> entries already animated in
+let sceneStartSeq = null;
+let inScene = false;
+
+function resetUiState() {
+  lastSeen = {}; feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
+  selected = "alex"; surface = "msgs"; threadRendered = {};
+  for (const id of game.order) { lastSeen[id] = game.threads[id].length; feedSeenLen[id] = game.threads[id].length; }
+}
+resetUiState();
+
+// ── helpers over the engine ───────────────────────────────────────────────────
+function weeksLeft(charId) {
+  const o = game.open[charId];
+  if (!o) return null;
+  const node = game.nodes.get(o.nodeId);
+  if (!node || !node.timeout || node.timeout.weeks == null) return null;
+  return Math.max(0, node.timeout.weeks - (game.s.week - o.week));
+}
+function railChars() {
+  return game.order.filter(id => {
+    const c = game.cast.get(id);
+    return c && c.active && id !== "founder" && !FEED.has(id) && !SELF.has(id);
+  });
+}
+function currentStage() {
+  for (const st of STAGES) if (st.active(game.s, game)) return st;
+  return STAGES[STAGES.length - 1];
+}
+function stageCounts(st) {
+  const done = st.items.filter(it => it.done(game.s, game)).length;
+  return { done, total: st.items.length };
+}
+function todoSnapshot() {
+  const out = new Set();
+  for (const st of STAGES) for (const it of st.items) if (it.done(game.s, game)) out.add(st.id + "|" + it.t);
+  return out;
+}
+function gatedKeys(nodeId) {
+  // which currently-offered options exist only because of banked evidence
+  const node = game.nodes.get(nodeId);
+  if (!node) return new Set();
+  return new Set((node.choices || []).filter(c => c.if).map(c => c.key));
+}
+
+// ── header ────────────────────────────────────────────────────────────────────
+function renderHeader() {
+  const st = game.stats();
+  $("hWeek").textContent = "Week " + st.week;
+  $("gRunV").textContent = st.runway + " wks · " + money(st.cash);
+  $("gRunB").style.width = Math.min(100, (st.runway / 20) * 100) + "%";
+  $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : "var(--amber)";
+  const ycIn = game.s.yc_week - st.week;
+  if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "pending…"; $("gYcB").style.width = "100%"; }
+  else if (ycIn > 0) { $("gYcL").textContent = "YC window"; $("gYcV").textContent = "in " + ycIn + " wks"; $("gYcB").style.width = Math.max(4, 100 - (ycIn / 25) * 100) + "%"; }
+  else { $("gYcL").textContent = "YC window"; $("gYcV").textContent = "open now"; $("gYcB").style.width = "100%"; }
+  const stg = currentStage(), c = stageCounts(stg);
+  $("gTdL").textContent = "☑ " + stg.label + " ▾";
+  $("gTdV").textContent = c.done + " of " + c.total;
+  $("gTdB").style.width = (c.done / c.total) * 100 + "%";
+  const dots = [];
+  for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
+  $("dots").innerHTML = (game.scene ? '<span class="free-note">scene — moves are free</span>' : "actions ") + dots.join("");
+  // surface badges
+  const msgActs = game.openActions().filter(a => !a.onHold && !FEED.has(a.charId)).length;
+  const unread = railChars().reduce((n, id) => n + (game.threads[id].length > (lastSeen[id] || 0) ? 1 : 0), 0);
+  setBadge("bMsgs", surface === "msgs" ? 0 : unread + msgActs);
+  const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0)
+    + game.openActions().filter(a => !a.onHold && FEED.has(a.charId)).length;
+  setBadge("bFeed", surface === "feed" ? 0 : feedNew);
+}
+function setBadge(id, n) {
+  const el = $(id);
+  el.style.display = n > 0 ? "" : "none";
+  el.textContent = n;
+}
+
+// ── rail + thread ─────────────────────────────────────────────────────────────
+function renderRail() {
+  const acts = game.openActions();
+  $("rail").innerHTML = railChars().map(id => {
+    const c = game.cast.get(id).def;
+    const t = game.threads[id];
+    const last = t.length ? t[t.length - 1] : null;
+    const a = acts.find(x => x.charId === id && !x.onHold);
+    const left = weeksLeft(id);
+    const unread = t.length - (lastSeen[id] || 0);
+    let tag = "";
+    if (a && a.kind === "story") tag = '<span class="tag call">needs a call</span>';
+    if (a && left != null && left <= 1) tag = '<span class="tag expiring">' + (left === 0 ? "last chance" : "1 wk") + "</span>";
+    const ub = unread > 0 && id !== selected ? '<span class="tag unread">' + unread + "</span>" : "";
+    const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : c.role;
+    return '<div class="conv ' + (id === selected ? "cur" : "") + '" data-id="' + id + '">' +
+      '<div class="av" style="background:' + (AV_COLORS[id] || "#999") + '">' + esc(id === "analytics" ? "▚" : c.name[0]) + "</div>" +
+      '<div class="who"><b>' + esc(c.name) + " " + tag + ub + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
+  }).join("");
+  for (const el of document.querySelectorAll(".conv")) {
+    el.onclick = () => { selected = el.dataset.id; lastSeen[selected] = game.threads[selected].length; render(); };
+  }
+}
+
+function threadEntryHtml(m, notes, idx, isNew, tail) {
+  const anim = isNew ? " msg-new" : "";
+  let out = "";
+  if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+  else if (m.type === "incoming") {
+    out = '<div class="m-in' + (tail ? " tail" : "") + (m.dropped ? " dropped" : "") + anim + '">' + esc(m.body) + "</div>" +
+      (m.subtext ? '<div class="m-sub">' + esc(m.subtext) + "</div>" : "");
+  }
+  for (const n of notes) if (n.idx === idx) out += '<div class="note' + anim + '">✎ ' + esc(n.text) + "</div>";
+  return out;
+}
+function renderThread() {
+  const c = game.cast.get(selected);
+  if (!c) return;
+  $("chatHead").innerHTML = "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + (c.active ? "" : " · gone") + "</span>";
+  const t = game.threads[selected];
+  const notes = uiNotes[selected] || [];
+  const prevN = threadRendered[selected] || 0;
+  let lastWk = null, html = "";
+  t.forEach((m, i) => {
+    if (m.week !== lastWk) { html += '<div class="m-wk">week ' + m.week + "</div>"; lastWk = m.week; }
+    // a bubble gets the iMessage tail when it's the last of its group
+    const next = t[i + 1];
+    const tail = !next || next.type !== m.type || next.week !== m.week;
+    html += threadEntryHtml(m, notes, i, i >= prevN && prevN > 0, tail);
+  });
+  threadRendered[selected] = t.length;
+  const el = $("thread");
+  el.innerHTML = html || '<div class="m-wk">no messages yet</div>';
+  if (prevN > 0 && t.length > prevN && el.scrollTo) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  else el.scrollTop = el.scrollHeight;
+
+  // reply chips for this thread's open node
+  const a = game.openActions().find(x => x.charId === selected);
+  if (a && !a.onHold) {
+    const left = weeksLeft(selected);
+    const gk = gatedKeys(a.nodeId);
+    const can = game.actionsLeft > 0;
+    $("reply").innerHTML = '<div class="hint">' +
+      (can ? "pick a reply (1 action)" : "no actions left — end the week") +
+      (left != null ? " · won't wait past " + left + " more wk" + (left === 1 ? "" : "s") : "") +
+      " · ⚑ = unlocked by what you've learned</div>" +
+      a.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" +
+        (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
+    for (const el of $("reply").querySelectorAll(".chip")) el.onclick = () => doAct(a.nodeId, el.dataset.k, selected);
+  } else {
+    $("reply").innerHTML = '<div class="hint">' + (a && a.onHold ? "on hold — something bigger is happening" : "nothing needs an answer here right now") + "</div>";
+  }
+}
+
+// ── the right column: triage + journal mirror ─────────────────────────────────
+function renderSide() {
+  const acts = game.openActions().filter(a => !a.onHold);
+  const move = acts.filter(a => SELF.has(a.charId));
+  const story = acts.filter(a => !SELF.has(a.charId) && a.kind === "story");
+  const later = acts.filter(a => !SELF.has(a.charId) && a.kind !== "story");
+  const can = game.actionsLeft > 0;
+
+  const linkCard = (a) => {
+    const left = weeksLeft(a.charId);
+    const goFeed = FEED.has(a.charId);
+    return '<div class="h-card link" data-char="' + a.charId + '" data-feed="' + (goFeed ? 1 : 0) + '">' +
+      "<b>" + esc(a.name) + (left != null && left <= 2 ? ' <i class="left">' + left + " wk" + (left === 1 ? "" : "s") + " left</i>" : "") +
+      ' <span class="go">↗ ' + (goFeed ? "News Feed" : "open chat") + "</span></b>" +
+      "<span>" + esc(String(a.body).slice(0, 90)) + "…</span></div>";
+  };
+  const moveCard = (a) => {
+    const left = weeksLeft(a.charId);
+    const gk = gatedKeys(a.nodeId);
+    return '<div class="h-card move"><b>Your move' + (left != null && left <= 2 ? ' <i class="left">' + left + " wk" + (left === 1 ? "" : "s") + " left</i>" : "") + "</b>" +
+      "<span>" + esc(a.body) + "</span>" +
+      '<div class="mv-opts">' + a.options.map(o =>
+        '<button data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ' class="' + (gk.has(o.key) ? "gated" : "") + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("") + "</div></div>";
+  };
+
+  let html = '<div class="tier"><h5>◉ Needs a call</h5>' +
+    (move.map(moveCard).join("") + story.map(linkCard).join("") || '<div class="empty-tier">nothing urgent — rare. enjoy it.</div>') + "</div>";
+  html += '<div class="tier later"><h5>When you have a minute</h5>' +
+    (later.map(linkCard).join("") || '<div class="empty-tier">quiet out there.</div>') + "</div>";
+
+  // journal mirror: outcomes + stamps + orphan drops from the founder thread
+  const jt = game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+  const recent = jt.slice(-14).reverse();
+  html += '<div id="journalSec"><h5>✎ Journal</h5>' + recent.map((m, i) => {
+    const cls = "j-entry" + (i > 2 ? " old" : "");
+    if (m.type === "stamp") return '<div class="' + cls + '"><span class="j-wk">wk ' + m.week + ' ·</span> <span class="stamp ' + esc(m.stampClass || "green") + '">' + esc(m.label) + "</span></div>";
+    const from = m.type === "incoming" ? (esc(m.from) + ": ") : "";
+    return '<div class="' + cls + '"><span class="j-wk">wk ' + m.week + " ·</span> " + from + esc(m.body) + "</div>";
+  }).join("") + "</div>";
+
+  $("sideCol").innerHTML = html;
+  for (const el of $("sideCol").querySelectorAll(".h-card.link")) {
+    el.onclick = () => {
+      if (el.dataset.feed === "1") setSurface("feed");
+      else { selected = el.dataset.char; setSurface("msgs"); lastSeen[selected] = game.threads[selected].length; render(); }
+    };
+  }
+  for (const el of $("sideCol").querySelectorAll(".mv-opts button")) {
+    el.onclick = () => doAct(el.dataset.n, el.dataset.k, "founder");
+  }
+}
+
+// ── News Feed ─────────────────────────────────────────────────────────────────
+function renderFeed() {
+  // merge feed chars' incoming entries by seq/week
+  const items = [];
+  for (const id of FEED) {
+    game.threads[id].forEach(m => { if (m.type === "incoming") items.push({ ...m, charId: id }); });
+    feedSeenLen[id] = game.threads[id].length;
+  }
+  items.sort((a, b) => (a.seq || 0) - (b.seq || 0));
+  const acts = game.openActions();
+  let lastWk = null, html = "";
+  for (const m of items.slice(-24)) {
+    if (m.week !== lastWk) { html += '<div class="f-wk">week ' + m.week + "</div>"; lastWk = m.week; }
+    const meta = FEED_META[m.charId];
+    const a = m.nodeId ? acts.find(x => x.nodeId === m.nodeId && !x.onHold) : null;
+    const resolved = m.nodeId ? game.outcome(m.nodeId) : null;
+    const left = a ? weeksLeft(m.charId) : null;
+    let foot = "";
+    if (a) {
+      const can = game.actionsLeft > 0;
+      foot = '<div class="f-act">' + a.options.map(o =>
+        '<button class="f-btn" data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" + esc(o.label) + "</button>").join("") + "</div>";
+    } else if (resolved === "@ignored") foot = '<div class="f-done">the moment passed — you never weighed in.</div>';
+    else if (resolved) foot = '<div class="f-done">✓ you engaged.</div>';
+    html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + '">' +
+      '<div class="f-src">' + meta.src + (a && left != null ? '<span class="f-expiry">scrolls away in ' + left + " wk" + (left === 1 ? "" : "s") + "</span>" : "") + "</div>" +
+      '<div class="f-body">' + esc(m.body) + "</div>" + foot + "</div>";
+  }
+  $("feedSurface").innerHTML = html || '<div class="f-wk" style="margin-top:30px">nothing in the news yet — the world hasn\'t noticed you.</div>';
+  $("feedSurface").scrollTop = $("feedSurface").scrollHeight;
+  for (const el of $("feedSurface").querySelectorAll(".f-btn")) {
+    el.onclick = () => doAct(el.dataset.n, el.dataset.k, null);
+  }
+}
+
+// ── Bank ──────────────────────────────────────────────────────────────────────
+function renderBank() {
+  const rows = game.ledger.slice(-8).reverse();
+  $("bankSurface").innerHTML = rows.map(w =>
+    '<div class="stmt"><h4>week ' + w.week + " <b>" + money(w.balanceAfter) + "</b></h4>" +
+    w.transactions.map(tx =>
+      '<div class="tx"><span>' + esc(tx.label) + (tx.note ? '<span class="n">' + esc(tx.note) + "</span>" : "") + "</span>" +
+      '<span class="amt ' + (tx.delta > 0 ? "pos" : "neg") + '">' + (tx.delta > 0 ? "+" : "") + money(tx.delta).replace("$-", "-$") + "</span></div>").join("") +
+    "</div>").join("") || '<div class="f-wk" style="margin-top:30px">the first statement arrives when the first week ends.</div>';
+}
+
+// ── to-do popover ─────────────────────────────────────────────────────────────
+function renderTodo() {
+  const cur = currentStage();
+  const pills = STAGES.map(st => {
+    const c = stageCounts(st);
+    const cls = st === cur ? "cur" : (c.done === c.total ? "done" : "");
+    return '<span class="' + cls + '">' + (c.done === c.total && st !== cur ? "✓ " : "") + esc(st.label) + "</span>";
+  }).join("");
+  const rows = cur.items.map(it => {
+    const done = it.done(game.s, game);
+    const note = it.note ? it.note(game.s, game) : null;
+    return '<div class="td-row' + (done ? " done" : "") + '"><div class="td-box"></div><div class="td-main">' + esc(it.t) +
+      (note ? '<span class="td-note">' + esc(note) + "</span>" : "") + "</div></div>";
+  }).join("");
+  $("todoPop").innerHTML = '<div class="td-stages">' + pills + "</div>" + rows +
+    '<div class="td-foot">one list per stage of the company. answering your co-founders\' questions is what moves it.</div>';
+}
+$("gTodo").onclick = (e) => { e.stopPropagation(); renderTodo(); $("todoPop").classList.toggle("on"); };
+document.addEventListener("click", (e) => {
+  if (!e.target.closest("#todoPop") && !e.target.closest("#gTodo")) $("todoPop").classList.remove("on");
+});
+
+// ── acting ────────────────────────────────────────────────────────────────────
+function doAct(nodeId, key, charId) {
+  const before = game.threads[charId || "founder"] ? game.threads[charId || "founder"].length : 0;
+  const preScene = game.scene;
+  const preSeq = game._seq;
+  const outcome = game.act(nodeId, key);
+  if (outcome && charId && !SELF.has(charId)) {
+    (uiNotes[charId] = uiNotes[charId] || []).push({ idx: findReplyIdx(charId, before), text: outcome, week: game.s.week });
+  }
+  if (charId) lastSeen[charId] = game.threads[charId].length;
+  if (!preScene && game.scene) enterScene(preSeq);
+  else if (inScene) pumpScene();
+  render();
+  checkEndgame();
+}
+function findReplyIdx(charId, beforeLen) {
+  // the outcome note goes after the last entry added by this act (reply bubble
+  // or, failing that, the last message present)
+  return Math.max(beforeLen, game.threads[charId].length - 1);
+}
+
+// ── scenes: interstitial in, beats typed out, one sitting ─────────────────────
+let lastSceneId = null, scRevealed = 0, scTimer = null, interTimer = null;
+
+function showInter(meta, done) {
+  $("iKicker").textContent = meta.kicker || "";
+  $("iTitle").textContent = (meta.title || "").toUpperCase();
+  $("iSub").textContent = meta.sub || "";
+  const iv = $("inter");
+  iv.classList.add("on");
+  let finished = false;
+  const fin = () => {
+    if (finished) return;
+    finished = true;
+    clearTimeout(interTimer);
+    iv.classList.remove("on");
+    iv.onclick = null;
+    done();
+  };
+  iv.onclick = fin;
+  interTimer = setTimeout(fin, 2200);
+}
+function enterScene(startSeq) {
+  inScene = true;
+  sceneStartSeq = startSeq != null ? startSeq : 0;
+  scRevealed = 0;
+  lastSceneId = game.scene.id;
+  showInter(SCENE_META[lastSceneId] || {}, () => { $("scene").classList.add("on"); pumpScene(); });
+}
+function sceneEntries() {
+  const arc = game.arcs.get(lastSceneId);
+  const castIds = (arc ? arc.scene.cast : []).concat("founder");
+  const entries = [];
+  for (const id of castIds) {
+    (game.threads[id] || []).forEach(m => {
+      if ((m.seq || 0) >= sceneStartSeq && (m.type === "incoming" || m.type === "reply")) entries.push({ ...m, charId: id });
+    });
+  }
+  entries.sort((a, b) => (a.seq || 0) - (b.seq || 0));
+  return entries;
+}
+// The scene's heartbeat: reveal the transcript one bubble at a time (typing
+// dots before each incoming line), then offer the current beat's choices.
+function pumpScene() {
+  clearTimeout(scTimer);
+  const meta = SCENE_META[lastSceneId] || {};
+  $("scTitle").textContent = meta.title || "";
+  $("scSub").textContent = meta.sub || "";
+  $("scClock").textContent = (lastSceneId === "launch" && game.s.launch_time) ? game.s.launch_time : "";
+  const entries = sceneEntries();
+  if (scRevealed > entries.length) scRevealed = entries.length;
+  const revealing = scRevealed < entries.length;
+
+  let html = entries.slice(0, scRevealed).map((m, i) => {
+    const anim = i === scRevealed - 1 ? " msg-new" : "";
+    return "<div>" + (m.type === "incoming"
+      ? '<span class="sc-from">' + esc(m.from) + '</span><div class="sc-in' + anim + '">'
+      : '<div class="sc-out' + anim + '">') + esc(m.body) + "</div></div>";
+  }).join("");
+  if (revealing && entries[scRevealed].type === "incoming") {
+    html += '<div><span class="sc-from">' + esc(entries[scRevealed].from) + '</span><div class="typing"><i></i><i></i><i></i></div></div>';
+  }
+  $("scThread").innerHTML = html;
+  $("scThread").scrollTop = $("scThread").scrollHeight;
+
+  if (revealing) {
+    $("scReply").innerHTML = "";
+    scTimer = setTimeout(() => { scRevealed++; pumpScene(); },
+      entries[scRevealed].type === "reply" ? 240 : 900);
+    return;
+  }
+  if (game.scene) {
+    const beats = game.openActions().filter(a => a.scene === game.scene.id && !a.onHold);
+    if (beats.length) {
+      const b = beats[0];
+      const gk = gatedKeys(b.nodeId);
+      $("scReply").innerHTML = '<div class="who-asks">' + esc(b.name) + ' is looking at you <span class="free">· moves in the room are free</span></div>' +
+        b.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-n="' + esc(b.nodeId) + '" data-k="' + esc(o.key) + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
+      for (const el of $("scReply").querySelectorAll(".chip")) el.onclick = () => doAct(el.dataset.n, el.dataset.k, beatChar(el.dataset.n));
+    } else {
+      $("scReply").innerHTML = '<div class="who-asks">…</div>';
+    }
+  } else {
+    $("scReply").innerHTML = '<button id="scDone" style="display:block">Back to the week →</button>';
+    $("scDone").onclick = exitScene;
+  }
+}
+function beatChar(nodeId) {
+  for (const cid of game.order) { const o = game.open[cid]; if (o && o.nodeId === nodeId) return cid; }
+  return null;
+}
+function exitScene() {
+  inScene = false;
+  clearTimeout(scTimer);
+  $("scene").classList.remove("on");
+  for (const id of game.order) {
+    lastSeen[id] = Math.max(lastSeen[id] || 0, game.threads[id].length);
+    threadRendered[id] = game.threads[id].length;
+  }
+  render();
+  checkEndgame();
+}
+
+// ── end week: the Monday flash, then the phone lights up ─────────────────────
+function showNotif(n) {
+  const el = document.createElement("div");
+  el.className = "notif";
+  el.innerHTML = '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+    '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span><span class="n-time">now</span></div>' +
+    '<div class="n-text">' + esc(n.text) + "</div></div>";
+  let gone = false;
+  const dismiss = () => { if (gone) return; gone = true; el.classList.add("hide"); setTimeout(() => el.remove(), 300); };
+  el.onclick = () => { dismiss(); if (n.go) n.go(); };
+  $("notifs").appendChild(el);
+  setTimeout(dismiss, 4800);
+}
+function notify(list) {
+  list.forEach((n, i) => setTimeout(() => showNotif(n), 400 + i * 480));
+}
+
+$("endWeek").onclick = () => {
+  if (game.s.game_over || game.s.game_won || game.scene) return;
+  const beforeTodo = todoSnapshot();
+  const beforeLens = {};
+  for (const id of game.order) beforeLens[id] = game.threads[id].length;
+
+  game.nextWeek();
+  render();
+  if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
+
+  // Monday flash…
+  const wf = $("weekFlash");
+  $("wfWeek").textContent = "WEEK " + game.s.week;
+  wf.classList.remove("on"); void wf.offsetWidth; wf.classList.add("on");
+  setTimeout(() => wf.classList.remove("on"), 1200);
+
+  // …then the phone lights up.
+  const list = [];
+  const afterTodo = todoSnapshot();
+  for (const key of afterTodo) if (!beforeTodo.has(key)) {
+    list.push({ ico: "✓", color: "#1d8f3c", title: "Reminders", text: "Checked off: " + key.split("|")[1],
+      go: () => { renderTodo(); $("todoPop").classList.add("on"); } });
+  }
+  for (const id of game.order) {
+    const fresh = game.threads[id].slice(beforeLens[id]).filter(m => m.type === "incoming");
+    if (!fresh.length) continue;
+    const feed = FEED.has(id);
+    const def = game.cast.get(id).def;
+    const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
+    const dropped = fresh.some(m => m.dropped);
+    list.push({
+      ico: feed ? "📰" : def.name[0],
+      color: feed ? "#3a3a40" : (AV_COLORS[id] || "#8a8a92"),
+      title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
+      text: String(fresh[fresh.length - 1].body || ""),
+      go: feed ? () => setSurface("feed")
+        : () => { selected = id; lastSeen[id] = game.threads[id].length; setSurface("msgs"); },
+    });
+  }
+  notify(list.slice(0, 8));
+};
+
+// ── endgame ───────────────────────────────────────────────────────────────────
+const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] : s >= 70 ? ["B", "#4a9a4a"] : s >= 55 ? ["C", "#c9922a"] : s >= 40 ? ["D", "#c96a2a"] : ["F", "#c0392b"];
+function checkEndgame() {
+  const s = game.s;
+  if (!s.game_over && !s.game_won) return;
+  const cats = V2Scoring.scoreGame(game);
+  const title = s.game_won ? (s.ycAccepted ? "You're in the batch." : "Round closed. $500k.") :
+    s.ycRejected ? "YC passed. The run ends here." : "Out of runway.";
+  const sub = s.game_won ? "Week " + s.week + " — the company lives. Here's what it taught you." :
+    "Week " + s.week + " — here's what this run taught you.";
+  $("endModal").innerHTML = "<h2>" + esc(title) + '</h2><div class="sub">' + esc(sub) + "</div>" +
+    cats.map(c => {
+      const [g, col] = GRADE(c.score);
+      return '<div class="grade-row"><div class="grade" style="background:' + col + '">' + g + "</div>" +
+        '<div class="g-body"><b>' + esc(c.label) + "</b>" +
+        '<div class="g-verdict">' + esc(c.verdict) + (c.notes && c.notes[0] ? " — " + esc(c.notes[0]) : "") + "</div>" +
+        '<div class="g-ref">' + esc(c.ref) + "</div></div></div>";
+    }).join("") +
+    '<button class="ok" onclick="location.search=\'?seed=\'+((Date.now()%100000)|0)">Run it back →</button>';
+  $("endOv").classList.add("on");
+}
+
+// ── intro ─────────────────────────────────────────────────────────────────────
+const INTRO = [
+  ["You're the founder.", "Kindred is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, a burn rate, and two moves a week. Get to a seed round (or YC) before the money runs out."],
+  ["Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
+  ["Decisions are the throttle.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
+];
+let introStep = 0;
+function showIntro() {
+  const [h, b] = INTRO[introStep];
+  $("introModal").innerHTML = '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
+    '<button class="ok">' + (introStep < INTRO.length - 1 ? "Continue →" : "Week 1 →") + "</button>";
+  $("introModal").querySelector(".ok").onclick = () => {
+    introStep++;
+    if (introStep >= INTRO.length) { $("introOv").classList.remove("on"); localStorage.setItem("kindred_intro", "1"); }
+    else showIntro();
+  };
+  $("introOv").classList.add("on");
+}
+if (!localStorage.getItem("kindred_intro")) showIntro();
+
+// ── surfaces + orchestration ──────────────────────────────────────────────────
+function setSurface(sf) {
+  surface = sf;
+  for (const b of document.querySelectorAll("nav.surfaces button")) b.classList.toggle("cur", b.dataset.surface === sf);
+  $("msgsSurface").classList.toggle("cur", sf === "msgs");
+  $("feedSurface").classList.toggle("cur", sf === "feed");
+  $("bankSurface").classList.toggle("cur", sf === "bank");
+  render();
+}
+for (const b of document.querySelectorAll("nav.surfaces button")) b.onclick = () => setSurface(b.dataset.surface);
+
+function render() {
+  renderHeader();
+  if (surface === "msgs") { renderRail(); renderThread(); }
+  if (surface === "feed") renderFeed();
+  if (surface === "bank") renderBank();
+  renderSide();
+  if ($("todoPop").classList.contains("on")) renderTodo();
+}
+
+// ── debug ─────────────────────────────────────────────────────────────────────
+$("dbgSeed").value = seed;
+const dbgSeed = () => { const v = parseInt($("dbgSeed").value, 10); return Number.isFinite(v) ? v : seed; };
+for (const btn of document.querySelectorAll("#debug [data-jump]")) {
+  btn.onclick = () => {
+    seed = dbgSeed();
+    game = V2Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
+    resetUiState();
+    // leave fresh arrivals unread so the state reads naturally
+    for (const id of game.order) lastSeen[id] = Math.max(0, game.threads[id].length - 2);
+    $("endOv").classList.remove("on");
+    render();
+  };
+}
+$("dbgSkip").onclick = () => { for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); render(); checkEndgame(); };
+$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new V2Engine({ seed }); resetUiState(); $("endOv").classList.remove("on"); render(); };
+
+render();
+</script>
+</body>
+</html>
