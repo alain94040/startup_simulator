@@ -193,27 +193,33 @@
   .td-note { display: block; font-size: 10.5px; color: var(--dim); text-decoration: none !important; }
   .td-foot { font-size: 11px; color: var(--dim); margin-top: 8px; }
 
-  /* ── scene takeover ─────────────────────────────────────────────────────── */
+  /* ── focus arc: the room, as private iMessage threads ───────────────────────
+     A scene is the regular chat UI with the rest of the app blocked out: a rail
+     of just the people in the room, and one private thread per person. */
   #scene {
-    position: fixed; inset: 0; background: #101014; color: #ececf0; z-index: 50;
+    position: fixed; inset: 0; background: var(--gutter); z-index: 50;
     display: none; flex-direction: column;
   }
   #scene.on { display: flex; animation: fadein .4s ease; }
   @keyframes fadein { from { opacity: 0; } }
-  .sc-head { flex: none; text-align: center; padding: 16px 20px 10px; border-bottom: 1px solid #26262a; }
-  .sc-head .sc-title { font-size: 17px; font-weight: 700; }
-  .sc-head .sc-sub { font-size: 12px; color: #9a9aa2; margin-top: 2px; }
-  .sc-head .sc-clock { font: 800 22px ui-monospace, Menlo, monospace; color: #f2c14e; margin-top: 6px; letter-spacing: .12em; text-shadow: 0 0 18px rgba(242,193,78,.55); }
-  #scThread { flex: 1; overflow-y: auto; padding: 18px 0; display: flex; flex-direction: column; gap: 7px; align-items: center; }
-  #scThread > div { width: min(680px, 92%); display: flex; flex-direction: column; gap: 2px; }
-  .sc-from { font-size: 10.5px; color: #8e8e93; margin-left: 8px; }
-  .sc-in { background: #26262a; align-self: flex-start; max-width: 78%; padding: 8px 13px; border-radius: 16px; border-bottom-left-radius: 5px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
-  .sc-out { background: var(--blue); color: #fff; align-self: flex-end; max-width: 78%; padding: 8px 13px; border-radius: 16px; border-bottom-right-radius: 5px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
-  #scReply { flex: none; padding: 10px 0 18px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
-  #scReply .who-asks { font-size: 11px; color: #9a9aa2; }
-  #scReply .chip { width: min(680px, 92%); background: #1a1a1e; }
-  #scReply .free { font-size: 10.5px; color: #f2c14e; }
-  #scDone { display: none; margin-top: 8px; background: #fff; color: #101014; border: 0; border-radius: 10px; padding: 9px 26px; font-weight: 700; }
+  .sc-head { flex: none; text-align: center; padding: 11px 20px 9px; background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 1px 4px rgba(20,20,40,.05); position: relative; z-index: 2; }
+  .sc-head .sc-title { font-size: 16px; font-weight: 700; }
+  .sc-head .sc-sub { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .sc-head .sc-clock { position: absolute; right: 20px; top: 10px; font: 800 18px ui-monospace, Menlo, monospace; color: var(--amber-ink); letter-spacing: .1em; }
+  .sc-head .sc-focusnote { font-size: 10.5px; color: var(--amber-ink); font-weight: 600; margin-top: 5px; letter-spacing: .02em; }
+  .sc-body { flex: 1; display: flex; min-height: 0; padding: 10px; gap: 10px; background: var(--gutter); }
+  #scRail { width: 250px; flex: none; background: var(--panel); overflow: hidden auto; border-radius: 14px; box-shadow: var(--card-shadow); }
+  #scRail .conv .who span.turn { color: var(--amber-ink); font-weight: 600; }
+  .sc-threadcol { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); border-radius: 14px; box-shadow: var(--card-shadow); overflow: hidden; }
+  #scChatHead { flex: none; padding: 9px 20px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 13px; }
+  #scChatHead b { font-size: 14px; }
+  #scChatHead span { color: var(--dim); margin-left: 8px; }
+  #scThread { flex: 1; overflow-y: auto; padding: 16px 22px; display: flex; flex-direction: column; gap: 7px; }
+  #scThread > :first-child { margin-top: auto; }
+  #scReply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
+  #scReply .who-asks { font-size: 11px; color: var(--dim); margin-bottom: 2px; }
+  #scReply .who-asks .free { color: var(--amber-ink); font-weight: 600; }
+  #scDone { display: block; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 0; font-weight: 600; margin-top: 2px; }
 
   /* ── recap / endgame / intro overlays ───────────────────────────────────── */
   .overlay { position: fixed; inset: 0; background: rgba(12,12,18,.5); z-index: 60; display: none; align-items: center; justify-content: center; }
@@ -294,13 +300,12 @@
   .lc-skip { position: absolute; bottom: 36px; right: 40px; color: rgba(255,255,255,.28); font-size: 11px; cursor: pointer; letter-spacing: .08em; }
   @keyframes fade { from { opacity: 0; } }
 
-  /* typing indicator (scenes) */
-  .typing { display: inline-flex; gap: 4px; background: #26262a; border-radius: 16px; padding: 12px 15px; align-self: flex-start; }
-  .typing i { width: 7px; height: 7px; border-radius: 50%; background: #8e8e93; animation: tblink 1.2s infinite; }
+  /* typing indicator — a light incoming bubble, matching the chat */
+  .typing { display: inline-flex; gap: 4px; background: #fff; box-shadow: 0 1px 1px rgba(20,20,40,.07); border-radius: 16px; padding: 12px 15px; align-self: flex-start; }
+  .typing i { width: 7px; height: 7px; border-radius: 50%; background: #b8b8bf; animation: tblink 1.2s infinite; }
   .typing i:nth-child(2) { animation-delay: .2s; }
   .typing i:nth-child(3) { animation-delay: .4s; }
   @keyframes tblink { 40% { opacity: .25; } }
-  .sc-in.msg-new, .sc-out.msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
 
   /* journal-leads glow + arriving entries + stat pulses */
   #sideCol { transition: box-shadow .45s ease; }
@@ -507,9 +512,16 @@
     <div class="sc-title" id="scTitle"></div>
     <div class="sc-sub" id="scSub"></div>
     <div class="sc-clock" id="scClock"></div>
+    <div class="sc-focusnote">everything else is on hold · these conversations are private · your moves here are free</div>
   </div>
-  <div id="scThread"></div>
-  <div id="scReply"></div>
+  <div class="sc-body">
+    <nav id="scRail"></nav>
+    <div class="sc-threadcol">
+      <div id="scChatHead"></div>
+      <div id="scThread"></div>
+      <div id="scReply"></div>
+    </div>
+  </div>
 </div>
 
 <div id="notifs"></div>
@@ -628,15 +640,6 @@ const SCENE_META = {
         : ["Half a pivot.", "Priya hopes she's wrong. She usually isn't."],
   },
 };
-// launch-day background walks the time of day (ported from LAUNCH_PANEL)
-const LAUNCH_BG = {
-  "8AM": "linear-gradient(175deg,#0a1628,#050e1a)", "9AM": "linear-gradient(175deg,#0c1a2e,#07101e)",
-  "10AM": "linear-gradient(175deg,#0d1c30,#081120)", "11AM": "linear-gradient(175deg,#0e1e32,#091222)",
-  "12PM": "linear-gradient(175deg,#0f1f34,#091323)", "1PM": "linear-gradient(175deg,#0f1e30,#091220)",
-  "4PM": "linear-gradient(175deg,#131520,#0a0f18)", "6PM": "linear-gradient(175deg,#1c1005,#100900)",
-  "9PM": "linear-gradient(175deg,#000a18,#00050f)", "11PM": "linear-gradient(175deg,#000510,#000208)",
-};
-
 // ── the founder's to-do list: one checklist per stage of the company ─────────
 const STAGES = [
   { id: "demo", label: "Ship the demo", active: (s, g) => !s.has_demo, items: [
@@ -696,6 +699,8 @@ let uiNotes = {};               // charId -> [{ idx, text, week }] inline outcom
 let threadRendered = {};        // charId -> entries fully revealed (the read cursor)
 let sceneStartSeq = null;
 let inScene = false;
+let scSelected = null;          // focus-arc: the participant thread on screen
+let scRendered = {};            // focus-arc: per-thread read cursor
 let pendingStatPulse = [];      // stat keys that changed this turn, to pulse once
 let uiBusy = false;             // input lock while a reveal sequence plays
 let revealTimer = null;         // in-thread typing-reveal pacing
@@ -712,6 +717,7 @@ function journalMirror() {
 }
 function resetUiState() {
   feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
+  scSelected = null; scRendered = {};
   selected = "alex"; surface = "msgs"; threadRendered = {};
   uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
@@ -1115,7 +1121,7 @@ function doAct(nodeId, key, charId) {
 
   // entering a scene → the world freezes; play its entry cinematic then the beats
   if (!preScene && game.scene) { enterScene(preSeq); return; }
-  if (inScene) { pumpScene(); return; }
+  if (inScene) { focusFlow(); return; }
 
   render();
   if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
@@ -1145,89 +1151,178 @@ function showCine(lines, accent, done) {
   skip.onclick = finish; el.onclick = finish;
 }
 
-// ── scenes: cinematic in, beats typed out, cinematic out — all one sitting ────
-let lastSceneId = null, scRevealed = 0, scTimer = null;
+// ── focus arcs: the same iMessage chat, restricted to the people in the room ──
+// A scene is NOT a single merged transcript — each participant has their own
+// private thread (that's how the story is written: "Jordan pipes up in her own
+// thread while Alex confronts you in his"). We reuse the regular rail + thread,
+// blocking out the rest of the app.
+let lastSceneId = null, scTimer = null;
+
+// The boundary between "before the room" and the room itself: the first message
+// tagged with this scene's arc (its opening beat). Everything from there on in a
+// participant's thread belongs to the sitting.
+function computeSceneStart(arcId) {
+  const arc = game.arcs.get(arcId);
+  const ids = (arc ? arc.scene.cast : []).concat("founder");
+  let min = Infinity;
+  for (const id of ids) for (const m of (game.threads[id] || []))
+    if (m.scene === arcId && (m.seq || 0) < min) min = m.seq || 0;
+  return min;
+}
+// One participant's private thread, scoped to this sitting. Incoming lines must
+// carry this scene's tag (so an unrelated open message — e.g. a founder journal
+// prompt that happens to be waiting — never leaks in); the player's replies are
+// scene answers by construction (non-cast characters are held during a scene).
+function sceneThread(charId) {
+  return (game.threads[charId] || []).filter(m => (m.seq || 0) >= sceneStartSeq &&
+    (m.type === "reply" || (m.type === "incoming" && m.scene === lastSceneId)));
+}
+function sceneLastSeq(charId) {
+  const t = sceneThread(charId); return t.length ? (t[t.length - 1].seq || 0) : 0;
+}
+function sceneOpenBeats() {
+  return game.scene ? game.openActions().filter(a => a.scene === game.scene.id && !a.onHold) : [];
+}
+function sceneOpenBeat(charId) { return sceneOpenBeats().find(a => a.charId === charId) || null; }
+// Who shows in the room's rail: cast members who've said something or owe a reply.
+function sceneCast() {
+  const arc = game.arcs.get(lastSceneId);
+  return (arc ? arc.scene.cast : []).filter(id => sceneThread(id).length > 0 || sceneOpenBeat(id));
+}
+function sceneUnread(charId) {
+  return sceneThread(charId).slice(scRendered[charId] || 0).some(m => m.type === "incoming");
+}
 
 function enterScene(startSeq) {
   inScene = true;
-  sceneStartSeq = startSeq != null ? startSeq : 0;
-  scRevealed = 0;
   lastSceneId = game.scene.id;
+  scRendered = {};
+  const start = computeSceneStart(lastSceneId);
+  sceneStartSeq = isFinite(start) ? start : (startSeq != null ? startSeq : 0);
   const meta = SCENE_META[lastSceneId] || {};
-  showCine(meta.enter || [meta.title || ""], meta.accent, () => { $("scene").classList.add("on"); pumpScene(); });
+  showCine(meta.enter || [meta.title || ""], meta.accent, () => {
+    $("scene").classList.add("on");
+    const beats = sceneOpenBeats();
+    scSelected = (beats[0] && beats[0].charId) || sceneCast()[0] || (game.scene && game.scene.scene.cast[0]);
+    openSceneThread(scSelected);
+  });
 }
-function sceneEntries() {
-  const arc = game.arcs.get(lastSceneId);
-  const castIds = (arc ? arc.scene.cast : []).concat("founder");
-  const entries = [];
-  for (const id of castIds) {
-    (game.threads[id] || []).forEach(m => {
-      if ((m.seq || 0) >= sceneStartSeq && (m.type === "incoming" || m.type === "reply")) entries.push({ ...m, charId: id });
-    });
+
+// After an answer: the engine has already re-polled, so new beats are waiting.
+// Stay in the current thread if it still has something to say; otherwise drift
+// to whoever spoke most recently — but never yank the player mid-conversation.
+function focusFlow() {
+  if (!game.scene) { openSceneThread(scSelected); return; }   // sitting is over → reveal, then the exit button
+  const beats = sceneOpenBeats();
+  if (!beats.some(b => b.charId === scSelected)) {
+    const nb = beats.slice().sort((a, b) => sceneLastSeq(b.charId) - sceneLastSeq(a.charId))[0];
+    if (nb) scSelected = nb.charId;
   }
-  entries.sort((a, b) => (a.seq || 0) - (b.seq || 0));
-  return entries;
+  openSceneThread(scSelected);
 }
-// The scene's heartbeat: reveal the transcript one bubble at a time (typing
-// dots before each incoming line), then offer the current beat's choices.
-function pumpScene() {
+
+// Reveal a thread's unread bubbles with typing dots, then hand off to render.
+function openSceneThread(charId) {
+  scSelected = charId;
+  const entries = sceneThread(charId);
+  const from = scRendered[charId] || 0;
+  if (from >= entries.length) { renderFocus(); return; }
+  uiBusy = true;
   clearTimeout(scTimer);
+  const step = () => {
+    const cur = scRendered[charId] || 0;
+    if (!inScene || charId !== scSelected || cur >= entries.length) { uiBusy = false; renderFocus(); return; }
+    const typing = entries[cur].type === "incoming";
+    renderFocus({ typing });
+    scTimer = setTimeout(() => {
+      scRendered[charId] = cur + 1;
+      renderFocus();
+      scTimer = setTimeout(step, typing ? 140 : 60);
+    }, typing ? 550 : 90);
+  };
+  step();
+}
+
+function renderFocus(opts) {
+  opts = opts || {};
   const meta = SCENE_META[lastSceneId] || {};
   $("scTitle").textContent = meta.title || "";
   $("scSub").textContent = meta.sub || "";
-  $("scClock").textContent = (lastSceneId === "launch" && game.s.launch_time) ? game.s.launch_time : "";
-  // launch day: the room darkens/warms with the time of day
-  $("scene").style.background = (lastSceneId === "launch" && LAUNCH_BG[game.s.launch_time]) || "#101014";
-  const entries = sceneEntries();
-  if (scRevealed > entries.length) scRevealed = entries.length;
-  const revealing = scRevealed < entries.length;
+  const clock = (lastSceneId === "launch" && game.s.launch_time) ? game.s.launch_time : "";
+  $("scClock").textContent = clock; $("scClock").style.display = clock ? "" : "none";
 
-  let html = entries.slice(0, scRevealed).map((m, i) => {
-    const anim = i === scRevealed - 1 ? " msg-new" : "";
-    return "<div>" + (m.type === "incoming"
-      ? '<span class="sc-from">' + esc(m.from) + '</span><div class="sc-in' + anim + '">'
-      : '<div class="sc-out' + anim + '">') + esc(m.body) + "</div></div>";
+  // rail: one row per person in the room (reuses the regular conversation rail)
+  const cast = sceneCast();
+  $("scRail").innerHTML = cast.map(id => {
+    const def = game.cast.get(id).def, stl = styleFor(id), t = sceneThread(id);
+    const last = t.length ? t[t.length - 1] : null;
+    const unread = sceneUnread(id) && id !== scSelected;
+    const turn = !!sceneOpenBeat(id);
+    const prev = turn ? "your turn to reply"
+      : last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
+    return '<div class="conv ' + (id === scSelected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
+      '<span class="unread-dot"></span>' +
+      '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
+      '<div class="who"><b>' + esc(def.name) + '</b><span' + (turn ? ' class="turn"' : "") + ">" + esc(prev.slice(0, 52)) + "</span></div></div>";
   }).join("");
-  if (revealing && entries[scRevealed].type === "incoming") {
-    html += '<div><span class="sc-from">' + esc(entries[scRevealed].from) + '</span><div class="typing"><i></i><i></i><i></i></div></div>';
+  for (const el of $("scRail").querySelectorAll(".conv")) {
+    el.onclick = () => { if (!uiBusy && el.dataset.id !== scSelected) openSceneThread(el.dataset.id); };
   }
-  $("scThread").innerHTML = html;
-  $("scThread").scrollTop = $("scThread").scrollHeight;
 
-  if (revealing) {
-    $("scReply").innerHTML = "";
-    scTimer = setTimeout(() => { scRevealed++; pumpScene(); },
-      entries[scRevealed].type === "reply" ? 240 : 900);
+  renderFocusThread(opts);
+}
+
+function renderFocusThread(opts) {
+  opts = opts || {};
+  const c = scSelected && game.cast.get(scSelected);
+  if (!c) { $("scChatHead").innerHTML = ""; $("scThread").innerHTML = ""; $("scReply").innerHTML = ""; return; }
+  $("scChatHead").innerHTML = "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + "</span>";
+
+  const t = sceneThread(scSelected);
+  const shown = scRendered[scSelected] || 0;
+  let html = "";
+  t.slice(0, shown).forEach((m, i) => {
+    const next = i + 1 < shown ? t[i + 1] : null;
+    const tail = !next || next.type !== m.type;
+    const anim = i === shown - 1 ? " msg-new" : "";
+    if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+    else html += '<div class="m-in' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+  });
+  if (opts.typing) html += '<div class="typing"><i></i><i></i><i></i></div>';
+  const el = $("scThread");
+  el.innerHTML = html || '<div class="m-wk">…</div>';
+  el.scrollTop = el.scrollHeight;
+
+  // composer: this thread's open beat, or a nudge toward whoever's waiting
+  const rbox = $("scReply");
+  if (uiBusy || opts.typing) { rbox.innerHTML = '<div class="who-asks">…</div>'; return; }
+  if (!game.scene) {
+    rbox.innerHTML = '<button id="scDone">Back to the week →</button>';
+    $("scDone").onclick = exitScene;
     return;
   }
-  if (game.scene) {
-    const beats = game.openActions().filter(a => a.scene === game.scene.id && !a.onHold);
-    if (beats.length) {
-      const b = beats[0];
-      const gk = gatedKeys(b.nodeId);
-      $("scReply").innerHTML = '<div class="who-asks">' + esc(b.name) + ' is looking at you <span class="free">· moves in the room are free</span></div>' +
-        b.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-n="' + esc(b.nodeId) + '" data-k="' + esc(o.key) + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
-      for (const el of $("scReply").querySelectorAll(".chip")) el.onclick = () => doAct(el.dataset.n, el.dataset.k, beatChar(el.dataset.n));
-    } else {
-      $("scReply").innerHTML = '<div class="who-asks">…</div>';
-    }
-  } else {
-    // scene resolved → its exit cinematic, then back to the week
-    $("scReply").innerHTML = '<button id="scDone" style="display:block">Back to the week →</button>';
-    $("scDone").onclick = exitScene;
+  const beat = sceneOpenBeat(scSelected);
+  if (beat) {
+    const gk = gatedKeys(beat.nodeId);
+    rbox.innerHTML = '<div class="who-asks">reply to ' + esc(c.def.name) + ' <span class="free">· moves in the room are free</span></div>' +
+      beat.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-n="' + esc(beat.nodeId) + '" data-k="' + esc(o.key) + '">' +
+        (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
+    for (const b of rbox.querySelectorAll(".chip")) b.onclick = () => { if (!uiBusy) doAct(b.dataset.n, b.dataset.k, scSelected); };
+    return;
   }
+  const waiting = sceneOpenBeats();
+  rbox.innerHTML = waiting.length
+    ? '<div class="who-asks">nothing to add here — ' + esc(waiting[0].name) + " is waiting on you →</div>"
+    : '<div class="who-asks">the room is quiet…</div>';
 }
-function beatChar(nodeId) {
-  for (const cid of game.order) { const o = game.open[cid]; if (o && o.nodeId === nodeId) return cid; }
-  return null;
-}
+
 function exitScene() {
   clearTimeout(scTimer);
   $("scene").classList.remove("on");
   for (const id of game.order) threadRendered[id] = game.threads[id].length;
   const meta = SCENE_META[lastSceneId] || {};
   const lines = meta.exit ? meta.exit(game.s) : null;
-  const back = () => { inScene = false; jShown = journalMirror().length; render(); checkEndgame(); };
+  const back = () => { inScene = false; scSelected = null; jShown = journalMirror().length; render(); checkEndgame(); };
   if (lines) showCine(lines, meta.accent, back); else back();
 }
 

@@ -435,6 +435,9 @@
           type: "incoming",
           from: m.from || (char ? char.def.name : charId),
           body: this._text(m.text, char),
+          // a line spoken while a scene is running belongs to that scene, so the
+          // focus UI can scope each private thread to its own sitting.
+          scene: this.scene ? this.scene.id : null,
         });
       }
     }
