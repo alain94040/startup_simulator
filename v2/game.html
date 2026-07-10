@@ -710,10 +710,11 @@ function resetUiState() {
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
   jShown = journalMirror().length; jArrive = false;
   for (const id of game.order) {
-    // messages start "read" (no wall of unread on load); feed posts start
-    // unseen so the News Feed badge flags news until you actually open the feed.
+    // feed posts start unseen so the News Feed badge flags news until you open
+    // the feed. Messages are iMessage-style: the conversation you land on is
+    // read; every other thread starts unread and clears when you open it.
     feedSeenLen[id] = FEED.has(id) ? 0 : game.threads[id].length;
-    threadRendered[id] = game.threads[id].length;
+    threadRendered[id] = (id === selected) ? game.threads[id].length : 0;
   }
 }
 resetUiState();
@@ -783,14 +784,12 @@ function renderHeader() {
   $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
   // surface badges — the same count on every tab (no zeroing of the tab you're
   // viewing), so switching tabs never changes the numbers.
-  // Messages: distinct conversations needing you — unread OR an unanswered
-  // question, counted once. Founder/self "Your move" lives in the side rail, not
-  // Messages, so it's excluded. Cleared by opening + answering the conversation.
-  const rail = new Set(railChars());
-  const msgAttn = new Set();
-  for (const id of rail) if (game.threads[id].length > (threadRendered[id] || 0)) msgAttn.add(id);
-  for (const a of game.openActions()) if (!a.onHold && rail.has(a.charId)) msgAttn.add(a.charId);
-  setBadge("bMsgs", msgAttn.size);
+  // Messages: unread conversations, iMessage-style. Opening a thread reveals it
+  // (threadRendered catches up to its length) and clears it — reading, not
+  // answering, is what counts. A pending reply still shows as "needs a call" in
+  // the rail and the side triage.
+  const unreadConvos = railChars().filter(id => game.threads[id].length > (threadRendered[id] || 0)).length;
+  setBadge("bMsgs", unreadConvos);
   // News Feed: posts you haven't seen yet. Opening the feed marks them seen (in
   // render()), so it clears and stays cleared — a post you've glanced at but not
   // acted on still lives in the feed and the side rail, just not here.
