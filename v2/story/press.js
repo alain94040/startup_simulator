@@ -44,7 +44,7 @@
           },
         ],
         timeout: {
-          weeks: 3,
+          weeks: 1,
           effects: { signal: -12, flags: { competitor_ignored: true } },
           say: { from: "Market signal", text: "Flare has 10,000 users and is well-funded. you need a sharper answer to 'why kindred and not them.'" },
         },
@@ -77,7 +77,7 @@
           },
         ],
         timeout: {
-          weeks: 3,
+          weeks: 1,
           effects: { marketFit: -8, signal: -8, users: -3 },
           say: { from: "User", text: "we've been evaluating Flare. going to give them a try — nothing personal." },
         },
@@ -129,7 +129,7 @@
           },
         ],
         timeout: {
-          weeks: 2,
+          weeks: 1,
           effects: { signal: -18, users: -10 },
           say: { char: "twitter", text: "tweet is at 200 retweets. a dating app journalist screenshot it. signup rate dropped 30%." },
         },

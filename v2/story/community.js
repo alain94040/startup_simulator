@@ -23,7 +23,7 @@
       { key: "skip", label: o.skipLabel, journal: o.skipJournal,
         effects: o.skipEffects, fx: () => o.skipOutcome },
     ],
-    timeout: { weeks: 2 }, // the thread scrolls away; the ladder still advances
+    timeout: { weeks: 1 }, // news is ephemeral — engage that week or the thread scrolls away (the ladder still advances)
   });
 
   const mod = {};
@@ -40,7 +40,7 @@
           fx: engage("Engaged the thread authentically. 7 DMs requesting early access."),
         },
       ],
-      timeout: { weeks: 2, effects: { signal: -3 } },
+      timeout: { weeks: 1, effects: { signal: -3 } },
     },
 
     // ── HN ladder ────────────────────────────────────────────────────────────

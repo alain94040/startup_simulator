@@ -12,6 +12,7 @@
     --ink: #17171a; --dim: #8b8b92; --blue: #2f6bff; --blue-soft: #eaf1ff;
     --amber: #f59e0b; --amber-ink: #9a4b00; --red: #d64545; --green: #34a853;
     --journal: #8a4b38; --journal-bg: #fdf9ee; --journal-line: #eee3c2;
+    --hand: "Segoe Print", "Bradley Hand", "Chalkboard SE", "Comic Sans MS", cursive;
   }
   * { box-sizing: border-box; margin: 0; }
   html, body { height: 100%; }
@@ -42,6 +43,8 @@
   .gauge .g-bar i { display: block; height: 100%; transition: width .6s ease; }
   .gauge.todo { cursor: pointer; border-radius: 8px; padding: 2px 6px; margin: -2px -6px; }
   .gauge.todo:hover { background: var(--blue-soft); }
+  .gauge.clickable { cursor: pointer; border-radius: 8px; padding: 2px 6px; margin: -2px -6px; }
+  .gauge.clickable:hover, .gauge.clickable.cur { background: var(--blue-soft); }
   .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
   .dots { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); transition: background .3s; }
@@ -98,7 +101,7 @@
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
   .note {
     align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
-    border-radius: 10px; padding: 7px 12px; font: italic 12px Georgia, serif; color: #6b6045;
+    border-radius: 10px; padding: 7px 12px; font: 13px var(--hand); color: #6b6045;
   }
   #reply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
   #reply .hint { font-size: 11px; color: var(--dim); margin-bottom: 4px; }
@@ -134,7 +137,7 @@
     content: ""; position: absolute; left: 13px; top: 0; bottom: 0; width: 1px; background: rgba(190,86,60,.28);
   }
   #journalSec h5 { color: var(--journal); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
-  .j-entry { font-family: Georgia, "Times New Roman", serif; font-size: 12.5px; color: #4a443c; line-height: 1.5; padding: 7px 0; margin: 0; border-bottom: 1px solid var(--journal-line); }
+  .j-entry { font-family: var(--hand); font-size: 13.5px; color: #4a443c; line-height: 1.55; padding: 7px 0; margin: 0; border-bottom: 1px solid var(--journal-line); }
   .j-entry:last-child { border-bottom: 0; }
   .j-entry .j-wk { font-weight: 700; color: var(--journal); font-family: -apple-system, system-ui, sans-serif; font-size: 10.5px; }
   .j-entry.old { color: #94836f; }
@@ -473,9 +476,8 @@
   <nav class="surfaces">
     <button class="cur" data-surface="msgs">Messages<span class="n-badge" id="bMsgs" style="display:none"></span></button>
     <button data-surface="feed">News Feed<span class="n-badge" id="bFeed" style="display:none"></span></button>
-    <button data-surface="bank">Bank</button>
   </nav>
-  <div class="gauge"><div class="g-lbl">Runway</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
+  <div class="gauge clickable" id="gRunway" title="open the bank"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
   <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
   <div class="gauge todo" id="gTodo"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
   <div class="hdr-right">
@@ -725,13 +727,6 @@ function resetUiState() {
 resetUiState();
 
 // ── helpers over the engine ───────────────────────────────────────────────────
-function weeksLeft(charId) {
-  const o = game.open[charId];
-  if (!o) return null;
-  const node = game.nodes.get(o.nodeId);
-  if (!node || !node.timeout || node.timeout.weeks == null) return null;
-  return Math.max(0, node.timeout.weeks - (game.s.week - o.week));
-}
 function railChars() {
   return game.order.filter(id => {
     const c = game.cast.get(id);
@@ -909,11 +904,10 @@ function renderThread(opts) {
       : '<div class="hint">' + (a && a.onHold ? "on hold — something bigger is happening" : "nothing needs an answer here right now") + "</div>";
     return;
   }
-  const left = weeksLeft(selected);
   const gk = gatedKeys(a.nodeId);
   const can = game.actionsLeft > 0;
   if (!replyExpanded) {
-    rbox.innerHTML = (left != null ? '<div class="hint">won\'t wait past ' + left + " more wk" + (left === 1 ? "" : "s") + "</div>" : "") +
+    rbox.innerHTML =
       '<button class="cta-pill"' + (can ? "" : " disabled") + ">" + (can ? "Respond ↓" : "No actions left this week") + "</button>";
     const btn = rbox.querySelector(".cta-pill");
     if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); };
@@ -984,17 +978,15 @@ function renderSide() {
   const can = game.actionsLeft > 0;
 
   const linkCard = (a) => {
-    const left = weeksLeft(a.charId);
     const goFeed = FEED.has(a.charId);
     return '<div class="h-card link" data-char="' + a.charId + '" data-feed="' + (goFeed ? 1 : 0) + '">' +
-      "<b>" + esc(a.name) + (left != null && left <= 2 ? ' <i class="left">' + left + " wk" + (left === 1 ? "" : "s") + " left</i>" : "") +
+      "<b>" + esc(a.name) +
       ' <span class="go">↗ ' + (goFeed ? "News Feed" : "open chat") + "</span></b>" +
       "<span>" + esc(String(a.body).slice(0, 90)) + "…</span></div>";
   };
   const moveCard = (a) => {
-    const left = weeksLeft(a.charId);
     const gk = gatedKeys(a.nodeId);
-    return '<div class="h-card move"><b>Your move' + (left != null && left <= 2 ? ' <i class="left">' + left + " wk" + (left === 1 ? "" : "s") + " left</i>" : "") + "</b>" +
+    return '<div class="h-card move"><b>Your move</b>' +
       "<span>" + esc(a.body) + "</span>" +
       '<div class="mv-opts">' + a.options.map(o =>
         '<button data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ' class="' + (gk.has(o.key) ? "gated" : "") + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("") + "</div></div>";
@@ -1055,7 +1047,6 @@ function renderFeed() {
     const meta = FEED_META[m.charId];
     const a = m.nodeId ? acts.find(x => x.nodeId === m.nodeId && !x.onHold) : null;
     const resolved = m.nodeId ? game.outcome(m.nodeId) : null;
-    const left = a ? weeksLeft(m.charId) : null;
     let foot = "";
     if (a) {
       const can = game.actionsLeft > 0;
@@ -1064,7 +1055,7 @@ function renderFeed() {
     } else if (resolved === "@ignored") foot = '<div class="f-done">the moment passed — you never weighed in.</div>';
     else if (resolved) foot = '<div class="f-done">✓ you engaged.</div>';
     html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + '">' +
-      '<div class="f-src">' + meta.src + (a && left != null ? '<span class="f-expiry">scrolls away in ' + left + " wk" + (left === 1 ? "" : "s") + "</span>" : "") + "</div>" +
+      '<div class="f-src">' + meta.src + "</div>" +
       '<div class="f-body">' + esc(m.body) + "</div>" + foot + "</div>";
   }
   $("feedSurface").innerHTML = html || '<div class="f-wk" style="margin-top:30px">nothing in the news yet — the world hasn\'t noticed you.</div>';
@@ -1444,6 +1435,8 @@ function syncSurfaceTabs() {
   $("msgsSurface").classList.toggle("cur", surface === "msgs");
   $("feedSurface").classList.toggle("cur", surface === "feed");
   $("bankSurface").classList.toggle("cur", surface === "bank");
+  // the runway gauge doubles as the Bank tab's entry point — light it when open
+  $("gRunway").classList.toggle("cur", surface === "bank");
 }
 function setSurface(sf) {
   if (uiBusy) return;
@@ -1452,6 +1445,7 @@ function setSurface(sf) {
   render();
 }
 for (const b of document.querySelectorAll("nav.surfaces button")) b.onclick = () => setSurface(b.dataset.surface);
+$("gRunway").onclick = () => setSurface(surface === "bank" ? "msgs" : "bank");
 
 function render() {
   // viewing the feed marks its posts seen before the badge is computed, so the
