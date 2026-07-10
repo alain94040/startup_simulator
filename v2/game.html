@@ -231,15 +231,6 @@
   .launch-clock { font: 800 clamp(40px, 7vw, 66px) ui-monospace, Menlo, monospace; letter-spacing: .05em; line-height: 1; color: #ffd76a; text-shadow: 0 0 26px rgba(255,193,78,.55), 0 0 66px rgba(255,150,20,.28); font-variant-numeric: tabular-nums; transition: text-shadow .2s; min-width: 3.2em; text-align: center; }
   .launch-clock.counting { color: #ffe49a; text-shadow: 0 0 34px rgba(255,214,110,.9), 0 0 80px rgba(255,150,20,.5); }
   .launch-titleline { font-size: 12.5px; color: rgba(255,255,255,.62); letter-spacing: .01em; text-align: center; }
-  .launch-track { display: flex; align-items: center; width: min(720px, 86vw); padding: 2px 0 0; }
-  .launch-track .tk { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: none; }
-  .launch-track .tk .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.22); transition: .4s; }
-  .launch-track .tk.past .dot { background: rgba(255,193,78,.85); }
-  .launch-track .tk.cur .dot { background: #ffd76a; transform: scale(1.35); box-shadow: 0 0 0 5px rgba(255,193,78,.20), 0 0 18px rgba(255,193,78,.75); }
-  .launch-track .tk small { font-size: 9px; color: rgba(255,255,255,.38); font-variant-numeric: tabular-nums; }
-  .launch-track .tk.cur small { color: #ffd76a; font-weight: 700; }
-  .launch-track .seg { flex: 1; height: 2px; background: rgba(255,255,255,.14); margin-bottom: 15px; }
-  .launch-track .seg.past { background: rgba(255,193,78,.7); }
   /* glass chat on the dark stage */
   #scene.launch #scRail, #scene.launch .sc-threadcol { background: rgba(18,20,30,.5); box-shadow: 0 12px 48px rgba(0,0,0,.45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
   #scene.launch .sc-threadcol { flex: 0 1 640px; max-width: 640px; }
@@ -678,9 +669,8 @@ const SCENE_META = {
         : ["Half a pivot.", "Priya hopes she's wrong. She usually isn't."],
   },
 };
-// Launch day walks the clock through these hours; the sky (background) shifts
-// with each, and the hero clock ticks forward. `s.launch_time` names the hour.
-const LAUNCH_DAY = ["8AM", "9AM", "10AM", "11AM", "12PM", "1PM", "4PM", "6PM", "9PM", "11PM"];
+// Launch day walks the clock through the hours; the sky (background) shifts with
+// each and the hero clock ticks forward. `s.launch_time` names the current hour.
 const LAUNCH_BG = {
   "8AM": "radial-gradient(120% 80% at 50% -10%, #1a3a5c 0%, #0a1628 55%, #050b16 100%)",
   "9AM": "radial-gradient(120% 80% at 50% -10%, #21507a 0%, #0c1c30 55%, #060e1e 100%)",
@@ -1314,17 +1304,9 @@ function renderSceneHead() {
     return;
   }
   const now = game.s.launch_time || "8AM";
-  const idx = LAUNCH_DAY.indexOf(now);
-  let track = "";
-  LAUNCH_DAY.forEach((t, i) => {
-    if (i > 0) track += '<span class="seg' + (i <= idx ? " past" : "") + '"></span>';
-    const cls = i < idx ? "past" : i === idx ? "cur" : "";
-    track += '<div class="tk ' + cls + '"><span class="dot"></span><small>' + esc(t) + "</small></div>";
-  });
   $("scHead").innerHTML = '<div class="launch-hero">' +
     '<div class="launch-clock">' + esc(scClockShown || now) + "</div>" +
-    '<div class="launch-titleline">' + esc(meta.sub || "") + "</div>" +
-    '<div class="launch-track">' + track + "</div></div>";
+    '<div class="launch-titleline">' + esc(meta.sub || "") + "</div></div>";
   // count the clock up to the new hour — a fast-forward through the minutes
   if (tick && scClockShown && scClockShown !== now) tickLaunchClock(scClockShown, now);
   else { const el = $("scHead").querySelector(".launch-clock"); if (el) el.textContent = now; scClockShown = now; }
