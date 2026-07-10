@@ -209,7 +209,6 @@
   .sc-head .sc-focusnote { font-size: 10.5px; color: var(--amber-ink); font-weight: 600; margin-top: 5px; letter-spacing: .02em; }
   .sc-body { flex: 1; display: flex; min-height: 0; padding: 10px; gap: 10px; background: var(--gutter); }
   #scRail { width: 250px; flex: none; background: var(--panel); overflow: hidden auto; border-radius: 14px; box-shadow: var(--card-shadow); }
-  #scRail .conv .who span.turn { color: var(--amber-ink); font-weight: 600; }
   .sc-threadcol { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--bg); border-radius: 14px; box-shadow: var(--card-shadow); overflow: hidden; }
   #scChatHead { flex: none; padding: 9px 20px; background: var(--panel); border-bottom: 1px solid var(--line); font-size: 13px; }
   #scChatHead b { font-size: 14px; }
@@ -1177,9 +1176,6 @@ function sceneThread(charId) {
   return (game.threads[charId] || []).filter(m => (m.seq || 0) >= sceneStartSeq &&
     (m.type === "reply" || (m.type === "incoming" && m.scene === lastSceneId)));
 }
-function sceneLastSeq(charId) {
-  const t = sceneThread(charId); return t.length ? (t[t.length - 1].seq || 0) : 0;
-}
 function sceneOpenBeats() {
   return game.scene ? game.openActions().filter(a => a.scene === game.scene.id && !a.onHold) : [];
 }
@@ -1208,16 +1204,11 @@ function enterScene(startSeq) {
   });
 }
 
-// After an answer: the engine has already re-polled, so new beats are waiting.
-// Stay in the current thread if it still has something to say; otherwise drift
-// to whoever spoke most recently — but never yank the player mid-conversation.
+// After an answer: the engine has already re-polled, so new beats may be
+// waiting. We never switch threads for the player — a reply that continues the
+// current conversation reveals here; anything said in another thread just lights
+// its blue unread dot in the rail, iMessage-style, for the player to open.
 function focusFlow() {
-  if (!game.scene) { openSceneThread(scSelected); return; }   // sitting is over → reveal, then the exit button
-  const beats = sceneOpenBeats();
-  if (!beats.some(b => b.charId === scSelected)) {
-    const nb = beats.slice().sort((a, b) => sceneLastSeq(b.charId) - sceneLastSeq(a.charId))[0];
-    if (nb) scSelected = nb.charId;
-  }
   openSceneThread(scSelected);
 }
 
@@ -1257,13 +1248,11 @@ function renderFocus(opts) {
     const def = game.cast.get(id).def, stl = styleFor(id), t = sceneThread(id);
     const last = t.length ? t[t.length - 1] : null;
     const unread = sceneUnread(id) && id !== scSelected;
-    const turn = !!sceneOpenBeat(id);
-    const prev = turn ? "your turn to reply"
-      : last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
+    const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
     return '<div class="conv ' + (id === scSelected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
       '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
-      '<div class="who"><b>' + esc(def.name) + '</b><span' + (turn ? ' class="turn"' : "") + ">" + esc(prev.slice(0, 52)) + "</span></div></div>";
+      '<div class="who"><b>' + esc(def.name) + '</b><span>' + esc(prev.slice(0, 52)) + "</span></div></div>";
   }).join("");
   for (const el of $("scRail").querySelectorAll(".conv")) {
     el.onclick = () => { if (!uiBusy && el.dataset.id !== scSelected) openSceneThread(el.dataset.id); };
