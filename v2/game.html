@@ -886,7 +886,9 @@ function renderRail() {
 function openThread() {
   const t = game.threads[selected];
   const from = threadRendered[selected] || 0;
-  if (from >= t.length) { renderThread(); return; }
+  // Nothing new to reveal (an already-read thread): still refresh the rail so the
+  // clicked conversation gets the selected highlight and the old one lets go.
+  if (from >= t.length) { render(); return; }
   uiBusy = true; renderHeader();
   clearTimeout(revealTimer);
   const step = () => {
