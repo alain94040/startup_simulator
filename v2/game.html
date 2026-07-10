@@ -710,7 +710,9 @@ function resetUiState() {
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
   jShown = journalMirror().length; jArrive = false;
   for (const id of game.order) {
-    feedSeenLen[id] = game.threads[id].length;
+    // messages start "read" (no wall of unread on load); feed posts start
+    // unseen so the News Feed badge flags news until you actually open the feed.
+    feedSeenLen[id] = FEED.has(id) ? 0 : game.threads[id].length;
     threadRendered[id] = game.threads[id].length;
   }
 }
@@ -779,22 +781,21 @@ function renderHeader() {
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
   $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
-  // surface badges — count each conversation/item once. A thread that is both
-  // unread and unanswered is one thing needing attention, not two; the founder's
-  // own "Your move" lives in the side rail, not Messages, so it doesn't count.
+  // surface badges — the same count on every tab (no zeroing of the tab you're
+  // viewing), so switching tabs never changes the numbers.
+  // Messages: distinct conversations needing you — unread OR an unanswered
+  // question, counted once. Founder/self "Your move" lives in the side rail, not
+  // Messages, so it's excluded. Cleared by opening + answering the conversation.
   const rail = new Set(railChars());
   const msgAttn = new Set();
   for (const id of rail) if (game.threads[id].length > (threadRendered[id] || 0)) msgAttn.add(id);
   for (const a of game.openActions()) if (!a.onHold && rail.has(a.charId)) msgAttn.add(a.charId);
-  setBadge("bMsgs", surface === "msgs" ? 0 : msgAttn.size);
-  // feed: unseen entries, plus a pending action once everything's been seen —
-  // without counting a new-and-actionable item twice.
-  const feedNew = [...FEED].reduce((n, id) => {
-    const unseen = Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0));
-    const acting = game.openActions().some(a => !a.onHold && a.charId === id);
-    return n + (unseen > 0 ? unseen : (acting ? 1 : 0));
-  }, 0);
-  setBadge("bFeed", surface === "feed" ? 0 : feedNew);
+  setBadge("bMsgs", msgAttn.size);
+  // News Feed: posts you haven't seen yet. Opening the feed marks them seen (in
+  // render()), so it clears and stays cleared — a post you've glanced at but not
+  // acted on still lives in the feed and the side rail, just not here.
+  const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0);
+  setBadge("bFeed", feedNew);
   updateBell();
 }
 function setBadge(id, n) {
@@ -1448,6 +1449,9 @@ function setSurface(sf) {
 for (const b of document.querySelectorAll("nav.surfaces button")) b.onclick = () => setSurface(b.dataset.surface);
 
 function render() {
+  // viewing the feed marks its posts seen before the badge is computed, so the
+  // News Feed badge clears the moment you're looking at it.
+  if (surface === "feed") for (const id of FEED) feedSeenLen[id] = game.threads[id].length;
   renderHeader();
   if (surface === "msgs") { renderRail(); renderThread(); }
   if (surface === "feed") renderFeed();
