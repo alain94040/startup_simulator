@@ -228,9 +228,8 @@
   #scene.launch .sc-head { background: rgba(8,10,18,.34); border-bottom-color: rgba(255,255,255,.09); box-shadow: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); padding: 15px 20px 14px; }
   #scene.launch .sc-body { background: transparent; justify-content: center; }
   .launch-hero { display: flex; flex-direction: column; align-items: center; gap: 11px; }
-  .launch-clock { font: 800 clamp(40px, 7vw, 66px) ui-monospace, Menlo, monospace; letter-spacing: .05em; line-height: 1; color: #ffd76a; text-shadow: 0 0 26px rgba(255,193,78,.55), 0 0 66px rgba(255,150,20,.28); }
-  .launch-clock.tick { animation: clockTick 1s cubic-bezier(.2,.9,.3,1); }
-  @keyframes clockTick { 0% { transform: translateY(-10px) scale(1.14); opacity: .15; text-shadow: 0 0 44px rgba(255,214,110,.95), 0 0 90px rgba(255,150,20,.6); } 100% { transform: none; } }
+  .launch-clock { font: 800 clamp(40px, 7vw, 66px) ui-monospace, Menlo, monospace; letter-spacing: .05em; line-height: 1; color: #ffd76a; text-shadow: 0 0 26px rgba(255,193,78,.55), 0 0 66px rgba(255,150,20,.28); font-variant-numeric: tabular-nums; transition: text-shadow .2s; min-width: 3.2em; text-align: center; }
+  .launch-clock.counting { color: #ffe49a; text-shadow: 0 0 34px rgba(255,214,110,.9), 0 0 80px rgba(255,150,20,.5); }
   .launch-titleline { font-size: 12.5px; color: rgba(255,255,255,.62); letter-spacing: .01em; text-align: center; }
   .launch-track { display: flex; align-items: center; width: min(720px, 86vw); padding: 2px 0 0; }
   .launch-track .tk { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: none; }
@@ -756,6 +755,8 @@ let inScene = false;
 let scSelected = null;          // focus-arc: the participant thread on screen
 let scRendered = {};            // focus-arc: per-thread read cursor
 let scHeadSig = null;           // focus-arc: last-rendered header signature (scene|clock)
+let scClockShown = null;        // launch: the time string currently on the clock face
+let scClockTimer = null;        // launch: the count-up ticker interval
 let pendingStatPulse = [];      // stat keys that changed this turn, to pulse once
 let uiBusy = false;             // input lock while a reveal sequence plays
 let revealTimer = null;         // in-thread typing-reveal pacing
@@ -772,7 +773,8 @@ function journalMirror() {
 }
 function resetUiState() {
   feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
-  scSelected = null; scRendered = {}; scHeadSig = null;
+  scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
+  if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   selected = "alex"; surface = "msgs"; threadRendered = {};
   uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
@@ -1248,7 +1250,8 @@ function sceneUnread(charId) {
 function enterScene(startSeq) {
   inScene = true;
   lastSceneId = game.scene.id;
-  scRendered = {}; scHeadSig = null;
+  scRendered = {}; scHeadSig = null; scClockShown = null;
+  if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   const start = computeSceneStart(lastSceneId);
   sceneStartSeq = isFinite(start) ? start : (startSeq != null ? startSeq : 0);
   const meta = SCENE_META[lastSceneId] || {};
@@ -1319,9 +1322,47 @@ function renderSceneHead() {
     track += '<div class="tk ' + cls + '"><span class="dot"></span><small>' + esc(t) + "</small></div>";
   });
   $("scHead").innerHTML = '<div class="launch-hero">' +
-    '<div class="launch-clock' + (tick ? " tick" : "") + '">' + esc(now) + "</div>" +
+    '<div class="launch-clock">' + esc(scClockShown || now) + "</div>" +
     '<div class="launch-titleline">' + esc(meta.sub || "") + "</div>" +
     '<div class="launch-track">' + track + "</div></div>";
+  // count the clock up to the new hour — a fast-forward through the minutes
+  if (tick && scClockShown && scClockShown !== now) tickLaunchClock(scClockShown, now);
+  else { const el = $("scHead").querySelector(".launch-clock"); if (el) el.textContent = now; scClockShown = now; }
+}
+
+// Launch clock ticker (ported from the original UI): spin the minutes forward
+// from the last shown hour up to the new one, so the time visibly races ahead.
+function launchMins(t) {
+  const m = (t || "").match(/^(\d+)(AM|PM)$/i);
+  if (!m) return 0;
+  let h = parseInt(m[1], 10);
+  if (m[2].toUpperCase() === "PM" && h !== 12) h += 12;
+  if (m[2].toUpperCase() === "AM" && h === 12) h = 0;
+  return h * 60;
+}
+function fmtLaunchMins(mins) {
+  const h24 = Math.floor(mins / 60) % 24, mm = mins % 60, h12 = h24 % 12 || 12;
+  return mm === 0 ? h12 + (h24 >= 12 ? "PM" : "AM") : h12 + ":" + String(mm).padStart(2, "0");
+}
+function tickLaunchClock(fromStr, toStr) {
+  if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
+  const el = $("scHead").querySelector(".launch-clock");
+  if (!el) { scClockShown = toStr; return; }
+  const fromM = launchMins(fromStr), toM = launchMins(toStr);
+  if (toM <= fromM) { el.textContent = toStr; scClockShown = toStr; return; }
+  const step = Math.max(1, Math.round((toM - fromM) / 24));
+  let cur = fromM;
+  el.classList.add("counting");
+  scClockTimer = setInterval(() => {
+    cur = Math.min(cur + step, toM);
+    if (cur >= toM) {
+      clearInterval(scClockTimer); scClockTimer = null;
+      if (el.isConnected) { el.textContent = toStr; el.classList.remove("counting"); }
+      scClockShown = toStr;
+    } else if (el.isConnected) {
+      el.textContent = fmtLaunchMins(cur);
+    }
+  }, 55);
 }
 
 function renderFocus(opts) {
@@ -1393,6 +1434,7 @@ function renderFocusThread(opts) {
 
 function exitScene() {
   clearTimeout(scTimer);
+  if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   $("scene").classList.remove("on", "launch");
   $("scene").style.background = "";
   for (const id of game.order) threadRendered[id] = game.threads[id].length;
