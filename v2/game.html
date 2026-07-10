@@ -56,13 +56,18 @@
 
   /* Messages: rail | thread — floating cards on the gutter */
   #rail { width: 250px; flex: none; background: var(--panel); overflow: hidden auto; border-radius: 14px; box-shadow: var(--card-shadow); }
-  .conv { display: flex; gap: 9px; padding: 9px 12px; border-bottom: 1px solid var(--soft); align-items: center; cursor: pointer; }
+  .conv { display: flex; gap: 8px; padding: 9px 12px 9px 8px; border-bottom: 1px solid var(--soft); align-items: center; cursor: pointer; }
   .conv:hover { background: #fafafc; }
   .conv.cur { background: var(--blue-soft); }
+  /* iMessage-style unread dot: a blue dot on the left, blank gutter when read */
+  .conv .unread-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: transparent; }
+  .conv.unread .unread-dot { background: var(--blue); }
   .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
   .conv .who { min-width: 0; flex: 1; }
-  .conv .who b { font-size: 13px; display: flex; align-items: center; gap: 6px; }
+  .conv .who b { font-size: 13px; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .conv.unread .who b { font-weight: 700; }
   .conv .who span { font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+  .conv.unread .who span { color: #55555c; }
   .tag { font-size: 8.5px; letter-spacing: .05em; border-radius: 4px; padding: 1px 5px; font-weight: 700; white-space: nowrap; }
   .tag.call { background: #ffe2c2; color: var(--amber-ink); }
   .tag.expiring { background: #ffd9d9; color: #a02020; }
@@ -788,7 +793,9 @@ function renderHeader() {
   // (threadRendered catches up to its length) and clears it — reading, not
   // answering, is what counts. A pending reply still shows as "needs a call" in
   // the rail and the side triage.
-  const unreadConvos = railChars().filter(id => game.threads[id].length > (threadRendered[id] || 0)).length;
+  // the thread you're actively viewing counts as read, so it never shows a dot
+  // in the rail nor a tick on the tab badge (keeps the two in lockstep).
+  const unreadConvos = railChars().filter(id => hasUnread(id) && !(surface === "msgs" && id === selected)).length;
   setBadge("bMsgs", unreadConvos);
   // News Feed: posts you haven't seen yet. Opening the feed marks them seen (in
   // render()), so it clears and stays cleared — a post you've glanced at but not
@@ -804,24 +811,23 @@ function setBadge(id, n) {
 }
 
 // ── rail + thread ─────────────────────────────────────────────────────────────
+// A conversation is unread when an incoming message waits past the read cursor.
+// Your own replies never count, and the thread you're viewing is always caught up.
+function hasUnread(id) {
+  return game.threads[id].slice(threadRendered[id] || 0).some(m => m.type === "incoming");
+}
 function renderRail() {
-  const acts = game.openActions();
   $("rail").innerHTML = railChars().map(id => {
     const c = game.cast.get(id).def;
     const t = game.threads[id];
     const last = t.length ? t[t.length - 1] : null;
-    const a = acts.find(x => x.charId === id && !x.onHold);
-    const left = weeksLeft(id);
-    const unread = t.length - (threadRendered[id] || 0);
-    let tag = "";
-    if (a && a.kind === "story") tag = '<span class="tag call">needs a call</span>';
-    if (a && left != null && left <= 1) tag = '<span class="tag expiring">' + (left === 0 ? "last chance" : "1 wk") + "</span>";
-    const ub = unread > 0 && id !== selected ? '<span class="tag unread">' + unread + "</span>" : "";
+    const unread = hasUnread(id) && id !== selected;   // blue dot, iMessage-style
     const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : c.role;
     const stl = styleFor(id);
-    return '<div class="conv ' + (id === selected ? "cur" : "") + '" data-id="' + id + '">' +
+    return '<div class="conv ' + (id === selected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
+      '<span class="unread-dot"></span>' +
       '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
-      '<div class="who"><b>' + esc(c.name) + " " + tag + ub + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
+      '<div class="who"><b>' + esc(c.name) + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
   }).join("");
   for (const el of document.querySelectorAll(".conv")) {
     el.onclick = () => { if (uiBusy) return; selected = el.dataset.id; replyExpanded = false; openThread(); };
@@ -1473,8 +1479,10 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     seed = dbgSeed();
     game = V2Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
     resetUiState(); dbgReset();
-    // leave fresh arrivals unread so the state reads naturally
+    // leave fresh arrivals unread so the state reads naturally, but the thread
+    // you land on is read (like opening the app on your current chat)
     for (const id of game.order) threadRendered[id] = Math.max(0, game.threads[id].length - 2);
+    threadRendered[selected] = game.threads[selected].length;
     render();
   };
 }
