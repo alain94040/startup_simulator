@@ -205,7 +205,6 @@
   .sc-head { flex: none; text-align: center; padding: 11px 20px 9px; background: var(--panel); border-bottom: 1px solid var(--line); box-shadow: 0 1px 4px rgba(20,20,40,.05); position: relative; z-index: 2; }
   .sc-head .sc-title { font-size: 16px; font-weight: 700; }
   .sc-head .sc-sub { font-size: 12px; color: var(--dim); margin-top: 2px; }
-  .sc-head .sc-clock { position: absolute; right: 20px; top: 10px; font: 800 18px ui-monospace, Menlo, monospace; color: var(--amber-ink); letter-spacing: .1em; }
   .sc-head .sc-focusnote { font-size: 10.5px; color: var(--amber-ink); font-weight: 600; margin-top: 5px; letter-spacing: .02em; }
   .sc-body { flex: 1; display: flex; min-height: 0; padding: 10px; gap: 10px; background: var(--gutter); }
   #scRail { width: 250px; flex: none; background: var(--panel); overflow: hidden auto; border-radius: 14px; box-shadow: var(--card-shadow); }
@@ -219,6 +218,52 @@
   #scReply .who-asks { font-size: 11px; color: var(--dim); margin-bottom: 2px; }
   #scReply .who-asks .free { color: var(--amber-ink); font-weight: 600; }
   #scDone { display: block; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 0; font-weight: 600; margin-top: 2px; }
+
+  /* ── launch day: a cinematic dark stage where the day passes overhead ────────
+     The whole scene goes dark and the sky walks the time of day; a giant clock
+     ticks the hours forward and a timeline shows how much daylight is left. The
+     chat becomes glowing glass panels floating on the stage — phones lit up in a
+     long, stressful war-room day. */
+  #scene.launch { color: #eaeaf0; }
+  #scene.launch .sc-head { background: rgba(8,10,18,.34); border-bottom-color: rgba(255,255,255,.09); box-shadow: none; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); padding: 15px 20px 14px; }
+  #scene.launch .sc-body { background: transparent; justify-content: center; }
+  .launch-hero { display: flex; flex-direction: column; align-items: center; gap: 11px; }
+  .launch-clock { font: 800 clamp(40px, 7vw, 66px) ui-monospace, Menlo, monospace; letter-spacing: .05em; line-height: 1; color: #ffd76a; text-shadow: 0 0 26px rgba(255,193,78,.55), 0 0 66px rgba(255,150,20,.28); }
+  .launch-clock.tick { animation: clockTick 1s cubic-bezier(.2,.9,.3,1); }
+  @keyframes clockTick { 0% { transform: translateY(-10px) scale(1.14); opacity: .15; text-shadow: 0 0 44px rgba(255,214,110,.95), 0 0 90px rgba(255,150,20,.6); } 100% { transform: none; } }
+  .launch-titleline { font-size: 12.5px; color: rgba(255,255,255,.62); letter-spacing: .01em; text-align: center; }
+  .launch-track { display: flex; align-items: center; width: min(720px, 86vw); padding: 2px 0 0; }
+  .launch-track .tk { display: flex; flex-direction: column; align-items: center; gap: 5px; flex: none; }
+  .launch-track .tk .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.22); transition: .4s; }
+  .launch-track .tk.past .dot { background: rgba(255,193,78,.85); }
+  .launch-track .tk.cur .dot { background: #ffd76a; transform: scale(1.35); box-shadow: 0 0 0 5px rgba(255,193,78,.20), 0 0 18px rgba(255,193,78,.75); }
+  .launch-track .tk small { font-size: 9px; color: rgba(255,255,255,.38); font-variant-numeric: tabular-nums; }
+  .launch-track .tk.cur small { color: #ffd76a; font-weight: 700; }
+  .launch-track .seg { flex: 1; height: 2px; background: rgba(255,255,255,.14); margin-bottom: 15px; }
+  .launch-track .seg.past { background: rgba(255,193,78,.7); }
+  /* glass chat on the dark stage */
+  #scene.launch #scRail, #scene.launch .sc-threadcol { background: rgba(18,20,30,.5); box-shadow: 0 12px 48px rgba(0,0,0,.45); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
+  #scene.launch .sc-threadcol { flex: 0 1 640px; max-width: 640px; }
+  #scene.launch #scChatHead { background: rgba(255,255,255,.05); border-bottom-color: rgba(255,255,255,.08); color: #eef; }
+  #scene.launch #scChatHead span { color: rgba(255,255,255,.5); }
+  #scene.launch #scRail .conv { border-bottom-color: rgba(255,255,255,.06); }
+  #scene.launch #scRail .conv.cur { background: rgba(255,255,255,.09); }
+  #scene.launch #scRail .conv:hover { background: rgba(255,255,255,.05); }
+  #scene.launch #scRail .conv .who b { color: #eef; }
+  #scene.launch #scRail .conv .who span { color: rgba(255,255,255,.45); }
+  #scene.launch #scThread { background: transparent; }
+  #scene.launch .m-in { background: rgba(46,48,60,.94); color: #e9e9f0; box-shadow: none; }
+  #scene.launch .m-out { background: var(--blue); }
+  #scene.launch .m-in.tail::after, #scene.launch .m-in.tail::before,
+  #scene.launch .m-out.tail::after, #scene.launch .m-out.tail::before { display: none; }
+  #scene.launch .typing { background: rgba(46,48,60,.94); box-shadow: none; }
+  #scene.launch #scReply { background: rgba(8,10,18,.5); border-top-color: rgba(255,255,255,.08); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  #scene.launch #scReply .who-asks { color: rgba(255,255,255,.55); }
+  #scene.launch #scReply .who-asks .free { color: #ffd76a; }
+  #scene.launch .chip { background: rgba(20,22,32,.66); border-color: rgba(120,160,255,.6); color: #c3d4ff; }
+  #scene.launch .chip:hover:not(:disabled) { background: rgba(47,107,255,.26); }
+  #scene.launch .chip.gated { border-color: #d8a83a; color: #ffd98a; }
+  #scene.launch .m-wk { color: rgba(255,255,255,.4); }
 
   /* ── recap / endgame / intro overlays ───────────────────────────────────── */
   .overlay { position: fixed; inset: 0; background: rgba(12,12,18,.5); z-index: 60; display: none; align-items: center; justify-content: center; }
@@ -507,12 +552,7 @@
 </main>
 
 <div id="scene">
-  <div class="sc-head">
-    <div class="sc-title" id="scTitle"></div>
-    <div class="sc-sub" id="scSub"></div>
-    <div class="sc-clock" id="scClock"></div>
-    <div class="sc-focusnote">everything else is on hold · these conversations are private · your moves here are free</div>
-  </div>
+  <div class="sc-head" id="scHead"></div>
   <div class="sc-body">
     <nav id="scRail"></nav>
     <div class="sc-threadcol">
@@ -639,6 +679,21 @@ const SCENE_META = {
         : ["Half a pivot.", "Priya hopes she's wrong. She usually isn't."],
   },
 };
+// Launch day walks the clock through these hours; the sky (background) shifts
+// with each, and the hero clock ticks forward. `s.launch_time` names the hour.
+const LAUNCH_DAY = ["8AM", "9AM", "10AM", "11AM", "12PM", "1PM", "4PM", "6PM", "9PM", "11PM"];
+const LAUNCH_BG = {
+  "8AM": "radial-gradient(120% 80% at 50% -10%, #1a3a5c 0%, #0a1628 55%, #050b16 100%)",
+  "9AM": "radial-gradient(120% 80% at 50% -10%, #21507a 0%, #0c1c30 55%, #060e1e 100%)",
+  "10AM": "radial-gradient(120% 80% at 50% -12%, #2a6394 0%, #0d2136 55%, #071122 100%)",
+  "11AM": "radial-gradient(120% 80% at 50% -12%, #2f6ea6 0%, #0e2438 55%, #08132a 100%)",
+  "12PM": "radial-gradient(120% 80% at 50% -14%, #3a7ab0 0%, #103055 55%, #0a1830 100%)",
+  "1PM": "radial-gradient(120% 80% at 50% -12%, #356a9e 0%, #0f2740 55%, #091426 100%)",
+  "4PM": "radial-gradient(120% 80% at 50% -8%, #4a4f6b 0%, #1a1830 55%, #0d0b1a 100%)",
+  "6PM": "radial-gradient(125% 85% at 50% -6%, #b5623a 0%, #3a1c30 45%, #140a1c 100%)",
+  "9PM": "radial-gradient(120% 80% at 50% -10%, #16305a 0%, #060f22 55%, #01050f 100%)",
+  "11PM": "radial-gradient(120% 80% at 50% -12%, #0d1e3e 0%, #030914 55%, #000208 100%)",
+};
 // ── the founder's to-do list: one checklist per stage of the company ─────────
 const STAGES = [
   { id: "demo", label: "Ship the demo", active: (s, g) => !s.has_demo, items: [
@@ -700,6 +755,7 @@ let sceneStartSeq = null;
 let inScene = false;
 let scSelected = null;          // focus-arc: the participant thread on screen
 let scRendered = {};            // focus-arc: per-thread read cursor
+let scHeadSig = null;           // focus-arc: last-rendered header signature (scene|clock)
 let pendingStatPulse = [];      // stat keys that changed this turn, to pulse once
 let uiBusy = false;             // input lock while a reveal sequence plays
 let revealTimer = null;         // in-thread typing-reveal pacing
@@ -716,7 +772,7 @@ function journalMirror() {
 }
 function resetUiState() {
   feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
-  scSelected = null; scRendered = {};
+  scSelected = null; scRendered = {}; scHeadSig = null;
   selected = "alex"; surface = "msgs"; threadRendered = {};
   uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
@@ -1192,7 +1248,7 @@ function sceneUnread(charId) {
 function enterScene(startSeq) {
   inScene = true;
   lastSceneId = game.scene.id;
-  scRendered = {};
+  scRendered = {}; scHeadSig = null;
   const start = computeSceneStart(lastSceneId);
   sceneStartSeq = isFinite(start) ? start : (startSeq != null ? startSeq : 0);
   const meta = SCENE_META[lastSceneId] || {};
@@ -1234,13 +1290,43 @@ function openSceneThread(charId) {
   step();
 }
 
+// The scene header. For most arcs it's a plain title/sub/focus-note. Launch day
+// gets the cinematic treatment: the sky walks the time of day, a giant clock
+// ticks the hours, and a timeline shows the daylight burning down.
+function renderSceneHead() {
+  const meta = SCENE_META[lastSceneId] || {};
+  const isLaunch = lastSceneId === "launch";
+  $("scene").classList.toggle("launch", isLaunch);
+  $("scene").style.background = isLaunch ? (LAUNCH_BG[game.s.launch_time] || LAUNCH_BG["8AM"]) : "";
+
+  const sig = lastSceneId + "|" + (isLaunch ? (game.s.launch_time || "") : "");
+  if (sig === scHeadSig) return;                       // no change → don't disturb a running clock tick
+  const tick = isLaunch && scHeadSig && scHeadSig.indexOf("launch|") === 0;  // an hour advanced
+  scHeadSig = sig;
+
+  if (!isLaunch) {
+    $("scHead").innerHTML = '<div class="sc-title">' + esc(meta.title || "") + "</div>" +
+      '<div class="sc-sub">' + esc(meta.sub || "") + "</div>" +
+      '<div class="sc-focusnote">everything else is on hold · these conversations are private · your moves here are free</div>';
+    return;
+  }
+  const now = game.s.launch_time || "8AM";
+  const idx = LAUNCH_DAY.indexOf(now);
+  let track = "";
+  LAUNCH_DAY.forEach((t, i) => {
+    if (i > 0) track += '<span class="seg' + (i <= idx ? " past" : "") + '"></span>';
+    const cls = i < idx ? "past" : i === idx ? "cur" : "";
+    track += '<div class="tk ' + cls + '"><span class="dot"></span><small>' + esc(t) + "</small></div>";
+  });
+  $("scHead").innerHTML = '<div class="launch-hero">' +
+    '<div class="launch-clock' + (tick ? " tick" : "") + '">' + esc(now) + "</div>" +
+    '<div class="launch-titleline">' + esc(meta.sub || "") + "</div>" +
+    '<div class="launch-track">' + track + "</div></div>";
+}
+
 function renderFocus(opts) {
   opts = opts || {};
-  const meta = SCENE_META[lastSceneId] || {};
-  $("scTitle").textContent = meta.title || "";
-  $("scSub").textContent = meta.sub || "";
-  const clock = (lastSceneId === "launch" && game.s.launch_time) ? game.s.launch_time : "";
-  $("scClock").textContent = clock; $("scClock").style.display = clock ? "" : "none";
+  renderSceneHead();
 
   // rail: one row per person in the room (reuses the regular conversation rail)
   const cast = sceneCast();
@@ -1307,7 +1393,8 @@ function renderFocusThread(opts) {
 
 function exitScene() {
   clearTimeout(scTimer);
-  $("scene").classList.remove("on");
+  $("scene").classList.remove("on", "launch");
+  $("scene").style.background = "";
   for (const id of game.order) threadRendered[id] = game.threads[id].length;
   const meta = SCENE_META[lastSceneId] || {};
   const lines = meta.exit ? meta.exit(game.s) : null;
