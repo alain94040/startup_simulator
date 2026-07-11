@@ -39,7 +39,7 @@
 //
 // All content lives in v2/cast.js + v2/story/*.js; the weekly economy lives in
 // v2/world.js. No DOM here. Dual export: Node (module.exports) + browser
-// (window.V2Engine, reading the V2CAST/V2STORY/V2WORLD globals).
+// (window.V2Engine, reading the V2CAST/V2STORY/V2WORLD/V2Scoring globals).
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -61,6 +61,7 @@
     ? {
         cast: require("./cast.js"),
         world: require("./world.js"),
+        scoring: require("./scoring.js"),
         story: [
           require("./story/opening.js"),
           require("./story/equity.js"),
@@ -84,6 +85,7 @@
     : {
         cast: typeof V2CAST !== "undefined" ? V2CAST : [],
         world: typeof V2WORLD !== "undefined" ? V2WORLD : null,
+        scoring: typeof V2Scoring !== "undefined" ? V2Scoring : null,
         story: typeof V2STORY !== "undefined" ? V2STORY : [],
       };
 
@@ -517,6 +519,17 @@
 
     get burnPerWeek() { return 500 + (this.s.extra_burn || 0); }
     get runwayWeeks() { return Math.floor(this.s.cash / this.burnPerWeek); }
+
+    // Overall report-card grade (0-100) of the run so far — the average of the
+    // scoring categories actually faced, matching the endgame rollup. Returns
+    // null if nothing has been graded yet (or scoring isn't loaded). Used by the
+    // YC verdict to admit on merit instead of a dice roll.
+    gradeScore() {
+      if (!DEPS.scoring) return null;
+      const scored = DEPS.scoring.scoreGame(this).filter(c => c.score != null);
+      if (!scored.length) return null;
+      return Math.round(scored.reduce((n, c) => n + c.score, 0) / scored.length);
+    }
 
     // ── milestones (founder journal rubber-stamps) ─────────────────────────────
     _checkStamps() {

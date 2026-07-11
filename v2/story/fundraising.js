@@ -6,11 +6,18 @@
 // s.investor_warmth is the shared thermometer; the `warmth` effect key moves it.
 // The lead-then-follower structure is the raise-early/find-your-lead lesson:
 // Fatima never commits before Marcus does (fatima_commit requires
-// s.marcusCommitted). Both verdict rolls ride e.rng() — seeded, reproducible.
+// s.marcusCommitted). The angel verdict rides e.rng() — seeded, reproducible.
+// YC, by contrast, admits on merit: it grades the run's report card and takes
+// only the B+ and better founders (see YC_ADMISSION_GRADE).
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  // Minimum report-card grade (0-100 rollup, per V2Scoring) for YC admission.
+  // 80 is a B+ on the endgame scale (A ≥ 85, B ≥ 70), so YC takes the top of
+  // the B band and better.
+  const YC_ADMISSION_GRADE = 80;
 
   const CHECKIN_BODIES = [
     "it's been a few weeks since you last touched base with Ryan. a short update on the numbers keeps you top of mind.",
@@ -261,7 +268,12 @@
                 in: 3,
                 unless: (st) => st.ycAccepted,
                 fx(st, en) {
-                  const accepted = en.rng() < (st.ycQualified ? 0.18 : 0.04);
+                  // Admission is earned, not rolled: YC reads the founder
+                  // report card and takes the batches that graded out at B+ or
+                  // better. gradeScore() returns the same 0-100 rollup the
+                  // endgame shows (null before anything's been graded).
+                  const grade = en.gradeScore();
+                  const accepted = grade != null && grade >= YC_ADMISSION_GRADE;
                   if (accepted) {
                     st.ycAccepted = true; st.ycApplied = false;
                     st.cash += 500000;

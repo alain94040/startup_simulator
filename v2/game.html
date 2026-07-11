@@ -596,8 +596,8 @@
 <script src="story/press.js"></script>
 <script src="story/ambient.js"></script>
 <script src="world.js"></script>
-<script src="engine.js"></script>
 <script src="scoring.js"></script>
+<script src="engine.js"></script>
 <script src="tests/harness.js"></script>
 <script>
 "use strict";
@@ -1582,8 +1582,7 @@ function checkEndgame() {
   const sub = s.game_won ? "Week " + s.week + " — the company lives. Here's what it taught you." :
     "Week " + s.week + " — here's what this run taught you.";
   const emoji = s.game_won ? (s.ycAccepted ? "🎉" : "🤝") : s.ycRejected ? "📮" : "🕰️";
-  const scored = cats.filter(c => c.score != null);
-  const avg = scored.length ? Math.round(scored.reduce((n, c) => n + c.score, 0) / scored.length) : null;
+  const avg = game.gradeScore();
   const [og, ocol] = GRADE(avg);
   $("endModal").innerHTML =
     '<div class="eg-emoji">' + emoji + "</div>" +
