@@ -274,6 +274,23 @@
   .grade-row .g-body { flex: 1; }
   .grade-row .g-verdict { color: #55555c; font-size: 12px; }
   .grade-row .g-ref { color: var(--dim); font-size: 10.5px; }
+  /* cinematic report-card reveal */
+  .eg-cardhead { text-align: center; margin-bottom: 14px; }
+  .eg-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+  .eg-headline { font-size: 18px; font-weight: 800; color: var(--ink); }
+  .eg-reveal { opacity: 0; transform: translateY(9px); transition: opacity .55s ease, transform .55s ease; }
+  .eg-reveal.in { opacity: 1; transform: none; }
+  .grade .gl { transition: opacity .2s ease; }
+  .grade.pending { background: var(--line) !important; animation: gradePulse 1.1s ease-in-out infinite; }
+  .grade.pending .gl { opacity: 0; }
+  .grade.pop { animation: gradePop .44s cubic-bezier(.2,.9,.3,1.35); }
+  @keyframes gradePulse { 0%,100% { opacity: .45; } 50% { opacity: .85; } }
+  @keyframes gradePop { 0% { transform: scale(.35); } 55% { transform: scale(1.18); } 100% { transform: scale(1); } }
+  .eg-final { margin-top: 12px; margin-bottom: 0; }
+  .eg-final .eg-roll-copy b { color: var(--ink); font-size: 13px; }
+  .eg-outcome { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--soft); }
+  .eg-batch { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(90deg, var(--blue), #8b5cf6); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .02em; }
+  .eg-skiphint { text-align: center; font-size: 11px; color: var(--dim); margin-top: 12px; transition: opacity .3s; }
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
@@ -1573,32 +1590,106 @@ document.addEventListener("click", (e) => {
 
 // ── endgame ───────────────────────────────────────────────────────────────────
 const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] : s >= 70 ? ["B", "#4a9a4a"] : s >= 55 ? ["C", "#c9922a"] : s >= 40 ? ["D", "#c96a2a"] : ["F", "#c0392b"];
+
+// The report card plays as a slow reveal: line items ink in one at a time, each
+// grade badge "grading…" then popping to its letter, then the final grade, and
+// only at the very end whether the run made the batch. egTimers holds the
+// pending steps so a tap can fast-forward to the full card (egFinish).
+let egTimers = [];
+let egDone = true;
+function egClearTimers() { egTimers.forEach(clearTimeout); egTimers = []; }
+function egRevealBadge(el) {
+  if (!el) return;
+  el.classList.remove("pending");
+  if (el.dataset.col) el.style.background = el.dataset.col;
+  el.classList.add("pop");
+}
+function egFinish() {
+  egClearTimers();
+  document.querySelectorAll("#endModal .eg-reveal").forEach(e => e.classList.add("in"));
+  document.querySelectorAll("#endModal .grade.pending").forEach(egRevealBadge);
+  const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
+  egDone = true;
+}
+function egRunReveal() {
+  if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { egFinish(); return; }
+  egClearTimers();
+  egDone = false;
+  const rows = [...document.querySelectorAll("#egRows .grade-row")];
+  const STEP = 640, BADGE = 360;
+  let t = 350;
+  for (const row of rows) {
+    egTimers.push(setTimeout(() => { row.classList.add("in"); row.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, t));
+    egTimers.push(setTimeout(() => egRevealBadge(row.querySelector(".grade")), t + BADGE));
+    t += STEP;
+  }
+  t += 300;
+  egTimers.push(setTimeout(() => {
+    const roll = $("egRollup");
+    if (roll) { roll.classList.add("in"); roll.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      egTimers.push(setTimeout(() => egRevealBadge(roll.querySelector(".grade")), 360)); }
+  }, t));
+  t += 1050;
+  egTimers.push(setTimeout(() => {
+    const out = $("egOutcome");
+    if (out) { out.classList.add("in"); out.scrollIntoView({ behavior: "smooth", block: "center" }); }
+    const btn = $("egBtn"); if (btn) btn.classList.add("in");
+    const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
+    egDone = true;
+  }, t));
+}
 function checkEndgame() {
   const s = game.s;
   if (!s.game_over && !s.game_won) return;
+  if ($("endOv").classList.contains("on")) return;   // reveal already running/shown
   const cats = V2Scoring.scoreGame(game);
-  const title = s.game_won ? (s.ycAccepted ? "You're in the batch." : "Round closed. $500k.") :
-    s.ycRejected ? "YC passed. The run ends here." : "Out of runway.";
-  const sub = s.game_won ? "Week " + s.week + " — the company lives. Here's what it taught you." :
-    "Week " + s.week + " — here's what this run taught you.";
-  const emoji = s.game_won ? (s.ycAccepted ? "🎉" : "🤝") : s.ycRejected ? "📮" : "🕰️";
   const avg = game.gradeScore();
   const [og, ocol] = GRADE(avg);
+
+  // Outcome copy — built now but held back until the very last reveal step.
+  const madeYC = s.ycAccepted;
+  const emoji = s.game_won ? (madeYC ? "🎉" : "🤝") : s.ycRejected ? "📮" : "🕰️";
+  const title = s.game_won ? (madeYC ? "You're in." : "Round closed. $500k.")
+    : s.ycRejected ? "YC passed this cycle." : "Out of runway.";
+  const sub = s.game_won
+    ? (madeYC ? "Your grade cleared the bar — welcome to the batch. The company lives."
+      : "Two angels committed. The company lives.")
+    : s.ycRejected ? "Graded below the B+ line this cycle — the run ends here."
+      : "Cash hit zero at week " + s.week + ".";
+  const batch = madeYC
+    ? '<div class="eg-batch">YC Summer 2027 · $500k for 7%</div>'
+    : s.ycRejected ? '<div class="eg-batch" style="background:var(--soft);color:#55555c">Missed the bar · needs a B+</div>' : "";
+
+  const rowsHtml = cats.map(c => {
+    const [g, col] = GRADE(c.score);
+    return '<div class="grade-row eg-reveal">'
+      + '<div class="grade pending" data-col="' + col + '"><span class="gl">' + g + "</span></div>"
+      + '<div class="g-body"><b>' + esc(c.label) + "</b>"
+      + '<div class="g-verdict">' + esc(c.verdict) + (c.notes && c.notes[0] ? " — " + esc(c.notes[0]) : "") + "</div>"
+      + '<div class="g-ref">' + esc(c.ref) + "</div></div></div>";
+  }).join("");
+
   $("endModal").innerHTML =
-    '<div class="eg-emoji">' + emoji + "</div>" +
-    '<h2 class="eg-title">' + esc(title) + '</h2><div class="sub eg-sub">' + esc(sub) + "</div>" +
-    '<div class="eg-rollup"><div class="grade eg-biggrade" style="background:' + ocol + '">' + og + "</div>" +
-    '<div class="eg-roll-copy">Founder report card — graded on the calls you actually made, week by week. The reading under each line is where the lesson comes from.</div></div>' +
-    cats.map(c => {
-      const [g, col] = GRADE(c.score);
-      return '<div class="grade-row"><div class="grade" style="background:' + col + '">' + g + "</div>" +
-        '<div class="g-body"><b>' + esc(c.label) + "</b>" +
-        '<div class="g-verdict">' + esc(c.verdict) + (c.notes && c.notes[0] ? " — " + esc(c.notes[0]) : "") + "</div>" +
-        '<div class="g-ref">' + esc(c.ref) + "</div></div></div>";
-    }).join("") +
-    '<button class="ok" onclick="location.search=\'?seed=\'+((Date.now()%100000)|0)">Run it back →</button>';
+    '<div class="eg-cardhead"><div class="eg-eyebrow">Founder Report Card</div>'
+      + '<div class="eg-headline">Week ' + s.week + " — grading the calls you made.</div></div>"
+    + '<div id="egRows">' + rowsHtml + "</div>"
+    + '<div id="egRollup" class="eg-rollup eg-final eg-reveal">'
+      + '<div class="grade eg-biggrade pending" data-col="' + ocol + '"><span class="gl">' + og + "</span></div>"
+      + '<div class="eg-roll-copy"><b>Final grade</b><br>Averaged across the lessons you actually faced.</div></div>'
+    + '<div id="egOutcome" class="eg-outcome eg-reveal"><div class="eg-emoji">' + emoji + "</div>"
+      + '<h2 class="eg-title">' + esc(title) + "</h2>"
+      + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
+    + '<button id="egBtn" class="ok eg-reveal" onclick="location.search=\'?seed=\'+((Date.now()%100000)|0)">Run it back →</button>'
+    + '<div id="egSkipHint" class="eg-skiphint">tap anywhere to reveal faster</div>';
+
   $("endOv").classList.add("on");
+  egRunReveal();
 }
+// Tap the card (anywhere but the button) to fast-forward the reveal.
+$("endModal").addEventListener("click", (e) => {
+  if (e.target.closest(".ok")) return;
+  if (!egDone) egFinish();
+});
 
 // ── intro ─────────────────────────────────────────────────────────────────────
 const INTRO = [
@@ -1660,6 +1751,7 @@ $("dbgSeed").value = seed;
 const dbgSeed = () => { const v = parseInt($("dbgSeed").value, 10); return Number.isFinite(v) ? v : seed; };
 function dbgReset() {
   clearTimeout(revealTimer); clearTimeout(noteTimer); noteTimer = null;
+  egClearTimers(); egDone = true;
   $("scene").classList.remove("on"); $("cine").classList.remove("show");
   $("endOv").classList.remove("on"); $("noteCenter").classList.remove("show");
   [...$("notifs").children].forEach(e => e.remove());
