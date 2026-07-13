@@ -639,8 +639,7 @@ const SELF = new Set(["founder", "growth"]);   // "your own moves" — acted in-
 // iOS palette + initials, ported from the old UI's STYLE map.
 const STYLE = {
   alex: { color: "#0b84ff", initials: "A" }, jordan: { color: "#34c759", initials: "J" },
-  priya: { color: "#af52de", initials: "P" }, marcus: { color: "#ff9500", initials: "M" },
-  fatima: { color: "#ff6482", initials: "F" }, ryan: { color: "#5ac8fa", initials: "R" },
+  priya: { color: "#af52de", initials: "P" },
   sarah: { color: "#ff2d55", initials: "S" }, brett: { color: "#8e8e93", initials: "B" },
   kevin: { color: "#8e8e93", initials: "K" }, mom: { color: "#ffcc02", initials: "👩" },
   jamie: { color: "#64d2ff", initials: "Ja" }, david: { color: "#30b0c7", initials: "D" },
@@ -735,17 +734,15 @@ const STAGES = [
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped },
   ]},
   { id: "channel", label: "Prove a channel", active: (s, g) => s.pivot_shipped && !s.primary_channel, items: [
-    { t: "Test channels cheaply (3)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 3, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 3 tested" },
+    { t: "Test channels cheaply (2)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 2, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 2 tested" },
     { t: "Go all-in on the one with legs", done: s => !!s.primary_channel, note: s => s.primary_channel ? "all chips on " + s.primary_channel : null },
   ]},
-  { id: "round", label: "Fill the round", active: () => true, items: [
+  { id: "apply", label: "Ace the application", active: () => true, items: [
     { t: "Take the friends & family money", done: (s, g) => g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") },
-    { t: "Bring on an advisor", done: s => !!s.priya_advising, note: s => s.priya_advising ? "Priya's officially advising" : null },
-    { t: "Have the deck ready", done: s => !!s.deck_ready },
-    { t: "Keep the investors warm", done: s => s.investor_warmth >= 50, note: s => "warmth " + Math.round(s.investor_warmth) },
-    { t: "Six paying subscribers", done: s => s.customers >= 6, note: s => s.customers + " of 6" },
-    { t: "Land the lead", done: s => !!s.marcusCommitted, note: s => s.marcusCommitted ? "Marcus · $400k" : null },
-    { t: "Close it — follower or YC", done: s => !!s.followerCommitted || !!s.ycAccepted },
+    { t: "Paying subscribers", done: s => s.customers >= 1, note: s => s.customers + " paying" },
+    { t: "Keep the cap table clean", done: s => !s.jordan_cleanup_needed, note: s => s.jordan_cleanup_needed ? "a departed co-founder still owns her stake" : null },
+    { t: "Send the application", done: s => !!s.ycApplied, note: s => "deadline · wk " + s.deadline_week },
+    { t: "The verdict", done: s => !!s.ycAccepted },
   ]},
 ];
 
@@ -831,10 +828,10 @@ function renderHeader() {
   $("gRunV").textContent = st.runway + " wks · " + money(st.cash);
   $("gRunB").style.width = Math.min(100, (st.runway / 20) * 100) + "%";
   $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
-  const ycIn = game.s.yc_week - st.week;
-  if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "pending…"; $("gYcB").style.width = "100%"; }
-  else if (ycIn > 0) { $("gYcL").textContent = "YC window"; $("gYcV").textContent = "in " + ycIn + " wks"; $("gYcB").style.width = Math.max(4, 100 - (ycIn / 25) * 100) + "%"; }
-  else { $("gYcL").textContent = "YC window"; $("gYcV").textContent = "open now"; $("gYcB").style.width = "100%"; }
+  const dIn = game.s.deadline_week - st.week;
+  if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "wk " + game.s.deadline_week; $("gYcB").style.width = "100%"; }
+  else if (dIn > 0) { $("gYcL").textContent = "YC deadline"; $("gYcV").textContent = dIn + " wks left"; $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
+  else { $("gYcL").textContent = "YC deadline"; $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
   const stg = currentStage(), c = stageCounts(stg);
   $("gTdL").textContent = "☑ " + stg.label + " ▾";
   $("gTdV").textContent = c.done + " of " + c.total;
@@ -1649,14 +1646,14 @@ function checkEndgame() {
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
-  const emoji = s.game_won ? (madeYC ? "🎉" : "🤝") : s.ycRejected ? "📮" : "🕰️";
-  const title = s.game_won ? (madeYC ? "You're in." : "Round closed. $500k.")
-    : s.ycRejected ? "YC passed this cycle." : "Out of runway.";
-  const sub = s.game_won
-    ? (madeYC ? "Your grade cleared the bar — welcome to the batch. The company lives."
-      : "Two angels committed. The company lives.")
-    : s.ycRejected ? "Graded below the B+ line this cycle — the run ends here."
-      : "Cash hit zero at week " + s.week + ".";
+  const emoji = madeYC ? "🎉" : s.ycRejected ? "📮" : s.deadline_passed ? "⏳" : "🕰️";
+  const title = madeYC ? "You're in."
+    : s.ycRejected ? "YC passed."
+      : s.deadline_passed ? "The deadline came and went." : "Out of runway.";
+  const sub = madeYC ? "Your grade cleared the bar — welcome to the batch. The company lives."
+    : s.ycRejected ? "Graded below the B+ line — the batch filled without you."
+      : s.deadline_passed ? "The application never went out. The batch filled without you — here's the company you built anyway."
+        : "Cash hit zero at week " + s.week + ".";
   const batch = madeYC
     ? '<div class="eg-batch">YC Summer 2027 · $500k for 7%</div>'
     : s.ycRejected ? '<div class="eg-batch" style="background:var(--soft);color:#55555c">Missed the bar · needs a B+</div>' : "";
@@ -1694,7 +1691,7 @@ $("endModal").addEventListener("click", (e) => {
 
 // ── intro ─────────────────────────────────────────────────────────────────────
 const INTRO = [
-  ["The team", "You're the founder.", "Kindred is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, a burn rate, and two moves a week. Get to a seed round (or YC) before the money runs out."],
+  ["The team", "You're the founder.", "Kindred is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until YC applications close. Build something worth the batch before the clock — or the cash — runs out."],
   ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
   ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
 ];

@@ -7,18 +7,17 @@
 
 (function () {
   // Asking family for money never resolves on the spot — they need to talk it
-  // over. The outcome is decided now but lands three weeks later.
+  // over. The answer lands three weeks later. Family money is the one certain
+  // check in the game (the friends' checks still ride dice) — the cash clock
+  // should be tensioned by decisions, not by a week-5 coin flip.
   function askFamily(s, e) {
-    const willInvest = e.rng() < 0.9;
     e.schedule({
       in: 3, char: "mom",
       say: {
         char: "mom",
-        text: willInvest
-          ? "ok!! dad and i talked it over — i just wired you $4,000. so proud of you honey ❤️ go build something amazing."
-          : "honey, we talked it over and we'd love to, but money's a little tight with the house right now. so sorry. we believe in you no matter what ❤️",
+        text: "ok!! dad and i talked it over — i just wired you $4,000. so proud of you honey ❤️ go build something amazing.",
       },
-      fx(st) { if (willInvest) st.cash += 4000; },
+      fx(st) { st.cash += 4000; },
     });
     return "Asked Mom and Dad if they'd put money in. They said they'd talk it over and let me know.";
   }
@@ -71,6 +70,34 @@
           },
         ],
         timeout: { weeks: 3 },
+      },
+
+      // ── the ramen valve: trade a week's focus for rent money ─────────────────
+      // Story class on purpose: when the runway is this short it IS the story.
+      // Converts a pure dice-death (thin friends-and-family rolls) into a
+      // choice — you can consult your way out of a cash hole, but each gig
+      // burns a week of focus against the deadline.
+      {
+        id: "founder_consulting", char: "founder",
+        text: (s) => "the bank balance says $" + Math.max(0, Math.round(s.cash)).toLocaleString() + ". your old firm keeps a freelance list — one week of contract work is $2,500, no questions asked. it's rent money. it's also a week not spent on kindred.",
+        when: {
+          cooldown: 3,
+          if: (s) => s.week >= 4 && s.cash < 2500 && !s.game_over,
+        },
+        choices: [
+          {
+            key: "take", label: "Take the contract week — $2,500",
+            journal: "Took a week of contract work to keep the lights on. $2,500 in, one week of kindred momentum out. Nobody puts this part in the founding story.",
+            effects: { cash: 2500, signal: -2 },
+            fx: () => "Invoice sent, $2,500 in. A week of someone else's roadmap. The runway breathes; the deadline doesn't.",
+          },
+          {
+            key: "decline", label: "No — every week belongs to kindred",
+            journal: "Turned down the contract week. Every remaining week belongs to kindred — and the bank balance knows it.",
+            fx: () => "All in. The balance is what it is.",
+          },
+        ],
+        timeout: { weeks: 2 },
       },
 
       // ── the safety valve: only surfaces when the founder has nothing real ────

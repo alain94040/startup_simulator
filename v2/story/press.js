@@ -82,39 +82,6 @@
           say: { from: "User", text: "we've been evaluating Flare. going to give them a try — nothing personal." },
         },
       },
-      {
-        id: "investor_moat_question", char: "techcrunch", from: "Investor",
-        text: "an investor you're pitching asks directly: 'Flare raised $3M and has 10,000 users. why does kindred win?'",
-        when: { after: ["competitor_launch"], if: (s) => s.deck_ready },
-        choices: [
-          {
-            key: "niche", label: "Explain the niche they ignored",
-            journal: "Answered the moat question directly — explained the niche Flare ignored.",
-            fx(s) {
-              if (s.competitive_intel) {
-                s.investor_warmth = clamp(s.investor_warmth + 12, 0, 100);
-                return "Your answer was specific and confident — you mapped their product, you know where they stopped. 'That's exactly what I was hoping to hear.'";
-              }
-              s.investor_warmth = clamp(s.investor_warmth - 5, 0, 100);
-              return "You said 'they're going broad, we're going deep' — but couldn't back it up with specifics. The investor nodded slowly. Conviction cooled.";
-            },
-          },
-          {
-            key: "speed", label: "We're moving faster and closer to customers",
-            journal: "Told the investor we're moving faster and closer to customers. Plausible but he wanted more.",
-            effects: { warmth: 2 },
-            fx: () => "Plausible answer. The investor appreciated the honesty but wanted more. 'Come back when you have 3 months of retention data.'",
-          },
-          {
-            key: "deflect", label: "Deflect — pivot to your traction story",
-            journal: "Tried to pivot to traction instead of answering the Flare question. The investor noticed.",
-            effects: { warmth: -8 },
-            fx: () => "The investor noticed the pivot. 'You didn't answer my question.' The meeting wrapped up quickly after that.",
-          },
-        ],
-        timeout: { weeks: 3 },
-      },
-
       // ── SOCIAL & PRESS ───────────────────────────────────────────────────────
       {
         id: "public_complaint", char: "twitter", from: "Twitter",
@@ -225,7 +192,7 @@
             key: "ask", label: "Ask him to invest",
             reply: "sure thing.",
             fx(s, e) {
-              if (e.rng() < 0.7) { s.cash += 7000; return "Jamie sent $7,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'"; }
+              if (e.rng() < 0.7) { s.cash += 5000; return "Jamie sent $5,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'"; }
               return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
             },
           },
@@ -254,9 +221,8 @@
             key: "pitch", label: "Show him the deck",
             fx(s, e) {
               if (e.rng() < 0.7) {
-                s.cash += 5000;
-                s.investor_warmth = clamp(s.investor_warmth + 5, 0, 100);
-                return "David pulled out his checkbook. $5,000 and a warm intro to two angels he knows.";
+                s.cash += 4000;
+                return "David pulled out his checkbook. $4,000. 'Pay me back by building the thing.'";
               }
               return "Great coffee. David's being conservative with money this year — new baby coming. 'I'm rooting for you though.'";
             },

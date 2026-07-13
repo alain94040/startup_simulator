@@ -39,10 +39,11 @@
   // chips first and calls the room a week later — the summit's own 3-week
   // patience is designed to allow exactly that.
   const ANSWER_ORDER = [
+    "founder_consulting", // rent money first — a sensible player never lets it expire
     "equity_worry", "equity_5050_interject", "interviews", "waitlist_cold",
     "slide_maya_call", "slide_cohort", "slide_first_echo",
     "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
-    "yc_window_ready", "yc_window_early", "yc_apply",
+    "yc_apply",
   ];
   const actPriority = (a) => {
     const i = ANSWER_ORDER.indexOf(a.nodeId);
@@ -60,7 +61,7 @@
     dev_plan: ["lean"], auth_choice: ["buy"], auth_forced: ["buy"],
     interviews: ["interview"], first_screen: ["intake_interviews", "intake"],
     ff_family: ["ask"], ff_family_2: ["ask"], ff_family_3: ["ask"],
-    founder_reflect: ["review"],
+    founder_reflect: ["review"], founder_consulting: ["take"],
     alex_commitment: ["accept"], vision_mismatch: ["test"],
     matching_choice: ["build"], ranking: ["conversation", "interests"],
     ios_sprint_1: ["wire_backend"], ios_sprint_2: ["ack"],
@@ -86,10 +87,8 @@
     pivot_day_shape: ["flip"], pivot_day_cost: ["ack"], pivot_day_decide: ["pivot"],
     pivot_day_close: ["night"], pivot_relaunch: ["ship"], pivot_fifty_verdict: ["pivot_now"],
     pivot_payoff_maya: ["ack"],
-    marcus_intro: ["call"], prep_deck: ["build"], investor_meetings: ["meet"], seed_pitch: ["pitch"],
-    fatima_intro: ["call"], fatima_meeting: ["meet"], fatima_deck: ["walk"], fatima_commit: ["welcome"],
-    ryan_intro: ["meet"], ryan_checkin: ["update"], sarah_intro: ["reply"],
-    yc_window_ready: ["apply"], yc_window_early: ["skip"], yc_apply: ["submit"],
+    sarah_intro: ["reply"],
+    yc_apply: ["submit"],
     beachhead_choice: ["narrow"], launch_surface: ["quiet"], launch_scramble: ["firefight"],
     channel_test: ["referrals", "creators", "community", "paid"], channel_double_down: ["referrals"],
     dont_scale_seed: ["concierge"], first_customer_offer: ["pitch"], pricing_experiment: ["prompt"],
@@ -97,14 +96,14 @@
     feature_cluster: ["build"],
     jordan_drift_start: ["talk"], jordan_drag: ["talk"], jordan_launch_blocker: ["confront"],
     jordan_confrontation: ["fire"], jordan_cap_table: ["lawyer"],
-    competitor_launch: ["study"], competitor_growing: ["calls"], investor_moat_question: ["niche"],
+    competitor_launch: ["study"], competitor_growing: ["calls"],
     public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
     consultant_growth: "SKIP", consultant_brand: "SKIP",
     ff_friend: ["tell"], ff_friend_ask: ["ask"], ff_mentor: ["lunch"], ff_mentor_pitch: ["pitch"],
     early_name: ["catchy"], early_customer_target: ["individuals"], early_funding_goal: ["profitable"],
     alex_side_project: ["pause"], alex_side_project_escalation: ["talk"], alex_quiet: ["checkin"],
     alex_equity_regret: ["fair"], family_doubt: ["talk"],
-    alex_decision: ["ship"], alex_wants_rebuild: ["refactor"], arch_refactor_done: ["review"],
+    alex_decision: ["ship"],
     alex_leaving_threat: ["talk"],
     first_interview_shock: ["pivot"], cold_silence: ["rewrite"], random_reframe: ["test"],
     pivot_insight_1: ["pivot"], pivot_insight_2: ["pivot"], pmf_lock: ["lock"],

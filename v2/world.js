@@ -125,11 +125,18 @@
     }
     s.revenue = s.customers * 50;
 
-    // Win conditions: YC acceptance, or two angels committed (lead + follower).
-    if (!s.game_won && (s.ycAccepted || (s.marcusCommitted && s.followerCommitted))) {
-      s.game_won = true;
+    // The horizon: entering deadline week, every run ends. An applied run's
+    // verdict (accept/reject) was already delivered by the scheduled letter in
+    // story/fundraising.js — scheduled consequences fire before this tick. A
+    // run that never applied ends here too: the batch filled without you, and
+    // the report card prints regardless.
+    if (!s.game_won && !s.game_over && s.week >= s.deadline_week
+      && !s.ycAccepted && !s.ycRejected) {
+      s.deadline_passed = true;
+      s.game_over = true;
     }
-    // Lose conditions: out of cash, or a final YC rejection.
+    // Win condition: YC acceptance. Lose: rejection, never applying, or $0.
+    if (!s.game_won && s.ycAccepted) s.game_won = true;
     if (s.ycRejected) s.game_over = true;
     if (s.cash <= 0) s.game_over = true;
   }

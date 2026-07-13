@@ -163,23 +163,29 @@
           "Built the commodity, rented the edge — exactly backwards."]);
     }
 
-    // ── 6. Raise early, find your lead ───────────────────────────────────────
+    // ── 6. Keep the cap table clean ──────────────────────────────────────────
     {
-      add("raise-early", "Raise early, find your lead", "📚 PG, \"How to Raise Money\"",
+      const pct = s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%";
+      add("clean-cap-table", "Keep the cap table clean", "📚 Fred Wilson, \"Founder Vesting\"",
         parts([
+          { faced: g.done("incorporate") || g.done("incorporate_again"), weight: 1,
+            got: s.incorporated ? 1 : 0,
+            note: s.incorporated ? "Incorporated before the work belonged to nobody." : "Never formed a legal entity — there is no cap table to keep clean." },
+          { faced: g.done("equity_open") || !!s.equity_proposal, weight: 2,
+            got: s.jordan_equity ? (s.equity_skipped ? 0.4 : 1) : 0,
+            note: s.jordan_equity ? (s.equity_skipped ? "The split defaulted to even thirds — signed, but never actually discussed." : "Equity split negotiated and signed while everyone was still friends.")
+              : "The split was never signed. Every later conversation got harder." },
           { faced: g.done("ff_family"), weight: 1, got: g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") ? 1 : 0.3,
             note: g.took("ff_family:ask") ? "Took the friends-and-family money early." : null },
-          { faced: g.done("marcus_intro"), weight: 1, got: g.took("marcus_intro:call") ? 1 : 0,
-            note: g.took("marcus_intro:call") ? null : "Left the first angel on read — he moved on." },
-          { faced: g.done("prep_deck"), weight: 1, got: s.deck_ready ? 1 : 0,
-            note: s.deck_ready ? "Deck was ready before diligence needed it." : "Scrambled deckless." },
-          { faced: g.done("seed_pitch") || s.marcusCommitted, weight: 2,
-            got: (s.marcusCommitted ? 0.6 : 0) + (s.followerCommitted ? 0.4 : 0),
-            note: s.followerCommitted ? "Lead secured, round filled — in that order." : s.marcusCommitted ? "Lead committed; the round never closed." : null },
+          { faced: !!s.jordan_resolved, weight: 2,
+            got: s.jordan_cleanup_needed ? 0 : 1,
+            note: s.jordan_resolved ? (s.jordan_cleanup_needed
+              ? "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there."
+              : "Bought back the departed co-founder's stake — the cap table survived the firing.") : null },
         ]),
-        ["Warm early, lead first, followers after — textbook.",
-          "The round moved, but slower and colder than it needed to be.",
-          "Fundraising happened to you rather than by you."]);
+        ["Paper first, feelings second — the cap table stayed clean through everything.",
+          "The ownership questions got answered, but late and at a price.",
+          "The cap table is a diligence minefield — unsigned splits and dead equity."]);
     }
 
     // ── 7. Stay default alive ────────────────────────────────────────────────
@@ -188,13 +194,14 @@
       for (const wk of g.ledger) minBalance = Math.min(minBalance, wk.balanceAfter);
       const score = s.game_won ? 100
         : !s.game_over ? clamp(40 + g.runwayWeeks * 3, 40, 90)
-          : s.ycRejected ? 55 : 10;
+          : s.ycRejected ? 55 : s.deadline_passed ? 45 : 10;
       out.push({
         key: "default-alive", label: "Stay default alive", ref: "📚 PG, \"Default Alive or Default Dead?\"",
         score, verdict: s.game_won ? "You reached the other side with the lights on."
           : !s.game_over ? "Still alive — runway is the scoreboard."
             : s.ycRejected ? "The run ended on a verdict, not on the bank balance."
-              : "Cash hit zero. Everything else became irrelevant.",
+              : s.deadline_passed ? "Alive at the deadline — but the application never went out."
+                : "Cash hit zero. Everything else became irrelevant.",
         notes: ["Lowest bank balance: $" + Math.max(0, Math.round(minBalance)).toLocaleString() + "."],
       });
     }

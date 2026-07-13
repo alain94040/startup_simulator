@@ -99,9 +99,7 @@
         signal: 28, market_fit: 0, launched: false,
         incorporated: false, has_demo: false, productPhase: "proto",
         extra_burn: 0, saas: [], items: null, dev_plan: null,
-        investor_warmth: 0, deck_ready: false,
-        marcusCommitted: false, followerCommitted: false,
-        yc_week: 25,
+        deadline_week: 25,   // the horizon: YC applications close, every run is graded
         beachhead: null, channels: {}, primary_channel: null,
         game_over: false, game_won: false,
       };
@@ -401,7 +399,6 @@
       if (fx.cash) s.cash = Math.max(0, s.cash + fx.cash);
       if (fx.signal) s.signal = clamp(s.signal + fx.signal, 0, 100);
       if (fx.marketFit) s.market_fit = clamp(s.market_fit + fx.marketFit, 0, 100);
-      if (fx.warmth) s.investor_warmth = clamp(s.investor_warmth + fx.warmth, 0, 100);
       if (fx.waitlist) s.waitlist = Math.max(0, s.waitlist + fx.waitlist);
       if (fx.users) s.users = Math.max(0, s.users + fx.users);
       if (fx.customers) s.customers = Math.max(0, s.customers + fx.customers);

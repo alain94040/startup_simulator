@@ -348,7 +348,9 @@
       },
       {
         // The bookend — only exists if the player called Maya during the slide.
-        id: "pivot_payoff_maya", char: "alex", ambient: true,
+        // Story class, not ambient: it's the pivot's designed payoff, and the
+        // packed post-pivot weeks would otherwise starve it of a slot.
+        id: "pivot_payoff_maya", char: "alex",
         text: "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
         when: { if: (s) => s.pivot_shipped && !!s.maya_quote },
         choices: [

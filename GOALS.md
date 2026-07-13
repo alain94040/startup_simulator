@@ -14,7 +14,7 @@ There are multiple lessons that this startup simulator is trying to teach:
 
 Money is critical to extending the runway of the startup. The game should be structured so that if you don't raise any money (especially early on from friends&family), you will go bankrupt before you get to finish building your product, and won't be able to launch.
 
-However, it's hard to tell the difference between legitimate investors and investors who only follow other leads. For instance, Fatima will never invest until Marcus does, no matter how interested she pretends to be.
+A cap-table lesson goes with it: sign the equity split on paper, and when a co-founder leaves, buy back their un-vested stake. A departed co-founder's stake left on the cap table costs you on the final report card — anyone doing diligence stops there.
 
 Another financial lesson: most consultants who reach out to you in your early days are trying to get money from you but they don't provide value.
 

@@ -97,8 +97,7 @@ const ALLOW = new Set([
   "mentor_competitor_bomb", // advisor warns about competitors, pre-product
   "waitlist_cold",          // waitlist signups going cold, explicitly pre-launch
   "first_customer_offer",   // convert-the-first-customer card — customers===0 by design
-  "yc_window_early",        // YC criteria meta-message; literally says "not launched"
-  "yc_apply",               // application boilerplate referencing subscriber learnings
+  "yc_apply",               // application boilerplate referencing user learnings
   "waitlist_calls",         // calling waitlist SIGNUPS pre-launch (the research habit)
   "founder_meetup",         // "consumer social" meetup flavor, not our metrics
   "trust_safety",           // "app store REVIEW" + "USER-generated content" — Apple's

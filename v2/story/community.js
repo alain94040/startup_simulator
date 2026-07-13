@@ -1,6 +1,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// v2/story/community.js — the communities feed (HN / Reddit / Indie Hackers)
-// and the YC application window.
+// v2/story/community.js — the communities feed (HN / Reddit / Indie Hackers).
+// (The YC application lives in story/fundraising.js on the yc thread.)
 //
 // The three staged pre-launch ladders port as plain chains: each rung is
 // `after: [previous], delay: 3` — the old stage/stage_week flag pairs are gone.
@@ -152,56 +152,6 @@
       skipOutcome: "Stayed quiet. The gap is widening.",
     }),
 
-    // ── THE YC WINDOW ────────────────────────────────────────────────────────
-    // s.yc_week is the next application window (starts at 25); skipping or
-    // missing a window pushes it ~6 months. Exactly one of ready/early fires,
-    // depending on whether the stats qualify.
-    {
-      id: "yc_window_ready", char: "hacker_news", from: "Hacker News",
-      text: "YC applications just opened. Your stats qualify — live product, at least one paying subscriber, and a clear pivot story. A lot of founders in the consumer social space are applying.",
-      when: {
-        cooldown: 26,
-        if: (s) => s.week >= s.yc_week && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && !s.ycRejected
-          && s.launched && s.pivot_shipped && s.customers >= 1,
-      },
-      choices: [
-        {
-          key: "apply", label: "Start writing the application",
-          journal: "Committed to this YC batch. Deadline is next sprint — time to write the application.",
-          effects: { flags: { ycDeciding: true, ycQualified: true } },
-          fx: () => "Committed to this batch. Deadline is next sprint — time to write.",
-        },
-        {
-          key: "skip", label: "Skip this batch",
-          journal: "Decided to skip this YC batch. Next one opens in ~6 months.",
-          fx(s) { s.yc_week += 26; return "Decided to skip this batch. Next one opens in ~6 months."; },
-        },
-      ],
-      timeout: { weeks: 2, fx(s) { s.yc_week = s.week + 26; } },
-    },
-    {
-      id: "yc_window_early", char: "hacker_news", from: "Hacker News",
-      text: "YC applications just opened. Stats aren't quite there yet — not launched, no pivot, or no paying subscribers yet. Some apply anyway for partner feedback. Apply or wait?",
-      when: {
-        cooldown: 26,
-        if: (s) => s.week >= s.yc_week && !s.ycDeciding && !s.ycApplied && !s.ycAccepted && !s.ycRejected
-          && (!s.launched || !s.pivot_shipped || s.customers < 1),
-      },
-      choices: [
-        {
-          key: "apply", label: "Start writing anyway",
-          journal: "Going for YC anyway — a long shot, but the partner feedback alone is worth it.",
-          effects: { flags: { ycDeciding: true, ycQualified: false } },
-          fx: () => "Going for it — a long shot, but the partner feedback alone is worth it.",
-        },
-        {
-          key: "skip", label: "Wait for next batch",
-          journal: "Waiting for the next YC batch. More time to hit the numbers.",
-          fx(s) { s.yc_week += 26; return "Waiting for next batch. More time to hit the numbers. Next window in ~6 months."; },
-        },
-      ],
-      timeout: { weeks: 2, fx(s) { s.yc_week = s.week + 26; } },
-    },
   ];
 
   if (typeof module !== "undefined" && module.exports) module.exports = mod;

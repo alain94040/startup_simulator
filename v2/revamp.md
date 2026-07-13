@@ -160,14 +160,51 @@ Audited v1's polish and re-implemented it as the *ordered grammar* it actually i
 
 Verified by a headless DOM smoke drive (24 checks) + the engine suites unchanged.
 
+### Pass 5 — the horizon (chapters groundwork)
+
+The game got a fixed ending: **every run ends entering week 25** — YC
+applications close, the run is graded off the report card (B+ = 80 admits),
+and the scorecard prints whether you applied or not. Consequences:
+
+- **The angel path is gone.** Simulation showed it was structurally dead
+  (`priya_advising` — the only key to the investor cast — expired at wk 16,
+  before Priya usually unlocked; 0% of 800 simulated games closed the round).
+  Marcus/Fatima/Ryan, `investor_warmth`, `deck_ready`, the deck/pitch chain and
+  the YC window machinery (`yc_week`, skip/miss ± 26 weeks) are deleted.
+  `fundraising.js` is now Sarah + the application/verdict. Wins collapse to
+  `s.ycAccepted`; a run that never applies ends as `s.deadline_passed`.
+- **The cap-table lesson moved into the score.** Scoring category 6
+  ("Raise early, find your lead", Marcus-based) became **"Keep the cap table
+  clean"**: incorporate, sign the split, take the F&F money, buy back Jordan's
+  stake after the firing. Its old payoff (Marcus's diligence bounce) is now
+  grade points every player faces.
+- **Compression so chapter 5 exists.** The pre-launch architecture-refactor
+  detour (`alex_wants_rebuild`/`arch_refactor_done`) was retired — it
+  double-taught proto_to_product's lesson and serialized Alex's thread. Median
+  launch moved 16 → 14, pivot 19 → 16, v2 ships ~21, leaving ~4 proving weeks
+  before the wall. The Bullseye loop tightened to 2 tests + all-in (cooldown 1);
+  `pivot_payoff_maya` promoted to story class (the packed endgame starved it);
+  `alex_decision` demoted to ambient.
+- **Economy retuned for 25 weeks.** Mom's $4k is now certain; Jamie $5k /
+  David $4k stay on dice; a new `founder_consulting` valve (story-class, cash
+  < $2.5k) trades a week's focus for $2,500 — dice-deaths became a time-vs-money
+  decision. Outcome mix: decent/pivot 100% win (mastery is the ceiling),
+  random 12% win / 49% rejected / 11% never-applied / 28% bankrupt.
+- Tooling followed: phase_map buckets (`never_applied`, cap wk 30),
+  sim_strategies (`noapply` replaces `angel`), harness PREF/ANSWER_ORDER,
+  test_slice deadline + never-applied blocks. **133/133 · 0 realistic
+  violations · 16/16 scenes.**
+
+Content set after the cut: **148 nodes, 19 cast, 5 scenes.**
+
 ---
 
 ## Current status
 
 | Area | State |
 |---|---|
-| Engine + content | Complete: 162 nodes, 22 cast, 5 scenes |
-| `test_slice.js` | 138/138 deterministic checks |
+| Engine + content | Complete: 148 nodes, 19 cast, 5 scenes |
+| `test_slice.js` | 133/133 deterministic checks |
 | `test_narrative.js` | 0 realistic-play violations (fuzzer-only documented) |
 | `test_scenes.js` | 16/16 — all scene paths exit cleanly |
 | `game.html` | Full UI, polished; the shipping surface |

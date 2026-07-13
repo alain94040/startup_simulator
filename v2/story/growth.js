@@ -89,7 +89,7 @@
           {
             key: "press", label: "Give a reporter the exclusive",
             journal: "Gave a reporter the launch exclusive — the anti-Tinder angle. Smaller than a viral hit, but the people who came in from a thoughtful piece actually read the whole thing first.",
-            effects: { users: 12, signal: 10, warmth: 4 },
+            effects: { users: 12, signal: 10 },
             fx: () => "The piece ran with the 'dating app that wants you to delete it' angle. ~12 signups in a day, plus an investor reply-all. Quality over volume.",
           },
           {
@@ -140,15 +140,18 @@
         // Gated on the pivot relaunch: channel strategy only pays off once the
         // product actually retains. Before that you'd just be buying churn.
         when: {
-          cooldown: 2,
-          if: (s) => s.pivot_shipped && !s.primary_channel && tested(s).length < 3,
+          // One cheap test per sprint, two tests before the all-in call: the
+          // deadline leaves ~3-5 post-pivot weeks, so the Bullseye loop is
+          // "a couple of these" (as the copy says), not a leisurely survey.
+          cooldown: 1,
+          if: (s) => s.pivot_shipped && !s.primary_channel && tested(s).length < 2,
         },
         choices: [testChoice("referrals"), testChoice("creators"), testChoice("community"), testChoice("paid")],
       },
       {
         id: "channel_double_down", char: "growth", from: "You",
         text: "you've got data now, not opinions. the runway won't fund three channels. naval's line keeps echoing — be exceptional at one. where do all the chips go?",
-        when: { if: (s) => s.pivot_shipped && !s.primary_channel && tested(s).length >= 3 },
+        when: { if: (s) => s.pivot_shipped && !s.primary_channel && tested(s).length >= 2 },
         choices: [
           commitChoice("referrals"), commitChoice("creators"), commitChoice("community"), commitChoice("paid"),
           {

@@ -45,21 +45,6 @@
         : "hey — you don't know me. priya. a friend sent me kindred's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
     },
     {
-      id: "marcus", name: "Marcus", role: "Angel investor", type: "investor",
-      unlock: (s) => s.week >= 6 && !!s.priya_advising,
-      intro: "heard about kindred through the network. genuinely curious about what you're building in the dating space — would love to connect when you have a minute.",
-    },
-    {
-      id: "fatima", name: "Fatima", role: "Angel investor", type: "investor",
-      unlock: (s) => s.week >= 8 && !!s.priya_advising,
-      intro: "a few people i trust have mentioned kindred. i invest in consumer social — would love to hear more.",
-    },
-    {
-      id: "ryan", name: "Ryan", role: "Angel investor", type: "investor",
-      unlock: (s) => s.week >= 8 && !!s.priya_advising,
-      intro: "heard about you through the network. love what you're building in the dating space — would love to grab coffee.",
-    },
-    {
       id: "sarah", name: "Sarah", role: "Community leader", type: "connector",
       unlock: (s) => s.launched && !!s.activities_pivot,
       intro: "hey — heard about kindred from a mutual friend. i run a singles community in SF and i think there could be a fit.",
@@ -107,7 +92,10 @@
     },
     {
       id: "yc", name: "YC", role: "Y Combinator", type: "institution",
-      unlock: (s) => !!s.ycDeciding,
+      // The application window: the thread opens three weeks before the
+      // deadline that ends every run (see story/fundraising.js).
+      unlock: (s) => s.week >= s.deadline_week - 3,
+      intro: "Applications for the batch are open. The deadline is firm.",
     },
     {
       id: "users", name: "Users", role: "Your customers", type: "customer",
@@ -135,8 +123,7 @@
         { key: "launched", cls: "green", label: "Launched", test: (s) => !!s.launched },
         { key: "pivotshipped", cls: "green", label: "Shipped v2", test: (s) => !!s.pivot_shipped },
         { key: "firstcust", cls: "blue", label: "First Customer", test: (s) => s.customers >= 1 },
-        { key: "marcus", cls: "blue", label: "Lead Investor", test: (s) => !!s.marcusCommitted },
-        { key: "funded", cls: "red", label: "Round Closed", test: (s) => !!s.followerCommitted },
+        { key: "applied", cls: "blue", label: "Applied to YC", test: (s) => !!s.ycApplied },
         { key: "yc", cls: "red", label: "YC Accepted", test: (s) => !!s.ycAccepted },
       ],
     },

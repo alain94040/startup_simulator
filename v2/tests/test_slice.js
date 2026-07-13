@@ -276,30 +276,16 @@ console.log("summit-ignored driver (seed 42)");
   ok(!g.done("pivot_fifty_verdict"), "and no redemption card either — drift has no exit");
 }
 
-// ── pass 3: the angel round — the non-YC win ─────────────────────────────────
-console.log("angel-round driver (seed 4, 48 weeks, subsidized)");
+// ── the horizon: week 25 ends every run, graded ──────────────────────────────
+console.log("the deadline (seed 4, decent, subsidized)");
 {
-  // A run about fundraising: skip the YC windows (decent now applies by
-  // default) and give the investor chain (plus its two keys — the meetup and
-  // Priya's competitive-analysis ask) first call on actions.
-  // (Seed 4: Marcus's commit roll is seeded — most seeds close the round; a
-  // few roll "come back in 2 months" into a warmth soft-lock.)
-  const angelChooser = (a, g2) => (a.nodeId === "yc_window_ready" || a.nodeId === "yc_window_early")
-    ? ["skip"] : decent(a, g2);
-  const g = run(4, angelChooser, 48, {
-    subsidy: 500,
-    priority: (a) => ["marcus", "fatima", "ryan"].includes(a.charId) ? -2
-      : (a.nodeId === "founder_meetup" || a.nodeId === "mentor_competitor_bomb") ? -1
-        : actPriority(a),
-  });
-  ok(g.took("mentor_competitor_bomb:research") && g.s.priya_advising,
-    "competitive deep-dive made Priya an advisor");
-  ok(g.cast.get("marcus").active && g.took("marcus_intro:call"), "Marcus unlocked off the advisor network");
-  ok(g.s.deck_ready, "deck built on Marcus's ask (before diligence needed it)");
-  ok(g.s.customers >= 6, "customers compounded (" + g.s.customers + " by wk " + g.s.week + ")");
-  ok(g.s.marcusCommitted, "Marcus led the round ($400k, wk " + g.weekOf("seed_pitch") + ")");
-  ok(g.s.followerCommitted, "Fatima followed ($100k) — she never commits before the lead");
-  ok(g.s.game_won, "two angels committed — game won");
+  const g = run(4, decent, 40, { subsidy: 500 });
+  ok(g.s.week <= 25, "no run outlives the deadline (ended wk " + g.s.week + ")");
+  ok(g.took("yc_apply:submit"), "application submitted (wk " + g.weekOf("yc_apply") + ")");
+  ok(g.s.ycAccepted || g.s.ycRejected, "the verdict arrived at the deadline");
+  ok(g.s.game_won || g.s.game_over, "…and ended the run (" + (g.s.ycAccepted ? "accepted" : "rejected") + ")");
+  ok(g.threads.yc.some(m => m.from === "Y Combinator" && /passing|You're in/.test(m.body || "")),
+    "the verdict letter landed on the YC thread");
 
   // Scoring smoke on a full run.
   const Scoring = require("../scoring.js");
@@ -308,39 +294,35 @@ console.log("angel-round driver (seed 4, 48 weeks, subsidized)");
     "scorecard: 7 well-formed categories");
   const by = {}; for (const c of cats) by[c.key] = c;
   ok(by["edge-vs-commodity"].score === 100, "edge-vs-commodity scored 100 (buy/build/buy)");
-  ok(by["raise-early"].score >= 80, "raise-early scored high (" + by["raise-early"].score + ")");
-  ok(by["default-alive"].score === 100, "default-alive: won");
+  ok(by["clean-cap-table"].score != null, "the cap-table lesson graded (" + by["clean-cap-table"].score + ")");
+}
+
+// ── never applying is an ending too ──────────────────────────────────────────
+console.log("never-applied driver (seed 42, subsidized)");
+{
+  const noApply = (a) => a.nodeId === "yc_apply" ? null : decent(a);
+  const g = run(42, noApply, 40, { subsidy: 500 });
+  ok(!g.s.ycApplied && !g.s.ycAccepted && !g.s.ycRejected, "the application never went out");
+  ok(g.s.deadline_passed && g.s.game_over && g.s.week === 25,
+    "the deadline still ended the run at wk 25");
+  const by = {};
+  for (const c of require("../scoring.js").scoreGame(g)) by[c.key] = c;
+  ok(/deadline/.test(by["default-alive"].verdict), "default-alive names the missed application");
 }
 
 // ── pass 3: the Bullseye loop, played to completion ──────────────────────────
-// (Both wins end runs before the channel loop finishes, so this driver skips
-// YC and the lead pitch to let the growth machinery run its full course.)
-console.log("bullseye driver (seed 42, 44 weeks, subsidized)");
+// (The channel beats get first call on actions — but only the channel beats,
+// so the pivot spine keeps its pace and the loop — two cheap tests, then
+// all-in — fits in the post-pivot weeks before the deadline.)
+console.log("bullseye driver (seed 42, channel-first, subsidized)");
 {
-  const bullseye = (a, g2) =>
-    (a.nodeId === "yc_window_ready" || a.nodeId === "yc_window_early") ? ["skip"]
-      : a.nodeId === "seed_pitch" ? null : decent(a, g2);
-  const g = run(42, bullseye, 44, { subsidy: 500 });
-  ok(g.timesResolved("channel_test") >= 3, "ran the cheap channel tests (" + g.timesResolved("channel_test") + ")");
+  const g = run(42, decent, 40, {
+    subsidy: 500,
+    priority: (a) => (a.nodeId === "channel_test" || a.nodeId === "channel_double_down") ? -1 : actPriority(a),
+  });
+  ok(g.timesResolved("channel_test") >= 2, "ran the cheap channel tests (" + g.timesResolved("channel_test") + ")");
   ok(g.s.primary_channel === "referrals", "went all-in on the channel with legs");
-  ok(g.s.users >= 30, "the committed channel compounded (" + g.s.users + " users)");
-}
-
-// ── pass 3: the YC path — the verdict ends the run either way ────────────────
-console.log("YC-path driver (seed 42, subsidized)");
-{
-  const ycDriver = (a) =>
-    (a.nodeId === "yc_window_ready" || a.nodeId === "yc_window_early") ? ["apply"]
-      : a.nodeId === "seed_pitch" ? null // don't let the angels win first
-        : decent(a);
-  const g = run(42, ycDriver, 40, { subsidy: 500 });
-  ok(g.took("yc_apply:submit"), "application submitted (wk " + g.weekOf("yc_apply") + ")");
-  ok(g.s.ycAccepted || g.s.ycRejected, "the verdict arrived 3 weeks later");
-  ok(g.s.game_won || g.s.game_over, "the YC verdict ended the run (" + (g.s.ycAccepted ? "accepted" : "rejected") + ")");
-  ok(g.threads.founder.some(m => m.from === "Y Combinator" && /passing|You're in/.test(m.body || "")),
-    "the verdict was posted to the journal");
-  const cats = require("../scoring.js").scoreGame(g);
-  ok(cats.length === 7, "scorecard renders at the verdict");
+  ok(g.s.users >= 25, "the committed channel compounded (" + g.s.users + " users)");
 }
 
 // ── pass 3: community engagement arms the trust-&-safety flagship ────────────

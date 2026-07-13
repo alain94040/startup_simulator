@@ -43,7 +43,7 @@ Separation of concerns is the whole point of the redesign: the engine holds no c
 - **`play.html`** — a plain debug harness UI (kept for quick inspection).
 - **`tests/`** — `harness.js` (shared drivers + game loop + `jumpTo`, exports `V2Harness`), `test_slice.js`, `test_narrative.js`, `test_scenes.js`, `phase_map.js`, `sim_strategies.js`.
 
-The content set: **~162 nodes, 22 cast, 5 scene arcs** across the `story/` files: `opening`, `equity`, `dev_plan`, `team`, `dev_directions`, `demo_night`, `users`, `launch_day`, `slide`, `pivot_day`, `community`, `fundraising`, `growth`, `jordan_arc`, `discovery`, `press`, `ambient`.
+The content set: **~148 nodes, 19 cast, 5 scene arcs** across the `story/` files: `opening`, `equity`, `dev_plan`, `team`, `dev_directions`, `demo_night`, `users`, `launch_day`, `slide`, `pivot_day`, `community`, `fundraising`, `growth`, `jordan_arc`, `discovery`, `press`, `ambient`.
 
 ## The story graph: nodes, when-clauses, effects
 
@@ -70,7 +70,7 @@ The engine replaced v1's single-`urgency`-axis "cards" with an explicit dependen
 `scene beat > story beat > ambient > filler`.
 An open node holds its slot until answered or its `timeout` fires. New messages appear at the week boundary — except **mid-scene**, where the next beat lands immediately.
 
-**Win:** YC acceptance (`s.ycAccepted`), or a lead **and** a follower angel (`s.marcusCommitted && s.followerCommitted`). **Lose:** cash hits $0, or a YC rejection (`s.ycRejected` — the YC verdict is final either way). **Starting cash** $10,000; **burn** `burnPerWeek = 500 + s.extra_burn` (recurring SaaS costs from build-vs-buy choices).
+**The horizon:** every run ends entering `s.deadline_week` (25) — YC applications close, the run is graded (`engine.gradeScore()`, B+ = 80 to get in), and the report card prints no matter what. **Win:** YC acceptance (`s.ycAccepted`). **Lose:** rejection (`s.ycRejected`), never applying (`s.deadline_passed`), or cash hitting $0 first. **Starting cash** $10,000; **burn** `burnPerWeek = 500 + s.extra_burn` (recurring SaaS costs from build-vs-buy choices).
 
 ## Focus arcs (scenes)
 
@@ -80,7 +80,7 @@ The UI renders a scene as the **same iMessage chat, restricted to the room**: a 
 
 ## The UI (`v2/game.html`)
 
-Self-contained. Three surfaces — **Messages** (rail · thread), **News Feed** (press/community posts you engage inline), and **Bank** (the ledger; opened from the clickable Runway gauge, not a tab). A persistent right column carries the **triage** ("Needs a call" / "When you have a minute" — your own moves you act on in-column) and the **journal mirror** (a read-only, handwritten-font recap of outcomes + milestone stamps). A header **☑ to-do gauge** shows one checklist per company stage (Ship the demo → Get to launch → Survive the slide → Rebuild as v2 → Prove a channel → Fill the round), derived from the facts ledger + `s.items`. The turn-end reveal is ordered: runway counts down → the journal inks in → iOS-style notifications buzz under a header bell → the active thread refreshes → changed stats pulse. Endgame shows the `V2Scoring` report card. Avatar colors/initials live in a `STYLE` map here — presentation, not engine state.
+Self-contained. Three surfaces — **Messages** (rail · thread), **News Feed** (press/community posts you engage inline), and **Bank** (the ledger; opened from the clickable Runway gauge, not a tab). A persistent right column carries the **triage** ("Needs a call" / "When you have a minute" — your own moves you act on in-column) and the **journal mirror** (a read-only, handwritten-font recap of outcomes + milestone stamps). A header **☑ to-do gauge** shows one checklist per company stage (Ship the demo → Get to launch → Survive the slide → Rebuild as v2 → Prove a channel → Ace the application), derived from the facts ledger + `s.items`. The turn-end reveal is ordered: runway counts down → the journal inks in → iOS-style notifications buzz under a header bell → the active thread refreshes → changed stats pulse. Endgame shows the `V2Scoring` report card. Avatar colors/initials live in a `STYLE` map here — presentation, not engine state.
 
 ## Coding conventions
 

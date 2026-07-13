@@ -252,7 +252,7 @@
         choices: [
           { key: "individuals", label: "Young singles — bigger market, easier to reach", effects: { marketFit: 4 },
             fx: () => "Locked in: 25-35 year olds tired of swiping. Bigger pool, faster feedback." },
-          { key: "teams", label: "Relationship-seekers — that's where the revenue is", effects: { warmth: 4 },
+          { key: "teams", label: "Relationship-seekers — that's where the revenue is", effects: { marketFit: 3 },
             fx: () => "Going after people who are seriously looking. Higher willingness to pay, stronger retention story." },
           { key: "open", label: "Follow the early users",
             fx: () => "Staying flexible. Let the first signups tell you who they are." },
@@ -264,7 +264,7 @@
         text: "been sitting on this: dating apps go one of three ways — VC-backed and scale fast (Hinge, Bumble), get acquired by Match Group, or build a quiet profitable subscription business. which are we aiming for? changes everything about how we make decisions.",
         when: { if: (s) => s.week >= 3 && s.week <= 9 },
         choices: [
-          { key: "vc", label: "VC route — raise, grow fast, aim for IPO or acquisition", effects: { warmth: 5 },
+          { key: "vc", label: "VC route — raise, grow fast, aim for IPO or acquisition", effects: { signal: 3 },
             fx: () => "Aligned on the VC path. Every conversation with investors gets sharper when you know what you're building toward." },
           { key: "profitable", label: "Profitable first — build a real business, no VC needed", effects: { marketFit: 3 },
             fx: () => "Profitable first. Every product decision gets cleaner when the bar is 'do people pay for this', not 'can we raise on this'." },
@@ -276,7 +276,9 @@
 
       // ── COMMITMENTS & ARCHITECTURE (post-launch texture) ─────────────────────
       {
-        id: "alex_decision", char: "alex", from: "Customer",
+        // Ambient: post-launch texture — it must not out-rank the endgame's
+        // designed beats (the Jordan arc, the Maya bookend) for Alex's slot.
+        id: "alex_decision", char: "alex", from: "Customer", ambient: true,
         text: "alex told me you'd add photo verification by end of week. it's wednesday. there's nothing about this in the roadmap.",
         when: { if: (s) => s.launched && s.customers > 1 },
         choices: [
@@ -294,52 +296,10 @@
           },
         },
       },
-      {
-        id: "alex_wants_rebuild", char: "alex",
-        text: "the current approach won't scale past 100 users. i know it's 2 weeks of work but if we don't do it now, it'll take 3x longer later.",
-        when: { if: (s, e, char) => char.focus === "build" && (s.has_demo || (s.tech_debt || 0) >= 20) },
-        choices: [
-          {
-            key: "refactor", label: "Do the refactor",
-            journal: "Gave Alex two weeks to rebuild the API layer from scratch. Nothing else gets done — but if he's right, it'll save us months later.",
-            effects: { char: { alex: { morale: 10 } } },
-            fx(s, e) {
-              const alex = e.cast.get("alex");
-              if (s.items) {
-                if (s.items.api_design) { s.items.api_design.status = "active"; s.items.api_design.quality = null; }
-                s.items.arch_refactor = { status: "active", quality: null, assignee: "alex", owner: "alex", effortStart: alex.buildEffort, effortTarget: alex.buildEffort + 2.0 };
-              }
-              return "Alex is heads-down. He's rebuilding the API layer from scratch — 2 weeks, nothing else gets done.";
-            },
-          },
-        ],
-        // Pre-launch, skipping it is survivable; post-launch the debt bites.
-        timeout: {
-          weeks: 4,
-          unless: (s) => !s.launched,
-          effects: { users: -8, customers: -2, char: { alex: { morale: -20 } } },
-          say: { char: "alex", text: "3 active outages this week from the tech debt i flagged. we're losing users in real time." },
-        },
-      },
-      {
-        id: "arch_refactor_done", char: "alex",
-        text: "refactor's done. rebuilt the api layer from scratch — clean, fast, and can scale past 10k users without touching it again.",
-        when: { if: (s) => s.items && s.items.arch_refactor && s.items.arch_refactor.status === "done" },
-        choices: [
-          {
-            key: "review", label: "Review the new architecture",
-            effects: { char: { alex: { trust: 5, morale: 5 } } },
-            fx(s) {
-              if (s.items && s.items.api_design) { s.items.api_design.status = "done"; s.items.api_design.quality = "solid"; }
-              return "Walked through the new codebase with Alex. Clean separation, well-documented. He seemed proud of this one.";
-            },
-          },
-        ],
-        timeout: {
-          weeks: 3,
-          fx(s) { if (s.items && s.items.api_design) { s.items.api_design.status = "done"; s.items.api_design.quality = "solid"; } },
-        },
-      },
+      // (The pre-launch architecture-refactor detour — alex_wants_rebuild /
+      // arch_refactor_done — was retired in the horizon pass: it double-taught
+      // proto_to_product's ship-vs-polish lesson and serialized Alex's thread
+      // for ~2 extra weeks on the road to launch.)
 
       // ── THE DEPARTURE THREAT (neglect has a face) ────────────────────────────
       {
