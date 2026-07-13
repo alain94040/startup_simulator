@@ -103,9 +103,9 @@ const ALLOW = new Set([
   "trust_safety",           // "app store REVIEW" + "USER-generated content" — Apple's
                             // form, not customer feedback; deliberately pre-launch
   "alex_sync_build",        // "customer feedback" = discovery-sprint findings, pre-launch
-  "competitor_growing",     // gated on customers>=1 at surfacing; can be HELD open
-                            // across a mid-week churn to 0 and expires at the next
-                            // boundary — one-poll staleness, not a narrative bug
+  // The Flare arc quotes the COMPETITOR's users/signups/funding — market talk,
+  // not claims about kindred being live.
+  "flare_stealth", "flare_10k", "flare_feature", "flare_stumble", "flare_epilogue",
   // Community ladders: threads quote OTHER products' users/signups and waitlist
   // asks — market talk, not claims about kindred being live.
   "hn_thread", "community_hn_1", "community_hn_2", "community_hn_3",

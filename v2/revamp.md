@@ -197,6 +197,29 @@ and the scorecard prints whether you applied or not. Consequences:
 
 Content set after the cut: **148 nodes, 19 cast, 5 scenes.**
 
+### Pass 5b — the chapter guide and the Flare drumbeat
+
+Two follow-ups from playtesting the horizon build:
+
+- **The to-do gauge is the chapter guide.** No cinematic chapter separation —
+  the scene arcs already do that. The header ☑ gauge's stages became the five
+  chapters (Ch 1 · Ship the demo → Ch 2 · Get to launch → Ch 3 · Find out why
+  they leave → Ch 4 · Rebuild as v2 → Ch 5 · Ace the application), each with a
+  one-line goal shown in the dropdown. "Prove a channel" merged into Ch 5; the
+  Jordan question joined Ch 4's list.
+- **The Flare arc: one beat per chapter, ignore-is-right.** The old
+  competitor_launch/competitor_growing pair (1-week timeouts, ignored in 100%
+  of games, ignore-penalized) became five phase-gated beats: stealth launch
+  (ch 1) → 10k users (ch 2) → their feature ships during your slide (ch 3) →
+  they stumble on the exact thing you pivoted to fix (ch 4) → they copy your
+  pivot (ch 5). The design lesson: a competitor launching is devastating for
+  morale — that's the text — but the right move is to steady the team and stay
+  on your own roadmap. Copying is the trap (s.copied_competitor, a weight-2
+  part of "Features won't save you"). Leaving a beat on read is harmless to
+  the company; it just means nobody steadied Alex (small morale drift). Beats
+  ride 3-week windows and close at chapter boundaries — a missed newspaper,
+  not a stuck dependency.
+
 ---
 
 ## Current status

@@ -138,6 +138,10 @@
             note: g.took("feature_cluster:build") ? "Built the thing three users asked for independently — that one counts." : null },
           { faced: g.done("pivot_day_decide"), weight: 1, got: g.took("pivot_day_decide:hedge") ? 0 : 1,
             note: g.took("pivot_day_decide:hedge") ? "The hedge: an events tab bolted onto a dating app." : null },
+          { faced: ["flare_stealth", "flare_10k", "flare_feature", "flare_epilogue"].some(id => g.done(id)),
+            weight: 2, got: s.copied_competitor ? 0 : 1,
+            note: s.copied_competitor ? "Chased Flare's feature list instead of your own users."
+              : "Flare launched, raised, and shipped — and you kept building your product." },
         ]),
         ["You shipped what demand asked for and nothing the graph merely wished for.",
           "A mixed record — some features were bets, some were flinches.",

@@ -184,6 +184,7 @@
   .td-stages span { border-radius: 999px; padding: 3px 9px; background: var(--soft); color: var(--dim); white-space: nowrap; }
   .td-stages .done { color: #1d8f3c; background: #e9f6ec; }
   .td-stages .cur { background: var(--ink); color: #fff; font-weight: 600; }
+  .td-goal { font-size: 12.5px; font-style: italic; color: var(--dim); padding: 2px 2px 8px; border-bottom: 1px solid var(--soft); }
   .td-row { display: flex; align-items: baseline; gap: 10px; padding: 6px 2px; border-bottom: 1px solid var(--soft); font-size: 13px; }
   .td-box { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid #c9c9d0; flex: none; position: relative; top: 2px; }
   .td-row.done .td-box { background: #1d8f3c; border-color: #1d8f3c; }
@@ -702,7 +703,9 @@ const LAUNCH_BG = {
 };
 // ── the founder's to-do list: one checklist per stage of the company ─────────
 const STAGES = [
-  { id: "demo", label: "Ship the demo", active: (s, g) => !s.has_demo, items: [
+  { id: "demo", label: "Ch 1 · Ship the demo",
+    goal: "Become a real company — paperwork, the split, and something a stranger can touch.",
+    active: (s, g) => !s.has_demo, items: [
     { t: "Kick off the build", done: (s, g) => g.done("start_prototype") },
     { t: "Incorporate", done: s => !!s.incorporated, note: () => "Delaware C-corp · $500" },
     { t: "Settle the equity split", done: s => !!s.jordan_equity, note: s => s.equity_proposal ? s.equity_proposal + " · nobody set up vesting" : null },
@@ -711,7 +714,9 @@ const STAGES = [
     { t: "Matching engine: ours or rented", done: (s, g) => g.done("matching_choice"), note: s => s.matching_owned ? "ours — the IP" : s.matching_licensed ? "licensed · $100/wk" : null },
     { t: "Put it in front of a stranger", done: s => !!s.has_demo },
   ]},
-  { id: "launch", label: "Get to launch", active: (s, g) => s.has_demo && !s.launched, items: [
+  { id: "launch", label: "Ch 2 · Get to launch",
+    goal: "Launch before the waitlist — and the runway — go cold.",
+    active: (s, g) => s.has_demo && !s.launched, items: [
     { t: "Instrument the funnel", done: (s, g) => g.done("analytics_choice"), note: s => s.analytics_live ? "SDK · $30/wk — you can see" : null },
     { t: "Pick the launch market", done: s => s.beachhead != null, note: s => s.seed_strategy === "austin" ? "Austin — where the waitlist lives" : s.beachhead === "narrow" ? "one dense market" : s.beachhead === "broad" ? "everywhere at once" : null },
     { t: "Answer Apple on safety", done: (s, g) => g.done("trust_safety") },
@@ -719,27 +724,32 @@ const STAGES = [
     { t: "The hardening week", done: s => s.productPhase === "product" },
     { t: "Flip the switch", done: s => !!s.launched },
   ]},
-  { id: "slide", label: "Survive the slide", active: (s, g) => s.launched && !s.pivot_summit_done && !s.pivot_deferred && !s.activities_pivot, items: [
+  { id: "slide", label: "Ch 3 · Find out why they leave",
+    goal: "The graph is sliding. Bank the evidence, then get both sides in a room.",
+    active: (s, g) => s.launched && !s.pivot_summit_done && !s.pivot_deferred && !s.activities_pivot, items: [
     { t: "Watch retention, not signups", done: (s, g) => g.done("slide_hangover") },
     { t: "Call Maya", done: (s, g) => g.done("slide_maya_call"), note: s => s.maya_quote ? "her words, kept" : null },
     { t: "Read the Friday cohort", done: (s, g) => g.done("slide_cohort") || !s.analytics_live, note: s => !s.analytics_live ? "no analytics — flying on gut" : null },
     { t: "Hear Alex's thesis out", done: (s, g) => g.done("slide_alex_thesis") },
     { t: "Get both sides in a room", done: s => !!s.pivot_summit_done },
   ]},
-  { id: "v2", label: "Rebuild as v2", active: (s, g) => s.activities_pivot && !s.pivot_shipped, items: [
+  { id: "v2", label: "Ch 4 · Rebuild as v2",
+    goal: "Ship the pivot — and decide who's actually on this team for it.",
+    active: (s, g) => s.activities_pivot && !s.pivot_shipped, items: [
     { t: "Call the pivot", done: s => !!s.activities_pivot, note: () => "plans, not profiles" },
     { t: "Rip out the old screens", done: s => !!(s.items && s.items.matching_algo && s.items.matching_algo.status === "obsolete") },
     { t: "Repoint the matching engine", done: s => !!(s.items && s.items.plans_matching && s.items.plans_matching.status === "done") },
     { t: "The plans UI", done: s => !!(s.items && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved)) },
+    { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? "she's off the team" : s.jordan_drifting ? "she's drifting — Alex is covering" : null },
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped },
   ]},
-  { id: "channel", label: "Prove a channel", active: (s, g) => s.pivot_shipped && !s.primary_channel, items: [
-    { t: "Test channels cheaply (2)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 2, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 2 tested" },
-    { t: "Go all-in on the one with legs", done: s => !!s.primary_channel, note: s => s.primary_channel ? "all chips on " + s.primary_channel : null },
-  ]},
-  { id: "apply", label: "Ace the application", active: () => true, items: [
+  { id: "apply", label: "Ch 5 · Ace the application",
+    goal: s => "Prove it before week " + s.deadline_week + ": revenue, a channel, a clean cap table.",
+    active: () => true, items: [
     { t: "Take the friends & family money", done: (s, g) => g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") },
     { t: "Paying subscribers", done: s => s.customers >= 1, note: s => s.customers + " paying" },
+    { t: "Test channels cheaply (2)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 2, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 2 tested" },
+    { t: "Go all-in on the one with legs", done: s => !!s.primary_channel, note: s => s.primary_channel ? "all chips on " + s.primary_channel : null },
     { t: "Keep the cap table clean", done: s => !s.jordan_cleanup_needed, note: s => s.jordan_cleanup_needed ? "a departed co-founder still owns her stake" : null },
     { t: "Send the application", done: s => !!s.ycApplied, note: s => "deadline · wk " + s.deadline_week },
     { t: "The verdict", done: s => !!s.ycAccepted },
@@ -1160,8 +1170,10 @@ function renderTodo() {
     return '<div class="td-row' + (done ? " done" : "") + '"><div class="td-box"></div><div class="td-main">' + esc(it.t) +
       (note ? '<span class="td-note">' + esc(note) + "</span>" : "") + "</div></div>";
   }).join("");
-  $("todoPop").innerHTML = '<div class="td-stages">' + pills + "</div>" + rows +
-    '<div class="td-foot">one list per stage of the company. answering your co-founders\' questions is what moves it.</div>';
+  const goal = typeof cur.goal === "function" ? cur.goal(game.s, game) : cur.goal;
+  $("todoPop").innerHTML = '<div class="td-stages">' + pills + "</div>" +
+    (goal ? '<div class="td-goal">' + esc(goal) + "</div>" : "") + rows +
+    '<div class="td-foot">one list per chapter of the story. answering your co-founders\' questions is what moves it.</div>';
 }
 $("gTodo").onclick = (e) => { e.stopPropagation(); renderTodo(); $("todoPop").classList.toggle("on"); };
 document.addEventListener("click", (e) => {

@@ -1,9 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// v2/story/press.js — the outside world: the competitor arc (Flare), social
-// media, the reporter's deadline, the power user's happy churn, the two
-// snake-oil consultants, and the friends-and-family micro-checks (Jamie,
-// David). Mostly ambient texture; the competitor arc feeds the
-// features-won't-save-you and moat lessons.
+// v2/story/press.js — the outside world: the Flare arc (the competitor as a
+// per-chapter drumbeat), social media, the reporter's deadline, the power
+// user's happy churn, the two snake-oil consultants, and the friends-and-
+// family micro-checks (Jamie, David).
+//
+// THE FLARE ARC — one beat per chapter, phase-gated (no after-chains: a beat
+// whose chapter passes un-surfaced is a newspaper you missed, not a stuck
+// dependency). The design lesson: a competitor launching is DEVASTATING for
+// morale — that's the text — but the right move is to steady the team and
+// stay on your own roadmap. Copying them is the trap (s.copied_competitor,
+// scored under "Features won't save you"). Leaving a beat on read is mostly
+// harmless to the company — nobody steadied Alex, that's all.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -12,76 +19,115 @@
   const mod = {
     nodes: [
 
-      // ── THE COMPETITOR ARC (Market feed) ─────────────────────────────────────
+      // ── THE FLARE ARC (one beat per chapter) ─────────────────────────────────
       {
-        id: "competitor_launch", char: "techcrunch", from: "TechCrunch",
-        text: "Flare just came out of stealth with $3M. same space — serious relationships, same price point. they already have 5,000 users from a TikTok campaign.",
-        when: { if: (s) => s.has_demo },
+        // Ch 1 — mid-build, pre-demo: the gut punch. Someone shipped "your" idea
+        // while your product is still a whiteboard.
+        id: "flare_stealth", char: "techcrunch", from: "TechCrunch",
+        text: "Flare just came out of stealth with $3M — same space, serious relationships, same price point. 5,000 users from one TikTok campaign. alex sent the article at 1am with no comment. jordan replied with one word: 'oof.'",
+        when: { if: (s) => s.items != null && !s.has_demo && s.week >= 5 },
         choices: [
           {
-            key: "study", label: "Study what they built",
-            journal: "Spent 2 weeks mapping Flare's product. They went broad — swiping, video dates, lots of noise. Our niche is the gap they skipped.",
-            effects: { marketFit: 8, signal: 4, flags: { competitive_intel: true }, char: { alex: { morale: -3 } } },
-            fx: () => "Spent 2 weeks mapping their product. They went broad — swiping, video dates, lots of noise. Your niche is the gap they skipped.",
+            key: "steady", label: "Steady the team — their launch isn't our roadmap",
+            journal: "Flare came out of stealth with $3M and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
+            effects: { marketFit: 3, char: { alex: { morale: 6 }, jordan: { morale: 4 } } },
+            fx: () => "You called both of them that morning. A funded competitor is proof the problem is real — and everything in their screenshots is broad and shallow, the exact thing you're not building. Alex exhaled. Back to work.",
           },
           {
-            key: "compare", label: "Write a comparison piece",
-            journal: "Published a direct comparison with Flare. Our niche is clearer now. Alex is rattled but focused.",
-            effects: { signal: 6, char: { alex: { morale: -5 } } },
-            fx: () => "Published a direct comparison. Your niche is clearer. Alex is rattled but focused.",
-          },
-          {
-            key: "copy", label: "Copy their best features",
-            journal: "Copied Flare's best features. Shipped fast — but we're building for their users now, not ours. Alex is frustrated.",
-            effects: { marketFit: -8, signal: -5, flags: { copied_competitor: true }, char: { alex: { morale: -10 } } },
-            fx: () => "Shipped fast. But you're building for their users now, not yours. Alex is frustrated. Twitter called you a Flare clone.",
-          },
-          {
-            key: "ignore", label: "Ignore it — stay on roadmap",
-            journal: "Ignored Flare's launch and stayed on our roadmap. Their noise is real but so is our plan.",
-            effects: { flags: { competitor_ignored: true }, char: { alex: { morale: -5 } } },
-            fx: () => "Back to building. Their noise is real but so is your roadmap. Alex saw the article and went quiet for a day.",
+            key: "copy", label: "Rework our plan around what they shipped",
+            journal: "Panicked at Flare's launch and reworked the plan around their feature list. We're building for their users now, not ours — and Alex knows it.",
+            effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -10, effort: -1.0 } } },
+            fx: () => "You spent the week rebuilding the roadmap around their screenshots. Alex shipped none of it happily. You're building their product a year late now, with $2.99M less.",
           },
         ],
-        timeout: {
-          weeks: 1,
-          effects: { signal: -12, flags: { competitor_ignored: true } },
-          say: { from: "Market signal", text: "Flare has 10,000 users and is well-funded. you need a sharper answer to 'why kindred and not them.'" },
-        },
+        // On read: the company is fine — but nobody talked Alex down.
+        timeout: { weeks: 3, effects: { char: { alex: { morale: -6 } } } },
       },
       {
-        id: "competitor_growing", char: "techcrunch", from: "TechCrunch",
-        text: "Flare hit 10,000 users. two of your subscribers emailed asking if you're planning to add video dates — the feature Flare just launched.",
-        when: {
-          took: [["competitor_launch:ignore", "competitor_launch:@ignored"]], delay: 3,
-          if: (s) => s.customers >= 1,
-        },
+        // Ch 2 — the road to launch: their graph goes up while yours is a checklist.
+        id: "flare_10k", char: "techcrunch", from: "TechCrunch",
+        text: "Flare crossed 10,000 users and closed a party round. your launch is still a checklist. alex keeps refreshing their app store page between commits — 'should we just add their top three features before we flip the switch?'",
+        when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
-            key: "calls", label: "Do user calls — understand what they actually need",
-            journal: "Called 5 subscribers. Most still prefer our approach. Two want video dates — for a different reason than I assumed. Now I know what to build next.",
-            effects: { marketFit: 6, signal: 4 },
-            fx: () => "Called 5 subscribers. Most still prefer your approach. Two want video dates — but for a different reason than you assumed. Now you know what to build next.",
+            key: "course", label: "Our launch, our scope — nothing gets added",
+            journal: "Flare hit 10K and Alex wanted to stuff their top features into our launch. Held the scope: we launch our product, not a reaction to theirs. He deleted the app store tab.",
+            effects: { signal: 3, char: { alex: { morale: 5 } } },
+            fx: () => "You held the scope. 'We're not launching a reaction to their product.' Alex closed the app store tab and went back to the launch list — faster, if anything.",
           },
           {
-            key: "discount", label: "Offer existing subscribers a discount to stay",
-            journal: "Offered existing subscribers a discount to stay. Bought loyalty — not ideal, but stopped the bleeding.",
-            effects: { cash: -500, customers: 1 },
-            fx: () => "Gave 3 subscribers 20% off. Bought loyalty — not ideal, but stopped the bleeding. The feature question didn't go away.",
-          },
-          {
-            key: "ignore", label: "Keep building, ignore the noise",
-            journal: "Kept building, ignored the Flare noise. Lost two subscribers. The remaining users are still with us — for now.",
-            effects: { marketFit: -5 },
-            fx: () => "Stayed the course. Lost two subscribers to Flare. The remaining users are still with you — for now.",
+            key: "copy", label: "Add their top three features first",
+            journal: "Delayed our launch to bolt on Flare's top three features. Scope creep in its purest form — and the launch list just got two weeks longer.",
+            effects: { marketFit: -5, flags: { copied_competitor: true }, char: { alex: { morale: -8, effort: -1.2 } } },
+            fx: () => "Three borrowed features went on the launch list. None of them serve your niche, all of them cost build weeks, and Flare will have shipped three more by the time you're live.",
           },
         ],
-        timeout: {
-          weeks: 1,
-          effects: { marketFit: -8, signal: -8, users: -3 },
-          say: { from: "User", text: "we've been evaluating Flare. going to give them a try — nothing personal." },
-        },
+        timeout: { weeks: 3, effects: { char: { alex: { morale: -5 } } } },
       },
+      {
+        // Ch 3 — the slide: their shiny feature ships exactly when your graph flattens.
+        id: "flare_feature", char: "techcrunch", from: "TechCrunch",
+        text: "Flare shipped video dates to a wave of press — the same week your signups flatlined. two of your users emailed asking if kindred will match it. alex forwarded both without comment.",
+        when: { if: (s) => s.launched && !s.activities_pivot && !s.pivot_summit_done && s.users >= 3 },
+        choices: [
+          {
+            key: "hold", label: "The evidence work comes first — their feature isn't our leak",
+            journal: "Flare shipped video dates the week our graph flattened, and the pressure to match them was real. Held the line: our users aren't leaving for video dates, they're leaving after the match. The evidence work continues.",
+            effects: { marketFit: 4, char: { alex: { morale: 3 } } },
+            fx: () => "You put the two emails next to Maya's quote and the cohort numbers. Nobody churned asking for video dates — they churned when nothing happened after the match. Their feature is not your leak. Back to the evidence.",
+          },
+          {
+            key: "copy", label: "Match them — build video dates now",
+            journal: "Dropped the retention investigation to chase Flare's video dates. Weeks of build for a feature none of our churned users asked for. The real leak is still open.",
+            effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -6, effort: -1.5 } } },
+            fx: () => "Alex went heads-down on WebRTC while the week-one cohort kept evaporating. Nobody who churned had asked for video dates. The real leak stayed open the whole time.",
+          },
+        ],
+        timeout: { weeks: 3, effects: { char: { alex: { morale: -4 } } } },
+      },
+      {
+        // Ch 4 — the rebuild: Flare stumbles on the exact thing you pivoted to fix.
+        id: "flare_stumble", char: "techcrunch", from: "TechCrunch",
+        text: "Flare's growth stalled. their app store rating slid to 3.1 and the top review reads: 'thousands of matches, zero actual dates.' the exact disease you're rebuilding to cure. alex sent it with three exclamation marks — first good morale day in a while.",
+        when: { if: (s) => s.activities_pivot && !s.pivot_shipped },
+        choices: [
+          {
+            key: "screenshot", label: "Save the receipt — then back to the rebuild",
+            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their stumble is our thesis, written by their users.",
+            effects: { signal: 4, marketFit: 3, char: { alex: { morale: 6 }, jordan: { morale: 3 } } },
+            fx: () => "Screenshot saved — a competitor's users writing your pivot thesis for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
+          },
+          {
+            key: "gloat", label: "Write the told-you-so thread",
+            journal: "Spent a day writing a told-you-so thread about Flare's stumble. Felt great, read petty, moved nothing. The rebuild lost a day.",
+            effects: { signal: 2, char: { alex: { morale: 2, effort: -0.5 } } },
+            fx: () => "The thread did numbers. It also cost the rebuild a day and read exactly as petty as it was. Their users' complaints were already making your argument better than you could.",
+          },
+        ],
+        timeout: { weeks: 3 },
+      },
+      {
+        // Ch 5 — the proving weeks: the antagonist blinks. They're copying YOU now.
+        id: "flare_epilogue", char: "techcrunch", from: "TechCrunch",
+        text: "Flare just announced a 'reimagining' — activity-based matching, plans instead of profiles. sound familiar? they have $3M and 40 people to point at your idea. jordan-from-the-group-chat take: 'lol.' alex take: 'we should panic, right?'",
+        when: { if: (s) => s.pivot_shipped },
+        choices: [
+          {
+            key: "work", label: "No panic — they validated us. Let the work answer",
+            journal: "Flare is pivoting to copy our plans-first model. Told the team the only answer is the work: we're months ahead on the thing that matters and we talk to our users every week. Their copy of our screens won't come with our understanding.",
+            effects: { signal: 5, marketFit: 3, char: { alex: { morale: 6 } } },
+            fx: () => "A $3M competitor just told the market your pivot was right. They can copy the screens; they can't copy fifty user calls and a rebuilt matching engine. It goes in the application word for word. Back to work.",
+          },
+          {
+            key: "panic", label: "They'll crush us — rush everything out now",
+            journal: "Panicked at Flare copying our pivot and rushed half-finished work out the door. Quality dipped exactly when the application needed proof of the opposite.",
+            effects: { signal: -4, marketFit: -4, char: { alex: { morale: -8 } } },
+            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked for your retention numbers. Panic is a strategy the way falling is flying.",
+          },
+        ],
+        timeout: { weeks: 3 },
+      },
+
       // ── SOCIAL & PRESS ───────────────────────────────────────────────────────
       {
         id: "public_complaint", char: "twitter", from: "Twitter",
