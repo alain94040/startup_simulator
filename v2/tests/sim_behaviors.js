@@ -33,6 +33,24 @@ const onlyChars = (chars) => (a, g) => chars.has(a.charId) ? H.decent(a, g) : nu
 
 const OUTSIDE = new Set(["users", "growth", "twitter", "lena", "techcrunch", "hacker_news", "tom", "sarah"]);
 
+// A half-decent founder with a lean: decent choices whenever they engage, but
+// cards in the disfavored categories only get their attention `p` of the time
+// (seeded roll, memoized per node·week — so a standing offer like dev_plan is
+// delayed by the lean, while a 1-3 week timeout card is usually missed).
+const lopsided = (skipCats, p) => (seed) => {
+  const rng = H.mulberry32((seed ^ 0x10B51D3D) >>> 0);
+  const rolls = new Map();
+  return (a, g) => {
+    const cat = H.CATEGORY[a.nodeId] || "other";
+    if (skipCats.includes(cat)) {
+      const key = a.nodeId + ":" + g.s.week;
+      if (!rolls.has(key)) rolls.set(key, rng() < p);
+      if (!rolls.get(key)) return null;
+    }
+    return H.decent(a, g);
+  };
+};
+
 const STRATEGIES = {
   // the canonical good founder — every contract's baseline
   decent: { chooser: "decent" },
@@ -56,6 +74,11 @@ const STRATEGIES = {
   no_meetup: { chooser: withPrefs({ founder_meetup: null }) },
   // picks the over-scoped plan A
   full_plan: { chooser: withPrefs({ dev_plan: ["full"] }) },
+  // the lopsided founders: half-decent, one lean each. builder loves the IDE
+  // and tends to ignore marketing (research + growth cards get 25% of his
+  // attention); marketer works the market and tends to ignore the build.
+  builder: { makeChooser: lopsided(["research", "growth"], 0.25) },
+  marketer: { makeChooser: lopsided(["build"], 0.25) },
 };
 
 // ── play + metrics ────────────────────────────────────────────────────────────
@@ -66,7 +89,7 @@ function runStrategy(name, spec) {
     const seed = 1000 + i;
     const m = { moraleWk3: null, moraleWk10: null };
     try {
-      const g = H.playGame(seed, spec.chooser, {
+      const g = H.playGame(seed, spec.makeChooser ? spec.makeChooser(seed) : spec.chooser, {
         priority: spec.priority ? spec.priority(seed) : undefined,
         onWeekStart(game) {
           if (game.s.week === 3) m.moraleWk3 = game.cast.get("alex").morale;
@@ -211,7 +234,19 @@ check(`full_plan launches later: wk ${r1(S.full_plan.meanLaunchWk)} > decent wk 
 check(`full_plan.wins (${S.full_plan.wins}%) < decent.wins (${S.decent.wins}%)`,
   S.full_plan.wins < S.decent.wins);
 
-// K · hygiene (old: no runtime errors across all strategies)
+// K · the lean asymmetry (new, from the chapter-economy work): a half-decent
+// founder who leans against the market loses most wins (research buys the
+// pivot and the evidence); one who leans against the build loses all of them
+// (you can't market a product that never ships). Build is existential,
+// research is instrumental — the ordering must hold.
+check(`builder.wins (${S.builder.wins}%) < decent.wins (${S.decent.wins}%) — ignoring the market costs wins`,
+  S.builder.wins < S.decent.wins);
+check(`marketer.wins (${S.marketer.wins}%) < builder.wins (${S.builder.wins}%) — no product beats no research`,
+  S.marketer.wins < S.builder.wins);
+check(`builder launches (${S.builder.launched}%) >= 90%; marketer (${S.marketer.launched}%) <= 50%`,
+  S.builder.launched >= 90 && S.marketer.launched <= 50);
+
+// L · hygiene (old: no runtime errors across all strategies)
 const totalErrors = Object.values(S).reduce((n, r) => n + r.errors, 0);
 check(`no runtime errors across all strategies (total: ${totalErrors})`, totalErrors === 0);
 

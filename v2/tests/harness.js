@@ -118,6 +118,55 @@
     return p || a.options[0].key;
   };
 
+  const CATEGORY = {
+    // build — the product: scope, build-vs-buy, direction calls, fixes
+    start_prototype: "build", dev_plan: "build", auth_choice: "build", auth_forced: "build",
+    first_screen: "build", matching_choice: "build", ranking: "build",
+    ios_sprint_1: "build", ios_sprint_2: "build", analytics_choice: "build",
+    trust_safety: "build", proto_to_product: "build", good_enough_launch: "build",
+    feature_spree: "build", bug_reports: "build", feature_request_custom: "build",
+    feature_cluster: "build", pivot_relaunch: "build", pivot_fifty_verdict: "build",
+    founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
+    founder_solo_launch: "build", founder_solo_build: "build", jordan_launch_blocker: "build",
+    // research — the market: interviews, communities, the competitor, evidence
+    interviews: "research", waitlist_calls: "research", waitlist_cold: "research",
+    hn_thread: "research", community_hn_1: "research", community_hn_2: "research",
+    community_hn_3: "research", community_reddit_1: "research", community_reddit_2: "research",
+    community_reddit_3: "research", community_ih_1: "research", community_ih_2: "research",
+    community_ih_3: "research", founder_meetup: "research", mentor_competitor_bomb: "research",
+    flare_stealth: "research", flare_10k: "research", flare_feature: "research",
+    flare_stumble: "research", flare_epilogue: "research",
+    post_match_dropoff: "research", pivot_open: "research", slide_hangover: "research",
+    slide_first_echo: "research", slide_cohort: "research", slide_alex_thesis: "research",
+    slide_priya_ping: "research", slide_maya_call: "research", slide_jordan_echo: "research",
+    pivot_summit_call: "research", pivot_payoff_maya: "research", power_user_quiet: "research",
+    churn_interview: "research", first_interview_shock: "research", cold_silence: "research",
+    random_reframe: "research", pivot_insight_1: "research", pivot_insight_2: "research",
+    pmf_lock: "research", founder_user_depth: "research", reference_checkin: "research",
+    alex_sync_discover: "research", founder_solo_discover: "research", early_customer_target: "research",
+    // team — co-founders, family, the company itself
+    incorporate: "team", incorporate_again: "team", alex_commitment: "team",
+    vision_mismatch: "team", alex_side_project: "team", alex_side_project_escalation: "team",
+    alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
+    alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",
+    jordan_confrontation: "team",
+    // money — checks in, checks out, the application
+    ff_family: "money", ff_family_2: "money", ff_family_3: "money",
+    founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
+    ff_mentor: "money", ff_mentor_pitch: "money", consultant_growth: "money",
+    consultant_brand: "money", jordan_cap_table: "money", yc_apply: "money",
+    early_funding_goal: "money",
+    // growth — distribution: markets, channels, press, pricing
+    seed_strategy: "growth", beachhead_choice: "growth", launch_surface: "growth",
+    launch_scramble: "growth", channel_test: "growth", channel_double_down: "growth",
+    dont_scale_seed: "growth", first_customer_offer: "growth", pricing_experiment: "growth",
+    sarah_intro: "growth", website_social_proof: "growth", founder_solo_growth: "growth",
+    public_complaint: "growth", reporter_deadline: "growth", early_name: "growth",
+    // other — filler
+    founder_reflect: "other",
+  };
+  const CAT_LIST = ["build", "research", "team", "money", "growth", "other"];
+
   // Randomized attention: same sensible choices, but WHICH open card gets the
   // founder's action is random — a stable per-game shuffle, so each seeded run
   // models one player who consistently favors different threads. Used by
@@ -243,7 +292,7 @@
   const api = {
     Game, mulberry32,
     ANSWER_ORDER, actPriority, PREF, decent, pivot, makeRandom, makeChooser,
-    makeAttentionPriority,
+    makeAttentionPriority, CATEGORY, CAT_LIST,
     playGame, jumpTo,
     quantile, mean, r1, pct, pad, padL,
   };

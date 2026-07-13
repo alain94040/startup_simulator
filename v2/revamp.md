@@ -233,7 +233,15 @@ dirty cap table is a visibly worse report card" (its new home per the
 horizon design). The commitment lesson is the canonical example: part-time
 Alex must never out-build full-time Alex.
 
-**Current status: 28/31.** The three failing contracts are balance TODOs,
+Two "lopsided founder" strategies probe whether the canonical player wins
+by balance: `builder` (decent choices, but research/growth cards get 25% of
+his attention) and `marketer` (the mirror — build cards at 25%). Result:
+builder 31%, marketer 0% (launches only 16% of games). Decent doesn't win by
+being balanced — its ch1 research share is just 11% — it wins by never
+dropping a spine gate. The asymmetry is GOALS-shaped and now a contract:
+build is existential, research is instrumental (it buys the pivot).
+
+**Current status: 31/34.** The three failing contracts are balance TODOs,
 not test bugs:
 
 - `ignore_alex morale wk10 (62) crashed < 30` — neglect drops morale
