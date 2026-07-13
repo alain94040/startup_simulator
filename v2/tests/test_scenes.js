@@ -15,13 +15,24 @@
 // CAP path-probes per scene, remaining open prefixes are closed greedily
 // (first option), and RANDOM_PATHS extra fully-random walks add breadth.
 //
-// Usage:  node v2/tests/test_scenes.js [--verbose]
+// Besides the pass/fail checks, the run prints a SHORTEST-PATH REPORT per
+// scene: the distribution of path lengths (beats surfaced in the sitting),
+// the exact shortest script(s), and a ⚠ design note when the shortest path
+// is way below the median — a sign the arc lets a corner-case answer skip
+// most of the conversation (e.g. proposing equal thirds twice ends the whole
+// equity negotiation). The BFS is level-order, so the minimum is provably
+// exact whenever the scene is fully enumerated (or the cap hit deeper than
+// the shortest exit); the report says which. Warnings are informational —
+// they don't fail the suite.
+//
+// Usage:  node v2/tests/test_scenes.js [--verbose] [--cap N]
 // ─────────────────────────────────────────────────────────────────────────────
 
 const H = require("./harness.js");
 
 const VERBOSE = process.argv.includes("--verbose");
-const CAP = 800;           // max replays per scene during BFS
+const capArg = process.argv.indexOf("--cap");
+const CAP = capArg >= 0 ? parseInt(process.argv[capArg + 1], 10) : 800; // max replays per scene during BFS
 const RANDOM_PATHS = 40;   // extra seeded random walks per scene
 
 const SCENES = [
@@ -48,6 +59,7 @@ function runPath(cfg, mode) {
 
   const entryWeek = g.s.week;
   let started = false, si = 0, acted = 0;
+  const steps = [];
   const script = mode.script || null;
 
   for (let guard = 0; guard < 60; guard++) {
@@ -58,7 +70,7 @@ function runPath(cfg, mode) {
       const ids = sceneSurfaced.map(l => l.surfaced);
       const dup = ids.find((id, i) => ids.indexOf(id) !== i) || null;
       return {
-        status: "exited", acted, beats: ids,
+        status: "exited", acted, steps, beats: ids,
         sameWeek: g.s.week === entryWeek, dup,
       };
     }
@@ -85,6 +97,7 @@ function runPath(cfg, mode) {
     }
     g.act(a.nodeId, key);
     acted++;
+    steps.push(a.nodeId + ":" + key);
     if (g.scene && g.scene.id === cfg.id) started = true;
   }
   return { status: "stuck-guard", acted };
@@ -93,9 +106,10 @@ function runPath(cfg, mode) {
 function exploreScene(cfg) {
   console.log(`scene "${cfg.id}"`);
   const queue = [[]];
-  let probes = 0, exitedPaths = 0, capped = false;
+  let probes = 0, exitedPaths = 0, capped = false, capLen = null;
   let maxBeats = 0, dupFail = null, weekFail = null;
   const bad = [];
+  const paths = []; // every BFS-completed path: { steps, beats }
 
   while (queue.length) {
     const script = queue.shift();
@@ -105,11 +119,13 @@ function exploreScene(cfg) {
       if (probes < CAP) {
         for (const k of res.frontier) queue.push([...script, k]);
       } else {
+        if (!capped) capLen = script.length; // first level the cap touched
         capped = true;
         queue.push([...script, res.frontier[0]]); // greedy close-out past the cap
       }
     } else if (res.status === "exited") {
       exitedPaths++;
+      paths.push({ steps: res.steps, beats: res.beats });
       maxBeats = Math.max(maxBeats, res.beats.length);
       if (res.dup && !dupFail) dupFail = { script, dup: res.dup };
       if (!res.sameWeek && !weekFail) weekFail = { script };
@@ -119,11 +135,14 @@ function exploreScene(cfg) {
     }
   }
 
-  // Extra breadth: seeded random walks through the whole tree.
+  // Extra breadth: seeded random walks through the whole tree. Their exits are
+  // duplicates of BFS paths when the scene was fully enumerated, so they only
+  // join the report when the BFS was capped (they can reach depths it didn't).
   for (let i = 0; i < RANDOM_PATHS; i++) {
     const res = runPath(cfg, { rng: H.mulberry32(1000 + i) });
     if (res.status === "exited") {
       exitedPaths++;
+      if (capped) paths.push({ steps: res.steps, beats: res.beats });
       if (res.dup && !dupFail) dupFail = { script: ["(random#" + i + ")"], dup: res.dup };
       if (!res.sameWeek && !weekFail) weekFail = { script: ["(random#" + i + ")"] };
     } else {
@@ -138,9 +157,59 @@ function exploreScene(cfg) {
       (bad[0].res.node ? ` at ${bad[0].res.node} (offered: ${(bad[0].res.offered || []).join("/")})` : ""));
   ok(!dupFail, dupFail ? `beat surfaced twice (${dupFail.dup}) on [${dupFail.script.join(",")}]` : "no beat surfaced twice on any path");
   ok(!weekFail, weekFail ? `scene spilled past its week on [${weekFail.script.join(",")}]` : `every path finished in one sitting (max ${maxBeats} beats)`);
+
+  return reportPaths(cfg, paths, capped, capLen);
 }
 
-for (const cfg of SCENES) exploreScene(cfg);
+// ── the shortest-path report ─────────────────────────────────────────────────
+// Path length = beats surfaced during the sitting (the dialogue the player
+// actually sees), which can exceed steps taken (parallel beats can be left
+// unanswered when the scene closes). The BFS dequeues scripts in level order,
+// so the minimum is exact when the tree was fully enumerated, or when the cap
+// first hit a level deeper than the shortest exit's script.
+function reportPaths(cfg, paths, capped, capLen) {
+  const lens = paths.map(p => p.beats.length).sort((a, b) => a - b);
+  const min = lens[0], max = lens[lens.length - 1];
+  const median = H.quantile(lens, 0.5);
+  const shortest = paths.filter(p => p.beats.length === min);
+  const minSteps = Math.min(...shortest.map(p => p.steps.length));
+  const minExact = !capped || minSteps <= capLen;
+  const outlier = min <= median - 2 || min * 2 <= max;
+
+  const hist = new Map();
+  for (const n of lens) hist.set(n, (hist.get(n) || 0) + 1);
+  const histStr = [...hist.entries()].map(([n, c]) => `${n}×${c}`).join("  ");
+
+  console.log(`  ── path lengths (beats): min ${min} · median ${median} · max ${max}` +
+    ` — ${minExact ? "min is exact" : "min is an upper bound (BFS capped at depth " + capLen + ")"}`);
+  console.log(`     distribution: ${histStr}`);
+
+  // Distinct shortest scripts (different scripts can surface the same beats).
+  const seen = new Set();
+  const distinct = shortest.filter(p => {
+    const k = p.steps.join(" ");
+    return seen.has(k) ? false : (seen.add(k), true);
+  });
+  const SHOW = 6;
+  console.log(`     shortest path(s) — ${min} beats, ${distinct.length} script(s):`);
+  for (const p of distinct.slice(0, SHOW)) console.log(`       ${p.steps.join(" → ")}`);
+  if (distinct.length > SHOW) console.log(`       … and ${distinct.length - SHOW} more`);
+  if (outlier) {
+    console.log(`     ⚠ shortcut: ${min}-beat path vs median ${median} / max ${max} —` +
+      ` these choices skip most of the arc; consider more dialogue on that branch`);
+  }
+  return { id: cfg.id, paths: paths.length, min, median, max, minExact, outlier };
+}
+
+const summaries = SCENES.map(exploreScene);
+
+console.log("\n── shortest-path summary " + "─".repeat(52));
+console.log(`  ${H.pad("scene", 8)} ${H.padL("paths", 6)} ${H.padL("min", 5)} ${H.padL("median", 7)} ${H.padL("max", 5)}  verdict`);
+for (const s of summaries) {
+  console.log(`  ${H.pad(s.id, 8)} ${H.padL(s.paths, 6)} ${H.padL(s.min + (s.minExact ? "" : "*"), 5)} ${H.padL(s.median, 7)} ${H.padL(s.max, 5)}  ` +
+    (s.outlier ? "⚠ short-circuit — a corner-case answer skips most of the arc" : "balanced"));
+}
+if (summaries.some(s => !s.minExact)) console.log("  (*) BFS capped before this depth — min is an upper bound");
 
 console.log(`\n${checks - failures}/${checks} checks passed` + (failures ? ` — ${failures} FAILED` : ""));
 process.exit(failures ? 1 : 0);

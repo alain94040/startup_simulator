@@ -259,6 +259,30 @@ not test bugs:
   co-founder carries no cap-table or application consequence. GOALS.md says
   firing her is required to win; the mechanics don't enforce it yet.
 
+### Pass 5d — the shortest-path report (scene depth audit)
+
+Observation from play: the equity negotiation can be over almost before it
+starts — commit to equal thirds at Alex's first ask, hold it through his one
+counter, sign. `test_scenes.js` already BFS-enumerated every path through
+each scene to prove clean exits; it now also keeps what it used to throw
+away — each completed path's length (beats surfaced in the sitting) and its
+exact `node:key` script — and prints a shortest-path report per scene:
+distribution, the shortest scripts themselves, and a ⚠ when the minimum sits
+way under the median (min ≤ median − 2 or min ≤ max/2). The BFS is
+level-order, so the minimum is exact wherever the tree is fully enumerated;
+for the capped launch tree the report says "upper bound" and at which depth
+the cap bit (`--cap N` to push it).
+
+Findings: **equity is the outlier the observation predicted** — 4-beat
+floor vs median 6 / max 8, four scripts hit it (direct-propose 33 or 40,
+survive the single counter, sign; the probe/why/worry texture and the
+50/25/25 double-counter never surface). Demo (all paths exactly 4) and
+pivot (all 8) are constant-depth. Launch is a 15–19-beat gauntlet whose
+floor held at 15 across 4,810 paths at `--cap 8000`. Open TODO: deepen the
+equity short paths — a beat or two of consequence for the snap-decision
+founder (e.g. the ignored partner reacting to being priced without a
+conversation) would close the gap.
+
 ---
 
 ## Current status
@@ -268,7 +292,7 @@ not test bugs:
 | Engine + content | Complete: 148 nodes, 19 cast, 5 scenes |
 | `test_slice.js` | 133/133 deterministic checks |
 | `test_narrative.js` | 0 realistic-play violations (fuzzer-only documented) |
-| `test_scenes.js` | 16/16 — all scene paths exit cleanly |
+| `test_scenes.js` | 16/16 — all scene paths exit cleanly; shortest-path report flags equity (4-beat floor vs median 6) |
 | `game.html` | Full UI, polished; the shipping surface |
 | `play.html` | Plain debug harness (kept) |
 
