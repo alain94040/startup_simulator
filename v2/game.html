@@ -1707,6 +1707,8 @@ const INTRO = [
   ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
   ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
 ];
+const INTRO_VERSION = 2; // bump when INTRO copy changes, so returning players see the update once
+const INTRO_SEEN_KEY = "kindred_intro_v" + INTRO_VERSION;
 let introStep = 0;
 function showIntro() {
   const [eyebrow, h, b] = INTRO[introStep];
@@ -1719,13 +1721,13 @@ function showIntro() {
     '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
     '<div class="intro-actions">' + (last ? "" : '<button class="intro-skip">skip</button>') +
     '<button class="intro-next">' + (last ? "Week 1 →" : "Continue →") + "</button></div></div></div>";
-  const done = () => { $("introOv").classList.remove("on"); try { localStorage.setItem("kindred_intro", "1"); } catch (e) {} };
+  const done = () => { $("introOv").classList.remove("on"); try { localStorage.setItem(INTRO_SEEN_KEY, "1"); } catch (e) {} };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep >= INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
   $("introOv").classList.add("on");
 }
 let seenIntro = false;
-try { seenIntro = !!localStorage.getItem("kindred_intro"); } catch (e) {}
+try { seenIntro = !!localStorage.getItem(INTRO_SEEN_KEY); } catch (e) {}
 if (!seenIntro) showIntro();
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
