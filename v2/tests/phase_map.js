@@ -46,6 +46,71 @@ const PHASES = [
   { key: "applied",        label: "Applied to YC",     reached: s => !!s.ycApplied },
 ];
 
+// ── the chapter economy ───────────────────────────────────────────────────────
+// Every non-scene card classified by what kind of founder-hour it asks for.
+// The early-game design tension (GOALS.md): make progress on the build WHILE
+// spending real actions on market research (online discussions, watching the
+// competition, user calls) — that split is what `fit` tracks. This table lets
+// us check the offered/answered balance per chapter instead of guessing.
+// Scene-arc beats (equity/demo/launch/pivot day) are excluded: they're free of
+// action cost and don't compete for the 2-action week.
+const CATEGORY = {
+  // build — the product: scope, build-vs-buy, direction calls, fixes
+  start_prototype: "build", dev_plan: "build", auth_choice: "build", auth_forced: "build",
+  first_screen: "build", matching_choice: "build", ranking: "build",
+  ios_sprint_1: "build", ios_sprint_2: "build", analytics_choice: "build",
+  trust_safety: "build", proto_to_product: "build", good_enough_launch: "build",
+  feature_spree: "build", bug_reports: "build", feature_request_custom: "build",
+  feature_cluster: "build", pivot_relaunch: "build", pivot_fifty_verdict: "build",
+  founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
+  founder_solo_launch: "build", founder_solo_build: "build", jordan_launch_blocker: "build",
+  // research — the market: interviews, communities, the competitor, evidence
+  interviews: "research", waitlist_calls: "research", waitlist_cold: "research",
+  hn_thread: "research", community_hn_1: "research", community_hn_2: "research",
+  community_hn_3: "research", community_reddit_1: "research", community_reddit_2: "research",
+  community_reddit_3: "research", community_ih_1: "research", community_ih_2: "research",
+  community_ih_3: "research", founder_meetup: "research", mentor_competitor_bomb: "research",
+  flare_stealth: "research", flare_10k: "research", flare_feature: "research",
+  flare_stumble: "research", flare_epilogue: "research",
+  post_match_dropoff: "research", pivot_open: "research", slide_hangover: "research",
+  slide_first_echo: "research", slide_cohort: "research", slide_alex_thesis: "research",
+  slide_priya_ping: "research", slide_maya_call: "research", slide_jordan_echo: "research",
+  pivot_summit_call: "research", pivot_payoff_maya: "research", power_user_quiet: "research",
+  churn_interview: "research", first_interview_shock: "research", cold_silence: "research",
+  random_reframe: "research", pivot_insight_1: "research", pivot_insight_2: "research",
+  pmf_lock: "research", founder_user_depth: "research", reference_checkin: "research",
+  alex_sync_discover: "research", founder_solo_discover: "research", early_customer_target: "research",
+  // team — co-founders, family, the company itself
+  incorporate: "team", incorporate_again: "team", alex_commitment: "team",
+  vision_mismatch: "team", alex_side_project: "team", alex_side_project_escalation: "team",
+  alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
+  alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",
+  jordan_confrontation: "team",
+  // money — checks in, checks out, the application
+  ff_family: "money", ff_family_2: "money", ff_family_3: "money",
+  founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
+  ff_mentor: "money", ff_mentor_pitch: "money", consultant_growth: "money",
+  consultant_brand: "money", jordan_cap_table: "money", yc_apply: "money",
+  early_funding_goal: "money",
+  // growth — distribution: markets, channels, press, pricing
+  seed_strategy: "growth", beachhead_choice: "growth", launch_surface: "growth",
+  launch_scramble: "growth", channel_test: "growth", channel_double_down: "growth",
+  dont_scale_seed: "growth", first_customer_offer: "growth", pricing_experiment: "growth",
+  sarah_intro: "growth", website_social_proof: "growth", founder_solo_growth: "growth",
+  public_complaint: "growth", reporter_deadline: "growth", early_name: "growth",
+  // other — filler
+  founder_reflect: "other",
+};
+const CAT_LIST = ["build", "research", "team", "money", "growth", "other"];
+const UNCLASSIFIED = new Set();
+
+// Chapter boundaries per run, from the same state transitions the to-do gauge
+// uses: demo → launch → pivot committed → v2 shipped → the deadline.
+const CHAPTER_LABELS = [
+  "Ch1 · Ship the demo", "Ch2 · Get to launch", "Ch3 · Why they leave",
+  "Ch4 · Rebuild as v2", "Ch5 · The application",
+];
+
 function classifyOutcome(s) {
   if (s.game_won) return "won_yc";
   if (s.ycRejected) return "yc_rejected";
@@ -90,10 +155,33 @@ function playGame(seed, driver, subsidy) {
     if (l.ignored && kindOf(l.ignored) === "story") { ignoredStory++; ignoredIds.push(l.ignored); }
   }
 
+  // The chapter economy: every acted/ignored log entry (scene beats excluded —
+  // they're free of action cost) tallied by chapter × category.
+  const bounds = [
+    firstWeek.demo, firstWeek.launched, firstWeek.pivot, firstWeek.pivot_shipped,
+  ].map(b => (b == null ? Infinity : b));
+  const chapterOf = (w) => {
+    for (let i = 0; i < bounds.length; i++) if (w <= bounds[i]) return i;
+    return 4;
+  };
+  const econ = Array.from({ length: 5 }, () =>
+    Object.fromEntries(CAT_LIST.map(c => [c, { ans: 0, ign: 0 }])));
+  const chapterWeeks = [0, 0, 0, 0, 0];
+  for (let w = 1; w <= game.s.week; w++) chapterWeeks[chapterOf(w)]++;
+  for (const l of game.log) {
+    const id = l.acted || l.ignored;
+    if (!id) continue;
+    const arc = game.arcOf.get(id);
+    if (arc && arc.scene) continue;
+    const cat = CATEGORY[id] || (UNCLASSIFIED.add(id), "other");
+    econ[chapterOf(l.week)][cat][l.acted ? "ans" : "ign"]++;
+  }
+
   return {
     seed, driver, firstWeek, density,
     endWeek: game.s.week, outcome: classifyOutcome(game.s),
     surfacedStory, ignoredStory, ignoredIds,
+    econ, chapterWeeks,
     peakCash: game.ledger.reduce((m, w) => Math.max(m, w.balanceAfter), game.s.cash),
   };
 }
@@ -211,6 +299,36 @@ function report(records, opts) {
   console.log(`  most-ignored story beats:`);
   for (const [id, n] of top) console.log(`    ${pad(id, 28)} ignored in ${pct(n, cohort.length)} of games`);
   if (!top.length) console.log("    (none)");
+
+  // the chapter economy — the founder-hour balance the chapters are asking for
+  console.log("\n── Chapter economy (mean cards answered per game, " + cohortName + ") ──");
+  console.log("  Scene beats excluded (free of action cost). Share = of that chapter's answers.");
+  const catMeans = (ch, field) => CAT_LIST.map(cat =>
+    mean(cohort.map(r => r.econ[ch][cat][field])) || 0);
+  console.log(`  ${pad("chapter", 22)} ${padL("wks", 4)} ${padL("cap", 4)}  `
+    + CAT_LIST.map(c => pad(c, 11)).join(""));
+  for (let ch = 0; ch < 5; ch++) {
+    const wks = mean(cohort.map(r => r.chapterWeeks[ch])) || 0;
+    const ans = catMeans(ch, "ans");
+    const total = ans.reduce((a, b) => a + b, 0);
+    const cells = ans.map(v => {
+      if (total === 0 || v < 0.05) return pad("—", 11);
+      return pad(`${r1(v)} ·${Math.round((v / total) * 100)}%`, 11);
+    });
+    console.log(`  ${pad(CHAPTER_LABELS[ch], 22)} ${padL(r1(wks), 4)} ${padL(Math.round(wks * 2), 4)}  ${cells.join("")}`
+      + `  = ${r1(total)}`);
+  }
+  console.log("\n  …and left on read (mean cards timing out per game):");
+  console.log(`  ${pad("chapter", 22)} ${padL("", 9)}  ` + CAT_LIST.map(c => pad(c, 11)).join(""));
+  for (let ch = 0; ch < 5; ch++) {
+    const ign = catMeans(ch, "ign");
+    const cells = ign.map(v => pad(v < 0.05 ? "—" : r1(v), 11));
+    console.log(`  ${pad(CHAPTER_LABELS[ch], 22)} ${padL("", 9)}  ${cells.join("")}`
+      + `  = ${r1(ign.reduce((a, b) => a + b, 0))}`);
+  }
+  if (UNCLASSIFIED.size) {
+    console.log("  ⚠ uncategorized node ids (add to CATEGORY): " + [...UNCLASSIFIED].join(", "));
+  }
 
   // launch vs pivot ordering
   console.log("\n── Launch vs pivot ordering (" + cohortName + ") ───────────");
