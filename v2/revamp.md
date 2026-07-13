@@ -220,6 +220,33 @@ Two follow-ups from playtesting the horizon build:
   ride 3-week windows and close at chapter boundaries — a missed newspaper,
   not a stuck dependency.
 
+### Pass 5c — the behavior-contract suite (sim_proto's regressions, by rationale)
+
+Old sim_proto.js carried 38 regression checks over 12 strategies — each one a
+contract that a founder behavior has its designed consequence. Ported to
+`tests/sim_behaviors.js` by rationale, not line-by-line: 11 strategies (all
+speaking through the decent chooser with targeted overrides — ignore_alex,
+outside_only, fulltime, keep_jordan, skip_captable, no_pivot, no_meetup,
+full_plan, distracted/random) and 31 contracts. The angel-path checks are
+gone with the angel path; "a dirty cap table blocks the round" became "a
+dirty cap table is a visibly worse report card" (its new home per the
+horizon design). The commitment lesson is the canonical example: part-time
+Alex must never out-build full-time Alex.
+
+**Current status: 28/31.** The three failing contracts are balance TODOs,
+not test bugs:
+
+- `ignore_alex morale wk10 (62) crashed < 30` — neglect drops morale
+  (80 → 62, direction correct; departure itself fires reliably at 100% via
+  the ignore-count trigger) but the morale meter decays gently. Design
+  target: sustained neglect should visibly crater the meter before he walks.
+- `keep_jordan v2 ships later` / `keep_jordan.wins <= half of decent` —
+  **keeping a drifting Jordan is currently free** (98% wins, same v2 ship
+  week). Her frozen effort doesn't slow the rebuild because the firing
+  normally happens after v2 ships anyway, and an unresolved drifting
+  co-founder carries no cap-table or application consequence. GOALS.md says
+  firing her is required to win; the mechanics don't enforce it yet.
+
 ---
 
 ## Current status
