@@ -590,6 +590,7 @@
     <button data-jump="pivot_relaunch">post-pivot</button>
     <button data-jump="seed_pitch">fundraising</button>
     <button id="dbgSkip">+5 weeks</button>
+    <button id="dbgYC">→ YC result</button>
     <button id="dbgRestart">restart</button>
   </div>
 </details>
@@ -1769,6 +1770,19 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   };
 }
 $("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
+// Auto-play decent runs from the seed box until one reaches a real YC verdict
+// (accept/reject decided by the grade), then jump straight to its reveal.
+$("dbgYC").onclick = () => {
+  const base = dbgSeed();
+  let g = V2Harness.playGame(base, "decent"), used = base;
+  for (let i = 1; i < 200 && !g.s.ycAccepted && !g.s.ycRejected; i++) {
+    used = base + i;
+    g = V2Harness.playGame(used, "decent");
+  }
+  seed = used; $("dbgSeed").value = used;
+  game = g;
+  resetUiState(); dbgReset(); render(); checkEndgame();
+};
 $("dbgRestart").onclick = () => { seed = dbgSeed(); game = new V2Engine({ seed }); resetUiState(); dbgReset(); render(); };
 
 render();
