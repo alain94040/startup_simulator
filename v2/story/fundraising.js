@@ -57,15 +57,26 @@
                 in: Math.max(1, s.deadline_week - s.week),
                 unless: (st) => st.game_over || st.game_won,
                 fx(st, en) {
+                  // Admission needs both: a company that exists (live product,
+                  // shipped pivot, someone paying — the traction bar the old
+                  // application window enforced) AND a report card at B+ or
+                  // better. Wise decisions without a shipped product don't get
+                  // funded; GOALS.md's "to win, a pivot is required" is this line.
                   const grade = en.gradeScore();
-                  if (grade != null && grade >= YC_ADMISSION_GRADE) {
+                  const qualified = st.launched && st.pivot_shipped && st.customers >= 1;
+                  if (qualified && grade != null && grade >= YC_ADMISSION_GRADE) {
                     st.ycAccepted = true;
                     st.cash += 500000;
                     st.signal = Math.min(100, st.signal + 25);
                     en.say({ char: "yc", from: "Y Combinator", text: "You're in. Welcome to the batch — $500k for 7%. See you at kickoff." });
                   } else {
                     st.ycRejected = true;
-                    en.say({ char: "yc", from: "Y Combinator", text: "Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever kindred becomes, this application wasn't the end of it." });
+                    en.say({
+                      char: "yc", from: "Y Combinator",
+                      text: qualified
+                        ? "Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever kindred becomes, this application wasn't the end of it."
+                        : "Thanks for applying — we're passing. We fund launched products with users who pay; the application reads like a company that's still ahead of you. The ones that come back are the founders who shipped anyway.",
+                    });
                   }
                 },
               });

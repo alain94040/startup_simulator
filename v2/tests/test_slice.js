@@ -274,6 +274,8 @@ console.log("summit-ignored driver (seed 42)");
     "never called the room — the default won silently");
   ok(!g.done("pivot_day_open"), "no summit, no pivot day");
   ok(!g.done("pivot_fifty_verdict"), "and no redemption card either — drift has no exit");
+  // The admission bar: wise answers without a shipped pivot don't get funded.
+  ok(g.s.game_over && !g.s.ycAccepted, "…and YC passed — no shipped pivot, no batch");
 }
 
 // ── the horizon: week 25 ends every run, graded ──────────────────────────────

@@ -119,11 +119,11 @@ function classifyOutcome(s) {
   return "timeout"; // shouldn't happen: the deadline ends every run by wk 25
 }
 
-function playGame(seed, driver, subsidy) {
+function playGame(seed, driver, subsidy, priority) {
   const firstWeek = {};
   const density = [];
   const game = H.playGame(seed, driver, {
-    weeks: WEEK_CAP, subsidy,
+    weeks: WEEK_CAP, subsidy, priority,
     onWeekStart(g, offered) {
       density.push(offered.filter(a => !a.onHold).length);
       for (const p of PHASES) {
@@ -292,39 +292,63 @@ function report(records, opts) {
   console.log("\n── Left on read (story beats resolving by @ignored) ────────");
   const ratios = cohort.filter(r => r.surfacedStory > 0)
     .map(r => r.ignoredStory / r.surfacedStory);
-  const topIgnored = new Map();
-  for (const r of cohort) for (const id of r.ignoredIds) topIgnored.set(id, (topIgnored.get(id) || 0) + 1);
-  const top = [...topIgnored.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
   console.log(`  mean share of surfaced story beats that timed out: ${pct(Math.round((mean(ratios) || 0) * 100), 100)}`);
-  console.log(`  most-ignored story beats:`);
-  for (const [id, n] of top) console.log(`    ${pad(id, 28)} ignored in ${pct(n, cohort.length)} of games`);
+  // "Ignored" is only meaningful across play styles: a card one tactic always
+  // skips is that tactic's choice; a card EVERY attention allocation skips is
+  // structurally unanswerable. So compare the canonical drivers against the
+  // mixed-attention population (same sensible choices, randomized priorities).
+  const ignoredPct = (coh) => {
+    const m = new Map();
+    for (const r of coh) for (const id of r.ignoredIds) m.set(id, (m.get(id) || 0) + 1);
+    return m;
+  };
+  // All mixed games count (not just winners): the balance question is what the
+  // game offers and what an untacticed player answers, win or lose.
+  const canonIgn = ignoredPct(cohort);
+  const mixedCohort = opts.mixed;
+  const mixedIgn = mixedCohort && mixedCohort.length ? ignoredPct(mixedCohort) : null;
+  const top = [...canonIgn.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+  console.log("  most-ignored story beats:        canonical" + (mixedIgn ? "   mixed-attention" : ""));
+  for (const [id, n] of top) {
+    const mixedCell = mixedIgn
+      ? padL(pct(mixedIgn.get(id) || 0, mixedCohort.length), 8)
+      : "";
+    console.log(`    ${pad(id, 28)} ${padL(pct(n, cohort.length), 8)}   ${mixedCell}`);
+  }
   if (!top.length) console.log("    (none)");
 
   // the chapter economy — the founder-hour balance the chapters are asking for
-  console.log("\n── Chapter economy (mean cards answered per game, " + cohortName + ") ──");
-  console.log("  Scene beats excluded (free of action cost). Share = of that chapter's answers.");
-  const catMeans = (ch, field) => CAT_LIST.map(cat =>
-    mean(cohort.map(r => r.econ[ch][cat][field])) || 0);
-  console.log(`  ${pad("chapter", 22)} ${padL("wks", 4)} ${padL("cap", 4)}  `
-    + CAT_LIST.map(c => pad(c, 11)).join(""));
-  for (let ch = 0; ch < 5; ch++) {
-    const wks = mean(cohort.map(r => r.chapterWeeks[ch])) || 0;
-    const ans = catMeans(ch, "ans");
-    const total = ans.reduce((a, b) => a + b, 0);
-    const cells = ans.map(v => {
-      if (total === 0 || v < 0.05) return pad("—", 11);
-      return pad(`${r1(v)} ·${Math.round((v / total) * 100)}%`, 11);
-    });
-    console.log(`  ${pad(CHAPTER_LABELS[ch], 22)} ${padL(r1(wks), 4)} ${padL(Math.round(wks * 2), 4)}  ${cells.join("")}`
-      + `  = ${r1(total)}`);
-  }
-  console.log("\n  …and left on read (mean cards timing out per game):");
-  console.log(`  ${pad("chapter", 22)} ${padL("", 9)}  ` + CAT_LIST.map(c => pad(c, 11)).join(""));
-  for (let ch = 0; ch < 5; ch++) {
-    const ign = catMeans(ch, "ign");
-    const cells = ign.map(v => pad(v < 0.05 ? "—" : r1(v), 11));
-    console.log(`  ${pad(CHAPTER_LABELS[ch], 22)} ${padL("", 9)}  ${cells.join("")}`
-      + `  = ${r1(ign.reduce((a, b) => a + b, 0))}`);
+  const printEconomy = (coh, title) => {
+    console.log("\n── Chapter economy (mean cards answered per game, " + title + ") ──");
+    console.log("  Scene beats excluded (free of action cost). Share = of that chapter's answers.");
+    const catMeans = (ch, field) => CAT_LIST.map(cat =>
+      mean(coh.map(r => r.econ[ch][cat][field])) || 0);
+    console.log(`  ${pad("chapter", 22)} ${padL("wks", 4)} ${padL("cap", 4)}  `
+      + CAT_LIST.map(c => pad(c, 11)).join(""));
+    for (let ch = 0; ch < 5; ch++) {
+      const wks = mean(coh.map(r => r.chapterWeeks[ch])) || 0;
+      const ans = catMeans(ch, "ans");
+      const total = ans.reduce((a, b) => a + b, 0);
+      const cells = ans.map(v => {
+        if (total === 0 || v < 0.05) return pad("—", 11);
+        return pad(`${r1(v)} ·${Math.round((v / total) * 100)}%`, 11);
+      });
+      console.log(`  ${pad(CHAPTER_LABELS[ch], 22)} ${padL(r1(wks), 4)} ${padL(Math.round(wks * 2), 4)}  ${cells.join("")}`
+        + `  = ${r1(total)}`);
+    }
+    console.log("\n  …and left on read (mean cards timing out per game):");
+    console.log(`  ${pad("chapter", 22)} ${padL("", 9)}  ` + CAT_LIST.map(c => pad(c, 11)).join(""));
+    for (let ch = 0; ch < 5; ch++) {
+      const ign = catMeans(ch, "ign");
+      const cells = ign.map(v => pad(v < 0.05 ? "—" : r1(v), 11));
+      console.log(`  ${pad(CHAPTER_LABELS[ch], 22)} ${padL("", 9)}  ${cells.join("")}`
+        + `  = ${r1(ign.reduce((a, b) => a + b, 0))}`);
+    }
+  };
+  printEconomy(cohort, cohortName + " · canonical attention");
+  if (mixedCohort && mixedCohort.length >= 20) {
+    const winPct = pct(mixedCohort.filter(r => r.outcome.startsWith("won")).length, mixedCohort.length);
+    printEconomy(mixedCohort, "mixed attention · all games, decent choices, random priorities (win " + winPct + ")");
   }
   if (UNCLASSIFIED.size) {
     console.log("  ⚠ uncategorized node ids (add to CATEGORY): " + [...UNCLASSIFIED].join(", "));
@@ -363,7 +387,15 @@ function main() {
   for (const driver of drivers) {
     for (let i = 0; i < games; i++) records.push(playGame(seed++, driver, subsidy));
   }
-  report(records, { drivers, all: has("--all"), subsidy });
+  // The mixed-attention population: decent choices, but WHICH open card gets
+  // each action is a per-game random shuffle — no baked-in tactic. Used to
+  // cross-check the ignored stats and the chapter economy.
+  const mixed = [];
+  for (let i = 0; i < games; i++) {
+    const s = seed++;
+    mixed.push(playGame(s, "decent", subsidy, H.makeAttentionPriority(s)));
+  }
+  report(records, { drivers, all: has("--all"), subsidy, mixed });
 }
 
 main();

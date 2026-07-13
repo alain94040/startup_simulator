@@ -118,6 +118,20 @@
     return p || a.options[0].key;
   };
 
+  // Randomized attention: same sensible choices, but WHICH open card gets the
+  // founder's action is random — a stable per-game shuffle, so each seeded run
+  // models one player who consistently favors different threads. Used by
+  // phase_map to separate "this card loses under one tactic" from "this card
+  // is structurally unanswerable".
+  function makeAttentionPriority(seed) {
+    const rng = mulberry32((seed ^ 0x51ED270) >>> 0);
+    const rank = new Map();
+    return (a) => {
+      if (!rank.has(a.nodeId)) rank.set(a.nodeId, rng());
+      return rank.get(a.nodeId);
+    };
+  }
+
   const PIVOT_RE = /pivot|activit|discover|interview|talk|meetup|priya|reframe|rebuild/i;
   const pivot = (a) => {
     const hit = a.options.find(o => PIVOT_RE.test(o.key) || PIVOT_RE.test(o.label || ""));
@@ -229,6 +243,7 @@
   const api = {
     Game, mulberry32,
     ANSWER_ORDER, actPriority, PREF, decent, pivot, makeRandom, makeChooser,
+    makeAttentionPriority,
     playGame, jumpTo,
     quantile, mean, r1, pct, pad, padL,
   };
