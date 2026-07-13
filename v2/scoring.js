@@ -98,10 +98,16 @@
 
     // ── 3. Build something people want ───────────────────────────────────────
     {
+      // Once the run is over, "never got there" stops being an excuse: at the
+      // deadline the launch and pivot parts grade as failures instead of
+      // dropping out of the denominator — otherwise a run that never reached
+      // the game's central lesson could ace this category (and the report card
+      // would contradict the rejection letter).
+      const ended = s.game_over || s.game_won || s.week >= (s.deadline_week || Infinity);
       const chips = [!!s.maya_quote, !!s.rachel_answer, !!s.demo_question_seen, !!s.analytics_dropoff_seen]
         .filter(Boolean).length;
-      const pivotGot = g.took("pivot_day_decide:pivot") ? 1
-        : g.took("pivot_fifty_verdict:pivot_now") ? 0.5
+      const pivotGot = g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? 1 : 0.5)
+        : g.took("pivot_fifty_verdict:pivot_now") ? (s.pivot_shipped ? 0.5 : 0.3)
           : (s.pivot_deferred || g.took("pivot_day_decide:growth|hedge")) ? 0.1 : 0;
       add("build-something-people-want", "Build something people want", "📚 Steve Blank / PG, \"How to Get Startup Ideas\"",
         parts([
@@ -113,12 +119,14 @@
           { faced: g.done("first_screen") || g.done("ranking"), weight: 1,
             got: (g.took("first_screen:intake_interviews") ? 0.5 : 0) + (g.took("ranking:conversation") ? 0.5 : 0),
             note: "Research-backed direction calls: " + ((g.took("first_screen:intake_interviews") ? 1 : 0) + (g.took("ranking:conversation") ? 1 : 0)) + "/2." },
-          { faced: s.launched, weight: 1, got: chips / 4,
-            note: chips + "/4 evidence chips banked before pivot day." },
-          { faced: g.done("pivot_day_decide") || s.pivot_deferred, weight: 2, got: pivotGot,
-            note: g.took("pivot_day_decide:pivot") ? "Pivoted on evidence, with cash left to survive it."
+          { faced: s.launched || ended, weight: 1, got: s.launched ? chips / 4 : 0,
+            note: s.launched ? chips + "/4 evidence chips banked before pivot day."
+              : ended ? "Never launched — no stranger ever touched the product." : null },
+          { faced: g.done("pivot_day_decide") || s.pivot_deferred || ended, weight: 2, got: pivotGot,
+            note: g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? "Pivoted on evidence, with cash left to survive it." : "Called the pivot — but v2 never shipped.")
               : g.took("pivot_fifty_verdict:pivot_now") ? "Pivoted late — right call, three weeks and $1k dearer."
-                : s.pivot_deferred ? "The default direction won by inertia." : null },
+                : s.pivot_deferred ? "The default direction won by inertia."
+                  : ended ? "The run ended without the product ever being questioned." : null },
         ]),
         ["You listened first, built second, and turned the ship while you still could.",
           "Some signal reached the roadmap; a lot of it didn't.",
