@@ -235,11 +235,15 @@ Alex must never out-build full-time Alex.
 
 Two "lopsided founder" strategies probe whether the canonical player wins
 by balance: `builder` (decent choices, but research/growth cards get 25% of
-his attention) and `marketer` (the mirror — build cards at 25%). Result:
-builder 31%, marketer 0% (launches only 16% of games). Decent doesn't win by
-being balanced — its ch1 research share is just 11% — it wins by never
-dropping a spine gate. The asymmetry is GOALS-shaped and now a contract:
-build is existential, research is instrumental (it buys the pivot).
+his attention) and `marketer` (the mirror — build cards at 50%; a 25% build
+lean simply never ships, 0% — too broken to be a tier). Result: builder 31%
+(always launches, under-pivots — the summit and slide evidence are research
+cards), marketer 3% (launches late at 88%, pivots MORE than the builder at
+73% — the research banks the evidence — but the rebuild is pure build, so
+v2 ships in only 7% of runs). Decent doesn't win by being balanced — its
+ch1 research share is just 11% — it wins by never dropping a spine gate.
+The asymmetry is GOALS-shaped and now a contract: build is existential,
+research is instrumental (it buys the pivot).
 
 **Current status: 31/34.** The three failing contracts are balance TODOs,
 not test bugs:

@@ -78,7 +78,9 @@ const STRATEGIES = {
   // and tends to ignore marketing (research + growth cards get 25% of his
   // attention); marketer works the market and tends to ignore the build.
   builder: { makeChooser: lopsided(["research", "growth"], 0.25) },
-  marketer: { makeChooser: lopsided(["build"], 0.25) },
+  // the marketer's lean is softer (50%): a full 25% build-attention founder
+  // simply never ships (0% wins) — too broken to be an interesting tier.
+  marketer: { makeChooser: lopsided(["build"], 0.5) },
 };
 
 // ── play + metrics ────────────────────────────────────────────────────────────
@@ -235,16 +237,19 @@ check(`full_plan.wins (${S.full_plan.wins}%) < decent.wins (${S.decent.wins}%)`,
   S.full_plan.wins < S.decent.wins);
 
 // K · the lean asymmetry (new, from the chapter-economy work): a half-decent
-// founder who leans against the market loses most wins (research buys the
-// pivot and the evidence); one who leans against the build loses all of them
-// (you can't market a product that never ships). Build is existential,
-// research is instrumental — the ordering must hold.
+// founder who leans against the market loses most wins — the summit and the
+// slide evidence are research cards, so he under-pivots. One who leans
+// against the build loses nearly all of them, and the failure mode is
+// instructive: at a 50% build lean he still launches (late) and even pivots
+// MORE than the builder (all that research banks the evidence) — but the
+// rebuild is pure build, so v2 almost never ships before the wall. Build is
+// existential, research is instrumental — the ordering must hold.
 check(`builder.wins (${S.builder.wins}%) < decent.wins (${S.decent.wins}%) — ignoring the market costs wins`,
   S.builder.wins < S.decent.wins);
 check(`marketer.wins (${S.marketer.wins}%) < builder.wins (${S.builder.wins}%) — no product beats no research`,
   S.marketer.wins < S.builder.wins);
-check(`builder launches (${S.builder.launched}%) >= 90%; marketer (${S.marketer.launched}%) <= 50%`,
-  S.builder.launched >= 90 && S.marketer.launched <= 50);
+check(`builder launches (${S.builder.launched}%) >= 90%; marketer ships v2 (${S.marketer.v2}%) < builder (${S.builder.v2}%)`,
+  S.builder.launched >= 90 && S.marketer.v2 < S.builder.v2);
 
 // L · hygiene (old: no runtime errors across all strategies)
 const totalErrors = Object.values(S).reduce((n, r) => n + r.errors, 0);
