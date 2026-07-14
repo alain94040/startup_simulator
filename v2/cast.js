@@ -100,7 +100,9 @@
     {
       id: "users", name: "Users", role: "Your customers", type: "customer",
       unlock: (s) => s.waitlist >= 5 || s.users >= 3 || s.customers >= 1,
-      intro: "you have real users now. they're going to start talking.",
+      intro: (s) => (s.users >= 3 || s.customers >= 1)
+        ? "you have real users now. they're going to start talking."
+        : "the waitlist just crossed a real number. people are starting to expect to hear from you.",
     },
     {
       id: "growth", name: "Growth", role: "Traction", type: "platform",

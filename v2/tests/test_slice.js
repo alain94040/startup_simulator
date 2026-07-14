@@ -136,7 +136,7 @@ console.log("decent driver (seed 42)");
 
   // Users unlocked off the waitlist.
   ok(g.cast.get("users").active, "Users character unlocked");
-  ok(g.threads.users.some(m => (m.body || "").includes("real users now")), "unlock intro posted");
+  ok(g.threads.users.some(m => (m.body || "").includes("waitlist just crossed")), "unlock intro posted (pre-launch waitlist framing)");
   ok(g.took("waitlist_cold:reach"), "answered the cold waitlist");
 
   // Milestone stamps.
