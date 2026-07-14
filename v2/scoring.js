@@ -57,6 +57,8 @@
       const talkRatio = answeredRatio(g, [
         "equity_open", "equity_alex", "equity_alex_why", "equity_worry",
         "equity_counter_alex", "equity_counter_alex_50", "equity_counter_jordan",
+        "equity_impasse_alex", "equity_impasse_jordan", "equity_impasse",
+        "equity_consent_alex", "equity_consent_jordan",
         "equity_signing", "alex_commitment",
       ]);
       add("hard-conversations", "Have the hard conversations", "📚 Wasserman, The Founder's Dilemmas",
@@ -65,6 +67,12 @@
             note: talkRatio === 1 ? "Every equity and commitment talk got an answer." : "Some of the hardest conversations resolved by silence." },
           { faced: g.done("equity_alex"), weight: 1, got: g.took("equity_alex:probe") ? 1 : 0.4,
             note: g.took("equity_alex:probe") ? "Asked where Alex's head was before naming a number." : null },
+          // Tabling the split is worse than never assembling the room: the
+          // whole company was on the call, both cases were made, and the
+          // founder blinked.
+          { faced: g.done("equity_impasse"), weight: 2, got: g.took("equity_impasse:table") ? 0 : 1,
+            note: g.took("equity_impasse:table")
+              ? "Got the whole room assembled for the equity call, then tabled it 'until after launch.' After launch never came." : null },
           { faced: g.done("jordan_confrontation"), weight: 2,
             got: g.took("jordan_confrontation:fire") ? 1 : g.took("jordan_confrontation:defer") ? 0.3 : 0,
             note: g.took("jordan_confrontation:fire") ? "Fired a drifting co-founder while it was still fixable."
@@ -184,8 +192,11 @@
             got: s.incorporated ? 1 : 0,
             note: s.incorporated ? "Incorporated before the work belonged to nobody." : "Never formed a legal entity — there is no cap table to keep clean." },
           { faced: g.done("equity_open") || !!s.equity_proposal, weight: 2,
-            got: s.jordan_equity ? (s.equity_skipped ? 0.4 : 1) : 0,
-            note: s.jordan_equity ? (s.equity_skipped ? "The split defaulted to even thirds — signed, but never actually discussed." : "Equity split negotiated and signed while everyone was still friends.")
+            got: s.jordan_equity ? (s.equity_tabled ? 0.3 : s.equity_skipped ? 0.4 : 1) : 0,
+            note: s.jordan_equity
+              ? (s.equity_tabled ? "Equity got tabled 'until after launch' — the default thirds went into the paperwork unexamined."
+                : s.equity_skipped ? "The split defaulted to even thirds — signed, but never actually discussed."
+                  : "Equity split negotiated and signed while everyone was still friends.")
               : "The split was never signed. Every later conversation got harder." },
           { faced: g.done("ff_family"), weight: 1, got: g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") ? 1 : 0.3,
             note: g.took("ff_family:ask") ? "Took the friends-and-family money early." : null },

@@ -40,7 +40,8 @@
   // patience is designed to allow exactly that.
   const ANSWER_ORDER = [
     "founder_consulting", // rent money first — a sensible player never lets it expire
-    "equity_worry", "equity_5050_interject", "interviews", "waitlist_cold",
+    "equity_worry", "equity_jordan_relief", "equity_alex_justify",
+    "equity_5050_interject", "interviews", "waitlist_cold",
     "slide_maya_call", "slide_cohort", "slide_first_echo",
     "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
     "yc_apply",
@@ -55,9 +56,12 @@
   const PREF = {
     start_prototype: ["build"], incorporate: ["atlas"], incorporate_again: ["atlas"],
     equity_open: ["open"], equity_alex: ["probe"], equity_alex_why: ["propose_40"],
-    equity_worry: ["reassure"], equity_counter_jordan: ["cave_33"],
-    equity_counter_alex: ["cave_40"], equity_counter_alex_50: ["give_alex"],
-    equity_5050_interject: ["ack"], equity_signing: ["sign"],
+    equity_worry: ["reassure"], equity_jordan_relief: ["not_yet"], equity_alex_justify: ["mine"],
+    equity_counter_jordan: ["hear_her"], equity_counter_alex: ["risk_real"],
+    equity_counter_alex_50: ["hear_him"], equity_5050_interject: ["ack"],
+    equity_impasse_alex: ["ack"], equity_impasse_jordan: ["call"],
+    equity_impasse: ["thirds_final"], equity_consent_alex: ["own_it"],
+    equity_consent_jordan: ["heard"], equity_signing: ["sign"],
     dev_plan: ["lean"], auth_choice: ["buy"], auth_forced: ["buy"],
     interviews: ["interview"], first_screen: ["intake_interviews", "intake"],
     ff_family: ["ask"], ff_family_2: ["ask"], ff_family_3: ["ask"],

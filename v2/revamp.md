@@ -273,15 +273,39 @@ level-order, so the minimum is exact wherever the tree is fully enumerated;
 for the capped launch tree the report says "upper bound" and at which depth
 the cap bit (`--cap N` to push it).
 
-Findings: **equity is the outlier the observation predicted** — 4-beat
+Findings: **equity was the outlier the observation predicted** — 4-beat
 floor vs median 6 / max 8, four scripts hit it (direct-propose 33 or 40,
 survive the single counter, sign; the probe/why/worry texture and the
 50/25/25 double-counter never surface). Demo (all paths exactly 4) and
 pivot (all 8) are constant-depth. Launch is a 15–19-beat gauntlet whose
-floor held at 15 across 4,810 paths at `--cap 8000`. Open TODO: deepen the
-equity short paths — a beat or two of consequence for the snap-decision
-founder (e.g. the ignored partner reacting to being priced without a
-conversation) would close the gap.
+floor held at 15 across 4,810 paths at `--cap 8000`.
+
+The fix (same pass): the arc was rebuilt so a number named early is an
+**anchor, not an ending**. `equity_counter_done` (one counter round, then
+sign) became `equity_decided`: counters put the case on record without
+moving the number, the demands collide out loud in a crossfire (Alex does
+the algebra — parity with the founder AND daylight over Jordan vs Jordan's
+no-daylight-at-all has no solution; it's his kind of argument, so no
+narrator needed), and only the founder's call at a new `equity_impasse`
+beat finalizes the split. Whoever the final number disappoints gets a
+consent beat before the signing — nobody signs unheard, which also fixes
+the old cave-shortcut where a flipped split was signed behind the loser's
+back. The earn-in ("the day you're full-time, we revisit") is rhetoric,
+not an outcome: a softer hold on Jordan's counter (`promised_path` cushions
+her consent) and Alex's own justification of the 40. Tabling the whole
+thing at the impasse is allowed, terminal, and silently expensive: default
+thirds go into the paperwork unexamined (`equity_tabled`), both meters
+deflate, nobody ever texts about equity again, and both `hard-conversations`
+(a weighted zero — worse than never assembling the room) and
+`clean-cap-table` (0.3, below the ignored path's 0.4) remember. The
+`dev_plan` spine gate learned to open off the impasse on that path, since
+the signing never fires.
+
+After the rebuild: floor 7 · median 9 · max 11, fully enumerated, and the
+report shows every 7-beat path funnels through `equity_impasse:table` — so
+the shortest tier is the designed dodge, not an under-written corner. The
+report now detects that funnel shape and names the exit, distinguishing
+"one deliberate, scored escape hatch" from "scattered shortcuts."
 
 ---
 
@@ -289,10 +313,10 @@ conversation) would close the gap.
 
 | Area | State |
 |---|---|
-| Engine + content | Complete: 148 nodes, 19 cast, 5 scenes |
-| `test_slice.js` | 133/133 deterministic checks |
+| Engine + content | Complete: 158 nodes, 19 cast, 5 scenes |
+| `test_slice.js` | 139/139 deterministic checks |
 | `test_narrative.js` | 0 realistic-play violations (fuzzer-only documented) |
-| `test_scenes.js` | 16/16 — all scene paths exit cleanly; shortest-path report flags equity (4-beat floor vs median 6) |
+| `test_scenes.js` | 16/16 — all scene paths exit cleanly; shortest-path report: equity 7/9/11 (short tier = the tabling dodge), demo 4, launch 15–19, pivot 8 |
 | `game.html` | Full UI, polished; the shipping surface |
 | `play.html` | Plain debug harness (kept) |
 

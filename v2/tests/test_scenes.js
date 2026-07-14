@@ -194,11 +194,20 @@ function reportPaths(cfg, paths, capped, capLen) {
   console.log(`     shortest path(s) — ${min} beats, ${distinct.length} script(s):`);
   for (const p of distinct.slice(0, SHOW)) console.log(`       ${p.steps.join(" → ")}`);
   if (distinct.length > SHOW) console.log(`       … and ${distinct.length - SHOW} more`);
+
+  // When every shortest path exits through the same final choice, the short
+  // tier is one authored escape hatch (a designed dodge), not scattered
+  // corner cases — flag it by name so the designer can check it's scored.
+  const lastSteps = new Set(shortest.map(p => p.steps[p.steps.length - 1]));
+  const funnel = lastSteps.size === 1 ? [...lastSteps][0] : null;
   if (outlier) {
-    console.log(`     ⚠ shortcut: ${min}-beat path vs median ${median} / max ${max} —` +
-      ` these choices skip most of the arc; consider more dialogue on that branch`);
+    console.log(funnel
+      ? `     ⚠ shortcut: ${min}-beat floor vs median ${median} — every shortest path exits via ${funnel};` +
+        ` fine if that's a deliberate, scored dodge — a design gap otherwise`
+      : `     ⚠ shortcut: ${min}-beat path vs median ${median} / max ${max} —` +
+        ` these choices skip most of the arc; consider more dialogue on that branch`);
   }
-  return { id: cfg.id, paths: paths.length, min, median, max, minExact, outlier };
+  return { id: cfg.id, paths: paths.length, min, median, max, minExact, outlier, funnel };
 }
 
 const summaries = SCENES.map(exploreScene);
@@ -207,7 +216,9 @@ console.log("\n── shortest-path summary " + "─".repeat(52));
 console.log(`  ${H.pad("scene", 8)} ${H.padL("paths", 6)} ${H.padL("min", 5)} ${H.padL("median", 7)} ${H.padL("max", 5)}  verdict`);
 for (const s of summaries) {
   console.log(`  ${H.pad(s.id, 8)} ${H.padL(s.paths, 6)} ${H.padL(s.min + (s.minExact ? "" : "*"), 5)} ${H.padL(s.median, 7)} ${H.padL(s.max, 5)}  ` +
-    (s.outlier ? "⚠ short-circuit — a corner-case answer skips most of the arc" : "balanced"));
+    (s.outlier
+      ? (s.funnel ? `⚠ short tier is one designed exit: ${s.funnel}` : "⚠ short-circuit — a corner-case answer skips most of the arc")
+      : "balanced"));
 }
 if (summaries.some(s => !s.minExact)) console.log("  (*) BFS capped before this depth — min is an upper bound");
 

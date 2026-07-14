@@ -32,12 +32,16 @@
           {
             id: "dev_plan", char: "alex",
             text: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
-            // Lands right after the equity signing — a week later if the split
-            // left Alex grudging (anything but 40/40/20). No timeout: this is
-            // the spine gate; Alex holds the question until he gets an answer.
+            // Lands right after the equity question closes — a week later if
+            // the split left Alex grudging (anything but 40/40/20), and a week
+            // after the dodge when equity got tabled (the signing never fires
+            // on that path). No timeout: this is the spine gate; Alex holds
+            // the question until he gets an answer.
             when: {
-              after: ["equity_signing"],
-              if: (s, e) => e.weeksSince("equity_signing") >= (s.equity_proposal === "40/40/20" ? 0 : 1),
+              if: (s, e) => s.equity_tabled
+                ? e.weeksSince("equity_impasse") >= 1
+                : e.done("equity_signing")
+                  && e.weeksSince("equity_signing") >= (s.equity_proposal === "40/40/20" ? 0 : 1),
             },
             mockups: {
               full:   { tag: "A", variant: "rich" },

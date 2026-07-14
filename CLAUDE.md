@@ -44,7 +44,7 @@ Separation of concerns is the whole point of the redesign: the engine holds no c
 - **`play.html`** — a plain debug harness UI (kept for quick inspection).
 - **`tests/`** — `harness.js` (shared drivers + game loop + `jumpTo`, exports `V2Harness`), `test_slice.js`, `test_narrative.js`, `test_scenes.js`, `phase_map.js`, `sim_strategies.js`, `sim_behaviors.js` (the behavior-contract suite: strategy → consequence).
 
-The content set: **~148 nodes, 19 cast, 5 scene arcs** across the `story/` files: `opening`, `equity`, `dev_plan`, `team`, `dev_directions`, `demo_night`, `users`, `launch_day`, `slide`, `pivot_day`, `community`, `fundraising`, `growth`, `jordan_arc`, `discovery`, `press`, `ambient`.
+The content set: **~158 nodes, 19 cast, 5 scene arcs** across the `story/` files: `opening`, `equity`, `dev_plan`, `team`, `dev_directions`, `demo_night`, `users`, `launch_day`, `slide`, `pivot_day`, `community`, `fundraising`, `growth`, `jordan_arc`, `discovery`, `press`, `ambient`.
 
 ## The story graph: nodes, when-clauses, effects
 

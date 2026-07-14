@@ -62,13 +62,20 @@ console.log("decent driver (seed 42)");
   const g = run(42, decent, 20);
   ok(!g.s.game_over, "alive after 20 weeks (cash $" + g.s.cash + ")");
 
-  // Equity arc, 40/40/20 → Jordan counters → cave to thirds.
+  // Equity arc, 40/40/20 anchor → Jordan counters → thirds at the impasse →
+  // Alex (the disappointed party) consents → signing.
   ok(g.took("equity_alex:probe"), "probed Alex before naming a split");
   ok(g.took("equity_worry:reassure"), "answered Jordan's worry before the split landed");
   ok(g.took("equity_alex_why:propose_40"), "proposed 40/40/20");
-  ok(g.took("equity_counter_jordan:cave_33"), "Jordan countered, player caved to thirds");
+  ok(g.took("equity_counter_jordan:hear_her"), "Jordan countered the 40 and got heard");
+  ok(g.took("equity_impasse_alex:ack") && g.took("equity_impasse_jordan:call"),
+    "both demands collided out loud before the call");
+  ok(g.took("equity_impasse:thirds_final"), "the founder called it at the impasse: thirds");
   ok(g.s.equity_proposal === "33/33/33", "final split is equal thirds");
+  ok(g.took("equity_consent_alex:own_it"), "Alex — the split's loser — had his say before the signing");
+  ok(!g.done("equity_consent_jordan"), "Jordan needed no consent round — thirds is her ask");
   ok(g.s.jordan_equity === true, "equity signed");
+  ok(!g.s.equity_tabled, "nothing was tabled");
   ok(g.weekOf("equity_signing") === g.weekOf("equity_open"),
     "scene: opener and signing resolved in the same week (one sitting)");
   const equityWeek = g.weekOf("equity_open");
