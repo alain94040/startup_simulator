@@ -252,7 +252,7 @@
         id: "interviews", char: "founder",
         text: "you've been building without a single structured conversation with someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
         when: {
-          if: (s, e) => !s.launched
+          if: (s, e) => !s.launched && s.incorporated 
             && s.week <= Math.max(8, e.done("dev_plan") ? e.weekOf("dev_plan") + 3 : 8),
         },
         choices: [

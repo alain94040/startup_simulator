@@ -32,6 +32,7 @@
     },
     {
       id: "mom", name: "Mom", role: "Family", type: "family",
+      unlock: (s) => (s.incorporated),
     },
     {
       id: "priya", name: "Priya", role: "Advisor", type: "advisor",

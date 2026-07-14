@@ -1719,12 +1719,12 @@ function showIntro() {
     '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
     '<div class="intro-actions">' + (last ? "" : '<button class="intro-skip">skip</button>') +
     '<button class="intro-next">' + (last ? "Week 1 →" : "Continue →") + "</button></div></div></div>";
-  const done = () => { $("introOv").classList.remove("on"); localStorage.setItem("kindred_intro", "1"); };
+  const done = () => { $("introOv").classList.remove("on"); };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep >= INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
   $("introOv").classList.add("on");
 }
-if (!localStorage.getItem("kindred_intro")) showIntro();
+showIntro();
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
 function syncSurfaceTabs() {
