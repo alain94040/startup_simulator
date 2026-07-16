@@ -494,7 +494,7 @@
      big portrait — so it still reads at inline-thumbnail size (~108px), where the
      earlier text-heavy layout turned to mush. Slim browser chrome + a bold legend
      sell the "real screenshot," in the app's own orange→pink→purple palette. */
-  .v-calc{padding-bottom:3.3em}  /* clearance so the corner mk-badge floats over empty space, not the legend */
+  .v-calc{padding-bottom:1.15em}
   .v-calc .mk-brow{display:flex;align-items:center;justify-content:center;gap:.4em;margin:.2em 1em .7em;padding:.5em .7em;
     border-radius:.8em;background:#eceef2}
   .v-calc .mk-brow .lock{width:.5em;height:.42em;border-radius:.08em;border:.1em solid #8a8a96;border-top:none;position:relative;flex:none}
@@ -1073,14 +1073,14 @@ function mockupRowHtml(mockups) {
   const keys = Object.keys(mockups);
   return '<div class="mk-row">' + keys.map(k =>
     '<div class="mk-thumb" data-mk="' + esc(k) + '">' + mockupPhoneHtml(mockups[k]) +
-    '<span class="mk-badge">' + esc(mockups[k].tag || "") + "</span></div>").join("") + "</div>";
+    (mockups[k].tag ? '<span class="mk-badge">' + esc(mockups[k].tag) + "</span>" : "") + "</div>").join("") + "</div>";
 }
 function openMockupLightbox(mockups, startKey) {
   const keys = Object.keys(mockups);
   const lb = $("lightbox");
   const show = (k) => {
-    $("lbStage").innerHTML = '<div class="mk-large">' + mockupPhoneHtml(mockups[k]) + '<span class="mk-badge">' + esc(mockups[k].tag || "") + "</span></div>";
-    $("lbThumbs").innerHTML = keys.map(kk => '<button class="lb-dot' + (kk === k ? " on" : "") + '" data-k="' + esc(kk) + '">' + esc(mockups[kk].tag || "") + "</button>").join("");
+    $("lbStage").innerHTML = '<div class="mk-large">' + mockupPhoneHtml(mockups[k]) + (mockups[k].tag ? '<span class="mk-badge">' + esc(mockups[k].tag) + "</span>" : "") + "</div>";
+    $("lbThumbs").innerHTML = keys.length > 1 ? keys.map(kk => '<button class="lb-dot' + (kk === k ? " on" : "") + '" data-k="' + esc(kk) + '">' + esc(mockups[kk].tag || "") + "</button>").join("") : "";
     for (const d of $("lbThumbs").querySelectorAll(".lb-dot")) d.onclick = () => show(d.dataset.k);
   };
   show(startKey);

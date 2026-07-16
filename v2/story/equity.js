@@ -306,7 +306,7 @@
           {
             id: "equity_impasse_alex", char: "alex",
             text: "okay, very \"plugged it into a spreadsheet\" of me, but i found this co-founder equity calculator on foundrs.com and ran our numbers through it last night. it said 40/40/20, give or take. i'm allowed to double-check my own case.",
-            mockups: { calc: { tag: "📊", variant: "calc" } },
+            mockups: { calc: { variant: "calc" } },
             when: { if: (s, e) => !!s.equity_proposal && !s.equity_decided && counterHeard(s, e) },
             choices: [
               {
