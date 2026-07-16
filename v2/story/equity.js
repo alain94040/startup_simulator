@@ -156,7 +156,12 @@
             // 33 on the table: Jordan thinks it's over. It isn't — Alex is next.
             id: "equity_jordan_relief", char: "jordan",
             text: "alex says you're at thirds. good. see — that wasn't hard. can we get it in writing before anyone gets clever about it?",
-            when: { if: (s) => s.equity_proposal === "33/33/33" && !s.equity_decided && !s.equity_skipped },
+            // Her premature relief is overtaken once the impasse opens (Alex has
+            // countered and you're being asked to call it). If it's still sitting
+            // unanswered, its window closes so it yields Jordan's single slot to
+            // the impasse beat waiting behind it — otherwise a scene sitting can't
+            // surface her report/impasse line while this holds her thread.
+            when: { if: (s, e) => s.equity_proposal === "33/33/33" && !s.equity_decided && !s.equity_skipped && !e.done("equity_impasse_alex") },
             choices: [
               {
                 key: "not_yet", label: "It's not signed yet",
