@@ -489,22 +489,31 @@
   .v-generic .gt.on{background:#ff4f6d}
 
   /* ===== D · CALC — a phone screenshot of a browser tab (Alex's equity-calculator receipt) =====
-     One segmented bar + a short legend, not text-heavy rows — reads at a glance
-     even shrunk to thumbnail size, the way the other mockup variants lean on
-     color blocks instead of paragraphs. */
-  .v-calc{padding-bottom:.5em}
-  .v-calc .mk-caddr{display:flex;align-items:center;gap:.32em;margin:.1em .9em .55em;padding:.42em .7em;
-    border-radius:1em;background:#eef0f4;font-size:.55em;color:#5c5c66;font-weight:700}
-  .v-calc .mk-caddr .lock{font-size:.85em;opacity:.7}
-  .v-calc .mk-ctitle{padding:0 1em .7em;font-size:.74em;font-weight:800;color:#1c1c22;letter-spacing:-.01em}
-  .v-calc .mk-cstack{display:flex;height:1.2em;margin:0 1em .8em;border-radius:.5em;overflow:hidden}
-  .v-calc .mk-cstack i{display:block;height:100%}
-  .v-calc .mk-clegend{padding:0 1em}
-  .v-calc .mk-cleg{display:flex;align-items:center;gap:.42em;font-size:.6em;font-weight:700;color:#3a3a44;padding:.3em 0}
-  .v-calc .mk-cleg b{margin-left:auto;color:#1c1c22;font-weight:800}
-  .v-calc .mk-cdot{width:.75em;height:.75em;border-radius:50%;flex:none}
-  .v-calc .mk-cbtn{margin:.8em 1em 0;padding:.55em 0;text-align:center;border-radius:.8em;
-    background:#1c1c22;color:#fff;font-size:.58em;font-weight:800}
+     A donut split + a short legend under real browser chrome — reads as an
+     equity calculator at a glance, even shrunk to thumbnail size, and borrows
+     the app's own orange→pink→purple palette so the mockups feel of a piece. */
+  .v-calc{padding-bottom:.7em}
+  .v-calc .mk-brow{display:flex;align-items:center;gap:.5em;margin:.15em .75em .7em;padding:.4em .7em;
+    border-radius:1em;background:#f1f2f6}
+  .v-calc .mk-brow .lock{width:.62em;height:.5em;border-radius:.1em;border:.11em solid #9a9aa6;border-top:none;position:relative;flex:none}
+  .v-calc .mk-brow .lock::before{content:"";position:absolute;left:50%;top:-.34em;transform:translateX(-50%);
+    width:.34em;height:.34em;border:.11em solid #9a9aa6;border-bottom:none;border-radius:.3em .3em 0 0}
+  .v-calc .mk-brow .url{font-size:.56em;color:#4a4a55;font-weight:700}
+  .v-calc .mk-brow .url b{color:#1c1c22}
+  .v-calc .mk-brow .dots{margin-left:auto;letter-spacing:.06em;color:#b6b6c0;font-weight:900;font-size:.6em}
+  .v-calc .mk-ctitle{padding:0 1.1em .08em;font-size:.62em;font-weight:800;color:#16161c;letter-spacing:-.01em;line-height:1.15}
+  .v-calc .mk-csub{padding:0 1.35em .5em;font-size:.5em;color:#9a9aa6;font-weight:700}
+  .v-calc .mk-cring{width:5.1em;height:5.1em;margin:.3em auto .8em;border-radius:50%;position:relative}
+  .v-calc .mk-cring::after{content:"";position:absolute;inset:1.15em;background:#fff;border-radius:50%}
+  .v-calc .mk-chole{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2}
+  .v-calc .mk-chole b{font-size:.95em;font-weight:800;color:#16161c;line-height:1}
+  .v-calc .mk-chole em{font-size:.42em;font-style:normal;color:#9a9aa6;font-weight:700;margin-top:.35em;letter-spacing:.04em}
+  .v-calc .mk-clegend{padding:0 1.25em}
+  .v-calc .mk-cleg{display:flex;align-items:center;gap:.5em;font-size:.56em;font-weight:700;color:#43434e;padding:.28em 0}
+  .v-calc .mk-cleg b{margin-left:auto;color:#16161c;font-weight:800;font-variant-numeric:tabular-nums}
+  .v-calc .mk-cdot{width:.62em;height:.62em;border-radius:50%;flex:none}
+  .v-calc .mk-cbtn{margin:.75em 1.1em 0;padding:.6em 0;text-align:center;border-radius:.9em;
+    background:#16161c;color:#fff;font-size:.56em;font-weight:800}
 
   .mk-photos{display:flex;gap:9px;align-self:flex-start;max-width:88%;margin:8px 2px 2px;flex-wrap:wrap}
   .mk-thumb{
@@ -1049,10 +1058,13 @@ function mkCalc() {
     { label: "Eng, full-time", pct: 40, color: "#ff4f81" },
     { label: "Eng, part-time", pct: 20, color: "#8b1ec2" },
   ];
+  let a = 0;
+  const stops = slices.map(s => { const seg = s.color + " " + a + "deg " + (a + s.pct * 3.6) + "deg"; a += s.pct * 3.6; return seg; }).join(",");
   return MK_STATUSBAR +
-    '<div class="mk-caddr"><span class="lock">🔒</span> foundrs.com</div>' +
+    '<div class="mk-brow"><span class="lock"></span><span class="url"><b>foundrs.com</b>/equity</span><span class="dots">⋯</span></div>' +
     '<div class="mk-ctitle">Co-Founder Equity Calculator</div>' +
-    '<div class="mk-cstack">' + slices.map(s => '<i style="width:' + s.pct + '%;background:' + s.color + '"></i>').join("") + "</div>" +
+    '<div class="mk-csub">3 people · 100% allocated</div>' +
+    '<div class="mk-cring" style="background:conic-gradient(' + stops + ')"><span class="mk-chole"><b>3</b><em>PEOPLE</em></span></div>' +
     '<div class="mk-clegend">' + slices.map(s =>
       '<div class="mk-cleg"><i class="mk-cdot" style="background:' + s.color + '"></i>' + s.label + "<b>" + s.pct + "%</b></div>").join("") + "</div>" +
     '<div class="mk-cbtn">Recalculate</div>';
