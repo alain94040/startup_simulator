@@ -347,7 +347,7 @@
           },
           {
             id: "equity_impasse_jordan_report", char: "jordan",
-            text: "alex called me about the equity thing, showed me some calculator he found online. i didn't move — i still don't want to keep making this case, that's still the whole problem. nothing's different, except now there's two of us waiting on you instead of one.",
+            text: "alex called me — walked me through that equity calculator like the numbers would change my mind. so i sent him back paul graham's essay, the one where he says founders should just split it equally and stop trying to price who mattered most. we went in circles. i still don't want to keep making the case for why i belong here — that's still the whole problem. nothing's different, except now there's two of us waiting on you instead of one.",
             when: { after: ["equity_impasse_alex"], took: ["equity_impasse_alex:convince_jordan"], if: (s) => !s.equity_decided },
             choices: [
               {
