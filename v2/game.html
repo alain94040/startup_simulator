@@ -1317,9 +1317,13 @@ function sceneOpenBeat(charId) { return sceneOpenBeats().find(a => a.charId === 
 function sceneSelfBeat() { return sceneOpenBeats().find(a => SELF.has(a.charId)) || null; }
 // Who shows in the room's rail: cast members who've said something or owe a
 // reply — excluding the founder, whose decisions are the card, not a thread.
+// Ordered by the game's rail order (cast declaration order) so a scene's roster
+// matches the main chat list, regardless of how the arc lists its cast.
 function sceneCast() {
   const arc = game.arcs.get(lastSceneId);
-  return (arc ? arc.scene.cast : []).filter(id => !SELF.has(id) && (sceneThread(id).length > 0 || sceneOpenBeat(id)));
+  return (arc ? arc.scene.cast : [])
+    .filter(id => !SELF.has(id) && (sceneThread(id).length > 0 || sceneOpenBeat(id)))
+    .sort((a, b) => game.order.indexOf(a) - game.order.indexOf(b));
 }
 function sceneUnread(charId) {
   return sceneThread(charId).slice(scRendered[charId] || 0).some(m => m.type === "incoming");
