@@ -59,7 +59,7 @@
     equity_worry: ["reassure"], equity_jordan_relief: ["not_yet"], equity_alex_justify: ["mine"],
     equity_counter_jordan: ["hear_her"], equity_counter_alex: ["risk_real"],
     equity_counter_alex_50: ["hear_him"], equity_5050_interject: ["ack"],
-    equity_impasse_alex: ["ack"], equity_impasse_jordan: ["call"],
+    equity_impasse_alex: ["ack"], equity_impasse_jordan: ["heard"],
     equity_impasse: ["thirds_final"], equity_consent_alex: ["own_it"],
     equity_consent_jordan: ["heard"], equity_signing: ["sign"],
     dev_plan: ["lean"], auth_choice: ["buy"], auth_forced: ["buy"],

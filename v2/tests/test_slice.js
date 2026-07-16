@@ -68,7 +68,7 @@ console.log("decent driver (seed 42)");
   ok(g.took("equity_worry:reassure"), "answered Jordan's worry before the split landed");
   ok(g.took("equity_alex_why:propose_40"), "proposed 40/40/20");
   ok(g.took("equity_counter_jordan:hear_her"), "Jordan countered the 40 and got heard");
-  ok(g.took("equity_impasse_alex:ack") && g.took("equity_impasse_jordan:call"),
+  ok(g.took("equity_impasse_alex:ack") && g.took("equity_impasse_jordan:heard"),
     "both demands collided out loud before the call");
   ok(g.took("equity_impasse:thirds_final"), "the founder called it at the impasse: thirds");
   ok(g.s.equity_proposal === "33/33/33", "final split is equal thirds");

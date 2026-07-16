@@ -488,6 +488,24 @@
   .v-generic .gt{width:1.05em;height:1.05em;border-radius:.28em;background:#d4d4dc}
   .v-generic .gt.on{background:#ff4f6d}
 
+  /* ===== D · CALC — a phone screenshot of a browser tab (Alex's equity-calculator receipt) =====
+     One segmented bar + a short legend, not text-heavy rows — reads at a glance
+     even shrunk to thumbnail size, the way the other mockup variants lean on
+     color blocks instead of paragraphs. */
+  .v-calc{padding-bottom:.5em}
+  .v-calc .mk-caddr{display:flex;align-items:center;gap:.32em;margin:.1em .9em .55em;padding:.42em .7em;
+    border-radius:1em;background:#eef0f4;font-size:.55em;color:#5c5c66;font-weight:700}
+  .v-calc .mk-caddr .lock{font-size:.85em;opacity:.7}
+  .v-calc .mk-ctitle{padding:0 1em .7em;font-size:.74em;font-weight:800;color:#1c1c22;letter-spacing:-.01em}
+  .v-calc .mk-cstack{display:flex;height:1.2em;margin:0 1em .8em;border-radius:.5em;overflow:hidden}
+  .v-calc .mk-cstack i{display:block;height:100%}
+  .v-calc .mk-clegend{padding:0 1em}
+  .v-calc .mk-cleg{display:flex;align-items:center;gap:.42em;font-size:.6em;font-weight:700;color:#3a3a44;padding:.3em 0}
+  .v-calc .mk-cleg b{margin-left:auto;color:#1c1c22;font-weight:800}
+  .v-calc .mk-cdot{width:.75em;height:.75em;border-radius:50%;flex:none}
+  .v-calc .mk-cbtn{margin:.8em 1em 0;padding:.55em 0;text-align:center;border-radius:.8em;
+    background:#1c1c22;color:#fff;font-size:.58em;font-weight:800}
+
   .mk-photos{display:flex;gap:9px;align-self:flex-start;max-width:88%;margin:8px 2px 2px;flex-wrap:wrap}
   .mk-thumb{
     position:relative;border:0;background:none;padding:0;cursor:pointer;font-size:8px;
@@ -1025,8 +1043,23 @@ function mkGeneric() {
     '<div class="mk-gacts"><button class="gact g-no">✕</button><button class="gact g-star">★</button><button class="gact g-like">♥</button></div>' +
     '<div class="mk-gtabs"><i class="gt on"></i><i class="gt"></i><i class="gt"></i></div>';
 }
+function mkCalc() {
+  const slices = [
+    { label: "Founder", pct: 40, color: "#ff8a5b" },
+    { label: "Eng, full-time", pct: 40, color: "#ff4f81" },
+    { label: "Eng, part-time", pct: 20, color: "#8b1ec2" },
+  ];
+  return MK_STATUSBAR +
+    '<div class="mk-caddr"><span class="lock">🔒</span> foundrs.com</div>' +
+    '<div class="mk-ctitle">Co-Founder Equity Calculator</div>' +
+    '<div class="mk-cstack">' + slices.map(s => '<i style="width:' + s.pct + '%;background:' + s.color + '"></i>').join("") + "</div>" +
+    '<div class="mk-clegend">' + slices.map(s =>
+      '<div class="mk-cleg"><i class="mk-cdot" style="background:' + s.color + '"></i>' + s.label + "<b>" + s.pct + "%</b></div>").join("") + "</div>" +
+    '<div class="mk-cbtn">Recalculate</div>';
+}
 function mockupPhoneHtml(m) {
-  const body = m.variant === "rich" ? mkRich() : m.variant === "generic" ? mkGeneric() : mkMinimal();
+  const body = m.variant === "rich" ? mkRich() : m.variant === "generic" ? mkGeneric()
+    : m.variant === "calc" ? mkCalc() : mkMinimal();
   return '<div class="mk-phone v-' + esc(m.variant || "minimal") + '"><span class="mk-notch"></span>' + body + "</div>";
 }
 function mockupRowHtml(mockups) {
@@ -1413,12 +1446,21 @@ function renderFocusThread(opts) {
     const tail = !next || next.type !== m.type;
     const anim = i === shown - 1 ? " msg-new" : "";
     if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
-    else html += '<div class="m-in' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+    else {
+      html += '<div class="m-in' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+      if (m.subtext) html += '<div class="m-sub">' + esc(m.subtext) + "</div>";
+      if (m.mockups) html += mockupRowHtml(m.mockups);
+    }
   });
   if (opts.typing) html += '<div class="typing"><i></i><i></i><i></i></div>';
   const el = $("scThread");
   el.innerHTML = html || '<div class="m-wk">…</div>';
   el.scrollTop = el.scrollHeight;
+  // wire mockup thumbnails → lightbox (same pattern as the main thread renderer)
+  for (const th of el.querySelectorAll(".mk-thumb")) {
+    const mk = t.find(m => m.mockups) && t.find(m => m.mockups).mockups;
+    if (mk) th.onclick = () => openMockupLightbox(mk, th.dataset.mk);
+  }
 
   // composer: this thread's open beat, or a nudge toward whoever's waiting
   const rbox = $("scReply");

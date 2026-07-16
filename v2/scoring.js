@@ -58,6 +58,7 @@
         "equity_open", "equity_alex", "equity_alex_why", "equity_worry",
         "equity_counter_alex", "equity_counter_alex_50", "equity_counter_jordan",
         "equity_impasse_alex", "equity_impasse_jordan", "equity_impasse",
+        "equity_impasse_alex_report", "equity_impasse_jordan_report",
         "equity_consent_alex", "equity_consent_jordan",
         "equity_signing", "alex_commitment",
       ]);
@@ -67,6 +68,13 @@
             note: talkRatio === 1 ? "Every equity and commitment talk got an answer." : "Some of the hardest conversations resolved by silence." },
           { faced: g.done("equity_alex"), weight: 1, got: g.took("equity_alex:probe") ? 1 : 0.4,
             note: g.took("equity_alex:probe") ? "Asked where Alex's head was before naming a number." : null },
+          // Sending Alex to negotiate with Jordan himself is the founder
+          // dodging the one call that's actually theirs to make — it settles
+          // nothing and leaves both of them waiting on you anyway.
+          { faced: g.done("equity_impasse_alex"), weight: 2,
+            got: g.took("equity_impasse_alex:convince_jordan") ? 0.2 : 1,
+            note: g.took("equity_impasse_alex:convince_jordan")
+              ? "Told Alex to go negotiate equity with Jordan himself instead of deciding — nothing moved, and both were left waiting on you." : null },
           // Tabling the split is worse than never assembling the room: the
           // whole company was on the call, both cases were made, and the
           // founder blinked.

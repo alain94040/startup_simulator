@@ -296,43 +296,80 @@
             timeout: { weeks: 3, effects: { char: { jordan: { trust: -8 } } } },
           },
 
-          // ── the crossfire: the demands collide out loud, then the founder
-          // has to call it. Alex does the algebra — it's his kind of argument. ─
+          // ── the crossfire: two live arguments, then the founder's call.
+          // Both cofounders already made their formal case in the counter
+          // beats above, so this isn't re-argument — it's Alex reaching for
+          // outside validation (very him) and Jordan naming the meta-problem
+          // (having to argue for her own worth at all). Private threads: Alex
+          // and Jordan can't see each other's message here, only what they
+          // tell each other directly (the convince-Jordan branch below). ─────
           {
             id: "equity_impasse_alex", char: "alex",
-            text: (s) => {
-              const lead = s.equity_proposal === "40/40/20"
-                ? "jordan's pushing back, i can tell by the typing bubbles. so before you fold — "
-                : s.equity_proposal === "50/25/25"
-                  ? "you know where i stand on the 50. what's on the table gives me neither thing i asked for. so — "
-                  : "jordan just repeated 'thirds' in the group like it's settled. it's not settled. ";
-              return lead + "i did the algebra on this. me even with you. me ahead of jordan. jordan even with everyone. pick any two — you can't have all three. somebody leaves this call unhappy. i'm asking you to pick on purpose.";
-            },
+            text: "okay, very \"plugged it into a spreadsheet\" of me, but i found this co-founder equity calculator on foundrs.com and ran our numbers through it last night. it said 40/40/20, give or take. i'm allowed to double-check my own case.",
+            mockups: { calc: { tag: "📊", variant: "calc" } },
             when: { if: (s, e) => !!s.equity_proposal && !s.equity_decided && counterHeard(s, e) },
             choices: [
               {
-                key: "ack", label: "I know what you're asking",
-                reply: "i know exactly what you're asking. give me a minute.",
+                key: "ack", label: "Noted — give me a minute",
+                reply: "duly noted. give me a minute with this.",
                 journal: null,
-                fx: () => "'a minute. okay.' The three dots appeared, and disappeared.",
+                fx: () => "Alex: 'take your time. i just wanted you to know i did my homework.'",
+              },
+              {
+                // The dodge: pass the hard call to the two people already in
+                // conflict. It costs nothing yet — that's the trap; the real
+                // price lands in the report-back beats below.
+                key: "convince_jordan", label: "Go talk to Jordan — try to convince her yourself",
+                reply: "you two are the ones who actually disagree. go talk to her — see if you can find the number between you.",
+                journal: null,
+                fx: () => "Alex: 'uh — okay. i can do that.'",
               },
             ],
             timeout: { weeks: 1, effects: { char: { alex: { morale: -3 } } } },
           },
           {
-            id: "equity_impasse_jordan", char: "jordan",
-            text: (s) => (s.equity_proposal === "33/33/33"
-              ? "he said 'both,' didn't he. i said thirds and i meant it. so now you know — "
-              : "he said 'both,' didn't he. so now you know — ")
-              + "one of us is about to hear a no from you. i knew that risk when i opened this. i'd still rather hear it on a call than find out in a docusign.",
-            when: { after: ["equity_impasse_alex"], if: (s) => !s.equity_decided },
+            // Report-back A: the dodge produced nothing — both of them stand
+            // exactly where they started, and now both are waiting on the
+            // founder instead of one.
+            id: "equity_impasse_alex_report", char: "alex",
+            text: "talked to jordan. told her about the calculator, walked through the numbers. she wasn't having it. we're exactly where we started.",
+            when: { after: ["equity_impasse_alex"], took: ["equity_impasse_alex:convince_jordan"], if: (s) => !s.equity_decided },
             choices: [
               {
-                key: "call", label: "You'll hear it from me first",
-                reply: "whatever i decide, you hear it from me first. not from paperwork.",
+                key: "ok", label: "Okay — I'll figure it out",
+                reply: "okay. i'll figure it out myself.",
                 journal: null,
-                effects: { char: { jordan: { trust: 2 } } },
-                fx: () => "'okay.' One word, but she stayed in the chat.",
+                effects: { char: { alex: { morale: -6, trust: -4 } } },
+                fx: () => "Alex: 'yeah. probably should've been you from the start.'",
+              },
+            ],
+            timeout: { weeks: 1, effects: { char: { alex: { morale: -6, trust: -4 } } } },
+          },
+          {
+            id: "equity_impasse_jordan_report", char: "jordan",
+            text: "alex called me about the equity thing, showed me some calculator he found online. i didn't move — i still don't want to keep making this case, that's still the whole problem. nothing's different, except now there's two of us waiting on you instead of one.",
+            when: { after: ["equity_impasse_alex"], took: ["equity_impasse_alex:convince_jordan"], if: (s) => !s.equity_decided },
+            choices: [
+              {
+                key: "own_it", label: "That's on me, not him — I'll decide",
+                reply: "that's on me, not him. i'll decide.",
+                journal: null,
+                effects: { char: { jordan: { morale: -6, trust: -4 } } },
+                fx: () => "Jordan: 'good.'",
+              },
+            ],
+            timeout: { weeks: 1, effects: { char: { jordan: { morale: -6, trust: -4 } } } },
+          },
+          {
+            id: "equity_impasse_jordan", char: "jordan",
+            text: "i don't want to keep making the case for why i deserve to be here. i shouldn't have to. that's kind of the whole problem.",
+            when: { if: (s, e) => e.done("equity_impasse_alex") && !e.took("equity_impasse_alex:convince_jordan") && !s.equity_decided },
+            choices: [
+              {
+                key: "heard", label: "I hear you",
+                reply: "i hear you. i'm not going to make you keep proving it.",
+                journal: null,
+                fx: () => "Jordan: 'okay.' Short, but she meant it.",
               },
             ],
             timeout: { weeks: 1, effects: { char: { jordan: { trust: -2 } } } },
@@ -344,7 +381,10 @@
             text: (s) => "notes to self. alex: even with me, ahead of jordan — he won't bend. jordan: no gaps at all — she won't ask twice."
               + (s.equity_proposal === "50/25/25" ? " my 50 is still on the table and neither of them will sign it happily." : "")
               + " both waiting. whatever i send to the group next is the cap table.",
-            when: { after: ["equity_impasse_jordan"], if: (s) => !s.equity_decided && !s.jordan_equity },
+            when: {
+              if: (s, e) => !s.equity_decided && !s.jordan_equity
+                && (e.done("equity_impasse_jordan") || (e.done("equity_impasse_alex_report") && e.done("equity_impasse_jordan_report"))),
+            },
             choices: [
               {
                 key: "thirds_final", label: "Equal thirds — final",
