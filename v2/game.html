@@ -267,6 +267,15 @@
   .modal h2 { font-size: 18px; margin-bottom: 4px; }
   .modal .sub { color: var(--dim); font-size: 12.5px; margin-bottom: 14px; }
   .modal .ok { margin-top: 14px; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 0; font-weight: 600; }
+  /* the founder's own beats in a scene are a private decision, not a chat with
+     yourself — surfaced as a centered card over the room instead of a "You" thread. */
+  #scSelfOv { z-index: 62; }
+  #scSelfModal { width: min(460px, 92%); }
+  .ss-tag { display: inline-block; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700; color: var(--blue); background: var(--blue-soft); border-radius: 999px; padding: 3px 11px; margin-bottom: 11px; }
+  .ss-body { font-size: 14px; line-height: 1.5; color: var(--ink); white-space: pre-wrap; }
+  .ss-sub { font-size: 12px; color: var(--dim); margin-top: 7px; }
+  .ss-choices { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .ss-choices .chip { margin-top: 0; }
   #endOv { background: rgba(10,10,18,.66); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
   .eg-emoji { font-size: 38px; text-align: center; line-height: 1; margin-bottom: 6px; }
   .eg-title { text-align: center; }
@@ -599,6 +608,7 @@
   </div>
 </div>
 
+<div class="overlay" id="scSelfOv"><div class="modal" id="scSelfModal"></div></div>
 <div id="notifs"></div>
 <div id="noteCenter"></div>
 <div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">tap to skip</span></div>
@@ -1301,10 +1311,15 @@ function sceneOpenBeats() {
   return game.scene ? game.openActions().filter(a => a.scene === game.scene.id && !a.onHold) : [];
 }
 function sceneOpenBeat(charId) { return sceneOpenBeats().find(a => a.charId === charId) || null; }
-// Who shows in the room's rail: cast members who've said something or owe a reply.
+// The founder's own beats in a scene are private decisions (their thread is the
+// journal), not a chat with yourself — they surface as a centered card, never as
+// a rail thread. Everything else about the scene stays the same.
+function sceneSelfBeat() { return sceneOpenBeats().find(a => SELF.has(a.charId)) || null; }
+// Who shows in the room's rail: cast members who've said something or owe a
+// reply — excluding the founder, whose decisions are the card, not a thread.
 function sceneCast() {
   const arc = game.arcs.get(lastSceneId);
-  return (arc ? arc.scene.cast : []).filter(id => sceneThread(id).length > 0 || sceneOpenBeat(id));
+  return (arc ? arc.scene.cast : []).filter(id => !SELF.has(id) && (sceneThread(id).length > 0 || sceneOpenBeat(id)));
 }
 function sceneUnread(charId) {
   return sceneThread(charId).slice(scRendered[charId] || 0).some(m => m.type === "incoming");
@@ -1320,8 +1335,9 @@ function enterScene(startSeq) {
   const meta = SCENE_META[lastSceneId] || {};
   showCine(meta.enter || [meta.title || ""], meta.accent, () => {
     $("scene").classList.add("on");
-    const beats = sceneOpenBeats();
-    scSelected = (beats[0] && beats[0].charId) || sceneCast()[0] || (game.scene && game.scene.scene.cast[0]);
+    const beats = sceneOpenBeats().filter(a => !SELF.has(a.charId));
+    scSelected = (beats[0] && beats[0].charId) || sceneCast()[0]
+      || (game.scene && game.scene.scene.cast.find(id => !SELF.has(id)));
     openSceneThread(scSelected);
   });
 }
@@ -1441,6 +1457,31 @@ function renderFocus(opts) {
   }
 
   renderFocusThread(opts);
+  renderSceneSelfDecision(opts);
+}
+
+// The founder's own open beat in a scene — the impasse call, the signing — is a
+// private decision, so it's a centered card over the room instead of a "You"
+// chat. Shows while such a beat is open and the room isn't mid-typing; answering
+// runs the same doAct path (which re-polls and continues the sitting).
+function renderSceneSelfDecision(opts) {
+  opts = opts || {};
+  const ov = $("scSelfOv");
+  const beat = (inScene && game.scene && !uiBusy && !opts.typing) ? sceneSelfBeat() : null;
+  if (!beat) { ov.classList.remove("on"); return; }
+  const gk = gatedKeys(beat.nodeId);
+  $("scSelfModal").innerHTML =
+    '<div class="ss-tag">Your call</div>' +
+    '<div class="ss-body">' + esc(beat.body) + "</div>" +
+    (beat.subtext ? '<div class="ss-sub">' + esc(beat.subtext) + "</div>" : "") +
+    '<div class="ss-choices">' +
+    beat.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-n="' + esc(beat.nodeId) + '" data-k="' + esc(o.key) + '">' +
+      (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("") +
+    "</div>";
+  for (const b of $("scSelfModal").querySelectorAll(".chip")) {
+    b.onclick = () => { if (!uiBusy) doAct(b.dataset.n, b.dataset.k, "founder"); };
+  }
+  ov.classList.add("on");
 }
 
 function renderFocusThread(opts) {
@@ -1490,7 +1531,7 @@ function renderFocusThread(opts) {
     for (const b of rbox.querySelectorAll(".chip")) b.onclick = () => { if (!uiBusy) doAct(b.dataset.n, b.dataset.k, scSelected); };
     return;
   }
-  const waiting = sceneOpenBeats();
+  const waiting = sceneOpenBeats().filter(a => !SELF.has(a.charId));
   if (waiting.length) {
     // Nudge toward whoever texted back in another thread — and make it a live
     // button, so the reply you provoked elsewhere is one click away (the scene
@@ -1507,6 +1548,7 @@ function renderFocusThread(opts) {
 function exitScene() {
   clearTimeout(scTimer);
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
+  $("scSelfOv").classList.remove("on");
   $("scene").classList.remove("on", "launch");
   $("scene").style.background = "";
   for (const id of game.order) threadRendered[id] = game.threads[id].length;
