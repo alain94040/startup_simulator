@@ -411,11 +411,10 @@
                 fx: () => "Alex: 'thank you for saying it plainly.' Jordan is typing…",
               },
               {
-                key: "fifty_final", label: "50/25/25 stands — final",
-                if: (s) => s.equity_proposal === "50/25/25",
-                reply: "the 50 stands. i started this and i'll carry the blame for it too. 25 each — i need you both anyway.",
+                key: "fifty_final", label: "50/25/25 — final",
+                reply: "50/25/25, final. i started this and i'll carry the blame for it too — 25 each. i need you both anyway.",
                 journal: null,
-                effects: { flags: { equity_decided: true } },
+                effects: { flags: { equity_proposal: "50/25/25", equity_decided: true } },
                 fx: () => "Nobody replied for four minutes. Then jordan: 'noted.'",
               },
               {
