@@ -744,12 +744,9 @@ const STAGES = [
   { id: "demo", label: "Ch 1 · Ship the demo",
     goal: "Become a real company — paperwork, the split, and something a stranger can touch.",
     active: (s, g) => !s.has_demo, items: [
-    { t: "Kick off the build", done: (s, g) => g.done("start_prototype") },
-    { t: "Incorporate", done: s => !!s.incorporated, note: () => "Delaware C-corp · $500" },
-    { t: "Settle the equity split", done: s => !!s.jordan_equity, note: s => s.equity_proposal ? s.equity_proposal + " · nobody set up vesting" : null },
+    { t: "Incorporate", done: s => !!s.incorporated, note: () => null },
     { t: "Pick the dev plan", done: (s, g) => g.done("dev_plan"), note: s => s.dev_plan === "lean" ? "lean — five items" : s.dev_plan === "full" ? "the works — 20+ items" : null },
-    { t: "Auth: build or buy", done: (s, g) => g.done("auth_choice"), note: (s, g) => g.took("auth_choice:buy") ? "bought · $30/wk" : g.done("auth_forced") ? "built, then bought anyway" : g.done("auth_choice") ? "Alex is hand-rolling it" : null },
-    { t: "Matching engine: ours or rented", done: (s, g) => g.done("matching_choice"), note: s => s.matching_owned ? "ours — the IP" : s.matching_licensed ? "licensed · $100/wk" : null },
+    { t: "Matching engine", done: (s, g) => g.done("matching_choice"), note: s => s.matching_owned ? "ours — the IP" : s.matching_licensed ? "licensed · $100/wk" : null },
     { t: "Put it in front of a stranger", done: s => !!s.has_demo },
   ]},
   { id: "launch", label: "Ch 2 · Get to launch",
@@ -1226,8 +1223,7 @@ function renderTodo() {
   }).join("");
   const goal = typeof cur.goal === "function" ? cur.goal(game.s, game) : cur.goal;
   $("todoPop").innerHTML = '<div class="td-stages">' + pills + "</div>" +
-    (goal ? '<div class="td-goal">' + esc(goal) + "</div>" : "") + rows +
-    '<div class="td-foot">one list per chapter of the story. answering your co-founders\' questions is what moves it.</div>';
+    (goal ? '<div class="td-goal">' + esc(goal) + "</div>" : "") + rows;
 }
 $("gTodo").onclick = (e) => { e.stopPropagation(); renderTodo(); $("todoPop").classList.toggle("on"); };
 document.addEventListener("click", (e) => {
