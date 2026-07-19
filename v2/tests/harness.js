@@ -42,8 +42,11 @@
     "founder_consulting", // rent money first — a sensible player never lets it expire
     "equity_worry", "equity_jordan_relief", "equity_alex_justify",
     "equity_5050_interject", "interviews", "waitlist_cold",
+    "launch_surface",     // the launch plan beats the ship call — a sensible
+                          // player picks the splash before flipping the switch
     "slide_maya_call", "slide_cohort", "slide_first_echo",
     "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
+    "pivot_relaunch", "public_complaint",
     "yc_apply",
   ];
   const actPriority = (a) => {
@@ -86,13 +89,18 @@
     slide_hangover: ["retention"], slide_first_echo: ["reply_honest"], slide_cohort: ["dig"],
     slide_alex_thesis: ["push_back", "hear_him"], slide_priya_ping: ["real_numbers"],
     slide_maya_call: ["call"], slide_jordan_echo: ["ack"], feature_spree: ["no"],
+    win_back_blast: ["skip"],
     pivot_summit_call: ["call_it"], pivot_day_open: ["deal"], pivot_day_alex_case: ["probe"],
-    pivot_day_priya_case: ["pull_it"], pivot_day_evidence: ["maya", "circle", "gut"],
+    pivot_day_priya_case: ["pull_it"], pivot_day_evidence: ["maya", "circle", "fixes", "gut"],
     pivot_day_shape: ["flip"], pivot_day_cost: ["ack"], pivot_day_decide: ["pivot"],
-    pivot_day_close: ["night"], pivot_relaunch: ["ship"], pivot_fifty_verdict: ["pivot_now"],
+    pivot_day_close: ["night"],
+    pivot_scope_call: ["cut"], pivot_beta_invite: ["invite"],
+    pivot_relaunch: ["sarah_event", "press", "quiet"], pivot_fifty_verdict: ["pivot_now"],
     pivot_payoff_maya: ["ack"],
     sarah_intro: ["reply"],
-    yc_apply: ["submit"],
+    yc_apply: ["start"],
+    app_q_learned: ["maya", "cohort", "fixes", "bluff"], app_q_team: ["killed", "team_call", "bluff"],
+    app_q_growth: ["channel", "community", "tested", "bluff"], app_send: ["submit"],
     beachhead_choice: ["narrow"], launch_surface: ["quiet"], launch_scramble: ["firefight"],
     channel_test: ["referrals", "creators", "community", "paid"], channel_double_down: ["referrals"],
     dont_scale_seed: ["concierge"], first_customer_offer: ["pitch"], pricing_experiment: ["prompt"],
@@ -130,6 +138,7 @@
     trust_safety: "build", proto_to_product: "build", good_enough_launch: "build",
     feature_spree: "build", bug_reports: "build", feature_request_custom: "build",
     feature_cluster: "build", pivot_relaunch: "build", pivot_fifty_verdict: "build",
+    pivot_scope_call: "build",
     founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
     founder_solo_launch: "build", founder_solo_build: "build", jordan_launch_blocker: "build",
     // research — the market: interviews, communities, the competitor, evidence
@@ -143,6 +152,7 @@
     post_match_dropoff: "research", pivot_open: "research", slide_hangover: "research",
     slide_first_echo: "research", slide_cohort: "research", slide_alex_thesis: "research",
     slide_priya_ping: "research", slide_maya_call: "research", slide_jordan_echo: "research",
+    win_back_blast: "research",
     pivot_summit_call: "research", pivot_payoff_maya: "research", power_user_quiet: "research",
     churn_interview: "research", first_interview_shock: "research", cold_silence: "research",
     random_reframe: "research", pivot_insight_1: "research", pivot_insight_2: "research",
@@ -159,12 +169,13 @@
     founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
     ff_mentor: "money", ff_mentor_pitch: "money", consultant_growth: "money",
     consultant_brand: "money", jordan_cap_table: "money", yc_apply: "money",
+    app_q_learned: "money", app_q_team: "money", app_q_growth: "money", app_send: "money",
     early_funding_goal: "money",
     // growth — distribution: markets, channels, press, pricing
     seed_strategy: "growth", beachhead_choice: "growth", launch_surface: "growth",
     launch_scramble: "growth", channel_test: "growth", channel_double_down: "growth",
     dont_scale_seed: "growth", first_customer_offer: "growth", pricing_experiment: "growth",
-    sarah_intro: "growth", website_social_proof: "growth", founder_solo_growth: "growth",
+    sarah_intro: "growth", pivot_beta_invite: "growth", website_social_proof: "growth", founder_solo_growth: "growth",
     public_complaint: "growth", reporter_deadline: "growth", early_name: "growth",
     // other — filler
     founder_reflect: "other",

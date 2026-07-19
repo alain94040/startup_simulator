@@ -76,39 +76,42 @@
         ],
       },
       {
+        // The launch PLAN — chosen before the switch flips (Ch 2 ends on a
+        // marketing decision, not just a ship call). The chosen splash's users
+        // land at launch conversion in world.js (s.launch_splash).
         id: "launch_surface", char: "growth", from: "You",
-        text: "it's live. now the part nobody warns you about: a launch is only as big as where you announce it, and you get one first impression. where do you make the splash?",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]] },
+        text: "the hardening week is nearly done — you flip the switch within days. now the part nobody warns you about: a launch is only as big as where you announce it, and you get exactly one first impression. where do you make the splash?",
+        when: { if: (s) => s.productPhase === "product" && !s._launch_converted && s.beachhead != null },
         choices: [
           {
             key: "quiet", label: "Soft-launch to the waitlist + friends",
-            journal: "Soft-launched to the waitlist and a few dozen friends. No fireworks. But every single one is a real person who wants this to work — and they're telling me exactly what's broken.",
-            effects: { users: 8, marketFit: 5, signal: 4 },
-            fx: () => "Quiet launch to the people who already raised their hands. ~8 active on day one — small, but every one is high-intent and loud with feedback. The kind of start that compounds.",
+            journal: "Launch plan: soft-launch to the waitlist and a few dozen friends. No fireworks — but every single one will be a real person who wants this to work, telling me exactly what's broken.",
+            effects: { marketFit: 5, signal: 4, flags: { launch_splash: "quiet" } },
+            fx: () => "Plan set: the people who already raised their hands get it first. Small day one — but every signup high-intent and loud with feedback. The kind of start that compounds.",
           },
           {
             key: "press", label: "Give a reporter the exclusive",
-            journal: "Gave a reporter the launch exclusive — the anti-Tinder angle. Smaller than a viral hit, but the people who came in from a thoughtful piece actually read the whole thing first.",
-            effects: { users: 12, signal: 10 },
-            fx: () => "The piece ran with the 'dating app that wants you to delete it' angle. ~12 signups in a day, plus an investor reply-all. Quality over volume.",
+            journal: "Launch plan: a reporter gets the exclusive — the anti-Tinder angle. Smaller than a viral hit, but people who come in from a thoughtful piece actually read the whole thing first.",
+            effects: { signal: 10, flags: { launch_splash: "press" } },
+            fx: () => "Plan set: the exclusive goes out under embargo, the piece runs launch morning. 'The dating app that wants you to delete it.' Quality over volume.",
           },
           {
             key: "tiktok", label: "Pay 3 TikTok creators to post",
-            journal: "Paid three TikTok creators to post about Kindred — the same playbook Flare used. Spendy ($1,200), but it put real daters in the door fast.",
-            effects: { cash: -1200, users: 18, signal: 8, marketFit: 2 },
-            fx: () => "Three creator posts went up. ~18 signups in 48 hours — actual daters, not tire-kickers. $1,200 gone, but the funnel is primed.",
+            journal: "Launch plan: three TikTok creators post on launch day — the same playbook Flare used. Spendy ($1,200), but it puts real daters in the door fast.",
+            effects: { cash: -1200, signal: 8, marketFit: 2, flags: { launch_splash: "tiktok" } },
+            fx: () => "Plan set: three creator posts queued for launch morning. $1,200 committed — actual daters in the door within 48 hours of the switch.",
           },
           {
             // No market_fit gain on purpose: the wrong audience. The spike
-            // deflates on its own (pre-pivot trueFit is low → no retention).
+            // deflates on its own (the trough drains what doesn't retain).
             key: "show_hn", label: "Go big — post to Show HN / Product Hunt",
-            journal: "Posted to Show HN and Product Hunt. Front page for six hours, the signup graph went vertical — and almost all of them were engineers admiring the stack, not single people looking to date. The best-looking launch that taught me the least.",
-            effects: { users: 35, signal: 12 },
-            fx: () => "Front page for six hours. ~35 signups in a day — the graph looks unbelievable. Then you read the comments: builders admiring the matching engine, almost nobody who'd actually use a dating app. A spike, not traction.",
+            journal: "Launch plan: Show HN and Product Hunt, launch morning. If it front-pages, the signup graph goes vertical. Whether any of them are single people looking to date is tomorrow's problem.",
+            effects: { signal: 12, flags: { launch_splash: "show_hn" } },
+            fx: () => "Plan set: Show HN post drafted, Product Hunt page scheduled. If it hits, the graph will look unbelievable for a day. Who actually shows up is another question.",
           },
         ],
-        // Ignored → a modest organic trickle stands in for the splash.
-        timeout: { weeks: 2, effects: { users: 4 } },
+        // Never planned → launch day gets a modest organic trickle (world.js).
+        timeout: { weeks: 3 },
       },
       {
         id: "launch_scramble", char: "growth", from: "Alex",
@@ -196,9 +199,12 @@
         ],
       },
       {
+        // Ch 5: the first ask. Post-pivot only — before the relaunch, "convert a
+        // subscriber" was asking someone to pay for the product that was losing
+        // them (see the trough).
         id: "first_customer_offer", char: "founder", ambient: true,
-        text: "free users show up every day but nobody's paying. one person has been swiping through profiles every single day for two weeks. time to convert the first subscriber.",
-        when: { if: (s) => s.launched && s.users >= 3 && s.customers === 0 },
+        text: "since the relaunch, people actually come back. one user has RSVP'd to four plans in two weeks and brought a friend to two of them. nobody has been asked to pay for anything yet. time to convert the first subscriber.",
+        when: { if: (s) => s.launched && s.pivot_shipped && s.users >= 3 && s.customers === 0 },
         choices: [
           {
             key: "reference", label: "Offer free access for a testimonial",
@@ -207,7 +213,7 @@
           },
           {
             key: "pitch", label: "Pitch them at $49/month",
-            journal: "Pitched them at $49/month. They converted. First paying subscriber. Not much, but it's real.",
+            journal: "Pitched our most active user at $49/month for unlimited plans. They converted. First paying subscriber. Not much, but it's real — and it's revenue the application can point at.",
             effects: { users: -1, customers: 1, signal: 5 },
             fx: () => "Made the ask. They converted. First paying subscriber. $49/month — not much, but it's real.",
           },
@@ -215,7 +221,7 @@
       },
       {
         id: "pricing_experiment", char: "founder", ambient: true,
-        text: "free users open the app every day, swipe, and match — but haven't upgraded. the product clearly works. nobody's been asked to pay. time to test.",
+        text: "free users open the app every day, browse plans, and show up to them — but nobody upgrades on their own. the product clearly works now. nobody's been asked to pay. time to test.",
         when: { if: (s) => s.launched && s.users >= 10 && s.customers >= 1 && s.pivot_shipped },
         choices: [
           {
@@ -229,14 +235,14 @@
             },
           },
           {
-            key: "cap", label: "Cap the free tier at 3 seats",
+            key: "cap", label: "Free tier: 2 plans a month, then pay",
             fx(s) {
               const converted = Math.min(5, Math.max(1, Math.floor(s.users * 0.15)));
               const churned = Math.min(4, Math.max(0, Math.floor(s.users * 0.08)));
               s.users = Math.max(0, s.users - converted - churned);
               s.customers += converted;
               s.signal = clamp(s.signal - 5, 0, 100);
-              return "Seat cap live. " + converted + " upgraded, " + churned + " left when the wall went up. More revenue, fewer free users.";
+              return "Plan cap live — two RSVPs a month free, unlimited on the paid tier. " + converted + " upgraded, " + churned + " left when the wall went up. More revenue, fewer free users.";
             },
           },
           {

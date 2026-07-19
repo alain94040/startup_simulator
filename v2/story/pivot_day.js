@@ -9,8 +9,12 @@
 // analytics) plus one human quote — a face on the data — is what moves Alex off
 // his own column (s.alex_converted → no morale hit, rebuild head start).
 //
-// Aftermath: pivot_relaunch (ship v2), pivot_fifty_verdict (the one redemption
-// card if you chose growth/hedge), pivot_payoff_maya (the bookend).
+// Aftermath — the Ch 4 rebuild, on screen: pivot_scope_call (the lean lesson
+// again, under pressure), pivot_beta_invite (Jordan writes the churned list),
+// pivot_relaunch (ship v2 — on the founder's thread with the relaunch-channel
+// choice: Sarah's event / the reporter's second bite / a quiet update),
+// pivot_fifty_verdict (the one redemption card if you chose growth/hedge),
+// pivot_payoff_maya (the bookend).
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -45,6 +49,8 @@
       e.say({ char: "alex", text: "…yeah. her words, next to my numbers, saying the same thing. i'm going to go quietly erase half my whiteboard." });
     } else if (key === "circle") {
       e.say({ char: "alex", text: "…yeah. twelve friends and almost every match stuck at 'hey'. more users just means more people stuck at 'hey'." });
+    } else if (key === "fixes") {
+      e.say({ char: "alex", text: "…i ran two of those pushes myself. every bump washed out in a week — i watched it happen. more water into a bucket i haven't patched. that's my own column arguing against me." });
     } else if (human) {
       e.say({ char: "alex", text: "that's real, and it stings. i just wish we had numbers to check it against. one person's story is a clue, not proof." });
     } else {
@@ -132,6 +138,15 @@
                 reply: "and our testflight group settles it — twelve people, all friends of friends, everyone knew everyone. a full room. 11 of their 14 matches still went nowhere.",
                 journal: null,
                 fx: (s, e) => playChip(s, e, "circle"),
+              },
+              {
+                // Banked by the trough's failed-fix loop: trying the growth
+                // answer and watching it wash out is itself evidence.
+                key: "fixes", label: "We already tried the growth answer",
+                if: (s) => !!(s.funnel_first || s.feature_spree || s.winback_flat),
+                reply: "and we already ran your experiment. traffic push, win-back email, a shiny feature — every one bought a bump and every bump was gone in a week. we filled the room three times. it kept emptying at the same spot.",
+                journal: null,
+                fx: (s, e) => playChip(s, e, "fixes"),
               },
               {
                 key: "gut", label: "A feeling and a flat graph",
@@ -260,9 +275,11 @@
       // ── THE SUMMIT CALL (founder journal, L+3) ───────────────────────────────
       {
         id: "pivot_summit_call", char: "founder",
-        text: (s, e) => "Three weeks since launch and the graph is flat. Two explanations on the table. Alex: the product is fine, there just aren't enough users yet. Priya: more users won't help — every match hits a dead end. You can't chase both. With " + e.runwayWeeks + " weeks of cash left, you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.",
+        text: (s, e) => "A month since launch and the graph only goes down — every push bought a bump, every bump evaporated. Two explanations on the table. Alex: the product is fine, there just aren't enough users yet. Priya: more users won't help — every match hits a dead end. You can't chase both. With " + e.runwayWeeks + " weeks of cash left, you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.",
         when: {
-          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3,
+          // Delay 4 (was 3): the trough gets a real stretch of falling numbers
+          // and failed fixes before the diagnosis room convenes.
+          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 4,
           if: (s, e) => !s.activities_pivot && !s.pivot_summit_done && !s.pivot_deferred
             && e.cast.get("priya").active,
         },
@@ -280,22 +297,131 @@
         timeout: { weeks: 3, effects: { flags: { pivot_deferred: true, pivot_summit_done: true } } },
       },
 
-      // ── AFTERMATH ────────────────────────────────────────────────────────────
+      // ── AFTERMATH: THE REBUILD, ON SCREEN ────────────────────────────────────
       {
-        id: "pivot_relaunch", char: "alex",
-        text: "activity features are live in staging. the matching is rebuilt around shared interests instead of profiles. this is a different product — ready to push it to users?",
+        // The scope call — Ch 1's lean-plan lesson, echoed under pressure. On
+        // Alex's thread ahead of the Jordan drift beats (declared earlier, so
+        // FIFO ties break its way).
+        id: "pivot_scope_call", char: "alex",
+        text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans board — for the users who liked it — or do we cut to the bone and ship one thing?",
         when: {
-          cooldown: 4,
+          if: (s) => s.activities_pivot && !s.pivot_shipped && s.pivot_week != null
+            && s.week >= s.pivot_week + 1
+            && s.items && s.items.plans_matching && s.items.plans_matching.status === "active",
+        },
+        choices: [
+          {
+            key: "cut", label: "One thing. Cut everything else",
+            reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
+            journal: "Scope call for v2: one thing. Plans board, nothing else — no legacy matching mode limping alongside. The lean lesson, learned twice. Alex says the cut buys him most of a week.",
+            effects: { marketFit: 4 },
+            fx(s, e) {
+              if (s.pivot_effort_base != null) s.pivot_effort_base -= 0.8;
+              e.say({ char: "alex", text: "cut it is. deleting code is the fastest i will ever ship. that buys us most of a week." });
+              return null;
+            },
+          },
+          {
+            key: "keep", label: "Keep classic matching alive too",
+            reply: "keep the old mode alive next to the board. some people liked it — i don't want to strand them.",
+            journal: "Told Alex to keep classic matching alive next to the plans board. Two products in one app — he didn't argue, but the build got slower and the pitch got fuzzier the moment I said it.",
+            effects: { marketFit: -4 },
+            fx(s, e) {
+              if (s.pivot_effort_base != null) s.pivot_effort_base += 1.5;
+              s.pivot_kept_legacy = true;
+              e.say({ char: "alex", text: "okay. for the record: that's two products in one app, and 'what is kindred' just got harder to answer. it also costs us at least an extra week." });
+              return null;
+            },
+          },
+        ],
+        timeout: {
+          weeks: 2,
+          say: { char: "alex", text: "no answer, so i made the call myself: cut to the bone. one screen, plans only. yell at me later if you wanted the museum wing." },
+        },
+      },
+      {
+        // The beta-invite call — Jordan's beat: she lurked the support inbox all
+        // trough, now she wants to write to the people who left. Optional; if
+        // she's already gone (late-pivot firings) the beat never exists.
+        id: "pivot_beta_invite", char: "jordan",
+        text: (s) => (s.maya_quote
+          ? "i want to write to the people who left before we relaunch. all of them — maya included — get a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' "
+          : "i want to write to the people who left before we relaunch. every quiet account gets a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' ")
+          + "the people who quit are the only ones who already know why the old app failed. or do we save the reveal for launch day and a clean slate?",
+        when: {
+          if: (s) => s.activities_pivot && !s.pivot_shipped && !s.jordan_resolved
+            && s.pivot_week != null && s.week >= s.pivot_week + 1,
+        },
+        choices: [
+          {
+            key: "invite", label: "Write them — they diagnosed it",
+            reply: "write it. they told us exactly what was wrong — they've earned the first look.",
+            journal: "Jordan is writing to everyone who left, before the relaunch: 'you told us what was wrong. we rebuilt it. want to see?' The people who walked away are the only beta list that already knows why v1 failed.",
+            effects: {
+              marketFit: 5, flags: { beta_invited: true }, char: { jordan: { morale: 5 } },
+              schedule: {
+                in: 1, char: "jordan", unless: (s) => s.pivot_shipped,
+                say: { char: "jordan", text: "beta invites are out. first replies already warmer than anything the old app ever got. one just says 'finally.'" },
+              },
+            },
+            fx: () => "Jordan's writing the email tonight. The quiet list becomes the beta list.",
+          },
+          {
+            key: "fresh", label: "Clean slate — save it for launch day",
+            reply: "save the reveal. i'd rather relaunch to fresh eyes than re-litigate v1 with the people it burned.",
+            journal: "Skipped the beta invite to the people who left — v2 relaunches to fresh eyes instead of re-litigating v1 with the people it burned.",
+            fx: () => "Clean slate it is. The quiet list stays quiet until launch day.",
+          },
+        ],
+        timeout: { weeks: 2 },
+      },
+      {
+        // Ch 4's climax — on the FOUNDER's thread, deliberately: it used to live
+        // on Alex's, where the Jordan arc's beats (same class, earlier in the
+        // queue) could starve it past the deadline on the late-pivot path.
+        id: "pivot_relaunch", char: "founder",
+        text: (s) => "Alex's message is three words: 'staging is green.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the new screens are in. This is a different product wearing the same name — and how it meets the world is your call.",
+        when: {
+          cooldown: 2,
           if: (s) => s.activities_pivot && s.launched && !s.pivot_shipped
             && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
             && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved),
         },
         choices: [
           {
-            key: "ship", label: "Ship it — relaunch now",
-            journal: "Shipped the pivot. Different product under the same name. The first activity was created within an hour.",
-            effects: { signal: 15, marketFit: 20, flags: { pivot_shipped: true } },
-            fx: () => "Pushed to production. Existing users got the update. First activity was created within an hour. Retention will tell the real story over the next few weeks.",
+            key: "sarah_event", label: "Debut v2 at Sarah's event",
+            if: (s) => !!s.sarah_onboard,
+            journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a board of plans, not a grid of faces. People RSVP'd to real plans on the spot. Kindred v2 walked out of that room with a heartbeat.",
+            fx(s, e) {
+              s.pivot_shipped = true;
+              s.users += 15 + (s.beta_invited ? 4 : 0);
+              s.signal = clamp(s.signal + 12, 0, 100);
+              s.market_fit = clamp(s.market_fit + 20, 0, 100);
+              e.say({ char: "sarah", text: "that went better than i pitched it to you. three of my regulars made plans on the spot. told you this crowd was your crowd." });
+              return "V2 debuted live at Sarah's event. Real plans, made in the room, by strangers. The relaunch has a pulse — and a channel.";
+            },
+          },
+          {
+            key: "press", label: "Give the reporter the pivot story",
+            journal: "Relaunched with the reporter's second piece: 'the dating app that killed its own product.' The pivot story reads better than a launch story — it has a before and after.",
+            fx(s, e) {
+              s.pivot_shipped = true;
+              s.users += 8 + (s.beta_invited ? 4 : 0);
+              s.signal = clamp(s.signal + 15, 0, 100);
+              s.market_fit = clamp(s.market_fit + 20, 0, 100);
+              return "The piece ran: 'the dating app that killed its own product.' A pivot is a better story than a launch — it has a before and after. Signups followed the honesty.";
+            },
+          },
+          {
+            key: "quiet", label: "Quiet update to your own users first",
+            journal: "Shipped v2 quietly to existing users first. No stage, no headline — just the people who stuck around, seeing the app become what they'd asked for. The first activity was created within an hour.",
+            fx(s, e) {
+              s.pivot_shipped = true;
+              s.users += 4 + (s.beta_invited ? 4 : 0);
+              s.signal = clamp(s.signal + 6, 0, 100);
+              s.market_fit = clamp(s.market_fit + 24, 0, 100);
+              return "Pushed to production, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
+            },
           },
           {
             key: "wait", label: "One more week of polish",
@@ -317,14 +443,16 @@
             : core;
         },
         when: {
-          took: ["pivot_day_decide:growth|hedge"], delay: 3,
+          // Two weeks, not three: the tally fills fast once the growth push
+          // lands, and the deadline leaves no slack for a leisurely reckoning.
+          took: ["pivot_day_decide:growth|hedge"], delay: 2,
           if: (s) => !s.activities_pivot && s.launched,
         },
         choices: [
           {
             key: "pivot_now", label: "Pivot now — late beats never",
             reply: "zero at fifty. priya said we'd know, and we know. we pivot — now, with whatever runway is left.",
-            journal: "Zero plans to meet out of 54 matches. Alex erased his own column. We're pivoting late — $3k instead of $2k, with runway nearly spent. The lesson was on the whiteboard three weeks ago.",
+            journal: "Zero plans to meet out of 54 matches. Alex erased his own column. We're pivoting late — $3k instead of $2k, with runway nearly spent. The lesson was on the whiteboard weeks ago.",
             fx(s, e) {
               s.activities_pivot = true;
               s.pivot_week = s.week;
@@ -333,7 +461,17 @@
               applyActivitiesPivot(s);
               const jordan = e.cast.get("jordan");
               if (jordan.active) jordan.morale = clamp(jordan.morale + 3, 0, 100);
-              return "Pivoting three weeks late. $3k, less runway, same rebuild. Alex is already sketching the plans screen — he got there on his own this time.";
+              // Alex converted himself watching the tally — he's been sketching
+              // the plans screen for days, so the rebuild starts with momentum
+              // (a bigger head start than the summit's, bought with worse odds
+              // everywhere else: less cash, less runway, less time to relaunch).
+              let teamEffort = 0;
+              for (const id of ["alex", "jordan"]) {
+                const c = e.cast.get(id);
+                if (c && c.active) teamEffort += c.buildEffort;
+              }
+              s.pivot_effort_base = teamEffort - 2.0;
+              return "Pivoting weeks late. $3k, less runway, same rebuild. Alex is already sketching the plans screen — he got there on his own this time, and he's been building it in his head for days.";
             },
           },
           {
@@ -351,7 +489,9 @@
         // Story class, not ambient: it's the pivot's designed payoff, and the
         // packed post-pivot weeks would otherwise starve it of a slot.
         id: "pivot_payoff_maya", char: "alex",
-        text: "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
+        text: (s) => s.beta_invited
+          ? "small thing. maya — launch-day maya, the one you called — answered jordan's beta email. she just RSVP'd to a thursday climbing plan. the first person the old app lost is the first one back in the new one."
+          : "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
         when: { if: (s) => s.pivot_shipped && !!s.maya_quote },
         choices: [
           {

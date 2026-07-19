@@ -74,21 +74,41 @@
         const pivotEffort = teamEffort - s.pivot_effort_base;
         if (pivotEffort >= 3.0 && s.items.plans_matching && s.items.plans_matching.status === "active")
           s.items.plans_matching.status = "done";
-        if (pivotEffort >= 5.5 && s.items.plans_ui && s.items.plans_ui.status === "todo")
+        if (pivotEffort >= 4.5 && s.items.plans_ui && s.items.plans_ui.status === "todo")
           s.items.plans_ui.status = "done";
       }
     }
 
-    // Launch day: convert the waitlist to users, once.
-    if (s.launched && s.waitlist > 0 && !s._launch_converted) {
+    // Launch day: convert the waitlist to users, once — plus the splash chosen
+    // pre-launch (story/growth.js launch_surface sets s.launch_splash).
+    let launchSpikeThisTick = false;
+    if (s.launched && !s._launch_converted) {
       s._launch_converted = true;
-      const converted = Math.max(1, Math.round(s.waitlist * (0.25 + game.rng() * 0.15)));
-      s.users += converted;
-      s.waitlist = 0;
+      launchSpikeThisTick = true;
+      if (s.waitlist > 0) {
+        s.users += Math.max(1, Math.round(s.waitlist * (0.25 + game.rng() * 0.15)));
+        s.waitlist = 0;
+      }
+      const SPLASH_USERS = { quiet: 8, press: 12, tiktok: 18, show_hn: 35 };
+      s.users += SPLASH_USERS[s.launch_splash] || 4; // no plan → organic trickle
     }
 
-    // Organic signups at high signal.
-    if (s.launched && s.signal >= 70) {
+    // The trough: pre-pivot the product leaks no matter what — the player built
+    // the wrong product, and only the shipped pivot turns the curve. After the
+    // launch-week spike, users drain toward a handful of diehards; anything the
+    // player pours into the top of the funnel becomes a one-week bump that
+    // evaporates. No retention model — story gravity.
+    const TROUGH_FLOOR = 5;
+    if (s.launched && !s.pivot_shipped && !launchSpikeThisTick) {
+      if (s.users > TROUGH_FLOOR) {
+        const drain = Math.max(2, Math.round((s.users - TROUGH_FLOOR) * 0.30));
+        s.users = Math.max(TROUGH_FLOOR, s.users - drain);
+      }
+    }
+
+    // Organic signups at high signal — only once the product actually retains
+    // people (pre-pivot this line would refill the trough and contradict it).
+    if (s.launched && s.pivot_shipped && s.signal >= 70) {
       s.users += Math.floor((s.signal - 70) / 30) + 1;
     }
 
@@ -115,7 +135,7 @@
 
     // Free-to-paid conversion (users don't pay for a product that doesn't retain them).
     if (s.launched && s.users > 0) {
-      const baseRate = trueFit < 30 ? 0.005 : trueFit < 50 ? 0.01 : trueFit < 70 ? 0.02 : 0.03;
+      const baseRate = trueFit < 30 ? 0.005 : trueFit < 50 ? 0.01 : trueFit < 70 ? 0.02 : 0.04;
       const raw = s.users * baseRate * density * (s.website_updated ? 1.3 : 1.0);
       const converted = Math.floor(raw) + (game.rng() < (raw % 1) ? 1 : 0);
       if (converted > 0) {

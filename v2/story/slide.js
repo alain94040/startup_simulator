@@ -8,8 +8,11 @@
 //   rachel ← slide_first_echo:reply_honest (s.rachel_answer)
 //   demo   ← demo_first_message:note     (s.demo_question_seen, demo_night.js)
 //   circle ← post_match_dropoff:dig      (s.analytics_dropoff_seen)
-// Also here: Priya's two ways in (the meetup or the launch), and the
-// features-won't-save-you trap (feature_spree).
+//   fixes  ← the failed-fix loop         (s.funnel_first / feature_spree / winback_flat)
+// The trough is mechanical (world.js drains users toward a floor pre-pivot), so
+// the desperation loop — traffic push, feature spree, win-back blast — plays as
+// attempt → visible failure; each failure is itself summit evidence. Also here:
+// Priya's two ways in (the meetup or the launch).
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -105,23 +108,39 @@
       // ── THE SLIDE, WEEK BY WEEK ──────────────────────────────────────────────
       {
         id: "slide_hangover", char: "alex",
-        text: (s) => "morning-after math. we ended launch week at " + Math.max(4, s.users) + " accounts. day one was the spike — yesterday 6 new, today 2. some comedown is normal: the email blast is spent, that traffic was never going to repeat. the number that actually matters is how many of them come back. i'll have a real answer friday.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 1, if: (s) => !s.activities_pivot },
+        text: (s) => s.launch_splash === "show_hn"
+          ? "morning-after math. the front page got us to " + Math.max(4, s.users) + " accounts and the graph looked incredible for a day. then i read the profiles: half list 'github' under interests, most have no photo. hacker news signed up to admire the matching engine, not to date. the number that actually matters is how many of them come back. i'll have a real answer friday."
+          : "morning-after math. we ended launch week at " + Math.max(4, s.users) + " accounts. day one was the spike — yesterday 6 new, today 2. some comedown is normal: the launch push is spent, that traffic was never going to repeat. the number that actually matters is how many of them come back. i'll have a real answer friday.",
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 2, if: (s) => !s.activities_pivot },
         choices: [
           {
             key: "retention", label: "Watch retention, not signups",
             reply: "agreed — ignore the top of the funnel for now. friday, i want to know who came back.",
             journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday — retention, not signups.",
-            effects: { signal: 2, say: { char: "alex", text: "that's the correct question. most founders ask the other one." } },
+            effects: {
+              signal: 2, say: { char: "alex", text: "that's the correct question. most founders ask the other one." },
+              schedule: [
+                { in: 1, char: "analytics", unless: (s) => !s.analytics_live || s.pivot_summit_done,
+                  say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(2, Math.round(s.users * 0.4)) + " of " + Math.max(3, s.users) + " accounts opened the app this week. down again. the line only bends one way right now." } },
+                { in: 2, char: "analytics", unless: (s) => !s.analytics_live || s.pivot_summit_done,
+                  say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(3, s.users) + " accounts left active. matches still happen; conversations still don't. whatever this is, more weeks of it won't change the shape." } },
+              ],
+            },
             fx: () => "Friday it is. Whoever comes back is the real launch number.",
           },
           {
             key: "funnel", label: "We need another traffic push",
             reply: "2 a day won't cut it. we need another traffic push this week.",
-            journal: "Told Alex to run another traffic push. It netted five signups and cost two days. He was polite about it, but the lesson was loud: the leak isn't at the top of the funnel.",
+            journal: "Told Alex to run another traffic push. It netted five signups and cost two days — and a week later the graph had swallowed them whole. The lesson was loud: the leak isn't at the top of the funnel.",
             effects: {
               users: 5, flags: { funnel_first: true },
               say: { char: "alex", text: "ran the re-blast plus a post in two local subreddits. five signups. cost us two days. the leak isn't at the top." },
+              schedule: [
+                { in: 1, char: "alex", unless: (s) => s.pivot_summit_done,
+                  say: { char: "alex", text: "the re-blast bump is gone. every one of those five signups matched, said hey, and went quiet. we poured water into a bucket we haven't patched." } },
+                { in: 1, char: "analytics", unless: (s) => !s.analytics_live || s.pivot_summit_done,
+                  say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(2, Math.round(s.users * 0.4)) + " of " + Math.max(3, s.users) + " accounts opened the app this week. the traffic push shows up as a one-week blip, already fading." } },
+              ],
             },
             fx: () => "Five signups for two days of work. The leak isn't at the top.",
           },
@@ -133,7 +152,7 @@
         // Replying personally banks Rachel's answer — the "rachel" chip.
         id: "slide_first_echo", char: "users", from: "Support inbox",
         text: "support email, forwarded by alex: \"hi! i matched with two people this week. we both said hi. now the app just… shows me the same two chats. am i missing a feature? is something supposed to happen next? — rachel k.\"",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 1, if: (s) => !s.activities_pivot },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 2, if: (s) => !s.activities_pivot },
         choices: [
           {
             key: "reply_honest", label: "Write her back yourself",
@@ -161,7 +180,7 @@
           const convos = Math.max(2, Math.round(matches * 0.13));
           return "week-one numbers are in. of " + total + " launch-week signups, " + opened + " opened the app this week. " + matches + " matches made since launch; " + convos + " conversations got past two messages; actual dates planned: 0. same pattern as the testflight group — just bigger.";
         },
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 2, if: (s) => s.analytics_live && !s.activities_pivot },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => s.analytics_live && !s.activities_pivot },
         choices: [
           {
             key: "dig", label: "Sit with the numbers",
@@ -212,7 +231,7 @@
         text: (s) => s.met_priya
           ? "saw the launch — congrats, genuinely. that's the part most people never do. real talk though: how's week two? and i mean retention, not signups. those are different numbers and only one of them is real."
           : "so — the coffee offer was half social. the real question: how's week two treating you? and i mean retention, not signups. those are different numbers and only one of them is real.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 2, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
         choices: [
           {
             key: "real_numbers", label: "Give her the real numbers",
@@ -235,7 +254,7 @@
         // The human beat — call the first churned user. Banks the "maya" chip.
         id: "slide_maya_call", char: "founder",
         text: "Maya — the first signup, launch day, Jordan watched her fill out her profile live — hasn't opened the app in 9 days. She matched with three people in week one. You have her number.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 2, if: (s) => !s.activities_pivot },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot },
         choices: [
           {
             key: "call", label: "Call her",
@@ -261,7 +280,7 @@
         // The person who flagged it, watching it come true. Deliberately quiet.
         id: "slide_jordan_echo", char: "jordan", ambient: true,
         text: "not my lane anymore maybe. but i've been lurking the support inbox. 'i matched, but then what' — that's the test group's feedback again, word for word, from strangers this time. same shape. anyway.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 2, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
         choices: [
           {
             key: "ack", label: "You called it first",
@@ -278,7 +297,7 @@
         // leave. (Scored: "Features Won't Save You".)
         id: "feature_spree", char: "alex",
         text: "signups are flat and i keep staring at the graph. i could bang out icebreaker prompts, streaks, read receipts — pick one and it's live by friday. something will stick, right?",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.pivot_shipped && s.users >= 3 },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done && s.users >= 3 },
         choices: [
           {
             key: "spree", label: "Pick one and ship it — something will stick",
@@ -299,9 +318,43 @@
         ],
         timeout: {
           weeks: 2,
+          // The moment can pass two ways: the player went quiet (Alex ships
+          // streaks into the void) or the pivot got decided first (the spree
+          // question is moot — no consequence).
+          unless: (s) => s.activities_pivot || s.pivot_summit_done,
           effects: { marketFit: -4, flags: { feature_spree: true } },
           say: { char: "alex", text: "went ahead and shipped streaks while you were quiet. a few taps, then nothing. the graph didn't move." },
         },
+      },
+      {
+        // The third desperate fix: beg the quiet accounts to come back. Like the
+        // traffic push, trying it isn't punished — the failure IS the finding
+        // (s.winback_flat), and it plays at the summit as the "fixes" chip.
+        id: "win_back_blast", char: "users", from: "The quiet accounts",
+        text: (s) => "the dashboard splits your users into 'active' and 'quiet' and the quiet column is winning. " + Math.max(6, s.users + 8) + " people signed up, matched, and stopped opening the app. you could send the win-back email — 'we miss you, here's what's new' — tonight.",
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
+        choices: [
+          {
+            key: "blast", label: "Send the win-back email tonight",
+            journal: "Sent the win-back email to every quiet account. A third opened it, a handful came back, and by the next week they'd all gone quiet again — same spot, right after the match. The email worked. The product didn't. That's not a marketing finding, that's a verdict.",
+            effects: {
+              users: 4, flags: { winback_flat: true },
+              schedule: {
+                in: 1, char: "users", unless: (s) => s.pivot_summit_done,
+                say: { from: "The quiet accounts", text: "win-back, one week later: everyone the email brought back has gone quiet again. same spot — right after the match. they came back to the exact wall they left over." },
+              },
+            },
+            fx: () => "The email went out to every quiet account. A third opened it. A handful reinstalled. Watch what happens next week.",
+          },
+          {
+            key: "skip", label: "Don't beg — fix the reason they left",
+            reply: "no. if we don't know why they left, 'we miss you' is just asking them to leave twice.",
+            journal: "Skipped the win-back email. If we don't know why they left, 'we miss you' is just asking them to leave twice. The sends can wait until there's something new to come back to.",
+            effects: { marketFit: 3 },
+            fx: () => "No blast. Whatever brings them back, it won't be an apology email for the same product.",
+          },
+        ],
+        timeout: { weeks: 2 },
       },
     ],
   };

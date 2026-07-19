@@ -143,7 +143,9 @@
         ],
         timeout: {
           weeks: 1,
-          effects: { signal: -18, users: -10 },
+          // Reputation damage, sized for the trough era: the user base is
+          // already a handful, so the hit is signal-heavy, users-light.
+          effects: { signal: -18, users: -3 },
           say: { char: "twitter", text: "tweet is at 200 retweets. a dating app journalist screenshot it. signup rate dropped 30%." },
         },
       },

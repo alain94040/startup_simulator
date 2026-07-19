@@ -26,39 +26,41 @@
         },
       },
 
-      // ── POST-LAUNCH: the customer voices (feed the features-won't-save-you
-      //    and build-what-people-want scoring) ──────────────────────────────────
+      // ── POST-PIVOT: the customer voices of Ch 5 (feed the features-won't-
+      //    save-you and build-what-people-want scoring). All gated on the
+      //    shipped pivot — pre-pivot, the users' only story is the trough
+      //    (see story/slide.js), and these voices would contradict it. ────────
       {
         id: "bug_reports", char: "users", from: "Users",
         text: (s, e) => e.done("bug_reports")
           ? "another crash report — different users, same broken screen. something in this path is still not stable."
-          : "all three emailed within an hour. the messaging screen goes blank when someone sends a photo. the product is unusable for them right now.",
-        when: { cooldown: 5, if: (s) => s.launched && s.customers >= 1 },
+          : "all three emailed within an hour. the RSVP button dies on any plan with more than six people — tap, spinner, nothing. the product is unusable for them right now.",
+        when: { cooldown: 5, if: (s) => s.launched && s.pivot_shipped && s.customers >= 1 },
         choices: [
           {
             key: "fix", label: "Drop everything and fix it",
-            journal: "Dropped everything and fixed the crash. Users notified. Goodwill recovered.",
+            journal: "Dropped everything and fixed the RSVP crash. Users notified. Goodwill recovered.",
             fx: () => "Fixed the crash. Users notified. Goodwill recovered.",
           },
         ],
         timeout: {
           weeks: 2,
           effects: {
-            customers: -2, signal: -10,
-            schedule: { in: 1, char: "users", say: { from: "Subscriber", text: "we cancelled. the bug never got fixed and we had a deadline. no hard feelings." } },
+            customers: -1, signal: -10,
+            schedule: { in: 1, char: "users", say: { from: "Subscriber", text: "we cancelled. the bug never got fixed and our thursday plan fell apart twice because of it. no hard feelings." } },
           },
         },
       },
       {
         id: "churn_interview", char: "users", ambient: true, from: "Customer",
-        text: "a paying subscriber just canceled. they had 5 active conversations going 3 days ago — something changed. you have their number.",
-        when: { if: (s) => s.launched && s.customers >= 1 },
+        text: "a paying subscriber just canceled. they RSVP'd to five plans in their first month, then nothing for two weeks — something changed. you have their number.",
+        when: { if: (s) => s.launched && s.pivot_shipped && s.customers >= 1 },
         choices: [
           {
             key: "call", label: "Call them — 20 minutes",
-            journal: "Called the churned subscriber. They left because Flare launched video dates — the one thing they'd been asking for. Now I know exactly what to build next.",
+            journal: "Called the churned subscriber. Nothing was wrong with the product — the plans near them dried up. They live 40 minutes out, and the calendar in their area went quiet. It's the density lesson wearing a new shirt: own one neighborhood before you promise the whole map.",
             effects: { marketFit: 10, signal: 5 },
-            fx: () => "20-minute call. They left because Flare launched video dates — the one thing they'd been asking for. You now know exactly what to build next.",
+            fx: () => "20-minute call. The product wasn't the problem — the plans near them dried up. They live 40 minutes out. Density, again: the app is only alive where the calendar is.",
           },
           {
             key: "email", label: "Send a quick email",
@@ -76,30 +78,30 @@
       },
       {
         id: "feature_request_custom", char: "users", ambient: true, from: "Your most active subscriber",
-        text: "a power user who's been on 4 dates from kindred messaged this week: 'i'd pay double if you add video dates. i always need to move to FaceTime before i'm comfortable meeting someone. it breaks the flow.'",
-        when: { if: (s) => s.launched && s.customers >= 3 },
+        text: "your most active subscriber — four plans hosted, never misses a thursday — messaged this week: 'i'd pay double for standing plans. my climbing group is the same six people every week and i rebuild the plan by hand every time. give me a repeat button with auto-invites.'",
+        when: { if: (s) => s.launched && s.pivot_shipped && s.customers >= 3 },
         choices: [
           {
-            key: "build", label: "Build video dates — keep them happy",
-            journal: "Built video dates for our power user. They doubled their plan — but it's really built around one person's workflow.",
+            key: "build", label: "Build standing plans — keep them happy",
+            journal: "Built recurring plans for our best host — repeat scheduling, auto-invites, attendance history. They doubled their subscription. It's also two weeks of Alex's time spent on one person's Thursday.",
             effects: { char: { alex: { morale: -8 } } },
             fx(s, e) {
               const alex = e.cast.get("alex");
-              if (s.items) s.items.video_dates = { status: "active", quality: null, assignee: "alex", owner: "alex", effortStart: alex.buildEffort, effortTarget: alex.buildEffort + 3.0 };
-              return "Said yes. Alex is heads-down on video infrastructure — WebRTC, TURN servers, recording consent.";
+              if (s.items) s.items.standing_plans = { status: "active", quality: null, assignee: "alex", owner: "alex", effortStart: alex.buildEffort, effortTarget: alex.buildEffort + 3.0 };
+              return "Said yes. Alex is heads-down on recurrence rules, auto-invites, and attendance edge cases — for one user's Thursday.";
             },
           },
           {
             key: "decline", label: "Decline — stay on roadmap",
-            journal: "Declined the video dates request. They churned. The clarity on what NOT to build was worth it.",
+            journal: "Declined the standing-plans request. They churned. The clarity on what NOT to build was worth it.",
             effects: { customers: -1, marketFit: 6 },
             fx: () => "Declined politely. They churned. The clarity on what NOT to build was worth it.",
           },
           {
             key: "negotiate", label: "Build a lightweight version for everyone",
-            journal: "Proposed a 60-second video hello instead of full video calls. Low friction, easy to build. 5 other subscribers turned it on immediately.",
+            journal: "Proposed a one-tap 'run it back' button — clone last week's plan, same people invited — instead of a full recurrence engine. Low friction, easy to build. Five other hosts used it the first week.",
             effects: { marketFit: 4 },
-            fx: () => "Proposed a 60-second video hello instead of full video calls — low friction, easy to build. They agreed. Took 2 weeks but 5 other subscribers turned it on immediately.",
+            fx: () => "Proposed 'run it back' — one tap clones last week's plan and re-invites the same people. They agreed. Five other hosts used it the first week.",
           },
         ],
         timeout: {
@@ -110,14 +112,14 @@
       },
       {
         id: "feature_cluster", char: "users", ambient: true, from: "3 users (separately)",
-        text: "none of them know each other. all three asked for the same thing this week — a way to signal they're looking for something serious before matching. that's not coincidence.",
-        when: { if: (s) => s.launched && (s.users >= 5 || s.customers >= 2) },
+        text: "none of them know each other. all three asked for the same thing this week — a way to see who's already in before they RSVP to a plan. that's not coincidence.",
+        when: { if: (s) => s.launched && s.pivot_shipped && (s.users >= 5 || s.customers >= 2) },
         choices: [
           {
             key: "build", label: "Build the feature",
-            journal: "Built the feature three users independently asked for. All 3 loved it. Two immediately referred a friend.",
+            journal: "Built the attendee preview three users independently asked for. All 3 loved it. Two immediately referred a friend.",
             effects: { signal: 10, marketFit: 4 },
-            fx: () => "Built the feature. All 3 users loved it. Two immediately referred a colleague.",
+            fx: () => "Built it — you see the group before you commit to the plan. All 3 users loved it. Two immediately referred a friend.",
           },
         ],
         timeout: {

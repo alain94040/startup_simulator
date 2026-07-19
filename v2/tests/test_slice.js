@@ -268,7 +268,7 @@ console.log("growth-path driver (seed 42)");
   ok(g.took("pivot_day_decide:growth") && g.s.pivot_deferred, "sided with Alex at the summit");
   ok(g.threads.alex.some(m => (m.body || "").includes("mixer report")), "the mixer report landed (+20 users)");
   ok(g.done("pivot_fifty_verdict"), "Priya's number came due");
-  ok(g.weekOf("pivot_fifty_verdict") >= g.weekOf("pivot_day_decide") + 3, "…on the 3-week clock");
+  ok(g.weekOf("pivot_fifty_verdict") >= g.weekOf("pivot_day_decide") + 2, "…on the 2-week clock (the deadline leaves no slack for a third)");
   ok(g.took("pivot_fifty_verdict:pivot_now") && g.s.activities_pivot, "pivoted late — $3k instead of $2k");
 }
 
@@ -290,7 +290,8 @@ console.log("the deadline (seed 4, decent, subsidized)");
 {
   const g = run(4, decent, 40, { subsidy: 500 });
   ok(g.s.week <= 25, "no run outlives the deadline (ended wk " + g.s.week + ")");
-  ok(g.took("yc_apply:submit"), "application submitted (wk " + g.weekOf("yc_apply") + ")");
+  ok(g.took("yc_apply:start"), "application started (wk " + g.weekOf("yc_apply") + ")");
+  ok(g.took("app_send:submit"), "…written as the three-question scene and submitted (wk " + g.weekOf("app_send") + ")");
   ok(g.s.ycAccepted || g.s.ycRejected, "the verdict arrived at the deadline");
   ok(g.s.game_won || g.s.game_over, "…and ended the run (" + (g.s.ycAccepted ? "accepted" : "rejected") + ")");
   ok(g.threads.yc.some(m => m.from === "Y Combinator" && /passing|You're in/.test(m.body || "")),
