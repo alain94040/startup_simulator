@@ -305,6 +305,36 @@
   .eg-outcome { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--soft); }
   .eg-batch { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(90deg, var(--blue), #8b5cf6); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .02em; }
   .eg-skiphint { text-align: center; font-size: 11px; color: var(--dim); margin-top: 12px; transition: opacity .3s; }
+  /* ── leaderboard (endgame + intro) ──────────────────────────────────────── */
+  .lb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--soft); }
+  .lb-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .lb-title { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); }
+  .lb-scope { font-size: 10px; color: var(--dim); }
+  .lb-scope.offline { color: #c9922a; }
+  .lb-list { display: flex; flex-direction: column; }
+  .lb-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; font-size: 13px; }
+  .lb-row + .lb-row { border-top: 1px solid var(--soft); }
+  .lb-row.me { background: var(--blue-soft); border-top-color: transparent; }
+  .lb-rank { flex: none; width: 24px; text-align: right; font-weight: 800; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .lb-row.me .lb-rank { color: var(--blue); }
+  .lb-name { flex: 1; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-medal { font-weight: 600; }
+  .lb-tag { font-size: 10px; color: var(--dim); font-weight: 500; }
+  .lb-score { flex: none; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .lb-empty { font-size: 12.5px; color: var(--dim); text-align: center; padding: 10px 0; }
+  .lb-loading { font-size: 12px; color: var(--dim); text-align: center; padding: 12px 0; }
+  /* name-entry card when the player cracks the top 50 */
+  .lb-entry { margin-top: 18px; padding: 16px; border-radius: 12px; background: var(--blue-soft); text-align: center; }
+  .lb-entry b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 3px; }
+  .lb-entry .lb-entry-sub { font-size: 12px; color: #55555c; margin-bottom: 12px; }
+  .lb-entry-form { display: flex; gap: 8px; }
+  .lb-entry input { flex: 1; border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
+  .lb-entry input:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+  .lb-entry button { flex: none; background: var(--blue); color: #fff; border: 0; border-radius: 9px; padding: 0 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .lb-entry button:disabled { opacity: .5; cursor: default; }
+  /* intro leaderboard panel reuses the intro chrome */
+  .intro-board { padding: 22px 28px 12px; }
+  .intro-board .lb { margin-top: 12px; border-top: 0; padding-top: 0; }
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
@@ -1701,6 +1731,77 @@ document.addEventListener("click", (e) => {
   if (!e.target.closest("#noteCenter") && !e.target.closest("#bell")) $("noteCenter").classList.remove("show");
 });
 
+// ── leaderboard ─────────────────────────────────────────────────────────────
+// One endpoint, two verbs: GET the top-50 board, POST a finished run. When the
+// server (leaderboard.php) is unreachable — playing from file://, or no backend
+// deployed — everything falls back to a per-browser localStorage board so the
+// game still has a ladder to climb. Same code path either way.
+const LB = (function () {
+  const ENDPOINT = "leaderboard.php";
+  const LKEY = "kindred_leaderboard";
+  const MAX = 50;
+
+  const readLocal = () => { try { return JSON.parse(localStorage.getItem(LKEY)) || []; } catch { return []; } };
+  const writeLocal = b => { try { localStorage.setItem(LKEY, JSON.stringify(b)); } catch {} };
+  const sortBoard = b => b.slice().sort((a, c) => c.score - a.score || a.ts - c.ts);
+  function insertLocal(entry) {
+    const board = sortBoard(readLocal().concat([entry]));
+    const rank = board.findIndex(e => e === entry) + 1;   // place before truncation
+    const top = board.slice(0, MAX);
+    writeLocal(top);
+    return { board: top, rank, online: false };
+  }
+  // Would this score make the board? (Full board → must strictly beat the last seat.)
+  function qualifies(board, score) {
+    if (score == null) return false;
+    return board.length < MAX || score > board[board.length - 1].score;
+  }
+  async function fetchBoard() {
+    try {
+      const r = await fetch(ENDPOINT, { cache: "no-store" });
+      if (!r.ok) throw 0;
+      const data = await r.json();
+      if (!Array.isArray(data)) throw 0;
+      return { board: data, online: true };
+    } catch { return { board: sortBoard(readLocal()), online: false }; }
+  }
+  async function submit(entry) {
+    entry.ts = entry.ts || Date.now();
+    try { localStorage.setItem("kindred_name", entry.name); } catch {}
+    try {
+      const r = await fetch(ENDPOINT, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entry),
+      });
+      if (!r.ok) throw 0;
+      const data = await r.json();
+      if (!Array.isArray(data.board)) throw 0;
+      // Mirror the accepted run locally too, so an offline replay still sees it.
+      writeLocal(sortBoard(readLocal().concat([entry])).slice(0, MAX));
+      return { board: data.board, rank: data.rank, online: true };
+    } catch { return insertLocal(entry); }
+  }
+  const lastName = () => { try { return localStorage.getItem("kindred_name") || ""; } catch { return ""; } };
+  return { MAX, qualifies, fetchBoard, submit, lastName };
+})();
+
+const MEDAL = ["🥇", "🥈", "🥉"];
+function lbRowsHtml(board, meIndex) {
+  if (!board.length) return '<div class="lb-empty">No runs yet — be the first name on the board.</div>';
+  return '<div class="lb-list">' + board.map((e, i) => {
+    const medal = i < 3 ? '<span class="lb-medal">' + MEDAL[i] + "</span>" : "";
+    const tag = e.won ? '<span class="lb-tag"> · YC</span>' : "";
+    return '<div class="lb-row' + (i === meIndex ? " me" : "") + '">'
+      + '<div class="lb-rank">' + (i + 1) + "</div>"
+      + '<div class="lb-name">' + medal + esc(e.name || "Anonymous") + tag + "</div>"
+      + '<div class="lb-score">' + e.score + "</div></div>";
+  }).join("") + "</div>";
+}
+function lbHeadHtml(online, title) {
+  return '<div class="lb-head"><span class="lb-title">' + esc(title) + "</span>"
+    + '<span class="lb-scope' + (online ? "" : " offline") + '">'
+    + (online ? "All time · top " + LB.MAX : "This device") + "</span></div>";
+}
+
 // ── endgame ───────────────────────────────────────────────────────────────────
 const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] : s >= 70 ? ["B", "#4a9a4a"] : s >= 55 ? ["C", "#c9922a"] : s >= 40 ? ["D", "#c96a2a"] : ["F", "#c0392b"];
 
@@ -1710,6 +1811,7 @@ const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] :
 // pending steps so a tap can fast-forward to the full card (egFinish).
 let egTimers = [];
 let egDone = true;
+let egScore = null, egWon = false, egWeek = 0, egLbMounted = false;
 function egClearTimers() { egTimers.forEach(clearTimeout); egTimers = []; }
 function egRevealBadge(el) {
   if (!el) return;
@@ -1723,6 +1825,7 @@ function egFinish() {
   document.querySelectorAll("#endModal .grade.pending").forEach(egRevealBadge);
   const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
   egDone = true;
+  mountEndgameLeaderboard();
 }
 function egRunReveal() {
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { egFinish(); return; }
@@ -1749,7 +1852,47 @@ function egRunReveal() {
     const btn = $("egBtn"); if (btn) btn.classList.add("in");
     const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
     egDone = true;
+    mountEndgameLeaderboard();
   }, t));
+}
+// Fetch the board once the reveal lands, then either offer name-entry (top 50)
+// or just show the ladder with where this run placed. Idempotent — the reveal
+// and the tap-to-skip path both call it.
+async function mountEndgameLeaderboard() {
+  if (egLbMounted) return;
+  egLbMounted = true;
+  const slot = $("egLeaderboard");
+  if (!slot) return;
+  slot.innerHTML = '<div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div>';
+  const { board, online } = await LB.fetchBoard();
+  if ($("egLeaderboard") !== slot) return;   // player restarted mid-fetch
+  if (LB.qualifies(board, egScore)) { renderEndgameEntry(slot, board, online); return; }
+  const wouldRank = egScore == null ? null : board.filter(e => e.score > egScore).length + 1;
+  slot.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Leaderboard") + lbRowsHtml(board, -1)
+    + (wouldRank ? '<div class="lb-empty">You placed #' + wouldRank + " — the top " + LB.MAX + " makes the board. Run it back to climb.</div>" : "")
+    + "</div>";
+}
+function renderEndgameEntry(slot, board, online) {
+  const rank = board.filter(e => e.score > egScore).length + 1;
+  slot.innerHTML =
+    '<div class="lb-entry"><b>🏆 You made the leaderboard!</b>'
+    + '<div class="lb-entry-sub">Provisional #' + rank + " of " + LB.MAX + " · grade " + egScore + "</div>"
+    + '<div class="lb-entry-form"><input id="lbName" maxlength="16" placeholder="Your name" value="'
+      + esc(LB.lastName()) + '" autocomplete="off"><button id="lbSubmit">Add me</button></div></div>'
+    + '<div class="lb">' + lbHeadHtml(online, "Leaderboard") + lbRowsHtml(board, -1) + "</div>";
+  const input = $("lbName"), btn = $("lbSubmit");
+  const go = async () => {
+    if (btn.disabled) return;
+    btn.disabled = true; input.disabled = true; btn.textContent = "…";
+    const res = await LB.submit({ name: input.value, score: egScore, won: egWon, week: egWeek });
+    const meIndex = res.rank && res.rank <= res.board.length ? res.rank - 1 : -1;
+    slot.innerHTML = '<div class="lb">' + lbHeadHtml(res.online, "Leaderboard") + lbRowsHtml(res.board, meIndex)
+      + (meIndex < 0 && res.rank ? '<div class="lb-empty">You placed #' + res.rank + ".</div>" : "")
+      + "</div>";
+  };
+  btn.onclick = go;
+  input.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  input.focus();
 }
 function checkEndgame() {
   const s = game.s;
@@ -1758,6 +1901,7 @@ function checkEndgame() {
   const cats = V2Scoring.scoreGame(game);
   const avg = game.gradeScore();
   const [og, ocol] = GRADE(avg);
+  egScore = avg; egWon = !!s.ycAccepted; egWeek = s.week; egLbMounted = false;
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
@@ -1792,6 +1936,7 @@ function checkEndgame() {
     + '<div id="egOutcome" class="eg-outcome eg-reveal"><div class="eg-emoji">' + emoji + "</div>"
       + '<h2 class="eg-title">' + esc(title) + "</h2>"
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
+    + '<div id="egLeaderboard"></div>'
     + '<button id="egBtn" class="ok eg-reveal" onclick="location.search=\'?seed=\'+((Date.now()%100000)|0)">Run it back →</button>'
     + '<div id="egSkipHint" class="eg-skiphint">tap anywhere to reveal faster</div>';
 
@@ -1811,21 +1956,42 @@ const INTRO = [
   ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
 ];
 let introStep = 0;
+// A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
+// a new player sees the bar to beat before week 1.
 function showIntro() {
-  const [eyebrow, h, b] = INTRO[introStep];
-  const last = introStep === INTRO.length - 1;
-  const dots = INTRO.map((_, i) => '<i class="' + (i === introStep ? "on" : "") + '"></i>').join("");
-  $("introModal").innerHTML =
-    '<div class="intro-stripe"></div><div class="intro-body">' +
-    '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" +
-    '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
-    '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
-    '<div class="intro-actions">' + (last ? "" : '<button class="intro-skip">skip</button>') +
-    '<button class="intro-next">' + (last ? "Week 1 →" : "Continue →") + "</button></div></div></div>";
+  const boardStep = introStep >= INTRO.length;
+  const dots = INTRO.concat([0]).map((_, i) => '<i class="' + (i === introStep ? "on" : "") + '"></i>').join("");
+  const nextLabel = boardStep ? "Week 1 →" : "Continue →";
+  if (boardStep) {
+    $("introModal").innerHTML =
+      '<div class="intro-stripe"></div><div class="intro-board">' +
+      '<div class="intro-eyebrow">Hall of Fame</div>' +
+      '<div class="intro-step"><b>Beat the board.</b>Every finished run is graded 0–100. Land in the top ' + LB.MAX +
+        " and your name goes up here for good.</div>" +
+      '<div id="introLb"><div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div></div>' +
+      '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
+      '<div class="intro-actions"><button class="intro-next">' + nextLabel + "</button></div></div></div>";
+  } else {
+    const [eyebrow, h, b] = INTRO[introStep];
+    $("introModal").innerHTML =
+      '<div class="intro-stripe"></div><div class="intro-body">' +
+      '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" +
+      '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
+      '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
+      '<div class="intro-actions"><button class="intro-skip">skip</button>' +
+      '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
+  }
   const done = () => { $("introOv").classList.remove("on"); };
-  $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep >= INTRO.length) done(); else showIntro(); };
+  $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
   $("introOv").classList.add("on");
+  if (boardStep) fillIntroBoard();
+}
+async function fillIntroBoard() {
+  const { board, online } = await LB.fetchBoard();
+  const el = $("introLb");
+  if (!el) return;   // intro already dismissed
+  el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
 }
 showIntro();
 
