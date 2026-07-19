@@ -1169,7 +1169,7 @@ function renderSide() {
   // journal mirror — only up to jShown (the turn-end reveal inks new entries one
   // at a time); the newest inking entry glows via jArrive.
   const jt = journalMirror().slice(0, jShown);
-  const recent = jt.slice(-14).reverse();
+  const recent = jt.slice().reverse();
   const jent = (m, i, arrive) => {
     const cls = "j-entry" + (i > 2 ? " old" : "") + (arrive ? " arrive" : "");
     if (m.type === "stamp") return '<div class="' + cls + '"><span class="j-wk">wk ' + m.week + ' ·</span> <span class="stamp ' + esc(m.stampClass || "green") + '">' + esc(m.label) + "</span></div>";
@@ -1230,7 +1230,7 @@ function renderFeed() {
 
 // ── Bank ──────────────────────────────────────────────────────────────────────
 function renderBank() {
-  const rows = game.ledger.slice(-8).reverse();
+  const rows = game.ledger.slice().reverse();
   $("bankSurface").innerHTML = rows.map(w =>
     '<div class="stmt"><h4>week ' + w.week + " <b>" + money(w.balanceAfter) + "</b></h4>" +
     w.transactions.map(tx =>
