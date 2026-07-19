@@ -32,7 +32,7 @@
       {
         id: "sarah_intro", char: "sarah", from: "Sarah (mutual)",
         text: "sarah runs a 'singles in SF' facebook group — 18,000 members, weekly events, huge trust in the community. she heard through a mutual that kindred is rebuilding around real-world plans, and that's exactly what her events are. she wants to talk about debuting the new version at one of them. she's also talking to flare.",
-        when: { if: (s, e) => s.launched && s.activities_pivot && !s.pivot_shipped && s.pivot_week != null && s.week >= s.pivot_week + 1 },
+        when: { if: (s, e) => e.chapter === 4 && s.pivot_week != null && s.week >= s.pivot_week + 1 },
         choices: [
           {
             key: "reply", label: "Meet with Sarah now",

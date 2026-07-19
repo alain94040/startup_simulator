@@ -167,6 +167,19 @@
     }
 
     // ── facts API (what content queries instead of hand-rolled flags) ─────────
+    // The five chapters, derived from the same state transitions the UI's to-do
+    // gauge reads (demo → launch → pivot decision → v2 → the application).
+    // Content that belongs to an era can gate on this instead of re-deriving
+    // the flag combination: `if: (s, e) => e.chapter === 3`. Note the growth/
+    // deferred paths skip chapter 4 (no rebuild) and land straight in 5.
+    get chapter() {
+      const s = this.s;
+      if (!s.has_demo) return 1;
+      if (!s.launched) return 2;
+      if (!s.pivot_summit_done && !s.pivot_deferred && !s.activities_pivot) return 3;
+      if (s.activities_pivot && !s.pivot_shipped) return 4;
+      return 5;
+    }
     done(id) { return this.resolved.has(id); }
     outcome(id) { const r = this.resolved.get(id); return r ? r.outcome : null; }
     weekOf(id) { const r = this.resolved.get(id); return r ? r.week : null; }
@@ -365,6 +378,14 @@
       if (!free) this.actionsLeft--;
       this.log.push({ week: this.s.week, charId, acted: nodeId, key: choice.key });
 
+      // An action can close other cards' windows (flipping the launch switch
+      // moots every pre-launch card) — sweep them out of the triage now rather
+      // than at the week boundary. Skipped mid-scene: held cards are blocked
+      // out of the UI anyway, and a timeout's message must not land inside the
+      // scene's transcript. The scene-exit answer runs the sweep (scene is
+      // null by then), so the room never reopens onto stale cards.
+      if (!this.scene) this._sweepClosed();
+
       // New messages surface at the week boundary — except mid-scene, where the
       // next beat lands immediately so the conversation flows in one sitting.
       if (this.scene) this._poll();
@@ -482,27 +503,41 @@
       // Weekly economy (passive contributions, build burn-down, growth, lose).
       if (DEPS.world) DEPS.world.tick(this);
 
-      // Timeouts & window expiry on open nodes.
+      // Timeouts on open nodes (their patience ran out)…
       for (const charId of this.order) {
         const o = this.open[charId];
         if (!o) continue;
         const node = this.nodes.get(o.nodeId);
         const waited = this.s.week - o.week;
-        const windowClosed = !this._stillRelevant(node);
         if (node.timeout) {
           const t = node.timeout;
           if ((t.weeks != null && waited >= t.weeks)
-            || (t.when && t.when(this.s, this))
-            || windowClosed) this._resolveIgnored(charId, node);
-        } else if (windowClosed) {
-          this.open[charId] = null; // standing offer quietly withdrawn, unresolved
+            || (t.when && t.when(this.s, this))) this._resolveIgnored(charId, node);
         }
       }
+      // …and window expiry (their moment passed) — shared with the act()-time
+      // sweep, so a card whose window an action just closed doesn't linger.
+      this._sweepClosed();
 
       this._poll();
       this._checkStamps();
       this.ledger.push({ week: wk, transactions: this._weekTx, balanceAfter: this.s.cash });
       this._weekTx = [];
+    }
+    // Window expiry on open nodes: a card whose `if` window closed resolves as
+    // "@ignored" (its timeout consequence fires — same as the boundary sweep),
+    // or is quietly withdrawn if it was a standing offer. Called at the week
+    // boundary AND after each act, so "flip the switch" makes the pre-launch
+    // cards vanish from the triage immediately instead of at week's end.
+    _sweepClosed() {
+      for (const charId of this.order) {
+        const o = this.open[charId];
+        if (!o) continue;
+        const node = this.nodes.get(o.nodeId);
+        if (this._stillRelevant(node)) continue;
+        if (node.timeout) this._resolveIgnored(charId, node);
+        else this.open[charId] = null; // standing offer quietly withdrawn, unresolved
+      }
     }
     // Is an already-open node's moment still live? Same as _eligible minus the
     // resolved/cooldown check (an open node is by definition unresolved).

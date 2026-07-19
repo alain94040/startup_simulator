@@ -51,13 +51,13 @@ The content set: **~158 nodes, 19 cast, 5 scene arcs** across the `story/` files
 The engine replaced v1's single-`urgency`-axis "cards" with an explicit dependency graph. Three ideas do all the work:
 
 **1. Facts ledger.** Every node resolution is recorded: `resolved[nodeId] = { outcome, week, count }`. Being ignored is just another outcome (`"@ignored"`), so the ignored path is a queryable edge like any choice. There are **no `_done` flags or `*_week` stamps** — content asks:
-`e.done(id)`, `e.outcome(id)`, `e.took("node:key1|key2")`, `e.weeksSince(id)`, `e.timesResolved(id)`.
+`e.done(id)`, `e.outcome(id)`, `e.took("node:key1|key2")`, `e.weeksSince(id)`, `e.timesResolved(id)` — and `e.chapter` (1–5, derived from the same transitions the to-do gauge reads). A card that belongs to an era gates on the chapter (`if: (s, e) => e.chapter === 3`) instead of re-deriving the flag combination; note the growth/deferred paths skip chapter 4, and a late pivot re-enters it.
 
 **2. Node schema** (a story beat):
 - `id`, `char` (whose thread it lands in), `from` (display sender), `text` (string or `(s,e,char)=>string`), optional `subtext`, `mockups`.
 - `when { after, took, not, delay, if, cooldown }` — when it can surface. `after`: these nodes resolved (any outcome). `took`: these outcomes taken (`"a|b"` = OR of keys; an array entry = OR across specs). `not`: none of these taken. `delay`: weeks after the latest dep. `if(s,e,char)`: world-state escape hatch. `cooldown`: makes it recurring (re-eligible N weeks after last resolution; without it a node fires once).
 - `choices[]` — each `{ key, label, reply?, if?, journal?, effects?, fx? }`. A per-option `if(s,e,char)` gates it (this is how the research-gated "C-options" appear only when the player has learned enough).
-- `timeout { weeks, when, unless, effects, fx, say }` — the **ignore path**: resolves the node as `"@ignored"` when its patience runs out or its `if` window closes. No `timeout` = a standing offer that yields to higher-class nodes but never auto-resolves.
+- `timeout { weeks, when, unless, effects, fx, say }` — the **ignore path**: resolves the node as `"@ignored"` when its patience runs out or its `if` window closes. Window closure is swept at the week boundary **and after every act** (outside scenes), so an action that moots other open cards — flipping the launch switch — clears them from the triage immediately. No `timeout` = a standing offer that yields to higher-class nodes but never auto-resolves (and is quietly withdrawn, unresolved, when its window closes).
 - `ambient: true` / `filler: true` — scheduler class (see below).
 
 **3. One effects vocabulary** (a choice or a timeout carries `effects` data and/or an `fx(s,e,char)` escape hatch):

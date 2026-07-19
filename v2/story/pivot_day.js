@@ -305,7 +305,7 @@
         id: "pivot_scope_call", char: "alex",
         text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans board — for the users who liked it — or do we cut to the bone and ship one thing?",
         when: {
-          if: (s) => s.activities_pivot && !s.pivot_shipped && s.pivot_week != null
+          if: (s, e) => e.chapter === 4 && s.pivot_week != null
             && s.week >= s.pivot_week + 1
             && s.items && s.items.plans_matching && s.items.plans_matching.status === "active",
         },
@@ -349,7 +349,7 @@
           : "i want to write to the people who left before we relaunch. every quiet account gets a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' ")
           + "the people who quit are the only ones who already know why the old app failed. or do we save the reveal for launch day and a clean slate?",
         when: {
-          if: (s) => s.activities_pivot && !s.pivot_shipped && !s.jordan_resolved
+          if: (s, e) => e.chapter === 4 && !s.jordan_resolved
             && s.pivot_week != null && s.week >= s.pivot_week + 1,
         },
         choices: [
@@ -383,7 +383,7 @@
         text: (s) => "Alex's message is three words: 'staging is green.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the new screens are in. This is a different product wearing the same name — and how it meets the world is your call.",
         when: {
           cooldown: 2,
-          if: (s) => s.activities_pivot && s.launched && !s.pivot_shipped
+          if: (s, e) => e.chapter === 4
             && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
             && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved),
         },

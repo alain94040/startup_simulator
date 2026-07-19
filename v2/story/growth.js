@@ -81,7 +81,9 @@
         // land at launch conversion in world.js (s.launch_splash).
         id: "launch_surface", char: "growth", from: "You",
         text: "the hardening week is nearly done — you flip the switch within days. now the part nobody warns you about: a launch is only as big as where you announce it, and you get exactly one first impression. where do you make the splash?",
-        when: { if: (s) => s.productPhase === "product" && !s._launch_converted && s.beachhead != null },
+        // Chapter 2 only — the window closes the moment the switch flips, so
+        // the plan question can't outlive the launch it was planning.
+        when: { if: (s, e) => e.chapter === 2 && s.productPhase === "product" && s.beachhead != null },
         choices: [
           {
             key: "quiet", label: "Soft-launch to the waitlist + friends",
@@ -138,7 +140,7 @@
       {
         id: "channel_test", char: "growth", from: "You",
         text: (s) => tested(s).length === 0
-          ? "the launch spike is fading and signups have flatlined. you can't pour money into every channel — pick one cheap experiment this sprint and see what the numbers say."
+          ? "the relaunch pop is real — but it's a pop, not a channel. v2 finally retains people, which means growth spend finally compounds. you can't fund every channel: pick one cheap experiment this sprint and see what the numbers say."
           : "one channel down, the picture's still fuzzy. run another cheap test — you only get a couple of these before the runway says pick one.",
         // Gated on the pivot relaunch: channel strategy only pays off once the
         // product actually retains. Before that you'd just be buying churn.

@@ -231,7 +231,7 @@
         text: (s) => s.met_priya
           ? "saw the launch — congrats, genuinely. that's the part most people never do. real talk though: how's week two? and i mean retention, not signups. those are different numbers and only one of them is real."
           : "so — the coffee offer was half social. the real question: how's week two treating you? and i mean retention, not signups. those are different numbers and only one of them is real.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s, e) => e.chapter === 3 },
         choices: [
           {
             key: "real_numbers", label: "Give her the real numbers",
@@ -280,7 +280,7 @@
         // The person who flagged it, watching it come true. Deliberately quiet.
         id: "slide_jordan_echo", char: "jordan", ambient: true,
         text: "not my lane anymore maybe. but i've been lurking the support inbox. 'i matched, but then what' — that's the test group's feedback again, word for word, from strangers this time. same shape. anyway.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s, e) => e.chapter === 3 },
         choices: [
           {
             key: "ack", label: "You called it first",
@@ -297,7 +297,7 @@
         // leave. (Scored: "Features Won't Save You".)
         id: "feature_spree", char: "alex",
         text: "signups are flat and i keep staring at the graph. i could bang out icebreaker prompts, streaks, read receipts — pick one and it's live by friday. something will stick, right?",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done && s.users >= 3 },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s, e) => e.chapter === 3 && s.users >= 3 },
         choices: [
           {
             key: "spree", label: "Pick one and ship it — something will stick",
@@ -332,7 +332,7 @@
         // (s.winback_flat), and it plays at the summit as the "fixes" chip.
         id: "win_back_blast", char: "users", from: "The quiet accounts",
         text: (s) => "the dashboard splits your users into 'active' and 'quiet' and the quiet column is winning. " + Math.max(6, s.users + 8) + " people signed up, matched, and stopped opening the app. you could send the win-back email — 'we miss you, here's what's new' — tonight.",
-        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s) => !s.activities_pivot && !s.pivot_summit_done },
+        when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s, e) => e.chapter === 3 },
         choices: [
           {
             key: "blast", label: "Send the win-back email tonight",
