@@ -156,9 +156,10 @@
         choices: [
           {
             key: "reply_honest", label: "Write her back yourself",
+            reply: "you're not missing a feature, rachel — tell me what you were hoping would happen next?",
             journal: "Rachel K. emailed support: 'is something supposed to happen next?' I wrote back myself and asked what she'd hoped would happen. Her answer, word for word: 'I hoped the app would give one of us an excuse. A place to say yes to.' Kept it.",
             effects: { signal: 3, marketFit: 3, flags: { rachel_answer: true } },
-            fx: () => "You wrote back: 'You're not missing anything — tell me what you hoped would happen?' Rachel's answer, verbatim: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.",
+            fx: () => "Rachel wrote back within the hour: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.",
           },
           {
             key: "faq", label: "Add it to the FAQ pile",
@@ -259,7 +260,10 @@
           {
             key: "call", label: "Call her",
             journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted Kindred because it made me feel worse, not better.'",
-            effects: { marketFit: 4, signal: 3, flags: { maya_quote: true } },
+            effects: {
+              marketFit: 4, signal: 3, flags: { maya_quote: true },
+              say: { char: "jordan", text: "you got maya on the phone? …i watched her fill out that profile launch day, so hopeful. 'made me feel worse.' that one's going to stay with me." },
+            },
             fx: () => "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. Kindred made me feel worse, not better.' You wrote down every word.",
           },
           {
@@ -311,6 +315,7 @@
           },
           {
             key: "no", label: "Nothing new ships until we know why they leave",
+            reply: "hold the features. nothing new ships until we know why they're leaving — otherwise we're just guessing in public.",
             journal: "Told Alex nothing new ships until we know why users leave. He grumbled, then admitted the streaks idea was a dice roll.",
             effects: { marketFit: 4, char: { alex: { morale: -4 } } },
             fx: () => "You held the line: no new features until you know why users leave. Alex grumbled, then admitted the streaks idea was a dice roll.",
