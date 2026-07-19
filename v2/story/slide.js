@@ -27,7 +27,8 @@
           : "there's a meetup for founders building in the consumer social and relationships space — a dozen people building adjacent things. you haven't been to one of these in months.",
         when: {
           cooldown: 2,
-          if: (s) => !s.met_priya && ((s.week >= 2 && s.week <= 6) || (s.week >= 8 && s.week <= 11)),
+          if: (s) => !!s.jordan_equity && !s.met_priya
+            && ((s.week >= 2 && s.week <= 6) || (s.week >= 8 && s.week <= 11)),
         },
         choices: [
           {

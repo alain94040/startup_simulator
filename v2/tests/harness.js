@@ -40,6 +40,7 @@
   // patience is designed to allow exactly that.
   const ANSWER_ORDER = [
     "founder_consulting", // rent money first — a sensible player never lets it expire
+    "start_prototype", "jordan_working_style", // week 1: one message per founder
     "equity_worry", "equity_jordan_relief", "equity_alex_justify",
     "equity_5050_interject", "interviews", "waitlist_cold",
     "launch_surface",     // the launch plan beats the ship call — a sensible
@@ -57,7 +58,8 @@
   // Preferred option keys (first available wins; unknown nodes take the first
   // offered option; "SKIP" leaves the message unanswered on purpose).
   const PREF = {
-    start_prototype: ["build"], incorporate: ["atlas"], incorporate_again: ["atlas"],
+    start_prototype: ["build"], jordan_working_style: ["standup"],
+    incorporate: ["atlas"], incorporate_again: ["atlas"],
     equity_open: ["open"], equity_alex: ["probe"], equity_alex_why: ["propose_40"],
     equity_worry: ["reassure"], equity_jordan_relief: ["not_yet"], equity_alex_justify: ["mine"],
     equity_counter_jordan: ["hear_her"], equity_counter_alex: ["risk_real"],
@@ -160,6 +162,7 @@
     alex_sync_discover: "research", founder_solo_discover: "research", early_customer_target: "research",
     // team — co-founders, family, the company itself
     incorporate: "team", incorporate_again: "team", alex_commitment: "team",
+    jordan_working_style: "team",
     vision_mismatch: "team", alex_side_project: "team", alex_side_project_escalation: "team",
     alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
     alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",

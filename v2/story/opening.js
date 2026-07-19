@@ -45,6 +45,29 @@
         timeout: { weeks: 2, fx(s) { kickoff(s); } },
       },
       {
+        // Ported from v1's early_working_style card: Jordan's own opener, so
+        // week 1 isn't Alex-only. No `when` — eligible from turn one, same as
+        // start_prototype.
+        id: "jordan_working_style", char: "jordan",
+        text: "i'm still at my day job so my hours are weird. do we want a quick daily check-in so you know when i'm available? or just async and ping me when you need something?",
+        choices: [
+          {
+            key: "standup", label: "Daily 15-min standup",
+            reply: "let's do a daily 15-minute standup at 9am. keeps us both honest while you're still juggling the day job.",
+            journal: "Set a daily 15-minute standup at 9am with Jordan. Keeps us both honest while she's still juggling her day job.",
+            effects: { char: { jordan: { morale: 5 } } },
+            fx: () => "Daily standup at 9am. Keeps both of you honest.",
+          },
+          {
+            key: "async", label: "Async — ping when blocked",
+            reply: "let's stay async — ping me when you're blocked, otherwise heads down.",
+            journal: "Decided to work async with Jordan — ping when blocked. Fewer interruptions, more deep work.",
+            fx: () => "Async by default. Fewer interruptions, more deep work.",
+          },
+        ],
+        timeout: { weeks: 1 },
+      },
+      {
         id: "incorporate", char: "alex",
         text: "before we do anything else — all three of us need a legal entity. no bank account, no contracts, no equity split without one. Stripe Atlas is the fastest path: Delaware C-corp, EIN, bank account in two days.",
         when: { after: ["start_prototype"] },

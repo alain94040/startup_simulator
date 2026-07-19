@@ -33,7 +33,7 @@
     {
       id: "hn_thread", char: "hacker_news", from: "Hacker News", ambient: true,
       text: "'Ask HN: Why are dating apps still so bad in 2026?' — top thread right now, 300 comments. this is your market talking openly.",
-      when: { if: (s) => !s.launched },
+      when: { if: (s) => !s.launched && s.week >= 3 },
       choices: [
         {
           key: "engage", label: "Engage the thread",
