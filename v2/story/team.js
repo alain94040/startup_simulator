@@ -196,6 +196,7 @@
         choices: [
           {
             key: "fair", label: "Revise fairly",
+            reply: "you're right, and i'd rather fix this than keep deflecting it. let's revise the split so it matches what you're actually carrying.",
             journal: "Revised the equity split. Both sides signed. Relationship's back on solid ground.",
             effects: { char: { alex: { morale: 30, trust: 15 } } },
             fx: () => "Revised the split. Both sides signed. Relationship back on solid ground.",
@@ -224,6 +225,7 @@
         choices: [
           {
             key: "talk", label: "Remind each other why",
+            reply: "mine too, constantly. listen — we're building the thing we both wished existed when we were the ones swiping. that's still true. don't let them in your head.",
             journal: "Long talk with Alex about family pressure. Reminded each other why we're doing this. Morale reset.",
             effects: { char: { alex: { morale: 12 } } },
             fx: () => "Long talk. Reminded each other why you're doing this. Morale reset.",

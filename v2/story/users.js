@@ -14,6 +14,7 @@
         choices: [
           {
             key: "reach", label: "Reach out now",
+            reply: "quick update to everyone who signed up early: we're almost there, launching in a couple of weeks. thank you for hanging in — you'll be the first ones in.",
             journal: "Reached out to the waitlist. Good feedback — people are still excited, want to know when we're launching.",
             effects: { signal: 8, marketFit: 5 },
             fx: () => "Reached out to waitlist. Good feedback — people are still excited, want to know when you're launching.",
@@ -83,6 +84,7 @@
         choices: [
           {
             key: "build", label: "Build standing plans — keep them happy",
+            reply: "you're our best host — let's build it. proper standing plans: repeat scheduling, auto-invites, attendance history. give me two weeks.",
             journal: "Built recurring plans for our best host — repeat scheduling, auto-invites, attendance history. They doubled their subscription. It's also two weeks of Alex's time spent on one person's Thursday.",
             effects: { char: { alex: { morale: -8 } } },
             fx(s, e) {
@@ -93,12 +95,14 @@
           },
           {
             key: "decline", label: "Decline — stay on roadmap",
+            reply: "i have to pass on the custom build — right now it'd only serve your group, and i have to keep us on the roadmap. i'm sorry, i know it's not what you wanted to hear.",
             journal: "Declined the standing-plans request. They churned. The clarity on what NOT to build was worth it.",
             effects: { customers: -1, marketFit: 6 },
             fx: () => "Declined politely. They churned. The clarity on what NOT to build was worth it.",
           },
           {
             key: "negotiate", label: "Build a lightweight version for everyone",
+            reply: "what if instead of a full recurrence engine, everyone gets a one-tap 'run it back' — clones last week's plan, same people invited? i can ship that fast.",
             journal: "Proposed a one-tap 'run it back' button — clone last week's plan, same people invited — instead of a full recurrence engine. Low friction, easy to build. Five other hosts used it the first week.",
             effects: { marketFit: 4 },
             fx: () => "Proposed 'run it back' — one tap clones last week's plan and re-invites the same people. They agreed. Five other hosts used it the first week.",

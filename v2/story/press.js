@@ -136,9 +136,10 @@
         choices: [
           {
             key: "respond", label: "Respond publicly",
+            reply: "that's a real bug and it's on us — the duplicate-match issue is getting fixed today, and i'll make it right with you directly. thank you for flagging it.",
             journal: "Responded publicly to the Twitter complaint, fixed the duplicate match bug. The user deleted the tweet and posted an apology.",
             effects: { signal: 5 },
-            fx: () => "Responded publicly, fixed the duplicate match bug. The user deleted the tweet and posted an apology. A few people replied saying they'd sign up now.",
+            fx: () => "Fixed the duplicate match bug. The user deleted the tweet and posted an apology. A few people replied saying they'd sign up now.",
           },
         ],
         timeout: {
@@ -156,6 +157,7 @@
         choices: [
           {
             key: "reply", label: "Reply to Lena now",
+            reply: "you've got your quote — sending it over now. happy to be the anti-tinder voice. thanks for thinking of us.",
             journal: "Replied to Lena's deadline. Story ran the next morning.",
             effects: { signal: 10 },
             fx(s, e) {
@@ -224,6 +226,7 @@
         choices: [
           {
             key: "tell", label: "Tell him about it",
+            reply: "ha — yes, seriously, a dating app. coffee this week and i'll tell you the whole thing.",
             journal: "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the waitlist.",
             effects: { waitlist: 1 },
             fx: () => "Caught up over coffee. Told him everything. He was into it — 'a dating app that actually works? I need to try this.' You put him on the waitlist.",
@@ -254,6 +257,7 @@
         choices: [
           {
             key: "lunch", label: "Have lunch with David",
+            reply: "would love to. lunch this week — it's been too long, and i've actually got a lot to tell you.",
             journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes people stay.",
             fx: () => "Good lunch. David asked sharp questions about the dating app space. 'Send me something concrete this week — what makes people actually stay?'",
           },
