@@ -112,7 +112,7 @@
             },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks conversation odds (from research)";
-              return "The ranking thesis came straight out of the research: optimize the first message, not the first look. Alex is proxying it with profile-text specificity until there's real response data. No other app ranks on this.";
+              return null;
             },
           },
         ],
@@ -261,7 +261,6 @@
               char: { alex: { effort: 0.8 } },
               say: { char: "alex", text: "booked two flights to austin for launch week. jordan found a bar for the mixer on yelp. this is either very smart or very funny." },
             },
-            fx: () => "Austin it is — invite waves by neighborhood, launch-week flights booked, a mixer venue picked off Yelp. Every invite lands somewhere dense enough to matter.",
           },
         ],
         // Ignored: Alex plans around home by default — without ever checking the data.

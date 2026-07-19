@@ -49,7 +49,7 @@
                 fx(s) {
                   s.tech_debt = (s.tech_debt || 0) + 12;
                   demoItems(s, "rough");
-                  return "Demo's out — rough edges and all. Tonight it goes in front of a total stranger for the first time, live, while Alex watches the session logs.";
+                  return "Demo's out — rough edges and all. Tonight it goes in front of a total stranger for the first time.";
                 },
               },
               {
@@ -64,7 +64,7 @@
                 fx(s) {
                   s.tech_debt = (s.tech_debt || 0) + 3;
                   demoItems(s, "solid");
-                  return "One sprint of cleanup, then out the door. Tonight the polished demo goes in front of a total stranger for the first time, live, while Alex watches the session logs.";
+                  return "One sprint of cleanup, then out the door. Tonight the polished demo goes in front of a total stranger for the first time.";
                 },
               },
             ],
