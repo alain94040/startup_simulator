@@ -873,10 +873,22 @@ resetUiState();
 
 // ── helpers over the engine ───────────────────────────────────────────────────
 function railChars() {
-  return game.order.filter(id => {
+  // iMessage-style: most recently active conversation on top. The thread you
+  // currently have open isn't pinned there — it slides down like any other
+  // once someone else texts more recently (that's what keeps an old thread,
+  // like mom's, from parking itself at the top forever).
+  const chars = game.order.filter(id => {
     const c = game.cast.get(id);
     return c && c.active && id !== "founder" && !FEED.has(id) && !SELF.has(id);
   });
+  return chars.slice().sort((a, b) => lastActivity(b) - lastActivity(a));
+}
+// Last message's sequence number (global, monotonic across all threads), or
+// -1 for a thread with nothing in it yet — sort is stable, so untouched
+// threads keep their declaration order at the bottom.
+function lastActivity(id) {
+  const t = game.threads[id];
+  return t.length ? t[t.length - 1].seq : -1;
 }
 function currentStage() {
   for (const st of STAGES) if (st.active(game.s, game)) return st;
