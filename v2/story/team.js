@@ -127,7 +127,7 @@
         when: { if: (s, e, char) => s.week >= 3 && s.week <= 14 && char.morale > 50 && !char.flags.committed_fulltime },
         choices: [
           {
-            key: "pause", label: "Ask him to pause it",
+            key: "pause", label: "Can you pause it until a milestone?",
             reply: "appreciate you telling me. can you pause it until we hit our first real milestone? i need to know you're fully here for this stretch.",
             effects: { char: { alex: { morale: 5, trust: 5 } } },
             fx: () => "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it.",
@@ -145,7 +145,7 @@
         when: { if: (s, e, char) => !!char.flags.side_project_active && s.week <= 26 },
         choices: [
           {
-            key: "talk", label: "Tell him to commit",
+            key: "talk", label: "I need you fully in — or we talk",
             reply: "alex, i need to be direct. 15 hours a week on something else means you're not here. i need you fully in or we need to have a different conversation.",
             effects: { char: { alex: { morale: 22, trust: 10, flags: { side_project_active: false } } } },
             fx: () => "Hard conversation. Alex commits fully. He was relieved you brought it up directly.",

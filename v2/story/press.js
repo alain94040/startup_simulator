@@ -237,11 +237,14 @@
         when: { took: ["ff_friend:tell"], delay: 4, if: (s, e) => e.weeksSince("ff_friend") <= 12 },
         choices: [
           {
-            key: "ask", label: "Ask him to invest",
-            reply: "sure thing.",
+            // Same shape as Mom's dinner: the text only agrees to the meeting —
+            // the ask itself happens there, which is what the label's second
+            // half and the outcome copy report.
+            key: "ask", label: "Say yes — ask him for a check when you meet",
+            reply: "sure thing. coffee again this week?",
             fx(s, e) {
-              if (e.rng() < 0.7) { s.cash += 5000; return "Jamie sent $5,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'"; }
-              return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
+              if (e.rng() < 0.7) { s.cash += 5000; return "Asked Jamie over coffee. He sent $5,000 via Venmo before I got home. 'Least I could do — you'd have done the same for me. go build something great.'"; }
+              return "Asked Jamie over coffee. His cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
             },
           },
         ],

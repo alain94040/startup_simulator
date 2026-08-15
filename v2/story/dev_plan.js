@@ -99,7 +99,7 @@
                 },
               },
               {
-                key: "build", label: "Let Alex build it himself",
+                key: "build", label: "Build it — if it's really just a few days",
                 reply: "ok — build it, if you're sure it's just a few days.",
                 effects: { char: { alex: { morale: 4 } } },
                 fx(s) {
@@ -124,7 +124,7 @@
             when: { took: [["auth_choice:build", "auth_choice:@ignored"]], delay: 2 },
             choices: [
               {
-                key: "buy", label: "Tell him to buy it",
+                key: "buy", label: "Stop — buy it",
                 reply: "stop — buy the hosted provider. we should've done that two weeks ago. let's move on.",
                 journal: "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
                 effects: { saas: { label: "Auth provider", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },

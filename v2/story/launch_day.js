@@ -91,7 +91,7 @@
                 reply: "normal. probably opened it on their commute. real signups need a minute to think.", journal: null,
               },
               {
-                key: "broken", label: "Was something wrong on mobile?",
+                key: "broken", label: "Check if the page is broken on mobile",
                 reply: "check if the page is broken on mobile.", journal: null,
                 effects: { say: { char: "jordan", text: "tested on my phone — page loads clean, 1.4s, no errors. they just weren't ready to commit on a first glance." } },
               },
@@ -245,7 +245,7 @@
             id: "launch_test_profiles_scope", char: "alex",
             text: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with lorem ipsum filler from when we seeded the db.",
             choices: [
-              { key: "damage", label: "Have they figured out she's fake?", reply: "do the users know she's a test account?", journal: null,
+              { key: "damage", label: "Do the users know she's a test account?", reply: "do the users know she's a test account?", journal: null,
                 effects: { say: { char: "alex", text: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets lorem ipsum back, it's going to be obvious. what do you want to do?" } } },
             ],
           },

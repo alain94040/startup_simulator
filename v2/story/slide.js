@@ -235,7 +235,7 @@
         when: { took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 3, if: (s, e) => e.chapter === 3 },
         choices: [
           {
-            key: "real_numbers", label: "Give her the real numbers",
+            key: "real_numbers", label: "Day one was great, then gravity",
             reply: "honestly? day one was great and it's been gravity ever since. matches happen, then nothing.",
             journal: "Priya asked about week two — retention, not signups. I gave her the real answer: matches happen, then nothing. She said 'then nothing' is the whole ballgame, and offered to clear a Saturday.",
             effects: { say: { char: "priya", text: "'then nothing' is the whole ballgame. when you're ready to take that seriously, i'll clear a saturday." } },

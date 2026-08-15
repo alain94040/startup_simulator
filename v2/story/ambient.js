@@ -19,13 +19,16 @@
       },
       fx(st) { st.cash += 4000; },
     });
-    return "Asked Mom and Dad if they'd put money in. They said they'd talk it over and let me know.";
+    return "Went over for dinner and asked Mom and Dad if they'd put money in. They said they'd talk it over and let me know.";
   }
 
+  // You don't ask your parents for money over text — you ask over dinner. So the
+  // message is only the first move (the invitation); the label's second half is
+  // what the dinner is FOR, and the journal reports the ask itself.
   const momChoices = (journalAsk) => ([
     {
-      key: "ask", label: "Ask if they'd put money in",
-      reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
+      key: "ask", label: "Dinner this weekend — ask them in person",
+      reply: "about that. can i come over for dinner this weekend? there's something i want to ask you and dad.",
       journal: journalAsk,
       fx: (s, e) => askFamily(s, e),
     },
@@ -42,7 +45,7 @@
         id: "ff_family", char: "mom", ambient: true,
         text: "just checking in! dad and i were talking about you last night. so proud. how's it going? let us know if there's anything we can do.",
         when: { if: (s) => s.incorporated && s.week <= 12 },
-        choices: momChoices("Asked Mom and Dad if they'd put money in. They're going to talk it over and get back to me."),
+        choices: momChoices("Went over for dinner and asked Mom and Dad if they'd put money in. They're going to talk it over and get back to me."),
         timeout: { weeks: 3 },
       },
       {
@@ -50,7 +53,7 @@
         id: "ff_family_2", char: "mom", ambient: true,
         text: "hey, still haven't heard back. dad keeps asking how things are going. if there's anything we can do to help, we really want to.",
         when: { took: ["ff_family:@ignored"], if: (s) => s.week <= 9 },
-        choices: momChoices("Asked the parents again about chipping in. They said they'd discuss it. Family money — complicated feelings."),
+        choices: momChoices("Drove over for dinner and asked the parents about chipping in. They said they'd discuss it. Family money — complicated feelings."),
         timeout: { weeks: 3 },
       },
       {
@@ -59,9 +62,11 @@
         when: { took: ["ff_family_2:@ignored"], if: (s) => s.week <= 12 },
         choices: [
           {
-            key: "ask", label: "Let them invest",
-            reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
-            journal: "Told Dad he could invest. He's going to sort it out. Family money hits different.",
+            // Inverted from the two beats above: Dad has already made the offer,
+            // so the dinner is for accepting it, not for asking.
+            key: "ask", label: "Dinner this weekend — say yes to Dad",
+            reply: "about that — can i come over for dinner this weekend? i'd rather say yes to dad in person than over text.",
+            journal: "Told Dad over dinner he could invest. He's going to sort it out. Family money hits different.",
             fx: (s, e) => askFamily(s, e),
           },
           {

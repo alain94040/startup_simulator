@@ -337,7 +337,7 @@
                 // The dodge: pass the hard call to the two people already in
                 // conflict. It costs nothing yet — that's the trap; the real
                 // price lands in the report-back beats below.
-                key: "convince_jordan", label: "Go talk to Jordan — try to convince her yourself",
+                key: "convince_jordan", label: "Go talk to Jordan — find the number between you",
                 reply: "you two are the ones who actually disagree. go talk to her — see if you can find the number between you.",
                 journal: null,
                 effects: { say: { char: "alex", text: "uh — okay. i can do that." } },
