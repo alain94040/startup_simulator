@@ -20,68 +20,11 @@ const { mean, r1, pct, pad, padL } = H;
 
 const N = parseInt(process.argv[2] || "60", 10);
 
-// ── strategy builders (all speak through the decent chooser) ─────────────────
-const withPrefs = (over) => (a, g) => {
-  if (a.nodeId in over) {
-    const v = over[a.nodeId];
-    return typeof v === "function" ? v(a, g) : v; // null = deliberately skip
-  }
-  return H.decent(a, g);
-};
-const skipChars = (chars) => (a, g) => chars.has(a.charId) ? null : H.decent(a, g);
-const onlyChars = (chars) => (a, g) => chars.has(a.charId) ? H.decent(a, g) : null;
-
-const OUTSIDE = new Set(["users", "growth", "twitter", "lena", "techcrunch", "hacker_news", "tom", "sarah"]);
-
-// A half-decent founder with a lean: decent choices whenever they engage, but
-// cards in the disfavored categories only get their attention `p` of the time
-// (seeded roll, memoized per node·week — so a standing offer like dev_plan is
-// delayed by the lean, while a 1-3 week timeout card is usually missed).
-const lopsided = (skipCats, p) => (seed) => {
-  const rng = H.mulberry32((seed ^ 0x10B51D3D) >>> 0);
-  const rolls = new Map();
-  return (a, g) => {
-    const cat = H.CATEGORY[a.nodeId] || "other";
-    if (skipCats.includes(cat)) {
-      const key = a.nodeId + ":" + g.s.week;
-      if (!rolls.has(key)) rolls.set(key, rng() < p);
-      if (!rolls.get(key)) return null;
-    }
-    return H.decent(a, g);
-  };
-};
-
-const STRATEGIES = {
-  // the canonical good founder — every contract's baseline
-  decent: { chooser: "decent" },
-  // no tactic at all: random choices, sometimes left on read
-  random: { chooser: "random" },
-  // decent choices but randomized attention (which card gets the action)
-  distracted: { chooser: "decent", priority: (seed) => H.makeAttentionPriority(seed) },
-  // never answers the CTO — the run should collapse
-  ignore_alex: { chooser: skipChars(new Set(["alex"])) },
-  // all market, no team, no build — the old customer_focus
-  outside_only: { chooser: onlyChars(OUTSIDE) },
-  // pushes Alex to commit full-time instead of accepting part-time
-  fulltime: { chooser: withPrefs({ alex_commitment: ["push"] }) },
-  // never has the Jordan conversation
-  keep_jordan: { chooser: withPrefs({ jordan_confrontation: ["defer"] }) },
-  // fires Jordan but never pays the lawyer
-  skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"] }) },
-  // explicitly refuses the pivot, twice
-  no_pivot: { chooser: withPrefs({ pivot_day_decide: ["growth"], pivot_fifty_verdict: ["ride"] }) },
-  // never goes to the founder meetup (Priya's early route)
-  no_meetup: { chooser: withPrefs({ founder_meetup: null }) },
-  // picks the over-scoped plan A
-  full_plan: { chooser: withPrefs({ dev_plan: ["full"] }) },
-  // the lopsided founders: half-decent, one lean each. builder loves the IDE
-  // and tends to ignore marketing (research + growth cards get 25% of his
-  // attention); marketer works the market and tends to ignore the build.
-  builder: { makeChooser: lopsided(["research", "growth"], 0.25) },
-  // the marketer's lean is softer (50%): a full 25% build-attention founder
-  // simply never ships (0% wins) — too broken to be an interesting tier.
-  marketer: { makeChooser: lopsided(["build"], 0.5) },
-};
+// ── strategy builders ────────────────────────────────────────────────────────
+// The archetypes themselves live in harness.js (`H.STRATEGIES`) so that
+// transcript.js can replay the exact same founders — when a contract below
+// fails, `node v2/tests/transcript.js --driver <name>` prints that run's story.
+const { withPrefs, STRATEGIES } = H;
 
 // ── play + metrics ────────────────────────────────────────────────────────────
 function runStrategy(name, spec) {

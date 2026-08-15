@@ -28,6 +28,9 @@ Run from the repo root:
 | Pacing, win-rate & chapter-economy map | `node v2/tests/phase_map.js` |
 | Strategy comparison | `node v2/tests/sim_strategies.js` |
 | Behavior contracts | `node v2/tests/sim_behaviors.js` |
+| **Read a run as a story** | `node v2/tests/transcript.js` (`--compact`, `--driver <archetype>`, `--char alex`, `--src`) |
+| The typical stories, as a page | `node v2/tests/transcript.js --sample --html book.html` |
+| Narrative smells across archetypes | `node v2/tests/transcript.js --audit` |
 
 After editing `v2/engine.js`, `v2/world.js`, `v2/cast.js`, or any `v2/story/*.js`, just refresh the browser — no compilation. The browser loads each file via a `<script>` tag; Node loads them with `require` (see `v2/engine.js`'s `DEPS`).
 
@@ -42,7 +45,8 @@ Separation of concerns is the whole point of the redesign: the engine holds no c
 - **`scoring.js`** — the endgame report card. `scoreGame(game)` grades a run on 7 lessons (including "Keep the cap table clean" — the vesting lesson) by asking the facts ledger directly (`e.took()`, `"@ignored"` outcomes) rather than mining a log. Pure logic, dual export `window.V2Scoring` / `module.exports`. A never-faced category returns `score:null` — **except once the run is over**: at the deadline, an unreached spine lesson (never launched, never questioned the product) grades as a failure, not an exemption, so the card can't contradict the verdict. Safe to call in any game state (`test_narrative.js` smoke-checks it at every game end).
 - **`game.html`** — the browser UI (the shipping surface). Self-contained inline CSS + JS; loads the engine, cast, world, story, and scoring via `<script>` tags. See *The UI* below.
 - **`play.html`** — a plain debug harness UI (kept for quick inspection).
-- **`tests/`** — `harness.js` (shared drivers + game loop + `jumpTo`, exports `V2Harness`), `test_slice.js`, `test_narrative.js`, `test_scenes.js`, `phase_map.js`, `sim_strategies.js`, `sim_behaviors.js` (the behavior-contract suite: strategy → consequence).
+- **`tests/`** — `harness.js` (shared drivers + game loop + `jumpTo` + the 13 player **archetypes** (`STRATEGIES`), exports `V2Harness`), `test_slice.js`, `test_narrative.js`, `test_scenes.js`, `phase_map.js`, `sim_strategies.js`, `sim_behaviors.js` (the behavior-contract suite: strategy → consequence), `transcript.js` (the story reader — see below).
+- **`transcript.js`** — the only tool that shows the *run* rather than statistics about runs: it replays a headless playthrough as a screenplay, merging all 19 threads into one stream by the engine's `seq` stamp. Prints the chosen option **and the ones passed over**, chapter/scene/week seams, `⌛` timeouts, and the report card; `--src` tags every beat with `story/<file>:<line>`. `--sample` reads one representative run per archetype (the *median* run by grade for the seed-varying ones), `--html` writes a self-contained readable page, `--audit` reports narrative smells (prose never surfaced, branches no driver takes, messages landing after the run is over, silent weeks, repeated journal lines). Background and the ideas not built: `v2/reading_the_game.md`.
 
 The content set: **~158 nodes, 19 cast, 5 scene arcs** across the `story/` files: `opening`, `equity`, `dev_plan`, `team`, `dev_directions`, `demo_night`, `users`, `launch_day`, `slide`, `pivot_day`, `community`, `fundraising`, `growth`, `jordan_arc`, `discovery`, `press`, `ambient`.
 

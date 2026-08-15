@@ -225,7 +225,10 @@
 
   // ── the game loop ───────────────────────────────────────────────────────────
   // opts: { weeks=120, subsidy, priority, onWeekStart(game, offered),
-  //         onNewMessages(game, msgs), until(game) }
+  //         onNewMessages(game, msgs), onAct(game, action, key), until(game) }
+  // `onAct` fires immediately after each `game.act`, with the pre-act action
+  // snapshot (body + the options that were on offer) — that's how transcript.js
+  // reconstructs "what was chosen, and what wasn't".
   // Returns the game, with `game.seenOptions[nodeId]` = options offered when a
   // node first surfaced (for option-gating assertions).
   function playGame(seed, driver, opts) {
@@ -271,6 +274,7 @@
           const offered = a.options.map(o => o.key);
           const k = [].concat(key).find(x => offered.includes(x)) || offered[0];
           game.act(a.nodeId, k);
+          if (opts.onAct) opts.onAct(game, a, k);
           did = true;
           break; // re-read: a scene answer surfaces the next beat immediately
         }
@@ -281,6 +285,76 @@
       collectMessages();
     }
     return game;
+  }
+
+  // ── player archetypes ───────────────────────────────────────────────────────
+  // The named founders the tools play as. Lives here (not in sim_behaviors.js)
+  // so the contract suite and the transcript reader replay the SAME people —
+  // a contract failure and the story you read to understand it are one run.
+  //
+  // A spec is { chooser } (a driver name or chooser fn), { makeChooser(seed) },
+  // and/or { priority(seed) }; `blurb` is the one-line character sketch the
+  // transcript reader prints as the run's byline.
+  const withPrefs = (over) => (a, g) => {
+    if (a.nodeId in over) {
+      const v = over[a.nodeId];
+      return typeof v === "function" ? v(a, g) : v; // null = deliberately skip
+    }
+    return decent(a, g);
+  };
+  const skipChars = (chars) => (a, g) => chars.has(a.charId) ? null : decent(a, g);
+  const onlyChars = (chars) => (a, g) => chars.has(a.charId) ? decent(a, g) : null;
+
+  const OUTSIDE = new Set(["users", "growth", "twitter", "lena", "techcrunch", "hacker_news", "tom", "sarah"]);
+
+  // A half-decent founder with a lean: decent choices whenever they engage, but
+  // cards in the disfavored categories only get their attention `p` of the time
+  // (seeded roll, memoized per node·week — so a standing offer like dev_plan is
+  // delayed by the lean, while a 1-3 week timeout card is usually missed).
+  const lopsided = (skipCats, p) => (seed) => {
+    const rng = mulberry32((seed ^ 0x10B51D3D) >>> 0);
+    const rolls = new Map();
+    return (a, g) => {
+      const cat = CATEGORY[a.nodeId] || "other";
+      if (skipCats.includes(cat)) {
+        const key = a.nodeId + ":" + g.s.week;
+        if (!rolls.has(key)) rolls.set(key, rng() < p);
+        if (!rolls.get(key)) return null;
+      }
+      return decent(a, g);
+    };
+  };
+
+  const STRATEGIES = {
+    decent: { chooser: "decent", blurb: "the canonical good founder — every contract's baseline" },
+    random: { chooser: "random", blurb: "no tactic at all: random choices, sometimes left on read" },
+    distracted: { chooser: "decent", priority: (seed) => makeAttentionPriority(seed),
+      blurb: "decent choices, but which card gets the action is random" },
+    ignore_alex: { chooser: skipChars(new Set(["alex"])), blurb: "never answers the CTO" },
+    outside_only: { chooser: onlyChars(OUTSIDE), blurb: "all market, no team, no build" },
+    fulltime: { chooser: withPrefs({ alex_commitment: ["push"] }),
+      blurb: "pushes Alex to commit full-time instead of accepting part-time" },
+    keep_jordan: { chooser: withPrefs({ jordan_confrontation: ["defer"] }),
+      blurb: "never has the Jordan conversation" },
+    skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"] }),
+      blurb: "fires Jordan but never pays the lawyer" },
+    no_pivot: { chooser: withPrefs({ pivot_day_decide: ["growth"], pivot_fifty_verdict: ["ride"] }),
+      blurb: "explicitly refuses the pivot, twice" },
+    no_meetup: { chooser: withPrefs({ founder_meetup: null }), blurb: "never goes to the founder meetup" },
+    full_plan: { chooser: withPrefs({ dev_plan: ["full"] }), blurb: "picks the over-scoped plan A" },
+    builder: { makeChooser: lopsided(["research", "growth"], 0.25),
+      blurb: "loves the IDE, ignores the market" },
+    marketer: { makeChooser: lopsided(["build"], 0.5), blurb: "works the market, never ships" },
+  };
+
+  // Resolve a strategy name (or a raw driver name) to a playGame-ready pair.
+  function strategyOpts(name, seed) {
+    const spec = STRATEGIES[name];
+    if (!spec) return { driver: name, priority: undefined }; // raw "decent"/"pivot"/"random"
+    return {
+      driver: spec.makeChooser ? spec.makeChooser(seed) : spec.chooser,
+      priority: spec.priority ? spec.priority(seed) : undefined,
+    };
   }
 
   // Play decent until a condition holds (a node id resolved, a node id open,
@@ -311,6 +385,7 @@
     Game, mulberry32,
     ANSWER_ORDER, actPriority, PREF, decent, pivot, makeRandom, makeChooser,
     makeAttentionPriority, CATEGORY, CAT_LIST,
+    withPrefs, skipChars, onlyChars, lopsided, STRATEGIES, strategyOpts,
     playGame, jumpTo,
     quantile, mean, r1, pct, pad, padL,
   };
