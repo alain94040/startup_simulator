@@ -166,7 +166,7 @@
             choices: [
               {
                 key: "not_yet", label: "It's not signed yet",
-                reply: "nothing's signed yet. alex still gets his say.",
+                reply: "not yet it isn't. alex still gets his say before anything goes in writing.",
                 journal: null,
                 effects: { say: { char: "jordan", text: "his say about what, exactly?" } },
               },
@@ -228,7 +228,7 @@
               },
               {
                 key: "essential", label: "Everyone's essential — that's what thirds says",
-                reply: "i hear you. and i still think everyone here is essential. that's what thirds says.",
+                reply: "you're not wrong about the risk. i still think everyone here is essential, and that's what thirds says.",
                 journal: "Held the line on thirds. Alex typed for a long time and sent back one word.",
                 effects: { char: { alex: { morale: -4 } }, say: { char: "alex", text: "noted." } },
               },
@@ -272,8 +272,8 @@
             when: { if: (s) => s.equity_proposal === "50/25/25" && !s.equity_decided },
             choices: [
               {
-                key: "ack", label: "Hear you — still settling it",
-                reply: "i hear you. nothing's signed. we're still settling it.",
+                key: "ack", label: "Blunt is fine — it isn't settled",
+                reply: "blunt is fine. i'd rather hear it now than after i've signed something. this isn't settled.",
                 journal: "Told Jordan nothing's signed yet. Her goodwill is on the clock.",
                 effects: {
                   char: { jordan: { trust: -5 } },
@@ -299,7 +299,7 @@
               },
               {
                 key: "today", label: "The split matches today — you're not full-time",
-                reply: "i hear you. but the split matches today, and today you're moonlighting. that's not an insult, it's a fact.",
+                reply: "you're not wrong about the code. but the split matches today, and today you're moonlighting. that's not an insult, it's a fact.",
                 journal: "Told Jordan the split matches today. Read receipt. No reply.",
                 effects: { char: { jordan: { morale: -4, trust: -6 } } },
               },
@@ -390,8 +390,8 @@
             when: { if: (s, e) => e.done("equity_impasse_alex") && !e.took("equity_impasse_alex:convince_jordan") && !s.equity_decided },
             choices: [
               {
-                key: "heard", label: "I hear you",
-                reply: "i hear you. i'm not going to make you keep proving it.",
+                key: "heard", label: "You shouldn't have to",
+                reply: "you shouldn't have to. you're not on trial here — i'm not going to make you keep proving it.",
                 journal: null,
                 effects: { say: { char: "jordan", text: "okay." } },
               },
@@ -522,8 +522,8 @@
             when: { if: (s) => !!s.equity_decided && !s.equity_tabled && !s.jordan_equity && s.equity_proposal === "40/40/20" },
             choices: [
               {
-                key: "heard", label: "I hear you",
-                reply: "i hear you. and jordan — the work already argues for you.",
+                key: "heard", label: "The work already argues for you",
+                reply: "twenty for now — and i know what it cost you to type that. the work already argues for you, louder than i did.",
                 journal: (s, e) => e.cast.get("jordan").flags.promised_path
                   ? "Jordan pinned the 'we revisit' message in the group chat. The clock she's watching now is mine."
                   : "Jordan took the 20. She's keeping score in commits from here.",
