@@ -20,6 +20,10 @@
 // also has an "@ignored" edge, so the whole conversation can resolve by pure
 // inertia (the split defaults to equal thirds, trust quietly leaks away).
 //
+// Everything a co-founder says here is a real message (`effects.say` / `e.say`)
+// in their own thread; the founder's own recaps go to the journal (`journal`).
+// No narrator asides in the chat — see the coding conventions in CLAUDE.md.
+//
 // Shared state: `s.equity_proposal` (the split currently on the table — the
 // impasse decision overwrites it, so downstream readers always see the final
 // number), `s.equity_decided` (the founder made the call — or silence made it
@@ -32,29 +36,24 @@
     {
       key: "propose_33", label: "Equal thirds",
       reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
-      journal: null,
+      journal: variant === "why"
+        ? "Put equal thirds on the table. Alex had just finished asking to be my equal, not Jordan's."
+        : "Put equal thirds on the table. Alex expected more weight for his commitment.",
       effects: { flags: { equity_proposal: "33/33/33" }, char: { alex: { morale: -3 } } },
-      fx: () => variant === "why"
-        ? "Equal split. Alex went quiet — he'd just told you he wanted to be your equal, not Jordan's."
-        : "Equal split. Alex went quiet — he expected more weight for his commitment.",
     },
     {
       key: "propose_40", label: variant === "why" ? "40/40/20 — you and me even, Jordan at 20" : "40/40/20",
       reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
-      journal: null,
+      journal: "Named 40/40/20 — Alex and me even, Jordan at 20 until she goes full-time. Jordan hasn't heard the number yet.",
       effects: { flags: { equity_proposal: "40/40/20" }, char: { alex: { morale: 5 } } },
-      fx: () => variant === "why"
-        ? "Alex: 'yeah — that's exactly it.' Jordan hasn't heard yet."
-        : "Alex: 'yeah — that's what I was thinking.' Jordan hasn't heard yet.",
     },
     {
       key: "propose_50", label: variant === "why" ? "50/25/25 — I take half" : "50/25/25",
       reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
-      journal: null,
+      journal: variant === "why"
+        ? "Kept 50 for myself, 25 each. Alex had just asked to be even with me. I'll hear from both of them."
+        : "Kept 50 for myself, 25 each. I'll hear from both of them.",
       effects: { flags: { equity_proposal: "50/25/25" }, char: { alex: { morale: -3 } } },
-      fx: () => variant === "why"
-        ? "Alex went still. 'I just asked to be even with you.' You'll hear from both of them."
-        : "Alex was quiet for a moment. 'Okay. I'll take 25 alongside Jordan.' You'll hear from both of them.",
     },
   ]);
 
@@ -93,9 +92,8 @@
               {
                 key: "open", label: "Let's sit down right now and settle it",
                 reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
-                journal: null,
+                journal: "Cleared the calendar. The three of us, sorting out equity before it gets weird.",
                 effects: { scene: "equity" },
-                fx: () => "Cleared the calendar. The three of us, sorting it out now.",
               },
             ],
             // Ignored: no sit-down — the same conversation happens piecemeal,
@@ -111,7 +109,6 @@
                 key: "probe", label: "What are you thinking?",
                 reply: "before i put a number on the table — talk to me. what feels fair to you, and why?",
                 journal: null,
-                fx: () => "Asked Alex to lay out his thinking before you name a split.",
               },
               ...proposeChoices("direct"),
             ],
@@ -137,15 +134,19 @@
                 key: "reassure", label: "You're an equal partner",
                 reply: "you're an equal partner. i'm not cutting you out — we'll land this fair.",
                 journal: null,
-                effects: { char: { jordan: { trust: 6, flags: { reassured: true } } } },
-                fx: () => "Jordan eased up. 'Okay. I trust you.' Now you've said it out loud.",
+                effects: {
+                  char: { jordan: { trust: 6, flags: { reassured: true } } },
+                  say: { char: "jordan", text: "okay. i trust you. it just helps to hear it out loud." },
+                },
               },
               {
                 key: "noncommittal", label: "We're still working it out",
                 reply: "we're still working it out. nothing's decided yet. i'll loop you in.",
                 journal: null,
-                effects: { char: { jordan: { trust: -4 } } },
-                fx: () => "Jordan went quiet. 'Right. Let me know when you've decided what I'm worth.'",
+                effects: {
+                  char: { jordan: { trust: -4 } },
+                  say: { char: "jordan", text: "right. let me know when you two have decided what i'm worth." },
+                },
               },
             ],
             timeout: { weeks: 2, effects: { char: { jordan: { trust: -4 } } } },
@@ -167,14 +168,13 @@
                 key: "not_yet", label: "It's not signed yet",
                 reply: "nothing's signed yet. alex still gets his say.",
                 journal: null,
-                fx: () => "Jordan: 'his say about what, exactly?'",
+                effects: { say: { char: "jordan", text: "his say about what, exactly?" } },
               },
               {
                 key: "celebrate", label: "Thirds it is",
                 reply: "thirds it is.",
-                journal: null,
-                effects: { char: { jordan: { trust: 2 } } },
-                fx: () => "Jordan sent a champagne emoji. Alex has not reacted to anything in ten minutes.",
+                journal: "Told Jordan thirds it is — she sent champagne. Alex still hasn't signed off on that number.",
+                effects: { char: { jordan: { trust: 2 } }, say: { char: "jordan", text: "🍾🍾🍾" } },
               },
             ],
             timeout: { weeks: 2 },
@@ -189,15 +189,17 @@
               {
                 key: "argument", label: "That's the argument I'll make",
                 reply: "that's the argument i'll make if she pushes. the split matches today.",
-                journal: null,
-                effects: { char: { alex: { morale: 2 } } },
-                fx: () => "Alex is solid. Jordan hasn't heard the number yet.",
+                journal: "Took Alex's earn-in argument as my own. He's solid. Jordan still hasn't heard the number.",
+                effects: {
+                  char: { alex: { morale: 2 } },
+                  say: { char: "alex", text: "good. then we're saying the same thing when she asks." },
+                },
               },
               {
                 key: "mine", label: "If she pushes back, that's mine to answer",
                 reply: "don't rehearse her rebuttal for me. if she pushes back, i answer for it.",
                 journal: null,
-                fx: () => "Alex: 'fair.' The typing bubble in Jordan's thread has already started.",
+                effects: { say: { char: "alex", text: "fair. she's already typing, by the way." } },
               },
             ],
             timeout: { weeks: 2 },
@@ -218,16 +220,17 @@
               {
                 key: "risk_real", label: "You're right — it's not the same risk",
                 reply: "you're right that it's not the same risk. i'm not pretending it is. let me sit with the numbers.",
-                journal: null,
-                effects: { char: { alex: { morale: 4, trust: 2 } } },
-                fx: () => "Alex: 'that's all i'm asking you to admit.' The number is still on the table.",
+                journal: "Admitted to Alex that the risk isn't the same. The number's still on the table.",
+                effects: {
+                  char: { alex: { morale: 4, trust: 2 } },
+                  say: { char: "alex", text: "that's all i'm asking you to admit. take the time, just don't send anything to the group until you have." },
+                },
               },
               {
                 key: "essential", label: "Everyone's essential — that's what thirds says",
                 reply: "i hear you. and i still think everyone here is essential. that's what thirds says.",
-                journal: null,
-                effects: { char: { alex: { morale: -4 } } },
-                fx: () => "Alex typed for a while. Then just: 'noted.'",
+                journal: "Held the line on thirds. Alex typed for a long time and sent back one word.",
+                effects: { char: { alex: { morale: -4 } }, say: { char: "alex", text: "noted." } },
               },
             ],
             timeout: { weeks: 2, effects: { char: { alex: { morale: -6 } } } },
@@ -240,16 +243,23 @@
               {
                 key: "hear_him", label: "Say it all — I'm listening",
                 reply: "say all of it. i'm listening.",
-                journal: null,
-                effects: { char: { alex: { morale: 2 } } },
-                fx: () => "He did. Ten messages. The last one: 'i just need to know you see me as your equal.'",
+                journal: "Let Alex say all of it. Ten messages, one after another.",
+                effects: {
+                  char: { alex: { morale: 2 } },
+                  say: [
+                    { char: "alex", text: "i'm not asking for a gift. i left a salary. i write half this product. i'm not asking to be paid, i'm asking not to be an employee at the company i'm building." },
+                    { char: "alex", text: "i just need to know you see me as your equal." },
+                  ],
+                },
               },
               {
                 key: "first_risk", label: "I started this — the risk was mine first",
                 reply: "i started this. i carried it alone before either of you said yes. that's what the 50 is.",
-                journal: null,
-                effects: { char: { alex: { morale: -6, trust: -4 } } },
-                fx: () => "Alex: 'okay. so we're employees.' That one's going to linger.",
+                journal: "Told Alex the 50 is for carrying it alone first. That one's going to linger.",
+                effects: {
+                  char: { alex: { morale: -6, trust: -4 } },
+                  say: { char: "alex", text: "okay. so we're employees." },
+                },
               },
             ],
             timeout: { weeks: 2, effects: { char: { alex: { morale: -10 } } } },
@@ -264,9 +274,11 @@
               {
                 key: "ack", label: "Hear you — still settling it",
                 reply: "i hear you. nothing's signed. we're still settling it.",
-                journal: null,
-                effects: { char: { jordan: { trust: -5 } } },
-                fx: () => "Jordan's blunt about it. 'Fix it before you sign.' Her goodwill is on the clock.",
+                journal: "Told Jordan nothing's signed yet. Her goodwill is on the clock.",
+                effects: {
+                  char: { jordan: { trust: -5 } },
+                  say: { char: "jordan", text: "fix it before you sign, then." },
+                },
               },
             ],
             timeout: { weeks: 2, effects: { char: { jordan: { trust: -5 } } } },
@@ -280,22 +292,25 @@
                 key: "hear_her", label: "Two builders shouldn't be that far apart",
                 reply: "you're right that the gap is ugly. two people building the same product shouldn't be half of each other. i'm not done thinking.",
                 journal: null,
-                effects: { char: { jordan: { trust: 3 } } },
-                fx: () => "Jordan: 'then think fast. docusign doesn't do take-backs.'",
+                effects: {
+                  char: { jordan: { trust: 3 } },
+                  say: { char: "jordan", text: "then think fast. docusign doesn't do take-backs." },
+                },
               },
               {
                 key: "today", label: "The split matches today — you're not full-time",
                 reply: "i hear you. but the split matches today, and today you're moonlighting. that's not an insult, it's a fact.",
-                journal: null,
+                journal: "Told Jordan the split matches today. Read receipt. No reply.",
                 effects: { char: { jordan: { morale: -4, trust: -6 } } },
-                fx: () => "Jordan went quiet. Read receipt, no reply.",
               },
               {
                 key: "revisit", label: "40/40/20 today — the day you're full-time, we revisit",
                 reply: "the 20 isn't a verdict on you, it's a photo of today. the day you go full-time, we revisit the whole thing. i mean that.",
-                journal: null,
-                effects: { char: { jordan: { trust: 1, flags: { promised_path: true } } } },
-                fx: () => "Jordan: 'i'm screenshotting this.' She means it as a contract.",
+                journal: "Promised Jordan we revisit the whole split the day she goes full-time. She's treating it as a contract.",
+                effects: {
+                  char: { jordan: { trust: 1, flags: { promised_path: true } } },
+                  say: { char: "jordan", text: "i'm screenshotting this." },
+                },
               },
             ],
             timeout: { weeks: 3, effects: { char: { jordan: { trust: -8 } } } },
@@ -318,7 +333,7 @@
                 key: "ack", label: "Noted — give me a minute",
                 reply: "duly noted. give me a minute with this.",
                 journal: null,
-                fx: () => "Alex: 'take your time. i just wanted you to know i did my homework.'",
+                effects: { say: { char: "alex", text: "take your time. i just wanted you to know i did my homework." } },
               },
               {
                 // The dodge: pass the hard call to the two people already in
@@ -327,7 +342,7 @@
                 key: "convince_jordan", label: "Go talk to Jordan — try to convince her yourself",
                 reply: "you two are the ones who actually disagree. go talk to her — see if you can find the number between you.",
                 journal: null,
-                fx: () => "Alex: 'uh — okay. i can do that.'",
+                effects: { say: { char: "alex", text: "uh — okay. i can do that." } },
               },
             ],
             timeout: { weeks: 1, effects: { char: { alex: { morale: -3 } } } },
@@ -344,8 +359,10 @@
                 key: "ok", label: "Okay — I'll figure it out",
                 reply: "okay. i'll figure it out myself.",
                 journal: null,
-                effects: { char: { alex: { morale: -6, trust: -4 } } },
-                fx: () => "Alex: 'yeah. probably should've been you from the start.'",
+                effects: {
+                  char: { alex: { morale: -6, trust: -4 } },
+                  say: { char: "alex", text: "yeah. probably should've been you from the start." },
+                },
               },
             ],
             timeout: { weeks: 1, effects: { char: { alex: { morale: -6, trust: -4 } } } },
@@ -359,8 +376,10 @@
                 key: "own_it", label: "That's on me, not him — I'll decide",
                 reply: "that's on me, not him. i'll decide.",
                 journal: null,
-                effects: { char: { jordan: { morale: -6, trust: -4 } } },
-                fx: () => "Jordan: 'good.'",
+                effects: {
+                  char: { jordan: { morale: -6, trust: -4 } },
+                  say: { char: "jordan", text: "good." },
+                },
               },
             ],
             timeout: { weeks: 1, effects: { char: { jordan: { morale: -6, trust: -4 } } } },
@@ -374,7 +393,7 @@
                 key: "heard", label: "I hear you",
                 reply: "i hear you. i'm not going to make you keep proving it.",
                 journal: null,
-                fx: () => "Jordan: 'okay.' Short, but she meant it.",
+                effects: { say: { char: "jordan", text: "okay." } },
               },
             ],
             timeout: { weeks: 1, effects: { char: { jordan: { trust: -2 } } } },
@@ -394,29 +413,37 @@
               {
                 key: "thirds_final", label: "Equal thirds — final",
                 reply: "equal thirds, final. we're all essential and i'd rather lose points than partners. yell at me if you need to — the number's set.",
-                journal: null,
-                effects: { flags: { equity_proposal: "33/33/33", equity_decided: true } },
+                journal: "Called it: equal thirds, final. Jordan replied in seconds. Alex hasn't replied at all.",
+                effects: {
+                  flags: { equity_proposal: "33/33/33", equity_decided: true },
+                  say: { char: "jordan", text: "thank you." },
+                },
                 fx(s, e) {
                   const jordan = e.cast.get("jordan");
                   jordan.morale = Math.min(100, jordan.morale + 8);
                   jordan.trust = Math.min(100, jordan.trust + (jordan.flags.reassured ? 10 : 6));
-                  return "Jordan replied in seconds: 'thank you.' Alex hasn't replied at all.";
+                  return null;
                 },
               },
               {
                 key: "forty_final", label: "40/40/20 — final",
                 reply: "40/40/20, final. full-time risk gets full-time equity. jordan — come yell at me, not at him.",
-                journal: null,
-                effects: { flags: { equity_proposal: "40/40/20", equity_decided: true }, char: { alex: { morale: 10 } } },
-                fx: () => "Alex: 'thank you for saying it plainly.' Jordan is typing…",
+                journal: "Called it: 40/40/20, final. Alex is relieved. Jordan started typing the moment it landed.",
+                effects: {
+                  flags: { equity_proposal: "40/40/20", equity_decided: true },
+                  char: { alex: { morale: 10 } },
+                  say: { char: "alex", text: "thank you for saying it plainly." },
+                },
               },
               {
                 key: "fifty_final", label: "50/25/25 stands — final",
                 if: (s) => s.equity_proposal === "50/25/25",
                 reply: "the 50 stands. i started this and i'll carry the blame for it too. 25 each — i need you both anyway.",
-                journal: null,
-                effects: { flags: { equity_decided: true } },
-                fx: () => "Nobody replied for four minutes. Then jordan: 'noted.'",
+                journal: "Called it: the 50 stands. Nobody replied for four minutes.",
+                effects: {
+                  flags: { equity_decided: true },
+                  say: { char: "jordan", text: "noted." },
+                },
               },
               {
                 // The dodge. Terminal: nobody ever reopens it — default thirds
@@ -424,13 +451,16 @@
                 // callbacks are the deflated meters and the report card.
                 key: "table", label: "Table it until after launch",
                 reply: "we're going in circles and we have a product to ship. parking this until after launch — i promise we come back to it.",
-                journal: "We tabled equity until after launch. Everyone typed 'fine.' Nobody meant it. The default thirds went into the paperwork unexamined.",
+                journal: "We tabled equity until after launch. Everyone typed 'fine.' Nobody meant it. The default thirds went into the paperwork unexamined, like an unpaid bill.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, equity_tabled: true, jordan_equity: true },
                   char: { alex: { morale: -8, flags: { equity_set: true } }, jordan: { morale: -8 } },
+                  say: [
+                    { char: "alex", text: "fine." },
+                    { char: "jordan", text: "👍" },
+                  ],
                   scene: null,
                 },
-                fx: () => "the group chat just… stopped. jordan sent a thumbs-up an hour later. nothing was settled — the default thirds sit in the paperwork like an unpaid bill.",
               },
             ],
             // Ignored: silence makes the call — whatever number is on the
@@ -452,19 +482,23 @@
               {
                 key: "own_it", label: "It was my call",
                 reply: "it was my call, and i'll own every consequence of it. thank you for staying.",
-                journal: null,
+                // A tapback isn't a message — what Alex does here belongs in the
+                // journal, not in his thread as a line he never typed.
+                journal: (s, e) => s.equity_proposal === "50/25/25"
+                  ? "Owned the 50 to Alex's face. He hearted it and went back to work. Something cooled."
+                  : e.took("equity_counter_alex:risk_real")
+                    ? "Owned the call to Alex. He hearted the message — being heard bought what the points didn't."
+                    : "Owned the call to Alex. He hearted the message. It didn't feel like a heart.",
                 fx(s, e) {
                   const alex = e.cast.get("alex");
                   if (s.equity_proposal === "50/25/25") {
                     alex.morale = Math.max(0, alex.morale - 12);
                     alex.trust = Math.max(0, alex.trust - 8);
-                    return "Alex went quiet. 'Okay. You're the boss.' Something cooled between you.";
+                    return null;
                   }
                   const soft = e.took("equity_counter_alex:risk_real");
                   alex.morale = Math.max(0, alex.morale - (soft ? 2 : 5));
-                  return soft
-                    ? "He hearted the message. Being heard bought what the points didn't."
-                    : "He hearted the message. It didn't feel like a heart.";
+                  return null;
                 },
               },
             ],
@@ -490,7 +524,9 @@
               {
                 key: "heard", label: "I hear you",
                 reply: "i hear you. and jordan — the work already argues for you.",
-                journal: null,
+                journal: (s, e) => e.cast.get("jordan").flags.promised_path
+                  ? "Jordan pinned the 'we revisit' message in the group chat. The clock she's watching now is mine."
+                  : "Jordan took the 20. She's keeping score in commits from here.",
                 fx(s, e, char) {
                   const promised = !!char.flags.promised_path;
                   char.morale = Math.max(0, char.morale - (promised ? 3 : 10));
@@ -498,9 +534,8 @@
                   // broken promise; the earn-in framing softens the landing.
                   const hit = promised ? (char.flags.reassured ? 6 : 3) : (char.flags.reassured ? 18 : 10);
                   char.trust = Math.max(0, char.trust - hit);
-                  return promised
-                    ? "Jordan pinned the 'we revisit' message in the group chat. The clock she's watching now is yours."
-                    : "Jordan went quiet. 'Fine. I'll show you what 20% worth of work looks like.'";
+                  if (!promised) e.say({ char: "jordan", text: "fine. i'll show you what 20% worth of work looks like." });
+                  return null;
                 },
               },
             ],
@@ -528,7 +563,6 @@
                 key: "sign", label: "Sign the agreement",
                 journal: "We signed the founder agreement. The split's locked in. Nobody set up vesting schedules — it felt unnecessary between friends. I hope that's not something I regret.",
                 effects: { flags: { jordan_equity: true }, char: { alex: { flags: { equity_set: true } } }, scene: null },
-                fx: () => "split locked in. documents signed. nobody set up vesting schedules — it felt unnecessary between friends.",
               },
             ],
             // Never leave the world on hold if the signing is ignored.

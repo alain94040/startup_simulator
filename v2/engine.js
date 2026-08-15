@@ -361,7 +361,10 @@
       if (choice.fx) outcome = choice.fx(this.s, this, char) || null;
       this._tx(node.from || char.def.name, cashBefore);
 
-      const journalBody = choice.journal !== undefined ? choice.journal : outcome;
+      // `journal` may be a string, a (s,e,char) function (like `text`), or null
+      // to say "this beat leaves no journal line"; omitted falls back to the fx
+      // return, which is how most content writes its recap.
+      const journalBody = choice.journal !== undefined ? this._text(choice.journal, char) : outcome;
       if (journalBody) {
         this._push("founder", {
           type: "outcome", nodeId,

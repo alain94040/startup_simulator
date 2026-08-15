@@ -103,10 +103,6 @@
   @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, .stat.changed, #scRail .conv.unread .unread-dot { animation: none !important; transition: none !important; } }
   .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
-  .note {
-    align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
-    border-radius: 10px; padding: 7px 12px; font: 13px var(--hand); color: #6b6045;
-  }
   #reply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
   #reply .hint { font-size: 11px; color: var(--dim); margin-bottom: 4px; }
   .chip { display: block; width: 100%; text-align: left; border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 18px; padding: 8px 14px; font-size: 13px; margin-top: 6px; }
@@ -830,7 +826,6 @@ let game = new V2Engine({ seed });
 let selected = "alex";
 let surface = "msgs";
 let feedSeenLen = {};           // feed charId -> entries seen
-let uiNotes = {};               // charId -> [{ idx, text, week }] inline outcome notes
 let threadRendered = {};        // charId -> entries fully revealed (the read cursor)
 let sceneStartSeq = null;
 let inScene = false;
@@ -854,7 +849,7 @@ function journalMirror() {
   return game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
 }
 function resetUiState() {
-  feedSeenLen = {}; uiNotes = {}; sceneStartSeq = null; inScene = false;
+  feedSeenLen = {}; sceneStartSeq = null; inScene = false;
   scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   selected = "alex"; surface = "msgs"; threadRendered = {};
@@ -998,7 +993,11 @@ function openThread() {
   step();
 }
 
-function threadEntryHtml(m, notes, idx, isNew, tail) {
+// A chat thread holds messages and nothing else: bubbles somebody actually
+// sent. Recaps of what a choice did belong to the journal mirror (the engine
+// already files them there) — never inline in the conversation, where a
+// third-person aside reads as a text the character never typed.
+function threadEntryHtml(m, isNew, tail) {
   const anim = isNew ? " msg-new" : "";
   let out = "";
   if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
@@ -1008,7 +1007,6 @@ function threadEntryHtml(m, notes, idx, isNew, tail) {
     // the dev-plan message carries three CSS phone mockups → thumbnails + lightbox
     if (m.mockups) out += mockupRowHtml(m.mockups);
   }
-  for (const n of notes) if (n.idx === idx) out += '<div class="note' + anim + '">✎ ' + esc(n.text) + "</div>";
   return out;
 }
 // opts.typing → append a typing bubble at the reveal frontier.
@@ -1018,14 +1016,13 @@ function renderThread(opts) {
   if (!c) return;
   $("chatHead").innerHTML = "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + (c.active ? "" : " · gone") + "</span>";
   const t = game.threads[selected];
-  const notes = uiNotes[selected] || [];
   const shown = threadRendered[selected] || 0;   // how far the read cursor has revealed
   let lastWk = null, html = "";
   t.slice(0, shown).forEach((m, i) => {
     if (m.week !== lastWk) { html += '<div class="m-wk">week ' + m.week + "</div>"; lastWk = m.week; }
     const next = t[i + 1] && i + 1 < shown ? t[i + 1] : null;
     const tail = !next || next.type !== m.type || next.week !== m.week;
-    html += threadEntryHtml(m, notes, i, false, tail);
+    html += threadEntryHtml(m, false, tail);
   });
   if (opts.typing) html += '<div class="row in"><div class="typing"><i></i><i></i><i></i></div></div>';
   const el = $("thread");
@@ -1265,13 +1262,9 @@ document.addEventListener("click", (e) => {
 // ── acting ────────────────────────────────────────────────────────────────────
 function doAct(nodeId, key, charId) {
   if (uiBusy) return;
-  const before = game.threads[charId || "founder"] ? game.threads[charId || "founder"].length : 0;
   const preScene = game.scene;
   const preSeq = game._seq;
-  const outcome = game.act(nodeId, key);
-  if (outcome && charId && !SELF.has(charId)) {
-    (uiNotes[charId] = uiNotes[charId] || []).push({ idx: findReplyIdx(charId, before), text: outcome, week: game.s.week });
-  }
+  game.act(nodeId, key);
   if (charId) threadRendered[charId] = game.threads[charId].length;
   // your own mid-week choices ink into the journal mirror at once (ungLowed);
   // only week-turn consequences get the reveal glow (advanceWeek captures jBefore here).
@@ -1285,9 +1278,6 @@ function doAct(nodeId, key, charId) {
   if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
   // both moves spent → the week turns automatically (no End-week button)
   if (game.actionsLeft <= 0) { uiBusy = true; renderHeader(); setTimeout(advanceWeek, 620); }
-}
-function findReplyIdx(charId, beforeLen) {
-  return Math.max(beforeLen, game.threads[charId].length - 1);
 }
 
 // ── focus-arc cinematic: staged lines, per-arc accent, click-to-skip ──────────
