@@ -130,6 +130,11 @@ function record(seed, driverName, opts) {
     },
   });
   game = game_;
+  // The loop exits the moment the run ends, so `onWeekStart` never fires for
+  // the final week — but the verdict, the last messages and often a chapter
+  // transition all land in it. Backfill it from the end state so the week has a
+  // header, a stats line, and a slot in the HTML rail.
+  if (!weekStats.has(game.s.week)) weekStats.set(game.s.week, snap(game));
 
   // ── merge every thread into one stream, in the order it happened ──────────
   const events = [];
@@ -245,8 +250,13 @@ function renderText(run, o) {
   if (sp) L.push(C.d(wrap(sp, W - 4, "  ")));
   L.push("═".repeat(W));
 
-  let week = null, scene = null, lastSpeaker = null;
+  let week = null, scene = null, lastSpeaker = null, heldChapter = null;
   const statsByWeek = new Map(run.weekStats.map(s => [s.week, s]));
+  const drawChapter = (ch) => {
+    L.push("");
+    L.push(C.m(`   ▐ CHAPTER ${ch} · ${CHAPTER_NAMES[ch] || ""}`));
+    lastSpeaker = null;
+  };
 
   for (const e of run.events) {
     if (o.char && e.owner !== o.char && e.t !== "chapter") continue;
@@ -262,9 +272,13 @@ function renderText(run, o) {
     }
 
     if (e.t === "chapter") {
-      L.push("");
-      L.push(C.m(`   ▐ CHAPTER ${e.chapter} · ${CHAPTER_NAMES[e.chapter] || ""}`));
-      lastSpeaker = null;
+      // A scene is one sitting, and three of them (demo, launch, pivot) flip the
+      // state that starts the next chapter partway through — `has_demo` goes
+      // true inside demo night. Drawing the banner there cuts the climax in
+      // half; hold it until the room empties. e.chapter is still the truth,
+      // this only moves where the seam is drawn.
+      if (scene) { heldChapter = e.chapter; continue; }
+      drawChapter(e.chapter);
       continue;
     }
 
@@ -273,6 +287,7 @@ function renderText(run, o) {
       if (e.scene) L.push(C.y("   ╭── SCENE · " + e.scene + " " + "─".repeat(Math.max(0, W - 19 - e.scene.length))));
       scene = e.scene;
       lastSpeaker = null;
+      if (!scene && heldChapter != null) { drawChapter(heldChapter); heldChapter = null; }
       continue;
     }
 
@@ -310,7 +325,10 @@ function renderText(run, o) {
       lastSpeaker = null;
     }
   }
-  if (scene) L.push(C.y("   ╰── end of scene: " + scene));
+  // A run can end inside a scene (the deadline lands mid-application) — say so
+  // rather than closing the band as if the sitting finished.
+  if (scene) L.push(C.y("   ╰── end of scene · " + scene + "  (run ended mid-scene)"));
+  if (heldChapter != null) drawChapter(heldChapter);
 
   L.push("");
   L.push("═".repeat(W));
@@ -335,25 +353,34 @@ function runHtml(run, idx) {
   for (const c of run.cast) nameOf[c.id] = c.name;
   const statsByWeek = new Map(run.weekStats.map(s => [s.week, s]));
   const parts = [];
-  let week = null, scene = null;
+  let week = null, scene = null, heldChapter = null;
+  const chapAt = new Map(); // chapter -> the week its banner is actually drawn in
+  const drawChapter = (ch) => {
+    chapAt.set(ch, week == null ? 1 : week);
+    parts.push(`<div class="chap" id="r${idx}c${ch}">Chapter ${ch} · ${esc(CHAPTER_NAMES[ch] || "")}</div>`);
+  };
 
   for (const e of run.events) {
     const cls = `own-${esc(e.owner || e.charId || "")}`;
     if (e.week != null && e.week !== week) {
-      if (scene) { parts.push("</div>"); scene = null; }
+      // a week boundary no longer tears the band open — scenes are one sitting,
+      // and if one ever does span weeks the marker belongs inside it
       week = e.week;
       const st = statsByWeek.get(week);
       parts.push(`<div class="wk" id="r${idx}w${week}"><b>Week ${week}</b>${st ? `<span>${esc(statLine(st))}</span>` : ""}</div>`);
     }
     if (e.t === "chapter") {
-      if (scene) { parts.push("</div>"); scene = null; }
-      parts.push(`<div class="chap" id="r${idx}c${e.chapter}">Chapter ${e.chapter} · ${esc(CHAPTER_NAMES[e.chapter] || "")}</div>`);
+      // hold a banner that lands mid-scene until the room empties — see the
+      // note in renderText: demo night flips `has_demo` partway through itself
+      if (scene) { heldChapter = e.chapter; continue; }
+      drawChapter(e.chapter);
       continue;
     }
     if (e.t === "sceneMark") {
       if (scene) parts.push("</div>");
       if (e.scene) parts.push(`<div class="scene"><div class="scene-h">scene · ${esc(e.scene)}</div>`);
       scene = e.scene;
+      if (!scene && heldChapter != null) { drawChapter(heldChapter); heldChapter = null; }
       continue;
     }
     const kindAttr = e.kind ? ` data-kind="${esc(e.kind)}"` : "";
@@ -376,23 +403,22 @@ function runHtml(run, idx) {
       parts.push(`<div class="ign ${cls}">left on read — ${esc(e.name)}: <code>${esc(e.nodeId)}</code></div>`);
     }
   }
-  if (scene) parts.push("</div>");
+  if (scene) parts.push(`<div class="scene-h">(run ended mid-scene)</div></div>`);
+  if (heldChapter != null) drawChapter(heldChapter);
 
   const report = run.report.map(c =>
     `<li><b>${c.score == null ? "—" : c.score}</b> ${esc(c.label)}<div>${esc(c.verdict)}</div></li>`).join("");
-  // the index: every week, with the chapter it opened folded in above it
-  const chapAt = new Map();
-  {
-    let wk = null;
-    for (const e of run.events) {
-      if (e.week != null) wk = e.week;
-      if (e.t === "chapter" && !chapAt.has(e.chapter)) chapAt.set(e.chapter, wk == null ? 1 : wk);
-    }
-  }
+  // the index: every week, with the chapter it opened folded in above it.
+  // `chapAt` was filled by drawChapter above, so the rail agrees with the page.
+  // a fast rebuild can open two chapters in one week — the rail lists both
   const chapByWeek = new Map();
-  for (const [ch, wk] of chapAt) if (!chapByWeek.has(wk)) chapByWeek.set(wk, ch);
+  for (const [ch, wk] of chapAt) {
+    if (!chapByWeek.has(wk)) chapByWeek.set(wk, []);
+    chapByWeek.get(wk).push(ch);
+  }
   const weeks = run.weekStats.map(s =>
-    (chapByWeek.has(s.week) ? `<a class="ch" href="#r${idx}c${chapByWeek.get(s.week)}">ch ${chapByWeek.get(s.week)}</a>` : "") +
+    (chapByWeek.get(s.week) || []).sort((a, b) => a - b)
+      .map(ch => `<a class="ch" href="#r${idx}c${ch}">ch ${ch}</a>`).join("") +
     `<a href="#r${idx}w${s.week}">wk ${s.week}</a>`).join("");
   const spine = Object.entries(run.spine).map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(v)}</span>`).join("");
 
@@ -443,6 +469,7 @@ function renderHtml(runs, title) {
   .idx a.ch { color:#7b3fb5; font-weight:700; margin-top:6px; text-transform:uppercase; font-size:11px; }
   .log > .wk:first-child { margin-top:0; border-top:0; padding-top:0; }
   .log > .chap:first-child { margin-top:0; }
+  .scene .wk { margin-left:0; margin-right:0; padding-left:0; padding-right:0; }
   .log { flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
   .wk { display:flex; justify-content:space-between; gap:10px; align-items:baseline; border-top:1px solid var(--line); margin:22px -20px 10px; padding:10px 20px 0; font-size:12.5px; color:var(--dim); }
   .wk b { color:var(--ink); font-size:13px; }
