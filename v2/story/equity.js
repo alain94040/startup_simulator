@@ -21,8 +21,10 @@
 // inertia (the split defaults to equal thirds, trust quietly leaks away).
 //
 // Everything a co-founder says here is a real message (`effects.say` / `e.say`)
-// in their own thread; the founder's own recaps go to the journal (`journal`).
-// No narrator asides in the chat — see the coding conventions in CLAUDE.md.
+// in their own thread — no narrator asides in the chat (see CLAUDE.md). And the
+// arc writes exactly ONE journal line, at whichever ending it reaches: the
+// signing, or the tabling that replaces it. The journal is a summary of the run,
+// not a transcript of a negotiation — every other beat here is `journal: null`.
 //
 // Shared state: `s.equity_proposal` (the split currently on the table — the
 // impasse decision overwrites it, so downstream readers always see the final
@@ -36,23 +38,19 @@
     {
       key: "propose_33", label: "Equal thirds",
       reply: "equal thirds. jordan found the space and brought us together. you're building. i'm running it. we're all essential.",
-      journal: variant === "why"
-        ? "Put equal thirds on the table. Alex had just finished asking to be my equal, not Jordan's."
-        : "Put equal thirds on the table. Alex expected more weight for his commitment.",
+      journal: null,
       effects: { flags: { equity_proposal: "33/33/33" }, char: { alex: { morale: -3 } } },
     },
     {
       key: "propose_40", label: variant === "why" ? "40/40/20 — you and me even, Jordan at 20" : "40/40/20",
       reply: "you're right. you and i are all in — jordan's still at her job. 40/40/20 until she goes full-time.",
-      journal: "Named 40/40/20 — Alex and me even, Jordan at 20 until she goes full-time. Jordan hasn't heard the number yet.",
+      journal: null,
       effects: { flags: { equity_proposal: "40/40/20" }, char: { alex: { morale: 5 } } },
     },
     {
       key: "propose_50", label: variant === "why" ? "50/25/25 — I take half" : "50/25/25",
       reply: "i'm taking 50. this is my company — i found the idea, i'm the one not sleeping. 25 each for you and jordan.",
-      journal: variant === "why"
-        ? "Kept 50 for myself, 25 each. Alex had just asked to be even with me. I'll hear from both of them."
-        : "Kept 50 for myself, 25 each. I'll hear from both of them.",
+      journal: null,
       effects: { flags: { equity_proposal: "50/25/25" }, char: { alex: { morale: -3 } } },
     },
   ]);
@@ -92,7 +90,7 @@
               {
                 key: "open", label: "Let's sit down right now and settle it",
                 reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
-                journal: "Cleared the calendar. The three of us, sorting out equity before it gets weird.",
+                journal: null,
                 effects: { scene: "equity" },
               },
             ],
@@ -173,7 +171,7 @@
               {
                 key: "celebrate", label: "Thirds it is",
                 reply: "thirds it is.",
-                journal: "Told Jordan thirds it is — she sent champagne. Alex still hasn't signed off on that number.",
+                journal: null,
                 effects: { char: { jordan: { trust: 2 } }, say: { char: "jordan", text: "🍾🍾🍾" } },
               },
             ],
@@ -189,7 +187,7 @@
               {
                 key: "argument", label: "That's the argument I'll make",
                 reply: "that's the argument i'll make if she pushes. the split matches today.",
-                journal: "Took Alex's earn-in argument as my own. He's solid. Jordan still hasn't heard the number.",
+                journal: null,
                 effects: {
                   char: { alex: { morale: 2 } },
                   say: { char: "alex", text: "good. then we're saying the same thing when she asks." },
@@ -220,7 +218,7 @@
               {
                 key: "risk_real", label: "You're right — it's not the same risk",
                 reply: "you're right that it's not the same risk. i'm not pretending it is. let me sit with the numbers.",
-                journal: "Admitted to Alex that the risk isn't the same. The number's still on the table.",
+                journal: null,
                 effects: {
                   char: { alex: { morale: 4, trust: 2 } },
                   say: { char: "alex", text: "that's all i'm asking you to admit. take the time, just don't send anything to the group until you have." },
@@ -229,7 +227,7 @@
               {
                 key: "essential", label: "Everyone's essential — that's what thirds says",
                 reply: "you're not wrong about the risk. i still think everyone here is essential, and that's what thirds says.",
-                journal: "Held the line on thirds. Alex typed for a long time and sent back one word.",
+                journal: null,
                 effects: { char: { alex: { morale: -4 } }, say: { char: "alex", text: "noted." } },
               },
             ],
@@ -243,7 +241,7 @@
               {
                 key: "hear_him", label: "Say it all — I'm listening",
                 reply: "say all of it. i'm listening.",
-                journal: "Let Alex say all of it. Ten messages, one after another.",
+                journal: null,
                 effects: {
                   char: { alex: { morale: 2 } },
                   say: [
@@ -255,7 +253,7 @@
               {
                 key: "first_risk", label: "I started this — the risk was mine first",
                 reply: "i started this. i carried it alone before either of you said yes. that's what the 50 is.",
-                journal: "Told Alex the 50 is for carrying it alone first. That one's going to linger.",
+                journal: null,
                 effects: {
                   char: { alex: { morale: -6, trust: -4 } },
                   say: { char: "alex", text: "okay. so we're employees." },
@@ -274,7 +272,7 @@
               {
                 key: "ack", label: "Blunt is fine — it isn't settled",
                 reply: "blunt is fine. i'd rather hear it now than after i've signed something. this isn't settled.",
-                journal: "Told Jordan nothing's signed yet. Her goodwill is on the clock.",
+                journal: null,
                 effects: {
                   char: { jordan: { trust: -5 } },
                   say: { char: "jordan", text: "fix it before you sign, then." },
@@ -300,13 +298,13 @@
               {
                 key: "today", label: "The split matches today — you're not full-time",
                 reply: "you're not wrong about the code. but the split matches today, and today you're moonlighting. that's not an insult, it's a fact.",
-                journal: "Told Jordan the split matches today. Read receipt. No reply.",
+                journal: null,
                 effects: { char: { jordan: { morale: -4, trust: -6 } } },
               },
               {
                 key: "revisit", label: "40/40/20 today — the day you're full-time, we revisit",
                 reply: "the 20 isn't a verdict on you, it's a photo of today. the day you go full-time, we revisit the whole thing. i mean that.",
-                journal: "Promised Jordan we revisit the whole split the day she goes full-time. She's treating it as a contract.",
+                journal: null,
                 effects: {
                   char: { jordan: { trust: 1, flags: { promised_path: true } } },
                   say: { char: "jordan", text: "i'm screenshotting this." },
@@ -413,7 +411,7 @@
               {
                 key: "thirds_final", label: "Equal thirds — final",
                 reply: "equal thirds, final. we're all essential and i'd rather lose points than partners. yell at me if you need to — the number's set.",
-                journal: "Called it: equal thirds, final. Jordan replied in seconds. Alex hasn't replied at all.",
+                journal: null,
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true },
                   say: { char: "jordan", text: "thank you." },
@@ -428,7 +426,7 @@
               {
                 key: "forty_final", label: "40/40/20 — final",
                 reply: "40/40/20, final. full-time risk gets full-time equity. jordan — come yell at me, not at him.",
-                journal: "Called it: 40/40/20, final. Alex is relieved. Jordan started typing the moment it landed.",
+                journal: null,
                 effects: {
                   flags: { equity_proposal: "40/40/20", equity_decided: true },
                   char: { alex: { morale: 10 } },
@@ -439,7 +437,7 @@
                 key: "fifty_final", label: "50/25/25 stands — final",
                 if: (s) => s.equity_proposal === "50/25/25",
                 reply: "the 50 stands. i started this and i'll carry the blame for it too. 25 each — i need you both anyway.",
-                journal: "Called it: the 50 stands. Nobody replied for four minutes.",
+                journal: null,
                 effects: {
                   flags: { equity_decided: true },
                   say: { char: "jordan", text: "noted." },
@@ -482,13 +480,7 @@
               {
                 key: "own_it", label: "It was my call",
                 reply: "it was my call, and i'll own every consequence of it. thank you for staying.",
-                // A tapback isn't a message — what Alex does here belongs in the
-                // journal, not in his thread as a line he never typed.
-                journal: (s, e) => s.equity_proposal === "50/25/25"
-                  ? "Owned the 50 to Alex's face. He hearted it and went back to work. Something cooled."
-                  : e.took("equity_counter_alex:risk_real")
-                    ? "Owned the call to Alex. He hearted the message — being heard bought what the points didn't."
-                    : "Owned the call to Alex. He hearted the message. It didn't feel like a heart.",
+                journal: null,
                 fx(s, e) {
                   const alex = e.cast.get("alex");
                   if (s.equity_proposal === "50/25/25") {
@@ -524,9 +516,7 @@
               {
                 key: "heard", label: "The work already argues for you",
                 reply: "twenty for now — and i know what it cost you to type that. the work already argues for you, louder than i did.",
-                journal: (s, e) => e.cast.get("jordan").flags.promised_path
-                  ? "Jordan pinned the 'we revisit' message in the group chat. The clock she's watching now is mine."
-                  : "Jordan took the 20. She's keeping score in commits from here.",
+                journal: null,
                 fx(s, e, char) {
                   const promised = !!char.flags.promised_path;
                   char.morale = Math.max(0, char.morale - (promised ? 3 : 10));
