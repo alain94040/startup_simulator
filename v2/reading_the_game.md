@@ -45,7 +45,24 @@ node v2/tests/transcript.js --sample --html book.html
 node v2/tests/transcript.js --audit
 ```
 
-Four things it shows that the UI can't:
+### It reads the surfaces the UI reads
+
+The engine keeps one flat thread per character, but `game.html` splits those
+across four surfaces and **drops some entries entirely**. The transcript mirrors
+that split, so what you read is what a player saw — not what the engine
+recorded. The rules (verified by reading `game.html`'s own constants in a
+browser, not by re-deriving them):
+
+| thread | surface | what renders |
+|---|---|---|
+| ordinary cast | Messages | `incoming` + your `reply` bubbles |
+| `hacker_news`, `techcrunch`, `twitter` (`FEED`) | News Feed | `incoming` posts only, options inline |
+| `founder`, `growth` (`SELF`) | the "Your move" card, right column | the node text + its options — **never a bubble** |
+| `founder` | journal mirror | `outcome` + `stamp` + `incoming` *without* a nodeId |
+
+Everything else the engine records is displayed nowhere. `--audit` lists those.
+
+Five things it shows that the UI can't:
 
 1. **Everything merged in true order.** The engine already stamps every message
    with a monotonic `seq` "for merged transcripts" — this cashes that in. All 19
@@ -56,6 +73,8 @@ Four things it shows that the UI can't:
    enter/exit, not message tags), week headers with the numbers underneath,
    milestone stamps, `⌛ left on read` for every timeout, and the report card.
 4. **Where to go fix it.** `--src` maps every beat back to `story/<file>:<line>`.
+5. **Prose the UI silently swallows**, marked in red rather than hidden — the
+   whole point is to see what the player doesn't.
 
 ### The archetypes (`--sample`)
 
@@ -82,6 +101,8 @@ Ink-Tester's coverage idea, aimed at things a writer wants flagged:
 
 - **never surfaced in any run** — prose no automated founder has ever seen
 - **options never chosen** — branches no driver exercises (see caveat below)
+- **written but displayed on no UI surface** — the engine recorded it and
+  `game.html` renders it nowhere
 - **arrives after the last possible action** — text landing in a thread the
   player can never answer, because the run is already over
 - **weeks where nobody said anything** — dead air, per archetype
@@ -119,6 +140,29 @@ Roughly in order of value-per-hour, if you want more:
    reachable, and by what."
 
 ## First findings
+
+### `equity_impasse`'s reply is written and never shown
+
+The founder's final call on the split —
+
+> equal thirds, final. we're all essential and i'd rather lose points than
+> partners. yell at me if you need to — the number's set.
+
+— is a `reply` on a `char: "founder"` node (`story/equity.js:402`). The founder's
+thread is rendered by `journalMirror()`, which keeps stamps, outcomes and orphan
+drops and **drops replies**; no other surface renders that thread. So the line
+never reaches the player on any screen. Jordan's scripted `"thank you."` lands a
+beat later, thanking the founder for an announcement the player never saw made.
+
+All three choices on the node carry a reply and `journal: null`, so the
+announcement is the intended payload and all of it is lost. Two ways out, both
+content-side: turn the reply into a `say` on Alex's and Jordan's threads (it *is*
+a message to the group, which matches the "a chat thread holds messages" rule),
+or give the node a `journal` line. I left the call to you — it's narrative
+content, not a tool bug. `--audit` now reports this class so it can't come back
+silently.
+
+### The rest
 
 Reading the decent run end-to-end immediately turned up things the stats hide:
 

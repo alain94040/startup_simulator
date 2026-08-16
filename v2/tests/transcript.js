@@ -45,6 +45,34 @@ function sourceOf(nodeId) {
   return SRC.get(nodeId) || null;
 }
 
+// ── where game.html actually puts a thread entry ─────────────────────────────
+// The engine keeps one flat thread per character, but the shipping UI splits
+// those across four surfaces — and drops some entries entirely. Mirroring that
+// split here is the difference between "what the engine recorded" and "what a
+// player saw". These three constants are game.html's, kept in sync by name:
+//   FEED    → the News Feed surface (posts you engage inline)
+//   SELF    → "your own moves", acted on as a card in the right column
+//   journal → the founder thread, rendered by journalMirror() as recap prose
+const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
+const SELF = new Set(["founder", "growth"]);
+const FEED_SRC = {
+  hacker_news: "Y · HACKER NEWS", techcrunch: "TC · TECHCRUNCH", twitter: "𝕏 · TWITTER",
+};
+
+// Returns the surface a player would have seen this entry on, or "hidden" when
+// the UI shows it nowhere at all (a real defect — see --audit).
+function uiSurface(charId, type, nodeId) {
+  // journalMirror(): stamps + outcomes + orphan drops, founder thread only
+  if (type === "outcome" || type === "stamp") return charId === "founder" ? "journal" : "hidden";
+  if (SELF.has(charId)) {
+    if (type === "reply") return "hidden";            // no thread renders these
+    if (nodeId) return "move";                        // the "Your move" card
+    return charId === "founder" ? "journal" : "hidden";
+  }
+  if (FEED.has(charId)) return type === "reply" ? "hidden" : "feed";
+  return type === "reply" ? "bubbleOut" : "bubbleIn"; // an ordinary chat thread
+}
+
 // ── the spine: the handful of calls that decide what kind of story this is ───
 // Used to fingerprint a run so `--sample` can bucket many playthroughs into
 // "typical stories" instead of dumping fifty near-identical transcripts.
@@ -142,6 +170,7 @@ function record(seed, driverName, opts) {
     for (const m of game.threads[charId]) {
       events.push({
         t: m.type === "outcome" ? "journal" : m.type, // incoming | reply | journal | stamp
+        ui: uiSurface(charId, m.type, m.nodeId),
         seq: m.seq, week: m.week, charId,
         // a journal line lives on the founder thread but belongs to whoever caused it
         owner: m.type === "outcome" ? (m.sourceChar || "founder") : charId,
@@ -151,7 +180,14 @@ function record(seed, driverName, opts) {
       });
     }
   }
-  for (const a of acts) events.push({ t: "act", ...a, owner: a.charId });
+  for (const a of acts) {
+    events.push({
+      t: "act", ...a, owner: a.charId,
+      // where the option buttons live: inline in the feed, on the "Your move"
+      // card, or as reply chips at the foot of the chat thread
+      ui: FEED.has(a.charId) ? "feed" : SELF.has(a.charId) ? "move" : "bubbleIn",
+    });
+  }
   events.push({ t: "chapter", seq: -1, chapter: 1 });
   for (const c of chapterEvents) events.push({ t: "chapter", seq: c.seq, chapter: c.chapter });
   for (const sv of sceneEvents) events.push({ t: "sceneMark", seq: sv.seq, scene: sv.scene });
@@ -292,14 +328,28 @@ function renderText(run, o) {
     }
 
     if (e.t === "incoming") {
-      const who = (e.from || nameOf[e.charId] || e.charId).toUpperCase();
+      // the UI never renders these as a chat bubble — say which surface it is
+      const who = e.ui === "feed" ? "📰 " + (FEED_SRC[e.charId] || e.charId)
+        : e.ui === "move" ? "▣ YOUR MOVE"
+          : e.ui === "hidden" ? "⚠ SHOWN NOWHERE"
+            : (e.from || nameOf[e.charId] || e.charId).toUpperCase();
+      if (e.ui === "journal") { // an orphan drop lands in the journal, not a thread
+        if (!o.compact) L.push(C.y(wrap("📓 " + e.body, W - 6, "    ")));
+        continue;
+      }
       if (o.compact) { L.push("  " + C.b(who.padEnd(14).slice(0, 14)) + " " + clip(e.body, W - 20)); continue; }
       if (who !== lastSpeaker) { L.push(""); L.push("  " + C.b(who) + (o.src && e.nodeId ? C.d("   " + (sourceOf(e.nodeId) || e.nodeId)) : "")); }
       lastSpeaker = who;
-      L.push(wrap('"' + e.body + '"', W - 6, "    "));
+      L.push(wrap(e.ui === "bubbleIn" ? '"' + e.body + '"' : e.body, W - 6, "    "));
       if (e.subtext) L.push(C.d(wrap("(" + e.subtext + ")", W - 6, "    ")));
     } else if (e.t === "reply") {
       if (o.compact) continue; // the act line already carries the decision
+      if (e.ui === "hidden") {
+        // written, and displayed on no surface in the shipping UI
+        L.push(C.y(wrap(`⚠ never displayed (${e.nodeId}): “${e.body}”`, W - 10, "      ")));
+        lastSpeaker = null;
+        continue;
+      }
       L.push(C.g(wrap(`↳ you → ${nameOf[e.charId] || e.charId}: ` + e.body, W - 8, "      ")));
       lastSpeaker = null;
     } else if (e.t === "act") {
@@ -384,16 +434,37 @@ function runHtml(run, idx) {
       continue;
     }
     const kindAttr = e.kind ? ` data-kind="${esc(e.kind)}"` : "";
+    const idTag = e.nodeId ? `<code title="${esc(sourceOf(e.nodeId) || "")}">${esc(e.nodeId)}</code>` : "";
     if (e.t === "incoming") {
-      parts.push(`<div class="row in ${cls}"${kindAttr}><div class="av">${esc((e.from || nameOf[e.charId] || "?").slice(0, 1))}</div>` +
-        `<div><div class="who">${esc(e.from || nameOf[e.charId])}${e.nodeId ? `<code title="${esc(sourceOf(e.nodeId) || "")}">${esc(e.nodeId)}</code>` : ""}</div>` +
-        `<div class="bub">${esc(e.body)}</div>${e.subtext ? `<div class="sub">${esc(e.subtext)}</div>` : ""}</div></div>`);
+      // each surface renders as what game.html would actually show
+      if (e.ui === "feed") {
+        parts.push(`<div class="feed ${cls}"${kindAttr}><div class="feed-src">${esc(FEED_SRC[e.charId] || e.charId)}${idTag}</div>` +
+          `<div class="feed-body">${esc(e.body)}</div></div>`);
+      } else if (e.ui === "move") {
+        parts.push(`<div class="move ${cls}"${kindAttr}><div class="move-h">Your move${idTag}</div>` +
+          `<div>${esc(e.body)}</div>${e.subtext ? `<div class="sub">${esc(e.subtext)}</div>` : ""}</div>`);
+      } else if (e.ui === "journal") {
+        parts.push(`<div class="jr ${cls}">${esc(e.body)}</div>`);
+      } else if (e.ui === "hidden") {
+        parts.push(`<div class="ghost">shown on no UI surface ${idTag}<div>${esc(e.body)}</div></div>`);
+      } else {
+        parts.push(`<div class="row in ${cls}"${kindAttr}><div class="av">${esc((e.from || nameOf[e.charId] || "?").slice(0, 1))}</div>` +
+          `<div><div class="who">${esc(e.from || nameOf[e.charId])}${idTag}</div>` +
+          `<div class="bub">${esc(e.body)}</div>${e.subtext ? `<div class="sub">${esc(e.subtext)}</div>` : ""}</div></div>`);
+      }
     } else if (e.t === "reply") {
-      parts.push(`<div class="row out ${cls}"><div><div class="who to">to ${esc(nameOf[e.charId] || e.charId)}</div>` +
-        `<div class="bub me">${esc(e.body)}</div></div></div>`);
+      if (e.ui === "hidden") {
+        parts.push(`<div class="ghost">written, never displayed — the founder's thread renders as the journal, ` +
+          `which drops replies ${idTag}<div>${esc(e.body)}</div></div>`);
+      } else {
+        parts.push(`<div class="row out ${cls}"><div><div class="who to">to ${esc(nameOf[e.charId] || e.charId)}</div>` +
+          `<div class="bub me">${esc(e.body)}</div></div></div>`);
+      }
     } else if (e.t === "act") {
       const alts = e.alts.map(a => `<span class="alt">${esc(a.label)}</span>`).join("");
-      parts.push(`<div class="choice ${cls}"><b>${esc(e.name)}:</b> ${esc(e.label)} <code>${esc(e.key)}</code>` +
+      const where = e.ui === "feed" ? "in the feed" : e.ui === "move" ? "on the card" : "";
+      parts.push(`<div class="choice ${cls}${e.ui === "bubbleIn" ? "" : " off"}"><b>${esc(e.name)}:</b> ${esc(e.label)} <code>${esc(e.key)}</code>` +
+        (where ? `<span class="where">${where}</span>` : "") +
         (alts ? `<div class="alts">passed over: ${alts}</div>` : "") + `</div>`);
     } else if (e.t === "journal") {
       parts.push(`<div class="jr ${cls}">${esc(e.body)}</div>`);
@@ -490,6 +561,18 @@ function renderHtml(runs, title) {
   .choice code { background:#eef4ff; border-radius:4px; padding:0 4px; font-size:11px; }
   .alts { color:var(--dim); margin-top:2px; }
   .alt { display:inline-block; border:1px solid var(--line); border-radius:10px; padding:0 7px; margin:2px 4px 0 0; font-size:11.5px; }
+  /* the non-Messages surfaces, so the page reads like the game looks */
+  .feed { background:#ececf0; border-radius:10px; padding:9px 13px; margin:8px 0; max-width:70ch; }
+  .feed-src { font-size:10.5px; font-weight:800; letter-spacing:.08em; color:#ff6600; margin-bottom:4px; display:flex; gap:6px; align-items:center; }
+  .feed-body { font-size:13.5px; white-space:pre-wrap; }
+  .move { background:#eef4ff; border:1px solid #cfe0ff; border-radius:10px; padding:9px 13px; margin:8px 0; max-width:70ch; }
+  .move-h { font-size:10.5px; font-weight:800; letter-spacing:.08em; color:#2456c4; text-transform:uppercase; margin-bottom:4px; display:flex; gap:6px; align-items:center; }
+  .ghost { border:1px dashed #c0392b; color:#8a2e20; background:#fff6f4; border-radius:10px; padding:8px 13px; margin:8px 0; font-size:12px; }
+  .ghost div { color:var(--ink); font-size:13.5px; margin-top:4px; font-style:italic; }
+  .ghost code, .feed-src code, .move-h code { background:rgba(0,0,0,.06); border-radius:4px; padding:0 4px; font-size:10.5px; display:none; }
+  body.ids .ghost code, body.ids .feed-src code, body.ids .move-h code { display:inline; }
+  .choice.off { margin-left:0; }
+  .choice .where { color:var(--dim); margin-left:6px; font-size:11.5px; }
   .jr { background:#fffbe8; border:1px solid #f0e6b8; color:#5b5340; border-radius:10px; padding:8px 13px; margin:8px 0 8px 37px; font-size:13.5px; }
   body.nojr .jr { display:none; }
   .stamp { text-align:center; margin:12px 0; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:11.5px; color:#1d8f3c; }
@@ -586,6 +669,7 @@ function audit(opts) {
   const tails = new Map();   // nodeId -> times it landed after the last action
   const silent = [];         // {driver, seed, week}
   const dupJournal = new Map();
+  const hidden = new Map();  // "nodeId · type" -> { count, body }
 
   for (const name of names) {
     for (const seed of seeds) {
@@ -594,6 +678,12 @@ function audit(opts) {
       const weeksWithTalk = new Set();
       const journalSeen = new Set();
       for (const e of run.events) {
+        if (e.ui === "hidden" && e.body) {
+          const k = (e.nodeId || "(say)") + " · " + e.t;
+          const hit = hidden.get(k) || { count: 0, body: e.body, charId: e.charId };
+          hit.count++;
+          hidden.set(k, hit);
+        }
         if (e.t === "incoming") {
           if (e.nodeId) surfaced.add(e.nodeId);
           weeksWithTalk.add(e.week);
@@ -619,6 +709,7 @@ function audit(opts) {
     deadNodes: allNodes.filter(id => !surfaced.has(id)),
     deadChoices: [...allChoices].filter(k => !taken.has(k) && surfaced.has(k.split(":")[0])),
     tails: [...tails.entries()].sort((a, b) => b[1] - a[1]),
+    hidden: [...hidden.entries()].sort((a, b) => b[1].count - a[1].count),
     silent, dupJournal: [...dupJournal.entries()].sort((a, b) => b[1] - a[1]),
     totals: { nodes: allNodes.length, choices: allChoices.size, surfaced: surfaced.size },
   };
@@ -640,6 +731,16 @@ function auditReport(a) {
   L.push(C.d("    harness.js's one PREF table, so this is mostly a gap in the DRIVERS, not"));
   L.push(C.d("    proof of dead prose — it's the list of branches no automated run exercises."));
   for (const k of a.deadChoices) L.push(`      ${k}`);
+
+  L.push("");
+  L.push(C.b(`  ⚠ written but displayed on no UI surface (${a.hidden.length})`));
+  L.push(C.d("    the engine recorded it; game.html renders it nowhere. Founder/growth"));
+  L.push(C.d("    threads show as the \"Your move\" card + the journal mirror, and the feed"));
+  L.push(C.d("    chars render only incoming posts — so a `reply` on those threads is lost."));
+  for (const [k, v] of a.hidden) {
+    L.push(`      ${k.padEnd(30)} ${v.count}× ${C.d(sourceOf(k.split(" ")[0]) || "")}`);
+    L.push(C.d(wrap("“" + clip(v.body, 200) + "”", 66, "         ")));
+  }
 
   L.push("");
   L.push(C.b(`  ⌛ arrives after the last possible action (${a.tails.length})`));
