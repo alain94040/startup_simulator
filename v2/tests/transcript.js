@@ -500,12 +500,12 @@ function runHtml(run, idx) {
     if (!sceneByWeek.has(sc.week)) sceneByWeek.set(sc.week, []);
     sceneByWeek.get(sc.week).push(sc);
   }
-  const weeks = run.weekStats.map(s =>
+  const weeks = `<div class="idx-scroll">` + run.weekStats.map(s =>
     (chapByWeek.get(s.week) || []).sort((a, b) => a - b)
       .map(ch => `<a class="ch" href="#r${idx}c${ch}">ch ${ch}</a>`).join("") +
     `<a href="#r${idx}w${s.week}">wk ${s.week}</a>` +
     (sceneByWeek.get(s.week) || [])
-      .map(sc => `<a class="sc" href="#r${idx}s${sc.n}">◆ ${esc(sc.name)}</a>`).join("")).join("");
+      .map(sc => `<a class="sc" href="#r${idx}s${sc.n}">◆ ${esc(sc.name)}</a>`).join("")).join("") + `</div>`;
   const spine = Object.entries(run.spine).map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(v)}</span>`).join("");
 
   return `<section class="run" data-run="${idx}">
@@ -531,7 +531,8 @@ function renderHtml(runs, title) {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${esc(title)}</title>
 <style>
-  :root { --bg:#f2f2f7; --panel:#fff; --line:#e3e3e8; --ink:#1c1c1e; --dim:#8e8e93; --blue:#0a84ff; }
+  :root { --bg:#f2f2f7; --panel:#fff; --line:#e3e3e8; --ink:#1c1c1e; --dim:#8e8e93; --blue:#0a84ff;
+          --head:112px; /* replaced at runtime with the header's real height */ }
   * { box-sizing:border-box; margin:0; }
   body { font:15px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
   header { position:sticky; top:0; z-index:5; background:var(--panel); border-bottom:1px solid var(--line); padding:10px 18px; }
@@ -549,7 +550,12 @@ function renderHtml(runs, title) {
   .spine { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
   .chip { background:#eef4ff; color:#2456c4; border-radius:12px; padding:2px 9px; font-size:11.5px; }
   .cols { display:flex; gap:16px; align-items:flex-start; }
-  .idx { position:sticky; top:96px; width:112px; flex:none; display:flex; flex-direction:column; gap:2px; max-height:80vh; overflow:auto; }
+  /* The rail sticks below the header, whose height changes when the archetype
+     picker wraps — so --head is measured at runtime, not guessed at. Sticky and
+     overflow also live on separate elements: Safari handles a sticky box that
+     scrolls itself badly, and its top rows end up unreachable. */
+  .idx { position:sticky; top:calc(var(--head) + 10px); width:112px; flex:none; }
+  .idx-scroll { display:flex; flex-direction:column; gap:2px; max-height:calc(100vh - var(--head) - 34px); overflow-y:auto; overscroll-behavior:contain; }
   .idx a { color:var(--dim); text-decoration:none; font-size:12px; padding:2px 6px; border-radius:6px; white-space:nowrap; }
   .idx a:hover { background:#fff; color:var(--ink); }
   .idx a.ch { color:#7b3fb5; font-weight:700; margin-top:6px; text-transform:uppercase; font-size:11px; }
@@ -559,6 +565,8 @@ function renderHtml(runs, title) {
   .log > .chap:first-child { margin-top:0; }
   .scene .wk { margin-left:0; margin-right:0; padding-left:0; padding-right:0; }
   .log { flex:1; min-width:0; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; }
+  /* clicking a rail link must not park its target under the sticky header */
+  .wk, .chap, .scene { scroll-margin-top:calc(var(--head) + 14px); }
   .wk { display:flex; justify-content:space-between; gap:10px; align-items:baseline; border-top:1px solid var(--line); margin:22px -20px 10px; padding:10px 20px 0; font-size:12.5px; color:var(--dim); }
   .wk b { color:var(--ink); font-size:13px; }
   .chap { margin:18px 0 10px; font-weight:800; letter-spacing:.04em; text-transform:uppercase; font-size:12px; color:#7b3fb5; border-left:3px solid #7b3fb5; padding-left:9px; }
@@ -620,6 +628,14 @@ function renderHtml(runs, title) {
   };
   document.querySelectorAll(".picker button").forEach(b => b.onclick = () => show(+b.dataset.go));
   show(0);
+  // Publish the header's real height so the rail sticks below it instead of
+  // behind it. The picker wraps to more rows on narrow windows, so re-measure
+  // on every resize rather than hardcoding a guess.
+  const head = document.querySelector("header");
+  const setHead = () => document.documentElement.style.setProperty("--head", head.offsetHeight + "px");
+  setHead();
+  if (window.ResizeObserver) new ResizeObserver(setHead).observe(head);
+  else window.addEventListener("resize", setHead);
   fIds.onchange = () => document.body.classList.toggle("ids", fIds.checked);
   fJr.onchange = () => document.body.classList.toggle("nojr", !fJr.checked);
   fAmb.onchange = () => document.body.classList.toggle("noamb", !fAmb.checked);
