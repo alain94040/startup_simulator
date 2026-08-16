@@ -405,6 +405,7 @@ function runHtml(run, idx) {
   const parts = [];
   let week = null, scene = null, heldChapter = null;
   const chapAt = new Map(); // chapter -> the week its banner is actually drawn in
+  const sceneAt = [];       // {n, name, week} — one per sitting, for the rail
   const drawChapter = (ch) => {
     chapAt.set(ch, week == null ? 1 : week);
     parts.push(`<div class="chap" id="r${idx}c${ch}">Chapter ${ch} · ${esc(CHAPTER_NAMES[ch] || "")}</div>`);
@@ -428,7 +429,12 @@ function runHtml(run, idx) {
     }
     if (e.t === "sceneMark") {
       if (scene) parts.push("</div>");
-      if (e.scene) parts.push(`<div class="scene"><div class="scene-h">scene · ${esc(e.scene)}</div>`);
+      if (e.scene) {
+        // each sitting gets its own anchor — an arc can be entered more than once
+        const n = sceneAt.length;
+        sceneAt.push({ n, name: e.scene, week: week == null ? 1 : week });
+        parts.push(`<div class="scene" id="r${idx}s${n}"><div class="scene-h">scene · ${esc(e.scene)}</div>`);
+      }
       scene = e.scene;
       if (!scene && heldChapter != null) { drawChapter(heldChapter); heldChapter = null; }
       continue;
@@ -487,10 +493,19 @@ function runHtml(run, idx) {
     if (!chapByWeek.has(wk)) chapByWeek.set(wk, []);
     chapByWeek.get(wk).push(ch);
   }
+  // scenes hang under the week they open in — the rail is the fastest way to
+  // jump to the equity talk or the pivot summit without scrolling for them
+  const sceneByWeek = new Map();
+  for (const sc of sceneAt) {
+    if (!sceneByWeek.has(sc.week)) sceneByWeek.set(sc.week, []);
+    sceneByWeek.get(sc.week).push(sc);
+  }
   const weeks = run.weekStats.map(s =>
     (chapByWeek.get(s.week) || []).sort((a, b) => a - b)
       .map(ch => `<a class="ch" href="#r${idx}c${ch}">ch ${ch}</a>`).join("") +
-    `<a href="#r${idx}w${s.week}">wk ${s.week}</a>`).join("");
+    `<a href="#r${idx}w${s.week}">wk ${s.week}</a>` +
+    (sceneByWeek.get(s.week) || [])
+      .map(sc => `<a class="sc" href="#r${idx}s${sc.n}">◆ ${esc(sc.name)}</a>`).join("")).join("");
   const spine = Object.entries(run.spine).map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(v)}</span>`).join("");
 
   return `<section class="run" data-run="${idx}">
@@ -534,10 +549,12 @@ function renderHtml(runs, title) {
   .spine { margin-top:8px; display:flex; gap:6px; flex-wrap:wrap; }
   .chip { background:#eef4ff; color:#2456c4; border-radius:12px; padding:2px 9px; font-size:11.5px; }
   .cols { display:flex; gap:16px; align-items:flex-start; }
-  .idx { position:sticky; top:96px; width:88px; flex:none; display:flex; flex-direction:column; gap:2px; max-height:80vh; overflow:auto; }
-  .idx a { color:var(--dim); text-decoration:none; font-size:12px; padding:2px 6px; border-radius:6px; }
+  .idx { position:sticky; top:96px; width:112px; flex:none; display:flex; flex-direction:column; gap:2px; max-height:80vh; overflow:auto; }
+  .idx a { color:var(--dim); text-decoration:none; font-size:12px; padding:2px 6px; border-radius:6px; white-space:nowrap; }
   .idx a:hover { background:#fff; color:var(--ink); }
   .idx a.ch { color:#7b3fb5; font-weight:700; margin-top:6px; text-transform:uppercase; font-size:11px; }
+  .idx a.sc { color:#b25000; background:#fff6ec; font-weight:600; font-size:11px; margin:1px 0 2px 8px; }
+  .idx a.sc:hover { background:#ffe8d0; color:#8a3d00; }
   .log > .wk:first-child { margin-top:0; border-top:0; padding-top:0; }
   .log > .chap:first-child { margin-top:0; }
   .scene .wk { margin-left:0; margin-right:0; padding-left:0; padding-right:0; }
