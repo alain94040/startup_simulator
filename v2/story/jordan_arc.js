@@ -4,8 +4,11 @@
 // her stake on the cap table (s.jordan_cleanup_needed) — the vesting lesson the
 // investors' diligence flags until a lawyer cleans it up.
 //
-// All beats live on Alex's thread (he's the one telling you) but mutate Jordan
-// via effects.char.jordan / e.cast.get("jordan").
+// The drift beats live on Alex's thread (he's the one telling you) but mutate
+// Jordan via effects.char.jordan / e.cast.get("jordan"). The confrontation
+// itself sits on the FOUNDER's thread — it's the founder's call, and Alex's
+// chapter-4 slot is too contested to carry it (see the note on that node).
+// Answering it opens the firing scene in story/firing.js.
 //
 // v2 timing note: the old arc could start at week 8, mid-dev-spine, silently
 // disabling Jordan's own direction cards. Here the drift waits until pivot day
@@ -127,10 +130,16 @@
         },
       },
       {
-        id: "jordan_confrontation", char: "alex",
+        // On the FOUNDER's thread, deliberately — same reason pivot_relaunch
+        // moved off Alex's: in chapter 4 his single slot is contested by the
+        // relaunch, the Maya bookend and the Flare epilogue, and this card was
+        // getting starved past the deadline. It is also the founder's call to
+        // make, which is the whole point of what follows.
+        id: "jordan_confrontation", char: "founder",
         text: (s, e) => {
           const pct = s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%";
-          return "i need to say something. jordan's been part-time for two months. i'm covering her work and mine. she has " + pct + " of the company and i don't think she's earning it anymore. we need to have the conversation.";
+          return "Alex finally said it out loud: \"jordan's been part-time for two months. i'm covering her work and mine. she has "
+            + pct + " of the company and i don't think she's earning it anymore.\" He won't say it twice, and he can't do anything about it. This one is yours.";
         },
         when: {
           cooldown: 4,
@@ -143,45 +152,20 @@
         },
         choices: [
           {
-            key: "fire", label: "Have the conversation — let Jordan go",
-            fx(s, e) {
-              const jordan = e.cast.get("jordan");
-              const alex = e.cast.get("alex");
-              jordan.active = false;
-              s.jordan_resolved = true;
-              s.jordan_cleanup_needed = true; // her stake stays on the cap table
-              if (s.items) {
-                if (s.items.ios_server && s.items.ios_server.status !== "done" && s.items.ios_server.status !== "obsolete") {
-                  s.items.ios_server.assignee = "alex";
-                  e.schedule({
-                    in: 2, char: "alex",
-                    unless: (st) => !!st.ios_unblocked,
-                    say: { char: "alex", text: "picked up jordan's ios backend integration. took a few days to orient in her code but it's running." },
-                    fx(st) {
-                      if (st.items && st.items.ios_server) { st.items.ios_server.status = "done"; st.items.ios_server.quality = "solid"; }
-                      st.ios_unblocked = true;
-                    },
-                  });
-                }
-                if (s.items.ios_ui && s.items.ios_ui.status !== "done" && s.items.ios_ui.status !== "obsolete") s.items.ios_ui.assignee = "alex";
-                if (s.items.plans_ui && s.items.plans_ui.status !== "done" && s.items.plans_ui.status !== "obsolete") s.items.plans_ui.assignee = null;
-              }
-              if (!s.jordan_equity) {
-                // Equity was never formally signed — Alex sees the same dysfunction.
-                alex.morale = clamp(alex.morale - 30, 0, 100);
-                alex.trust = clamp(alex.trust - 25, 0, 100);
-                s.alex_departure_risk = true;
-                return "Hard conversation. Jordan left. Then Alex pulled you aside: 'we never actually signed anything. no equity split, no vesting. what are we even building here?' he looked serious.";
-              }
-              alex.morale = clamp(alex.morale + 10, 0, 100);
-              alex.trust = clamp(alex.trust + 8, 0, 100);
-              const pct = s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%";
-              return "Hard conversation. Jordan wasn't surprised — she knew it wasn't working. She's off the team. Her " + pct + " is still on the cap table.";
-            },
+            // The door, not the resolution: everything that used to happen in
+            // this fx now happens in the scene (story/firing.js), where Jordan
+            // is actually in the room. The old one-click fire never let the
+            // player say a word to her.
+            key: "fire", label: "Have the conversation — talk to Jordan",
+            reply: "you're right. this is mine to do, and i'm doing it tonight.",
+            replyTo: "alex",
+            journal: null,
+            effects: { scene: "firing" },
+            fx: () => null,
           },
           {
-            key: "defer", label: "One more sprint to turn it around",
-            journal: "Gave Jordan one more sprint. Alex went quiet. We both know how this ends.",
+            key: "defer", label: "Not yet — put it off another month",
+            journal: "Put the Jordan conversation off another month. Alex went quiet. We both know how this ends.",
             effects: { char: { alex: { morale: -8 } } },
             fx(s) {
               s.jordan_confrontation_triggered = false;
@@ -210,6 +194,14 @@
             journal: "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
             effects: { cash: -2000, flags: { jordan_cleanup_needed: false } },
             fx: () => "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.",
+          },
+          {
+            // The guilt payment, moved out of the firing scene: on this card
+            // it is a cold decision with a price on it, not a midnight flinch.
+            key: "keep", label: "Let her keep it — she earned the early part",
+            journal: "Decided to let Jordan keep her full stake. It felt like the decent thing. It is also the largest cheque this company will ever write, and it is written to someone who does not work here.",
+            effects: { flags: { jordan_cleanup_needed: false, jordan_equity_gifted: true } },
+            fx: () => "Left her stake alone. Nothing to clean up now — a departed co-founder simply owns a fifth of the company, forever.",
           },
           {
             key: "defer", label: "Can't afford it right now",

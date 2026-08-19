@@ -134,7 +134,42 @@
             ],
           },
           {
+            // The real YC form asks this, in these words. It only exists when
+            // there is something to answer, and every answer available is bad:
+            // the application does not punish you for how you tell it, it
+            // punishes you because team decisions are facts, not narratives.
+            id: "app_q_founders_left", char: "yc", from: "The application",
+            text: (s) => "There's a box under question 2 you can't leave empty: \"Have any of the founders left? If so, why, and how much equity do they have?\" "
+              + (s.jordan_equity ? "Jordan holds " + (s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%") + ". "
+                : "Nothing was ever signed, so what Jordan holds is a question your own company can't answer. ")
+              + "She left three weeks into the rebuild.",
+            when: { if: (s) => !!s.jordan_quit },
+            choices: [
+              {
+                key: "honest", label: "Write exactly what happened",
+                journal: "Application, the founders-left box: wrote it straight. She went part-time, I never had the conversation, she resigned mid-rebuild holding her full stake. Every word true and not one of them good.",
+                fx(s) {
+                  s.app_founders_left = "honest";
+                  return "You write it straight: she drifted, you didn't act, she left holding everything. It reads as honest, and it reads as a team that broke.";
+                },
+              },
+              {
+                key: "spin", label: "\"She moved on to other opportunities\"",
+                journal: "Application, the founders-left box: 'she moved on to other opportunities.' Anyone who has read a hundred of these knows what that sentence is covering.",
+                fx(s) {
+                  s.app_founders_left = "spin";
+                  s.app_bluffs = (s.app_bluffs || 0) + 1;
+                  return "The sentence every application uses for this. Anyone who has read a hundred of them knows exactly what it covers.";
+                },
+              },
+            ],
+          },
+          {
             id: "app_q_growth", char: "yc", from: "The application",
+            // Explicit, not auto-chained: the founders-left box above only
+            // exists on runs where somebody left, and the engine's
+            // chain-to-previous default would strand Q3 behind it otherwise.
+            when: { after: ["app_q_team"] },
             text: "Question 3: \"How will you get users?\" 'Marketing' is not an answer. A channel with a number attached is.",
             choices: [
               {

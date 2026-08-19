@@ -313,10 +313,10 @@ report now detects that funnel shape and names the exit, distinguishing
 
 | Area | State |
 |---|---|
-| Engine + content | Complete: 158 nodes, 19 cast, 5 scenes |
+| Engine + content | Complete: 180 nodes, 19 cast, 6 scenes |
 | `test_slice.js` | 139/139 deterministic checks |
 | `test_narrative.js` | 0 realistic-play violations (fuzzer-only documented) |
-| `test_scenes.js` | 16/16 — all scene paths exit cleanly; shortest-path report: equity 7/9/11 (short tier = the tabling dodge), demo 4, launch 15–19, pivot 8 |
+| `test_scenes.js` | 20/20 — all scene paths exit cleanly; shortest-path report: equity 7/10/12 (short tier = the tabling dodge), demo 5, launch 15–19, pivot 8, firing 2/6/7 (short tier = the compromise) |
 | `game.html` | Full UI, polished; the shipping surface |
 | `play.html` | Plain debug harness (kept) |
 
@@ -324,8 +324,68 @@ report now detects that funnel shape and names the exit, distinguishing
 `engine.js` · `world.js` · `cast.js` · `scoring.js` · `game.html` · `play.html`
 `story/`: opening, equity, dev_plan, team, dev_directions, demo_night, users,
 launch_day, slide, pivot_day, community, fundraising, growth, jordan_arc,
-discovery, press, ambient
+firing, discovery, press, ambient
 `tests/`: harness, test_slice, test_narrative, phase_map, test_scenes, sim_strategies
+
+## Pass 6 — the Jordan arc gets its scene
+
+**Why.** Firing a co-founder was `jordan_confrontation:fire`: one button, in
+*Alex's* thread, with no reply text. The hardest human moment in the game
+happened off-screen and Jordan never heard from the player at all. Most
+founders will have to do this once, and almost nobody is good at it — the
+educational content is entirely in *how*, which the old card could not express.
+
+**What shipped.**
+- **`story/firing.js`** — a one-on-one scene (`cast: ["jordan", "founder"]`,
+  the first single-character room). `jordan_confrontation:fire` stopped being a
+  resolution and became a door. Five beats a player answers, ~16 bubbles: the
+  opener, her reaction, her counter-offer, the logistics, the last word.
+  Deliberately shorter than pivot (8) and equity (10) — one voice reads longer
+  than three arguing, and the outcome is settled at beat 2; everything after is
+  the cost.
+- **The player speaks first.** `firing_open` is on the founder's thread (the
+  "Your move" card) and its options carry `replyTo: "jordan"`, so the blue
+  bubble lands in *her* thread. The player watches themselves send it.
+- **Beat 2 is an exam on the whole run**, not on the last five minutes: three
+  tiers off the drift history, the ratio of her messages left on read, and the
+  equity paperwork. At the bottom she pre-empts you (`firing_preempt`) and the
+  scene ends — you can lose this conversation.
+- **Two exits.** The clean exit, and the compromise (`firing_reaction:fold`),
+  which schedules her resignation five weeks out with an `unless`: the
+  conversation re-arms after four, so there is exactly one week to walk back
+  in. Refusing twice (`firing_reentry:fold_again`) is the dead end — the same
+  shape as `ride` on the fifty-match verdict.
+- **Demo night plants it.** Jordan joins the `demo` scene cast and is silent in
+  it (the engine guarantees the empty chair: `_candidates` only surfaces the
+  active arc's beats). The HEIC uploader moved from the server to *her* iOS
+  picker, so Alex can't fix it live and a third option — text her, get nothing
+  — is the player's first lived data point. The scene now closes on her 12:41 AM
+  message asking how it went.
+- **Consequences.** `s.jordan_quit` (she left) is kept distinct from
+  `s.jordan_resolved` (you decided): the quit locks the YC `team_call` chip and
+  fires `app_q_founders_left`, the question the real YC form asks — *"Have any
+  of the founders left? If so, why, and how much equity do they have?"* — where
+  every available answer is bad. The guilt payment moved out of the scene onto
+  `jordan_cap_table` as a third option, where it is a cold decision with a
+  price rather than a midnight flinch.
+
+**Two bugs found on the way.**
+- `jordan_confrontation` was starving on Alex's thread in chapter 4, exactly as
+  `pivot_relaunch` once did. Moved to the founder's thread — it's the founder's
+  call anyway.
+- Inserting a conditional beat mid-arc broke the chain: `engine.js` auto-links
+  a beat with no `when` to the previous one, so `app_q_growth` ended up gated
+  behind a question that only exists on some runs. It now chains explicitly.
+
+**Measured.** Pacing unchanged except Jordan leaving a week earlier (wk 22 vs
+23). Win rate 100%, dead air 0%. Behavior contracts 34/37 (the same three
+documented failures, plus three new passing contracts for the compromise).
+Three new archetypes — `fold_jordan`, `ghost_jordan`, `blame_alex` — exist so
+every branch of the scene is exercised by some run.
+
+**Open balance question.** `fold_jordan` still wins 100% at grade 90: the
+compromise costs ~10 points, which an otherwise-perfect run absorbs. Whether
+blinking should be able to cost the batch is a dial, not a bug.
 
 ## Open items (next passes)
 - **Re-balance** (tools now exist): the angel round win path, the Marcus

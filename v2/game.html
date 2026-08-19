@@ -675,6 +675,7 @@
 <script src="story/fundraising.js"></script>
 <script src="story/growth.js"></script>
 <script src="story/jordan_arc.js"></script>
+<script src="story/firing.js"></script>
 <script src="story/discovery.js"></script>
 <script src="story/press.js"></script>
 <script src="story/ambient.js"></script>
@@ -749,6 +750,14 @@ const SCENE_META = {
     exit: (s) => s.pivot_choice === "pivot" ? ["The decision is made.", "Monday morning, the rebuild begins."]
       : s.pivot_choice === "growth" ? ["The decision is made.", "The next fifty matches will tell you if it was right."]
         : ["Half a pivot.", "Priya hopes she's wrong. She usually isn't."],
+  },
+  firing: {
+    title: "The conversation", sub: "just you and Jordan. everything else can wait until morning.",
+    accent: "rgba(150,165,190,1)",
+    enter: ["Nearly midnight.", "Her thread is open.", "Nobody can help you with this one."],
+    exit: (s) => s.jordan_quit ? ["She resigned before you finished.", "The call was never yours to make."]
+      : s.jordan_resolved ? ["It's done.", "Alex has iOS from Monday."]
+        : ["Nothing changed.", "You both know how this ends."],
   },
 };
 // Launch day walks the clock through the hours; the sky (background) shifts with

@@ -1,9 +1,9 @@
 "use strict";
 // ─────────────────────────────────────────────────────────────────────────────
 // v2/tests/test_scenes.js — scene permutation test (generalizes the old
-// tests/test_launch_arc.js from one hand-coded arc to all four scene arcs).
+// tests/test_launch_arc.js from one hand-coded arc to all five scene arcs).
 //
-// For each scene (equity, demo, launch, pivot): play a decent game up to the
+// For each scene (equity, demo, launch, pivot, firing): play a decent game up to
 // scene's entry beat, then explore the choice tree through the scene by
 // replaying from seed with an incremental choice script (game state is not
 // clonable, so each path replays). Every completed path must:
@@ -40,6 +40,7 @@ const SCENES = [
   { id: "demo", entry: { node: "demo_ready", keys: ["rough", "polish"] }, seed: 42 },
   { id: "launch", entry: { node: "good_enough_launch", keys: ["ship"] }, seed: 42 },
   { id: "pivot", entry: { node: "pivot_summit_call", keys: ["call_it"] }, seed: 42 },
+  { id: "firing", entry: { node: "jordan_confrontation", keys: ["fire"] }, seed: 42 },
 ];
 
 let failures = 0, checks = 0;

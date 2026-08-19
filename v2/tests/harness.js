@@ -48,6 +48,10 @@
     "slide_maya_call", "slide_cohort", "slide_first_echo",
     "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
     "pivot_relaunch", "public_complaint",
+    // The co-founder conversation outranks the application: it now sits on the
+    // founder's thread, where founder_codebuild (which a decent player never
+    // answers) can otherwise squat the slot until the deadline.
+    "jordan_confrontation", "jordan_cap_table",
     "yc_apply",
   ];
   const actPriority = (a) => {
@@ -75,6 +79,7 @@
     matching_choice: ["build"], ranking: ["conversation", "interests"],
     ios_sprint_1: ["wire_backend"], ios_sprint_2: ["ack"],
     demo_ready: ["rough"], demo_watch: ["watch"], demo_bug: ["note"], demo_first_message: ["note"],
+    demo_jordan_late: ["tell"],
     analytics_choice: ["buy"], seed_strategy: ["waitlist_city", "local"],
     trust_safety: ["report_now"], waitlist_calls: ["call"], waitlist_cold: ["reach"],
     alex_sync_discover: "SKIP", alex_sync_build: ["build"],
@@ -102,6 +107,7 @@
     sarah_intro: ["reply"],
     yc_apply: ["start"],
     app_q_learned: ["maya", "cohort", "fixes", "bluff"], app_q_team: ["killed", "team_call", "bluff"],
+    app_q_founders_left: ["honest"],
     app_q_growth: ["channel", "community", "tested", "bluff"], app_send: ["submit"],
     beachhead_choice: ["narrow"], launch_surface: ["quiet"], launch_scramble: ["firefight"],
     channel_test: ["referrals", "creators", "community", "paid"], channel_double_down: ["referrals"],
@@ -110,6 +116,11 @@
     feature_cluster: ["build"],
     jordan_drift_start: ["talk"], jordan_drag: ["talk"], jordan_launch_blocker: ["confront"],
     jordan_confrontation: ["fire"], jordan_cap_table: ["lawyer"],
+    firing_open: ["own"], firing_restate: ["say_it"], firing_reentry: ["finish"],
+    firing_preempt: ["nothing"], firing_reaction: ["ask", "hold"],
+    firing_ask_finish: ["hold_informed"], firing_counter: ["buy_handoff"],
+    firing_logistics: ["transfer"], firing_last_word: ["human"],
+    firing_alex_after: ["keep_confidence"],
     flare_stealth: ["steady"], flare_10k: ["course"], flare_feature: ["hold"],
     flare_stumble: ["screenshot"], flare_epilogue: ["work"],
     public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
@@ -166,13 +177,14 @@
     vision_mismatch: "team", alex_side_project: "team", alex_side_project_escalation: "team",
     alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
     alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",
-    jordan_confrontation: "team",
+    jordan_confrontation: "team", firing_alex_after: "team",
     // money — checks in, checks out, the application
     ff_family: "money", ff_family_2: "money", ff_family_3: "money",
     founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
     ff_mentor: "money", ff_mentor_pitch: "money", consultant_growth: "money",
     consultant_brand: "money", jordan_cap_table: "money", yc_apply: "money",
     app_q_learned: "money", app_q_team: "money", app_q_growth: "money", app_send: "money",
+    app_q_founders_left: "money",
     early_funding_goal: "money",
     // growth — distribution: markets, channels, press, pricing
     seed_strategy: "growth", beachhead_choice: "growth", launch_surface: "growth",
@@ -180,6 +192,11 @@
     dont_scale_seed: "growth", first_customer_offer: "growth", pricing_experiment: "growth",
     sarah_intro: "growth", pivot_beta_invite: "growth", website_social_proof: "growth", founder_solo_growth: "growth",
     public_complaint: "growth", reporter_deadline: "growth", early_name: "growth",
+    // the firing scene's beats (free of action cost, like every scene beat)
+    firing_open: "team", firing_restate: "team", firing_reentry: "team",
+    firing_preempt: "team", firing_reaction: "team", firing_ask_finish: "team",
+    firing_counter: "team", firing_logistics: "team", firing_last_word: "team",
+    demo_jordan_late: "team",
     // other — filler
     founder_reflect: "other",
   };
@@ -336,8 +353,25 @@
       blurb: "pushes Alex to commit full-time instead of accepting part-time" },
     keep_jordan: { chooser: withPrefs({ jordan_confrontation: ["defer"] }),
       blurb: "never has the Jordan conversation" },
-    skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"] }),
-      blurb: "fires Jordan but never pays the lawyer" },
+    skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"], firing_logistics: ["defer"] }),
+      blurb: "fires Jordan but never does the paperwork" },
+    fold_jordan: { chooser: withPrefs({ firing_reaction: ["fold"], firing_reentry: ["fold_again"] }),
+      blurb: "has the Jordan conversation and blinks in it" },
+    // Ghosts Jordan for the whole run, then opens the firing with the charge
+    // sheet — the only archetype that reaches her tier-3 reaction and the
+    // pre-emptive resignation (firing_preempt), and the one that exercises
+    // firing_restate on the way.
+    // Leaves every Jordan card that isn't build-critical on read, then opens
+    // the firing with the charge sheet — the only archetype that reaches her
+    // tier-3 reaction and the pre-emptive resignation.
+    ghost_jordan: { chooser: withPrefs({
+        jordan_working_style: null, slide_jordan_echo: null, pivot_beta_invite: null,
+        firing_open: ["litigate"],
+      }), blurb: "leaves Jordan on read all run, then opens with the charge sheet" },
+    // Opens the firing by hiding behind Alex — exercises firing_restate, the
+    // beat that charges you a message for not leading with the decision.
+    blame_alex: { chooser: withPrefs({ firing_open: ["outsource"] }),
+      blurb: "fires Jordan, but makes it Alex's fault" },
     no_pivot: { chooser: withPrefs({ pivot_day_decide: ["growth"], pivot_fifty_verdict: ["ride"] }),
       blurb: "explicitly refuses the pivot, twice" },
     no_meetup: { chooser: withPrefs({ founder_meetup: null }), blurb: "never goes to the founder meetup" },

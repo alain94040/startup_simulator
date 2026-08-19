@@ -52,6 +52,7 @@ function runStrategy(name, spec) {
       m.applied = !!s.ycApplied;
       m.alexLeft = !g.cast.get("alex").active;
       m.jordanFired = !!s.jordan_resolved;
+      m.jordanQuit = !!s.jordan_quit;
       m.itemsDone = Object.values(s.items || {}).filter(it => it && it.status === "done").length;
       m.grade = g.gradeScore();
       const cap = Scoring.scoreGame(g).find(c => c.key === "clean-cap-table");
@@ -70,6 +71,7 @@ function runStrategy(name, spec) {
     pivoted: share(m => m.pivoted), v2: share(m => m.v2),
     applied: share(m => m.applied), alexLeft: share(m => m.alexLeft),
     jordanFired: share(m => m.jordanFired),
+    jordanQuit: share(m => m.jordanQuit),
     priyaSeen: share(m => m.priya == null ? m.launched : m.priya), // filled below for no_meetup
     meanDemoWk: avg(m => m.demoWk), meanLaunchWk: avg(m => m.launchWk),
     meanV2Wk: avg(m => m.v2Wk), itemsDone: avg(m => m.itemsDone),
@@ -159,6 +161,16 @@ check(`keep_jordan v2 ships later: wk ${r1(S.keep_jordan.meanV2Wk)} > decent wk 
   (S.keep_jordan.meanV2Wk || Infinity) > S.decent.meanV2Wk);
 check(`keep_jordan.wins (${S.keep_jordan.wins}%) <= half of decent.wins (${S.decent.wins}%)`,
   S.keep_jordan.wins <= S.decent.wins / 2);
+
+// G2 · the compromise (new with the firing scene): reaching the room and
+// blinking is worse than deferring, not better. She resigns on her own, so the
+// founder never gets the decision — and the report card must say so.
+check(`fold_jordan.jordanFired = ${S.fold_jordan.jordanFired}% (expected 0 — blinked in the room)`,
+  S.fold_jordan.jordanFired === 0);
+check(`fold_jordan.jordanQuit (${S.fold_jordan.jordanQuit}%) >= 80% — she leaves on her own`,
+  S.fold_jordan.jordanQuit >= 80);
+check(`fold_jordan.grade (${Math.round(S.fold_jordan.grade)}) < decent.grade (${Math.round(S.decent.grade)})`,
+  S.fold_jordan.grade < S.decent.grade);
 
 // H · the pivot is required (old: lean pivots >= 80%, no_pivot refuses, no_pivot
 // loses — v2 is stricter: the YC traction bar makes refusing fatal)

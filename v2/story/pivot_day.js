@@ -349,7 +349,7 @@
           : "i want to write to the people who left before we relaunch. every quiet account gets a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' ")
           + "the people who quit are the only ones who already know why the old app failed. or do we save the reveal for launch day and a clean slate?",
         when: {
-          if: (s, e) => e.chapter === 4 && !s.jordan_resolved
+          if: (s, e) => e.chapter === 4 && !s.jordan_resolved && !s.jordan_quit
             && s.pivot_week != null && s.week >= s.pivot_week + 1,
         },
         choices: [
@@ -385,7 +385,7 @@
           cooldown: 2,
           if: (s, e) => e.chapter === 4
             && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
-            && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved),
+            && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved || s.jordan_quit),
         },
         choices: [
           {

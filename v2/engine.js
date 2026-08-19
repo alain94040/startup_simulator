@@ -77,6 +77,7 @@
           require("./story/fundraising.js"),
           require("./story/growth.js"),
           require("./story/jordan_arc.js"),
+          require("./story/firing.js"),
           require("./story/discovery.js"),
           require("./story/press.js"),
           require("./story/ambient.js"),
@@ -351,8 +352,14 @@
         .find(c => c.key === key);
       if (!choice) return null;
 
-      if (typeof choice.reply === "string" && !char.def.noChat) {
-        this._push(charId, { type: "reply", nodeId, body: choice.reply });
+      // A choice's `reply` lands in the answering character's thread by
+      // default. `replyTo` sends it somewhere else instead — which is what a
+      // decision made on the founder's own "Your move" card needs, since the
+      // founder thread is the journal mirror and renders no bubbles at all.
+      if (typeof choice.reply === "string") {
+        const toId = choice.replyTo || charId;
+        const to = this.cast.get(toId);
+        if (to && !to.def.noChat) this._push(toId, { type: "reply", nodeId, body: choice.reply });
       }
 
       const cashBefore = this.s.cash;

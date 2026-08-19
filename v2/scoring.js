@@ -81,10 +81,36 @@
           { faced: g.done("equity_impasse"), weight: 2, got: g.took("equity_impasse:table") ? 0 : 1,
             note: g.took("equity_impasse:table")
               ? "Got the whole room assembled for the equity call, then tabled it 'until after launch.' After launch never came." : null },
-          { faced: g.done("jordan_confrontation"), weight: 2,
-            got: g.took("jordan_confrontation:fire") ? 1 : g.took("jordan_confrontation:defer") ? 0.3 : 0,
-            note: g.took("jordan_confrontation:fire") ? "Fired a drifting co-founder while it was still fixable."
-              : g.done("jordan_confrontation") ? "The Jordan conversation kept getting deferred." : null },
+          // Reaching the room is one thing; what happened in it is another.
+          // The compromise grades BELOW deferring: you got there and blinked,
+          // and she now knows you considered it.
+          { faced: g.done("jordan_confrontation"), weight: 3,
+            got: s.jordan_resolved ? 1
+              : g.took("firing_preempt:nothing") ? 0
+                : g.took("firing_reentry:fold_again") ? 0
+                  : s.jordan_quit ? 0.1
+                    : g.took("jordan_confrontation:defer") ? 0.3 : 0,
+            note: s.jordan_resolved
+              ? (s.jordan_compromised
+                ? "Blinked the first time, went back three weeks later and finished it. Late, and it counted."
+                : "Told a drifting co-founder to her face, while it was still fixable.")
+              : g.took("firing_preempt:nothing") ? "Jordan resigned mid-sentence. You never made the call — you were beaten to it."
+                : s.jordan_quit ? "Got as far as the conversation and asked for one more sprint. She quit four weeks later."
+                  : g.done("jordan_confrontation") ? "The Jordan conversation kept getting deferred." : null },
+          // How it was delivered. Leading with the decision is the whole craft;
+          // hiding behind Alex or reading the charge sheet reaches the same
+          // place having spent her respect on the way.
+          { faced: g.done("firing_open"), weight: 1,
+            got: g.took("firing_open:own") ? 1 : 0.4,
+            note: g.took("firing_open:own") ? "Led with the decision in the first message — no burying it."
+              : g.took("firing_open:outsource") ? "Opened by hiding behind Alex; she made you say it yourself anyway."
+                : "Opened with the charge sheet. You win that argument and lose the person." },
+          // Asking changes nothing about the decision and everything about
+          // what it cost.
+          { faced: g.done("firing_reaction"), weight: 1,
+            got: g.took("firing_reaction:ask") ? 1 : 0.5,
+            note: g.took("firing_reaction:ask")
+              ? "Asked what was actually going on before finishing — and found out she'd already taken another job." : null },
         ]),
         ["You had the talks nobody wants to have — early, in person.",
           "Some conversations happened; others were left to fester.",
@@ -208,11 +234,19 @@
               : "The split was never signed. Every later conversation got harder." },
           { faced: g.done("ff_family"), weight: 1, got: g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") ? 1 : 0.3,
             note: g.took("ff_family:ask") ? "Took the friends-and-family money early." : null },
-          { faced: !!s.jordan_resolved, weight: 2,
-            got: s.jordan_cleanup_needed ? 0 : 1,
-            note: s.jordan_resolved ? (s.jordan_cleanup_needed
-              ? "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there."
-              : "Bought back the departed co-founder's stake — the cap table survived the firing.") : null },
+          { faced: !!s.jordan_resolved || !!s.jordan_quit, weight: 2,
+            got: s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 1,
+            note: s.jordan_equity_gifted
+              ? "Gave a departed co-founder her full " + pct + " rather than have the buyback conversation. The kindest cheque this company ever wrote."
+              : !s.jordan_cleanup_needed ? "Bought back the departed co-founder's stake — the cap table survived the exit."
+                : s.jordan_quit ? "She resigned holding " + pct + " and no reason to sign anything. The lawyer buys a negotiation now, not a signature."
+                  : "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there." },
+          // The practical half of a firing, and the half founders forget.
+          { faced: g.done("firing_logistics"), weight: 1,
+            got: s.appstore_on_jordan ? 0 : 1,
+            note: s.appstore_on_jordan
+              ? "The App Store listing is still on a departed co-founder's personal developer account."
+              : "Moved the App Store listing off her personal account before she signed anything." },
         ]),
         ["Paper first, feelings second — the cap table stayed clean through everything.",
           "The ownership questions got answered, but late and at a price.",
