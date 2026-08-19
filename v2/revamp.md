@@ -344,9 +344,12 @@ educational content is entirely in *how*, which the old card could not express.
   than three arguing, and the outcome is settled at beat 2; everything after is
   the cost. A seventh beat (Alex asking what she said) only exists if you asked
   her what was going on.
-- **The player speaks first.** `firing_open` is on the founder's thread (the
-  "Your move" card) and its options carry `replyTo: "jordan"`, so the blue
-  bubble lands in *her* thread. The player watches themselves send it.
+- **She texts first, and every beat is a message.** Nothing in the scene is a
+  founder card: a firing is a conversation, so it plays in her thread with
+  ordinary reply chips, and each chip is the sentence you are about to send
+  rather than a label for a strategy. The opener is her, at midnight, on the
+  first free evening she has had in weeks — pushing the plans screen to staging
+  and asking whether to walk you through it tomorrow. You answer that.
 - **Beat 2 is an exam on the whole run**, not on the last five minutes: three
   tiers off the drift history, the ratio of her messages left on read, and the
   equity paperwork. At the bottom she pre-empts you (`firing_preempt`) and the
@@ -362,11 +365,12 @@ educational content is entirely in *how*, which the old card could not express.
   picker, so Alex can't fix it live and a third option — text her, get nothing
   — is the player's first lived data point. The scene now closes on her 12:41 AM
   message asking how it went.
-- **Alex is awake.** His "so what did she say?" is authored *inside* the scene
-  as a founder card whose reply goes back to his thread via `replyTo` — on his
-  own thread it landed after the run was over in a third of runs, because
-  chapter 4 leaves him no free slot. Deliberately ungraded: discretion and
-  transparency both cost something.
+- **Alex is awake.** His "so what did she say?" is a beat inside the scene on
+  his own thread (he is in the arc's cast), so his name only enters the room's
+  rail — with an unread dot — on the branch where he actually interrupts. It
+  lives inside the sitting because on his thread afterwards it landed past the
+  last playable week in 15 of 48 audited runs. Deliberately ungraded:
+  discretion and transparency both cost something.
 - **Consequences.** `s.jordan_quit` (she left) is kept distinct from
   `s.jordan_resolved` (you decided): the quit locks the YC `team_call` chip and
   fires `app_q_founders_left`, the question the real YC form asks — *"Have any

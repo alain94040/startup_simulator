@@ -147,66 +147,60 @@
     arcs: [
       {
         id: "firing",
-        // The founder is in the room because the scene opens on the "Your move"
-        // card — the player types the first message. (Same pattern as the
-        // equity arc's cast, which also carries the founder.)
-        scene: { cast: ["jordan", "founder"] },
+        // Two threads, and the rail only ever shows the one with something in
+        // it: Jordan all the way through, and Alex only on the branch where he
+        // interrupts. Nothing here is a founder card — a firing is a
+        // conversation, so every beat is a message somebody sent.
+        scene: { cast: ["jordan", "alex"] },
         beats: [
           {
-            id: "firing_open", char: "founder",
-            text: "Her thread is open. The last message in it is four days old and says \"sounds good 👍\". The cursor is blinking, and everything you type is going to be permanent.",
+            // She has no idea. She is still working, on the one evening she has
+            // been free in a month, and she is asking about tomorrow. That is
+            // the whole beat: you have to answer this with something else.
+            id: "firing_open", char: "jordan",
+            text: "hey! good timing — i just pushed the plans screen to staging. it's rough but the flow works end to end. first clear evening i've had in weeks.\n\nwant me to walk you through it tomorrow?",
             when: {
               took: ["jordan_confrontation:fire"],
               if: (s) => !s.jordan_compromised,
             },
             choices: [
               {
-                key: "own", label: "Lead with the decision",
-                reply: "jordan — i've made a decision and i want you to hear it from me before you hear it anywhere else. i'm taking you off the founding team. you're not going to be building kindred with us.",
-                replyTo: "jordan",
+                key: "own", label: "I've made a decision, and you should hear it from me",
+                reply: "jordan — i'm sorry, this isn't about the staging build. i've made a decision and i want you to hear it from me: i'm taking you off the founding team. you're not going to be building kindred with us.",
                 journal: null,
+                effects: { say: { char: "jordan", text: "…okay. say the rest." } },
                 fx(s) { s.firing_open_key = "own"; return null; },
               },
               {
                 key: "outsource", label: "Alex can't keep covering for you",
-                reply: "hey. alex can't keep covering for you. it's not fair to him and it isn't sustainable.",
-                replyTo: "jordan",
+                reply: "before that — alex can't keep covering for you. it's not fair to him and it isn't sustainable.",
                 journal: null,
-                fx(s, e) {
-                  s.firing_open_key = "outsource";
-                  e.say({ char: "jordan", text: "is this alex talking or you? because he hasn't said a word to me and now his name is in your message." });
-                  e.say({ char: "jordan", text: "just say what you sat down to say." });
-                  return null;
-                },
+                fx(s) { s.firing_open_key = "outsource"; return null; },
               },
               {
-                key: "litigate", label: "Walk her through the record",
-                reply: "the ios PR sat four days. the crash on the 12 took two. you've missed standup six times this month. i can keep going.",
-                replyTo: "jordan",
+                key: "litigate", label: "The iOS PR sat four days. The crash took two.",
+                reply: "before that — the ios PR sat four days. the crash on the 12 took two. you've missed standup six times this month. i can keep going.",
                 journal: null,
-                fx(s, e) {
-                  s.firing_open_key = "litigate";
-                  e.say({ char: "jordan", text: "the PR sat four days because i asked a question about it on the tuesday and nobody answered until friday. i can keep going too. is that what this is?" });
-                  return null;
-                },
+                fx(s) { s.firing_open_key = "litigate"; return null; },
               },
             ],
           },
 
           {
-            // The two weak openers cost a beat and land in exactly the same
+            // The two weak openers cost a message and land in exactly the same
             // place: you say the sentence you should have opened with.
-            id: "firing_restate", char: "founder",
-            text: "You haven't actually said it yet.",
+            id: "firing_restate", char: "jordan",
+            text: (s) => s.firing_open_key === "litigate"
+              ? "the PR sat four days because i asked a question about it on the tuesday and nobody answered until friday. i can keep going too.\n\nis that what this is?"
+              : "is this alex talking or you? because he hasn't said a word to me and now his name is in your message.\n\njust say what you sat down to say.",
             when: {
               took: ["firing_open:outsource|litigate"],
               if: (s, e) => !preempts(s, e),
             },
             choices: [
               {
-                key: "say_it", label: "Say the thing you opened this to say",
+                key: "say_it", label: "It's my call, and it isn't a debate",
                 reply: "you're right. it's mine, and it isn't a debate — i'd decided before i opened this thread. i'm taking you off the founding team.",
-                replyTo: "jordan",
                 journal: null,
                 fx(s, e) {
                   const jordan = e.cast.get("jordan");
@@ -232,7 +226,7 @@
             when: { took: ["jordan_confrontation:fire"], if: (s) => !!s.jordan_compromised },
             choices: [
               {
-                key: "finish", label: "Finish it properly this time",
+                key: "finish", label: "I should have said this three weeks ago.",
                 reply: "i should have said this three weeks ago and i didn't. you're off the founding team. i'm sorry i made you sit through it twice.",
                 journal: (s) => "Went back to Jordan and finished what I started three weeks ago. Her " + pctOf(s)
                   + " gets papered this week. Three weeks of everyone pretending, and Alex reading her code cold.",
@@ -240,7 +234,7 @@
                 fx: (s, e) => jordanLeaves(s, e, "exit"),
               },
               {
-                key: "fold_again", label: "Ask for one more sprint",
+                key: "fold_again", label: "One more sprint. I mean it this time.",
                 reply: "give me one more sprint. i mean it this time.",
                 journal: "Asked Jordan for one more sprint. Again. She stopped replying, and a week later she was gone.",
                 effects: { scene: null },
@@ -262,7 +256,7 @@
             when: { after: ["firing_open"], if: preempts },
             choices: [
               {
-                key: "nothing", label: "There is nothing to say to that",
+                key: "nothing", label: "There's nothing to say to that.",
                 journal: "Opened the conversation with Jordan and she finished it for me. She resigned before I could say it. Two months of drift and I never once told her — she quit holding her stake and a codebase nobody else has read.",
                 effects: { scene: null },
                 fx(s, e) {
@@ -299,7 +293,7 @@
                 effects: { say: { char: "jordan", text: "…yeah. okay." } },
               },
               {
-                key: "ask", label: "Before anything else — what's actually going on?",
+                key: "ask", label: "What's actually going on with you?",
                 reply: "before we go further. what's actually going on with you? not the work. you.",
                 journal: null,
                 fx(s, e) {
@@ -310,7 +304,7 @@
                 },
               },
               {
-                key: "fold", label: "One more sprint — show me",
+                key: "fold", label: "One more sprint. Show me.",
                 reply: "look — one more sprint. land the ios build and we forget tonight happened.",
                 journal: "Opened the conversation with Jordan and blinked. Gave her one more sprint. Alex typed \"okay.\" and nothing else.",
                 effects: { scene: null },
@@ -325,13 +319,13 @@
             when: { took: ["firing_reaction:ask"] },
             choices: [
               {
-                key: "hold_informed", label: "Finish it, knowing",
+                key: "hold_informed", label: "I'm glad you told me. It doesn't change the call.",
                 reply: "i'm glad you told me. it doesn't change the call — i think it makes it the right one for both of us. you're off the founding team.",
                 journal: null,
                 effects: { say: { char: "jordan", text: "yeah. i know. it's just easier to hear when someone asks first." } },
               },
               {
-                key: "fold_informed", label: "…Take the sprint. See how it goes.",
+                key: "fold_informed", label: "…Forget what I said. Take the sprint.",
                 reply: "…okay. forget what i said. take the sprint, see how it goes.",
                 journal: "Jordan told me she'd taken another job three weeks ago, and I asked her for one more sprint anyway.",
                 effects: {
@@ -349,21 +343,21 @@
             when: { took: [["firing_reaction:hold", "firing_ask_finish:hold_informed"]] },
             choices: [
               {
-                key: "hire_back", label: "Take it — three weeks, $3k",
+                key: "hire_back", label: "Yes — three weeks, scoped to plans UI ($3,000)",
                 reply: "yes. three weeks, scoped to plans UI, $3k on delivery.",
                 journal: null,
                 effects: { cash: -3000, say: { char: "jordan", text: "done. i'll keep out of everything else." } },
                 fx(s) { s.jordan_contract = true; s.jordan_exit_clean = false; return null; },
               },
               {
-                key: "buy_handoff", label: "Buy the knowledge, not the person",
+                key: "buy_handoff", label: "Not the work — the handoff. Two days ($500)",
                 reply: "not the work — the handoff. two days, write it all down properly, $500. alex builds from your notes.",
                 journal: null,
                 effects: { cash: -500, say: { char: "jordan", text: "…that's smarter than what i offered. okay." } },
                 fx(s) { s.jordan_handoff = true; return null; },
               },
               {
-                key: "decline", label: "Clean break — Alex takes it",
+                key: "decline", label: "No. Clean break is worth more to us.",
                 reply: "no. clean break is worth more to us than three weeks. alex owns iOS from monday.",
                 journal: null,
                 effects: { say: { char: "jordan", text: "okay. that's probably right. it's going to hurt though." } },
@@ -379,13 +373,13 @@
             when: { after: ["firing_counter"] },
             choices: [
               {
-                key: "transfer", label: "Handle both this week — $99",
+                key: "transfer", label: "Paperwork this week, and I'll move the account ($99)",
                 reply: "paperwork this week — you keep what's vested, i pay the lawyer. and good catch on the account: i'll open the org one tomorrow and we'll transfer before you sign anything.",
                 journal: null,
                 effects: { cash: -99, say: { char: "jordan", text: "yeah. do it while i still care about doing it properly." } },
               },
               {
-                key: "defer", label: "Paperwork's coming — leave the account",
+                key: "defer", label: "Paperwork's coming. Leave the account for now.",
                 reply: "i'll send the paperwork this week. can we leave the account where it is for now? i've got about nine things ahead of that one.",
                 journal: null,
                 effects: {
@@ -397,18 +391,19 @@
           },
 
           {
-            // Alex is awake and waiting. Authored inside the scene as a founder
-            // card (his reply goes back to his thread via replyTo) because on
-            // his own thread it landed after the run was over in a third of
-            // runs — chapter 4 leaves him no free slot. Only exists if she told
-            // you something private; deliberately ungraded either way.
-            id: "firing_alex_after", char: "founder",
-            text: "Alex, in the other thread, still awake: \"so what did she say? i've been staring at my phone for an hour.\"",
+            // Alex is awake and waiting. He's in the scene cast so this is a
+            // real thread in the room — his name only appears in the rail once
+            // he says this, so the one-on-one stays a one-on-one on every other
+            // path. Inside the scene because on his own thread afterwards it
+            // landed past the last playable week in a third of runs. Only
+            // exists if she told you something private; ungraded either way.
+            id: "firing_alex_after", char: "alex",
+            text: "so what did she say? i've been staring at my phone for an hour.",
             when: { after: ["firing_logistics"], if: (s) => !!s.firing_asked },
             choices: [
               {
-                key: "tell_alex", label: "Tell him — she took another job",
-                reply: "she took another job. three weeks ago.", replyTo: "alex",
+                key: "tell_alex", label: "She took another job. Three weeks ago.",
+                reply: "she took another job. three weeks ago.",
                 journal: "Told Alex what Jordan told me in confidence an hour after I let her go. He took it better than she would have.",
                 effects: {
                   char: { alex: { morale: 8 } },
@@ -416,8 +411,8 @@
                 },
               },
               {
-                key: "keep_confidence", label: "That's between her and me",
-                reply: "that's between her and me. it's done, and it was the right call.", replyTo: "alex",
+                key: "keep_confidence", label: "That's between her and me.",
+                reply: "that's between her and me. it's done, and it was the right call.",
                 journal: "Kept what Jordan told me to myself. Alex carried her work for two months and still doesn't know why she went.",
                 effects: {
                   char: { alex: { trust: 6, morale: -3 } },
@@ -438,7 +433,7 @@
             },
             choices: [
               {
-                key: "human", label: "Name the thing she actually did",
+                key: "human", label: "The intake screen was yours. Tonight doesn't erase it.",
                 reply: "one more thing. the intake screen — the one your sister screenshotted into her group chat — is still the only organic share this company has ever had. that was you. tonight doesn't erase it.",
                 journal: (s) => "Told Jordan tonight, myself, in her thread. She wasn't surprised and she didn't pretend to be. Her "
                   + pctOf(s) + " gets papered this week; Alex has iOS from Monday. She's writing the handoff up before she goes dark.",
@@ -451,7 +446,7 @@
                 },
               },
               {
-                key: "close", label: "That's everything",
+                key: "close", label: "That's everything. I'll send the paperwork.",
                 reply: "that's everything. i'll send the paperwork.",
                 journal: (s) => "Told Jordan tonight, myself, in her thread. She wasn't surprised and she didn't pretend to be. Her "
                   + pctOf(s) + " gets papered this week; Alex has iOS from Monday.",

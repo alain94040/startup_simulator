@@ -755,7 +755,7 @@ const SCENE_META = {
   firing: {
     title: "The conversation", sub: "just you and Jordan. everything else can wait until morning.",
     accent: "rgba(150,165,190,1)",
-    enter: ["Nearly midnight.", "Her thread is open.", "Nobody can help you with this one."],
+    enter: ["Nearly midnight.", "Jordan is still up, still working.", "Nobody can help you with this one."],
     exit: (s) => s.jordan_quit ? ["She resigned before you finished.", "The call was never yours to make."]
       : s.jordan_resolved ? ["It's done.", "Alex has iOS from Monday."]
         : ["Nothing changed.", "You both know how this ends."],
