@@ -119,8 +119,8 @@
     firing_open: ["own"], firing_restate: ["say_it"], firing_reentry: ["finish"],
     firing_preempt: ["nothing"], firing_reaction: ["ask", "hold"],
     firing_ask_finish: ["hold_informed"], firing_counter: ["buy_handoff"],
-    firing_logistics: ["transfer"], firing_last_word: ["human"],
-    firing_alex_after: ["keep_confidence"],
+    firing_logistics: ["transfer"], firing_alex_after: ["keep_confidence"],
+    firing_last_word: ["human"],
     flare_stealth: ["steady"], flare_10k: ["course"], flare_feature: ["hold"],
     flare_stumble: ["screenshot"], flare_epilogue: ["work"],
     public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
@@ -177,7 +177,7 @@
     vision_mismatch: "team", alex_side_project: "team", alex_side_project_escalation: "team",
     alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
     alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",
-    jordan_confrontation: "team", firing_alex_after: "team",
+    jordan_confrontation: "team",
     // money — checks in, checks out, the application
     ff_family: "money", ff_family_2: "money", ff_family_3: "money",
     founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
@@ -195,7 +195,8 @@
     // the firing scene's beats (free of action cost, like every scene beat)
     firing_open: "team", firing_restate: "team", firing_reentry: "team",
     firing_preempt: "team", firing_reaction: "team", firing_ask_finish: "team",
-    firing_counter: "team", firing_logistics: "team", firing_last_word: "team",
+    firing_counter: "team", firing_logistics: "team", firing_alex_after: "team",
+    firing_last_word: "team",
     demo_jordan_late: "team",
     // other — filler
     founder_reflect: "other",

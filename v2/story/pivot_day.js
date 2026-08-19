@@ -492,7 +492,14 @@
         text: (s) => s.beta_invited
           ? "small thing. maya — launch-day maya, the one you called — answered jordan's beta email. she just RSVP'd to a thursday climbing plan. the first person the old app lost is the first one back in the new one."
           : "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
-        when: { if: (s) => s.pivot_shipped && !!s.maya_quote },
+        // Yields Alex's single slot while the Jordan conversation is waiting on
+        // it: both go eligible the week after the relaunch, and a bookend
+        // notification must not outrank chapter 4's other climax. Bounded —
+        // the confrontation resolves within its own 3-week patience either way.
+        when: {
+          if: (s, e) => s.pivot_shipped && !!s.maya_quote
+            && !(s.jordan_confrontation_triggered && !e.done("jordan_confrontation")),
+        },
         choices: [
           {
             key: "ack", label: "It is a different app now",

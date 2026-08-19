@@ -397,9 +397,45 @@
           },
 
           {
+            // Alex is awake and waiting. Authored inside the scene as a founder
+            // card (his reply goes back to his thread via replyTo) because on
+            // his own thread it landed after the run was over in a third of
+            // runs — chapter 4 leaves him no free slot. Only exists if she told
+            // you something private; deliberately ungraded either way.
+            id: "firing_alex_after", char: "founder",
+            text: "Alex, in the other thread, still awake: \"so what did she say? i've been staring at my phone for an hour.\"",
+            when: { after: ["firing_logistics"], if: (s) => !!s.firing_asked },
+            choices: [
+              {
+                key: "tell_alex", label: "Tell him — she took another job",
+                reply: "she took another job. three weeks ago.", replyTo: "alex",
+                journal: "Told Alex what Jordan told me in confidence an hour after I let her go. He took it better than she would have.",
+                effects: {
+                  char: { alex: { morale: 8 } },
+                  say: { char: "alex", text: "…three weeks. and she let me cover for her the whole time." },
+                },
+              },
+              {
+                key: "keep_confidence", label: "That's between her and me",
+                reply: "that's between her and me. it's done, and it was the right call.", replyTo: "alex",
+                journal: "Kept what Jordan told me to myself. Alex carried her work for two months and still doesn't know why she went.",
+                effects: {
+                  char: { alex: { trust: 6, morale: -3 } },
+                  say: { char: "alex", text: "okay. i'll take that." },
+                },
+              },
+            ],
+          },
+
+          {
             id: "firing_last_word", char: "jordan",
             text: "is that everything?",
-            when: { after: ["firing_logistics"] },
+            // Closes the scene, so it yields to Alex's question when there is
+            // one — otherwise the sitting could end with him still waiting.
+            when: {
+              after: ["firing_logistics"],
+              if: (s, e) => !s.firing_asked || e.done("firing_alex_after"),
+            },
             choices: [
               {
                 key: "human", label: "Name the thing she actually did",
@@ -428,40 +464,6 @@
       },
     ],
 
-    nodes: [
-      {
-        // Alex was awake. What you tell him is a second management problem,
-        // the same night — and it is deliberately ungraded.
-        id: "firing_alex_after", char: "alex",
-        text: "so what did she say? i've been staring at my phone for an hour.",
-        when: { took: ["firing_reaction:ask"], if: (s) => !!s.jordan_resolved },
-        choices: [
-          {
-            key: "tell_alex", label: "Tell him — she took another job",
-            reply: "she took another job. three weeks ago.",
-            journal: "Told Alex what Jordan told me in confidence an hour after I let her go. He took it better than she would have.",
-            effects: {
-              char: { alex: { morale: 8 } },
-              say: { char: "alex", text: "…three weeks. and she let me cover for her the whole time." },
-            },
-          },
-          {
-            key: "keep_confidence", label: "That's between her and me",
-            reply: "that's between her and me. it's done, and it was the right call.",
-            journal: "Kept what Jordan told me to myself. Alex carried her work for two months and still doesn't know why she went.",
-            effects: {
-              char: { alex: { trust: 6, morale: -3 } },
-              say: { char: "alex", text: "okay. i'll take that." },
-            },
-          },
-        ],
-        timeout: {
-          weeks: 2,
-          effects: { char: { alex: { trust: -5 } } },
-          say: { char: "alex", text: "right. i'll stop asking." },
-        },
-      },
-    ],
   };
 
   // ── the compromise ──────────────────────────────────────────────────────────

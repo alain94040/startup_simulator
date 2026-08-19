@@ -4,11 +4,10 @@
 // her stake on the cap table (s.jordan_cleanup_needed) — the vesting lesson the
 // investors' diligence flags until a lawyer cleans it up.
 //
-// The drift beats live on Alex's thread (he's the one telling you) but mutate
-// Jordan via effects.char.jordan / e.cast.get("jordan"). The confrontation
-// itself sits on the FOUNDER's thread — it's the founder's call, and Alex's
-// chapter-4 slot is too contested to carry it (see the note on that node).
-// Answering it opens the firing scene in story/firing.js.
+// Every drift beat lives on Alex's thread (he's the one telling you) but
+// mutates Jordan via effects.char.jordan / e.cast.get("jordan"). Answering the
+// confrontation — telling Alex you'll have the talk — opens the firing scene in
+// story/firing.js.
 //
 // v2 timing note: the old arc could start at week 8, mid-dev-spine, silently
 // disabling Jordan's own direction cards. Here the drift waits until pivot day
@@ -130,16 +129,17 @@
         },
       },
       {
-        // On the FOUNDER's thread, deliberately — same reason pivot_relaunch
-        // moved off Alex's: in chapter 4 his single slot is contested by the
-        // relaunch, the Maya bookend and the Flare epilogue, and this card was
-        // getting starved past the deadline. It is also the founder's call to
-        // make, which is the whole point of what follows.
-        id: "jordan_confrontation", char: "founder",
+        // Alex's message, answered in Alex's thread: the player agrees to have
+        // the conversation, and that agreement opens the scene. It deliberately
+        // is NOT a founder-thread card — a "Your move" card can be skimmed past,
+        // and this is the one call in chapter 4 that must be made to somebody's
+        // face. Alex's slot is contested here, which is why pivot_payoff_maya
+        // yields to this beat (see story/pivot_day.js).
+        id: "jordan_confrontation", char: "alex",
         text: (s, e) => {
           const pct = s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%";
-          return "Alex finally said it out loud: \"jordan's been part-time for two months. i'm covering her work and mine. she has "
-            + pct + " of the company and i don't think she's earning it anymore.\" He won't say it twice, and he can't do anything about it. This one is yours.";
+          return "i need to say something out loud. jordan's been part-time for two months. i'm covering her work and mine. she has "
+            + pct + " of the company and i don't think she's earning it anymore.\n\ni can't be the one to have this conversation. you can.";
         },
         when: {
           cooldown: 4,
@@ -156,9 +156,8 @@
             // this fx now happens in the scene (story/firing.js), where Jordan
             // is actually in the room. The old one-click fire never let the
             // player say a word to her.
-            key: "fire", label: "Have the conversation — talk to Jordan",
-            reply: "you're right. this is mine to do, and i'm doing it tonight.",
-            replyTo: "alex",
+            key: "fire", label: "You're right. I'll talk to her tonight.",
+            reply: "you're right, and it's mine to do. i'm messaging her tonight.",
             journal: null,
             effects: { scene: "firing" },
             fx: () => null,

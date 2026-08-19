@@ -342,7 +342,8 @@ educational content is entirely in *how*, which the old card could not express.
   opener, her reaction, her counter-offer, the logistics, the last word.
   Deliberately shorter than pivot (8) and equity (10) — one voice reads longer
   than three arguing, and the outcome is settled at beat 2; everything after is
-  the cost.
+  the cost. A seventh beat (Alex asking what she said) only exists if you asked
+  her what was going on.
 - **The player speaks first.** `firing_open` is on the founder's thread (the
   "Your move" card) and its options carry `replyTo: "jordan"`, so the blue
   bubble lands in *her* thread. The player watches themselves send it.
@@ -361,6 +362,11 @@ educational content is entirely in *how*, which the old card could not express.
   picker, so Alex can't fix it live and a third option — text her, get nothing
   — is the player's first lived data point. The scene now closes on her 12:41 AM
   message asking how it went.
+- **Alex is awake.** His "so what did she say?" is authored *inside* the scene
+  as a founder card whose reply goes back to his thread via `replyTo` — on his
+  own thread it landed after the run was over in a third of runs, because
+  chapter 4 leaves him no free slot. Deliberately ungraded: discretion and
+  transparency both cost something.
 - **Consequences.** `s.jordan_quit` (she left) is kept distinct from
   `s.jordan_resolved` (you decided): the quit locks the YC `team_call` chip and
   fires `app_q_founders_left`, the question the real YC form asks — *"Have any
@@ -370,9 +376,13 @@ educational content is entirely in *how*, which the old card could not express.
   price rather than a midnight flinch.
 
 **Two bugs found on the way.**
-- `jordan_confrontation` was starving on Alex's thread in chapter 4, exactly as
-  `pivot_relaunch` once did. Moved to the founder's thread — it's the founder's
-  call anyway.
+- `jordan_confrontation` was starving on Alex's thread in chapter 4: it and
+  `pivot_payoff_maya` both go eligible the week after the relaunch, and a
+  declaration-order tiebreak decided which one the player ever saw. It stays on
+  Alex's thread — the entry has to be *answering him*, agreeing to have the
+  talk, because a founder-thread "Your move" card can be skimmed past and this
+  is the one call that must be made to somebody's face. The Maya bookend yields
+  Alex's slot instead, bounded by the confrontation's own 3-week patience.
 - Inserting a conditional beat mid-arc broke the chain: `engine.js` auto-links
   a beat with no `when` to the previous one, so `app_q_growth` ended up gated
   behind a question that only exists on some runs. It now chains explicitly.
