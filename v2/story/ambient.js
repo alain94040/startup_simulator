@@ -41,7 +41,7 @@
       {
         id: "ff_family", char: "mom", ambient: true,
         text: "just checking in! dad and i were talking about you last night. so proud. how's it going? let us know if there's anything we can do.",
-        when: { if: (s) => s.incorporated && s.week <= 12 },
+        when: { if: (s) => s.week >= 3 && s.week <= 12 },
         choices: momChoices("Asked Mom and Dad if they'd put money in. They're going to talk it over and get back to me."),
         timeout: { weeks: 3 },
       },

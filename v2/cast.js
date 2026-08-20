@@ -32,7 +32,11 @@
     },
     {
       id: "mom", name: "Mom", role: "Family", type: "family",
-      unlock: (s) => (s.incorporated),
+      // Mom texts from week 3 — she waits a beat, but she is family, not a
+      // consequence of the paperwork: gating her on `s.incorporated` (as this
+      // rule briefly did) deleted the whole family-money arc for any founder
+      // who left the incorporation card on read.
+      unlock: (s) => s.week >= 3,
     },
     {
       id: "priya", name: "Priya", role: "Advisor", type: "advisor",

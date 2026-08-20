@@ -86,7 +86,13 @@ console.log("decent driver (seed 42)");
   // Dev spine.
   ok(g.s.dev_plan === "lean", "picked the lean plan");
   ok(!Object.keys(g.s.items || {}).some(k => k.startsWith("scope_")), "no over-scope items on the lean plan");
-  ok(g.weekOf("dev_plan") >= g.weekOf("equity_signing"), "dev plan waited for the signing");
+  // The decent run ends at thirds — the split Alex argued against — so his
+  // mockups arrive a week LATE. Exact equality on purpose: the old `>=` form
+  // passed whether the disappointment cost a week or nothing at all, which is
+  // how the delay stayed broken (see "the cost of a grudging split" below).
+  ok(g.weekOf("dev_plan") === g.weekOf("equity_signing") + 2,
+    "dev plan landed signing+2 — the grudging split cost a week (signed wk "
+    + g.weekOf("equity_signing") + ", plan wk " + g.weekOf("dev_plan") + ")");
   ok(g.took("auth_choice:buy"), "bought auth day one");
   ok(g.s.saas.some(x => x.label === "Auth provider"), "auth SaaS on the burn ($30/wk)");
   ok(!g.log.some(l => l.surfaced === "auth_forced"), "auth_forced never surfaced after buying");
@@ -401,6 +407,61 @@ console.log("part-time vs full-time (seed 42)");
     "full-time Alex out-built part-time (" + ft.cast.get("alex").buildEffort.toFixed(1) + " vs " + pt.cast.get("alex").buildEffort.toFixed(1) + " effort)");
   ok(ft.cast.get("alex").trust < pt.cast.get("alex").trust,
     "…paid for in trust (" + Math.round(ft.cast.get("alex").trust) + " vs " + Math.round(pt.cast.get("alex").trust) + ")");
+}
+
+// ── the cost of a grudging split ─────────────────────────────────────────────
+// Spec: if the equity call doesn't give Alex what he wants, the company loses a
+// week — he doesn't pick the work back up until the week after he otherwise
+// would. dev_plan (his three mockups) is that clock.
+//
+// Note the arithmetic: new messages surface at the WEEK BOUNDARY, so a node
+// that becomes eligible in week W first appears in week W+1. "No delay" is
+// therefore signing+1, and the grudging path has to land on signing+2 to have
+// cost anything. Assert the exact weeks — a `>=` here proves nothing.
+console.log("equity: the grudging delay (seed 42)");
+{
+  const atImpasse = (key) => (a, g) => a.nodeId === "equity_impasse" ? [key] : decent(a, g);
+  const happy   = run(42, atImpasse("forty_final"), 8);   // Alex got what he asked for
+  const grudge  = run(42, atImpasse("thirds_final"), 8);  // he didn't
+  const tabled  = run(42, atImpasse("table"), 8);         // nobody got anything
+
+  ok(happy.s.equity_proposal === "40/40/20" && happy.done("equity_signing"),
+    "40/40/20 signed — Alex got the parity he argued for");
+  ok(happy.weekOf("dev_plan") === happy.weekOf("equity_signing") + 1,
+    "…so the mockups land the very next week (signed wk " + happy.weekOf("equity_signing")
+    + ", plan wk " + happy.weekOf("dev_plan") + ")");
+
+  ok(grudge.s.equity_proposal === "33/33/33" && grudge.done("equity_signing"),
+    "thirds signed over Alex's objection");
+  ok(grudge.weekOf("dev_plan") === grudge.weekOf("equity_signing") + 2,
+    "…so the mockups land a week late (signed wk " + grudge.weekOf("equity_signing")
+    + ", plan wk " + grudge.weekOf("dev_plan") + ")");
+  ok(grudge.weekOf("dev_plan") === happy.weekOf("dev_plan") + 1,
+    "the disappointment costs exactly one week against the happy split");
+
+  ok(tabled.s.equity_tabled && !tabled.done("equity_signing"),
+    "tabling ends the arc with nothing signed");
+  ok(tabled.weekOf("dev_plan") === tabled.weekOf("equity_impasse") + 2,
+    "…and the dodge costs the same week (tabled wk " + tabled.weekOf("equity_impasse")
+    + ", plan wk " + tabled.weekOf("dev_plan") + ")");
+}
+
+// ── the paperwork gates the paperwork, and nothing else ──────────────────────
+// Regression: Mom and the interviews were briefly gated on `s.incorporated`,
+// which silently deleted the family-money arc AND the entire research spine for
+// any founder who left the incorporation card on read.
+console.log("skipping incorporation (seed 42)");
+{
+  const noPaperwork = (a, g) =>
+    (a.nodeId === "incorporate" || a.nodeId === "incorporate_again") ? null : decent(a, g);
+  const g = run(42, noPaperwork, 20, { subsidy: 1500 });
+  ok(!g.s.incorporated, "never incorporated");
+  ok(g.cast.get("mom").active && g.done("ff_family"),
+    "Mom still texts — family isn't a consequence of the paperwork");
+  ok(g.took("interviews:interview"),
+    "the interviews still surface — talking to users doesn't wait on a C-corp");
+  ok(g.took("first_screen:intake_interviews"),
+    "…so the research-gated C-option is still reachable");
 }
 
 // ── determinism ──────────────────────────────────────────────────────────────

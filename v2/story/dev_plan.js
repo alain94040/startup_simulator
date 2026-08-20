@@ -32,16 +32,27 @@
           {
             id: "dev_plan", char: "alex",
             text: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
-            // Lands right after the equity question closes — a week later if
-            // the split left Alex grudging (anything but 40/40/20), and a week
-            // after the dodge when equity got tabled (the signing never fires
-            // on that path). No timeout: this is the spine gate; Alex holds
-            // the question until he gets an answer.
+            // Lands the week after the equity question closes — one week later
+            // still if the answer left Alex grudging: anything but 40/40/20,
+            // or the dodge that tabled the split (the signing never fires on
+            // that path, so the impasse is the clock). A disappointed CTO
+            // costs the company a week before he picks the work back up.
+            //
+            // NOTE ON THE THRESHOLDS: new messages surface at the week
+            // boundary, so a node eligible in week W first appears in week
+            // W+1 — `weeksSince(dep) >= 1` IS "right away". The grudging path
+            // therefore has to ask for >= 2 to cost an actual week; the old
+            // `>= 0 : >= 1` pair surfaced on the same week either way and the
+            // disappointment was free.
+            //
+            // No timeout: this is the spine gate; Alex holds the question
+            // until he gets an answer.
             when: {
-              if: (s, e) => s.equity_tabled
-                ? e.weeksSince("equity_impasse") >= 1
-                : e.done("equity_signing")
-                  && e.weeksSince("equity_signing") >= (s.equity_proposal === "40/40/20" ? 0 : 1),
+              if: (s, e) => {
+                const dep = s.equity_tabled ? "equity_impasse" : "equity_signing";
+                const grudging = s.equity_tabled || s.equity_proposal !== "40/40/20";
+                return e.done(dep) && e.weeksSince(dep) >= (grudging ? 2 : 1);
+              },
             },
             mockups: {
               full:   { tag: "A", variant: "rich" },
@@ -252,7 +263,12 @@
         id: "interviews", char: "founder",
         text: "you've been building without a single structured conversation with someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
         when: {
-          if: (s, e) => !s.launched && s.incorporated 
+          // From week 3 (the paperwork week on the golden path) to the close
+          // of the pre-launch window. Deliberately NOT gated on `s.incorporated`
+          // — talking to users doesn't wait on a Delaware C-corp, and gating it
+          // there silently removed the research spine from any run that left
+          // the incorporation card on read.
+          if: (s, e) => !s.launched && s.week >= 3
             && s.week <= Math.max(8, e.done("dev_plan") ? e.weekOf("dev_plan") + 3 : 8),
         },
         choices: [

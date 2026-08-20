@@ -17,6 +17,14 @@
 //                                         //   keys; an array entry = OR across specs)
 //        not:    ["pivot:defer"],         // none of these outcomes taken
 //        delay:  2,                       // weeks after the latest after/took dep
+//                                         //   ── MIND THE OFF-BY-ONE: outside a
+//                                         //   scene, messages surface at the week
+//                                         //   BOUNDARY, so a node eligible in week
+//                                         //   W first appears in W+1. `delay: 1`
+//                                         //   (and `weeksSince(dep) >= 1`) is
+//                                         //   therefore "the next week" — i.e. no
+//                                         //   delay at all. To make a beat wait one
+//                                         //   real week, ask for 2.
 //        if:     (s, e, char) => bool,    // world-state escape hatch
 //        cooldown: 5,                     // recurring: re-eligible n weeks after the
 //      }                                  //   last resolution (default: fires once)
