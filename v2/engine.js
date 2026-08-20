@@ -32,7 +32,9 @@
 //  - ONE CONSEQUENCE VOCABULARY. A choice (or a timeout) carries `effects` (data)
 //    and/or `fx` (escape hatch). `timeout: { weeks, when, unless, effects, fx, say }`
 //    resolves the node as "@ignored" when its patience runs out or its moment
-//    passes. `effects.schedule` queues delayed consequences.
+//    passes. `effects.schedule` queues delayed consequences; `effects.surface`
+//    pulls a named node into the CURRENT week (see _flushSurface) for the rare
+//    beat that an answer directly causes.
 //
 //  - ARCS are ordered beat lists; a beat with no `when` of its own chains to the
 //    previous beat. An arc with `scene: { cast: [...] }` is a war-room: entering it
@@ -165,6 +167,7 @@
       this.open = {};                 // charId -> { nodeId, week } | null
       this.scene = null;              // active scene arc | null
       this._displaced = new Map();    // charId -> nodeId a scene pushed out of the triage
+      this._surfaceNow = [];          // nodeIds an answer pulled into THIS week (effects.surface)
       this.scheduled = [];            // { week, charId, ev }
       this.actionsLeft = 2;
       this.log = [];                  // flat event log (tests / debugging)
@@ -327,6 +330,27 @@
       }
       this._displaced.clear();
     }
+    // `effects.surface: "<nodeId>"` — the one licensed mid-week arrival outside a
+    // scene. Normal cards land at the week boundary; this is for an answer that
+    // *causes* the next message, where waiting a week would break the causality
+    // (filing the incorporation is what makes the split a live question). Opt-in
+    // and named, so an answer can never dump an unplanned pile into the triage.
+    // Degrades gracefully: if the character's slot is busy or the node isn't
+    // eligible yet, it simply surfaces at the next boundary like anything else.
+    _flushSurface() {
+      const ids = this._surfaceNow;
+      this._surfaceNow = [];
+      if (this.scene) return; // a room is talking — the boundary will do it
+      for (const id of ids) {
+        const node = this.nodes.get(id);
+        if (!node) continue;
+        const char = this.cast.get(node.char);
+        if (!char || !char.active || this.open[node.char]) continue;
+        if (!this._eligible(node)) continue;
+        this.eligibleSince.set(id, this.s.week);
+        this._show(node.char, node);
+      }
+    }
     _show(charId, node) {
       const cur = this.open[charId];
       if (cur && cur.nodeId === node.id) return;
@@ -422,7 +446,7 @@
       // out of the UI anyway, and a timeout's message must not land inside the
       // scene's transcript. The scene-exit answer runs the sweep (scene is
       // null by then), so the room never reopens onto stale cards.
-      if (!this.scene) { this._restoreDisplaced(); this._sweepClosed(); }
+      if (!this.scene) { this._restoreDisplaced(); this._sweepClosed(); this._flushSurface(); }
 
       // New messages surface at the week boundary — except mid-scene, where the
       // next beat lands immediately so the conversation flows in one sitting.
@@ -480,6 +504,7 @@
       }
       if (fx.say) this._say(fx.say, node && node.char);
       if (fx.schedule) for (const ev of [].concat(fx.schedule)) this.schedule(ev);
+      if (fx.surface) for (const id of [].concat(fx.surface)) this._surfaceNow.push(id);
       if ("scene" in fx) {
         this.scene = fx.scene ? this.arcs.get(fx.scene) : null;
         if (this.scene) this._displaced.clear(); // a new room starts with a clean slate

@@ -84,8 +84,21 @@
         beats: [
           {
             id: "equity_open", char: "jordan",
-            text: "hey — the three of us should probably sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon.",
-            when: { after: ["start_prototype"], delay: 1 },
+            // Two openings, because there are two ways in. Filed: the Atlas
+            // form itself asks who owns what, and Jordan just read that
+            // question. Never filed (the paperwork went unanswered): she
+            // raises it on her own, the way she always would have.
+            text: (s) => s.incorporated
+              ? "the atlas form just asked how many shares each of us gets 😅 so — we should sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon."
+              : "hey — the three of us should probably sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon.",
+            // Chained to the paperwork, not the calendar: you can't split a
+            // company that doesn't exist yet (see incorporate's own text). On
+            // the golden path the filing pulls this into the same week via
+            // `effects.surface`, so the crisis still lands in week 2; if the
+            // paperwork gets ignored instead, the @ignored resolution satisfies
+            // `after` and the opener arrives at the next boundary — late, but
+            // never lost.
+            when: { after: ["incorporate"] },
             choices: [
               {
                 key: "open", label: "Let's sit down right now and settle it",

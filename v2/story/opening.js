@@ -17,11 +17,15 @@
     };
   }
 
+  // Filing is what makes the split a live question — the Atlas form asks who
+  // owns what — so Jordan's equity opener is pulled into the same week instead
+  // of waiting for the boundary (`effects.surface`). Alex's own card says it:
+  // "no equity split without one."
   const incorporateChoice = {
     key: "atlas", label: "Incorporate via Stripe Atlas — $500",
     reply: "do it. stripe atlas, delaware c-corp. let's get this done today.",
     journal: "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
-    effects: { cash: -500, flags: { incorporated: true } },
+    effects: { cash: -500, flags: { incorporated: true }, surface: "equity_open" },
     fx: () => "Delaware C-corp registered. EIN assigned, bank account open. $500 gone — you're officially a company.",
   };
 

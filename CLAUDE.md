@@ -65,7 +65,7 @@ The engine replaced v1's single-`urgency`-axis "cards" with an explicit dependen
 - `ambient: true` / `filler: true` — scheduler class (see below).
 
 **3. One effects vocabulary** (a choice or a timeout carries `effects` data and/or an `fx(s,e,char)` escape hatch):
-`{ cash, signal, marketFit, waitlist, users, customers, saas, flags, char{ morale, trust, effort, focus, flags }, say, schedule, scene }`. Cash deltas auto-log to `engine.ledger` (the Bank statement). `effects.schedule` queues a delayed consequence (`{ in, char?, say?, effects?, fx?, unless? }`), fired in `nextWeek()`. `effects.scene = arcId` enters a scene; `scene: null` exits it.
+`{ cash, signal, marketFit, waitlist, users, customers, saas, flags, char{ morale, trust, effort, focus, flags }, say, schedule, surface, scene }`. Cash deltas auto-log to `engine.ledger` (the Bank statement). `effects.schedule` queues a delayed consequence (`{ in, char?, say?, effects?, fx?, unless? }`), fired in `nextWeek()`. `effects.surface = "<nodeId>"` pulls a named node into the **current** week — the opt-in exception to the boundary rule, for a beat an answer directly causes (filing the incorporation is what makes the split a live question, so Jordan's opener lands the same week). `effects.scene = arcId` enters a scene; `scene: null` exits it.
 
 ## Turn & surfacing model
 
@@ -73,7 +73,7 @@ The engine replaced v1's single-`urgency`-axis "cards" with an explicit dependen
 
 **One open slot per character**, tracked in `engine.open[charId] = { nodeId, week }`. Surfacing happens in `_poll()` (constructor + `nextWeek()`, and mid-scene after each answer). **Scheduler — no urgency:** per character, pick the first eligible node by class then FIFO (earliest-eligible, then declaration order):
 `scene beat > story beat > ambient > filler`.
-An open node holds its slot until answered or its `timeout` fires. New messages appear at the week boundary — except **mid-scene**, where the next beat lands immediately.
+An open node holds its slot until answered or its `timeout` fires. New messages appear at the week boundary — with two exceptions: **mid-scene**, where the next beat lands immediately, and a beat a choice names with **`effects.surface`**, which lands the moment that choice is answered. A scene also *displaces* whatever its cast had open; those cards are handed straight back when the room empties (`_restoreDisplaced`), so a sitting that opens and closes inside one week still owes the player its two actions.
 
 **The horizon:** every run ends entering `s.deadline_week` (25) — YC applications close and the report card prints no matter what. Admission needs **both** the grade (`engine.gradeScore()` ≥ 80, a B+) **and** the traction bar (`launched && pivot_shipped && customers >= 1` — wise answers without a shipped company don't get funded). **Win:** YC acceptance (`s.ycAccepted`). **Lose:** rejection (`s.ycRejected`), never applying (`s.deadline_passed`), or cash hitting $0 first. **Starting cash** $10,000; **burn** `burnPerWeek = 500 + s.extra_burn` (recurring SaaS costs from build-vs-buy choices). The application beat lives on the `yc` thread from week `deadline_week - 3` (`story/fundraising.js`); the verdict letter is scheduled at submission and world.js is the mechanical backstop that ends every run.
 

@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { Game } = require("../engine.js");
-const { ANSWER_ORDER, actPriority, PREF, decent, playGame } = require("./harness.js");
+const { ANSWER_ORDER, actPriority, PREF, decent, playGame, makeAttentionPriority } = require("./harness.js");
 
 let failures = 0, checks = 0;
 function ok(cond, label) {
@@ -446,21 +446,46 @@ console.log("equity: the grudging delay (seed 42)");
     + ", plan wk " + tabled.weekOf("dev_plan") + ")");
 }
 
-// ── a scene hands the week back ──────────────────────────────────────────────
-// Weeks 1-2 are meant to be forced: two actions, two real cards, so the company
-// always gets incorporated. Tapping Jordan's equity opener first used to break
-// that — entering a scene DISPLACES whatever its cast had open (Alex was
-// holding the paperwork), and act() only re-polls *inside* a scene, so the
-// displaced card stayed out of the triage until the next week boundary. The
-// negotiation is free, so the player came out of it with two unspent actions,
-// nothing to answer, and an "End week →" pill: incorporation slid to week 3,
-// where a crowded triage let it time out entirely.
-console.log("week 2 is forced, whichever card you tap first (seed 42)");
+// ── week 2: the paperwork, then the split ────────────────────────────────────
+// Weeks 1-2 are meant to be forced — two actions, two real cards — so the
+// company always gets incorporated. That only holds if the week can't be spent
+// elsewhere, which is why Jordan's equity opener is chained to the filing
+// (`after: ["incorporate"]`) rather than to the calendar: you can't divide a
+// company that doesn't exist, and Alex's own card says so ("no equity split
+// without one"). The filing then pulls her in the SAME week via
+// `effects.surface`, so the opening crisis still lands in week 2.
+console.log("week 2: the paperwork, then the split (seed 42)");
 {
-  const equityFirst = (a) => (a.scene || a.charId === "jordan") ? -10 : 0;
-  let atExit = null;
+  let wk2Open = null, afterFiling = null;
   const g = run(42, decent, 6, {
-    priority: equityFirst,
+    onWeekStart: (game, acts) => { if (game.s.week === 2) wk2Open = acts.map(a => a.nodeId); },
+    onAct: (game, a) => {
+      if (a.nodeId === "incorporate") afterFiling = game.openActions().map(x => x.nodeId);
+    },
+  });
+  ok(wk2Open && wk2Open.filter(id => id !== "founder_reflect").join() === "incorporate",
+    "week 2 opens on the paperwork and nothing else: " + (wk2Open || []).join(", "));
+  ok(afterFiling && afterFiling.includes("equity_open"),
+    "filing brings Jordan in the same week — no waiting for the boundary");
+  ok(g.weekOf("incorporate") === 2 && g.weekOf("equity_open") === 2,
+    "both land in week 2 (paperwork wk " + g.weekOf("incorporate")
+    + ", opener wk " + g.weekOf("equity_open") + ")");
+  ok(g.weekOf("equity_signing") === 2, "…and the sitting still settles the split in week 2");
+}
+
+// ── a scene hands the week back ──────────────────────────────────────────────
+// Entering a scene DISPLACES whatever its cast had open, and act() only
+// re-polls *inside* a scene — so a displaced card used to stay out of the
+// triage until the next week boundary. Since the beats are free, a sitting that
+// opened and closed inside one week left the player holding unspent actions
+// with nothing to answer, and the displaced card silently slid a week.
+console.log("a scene hands the week back (seed 1, attention-shuffled)");
+{
+  // This founder deferred the paperwork, so the equity sitting lands in week 4
+  // on top of two live cards of their own.
+  let atExit = null;
+  const g = run(1, decent, 6, {
+    priority: makeAttentionPriority(1),
     onAct: (game, a) => {
       if (a.nodeId === "equity_signing") atExit = {
         left: game.actionsLeft,
@@ -468,13 +493,11 @@ console.log("week 2 is forced, whichever card you tap first (seed 42)");
       };
     },
   });
-  ok(g.weekOf("equity_signing") === 2, "the equity sitting opened and closed inside week 2");
-  ok(atExit && atExit.left === 2,
-    "the sitting was free — both actions still in hand when the room emptied (" + (atExit ? atExit.left : "?") + ")");
-  ok(atExit && atExit.open.includes("incorporate"),
-    "…and Alex's paperwork is back in the triage: " + (atExit ? atExit.open.join(", ") || "(nothing — the week is dead)" : "?"));
-  ok(g.outcome("incorporate") === "atlas" && g.weekOf("incorporate") === 2,
-    "so the company is incorporated in week 2 either way (wk " + g.weekOf("incorporate") + ")");
+  ok(g.weekOf("equity_signing") === 4, "the sitting ran in week 4, mid-chapter");
+  ok(atExit && atExit.left >= 1, "the player still had an action when the room emptied");
+  ok(atExit && atExit.open.includes("interviews") && atExit.open.includes("alex_side_project"),
+    "…and both cards the room pushed aside are back in it: "
+    + (atExit ? atExit.open.join(", ") || "(nothing — the week is dead)" : "?"));
 }
 
 // ── the paperwork gates the paperwork, and nothing else ──────────────────────
