@@ -164,6 +164,7 @@
       for (const id of this.order) this.threads[id] = [];
       this.open = {};                 // charId -> { nodeId, week } | null
       this.scene = null;              // active scene arc | null
+      this._displaced = new Map();    // charId -> nodeId a scene pushed out of the triage
       this.scheduled = [];            // { week, charId, ev }
       this.actionsLeft = 2;
       this.log = [];                  // flat event log (tests / debugging)
@@ -283,9 +284,14 @@
           const curInScene = this.scene && this.arcOf.get(cur.nodeId) === this.scene;
           if (this.scene && !curInScene) {
             // A scene displaces whatever was open; the displaced node was never
-            // resolved, so it simply resurfaces once the scene ends.
+            // resolved, so it goes back in its slot the moment the room empties
+            // (_restoreDisplaced, called from act()) — the week the scene ate
+            // still owes the player its two actions.
             const best = this._pick(cands);
-            if (best) this._show(charId, best);
+            if (best) {
+              if (!this._displaced.has(charId)) this._displaced.set(charId, cur.nodeId);
+              this._show(charId, best);
+            }
             continue;
           }
           if (this.scene && curInScene && !this._stillRelevant(curNode)) {
@@ -306,6 +312,20 @@
         const best = this._pick(cands);
         if (best) this._show(charId, best);
       }
+    }
+    // Put back whatever the room pushed aside. Scene beats are free, so a scene
+    // that opens AND closes inside one week must hand the week back intact:
+    // without this, a card displaced by the sitting stayed out of the triage
+    // until the next week boundary (act() only re-polls *inside* a scene), and
+    // the player skipped a week they never got to spend.
+    _restoreDisplaced() {
+      if (this.scene) return;
+      for (const [charId, nodeId] of this._displaced) {
+        const node = this.nodes.get(nodeId);
+        if (!node || this.open[charId] || !this._eligible(node)) continue;
+        this._show(charId, node);
+      }
+      this._displaced.clear();
     }
     _show(charId, node) {
       const cur = this.open[charId];
@@ -402,7 +422,7 @@
       // out of the UI anyway, and a timeout's message must not land inside the
       // scene's transcript. The scene-exit answer runs the sweep (scene is
       // null by then), so the room never reopens onto stale cards.
-      if (!this.scene) this._sweepClosed();
+      if (!this.scene) { this._restoreDisplaced(); this._sweepClosed(); }
 
       // New messages surface at the week boundary — except mid-scene, where the
       // next beat lands immediately so the conversation flows in one sitting.
@@ -460,7 +480,10 @@
       }
       if (fx.say) this._say(fx.say, node && node.char);
       if (fx.schedule) for (const ev of [].concat(fx.schedule)) this.schedule(ev);
-      if ("scene" in fx) this.scene = fx.scene ? this.arcs.get(fx.scene) : null;
+      if ("scene" in fx) {
+        this.scene = fx.scene ? this.arcs.get(fx.scene) : null;
+        if (this.scene) this._displaced.clear(); // a new room starts with a clean slate
+      }
     }
     // Public alias for content code that needs a conditional in-character
     // message mid-fx (e.g. pivot day's evidence-chip responses).

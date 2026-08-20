@@ -446,6 +446,37 @@ console.log("equity: the grudging delay (seed 42)");
     + ", plan wk " + tabled.weekOf("dev_plan") + ")");
 }
 
+// ── a scene hands the week back ──────────────────────────────────────────────
+// Weeks 1-2 are meant to be forced: two actions, two real cards, so the company
+// always gets incorporated. Tapping Jordan's equity opener first used to break
+// that — entering a scene DISPLACES whatever its cast had open (Alex was
+// holding the paperwork), and act() only re-polls *inside* a scene, so the
+// displaced card stayed out of the triage until the next week boundary. The
+// negotiation is free, so the player came out of it with two unspent actions,
+// nothing to answer, and an "End week →" pill: incorporation slid to week 3,
+// where a crowded triage let it time out entirely.
+console.log("week 2 is forced, whichever card you tap first (seed 42)");
+{
+  const equityFirst = (a) => (a.scene || a.charId === "jordan") ? -10 : 0;
+  let atExit = null;
+  const g = run(42, decent, 6, {
+    priority: equityFirst,
+    onAct: (game, a) => {
+      if (a.nodeId === "equity_signing") atExit = {
+        left: game.actionsLeft,
+        open: game.openActions().filter(x => !x.onHold).map(x => x.nodeId),
+      };
+    },
+  });
+  ok(g.weekOf("equity_signing") === 2, "the equity sitting opened and closed inside week 2");
+  ok(atExit && atExit.left === 2,
+    "the sitting was free — both actions still in hand when the room emptied (" + (atExit ? atExit.left : "?") + ")");
+  ok(atExit && atExit.open.includes("incorporate"),
+    "…and Alex's paperwork is back in the triage: " + (atExit ? atExit.open.join(", ") || "(nothing — the week is dead)" : "?"));
+  ok(g.outcome("incorporate") === "atlas" && g.weekOf("incorporate") === 2,
+    "so the company is incorporated in week 2 either way (wk " + g.weekOf("incorporate") + ")");
+}
+
 // ── the paperwork gates the paperwork, and nothing else ──────────────────────
 // Regression: Mom and the interviews were briefly gated on `s.incorporated`,
 // which silently deleted the family-money arc AND the entire research spine for
