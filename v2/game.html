@@ -986,7 +986,9 @@ function openThread() {
   // Nothing new to reveal (an already-read thread): still refresh the rail so the
   // clicked conversation gets the selected highlight and the old one lets go.
   if (from >= t.length) { render(); return; }
-  uiBusy = true; renderHeader();
+  // The rail moves with the click, not with the reveal: the row you just opened
+  // takes the highlight and drops its blue dot now, while its messages type in.
+  uiBusy = true; renderHeader(); renderRail();
   clearTimeout(revealTimer);
   const step = () => {
     const cur = threadRendered[selected] || 0;
@@ -1657,6 +1659,13 @@ function advanceWeek() {
       setTimeout(checkEndgame, weekNotes.length ? 1700 : 700);
     }
     uiBusy = false;
+    // The reveal above only redraws the header, the journal and the triage —
+    // the rail's unread dots and previews used to ride on openThread()'s
+    // closing render(), which fires only when the thread you're STANDING IN
+    // got something. On any other week the rail kept showing last week: no
+    // blue dot for the person who just texted you, and a stale preview line.
+    // Refresh with the buzz instead, so the dots land with the notification.
+    render();
   }
 }
 // runway digit + bar count from → to (fast, ~500ms)
