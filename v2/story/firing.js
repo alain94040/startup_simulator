@@ -239,7 +239,7 @@
                 journal: "Asked Jordan for one more sprint. Again. She stopped replying, and a week later she was gone.",
                 effects: { scene: null },
                 fx(s, e) {
-                  e.say({ char: "jordan", text: "no. i'm out — i took a full-time offer weeks ago and you've now asked me twice not to tell you. i'll keep my shares." });
+                  e.say({ char: "jordan", text: "no. nothing has changed since last time and you've now asked me twice to pretend it will. i'm out. i'll keep my shares." });
                   jordanLeaves(s, e, "quit");
                   return "She's gone. You asked twice and she answered once.";
                 },
@@ -315,22 +315,31 @@
 
           {
             id: "firing_ask_finish", char: "jordan",
-            text: "i took a full-time offer. three weeks ago. senior ios, real money, and i've been doing both badly ever since.\n\ni started four messages telling you and deleted all of them, because i didn't want to be the one who left.\n\nso. finish what you opened this to say.",
+            // No secret, no betrayal, no new job: she has been part-time with a
+            // day job since week one and said so out loud in the equity scene.
+            // Nothing changed — the company changed around her. That removes
+            // the player's excuse, which is the entire point of asking.
+            text: (s) => "honestly? nothing. that's the whole answer, and i know how it sounds.\n\n"
+              + "i'm doing exactly what i said i'd do in week one — evenings and weekends, around a job i can't afford to quit. that hasn't changed once since we started. you two went full-time and i didn't, and i was never going to be able to match that.\n\n"
+              + (s.jordan_equity
+                ? "you knew that when we signed the split. nobody's said a word about it since."
+                : "you knew that when we were arguing about the split. the one we never got round to signing.")
+              + "\n\nso. finish what you opened this to say.",
             when: { took: ["firing_reaction:ask"] },
             choices: [
               {
-                key: "hold_informed", label: "I'm glad you told me. It doesn't change the call.",
-                reply: "i'm glad you told me. it doesn't change the call — i think it makes it the right one for both of us. you're off the founding team.",
+                key: "hold_informed", label: "You're right, and it doesn't change the call.",
+                reply: "you're right, and i should have said it months ago instead of letting it drift. it doesn't change the call — it's most of why it's the right one. you're off the founding team.",
                 journal: null,
                 effects: { say: { char: "jordan", text: "yeah. i know. it's just easier to hear when someone asks first." } },
               },
               {
                 key: "fold_informed", label: "…Forget what I said. Take the sprint.",
                 reply: "…okay. forget what i said. take the sprint, see how it goes.",
-                journal: "Jordan told me she'd taken another job three weeks ago, and I asked her for one more sprint anyway.",
+                journal: "Jordan told me straight that nothing about her situation was going to change — and I asked her for one more sprint anyway.",
                 effects: {
                   scene: null,
-                  say: { char: "jordan", text: "i just told you i have another job." },
+                  say: { char: "jordan", text: "i just told you nothing is going to change." },
                 },
                 fx: (s, e) => compromise(s, e),
               },
@@ -402,12 +411,12 @@
             when: { after: ["firing_logistics"], if: (s) => !!s.firing_asked },
             choices: [
               {
-                key: "tell_alex", label: "She took another job. Three weeks ago.",
-                reply: "she took another job. three weeks ago.",
-                journal: "Told Alex what Jordan told me in confidence an hour after I let her go. He took it better than she would have.",
+                key: "tell_alex", label: "She knew months ago she couldn't match us.",
+                reply: "she's known for months she was never going to be able to match us. she just never said it out loud.",
+                journal: "Repeated to Alex what Jordan told me in confidence an hour after I let her go — that she'd known for months and said nothing.",
                 effects: {
                   char: { alex: { morale: 8 } },
-                  say: { char: "alex", text: "…three weeks. and she let me cover for her the whole time." },
+                  say: { char: "alex", text: "…months. and she let me carry it anyway." },
                 },
               },
               {
@@ -485,8 +494,8 @@
         en.say({
           char: "jordan",
           text: st.firing_asked
-            ? "i'm stepping back. i told you about the job that night and you asked me for one more sprint anyway, so i think we both knew. i'll keep my shares. good luck with the relaunch."
-            : "i'm stepping back. i took a full-time offer — three weeks before that night, actually. i'll keep my shares. good luck with the relaunch. i mean that.",
+            ? "i'm stepping back. i told you that night that nothing was going to change and you asked me for one more sprint anyway, so i think we both knew. i'll keep my shares. good luck with the relaunch."
+            : "i'm stepping back. nothing's changed since that night and nothing was going to — i think we both knew that when you asked. i'll keep my shares. good luck with the relaunch. i mean that.",
         });
         jordanLeaves(st, en, "quit");
         en.schedule({

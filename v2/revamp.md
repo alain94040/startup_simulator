@@ -350,6 +350,14 @@ educational content is entirely in *how*, which the old card could not express.
   rather than a label for a strategy. The opener is her, at midnight, on the
   first free evening she has had in weeks — pushing the plans screen to staging
   and asking whether to walk you through it tomorrow. You answer that.
+- **No secret and no villain.** Asking her what is going on does not uncover a
+  hidden job — she has been part-time with a day job since week one, says so in
+  the opening scene, and argues it in the equity negotiation. Her answer is
+  that nothing has changed and nothing is going to: the company went full-time
+  around her and nobody ever said a word about it. That removes the player's
+  excuse (*she deceived me, so this is easy*) and points the one accusation in
+  the scene back at the founder, who set the split knowing exactly this.
+  Holding the line after hearing it is the skill the beat tests.
 - **Beat 2 is an exam on the whole run**, not on the last five minutes: three
   tiers off the drift history, the ratio of her messages left on read, and the
   equity paperwork. At the bottom she pre-empts you (`firing_preempt`) and the

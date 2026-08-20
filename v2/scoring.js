@@ -110,7 +110,7 @@
           { faced: g.done("firing_reaction"), weight: 1,
             got: g.took("firing_reaction:ask") ? 1 : 0.5,
             note: g.took("firing_reaction:ask")
-              ? "Asked what was actually going on before finishing — and found out she'd already taken another job." : null },
+              ? "Asked what was actually going on before finishing — and heard that nothing had changed since week one, which was the whole problem." : null },
         ]),
         ["You had the talks nobody wants to have — early, in person.",
           "Some conversations happened; others were left to fester.",
