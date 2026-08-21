@@ -1274,6 +1274,14 @@ document.addEventListener("click", (e) => {
 // ── acting ────────────────────────────────────────────────────────────────────
 function doAct(nodeId, key, charId) {
   if (uiBusy) return;
+  // A room blocks out the rest of the world — and that has to include clicks.
+  // The HUD behind a scene keeps whatever it rendered before the room opened
+  // (renderSide doesn't run while the overlay is up), so its buttons are live,
+  // stale, and worth a real action: answering one spent a move the room never
+  // offered, and the week could end up with nothing left to spend. The engine
+  // already flags those cards `onHold`; honour it here.
+  const held = game.openActions().find(a => a.nodeId === nodeId);
+  if (held && held.onHold) return;
   const preScene = game.scene;
   const preSeq = game._seq;
   game.act(nodeId, key);
@@ -1588,7 +1596,18 @@ function exitScene() {
   for (const id of game.order) threadRendered[id] = game.threads[id].length;
   const meta = SCENE_META[lastSceneId] || {};
   const lines = meta.exit ? meta.exit(game.s) : null;
-  const back = () => { inScene = false; scSelected = null; jShown = journalMirror().length; render(); checkEndgame(); };
+  const back = () => {
+    inScene = false; scSelected = null; jShown = journalMirror().length;
+    render(); checkEndgame();
+    // The beats in a room are free, but the week around it is not: the answer
+    // that OPENS a room can be a paid one (Jordan's confrontation, the summit
+    // call, the ship call), and doAct returns into enterScene() before it can
+    // schedule the turn. Without this the player comes back to a spent week
+    // with nothing to answer and no End-week pill — stuck on the same week.
+    if (!game.s.game_over && !game.s.game_won && game.actionsLeft <= 0) {
+      uiBusy = true; renderHeader(); setTimeout(advanceWeek, 620);
+    }
+  };
   if (lines) showCine(lines, meta.accent, back); else back();
 }
 
