@@ -456,10 +456,12 @@ console.log("equity: the grudging delay (seed 42)");
 // `effects.surface`, so the opening crisis still lands in week 2.
 console.log("week 2: the paperwork, then the split (seed 42)");
 {
-  let wk2Open = null, afterFiling = null;
+  let wk2Open = null, afterFiling = null, before = 2;
+  const spend = {};
   const g = run(42, decent, 6, {
-    onWeekStart: (game, acts) => { if (game.s.week === 2) wk2Open = acts.map(a => a.nodeId); },
+    onWeekStart: (game, acts) => { if (game.s.week === 2) { wk2Open = acts.map(a => a.nodeId); before = game.actionsLeft; } },
     onAct: (game, a) => {
+      if (game.s.week === 2) { spend[a.nodeId] = before - game.actionsLeft; before = game.actionsLeft; }
       if (a.nodeId === "incorporate") afterFiling = game.openActions().map(x => x.nodeId);
     },
   });
@@ -471,6 +473,20 @@ console.log("week 2: the paperwork, then the split (seed 42)");
     "both land in week 2 (paperwork wk " + g.weekOf("incorporate")
     + ", opener wk " + g.weekOf("equity_open") + ")");
   ok(g.weekOf("equity_signing") === 2, "…and the sitting still settles the split in week 2");
+
+  // The week's two moves are the filing and the invitation. Jordan's opener is
+  // a normal card that costs an action (like the summit call, the ship call and
+  // Jordan's confrontation) — only what happens INSIDE the room is free. While
+  // it lived inside the arc the whole negotiation was free, so week 2 ended
+  // with a move still unspent and the founder's filler card to burn it on.
+  ok(g.arcOf.get("equity_open") === undefined,
+    "the invitation is a card, not a scene beat");
+  ok(spend.incorporate === 1 && spend.equity_open === 1,
+    "filing and answering Jordan each cost a move (" + JSON.stringify(spend) + ")");
+  ok(spend.equity_signing === 0 && spend.equity_impasse === 0,
+    "…and every beat inside the room is free");
+  ok(!g.done("founder_reflect") || g.weekOf("founder_reflect") !== 2,
+    "so week 2 is spent on the company, not on the filler card");
 }
 
 // ── a scene hands the week back ──────────────────────────────────────────────
@@ -494,10 +510,11 @@ console.log("a scene hands the week back (seed 1, attention-shuffled)");
     },
   });
   ok(g.weekOf("equity_signing") === 4, "the sitting ran in week 4, mid-chapter");
-  ok(atExit && atExit.left >= 1, "the player still had an action when the room emptied");
   ok(atExit && atExit.open.includes("interviews") && atExit.open.includes("alex_side_project"),
-    "…and both cards the room pushed aside are back in it: "
+    "both cards the room pushed aside are back in the triage the moment it empties: "
     + (atExit ? atExit.open.join(", ") || "(nothing — the week is dead)" : "?"));
+  ok(g.took("interviews:interview"),
+    "…and the displaced research card was still there to answer, not lost with the room");
 }
 
 // ── the paperwork gates the paperwork, and nothing else ──────────────────────
