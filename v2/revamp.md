@@ -45,8 +45,10 @@ mechanism each — organized by storyline, not by character.
 
 - **Arcs** are ordered beat lists; a beat with no `when` chains to the previous.
   A `scene:` arc is a war-room (equity, demo, launch, pivot): entering it makes
-  only its cast surface, its beats free of action cost, re-polls after each
-  answer so the talk flows in one sitting, and holds the rest of the world.
+  only its cast surface, re-polls after each answer so the talk flows in one
+  sitting, and holds the rest of the world. It costs one of the week's two
+  moves to walk in — you are answering a message — and that move covers the
+  whole sitting; the beats inside are free.
 
 - **Scheduler — no urgency.** Per character, per week, pick the first eligible
   node by class then FIFO: scene beat > story beat > `ambient` > `filler`.

@@ -38,8 +38,10 @@
 //
 //  - ARCS are ordered beat lists; a beat with no `when` of its own chains to the
 //    previous beat. An arc with `scene: { cast: [...] }` is a war-room: entering it
-//    (effects.scene = arcId) makes only its cast surface, its beats free of action
-//    cost, and re-polls after each answer so the talk flows in one sitting.
+//    (effects.scene = arcId) makes only its cast surface and re-polls after each
+//    answer so the talk flows in one sitting. Entering costs ONE of the week's two
+//    moves (you are answering a message) and that move buys the whole sitting —
+//    every beat answered from inside the room is free.
 //
 //  - SCHEDULER. Per character, per week: the first eligible node by class —
 //    scene beat > story beat > ambient > filler — then FIFO (earliest-eligible
@@ -435,8 +437,14 @@
 
       this._record(node, choice.key);
       this.open[charId] = null;
-      // Scene beats are free — including the answer that opens the scene.
-      const free = inSceneBefore || (this.scene && arc === this.scene);
+      // Entering a room is answering a message, so it costs one of the week's
+      // two moves — and that one move buys the WHOLE sitting: every beat
+      // answered once you are inside is free. Only `inSceneBefore` (we were
+      // already in this room when this answer was made) is free; the answer
+      // that opens the room is not, whether the content authored it as the
+      // arc's first beat (equity, demo night) or as a standalone card
+      // (the summit call, the ship call, Jordan's confrontation).
+      const free = inSceneBefore;
       if (!free) this.actionsLeft--;
       this.log.push({ week: this.s.week, charId, acted: nodeId, key: choice.key });
 

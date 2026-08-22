@@ -77,48 +77,40 @@
   };
 
   const mod = {
-    // The invitation is a NORMAL card, not a scene beat: answering it costs one
-    // of the week's two moves, the same way the summit call, the ship call and
-    // Jordan's confrontation do. Only what happens inside the room is free —
-    // so week 2 reads as "file the paperwork, then have the conversation", two
-    // moves, week over. (While this lived inside the arc it was free, and the
-    // whole negotiation cost nothing.)
-    nodes: [
-      {
-        id: "equity_open", char: "jordan",
-        // Two openings, because there are two ways in. Filed: the Atlas
-        // form itself asks who owns what, and Jordan just read that
-        // question. Never filed (the paperwork went unanswered): she
-        // raises it on her own, the way she always would have.
-        text: (s) => s.incorporated
-          ? "the atlas form just asked how many shares each of us gets 😅 so — we should sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon."
-          : "hey — the three of us should probably sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon.",
-        // Chained to the paperwork, not the calendar: you can't split a
-        // company that doesn't exist yet (see incorporate's own text). On
-        // the golden path the filing pulls this into the same week via
-        // `effects.surface`, so the crisis still lands in week 2; if the
-        // paperwork gets ignored instead, the @ignored resolution satisfies
-        // `after` and the opener arrives at the next boundary — late, but
-        // never lost.
-        when: { after: ["incorporate"] },
-        choices: [
-          {
-            key: "open", label: "Let's sit down right now and settle it",
-            reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
-            journal: null,
-            effects: { scene: "equity" },
-          },
-        ],
-        // Ignored: no sit-down — the same conversation happens piecemeal,
-        // one text at a time, over the coming weeks.
-        timeout: { weeks: 2 },
-      },
-    ],
     arcs: [
       {
         id: "equity",
         scene: { cast: ["jordan", "alex", "founder"] },
         beats: [
+          {
+            id: "equity_open", char: "jordan",
+            // Two openings, because there are two ways in. Filed: the Atlas
+            // form itself asks who owns what, and Jordan just read that
+            // question. Never filed (the paperwork went unanswered): she
+            // raises it on her own, the way she always would have.
+            text: (s) => s.incorporated
+              ? "the atlas form just asked how many shares each of us gets 😅 so — we should sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon."
+              : "hey — the three of us should probably sort out equity before it gets weird. equal thirds feels right to me. doesn't have to be today, but soon.",
+            // Chained to the paperwork, not the calendar: you can't split a
+            // company that doesn't exist yet (see incorporate's own text). On
+            // the golden path the filing pulls this into the same week via
+            // `effects.surface`, so the crisis still lands in week 2; if the
+            // paperwork gets ignored instead, the @ignored resolution satisfies
+            // `after` and the opener arrives at the next boundary — late, but
+            // never lost.
+            when: { after: ["incorporate"] },
+            choices: [
+              {
+                key: "open", label: "Let's sit down right now and settle it",
+                reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
+                journal: null,
+                effects: { scene: "equity" },
+              },
+            ],
+            // Ignored: no sit-down — the same conversation happens piecemeal,
+            // one text at a time, over the coming weeks.
+            timeout: { weeks: 2 },
+          },
           {
             id: "equity_alex", char: "alex",
             text: "before we lock anything in — i can't sign off on equal thirds. not the way jordan framed it. i need to know where your head's actually at first.",

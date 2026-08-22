@@ -474,17 +474,19 @@ console.log("week 2: the paperwork, then the split (seed 42)");
     + ", opener wk " + g.weekOf("equity_open") + ")");
   ok(g.weekOf("equity_signing") === 2, "…and the sitting still settles the split in week 2");
 
-  // The week's two moves are the filing and the invitation. Jordan's opener is
-  // a normal card that costs an action (like the summit call, the ship call and
-  // Jordan's confrontation) — only what happens INSIDE the room is free. While
-  // it lived inside the arc the whole negotiation was free, so week 2 ended
-  // with a move still unspent and the founder's filler card to burn it on.
-  ok(g.arcOf.get("equity_open") === undefined,
-    "the invitation is a card, not a scene beat");
+  // The week's two moves are the filing and the invitation. Entering a room is
+  // answering a message: it costs one move, and that move buys the WHOLE
+  // sitting. The engine charges for it whether the content authored the
+  // invitation as the arc's own first beat (here, and demo night) or as a
+  // standalone card (the summit call, the ship call, Jordan's confrontation) —
+  // only `inSceneBefore` is free. While the opening answer was free too, the
+  // entire negotiation cost nothing and week 2 ended with a move unspent.
+  ok(g.arcOf.get("equity_open") === g.arcs.get("equity"),
+    "the invitation is the arc's own first beat");
   ok(spend.incorporate === 1 && spend.equity_open === 1,
-    "filing and answering Jordan each cost a move (" + JSON.stringify(spend) + ")");
+    "…and it still costs a move, like the filing (" + JSON.stringify(spend) + ")");
   ok(spend.equity_signing === 0 && spend.equity_impasse === 0,
-    "…and every beat inside the room is free");
+    "…while every beat answered inside the room is free");
   ok(!g.done("founder_reflect") || g.weekOf("founder_reflect") !== 2,
     "so week 2 is spent on the company, not on the filler card");
 }
