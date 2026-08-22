@@ -472,6 +472,39 @@ compression that would put clear water between the firing and the application
 was scoped out — the collision is resolved by the application no longer being
 an arc, not by moving the spine.
 
+### Pass 7b — the verdict is immediate, the run is not
+
+Pass 7 made applying end the run, which fixed the collision by deleting the
+weeks after it: median end moved 25 -> 24, and the firing (wk 22) was followed
+by the report card almost immediately. The horizon is supposed to be the
+ending, not the application.
+
+So the run now always plays to `deadline_week`. `world.js` is once again the
+only thing that ends a run on time: acceptance and rejection are recorded the
+moment the player applies and only become the run's *outcome* at the deadline
+(bankruptcy still ends a run whenever it happens). The application button moved
+from `deadline_week - 3` to `- 2`, so it no longer appears in the same week as
+the co-founder conversation — a founder should not be firing someone and
+applying to YC in one turn.
+
+The shape that produces, with no change to any arc's pacing:
+
+    wk 22  the firing            wk 23  apply, verdict same day
+    wk 24  the company runs      wk 25  the report card
+
+**A real decision falls out of this.** The verdict reads `gradeScore()` as it
+stands the day you send it, but the report card is recomputed at week 25. So
+applying early locks a lower grade, and waiting improves your odds at the risk
+of running out of clock. The card text now says so out loud ("Partners read the
+company as it stands the day you send it"), and the header gauge stops counting
+down once the answer is in — it reads "Y Combinator · you're in".
+
+**Measured.** Firing -> apply is 1 week in 99 of 103 archetype runs (0 before,
+in 24 of them). Median end week back to 25. Win 52%, bankruptcies 18/192, dead
+air 0% — all unchanged. Never-applied went 5/192 -> 7/192; the two extra are
+`builder` and `marketer`, the lopsided archetypes, and moving the window one
+further week out (`- 1`) costs ten, which is why it stayed at two.
+
 **Still open.** The grade bar is not the binding constraint: every archetype
 that clears the traction gate scores ≥ 89, and every loss in the table is a
 traction loss, not a grade loss. `features-wont-save-you` scores 100 for 15 of

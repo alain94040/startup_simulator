@@ -3,7 +3,7 @@
 // its verdict, plus Sarah (the relaunch channel, met mid-rebuild).
 //
 // The game runs on a fixed horizon: s.deadline_week (25). The application
-// window opens three weeks out on the YC thread, and it is one button: you
+// window opens two weeks out on the YC thread, and it is one button: you
 // apply, and you find out. There is no application scene and no waiting letter
 // — the run is the application, and by the time the button appears every
 // answer it could contain has already been decided by play. A questionnaire
@@ -13,9 +13,14 @@
 // The verdict is earned, not rolled: YC reads the run's report card
 // (engine.gradeScore(), the same 0-100 rollup the endgame shows) and takes B+
 // and better — provided the company exists (launched, pivot shipped, someone
-// paying). Pressing the button ends the run: the verdict lands, and the report
-// card prints behind it. Not applying is a choice with its own ending —
-// world.js closes every run at the deadline either way.
+// paying).
+//
+// Hearing back is NOT the ending. world.js closes every run entering deadline
+// week and the report card prints there, so a founder who gets in at week 23
+// still has the rest of the run to play — and one who applies the day the
+// button appears is graded on the company as it stood that day. Applying is
+// therefore a real call about whether the company is finished, not a formality
+// to get out of the way. Not applying at all is its own ending.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -59,8 +64,11 @@
       // wait was only a wait.
       {
         id: "yc_apply", char: "yc", from: "Y Combinator",
-        text: (s) => "Applications close week " + s.deadline_week + " — one batch, hard deadline, no make-up round. The form asks what you've learned from your users, why this team, and how you'll grow. You've spent " + (s.week - 1) + " weeks answering all three.",
-        when: { if: (s) => s.week >= s.deadline_week - 3 && !s.ycApplied },
+        text: (s) => "Applications close week " + s.deadline_week + " — one batch, hard deadline, no make-up round. The form asks what you've learned from your users, why this team, and how you'll grow; you've spent " + (s.week - 1) + " weeks answering all three. Partners read the company as it stands the day you send it, so the only question left is whether it's finished.",
+        // Opens two weeks out, not three: at three the button appeared in the
+        // same week as the co-founder conversation, and a founder should not be
+        // firing someone and applying to YC in one turn.
+        when: { if: (s) => s.week >= s.deadline_week - 2 && !s.ycApplied },
         choices: [
           {
             key: "submit", label: "Apply to Y Combinator",
@@ -93,11 +101,11 @@
                     : "Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever kindred becomes, this application wasn't the end of it.",
                 });
               }
-              // The button IS the ending: the verdict resolves the run on the
-              // spot rather than waiting for world.js's next tick to notice.
-              // world.js draws the same conclusions from the same two flags —
-              // this just gets there without costing the player a week.
-              if (s.ycAccepted) s.game_won = true; else s.game_over = true;
+              // The verdict is immediate; the RUN is not. world.js still closes
+              // every run entering deadline week, so hearing back early doesn't
+              // cost the player the weeks they have left — it just tells them
+              // what those weeks are for. The report card prints at week 25
+              // either way.
               return s.ycAccepted
                 ? "You hit submit. The reply comes back the same day: you're in."
                 : "You hit submit. The reply comes back the same day, and it's a no.";

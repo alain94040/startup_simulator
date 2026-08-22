@@ -97,8 +97,9 @@
     },
     {
       id: "yc", name: "YC", role: "Y Combinator", type: "institution",
-      // The application window: the thread opens three weeks before the
-      // deadline that ends every run (see story/fundraising.js).
+      // The thread opens three weeks out — a week of warning before the
+      // application button itself arrives at deadline_week - 2, so the
+      // deadline is visible before it is actionable (story/fundraising.js).
       unlock: (s) => s.week >= s.deadline_week - 3,
       intro: "Applications for the batch are open. The deadline is firm.",
     },

@@ -910,7 +910,11 @@ function renderHeader() {
   $("gRunB").style.width = Math.min(100, (st.runway / 20) * 100) + "%";
   $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
   const dIn = game.s.deadline_week - st.week;
-  if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "wk " + game.s.deadline_week; $("gYcB").style.width = "100%"; }
+  // Once the verdict is in, the gauge stops counting down to it — the player
+  // already knows, and still has the rest of the run to play.
+  if (game.s.ycAccepted) { $("gYcL").textContent = "Y Combinator"; $("gYcV").textContent = "you're in"; $("gYcB").style.width = "100%"; }
+  else if (game.s.ycRejected) { $("gYcL").textContent = "Y Combinator"; $("gYcV").textContent = "passed"; $("gYcB").style.width = "100%"; }
+  else if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "wk " + game.s.deadline_week; $("gYcB").style.width = "100%"; }
   else if (dIn > 0) { $("gYcL").textContent = "YC deadline"; $("gYcV").textContent = dIn + " wks left"; $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
   else { $("gYcL").textContent = "YC deadline"; $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
   const stg = currentStage(), c = stageCounts(stg);

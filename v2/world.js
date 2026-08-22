@@ -145,19 +145,22 @@
     }
     s.revenue = s.customers * 50;
 
-    // The horizon: entering deadline week, every run ends. An applied run's
-    // verdict (accept/reject) was already delivered by the scheduled letter in
-    // story/fundraising.js — scheduled consequences fire before this tick. A
-    // run that never applied ends here too: the batch filled without you, and
-    // the report card prints regardless.
-    if (!s.game_won && !s.game_over && s.week >= s.deadline_week
-      && !s.ycAccepted && !s.ycRejected) {
-      s.deadline_passed = true;
-      s.game_over = true;
+    // The horizon: entering deadline week, every run ends — and that is the
+    // ONLY thing that ends a run on time. The YC verdict lands the moment the
+    // player applies (story/fundraising.js), but hearing back is not the
+    // ending: a founder who gets in at week 22 still has weeks 22-25 to run
+    // the company, and the report card grades all of them. So acceptance and
+    // rejection are recorded when they happen and only become the run's
+    // outcome here, at the deadline.
+    if (!s.game_won && !s.game_over && s.week >= s.deadline_week) {
+      if (s.ycAccepted) {
+        s.game_won = true;                       // in, and you ran the weeks out
+      } else {
+        if (!s.ycRejected) s.deadline_passed = true;   // the batch filled without you
+        s.game_over = true;
+      }
     }
-    // Win condition: YC acceptance. Lose: rejection, never applying, or $0.
-    if (!s.game_won && s.ycAccepted) s.game_won = true;
-    if (s.ycRejected) s.game_over = true;
+    // Cash is the one thing that can end a run early, whatever YC said.
     if (s.cash <= 0) s.game_over = true;
   }
 
