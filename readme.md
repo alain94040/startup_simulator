@@ -1,99 +1,143 @@
-# Startup Simulator
+# Startup Simulator — PlusOne
 
-A browser-based educational game about the early startup journey — from idea to seed round. It plays as an **iMessage-style chat sim**: your co-founders, early customers, investors, family, and the press text you, and you respond by picking reply chips. Outcomes are narrated in a founder's journal. Every week you decide who gets your attention — you can't answer everyone.
+A browser-based educational game about the first 25 weeks of a startup, from idea to the YC
+application. It plays as an **iMessage-style chat sim**: your co-founders, early users,
+advisors, family, and the press text you, and you answer by picking reply chips. What each
+choice cost you is recorded in a founder's journal.
 
-**Target play time:** 10–20 minutes. **Win conditions:** YC acceptance, or two angel investors committed. **Lose condition:** you run out of cash.
+You are building **PlusOne**, a dating app for people sick of swiping. You have **$10,000**,
+**two moves a week**, and **25 weeks** until YC applications close.
+
+A full run is 25 weeks at two moves each — about fifty decisions in one sitting.
+**Win:** get into YC. **Lose:** get rejected, never apply, or run out of cash first.
 
 ---
 
 ## Playing
 
 ```
-open game.html        # opens the game in your browser
+open game.html            # the game
+open game.html?seed=42    # a reproducible run
+open play.html            # plain debug harness, for inspecting state
 ```
 
-No build step, no dependencies. After editing any source file, refresh the page.
+No build step, no dependencies, no server. After editing any source file, refresh the page.
+
+`leaderboard.php` is an optional server-side top-50 board (PHP + a writable `score/`
+directory, no database). Without it the game keeps a local board in `localStorage`, so it is
+fully playable from `file://`.
 
 ---
 
 ## How it plays
 
-- **Turn = 1 week, 2 actions.** An action is answering one chat message (pick a suggested reply) or taking a journal action. After two actions — or when you hit "End week" — the week advances.
-- **One message per person at a time.** Each character shows at most one open message. New messages arrive at the start of each week.
-- **You can't answer everyone.** With only two actions a week, threads pile up. If you leave someone hanging too long, they react — a co-founder's morale slips, an investor moves on, a moment passes.
-- **The journal** records what happened in the founder's own voice, with milestone stamps ("Incorporated", "Launched", "YC Accepted", …).
+- **Turn = 1 week, 2 actions.** An action is answering one open message. Spend both and the
+  week advances on its own.
+- **One open message per person.** Each character holds at most one open card; new messages
+  arrive at the week boundary.
+- **You can't answer everyone.** Two moves a week means threads pile up. Leave someone hanging
+  and the moment resolves without you — a co-founder's morale slips, an offer expires, a card
+  quietly closes. Being ignored is a real outcome the story branches on, not a null.
+- **Rooms cost one move and buy the whole conversation.** The equity fight, demo night, launch
+  day, pivot day, the firing, the application — each is a *scene*: entering it costs one of your
+  two moves, and every beat inside it is free.
+- **The journal** records what happened in the founder's own voice, with milestone stamps
+  (Incorporated, Launched, Shipped v2, …).
 
-Cash starts at **$10,000** and burns **$500/week**. Co-founders contribute passively each week based on what they're focused on (building, customer discovery, or pitching).
+Cash starts at **$10,000** and burns **$500/week**, plus whatever recurring SaaS you bought
+along the way. Co-founders contribute passively each week depending on what they're focused on.
+
+---
+
+## The five chapters
+
+A run is one five-chapter story, bounded by what you actually do — not by a script:
+
+| Ch | Goal | Climax |
+|----|------|--------|
+| 1 · Ship the demo | Become a real company: paperwork, the equity split, something a stranger can touch | Demo night |
+| 2 · Get to launch | Launch before the waitlist and the runway go cold | Launch day |
+| 3 · The trough of sorrow | The graph only goes down. Try the quick fixes, watch them fail, bank the evidence | Pivot summit |
+| 4 · Rebuild as v2 | Ship the pivot — and decide who is on the team for it | The relaunch / the firing |
+| 5 · Ace the application | Prove it before week 25: revenue, a channel, a clean cap table | The application → the verdict |
+
+Admission needs **both** a good report card and real traction — wise answers without a shipped
+company don't get funded. The lessons the game is built to teach are in `GOALS.md`.
 
 ---
 
 ## Directory structure
 
 ```
-game.html     Game UI. Self-contained (inline CSS + JS). Loads engine.js and all
-              roles/*.js via <script> tags. Renders the conversation rail, chat
-              threads, and the founder journal. Avatar colors/initials live here.
+game.html     The game UI, self-contained (inline CSS + JS). Three surfaces — Messages
+              (rail · thread), News Feed, and Bank — plus a persistent triage column and
+              the journal mirror. Loads everything below via <script> tags.
+play.html     Plain debug harness UI, for inspecting state quickly.
 
-engine.js     The Engine class — pure logic, no DOM. Exports { Engine }. A thin
-              coordinator: it owns game state and the weekly tick, but each
-              character decides what it says. Each week it polls every active
-              character (their own next(), or the shared defaultNext()) and shows
-              the result; tracks the per-character open slot; resolves answers;
-              runs the economy (burn, passive contributions, conversion, revenue)
-              and win/lose checks.
+engine.js     The story-graph engine: the facts ledger, the scheduler, effects, and scenes.
+              Pure logic, no DOM, no content.
+cast.js       The character registry — who exists, how they unlock, their simulation stats.
+world.js      The weekly economy tick: burn, co-founder effort, conversion, growth, revenue,
+              win/lose.
+scoring.js    The endgame report card: 7 lessons, graded off the facts ledger.
 
-roles/        One file per character. Each exports id, name, role, optional intro,
-              a slice of participating card ids, a voice map (journal retellings),
-              and a cards[] array. Cards have body, options[], urgency (slot rank),
-              available(), and an ignore reaction (dropFx/dropMsg). Files work in
-              both Node and browser (IIFE + module.exports / ROLES global).
+story/        All narrative content, one file per storyline (not per character):
+              opening, equity, dev_plan, team, dev_directions, demo_night, users,
+              launch_day, slide, pivot_day, community, fundraising, growth, jordan_arc,
+              firing, discovery, press, ambient.
 
-  founder.js          The player's own decisions + journal action cards + milestones
-  alex.js             Co-founder/CTO — trust/morale, commitment arc, the Jordan arc
-  jordan.js           Co-founder/iOS — equity negotiation, drift, full-time ask
-  marcus.js           Lead angel investor
-  fatima.js           Follow-on angel investor
-  ryan.js             Angel investor
-  priya.js            Advisor
-  sarah.js            Community leader
-  brett.js / kevin.js Consultants / distractions
-  lena.js             Tech journalist
-  techcrunch.js       Market / competitor news
-  hacker_news.js      HN / Reddit / Indie Hackers community arcs
-  twitter.js          Social signal events
-  yc.js               YC application arc
-  tom.js              Power user
-  analytics.js        Product analytics events
-  users.js            Early user feedback
-  mom.js / jamie.js / david.js   Friends & family funding
+tests/        Headless simulation tools (see below).
+leaderboard.php  Optional top-50 board. No database — a JSON file under score/.
 
-test_engine.js  Headless regression checks for the engine.
-
-CLAUDE.md       Codebase guide (architecture, mechanics, conventions).
+CLAUDE.md     The codebase guide. Read this before changing anything.
+GOALS.md      The educational lessons the game is built to teach.
+revamp.md     Design log for the story-graph engine — why it is built this way.
+reading_the_game.md  Background on the transcript tool.
 ```
+
+Every source file works in both Node and the browser: the browser loads it with a `<script>`
+tag, Node `require`s the same file.
 
 ---
 
 ## Running the tests
 
 ```
-node test_engine.js
+node tests/test_narrative.js    # primary regression suite (narrative-consistency fuzzer)
+node tests/test_slice.js        # deterministic engine + content checks
+node tests/test_scenes.js       # every path through every scene must exit cleanly
+node tests/sim_behaviors.js     # behavior contracts: strategy → designed consequence
+node tests/phase_map.js         # pacing, win rate, per-chapter card balance
+node tests/sim_strategies.js    # strategy comparison table
 ```
 
-Checks that the game advances past week 1/2 without freezing, that characters react when ignored, that no character spams the same message, and that ignore reactions move state.
+And the one that shows you the game instead of statistics about it:
 
-> The older card-based tools (`sim_proto.js`, `earlymap.js`, `treemap.js`, `test_card_balance.js`) target a previous card-dealing engine API and are not wired to the current engine.
+```
+node tests/transcript.js                        # read a run as a screenplay
+node tests/transcript.js --compact              # one line per beat
+node tests/transcript.js --driver no_pivot      # play it as a named archetype
+node tests/transcript.js --char alex            # one relationship, in context
+node tests/transcript.js --sample --html book.html   # the typical runs, as a page
+node tests/transcript.js --audit                # narrative smells across archetypes
+```
 
 ---
 
 ## Key mechanics
 
-**Cash and burn.** Start with $10k; burn $500/week. Hitting $0 ends the game.
+**Attention is the constraint.** Two moves a week is the whole design. Every card competes for
+them, and the early game deliberately runs saturated: the build spine competes with market
+research, and how you split them is what the game measures.
 
-**Attention is the constraint.** Two actions a week means moments pass if you don't engage. Each character decides — from the full game state and history — what to bring up and how to react when unanswered.
+**Facts, not flags.** Every answer (including every non-answer) is recorded in a ledger, and
+later content asks that ledger directly — what you did in week 4 is what makes an option
+available in week 18.
 
-**Slot ranking.** When a character has several things it could say, it surfaces the one with the highest `urgency`; arc-continuation beats use a higher urgency band so they win the slot. A `fallback` card only appears when there's nothing else.
+**Failure is evidence.** The wrong fix is never purely punished. The traffic push, the feature
+spree, the win-back blast each bank something that becomes a playable argument later. The two
+exams — pivot day and the YC application — are answered with whatever the run actually banked.
+A bluff is always available. Whether you need it is the game.
 
-**Win via YC.** Apply, wait, get accepted.
-
-**Win via angels.** Get a lead (Marcus) and a follower (Fatima/Ryan) both committed.
+**Cash and burn.** $10,000, $500/week, plus recurring costs you signed up for. Hitting $0 ends
+the run.

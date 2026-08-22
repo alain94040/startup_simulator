@@ -8,11 +8,11 @@ Browser-based educational startup simulation game. Players navigate from idea to
 
 This game is educational; the educational goals are in `GOALS.md`.
 
-## The active codebase is `v2/`
+## Layout
 
-The game was rebuilt from scratch as a **story-graph engine** and that redesign, under `v2/`, is the shipping game. **Do all new work in `v2/`.** The files at the repo root (`engine.js`, `roles/*.js`, `game.html`, `tests/`, `sim_proto.js`, …) are the **legacy v1** card-dealer engine — kept side-by-side, still runnable, but superseded. Don't edit v1 for new features; see *Legacy v1* at the bottom.
+Everything lives at the repo root — the engine (`engine.js`, `world.js`, `cast.js`, `scoring.js`), the content (`story/*.js`), the UI (`game.html`, `play.html`), and the simulation tools (`tests/`). There is no build step and no dependency tree: the browser loads the sources directly, Node `require`s the same files.
 
-`v2/revamp.md` is the running design log of the rewrite (why we rebuilt, the engine ideas, the build passes, current status). Read it for background.
+`revamp.md` is the design log for the story-graph engine — why it is shaped this way, the build passes, current status. It is the record of a rewrite, so it argues against an older card-dealer engine that no longer exists in the repo; read it for background on the design decisions.
 
 ## Commands
 
@@ -20,33 +20,33 @@ Run from the repo root:
 
 | Action | Command |
 |--------|---------|
-| Play | `open v2/game.html` (add `?seed=42` for a reproducible run) |
-| Plain debug harness | `open v2/play.html` |
-| Deterministic slice checks | `node v2/tests/test_slice.js` |
-| Narrative checks / **primary regression suite** | `node v2/tests/test_narrative.js` |
-| Scene-permutation test | `node v2/tests/test_scenes.js` |
-| Pacing, win-rate & chapter-economy map | `node v2/tests/phase_map.js` |
-| Strategy comparison | `node v2/tests/sim_strategies.js` |
-| Behavior contracts | `node v2/tests/sim_behaviors.js` |
-| **Read a run as a story** | `node v2/tests/transcript.js` (`--compact`, `--driver <archetype>`, `--char alex`, `--src`) |
-| The typical stories, as a page | `node v2/tests/transcript.js --sample --html book.html` |
-| Narrative smells across archetypes | `node v2/tests/transcript.js --audit` |
+| Play | `open game.html` (add `?seed=42` for a reproducible run) |
+| Plain debug harness | `open play.html` |
+| Deterministic slice checks | `node tests/test_slice.js` |
+| Narrative checks / **primary regression suite** | `node tests/test_narrative.js` |
+| Scene-permutation test | `node tests/test_scenes.js` |
+| Pacing, win-rate & chapter-economy map | `node tests/phase_map.js` |
+| Strategy comparison | `node tests/sim_strategies.js` |
+| Behavior contracts | `node tests/sim_behaviors.js` |
+| **Read a run as a story** | `node tests/transcript.js` (`--compact`, `--driver <archetype>`, `--char alex`, `--src`) |
+| The typical stories, as a page | `node tests/transcript.js --sample --html book.html` |
+| Narrative smells across archetypes | `node tests/transcript.js --audit` |
 
-After editing `v2/engine.js`, `v2/world.js`, `v2/cast.js`, or any `v2/story/*.js`, just refresh the browser — no compilation. The browser loads each file via a `<script>` tag; Node loads them with `require` (see `v2/engine.js`'s `DEPS`).
+After editing `engine.js`, `world.js`, `cast.js`, or any `story/*.js`, just refresh the browser — no compilation. The browser loads each file via a `<script>` tag; Node loads them with `require` (see `engine.js`'s `DEPS`).
 
-## Architecture (`v2/`)
+## Architecture
 
 Separation of concerns is the whole point of the redesign: the engine holds no content and no DOM; content is organized **by storyline, not by character**.
 
-- **`engine.js`** — the `Game` class: facts ledger + scheduler + effects + scenes. Pure logic, no DOM. Dual export: `module.exports = { Game }` (Node) / `window.V2Engine` (browser). Reads the `V2CAST` / `V2WORLD` / `V2STORY` globals in the browser, `require`s them in Node.
-- **`cast.js`** — the character registry (who exists, unlock rule, stats). Just names, `unlock(s,e)`, `intro`, `type`, and simulation params (`skills`, `effortMult`, `passiveMult`, founder-only `milestones`). Export: `window.V2CAST` / `module.exports`. **Rail order = declaration order; `founder` stays last.**
-- **`story/*.js`** — the content, one file **per storyline** (not per character). Each pushes a module `{ nodes?, arcs? }` onto `window.V2STORY` (browser) / `module.exports = mod` (Node). This is where all narrative text and node/arc definitions live.
-- **`world.js`** — the weekly economy `tick(game)`: burn, passive co-founder effort, the over-scope build burn-down, launch conversion, growth, revenue, win/lose. Pure logic. Export: `window.V2WORLD` / `module.exports` (`{ tick, AUTO_BUILD_INCREMENT }`).
-- **`scoring.js`** — the endgame report card. `scoreGame(game)` grades a run on 7 lessons (including "Keep the cap table clean" — the vesting lesson) by asking the facts ledger directly (`e.took()`, `"@ignored"` outcomes) rather than mining a log. Pure logic, dual export `window.V2Scoring` / `module.exports`. A never-faced category returns `score:null` — **except once the run is over**: at the deadline, an unreached spine lesson (never launched, never questioned the product) grades as a failure, not an exemption, so the card can't contradict the verdict. Safe to call in any game state (`test_narrative.js` smoke-checks it at every game end).
+- **`engine.js`** — the `Game` class: facts ledger + scheduler + effects + scenes. Pure logic, no DOM. Dual export: `module.exports = { Game }` (Node) / `window.Engine` (browser). Reads the `CAST` / `WORLD` / `STORY` globals in the browser, `require`s them in Node.
+- **`cast.js`** — the character registry (who exists, unlock rule, stats). Just names, `unlock(s,e)`, `intro`, `type`, and simulation params (`skills`, `effortMult`, `passiveMult`, founder-only `milestones`). Export: `window.CAST` / `module.exports`. **Rail order = declaration order; `founder` stays last.**
+- **`story/*.js`** — the content, one file **per storyline** (not per character). Each pushes a module `{ nodes?, arcs? }` onto `window.STORY` (browser) / `module.exports = mod` (Node). This is where all narrative text and node/arc definitions live.
+- **`world.js`** — the weekly economy `tick(game)`: burn, passive co-founder effort, the over-scope build burn-down, launch conversion, growth, revenue, win/lose. Pure logic. Export: `window.WORLD` / `module.exports` (`{ tick, AUTO_BUILD_INCREMENT }`).
+- **`scoring.js`** — the endgame report card. `scoreGame(game)` grades a run on 7 lessons (including "Keep the cap table clean" — the vesting lesson) by asking the facts ledger directly (`e.took()`, `"@ignored"` outcomes) rather than mining a log. Pure logic, dual export `window.Scoring` / `module.exports`. A never-faced category returns `score:null` — **except once the run is over**: at the deadline, an unreached spine lesson (never launched, never questioned the product) grades as a failure, not an exemption, so the card can't contradict the verdict. Safe to call in any game state (`test_narrative.js` smoke-checks it at every game end).
 - **`game.html`** — the browser UI (the shipping surface). Self-contained inline CSS + JS; loads the engine, cast, world, story, and scoring via `<script>` tags. See *The UI* below.
 - **`play.html`** — a plain debug harness UI (kept for quick inspection).
-- **`tests/`** — `harness.js` (shared drivers + game loop + `jumpTo` + the 16 player **archetypes** (`STRATEGIES`), exports `V2Harness`), `test_slice.js`, `test_narrative.js`, `test_scenes.js`, `phase_map.js`, `sim_strategies.js`, `sim_behaviors.js` (the behavior-contract suite: strategy → consequence), `transcript.js` (the story reader — see below).
-- **`transcript.js`** — the only tool that shows the *run* rather than statistics about runs: it replays a headless playthrough as a screenplay, merging all 19 threads into one stream by the engine's `seq` stamp. It renders each entry on **the surface `game.html` would put it on** — Messages bubble, News Feed post (`FEED`), the "Your move" card (`SELF` = founder/growth, whose node text is never a bubble), or the journal mirror — and flags in red anything the UI displays nowhere. Prints the chosen option **and the ones passed over**, chapter/scene/week seams (a chapter banner landing mid-scene is held until the room empties), `⌛` timeouts, and the report card; `--src` tags every beat with `story/<file>:<line>`. `--sample` reads one representative run per archetype (the *median* run by grade for the seed-varying ones), `--html` writes a self-contained readable page, `--audit` reports narrative smells (prose never surfaced, branches no driver takes, **text the UI displays on no surface**, messages landing after the run is over, silent weeks, repeated journal lines). **When you change how `game.html` routes threads to surfaces, update `FEED`/`SELF`/`uiSurface()` in `transcript.js` to match** — they're kept in sync by name, not by import. Background and the ideas not built: `v2/reading_the_game.md`.
+- **`tests/`** — `harness.js` (shared drivers + game loop + `jumpTo` + the 16 player **archetypes** (`STRATEGIES`), exports `Harness`), `test_slice.js`, `test_narrative.js`, `test_scenes.js`, `phase_map.js`, `sim_strategies.js`, `sim_behaviors.js` (the behavior-contract suite: strategy → consequence), `transcript.js` (the story reader — see below).
+- **`transcript.js`** — the only tool that shows the *run* rather than statistics about runs: it replays a headless playthrough as a screenplay, merging all 19 threads into one stream by the engine's `seq` stamp. It renders each entry on **the surface `game.html` would put it on** — Messages bubble, News Feed post (`FEED`), the "Your move" card (`SELF` = founder/growth, whose node text is never a bubble), or the journal mirror — and flags in red anything the UI displays nowhere. Prints the chosen option **and the ones passed over**, chapter/scene/week seams (a chapter banner landing mid-scene is held until the room empties), `⌛` timeouts, and the report card; `--src` tags every beat with `story/<file>:<line>`. `--sample` reads one representative run per archetype (the *median* run by grade for the seed-varying ones), `--html` writes a self-contained readable page, `--audit` reports narrative smells (prose never surfaced, branches no driver takes, **text the UI displays on no surface**, messages landing after the run is over, silent weeks, repeated journal lines). **When you change how `game.html` routes threads to surfaces, update `FEED`/`SELF`/`uiSurface()` in `transcript.js` to match** — they're kept in sync by name, not by import. Background and the ideas not built: `reading_the_game.md`.
 
 The content set: **~180 nodes, 19 cast, 7 arcs (6 of them scenes)** across the `story/` files: `opening`, `equity`, `dev_plan`, `team`, `dev_directions`, `demo_night`, `users`, `launch_day`, `slide`, `pivot_day`, `community`, `fundraising`, `growth`, `jordan_arc`, `firing`, `discovery`, `press`, `ambient`.
 
@@ -93,7 +93,7 @@ Chapters have **no cinematic separation** — the scene arcs do that; the **☑ 
 
 ### Chapter design philosophy
 
-- **Every chapter has the same shape: a felt problem → a loop the player plays → banked consequences → one climax.** The problem must be *visible in the numbers the player watches* (users, runway), not just narrated; the loop is real decisions competing for the 2 actions; the climax is a scene or a decision card that cashes in what the loop banked. A chapter that is only messages ("the graph is bad", with nothing falling and nothing to try) is the failure mode the v2 rewrite exists to avoid.
+- **Every chapter has the same shape: a felt problem → a loop the player plays → banked consequences → one climax.** The problem must be *visible in the numbers the player watches* (users, runway), not just narrated; the loop is real decisions competing for the 2 actions; the climax is a scene or a decision card that cashes in what the loop banked. A chapter that is only messages ("the graph is bad", with nothing falling and nothing to try) is the failure mode the story-graph rewrite exists to avoid.
 - **Chapters are state, not script.** A chapter is defined by its entry/exit transitions, derived from the facts ledger — `e.chapter` is the one source of truth. Nothing "advances the chapter"; play does. Corollary: chapters aren't strictly linear — the growth/deferred summit paths skip chapter 4 entirely, and a late pivot (the fifty-match verdict) re-enters it. Wrong turns stay playable: a bad summit call is winnable at a price (less cash, lower grade, a compressed rebuild), and only refusing the lesson twice (`ride`) is a dead end.
 - **Every card belongs to an era.** Gate it on `e.chapter` (plus whatever moment-specific state it needs) rather than an ad-hoc flag pile, and give it a window that closes when its era ends — the engine sweeps window-closed cards out of the triage at act time, so "flip the switch" instantly clears the pre-launch pile. A card that can legitimately span chapters (Flare, money, `founder_codebuild`) must read correctly in *every* chapter it can surface in; branch its text on state if it doesn't. When touching gates, re-run the lingering audit: simulate several styles, snapshot `openActions()` after every act and at every chapter transition, and eyeball each survivor.
 - **The trough is scripted, not simulated.** Chapter 3's premise is that the player built the wrong product, so retention is bad *no matter what* — `world.js` drains users toward a floor of diehards each week, and only the shipped pivot turns the curve. There is no retention model to optimize; there is a story fact to discover. Growth actions during the trough still land — as one-week bumps that visibly evaporate, which *is* the lesson (top-of-funnel can't fix a leaky product).
@@ -108,23 +108,19 @@ An arc with `scene: { cast: [...] }` is a **war-room** (there are 6: `equity`, `
 
 The UI renders a scene as the **same iMessage chat, restricted to the room**: a conversation rail of just the participants, one private thread each, everything else blocked out. New messages in another participant's thread light a blue unread dot — the UI never auto-switches threads for the player. Beats are scoped to the sitting by the `scene` tag the engine stamps on their messages (`_show`/`_say`). Cinematics bookend a scene (staged fade-in enter/exit lines, per-arc accent). **Launch day** additionally gets a cinematic dark stage: the time-of-day sky walks the hours, and a big clock counts the minutes forward as `s.launch_time` advances.
 
-## The UI (`v2/game.html`)
+## The UI (`game.html`)
 
-Self-contained. Three surfaces — **Messages** (rail · thread), **News Feed** (press/community posts you engage inline), and **Bank** (the ledger; opened from the clickable Runway gauge, not a tab). A persistent right column carries the **triage** ("Needs a call" / "When you have a minute" — your own moves you act on in-column) and the **journal mirror** (a read-only, handwritten-font recap of outcomes + milestone stamps) — the journal is the **only** surface for recap prose; threads render bubbles only. A header **☑ to-do gauge** is the chapter guide: one checklist + goal line per chapter (Ch 1 · Ship the demo → Ch 2 · Get to launch → Ch 3 · The trough of sorrow → Ch 4 · Rebuild as v2 → Ch 5 · Ace the application), derived from the facts ledger + `s.items`; a second header gauge counts down to the week-25 YC deadline. The turn-end reveal is ordered: runway counts down → the journal inks in → iOS-style notifications buzz under a header bell → the active thread refreshes → changed stats pulse. Endgame shows the `V2Scoring` report card. Avatar colors/initials live in a `STYLE` map here — presentation, not engine state.
+Self-contained. Three surfaces — **Messages** (rail · thread), **News Feed** (press/community posts you engage inline), and **Bank** (the ledger; opened from the clickable Runway gauge, not a tab). A persistent right column carries the **triage** ("Needs a call" / "When you have a minute" — your own moves you act on in-column) and the **journal mirror** (a read-only, handwritten-font recap of outcomes + milestone stamps) — the journal is the **only** surface for recap prose; threads render bubbles only. A header **☑ to-do gauge** is the chapter guide: one checklist + goal line per chapter (Ch 1 · Ship the demo → Ch 2 · Get to launch → Ch 3 · The trough of sorrow → Ch 4 · Rebuild as v2 → Ch 5 · Ace the application), derived from the facts ledger + `s.items`; a second header gauge counts down to the week-25 YC deadline. The turn-end reveal is ordered: runway counts down → the journal inks in → iOS-style notifications buzz under a header bell → the active thread refreshes → changed stats pulse. Endgame shows the `Scoring` report card. Avatar colors/initials live in a `STYLE` map here — presentation, not engine state.
 
 ## Coding conventions
 
 - 2-space indentation, double quotes, semicolons.
 - **`engine.js` and `world.js` stay free of DOM** — all UI belongs in `game.html`. **All narrative text** (node text, option labels, `reply`/`journal`, intros, names, scene copy) belongs in `story/*.js` / `cast.js`, never the engine.
 - **A chat thread holds messages and nothing else.** If a character says something, it's a real message — `effects.say` (or `e.say(...)` for a conditional one mid-`fx`), which lands as a bubble in their thread. Everything else — what a choice cost you, how someone reacted, a tapback, a silence — is a **founder recap** and belongs in the journal: the `journal` field (a string, or a `(s,e,char)` function for a branchy one), or the `fx` return when a choice has no explicit `journal`. **The journal is a summary, not a transcript**: a multi-beat conversation writes one line, at the ending it reaches (the equity arc records the signing — or the tabling that replaces it — and nothing else, `journal: null` on every other beat). Never write a third-person aside that quotes a character ("Alex: 'take your time'"): the chat is an iMessage transcript, and a narrator line inside it reads as a text nobody sent.
-- Every content file must work in **both Node and browser**: the IIFE + `module.exports` / `window.V2*` (or `V2STORY.push`) pattern at the bottom of the file.
+- Every content file must work in **both Node and browser**: the IIFE + `module.exports` / `window.<Global>` (or `STORY.push`) pattern at the bottom of the file.
 - `char` passed to a node is the **owning** character. A node that reasons about someone else reads them via `engine.cast.get('jordan')`.
 - Guard "was this ever set" with `flags.x != null`, not `flags.x || 0` (the `|| 0` form conflates undefined with week 0).
 
 ## Instructions
 
-When running regressions use `node v2/tests/test_narrative.js` — **keep realistic-play violations at 0** (fuzzer-only findings are documented at the top of that file; replay one with `--seed N --driver X`). After any balance-affecting change, check pacing, win rate, and the per-chapter card balance with `node v2/tests/phase_map.js` (it plays a second, randomized-attention cohort to separate "one tactic skips this card" from "structurally unanswerable"), run the behavior contracts with `node v2/tests/sim_behaviors.js` (**don't regress the 31 passing contracts**; the 3 documented failures are open balance TODOs — see `v2/revamp.md` Pass 5c), and confirm scenes still exit cleanly with `node v2/tests/test_scenes.js`. New story nodes must be classified in `phase_map.js`'s `CATEGORY` table (unclassified ids are flagged in its output).
-
-## Legacy v1 (repo root)
-
-The root `engine.js` (`Engine` class, single-`urgency` card dealer), `roles/*.js` (one file per character, `cards`/`voice`/`slice`), `game.html`, `scoring.js`, `sim_proto.js`, and root `tests/` are the **previous version**, superseded by `v2/` and no longer developed. They still run (`open game.html`, `node sim_proto.js 1000`), and `v2/revamp.md` explains what changed and why. The card-based tools `earlymap.js`, `treemap.js`, `test_card_balance.js`, `test_redesign.js`, and the files `startup_game.html`, `ui.js`, `tests.js`, `tests.html` are dead even against v1. Don't build on any of this.
+When running regressions use `node tests/test_narrative.js` — **keep realistic-play violations at 0** (fuzzer-only findings are documented at the top of that file; replay one with `--seed N --driver X`). After any balance-affecting change, check pacing, win rate, and the per-chapter card balance with `node tests/phase_map.js` (it plays a second, randomized-attention cohort to separate "one tactic skips this card" from "structurally unanswerable"), run the behavior contracts with `node tests/sim_behaviors.js` (**don't regress the 34 passing contracts**; the 3 documented failures are open balance TODOs — see `revamp.md` Pass 5c), and confirm scenes still exit cleanly with `node tests/test_scenes.js`. New story nodes must be classified in `phase_map.js`'s `CATEGORY` table (unclassified ids are flagged in its output).

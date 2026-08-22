@@ -1,755 +1,713 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// engine.js — thin chat-simulation coordinator.
+// engine.js — story-graph chat engine. No urgency, no hand-stamped weeks.
 //
-// The game is a week-by-week chat sim. Each week the player has 2 actions.
-// An action = answering one open chat message (picking a suggested reply) or
-// taking one journal action. Each character shows at most one message at a time
-// (its single "slot").
+// The game is a week-by-week chat sim: characters text the founder, the player
+// answers with reply chips (2 actions per week). This engine replaces the old
+// urgency-ranked slot model with an explicit dependency graph:
 //
-// The engine does NOT decide what characters say. Each week it polls every
-// active character — `def.next(s, char, engine)` if the role defines one, else
-// the shared `defaultNext()` — and shows whatever the character returns. The
-// character owns its own curation (`def.slice`), ranking (`card.urgency`),
-// and its reaction to being ignored (it reads game state/history via the engine
-// APIs: pick(), openCardId(), weeksWaiting(), answered(), plus s/chars/history).
-// There is no engine-side allowlist, priority table, or drop subsystem.
+//  - FACTS LEDGER. Every node resolution is recorded as (nodeId, outcome, week).
+//    Being ignored is just another outcome ("@ignored"), so the ignored path is
+//    a queryable edge in the story graph like any choice. Content never hand-rolls
+//    "_done" flags or "*_week" stamps — it asks e.took()/e.done()/e.weeksSince().
 //
-// All content (message bodies, options, journal voice, intros, names) lives in
-// roles/*.js. No DOM here. Dual export: Node (module.exports) + browser (window.Engine).
+//  - WHEN-CLAUSES decide when a node can surface:
+//      when: {
+//        after:  ["dev_plan"],            // AND: these nodes resolved (any outcome)
+//        took:   ["dev_plan:full|lean"],  // AND: these outcomes taken ("a|b" = OR of
+//                                         //   keys; an array entry = OR across specs)
+//        not:    ["pivot:defer"],         // none of these outcomes taken
+//        delay:  2,                       // weeks after the latest after/took dep
+//                                         //   ── MIND THE OFF-BY-ONE: outside a
+//                                         //   scene, messages surface at the week
+//                                         //   BOUNDARY, so a node eligible in week
+//                                         //   W first appears in W+1. `delay: 1`
+//                                         //   (and `weeksSince(dep) >= 1`) is
+//                                         //   therefore "the next week" — i.e. no
+//                                         //   delay at all. To make a beat wait one
+//                                         //   real week, ask for 2.
+//        if:     (s, e, char) => bool,    // world-state escape hatch
+//        cooldown: 5,                     // recurring: re-eligible n weeks after the
+//      }                                  //   last resolution (default: fires once)
+//
+//  - ONE CONSEQUENCE VOCABULARY. A choice (or a timeout) carries `effects` (data)
+//    and/or `fx` (escape hatch). `timeout: { weeks, when, unless, effects, fx, say }`
+//    resolves the node as "@ignored" when its patience runs out or its moment
+//    passes. `effects.schedule` queues delayed consequences; `effects.surface`
+//    pulls a named node into the CURRENT week (see _flushSurface) for the rare
+//    beat that an answer directly causes.
+//
+//  - ARCS are ordered beat lists; a beat with no `when` of its own chains to the
+//    previous beat. An arc with `scene: { cast: [...] }` is a war-room: entering it
+//    (effects.scene = arcId) makes only its cast surface and re-polls after each
+//    answer so the talk flows in one sitting. Entering costs ONE of the week's two
+//    moves (you are answering a message) and that move buys the whole sitting —
+//    every beat answered from inside the room is free.
+//
+//  - SCHEDULER. Per character, per week: the first eligible node by class —
+//    scene beat > story beat > ambient > filler — then FIFO (earliest-eligible
+//    first, then declaration order). An open node holds its slot until answered
+//    or timed out; a node without a timeout is a standing offer and yields to a
+//    higher-class node.
+//
+// All content lives in cast.js + story/*.js; the weekly economy lives in
+// world.js. No DOM here. Dual export: Node (module.exports) + browser
+// (window.Engine, reading the CAST/STORY/WORLD/Scoring globals).
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
-  // Character definitions: Node requires them; browser reads the ROLES global
-  // populated by the <script src="roles/*.js"> tags.
-  const DEFS = (typeof require !== "undefined")
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+  // Deterministic RNG (mulberry32). The engine owns all randomness so a seed
+  // reproduces a full game; content reaches it via e.rng().
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const DEPS = (typeof require !== "undefined")
     ? {
-        alex:         require("./roles/alex.js"),
-        jordan:       require("./roles/jordan.js"),
-        priya:        require("./roles/priya.js"),
-        marcus:       require("./roles/marcus.js"),
-        fatima:       require("./roles/fatima.js"),
-        ryan:         require("./roles/ryan.js"),
-        sarah:        require("./roles/sarah.js"),
-        brett:        require("./roles/brett.js"),
-        kevin:        require("./roles/kevin.js"),
-        mom:          require("./roles/mom.js"),
-        jamie:        require("./roles/jamie.js"),
-        david:        require("./roles/david.js"),
-        founder:      require("./roles/founder.js"),
-        hacker_news:  require("./roles/hacker_news.js"),
-        yc:           require("./roles/yc.js"),
-        lena:         require("./roles/lena.js"),
-        techcrunch:   require("./roles/techcrunch.js"),
-        users:        require("./roles/users.js"),
-        analytics:    require("./roles/analytics.js"),
-        twitter:      require("./roles/twitter.js"),
-        tom:          require("./roles/tom.js"),
-        growth:       require("./roles/growth.js"),
+        cast: require("./cast.js"),
+        world: require("./world.js"),
+        scoring: require("./scoring.js"),
+        story: [
+          require("./story/opening.js"),
+          require("./story/equity.js"),
+          require("./story/dev_plan.js"),
+          require("./story/team.js"),
+          require("./story/dev_directions.js"),
+          require("./story/demo_night.js"),
+          require("./story/users.js"),
+          require("./story/launch_day.js"),
+          require("./story/slide.js"),
+          require("./story/pivot_day.js"),
+          require("./story/community.js"),
+          require("./story/fundraising.js"),
+          require("./story/growth.js"),
+          require("./story/jordan_arc.js"),
+          require("./story/firing.js"),
+          require("./story/discovery.js"),
+          require("./story/press.js"),
+          require("./story/ambient.js"),
+        ],
       }
-    : (typeof ROLES !== "undefined" ? ROLES : {});
-
-  // Weeks a *consequence-bearing* message waits unanswered before its dropFx/dropMsg
-  // fires and it leaves the slot, so the character can move on. Consequence-free
-  // cards (standing offers, the quiet-week fallback) ignore this — they sit until
-  // answered. Cards override with `patience` (Infinity = never expire on time).
-  const DEFAULT_PATIENCE = 3;
-
-  // Cumulative team build-effort needed to silently finish one over-scope ("auto")
-  // roadmap item. The full/A plan carries ~2x these items, so it takes ~2x longer to
-  // reach product-ready (the over-scope penalty; see roles/alex.js expandItems).
-  // Tuned up from 6.5 when direction-card answers started granting buildEffort
-  // (see roles/*_dir_* cards) — team effort now accrues ~2x faster, and the full
-  // plan must still miss the wk-30 YC window and die by runway.
-  const AUTO_BUILD_INCREMENT = 11;
-
-  class Engine {
-    constructor() {
-      // Mirrors the initial-state shape of the legacy engine so every slice
-      // card finds the field it reads. Unused fields are harmless.
-      this.s = {
-        cash: 10000, week: 1, product: 0, waitlist: 0, users: 0, customers: 0, revenue: 0,
-        signal: 28, market_fit: 0, launched: false, deck_ready: false,
-        productPhase: "proto",
-        has_demo: false, tech_debt: 0,
-        investor_warmth: 0,
-        incorporated: false, ip_clear: false,
-        has_landing_page: false,
-        marcusCommitted: false, followerCommitted: false,
-        game_over: false, game_won: false,
-        network: { peers: 12, advisors: 0, angels: 0, press: 0 },
-        items: null,
-        dev_plan: null,
-        extra_burn: 0,
-        saas: [],
-        // Launch & growth (see roles/growth.js): cold-start density choice, the
-        // channel-experiment results, and the channel chosen to double down on.
-        beachhead: null,         // null | 'narrow' (own one market) | 'broad' (open everywhere)
-        channels: {},            // { channelId: { fit, cac, tested:true } } — Bullseye test results
-        primary_channel: null,   // channelId once you commit (drives sustained growth)
-        // Focus mode: when a "war-room" arc is engaged, this holds { id, charIds }.
-        // While set, only cards tagged `focus === s.focus.id` surface, they cost no
-        // action, and the next beat is re-polled mid-week so the talk flows in one
-        // sitting; every other character/card is held on hold. See roles/jordan.js.
-        focus: null,
-        launch_time: null,  // time-of-day label while launch focus arc is active
+    : {
+        cast: typeof CAST !== "undefined" ? CAST : [],
+        world: typeof WORLD !== "undefined" ? WORLD : null,
+        scoring: typeof Scoring !== "undefined" ? Scoring : null,
+        story: typeof STORY !== "undefined" ? STORY : [],
       };
 
-      this.chars = new Map([
-        ["alex",         { archetypeId: "alex",         active: true, morale: 80, trust: 90, focus: "build", focusSprints: 0, buildEffort: 0, flags: {} }],
-        ["jordan",       { archetypeId: "jordan",       active: true, morale: 80, trust: 90, focus: "build", focusSprints: 0, buildEffort: 0, flags: {} }],
-        ["priya",        { archetypeId: "priya",        active: false, engagement: 80, flags: {} }],
-        ["marcus",       { archetypeId: "marcus",       active: false, engagement: 50, flags: {} }],
-        ["fatima",       { archetypeId: "fatima",       active: false, flags: {} }],
-        ["ryan",         { archetypeId: "ryan",         active: false, flags: {} }],
-        ["sarah",        { archetypeId: "sarah",        active: false, engagement: 60, flags: {} }],
-        ["brett",        { archetypeId: "brett",         active: false, flags: {} }],
-        ["kevin",        { archetypeId: "kevin",        active: false, flags: {} }],
-        ["mom",          { archetypeId: "mom",          active: true,  flags: {} }],
-        ["jamie",        { archetypeId: "jamie",        active: false, flags: {} }],
-        ["david",        { archetypeId: "david",        active: false, flags: {} }],
-        ["hacker_news",  { archetypeId: "hacker_news",  active: true,  flags: {} }],
-        ["yc",           { archetypeId: "yc",           active: false, flags: {} }],
-        ["lena",         { archetypeId: "lena",         active: false, flags: {} }],
-        ["techcrunch",   { archetypeId: "techcrunch",   active: false, flags: {} }],
-        ["users",        { archetypeId: "users",        active: false, flags: {} }],
-        ["analytics",    { archetypeId: "analytics",    active: false, flags: {} }],
-        ["twitter",      { archetypeId: "twitter",      active: false, flags: {} }],
-        ["tom",          { archetypeId: "tom",          active: false, flags: {} }],
-      ["growth",       { archetypeId: "growth",       active: false, flags: {} }],
-        ["founder",      { archetypeId: "founder",      active: true,  flags: {} }],
-      ]);
+  class Game {
+    constructor(opts) {
+      opts = opts || {};
+      this.rng = mulberry32(opts.seed != null ? opts.seed : 1);
 
-      this.order = [
-        "alex", "jordan", "priya", "marcus", "fatima", "ryan", "sarah",
-        "brett", "kevin", "mom", "jamie", "david",
-        "hacker_news", "yc", "lena", "techcrunch",
-        "users", "analytics", "twitter", "tom", "growth",
-        "founder", // always last
-      ];
+      this.s = {
+        cash: 10000, week: 1, waitlist: 0, users: 0, customers: 0, revenue: 0,
+        signal: 28, market_fit: 0, launched: false,
+        incorporated: false, has_demo: false, productPhase: "proto",
+        extra_burn: 0, saas: [], items: null, dev_plan: null,
+        deadline_week: 25,   // the horizon: YC applications close, every run is graded
+        beachhead: null, channels: {}, primary_channel: null,
+        game_over: false, game_won: false,
+      };
 
-      // threads[charId] = ordered list of message entries shown in that chat.
+      // ── cast instances ──────────────────────────────────────────────────────
+      this.cast = new Map();
+      this.order = [];
+      for (const def of DEPS.cast) {
+        const st = def.start || {};
+        this.cast.set(def.id, {
+          def, active: !def.unlock,
+          morale: st.morale != null ? st.morale : null,
+          trust: st.trust != null ? st.trust : null,
+          focus: st.focus || null,
+          buildEffort: 0, flags: {},
+        });
+        this.order.push(def.id);
+      }
+
+      // ── story graph ─────────────────────────────────────────────────────────
+      this.nodes = new Map();     // id -> node
+      this.arcOf = new Map();     // nodeId -> arc
+      this.arcs = new Map();      // arcId -> arc
+      this.byChar = new Map();    // charId -> [node, ...]
+      this._decl = new Map();     // nodeId -> declaration index (FIFO tiebreak)
+      let decl = 0;
+      const add = (node, arc) => {
+        if (this.nodes.has(node.id)) throw new Error("duplicate node id: " + node.id);
+        this.nodes.set(node.id, node);
+        this._decl.set(node.id, decl++);
+        if (arc) this.arcOf.set(node.id, arc);
+        if (!this.byChar.has(node.char)) this.byChar.set(node.char, []);
+        this.byChar.get(node.char).push(node);
+      };
+      for (const mod of DEPS.story) {
+        for (const arc of mod.arcs || []) {
+          this.arcs.set(arc.id, arc);
+          let prev = null;
+          for (const beat of arc.beats) {
+            // A beat that declares no `when` of its own chains to the previous beat.
+            if (!beat.when && prev) beat.when = { after: [prev.id] };
+            add(beat, arc);
+            prev = beat;
+          }
+        }
+        for (const node of mod.nodes || []) add(node, null);
+      }
+
+      // ── runtime state ───────────────────────────────────────────────────────
+      this.resolved = new Map();      // nodeId -> { outcome, week, count }
+      this.eligibleSince = new Map(); // nodeId -> week it first became eligible
       this.threads = {};
       for (const id of this.order) this.threads[id] = [];
-
-      // open[charId] = { cardId, def, week } for that character's currently-open prompt.
-      // One slot per character — a character shows at most one unanswered message.
-      this.open = {};
-
-      this.ycWeek = 25;
-      this.alexDepartureRisk = false;
-      this.pending = [];
-      this.history = [];
-      this._seq = 0;       // monotonic stamp on thread entries — lets the UI merge two
-                           // participants' threads into one ordered focus-room transcript
+      this.open = {};                 // charId -> { nodeId, week } | null
+      this.scene = null;              // active scene arc | null
+      this._displaced = new Map();    // charId -> nodeId a scene pushed out of the triage
+      this._surfaceNow = [];          // nodeIds an answer pulled into THIS week (effects.surface)
+      this.scheduled = [];            // { week, charId, ev }
       this.actionsLeft = 2;
-      this.act1Complete = false;
-      this.firedStamps = new Set();  // milestone stamps already placed
-      this.log = [];       // flat event log (debugging / node tests)
-      this.ledger = [];    // per-week bank statements: { week, transactions, balanceAfter }
-      this.userHistory = []; // per-week traction: { week, users (total), customers (paying) }
-      this._weekTx = [];   // cash transactions accumulating for the week in progress
+      this.log = [];                  // flat event log (tests / debugging)
+      this.ledger = []; this._weekTx = [];
+      this.firedStamps = new Set();
+      this._seq = 0;                  // monotonic stamp for merged transcripts
 
-      // Impersonal sources (communities, market news, aggregate users, analytics,
-      // YC) are NOT chats — they surface as "no-chat" cards under the founder, with
-      // no conversation in the rail. The UI reads this to route them to the popup.
-      this.noChatChars = this.order.filter(id => DEFS[id] && DEFS[id].noChat);
-
-      // Open the game: poll characters for week-1 messages without consuming a tick.
       this._poll();
-    }
-
-    // ── reusable APIs a character calls from its next() ─────────────────────────
-    _resolveBody(def, char) {
-      return (typeof def.body === "function") ? def.body(this.s, char, this) : def.body;
-    }
-    // Display name for a character — from the role def (content lives in roles/*.js).
-    _name(charId) {
-      const def = DEFS[charId];
-      return (def && def.name) || charId;
-    }
-    // The cards a character has opted into (its own curation, declared in the role).
-    sliceCards(def) {
-      const cards = def.cards || [];
-      return (def.slice || []).map(id => cards.find(c => c.id === id)).filter(Boolean);
-    }
-    // Slot rank: a `fallback` card (-1) only wins when nothing else is available;
-    // otherwise the card's own `urgency` decides. There is a single ranking axis —
-    // arc-continuation cards just use a higher urgency band (e.g. 11-23).
-    _rankVal(card, char) {
-      return card.fallback ? -1 : (this._urgency(card, char) || 0);
-    }
-    // Does card `a` outrank `b` for the single slot?
-    _better(a, b, char) {
-      return this._rankVal(a, char) > this._rankVal(b, char);
-    }
-    // Select-by-urgency API: the best currently-available card from `cards`, or null.
-    pick(cards, char) {
-      const avail = cards.filter(c => c.available(this.s, char, this));
-      if (!avail.length) return null;
-      avail.sort((a, b) => this._rankVal(b, char) - this._rankVal(a, char));
-      return avail[0];
-    }
-    // ── awareness: lets a character read whether it was answered ────────────────
-    openCardId(charId) {
-      const o = this.open[charId];
-      return o ? o.cardId : null;
-    }
-    weeksWaiting(charId) {
-      const o = this.open[charId];
-      return o ? this.s.week - o.week : 0;
-    }
-    answered(cardId) {
-      return this.log.some(l => l.acted === cardId);
-    }
-    // Is this card the currently-open (unanswered) prompt for some character?
-    isOpen(cardId) {
-      return !!this._openByCard(cardId);
-    }
-    _openByCard(cardId) {
-      for (const charId of this.order) {
-        const o = this.open[charId];
-        if (o && o.cardId === cardId) return { charId, def: o.def };
-      }
-      return null;
-    }
-    // ── default decision, used when a role defines no next() of its own ─────────
-    // The character keeps offering its open card while it's still relevant; once
-    // the moment passes (its window closed, or it was ignored past its patience)
-    // the character reacts and moves on. A consequence-free standing offer may be
-    // quietly out-ranked by a more important card.
-    defaultNext(def, char) {
-      const charId = def.id;
-      const o = this.open[charId];
-      if (o) {
-        const card = o.def;
-        const avail = card.available(this.s, char, this);
-        const hasConseq = !!(card.dropFx || card.dropMsg);
-        const patience = card.patience != null ? card.patience : DEFAULT_PATIENCE;
-        const waited = this.s.week - o.week;
-        if (avail && !(hasConseq && waited >= patience)) {
-          if (!hasConseq) {
-            const best = this.pick(this.sliceCards(def), char);
-            if (best && best.id !== card.id && this._better(best, card, char)) return best;
-          }
-          return card; // still relevant — hold the slot, don't repost
-        }
-        // moment passed: the character reacts to not getting a response, then moves on
-        this._reactIgnored(charId, card, char);
-        return this.pick(this.sliceCards(def).filter(c => c.id !== card.id), char);
-      }
-      return this.pick(this.sliceCards(def), char);
-    }
-    // Apply a card's reaction when its moment passed unanswered. The reaction
-    // content (dropFx / dropMsg) lives on the card in roles/*.js.
-    _reactIgnored(charId, card, char) {
-      this.log.push({ week: this.s.week, charId, ignored: card.id });
-      if (card.dropCancel && card.dropCancel(this.s, char)) return;
-      if (card.dropCondition && !card.dropCondition(this.s, char)) return;
-      if (card.dropFx) {
-        const cashBefore = this.s.cash;
-        try { card.dropFx(this.s, char, this); } catch (_) { /* slice-tolerant */ }
-        this._tx((card.dropFrom || this._name(charId)) + " — missed", cashBefore);
-      }
-      if (card.dropMsg) {
-        this.threads[charId].push({
-          type: "incoming", cardId: card.id,
-          from: card.dropFrom || this._name(charId),
-          body: card.dropMsg, subtext: null,
-          week: this.s.week, isNew: true, dropped: true,
-        });
-      }
-    }
-
-    // ── weekly poll: ask each character what (if anything) to say, then show it ──
-    _poll() {
-      const focus = this.s.focus;
-
-      // 1) unlock any inactive characters whose condition now passes.
-      //    Suppressed during a focus arc — no new characters/intros mid-war-room.
-      if (!focus) for (const [id, char] of this.chars) {
-        if (!char.active) {
-          const def = DEFS[id];
-          if (def && def.unlockCondition && def.unlockCondition(this.s, this)) {
-            char.active = true;
-            if (def.intro) {
-              this.threads[id].push({
-                type: "incoming", from: this._name(id),
-                // intro may be a function — a character can greet differently
-                // depending on *why* it unlocked (e.g. Priya: meetup vs launch).
-                body: typeof def.intro === "function" ? def.intro(this.s, char, this) : def.intro,
-                week: this.s.week, isNew: true,
-              });
-            }
-          }
-        }
-      }
-
-      // 2) each active character decides its single message — via its own next()
-      //    or the shared defaultNext(). The result becomes its slot this week:
-      //    same id → left in place (no repost); new card → replaces it; null → silent.
-      for (const charId of this.order) {
-        const char = this.chars.get(charId);
-        if (!char || !char.active) continue;
-        // During a focus arc, only the participants are polled; everyone else is
-        // held in place (their open slot is left untouched, not cleared).
-        if (focus && !focus.charIds.includes(charId)) continue;
-        const def = DEFS[charId];
-        if (!def) continue;
-
-        let card;
-        if (focus) {
-          // Within a focus arc, surface only that arc's tagged cards, ranked by
-          // urgency — bypassing the normal "hold the open slot" logic so a pending
-          // consequence-card can't block the arc. A card displaced this way isn't
-          // dropped: it simply resurfaces (availability-driven) once focus ends.
-          card = this.pick(this.sliceCards(def).filter(c => c.focus === focus.id), char);
-          if (!card) continue;  // nothing from the arc for this participant right now
-        } else {
-          card = def.next ? def.next(this.s, char, this) : this.defaultNext(def, char);
-        }
-        const cur = this.open[charId];
-        if (!card) { this.open[charId] = null; continue; }
-        if (cur && cur.cardId === card.id) continue; // unchanged — don't repost
-
-        this.open[charId] = { cardId: card.id, def: card, week: this.s.week };
-        this.threads[charId].push({
-          type: "incoming",
-          cardId: card.id,
-          from: card.from || this._name(charId),
-          body: this._resolveBody(card, char),
-          subtext: card.subtext || null,
-          mockups: card.mockups || null,  // browser-only: photo attachments on the text
-          week: this.s.week,
-          isNew: true,
-          focus: card.focus || null,   // tags arc messages so the UI can build the room
-          launchTime: card.focus === 'launch' ? (this.s.launch_time || null) : null,
-          seq: this._seq++,
-        });
-        this.log.push({ week: this.s.week, charId, surfaced: card.id });
-      }
-    }
-
-    _urgency(def, char) {
-      // Dynamic urgency gets the owning character when the caller knows it;
-      // fall back to alex only for legacy call sites without an owner.
-      return (typeof def.urgency === "function") ? def.urgency(this.s, char || this.chars.get("alex")) : def.urgency;
-    }
-
-    // ── player action ───────────────────────────────────────────────────────────
-    options(cardId) {
-      const o = this._openByCard(cardId);
-      if (!o) return [];
-      const char = this.chars.get(o.charId);
-      return (o.def.options || [])
-        .filter(opt => !opt.available || opt.available(this.s, char, this))
-        .map(opt => ({ key: opt.key, label: opt.label }));
-    }
-
-    /** Answer an open prompt. Returns the outcome text (or null). */
-    act(cardId, optionKey) {
-      const o = this._openByCard(cardId);
-      if (!o) return null;
-      // Focus-arc cards (e.g. the equity talk) cost no action — playable even at 0 left.
-      if (this.actionsLeft <= 0 && !o.def.focus) return null;
-
-      const charId = o.charId;
-      const char = this.chars.get(charId);
-      const opts = o.def.options || [];
-      const opt = opts.find(x => x.key === optionKey) || opts[0];
-      if (!opt) return null;
-
-      // Reply bubble first — so execute() can push follow-up messages that appear after it.
-      if (typeof opt.reply === "string" && !(DEFS[charId] && DEFS[charId].noChat)) {
-        this.threads[charId].push({
-          type: "reply",
-          cardId,
-          body: opt.reply,
-          week: this.s.week,
-          isNew: true,
-          focus: o.def.focus || null,
-          launchTime: o.def.focus === 'launch' ? (this.s.launch_time || null) : null,
-          seq: this._seq++,
-        });
-      }
-
-      const cashBefore = this.s.cash;
-      const outcome = opt.execute(this.s, char, this);
-      // Record any cash this move moved (incorporate −$500, Mom's wire +$5,000, hires…)
-      // on the week's bank statement, labelled with its journal outcome.
-      this._tx(outcome || this._name(charId), cashBefore);
-      // Journal outcome: opt.journal when provided, else the raw execute() return.
-      const journalBody = opt.journal !== undefined ? opt.journal : outcome;
-      if (journalBody) {
-        // Outcomes are narrated in the founder's journal, not the chat thread.
-        const entry = {
-          type: "outcome",
-          cardId,
-          from: this._name(charId),
-          sourceChar: charId === "founder" ? null : charId,
-          body: journalBody,
-          week: this.s.week,
-          isNew: true,
-        };
-        if (o.def.mockups && o.def.mockups[opt.key]) {
-          entry.mockup = o.def.mockups[opt.key];
-        }
-        this.threads.founder.push(entry);
-      }
-
-      this.open[charId] = null;  // answered — slot clears
-      this.history.push({ week: this.s.week, chosen: [cardId] });
-      if (!o.def.focus) this.actionsLeft--;  // focus-arc beats are free
-      this.log.push({ week: this.s.week, charId, acted: cardId, option: opt.key });
-
-      // milestone: equity locked in
-      if (this.s.jordan_equity && !this.act1Complete) {
-        this.act1Complete = true;
-      }
-
-      // New messages normally surface at the next week boundary in _poll(), not
-      // mid-week. Exception: while a focus arc is active, re-poll now so the next
-      // beat lands immediately and the conversation flows in a single sitting.
-      if (this.s.focus) this._poll();
-
       this._checkStamps();
-
-      return outcome;
     }
 
-    // Place a rubber-stamp in the journal for any milestone that just flipped.
-    _checkStamps() {
-      const ctx = {};
-      for (const [id, ch] of this.chars) ctx[id] = ch;
-      const stamps = (DEFS.founder && DEFS.founder.milestones) || [];
-      for (const st of stamps) {
-        if (this.firedStamps.has(st.key)) continue;
-        if (st.test(this.s, ctx)) {
-          this.firedStamps.add(st.key);
-          this.threads.founder.push({
-            type: "stamp", stampKey: st.key, label: st.label, stampClass: st.cls,
-            week: this.s.week, isNew: true,
+    // ── facts API (what content queries instead of hand-rolled flags) ─────────
+    // The five chapters, derived from the same state transitions the UI's to-do
+    // gauge reads (demo → launch → pivot decision → v2 → the application).
+    // Content that belongs to an era can gate on this instead of re-deriving
+    // the flag combination: `if: (s, e) => e.chapter === 3`. Note the growth/
+    // deferred paths skip chapter 4 (no rebuild) and land straight in 5.
+    get chapter() {
+      const s = this.s;
+      if (!s.has_demo) return 1;
+      if (!s.launched) return 2;
+      if (!s.pivot_summit_done && !s.pivot_deferred && !s.activities_pivot) return 3;
+      if (s.activities_pivot && !s.pivot_shipped) return 4;
+      return 5;
+    }
+    done(id) { return this.resolved.has(id); }
+    outcome(id) { const r = this.resolved.get(id); return r ? r.outcome : null; }
+    weekOf(id) { const r = this.resolved.get(id); return r ? r.week : null; }
+    weeksSince(id) { const r = this.resolved.get(id); return r ? this.s.week - r.week : Infinity; }
+    timesResolved(id) { const r = this.resolved.get(id); return r ? r.count : 0; }
+    // "node" (resolved at all) or "node:key1|key2" (one of these outcomes taken).
+    took(spec) {
+      const i = spec.indexOf(":");
+      if (i < 0) return this.done(spec);
+      const r = this.resolved.get(spec.slice(0, i));
+      return !!r && spec.slice(i + 1).split("|").includes(r.outcome);
+    }
+    _tookEntry(entry) { // an array entry means OR across specs
+      return Array.isArray(entry) ? entry.some(sp => this.took(sp)) : this.took(entry);
+    }
+    _depIds(took) {
+      const out = [];
+      for (const entry of took || [])
+        for (const sp of [].concat(entry)) out.push(sp.split(":")[0]);
+      return out;
+    }
+
+    // Queue a delayed consequence from content: { in, char?, say?, effects?, fx?, unless? }
+    schedule(ev) {
+      this.scheduled.push({ week: this.s.week + (ev.in != null ? ev.in : 1), charId: ev.char || null, ev });
+    }
+
+    // ── eligibility & selection ────────────────────────────────────────────────
+    _eligible(node) {
+      const char = this.cast.get(node.char);
+      if (!char || !char.active) return false;
+      const w = node.when || {};
+      const r = this.resolved.get(node.id);
+      if (r && (w.cooldown == null || this.s.week < r.week + w.cooldown)) return false;
+      if (w.after && !w.after.every(id => this.resolved.has(id))) return false;
+      if (w.took && !w.took.every(e2 => this._tookEntry(e2))) return false;
+      if (w.not && w.not.some(e2 => this._tookEntry(e2))) return false;
+      if (w.delay != null) {
+        const deps = (w.after || []).concat(this._depIds(w.took));
+        let base = 1; // no deps: delay counts from the start of the game
+        for (const id of deps) { const rr = this.resolved.get(id); if (rr && rr.week > base) base = rr.week; }
+        if (this.s.week < base + w.delay) return false;
+      }
+      if (w.if && !w.if(this.s, this, char)) return false;
+      return true;
+    }
+    _class(node) { return node.filler ? 0 : node.ambient ? 1 : 2; }
+    _pick(cands) {
+      if (!cands.length) return null;
+      cands = cands.slice().sort((a, b) =>
+        (this._class(b) - this._class(a))
+        || ((this.eligibleSince.get(a.id) || 0) - (this.eligibleSince.get(b.id) || 0))
+        || (this._decl.get(a.id) - this._decl.get(b.id)));
+      return cands[0];
+    }
+    _candidates(charId) {
+      const nodes = this.byChar.get(charId) || [];
+      return nodes.filter(n =>
+        (!this.scene || this.arcOf.get(n.id) === this.scene) && this._eligible(n));
+    }
+
+    // ── surfacing ──────────────────────────────────────────────────────────────
+    _poll() {
+      // 1) unlock characters whose condition now passes (suppressed mid-scene).
+      if (!this.scene) for (const [id, char] of this.cast) {
+        if (!char.active && char.def.unlock && char.def.unlock(this.s, this)) {
+          char.active = true;
+          if (char.def.intro) this._push(id, {
+            type: "incoming", from: char.def.name,
+            body: this._text(char.def.intro, char),
           });
         }
       }
+      // 2) sweep eligibility for FIFO ordering.
+      for (const [id, node] of this.nodes) {
+        if (this._eligible(node)) {
+          if (!this.eligibleSince.has(id)) this.eligibleSince.set(id, this.s.week);
+        } else {
+          this.eligibleSince.delete(id);
+        }
+      }
+      // 3) per character: surface (or hold) its single slot.
+      for (const charId of this.order) {
+        const char = this.cast.get(charId);
+        if (!char || !char.active) continue;
+        // Mid-scene, non-cast characters are held in place untouched.
+        if (this.scene && !this.scene.scene.cast.includes(charId)) continue;
+        const cur = this.open[charId];
+        const cands = this._candidates(charId);
+        if (cur) {
+          const curNode = this.nodes.get(cur.nodeId);
+          const curInScene = this.scene && this.arcOf.get(cur.nodeId) === this.scene;
+          if (this.scene && !curInScene) {
+            // A scene displaces whatever was open; the displaced node was never
+            // resolved, so it goes back in its slot the moment the room empties
+            // (_restoreDisplaced, called from act()) — the week the scene ate
+            // still owes the player its two actions.
+            const best = this._pick(cands);
+            if (best) {
+              if (!this._displaced.has(charId)) this._displaced.set(charId, cur.nodeId);
+              this._show(charId, best);
+            }
+            continue;
+          }
+          if (this.scene && curInScene && !this._stillRelevant(curNode)) {
+            // Mid-scene, a beat whose moment passed (its `if` window closed while
+            // the talk moved on) resolves right away so the sitting keeps flowing.
+            this._resolveIgnored(charId, curNode);
+            const best = this._pick(this._candidates(charId));
+            if (best) this._show(charId, best);
+            continue;
+          }
+          // A standing offer (no timeout = no consequence) yields to a higher class.
+          if (!curNode.timeout) {
+            const best = this._pick(cands.filter(n => n.id !== curNode.id));
+            if (best && this._class(best) > this._class(curNode)) this._show(charId, best);
+          }
+          continue; // otherwise hold — don't repost
+        }
+        const best = this._pick(cands);
+        if (best) this._show(charId, best);
+      }
+    }
+    // Put back whatever the room pushed aside. Scene beats are free, so a scene
+    // that opens AND closes inside one week must hand the week back intact:
+    // without this, a card displaced by the sitting stayed out of the triage
+    // until the next week boundary (act() only re-polls *inside* a scene), and
+    // the player skipped a week they never got to spend.
+    _restoreDisplaced() {
+      if (this.scene) return;
+      for (const [charId, nodeId] of this._displaced) {
+        const node = this.nodes.get(nodeId);
+        if (!node || this.open[charId] || !this._eligible(node)) continue;
+        this._show(charId, node);
+      }
+      this._displaced.clear();
+    }
+    // `effects.surface: "<nodeId>"` — the one licensed mid-week arrival outside a
+    // scene. Normal cards land at the week boundary; this is for an answer that
+    // *causes* the next message, where waiting a week would break the causality
+    // (filing the incorporation is what makes the split a live question). Opt-in
+    // and named, so an answer can never dump an unplanned pile into the triage.
+    // Degrades gracefully: if the character's slot is busy or the node isn't
+    // eligible yet, it simply surfaces at the next boundary like anything else.
+    _flushSurface() {
+      const ids = this._surfaceNow;
+      this._surfaceNow = [];
+      if (this.scene) return; // a room is talking — the boundary will do it
+      for (const id of ids) {
+        const node = this.nodes.get(id);
+        if (!node) continue;
+        const char = this.cast.get(node.char);
+        if (!char || !char.active || this.open[node.char]) continue;
+        if (!this._eligible(node)) continue;
+        this.eligibleSince.set(id, this.s.week);
+        this._show(node.char, node);
+      }
+    }
+    _show(charId, node) {
+      const cur = this.open[charId];
+      if (cur && cur.nodeId === node.id) return;
+      const char = this.cast.get(charId);
+      this.open[charId] = { nodeId: node.id, week: this.s.week };
+      this._push(charId, {
+        type: "incoming", nodeId: node.id,
+        from: node.from || char.def.name,
+        body: this._text(node.text, char),
+        subtext: node.subtext || null,
+        mockups: node.mockups || null,
+        scene: this.arcOf.get(node.id) && this.arcOf.get(node.id).scene ? this.arcOf.get(node.id).id : null,
+      });
+      this.log.push({ week: this.s.week, charId, surfaced: node.id });
+    }
+    _push(charId, entry) {
+      entry.week = this.s.week; entry.isNew = true; entry.seq = this._seq++;
+      this.threads[charId].push(entry);
+    }
+    _text(v, char) { return typeof v === "function" ? v(this.s, this, char) : v; }
+
+    // ── player action ──────────────────────────────────────────────────────────
+    options(nodeId) {
+      const hit = this._openByNode(nodeId);
+      if (!hit) return [];
+      const char = this.cast.get(hit.charId);
+      return (this.nodes.get(nodeId).choices || [])
+        .filter(c => !c.if || c.if(this.s, this, char))
+        .map(c => ({ key: c.key, label: c.label }));
+    }
+    _openByNode(nodeId) {
+      for (const charId of this.order) {
+        const o = this.open[charId];
+        if (o && o.nodeId === nodeId) return { charId };
+      }
+      return null;
     }
 
+    /** Answer an open node. Returns the outcome text (or null). */
+    act(nodeId, key) {
+      const hit = this._openByNode(nodeId);
+      if (!hit) return null;
+      const charId = hit.charId;
+      const char = this.cast.get(charId);
+      const node = this.nodes.get(nodeId);
+      const arc = this.arcOf.get(nodeId);
+      const inSceneBefore = this.scene && arc === this.scene;
+      if (this.actionsLeft <= 0 && !inSceneBefore) return null;
+      const choice = (node.choices || [])
+        .filter(c => !c.if || c.if(this.s, this, char))
+        .find(c => c.key === key);
+      if (!choice) return null;
 
-    // Record a cash movement on this week's bank statement, if cash actually moved.
-    // `label` is the human-readable line; `before` is the cash reading taken before the
-    // mutation. Optional `note`/`type` decorate the row (type: income|expense|burn).
+      // A choice's `reply` lands in the answering character's thread by
+      // default. `replyTo` sends it somewhere else instead — which is what a
+      // decision made on the founder's own "Your move" card needs, since the
+      // founder thread is the journal mirror and renders no bubbles at all.
+      if (typeof choice.reply === "string") {
+        const toId = choice.replyTo || charId;
+        const to = this.cast.get(toId);
+        if (to && !to.def.noChat) this._push(toId, { type: "reply", nodeId, body: choice.reply });
+      }
+
+      const cashBefore = this.s.cash;
+      let outcome = null;
+      if (choice.effects) this._applyEffects(choice.effects, char, node);
+      if (choice.fx) outcome = choice.fx(this.s, this, char) || null;
+      this._tx(node.from || char.def.name, cashBefore);
+
+      // `journal` may be a string, a (s,e,char) function (like `text`), or null
+      // to say "this beat leaves no journal line"; omitted falls back to the fx
+      // return, which is how most content writes its recap.
+      const journalBody = choice.journal !== undefined ? this._text(choice.journal, char) : outcome;
+      if (journalBody) {
+        this._push("founder", {
+          type: "outcome", nodeId,
+          from: char.def.name, sourceChar: charId === "founder" ? null : charId,
+          body: journalBody,
+          mockup: node.mockups && node.mockups[choice.key] || null,
+        });
+      }
+
+      this._record(node, choice.key);
+      this.open[charId] = null;
+      // Entering a room is answering a message, so it costs one of the week's
+      // two moves — and that one move buys the WHOLE sitting: every beat
+      // answered once you are inside is free. Only `inSceneBefore` (we were
+      // already in this room when this answer was made) is free; the answer
+      // that opens the room is not, whether the content authored it as the
+      // arc's first beat (equity, demo night) or as a standalone card
+      // (the summit call, the ship call, Jordan's confrontation).
+      const free = inSceneBefore;
+      if (!free) this.actionsLeft--;
+      this.log.push({ week: this.s.week, charId, acted: nodeId, key: choice.key });
+
+      // An action can close other cards' windows (flipping the launch switch
+      // moots every pre-launch card) — sweep them out of the triage now rather
+      // than at the week boundary. Skipped mid-scene: held cards are blocked
+      // out of the UI anyway, and a timeout's message must not land inside the
+      // scene's transcript. The scene-exit answer runs the sweep (scene is
+      // null by then), so the room never reopens onto stale cards.
+      if (!this.scene) { this._restoreDisplaced(); this._sweepClosed(); this._flushSurface(); }
+
+      // New messages surface at the week boundary — except mid-scene, where the
+      // next beat lands immediately so the conversation flows in one sitting.
+      if (this.scene) this._poll();
+      this._checkStamps();
+      return outcome;
+    }
+
+    _record(node, outcome) {
+      const prev = this.resolved.get(node.id);
+      this.resolved.set(node.id, { outcome, week: this.s.week, count: (prev ? prev.count : 0) + 1 });
+    }
+
+    // The node's moment passed unanswered: resolve as "@ignored" and fire the
+    // timeout consequence (unless its `unless` guard suppresses it).
+    _resolveIgnored(charId, node) {
+      const char = this.cast.get(charId);
+      this._record(node, "@ignored");
+      this.open[charId] = null;
+      this.log.push({ week: this.s.week, charId, ignored: node.id });
+      const t = node.timeout || {};
+      if (t.unless && t.unless(this.s, this, char)) return;
+      const cashBefore = this.s.cash;
+      if (t.effects) this._applyEffects(t.effects, char, node);
+      if (t.fx) t.fx(this.s, this, char);
+      this._tx((node.from || char.def.name) + " — missed", cashBefore);
+      if (t.say) this._say(t.say, charId);
+    }
+
+    // ── effects vocabulary ─────────────────────────────────────────────────────
+    _applyEffects(fx, char, node) {
+      const s = this.s;
+      if (fx.cash) s.cash = Math.max(0, s.cash + fx.cash);
+      if (fx.signal) s.signal = clamp(s.signal + fx.signal, 0, 100);
+      if (fx.marketFit) s.market_fit = clamp(s.market_fit + fx.marketFit, 0, 100);
+      if (fx.waitlist) s.waitlist = Math.max(0, s.waitlist + fx.waitlist);
+      if (fx.users) s.users = Math.max(0, s.users + fx.users);
+      if (fx.customers) s.customers = Math.max(0, s.customers + fx.customers);
+      if (fx.saas) { s.saas.push({ label: fx.saas.label, cost: fx.saas.cost }); s.extra_burn += fx.saas.cost; }
+      if (fx.flags) Object.assign(s, fx.flags);
+      if (fx.char) for (const id of Object.keys(fx.char)) {
+        const c = this.cast.get(id);
+        if (!c) continue;
+        const d = fx.char[id];
+        if (d.morale) c.morale = clamp((c.morale || 0) + d.morale, 0, 100);
+        if (d.trust) c.trust = clamp((c.trust || 0) + d.trust, 0, 100);
+        if (d.effort) {
+          // Positive grants scale by the character's own multiplier (e.g. Alex
+          // part-time); penalties land raw.
+          const mult = d.effort > 0 && c.def.effortMult ? c.def.effortMult(s, c) : 1;
+          c.buildEffort = Math.max(0, c.buildEffort + d.effort * mult);
+        }
+        if (d.focus) c.focus = d.focus;
+        if (d.flags) Object.assign(c.flags, d.flags);
+      }
+      if (fx.say) this._say(fx.say, node && node.char);
+      if (fx.schedule) for (const ev of [].concat(fx.schedule)) this.schedule(ev);
+      if (fx.surface) for (const id of [].concat(fx.surface)) this._surfaceNow.push(id);
+      if ("scene" in fx) {
+        this.scene = fx.scene ? this.arcs.get(fx.scene) : null;
+        if (this.scene) this._displaced.clear(); // a new room starts with a clean slate
+      }
+    }
+    // Public alias for content code that needs a conditional in-character
+    // message mid-fx (e.g. pivot day's evidence-chip responses).
+    say(spec) { this._say(spec); }
+    _say(spec, fallbackCharId) {
+      for (const m of [].concat(spec)) {
+        const charId = m.char || fallbackCharId;
+        const char = this.cast.get(charId);
+        this._push(charId, {
+          type: "incoming",
+          from: m.from || (char ? char.def.name : charId),
+          body: this._text(m.text, char),
+          // a line spoken while a scene is running belongs to that scene, so the
+          // focus UI can scope each private thread to its own sitting.
+          scene: this.scene ? this.scene.id : null,
+        });
+      }
+    }
+
+    // Record a cash movement on this week's bank statement, if cash moved.
     _tx(label, before, opts) {
       const delta = this.s.cash - before;
       if (delta === 0) return;
       const o = opts || {};
       this._weekTx.push({
         label: label || (delta > 0 ? "Income" : "Expense"),
-        note: o.note,
-        delta,
+        note: o.note, delta,
         type: o.type || (delta > 0 ? "income" : "expense"),
       });
     }
 
-    // ── advance to next week ─────────────────────────────────────────────────────
+    // ── weekly tick ────────────────────────────────────────────────────────────
     nextWeek() {
-      const wk = this.s.week;  // the week being closed (statement is filed under it)
-      // burn + clock
-      const baseBurn = 500;
+      const wk = this.s.week;
       this.s.cash = Math.max(0, this.s.cash - this.burnPerWeek);
-      this._weekTx.push({
-        label: "Team & ops", note: "$" + baseBurn + "/wk",
-        delta: -baseBurn, type: "burn",
-      });
+      this._weekTx.push({ label: "Team & ops", note: "$500/wk", delta: -500, type: "burn" });
       for (const sub of this.s.saas) {
-        this._weekTx.push({
-          label: sub.label, note: "$" + sub.cost + "/wk",
-          delta: -sub.cost, type: "saas",
-        });
+        this._weekTx.push({ label: sub.label, note: "$" + sub.cost + "/wk", delta: -sub.cost, type: "saas" });
       }
       this.s.week += 1;
       this.actionsLeft = 2;
 
-      // fire any due delayed consequences
-      const due = this.pending.filter(p => p.fireWeek <= this.s.week);
-      this.pending = this.pending.filter(p => p.fireWeek > this.s.week);
+      // Fire due scheduled consequences.
+      const due = this.scheduled.filter(p => p.week <= this.s.week);
+      this.scheduled = this.scheduled.filter(p => p.week > this.s.week);
       for (const p of due) {
-        const char = p.charId ? this.chars.get(p.charId) : null;
+        const ev = p.ev;
+        const char = p.charId ? this.cast.get(p.charId) : null;
         if (char && !char.active) continue;
-        if (p.cancel && p.cancel(this.s, char)) continue;
-        if (p.condition && !p.condition(this.s, char)) continue;
-        if (p.fx) {
-          const cashBefore = this.s.cash;
-          p.fx(this.s, char, this);
-          this._tx(p.text || p.from || "Consequence", cashBefore);
-        }
-        if (p.text) {
-          const tid = this.threads[p.charId] ? p.charId : "founder";
-          this.threads[tid].push({
-            type: "incoming", from: p.from || "System", body: p.text,
-            week: this.s.week, isNew: true,
-          });
-        }
+        if (ev.unless && ev.unless(this.s, this, char)) continue;
+        const cashBefore = this.s.cash;
+        if (ev.effects) this._applyEffects(ev.effects, char, { char: p.charId });
+        if (ev.fx) ev.fx(this.s, this, char);
+        this._tx("Consequence", cashBefore);
+        if (ev.say) this._say(ev.say, p.charId);
       }
 
-      // Passive co-founder contributions (mirrors engine.js resolveTurn)
-      for (const [id, char] of this.chars) {
-        if (!char.active || !char.focus) continue;
-        const def = DEFS[id];
-        if (!def || def.type !== "cofounder") continue;
-        const skill = (def.skills || {})[char.focus] || 1.0;
-        const sideProjectMult = char.flags.side_project_active ? 0.7 : 1.0;
-        const trustFactor = "trust" in char ? char.trust / 100 : 1.0;
-        const base = 1.2 * skill * sideProjectMult * trustFactor;
-        const ptMult = id === "alex" ? (char.flags.committed_fulltime ? 1.0 : 0.4) : 1.0;
-        if (char.focus === "build") {
-          char.buildEffort = (char.buildEffort || 0) + base * ptMult;
-        } else if (char.focus === "discover") {
-          this.s.signal = Math.min(100, this.s.signal + base * 1.5);
-          this.s.market_fit = Math.min(100, this.s.market_fit + base);
-        } else if (char.focus === "pitch") {
-          this.s.investor_warmth = Math.min(100, this.s.investor_warmth + base * 2);
-        }
-        char.focusSprints = (char.focusSprints || 0) + 1;
-      }
+      // Weekly economy (passive contributions, build burn-down, growth, lose).
+      if (DEPS.world) DEPS.world.tick(this);
 
-      // Generic build burn-down: the over-scoped plan's extra "auto" roadmap items get
-      // built passively as the team's cumulative build effort accrues. Content-free —
-      // the engine flips statuses by effort; item keys/labels live in roles/UI. The
-      // read of buildEffort is non-destructive so it never starves other build gates.
-      let teamEffort = 0;
-      for (const [id, char] of this.chars) {
-        const def = DEFS[id];
-        if (def && def.type === "cofounder" && char.active) teamEffort += (char.buildEffort || 0);
-      }
-
-      if (this.s.items) {
-        const autoKeys = Object.keys(this.s.items).filter(k => this.s.items[k] && this.s.items[k].auto);
-        const target = Math.floor(teamEffort / AUTO_BUILD_INCREMENT);
-        let done = autoKeys.filter(k => this.s.items[k].status === "done").length;
-        for (const k of autoKeys) {
-          if (done >= target) break;
-          if (this.s.items[k].status === "todo" || this.s.items[k].status === "obsolete") {
-            this.s.items[k].status = "done";
-            this.s.items[k].quality = this.s.items[k].quality || "solid";
-            done++;
-          }
+      // Timeouts on open nodes (their patience ran out)…
+      for (const charId of this.order) {
+        const o = this.open[charId];
+        if (!o) continue;
+        const node = this.nodes.get(o.nodeId);
+        const waited = this.s.week - o.week;
+        if (node.timeout) {
+          const t = node.timeout;
+          if ((t.weeks != null && waited >= t.weeks)
+            || (t.when && t.when(this.s, this))) this._resolveIgnored(charId, node);
         }
       }
-
-      if (this.s.activities_pivot && this.s.launched && this.s.items) {
-        if (this.s.pivot_effort_base == null) this.s.pivot_effort_base = teamEffort;
-        const pivotEffort = teamEffort - this.s.pivot_effort_base;
-        if (pivotEffort >= 3.0 && this.s.items.plans_matching && this.s.items.plans_matching.status === "active")
-          this.s.items.plans_matching.status = "done";
-        if (pivotEffort >= 5.5 && this.s.items.plans_ui && this.s.items.plans_ui.status === "todo")
-          this.s.items.plans_ui.status = "done";
-      }
-
-      // Generic per-item effort completion: any roadmap item carrying
-      // { effortTarget, owner } flips to done once its owner's cumulative
-      // buildEffort passes the target. Direction cards in roles/* write
-      // effortStart/effortTarget when a call is made, so the roadmap panel
-      // can show week-by-week progress toward each decision's delivery.
-      if (this.s.items) {
-        for (const k of Object.keys(this.s.items)) {
-          const it = this.s.items[k];
-          if (!it || it.status !== "active" || it.effortTarget == null || !it.owner) continue;
-          const ownerChar = this.chars.get(it.owner);
-          if (ownerChar && (ownerChar.buildEffort || 0) >= it.effortTarget) {
-            it.status = "done";
-            it.quality = it.quality || "solid";
-          }
-        }
-      }
-
-      // Launch day: convert waitlist to users
-      if (this.s.launched && this.s.waitlist > 0 && !this._launchConverted) {
-        this._launchConverted = true;
-        const converted = Math.max(1, Math.round(this.s.waitlist * (0.25 + Math.random() * 0.15)));
-        this.s.users += converted;
-        this.s.waitlist = 0;
-      }
-
-      // Cold-start density (the dating ghost-town lesson): owning one narrow market
-      // gives liquidity — real matches → people convert and stay. Spreading thin
-      // ("broad") means an empty app — signups that never match and churn.
-      const density = this.s.beachhead === 'narrow' ? 1.25 : this.s.beachhead === 'broad' ? 0.7 : 1.0;
-
-      // Organic signups at high signal
-      if (this.s.launched && this.s.signal >= 70)
-        this.s.users += Math.floor((this.s.signal - 70) / 30) + 1;
-
-      // Channel-driven growth (after committing to a winning channel via Bullseye).
-      // A channel that fits dating (referrals, creators, community) compounds; a dud
-      // (paid search, cold sales) barely moves the needle even after you've focused on it.
-      if (this.s.launched && this.s.primary_channel) {
-        const ch = this.s.channels[this.s.primary_channel];
-        const fit = ch ? ch.fit : 0;   // 0..1 effectiveness for a consumer dating app
-        const gained = Math.round((1 + fit * 7) * density);
-        if (gained > 0) this.s.users += gained;
-      }
-
-      // True product-market fit: pre-pivot the raw score overstates reality.
-      if (this.s.activities_pivot && this.s.fit_at_pivot == null)
-        this.s.fit_at_pivot = this.s.market_fit;
-      const trueFit = Math.max(0,
-        this.s.pivot_shipped ? this.s.market_fit
-        : this.s.activities_pivot ? this.s.fit_at_pivot * 0.3 + (this.s.market_fit - this.s.fit_at_pivot) * 0.5
-        : this.s.market_fit / 6);
-
-      // Free-to-paid conversion (uses trueFit — users don't pay for a product
-      // that doesn't retain them)
-      if (this.s.launched && this.s.users > 0) {
-        const baseRate = trueFit < 30 ? 0.005 : trueFit < 50 ? 0.01 : trueFit < 70 ? 0.02 : 0.03;
-        const rate = baseRate * (this.s.website_updated ? 1.3 : 1.0) * density;
-        const raw = this.s.users * rate;
-        const converted = Math.floor(raw) + (Math.random() < (raw % 1) ? 1 : 0);
-        if (converted > 0) { this.s.users = Math.max(0, this.s.users - converted); this.s.customers += converted; }
-      }
-
-      // B2B revenue (display only — negligible at pre-seed scale)
-      this.s.revenue = this.s.customers * 50;
-
-      // Win conditions
-      if (!this.s.game_won) {
-        if (this.s.ycAccepted) this.s.game_won = true;
-        if (this.s.marcusCommitted && this.s.followerCommitted) this.s.game_won = true;
-      }
-
-      // A YC rejection is final — the run ends at the verdict (see roles/yc.js).
-      if (this.s.ycRejected) this.s.game_over = true;
-      if (this.s.cash <= 0) this.s.game_over = true;
+      // …and window expiry (their moment passed) — shared with the act()-time
+      // sweep, so a card whose window an action just closed doesn't linger.
+      this._sweepClosed();
 
       this._poll();
       this._checkStamps();
-
-      // File this week's bank statement after _poll, so ignored-card consequences that
-      // fire at the boundary land on the week they were ignored; balanceAfter == cash.
       this.ledger.push({ week: wk, transactions: this._weekTx, balanceAfter: this.s.cash });
-      const totalAccounts = this.s.users + this.s.customers;
-      if (this.s.pivot_shipped && this.s.users_at_pivot_ship == null)
-        this.s.users_at_pivot_ship = totalAccounts;
-      const retention = Math.min(0.95, (0.05 + (trueFit / 100) * 0.9) * density);
-      let active;
-      if (this.s.pivot_shipped) {
-        const oldPool = this.s.users_at_pivot_ship;
-        const newUsers = totalAccounts - oldPool;
-        active = Math.max(this.s.customers, Math.round(oldPool * 0.1 + newUsers * retention));
-      } else {
-        active = Math.max(this.s.customers, Math.round(totalAccounts * retention));
-      }
-      this.userHistory.push({ week: wk, users: totalAccounts, customers: this.s.customers, active });
       this._weekTx = [];
+    }
+    // Window expiry on open nodes: a card whose `if` window closed resolves as
+    // "@ignored" (its timeout consequence fires — same as the boundary sweep),
+    // or is quietly withdrawn if it was a standing offer. Called at the week
+    // boundary AND after each act, so "flip the switch" makes the pre-launch
+    // cards vanish from the triage immediately instead of at week's end.
+    _sweepClosed() {
+      for (const charId of this.order) {
+        const o = this.open[charId];
+        if (!o) continue;
+        const node = this.nodes.get(o.nodeId);
+        if (this._stillRelevant(node)) continue;
+        if (node.timeout) this._resolveIgnored(charId, node);
+        else this.open[charId] = null; // standing offer quietly withdrawn, unresolved
+      }
+    }
+    // Is an already-open node's moment still live? Same as _eligible minus the
+    // resolved/cooldown check (an open node is by definition unresolved).
+    _stillRelevant(node) {
+      const char = this.cast.get(node.char);
+      if (!char || !char.active) return false;
+      const w = node.when || {};
+      if (w.if && !w.if(this.s, this, char)) return false;
+      return true;
     }
 
     get burnPerWeek() { return 500 + (this.s.extra_burn || 0); }
     get runwayWeeks() { return Math.floor(this.s.cash / this.burnPerWeek); }
 
-    finishItemsAtLaunch() {
-      if (!this.s.items) return;
-      for (const k of Object.keys(this.s.items)) {
-        const it = this.s.items[k];
-        if (it && (it.status === 'active' || it.status === 'todo')) {
-          it.status = 'done';
-          it.quality = it.quality || 'rough';
+    // Overall report-card grade (0-100) of the run so far — the average of the
+    // scoring categories actually faced, matching the endgame rollup. Returns
+    // null if nothing has been graded yet (or scoring isn't loaded). Used by the
+    // YC verdict to admit on merit instead of a dice roll.
+    gradeScore() {
+      if (!DEPS.scoring) return null;
+      const scored = DEPS.scoring.scoreGame(this).filter(c => c.score != null);
+      if (!scored.length) return null;
+      return Math.round(scored.reduce((n, c) => n + c.score, 0) / scored.length);
+    }
+
+    // ── milestones (founder journal rubber-stamps) ─────────────────────────────
+    _checkStamps() {
+      const founder = this.cast.get("founder");
+      const stamps = (founder && founder.def.milestones) || [];
+      for (const st of stamps) {
+        if (this.firedStamps.has(st.key)) continue;
+        if (st.test(this.s, this)) {
+          this.firedStamps.add(st.key);
+          this._push("founder", { type: "stamp", stampKey: st.key, label: st.label, stampClass: st.cls });
         }
       }
     }
 
-    // ── view helpers for the UI ───────────────────────────────────────────────────
+    // ── view helpers for the UI ────────────────────────────────────────────────
     conversations() {
       return this.order
-        .filter(id => this.chars.get(id) && this.chars.get(id).active
-          && !(DEFS[id] && DEFS[id].noChat))   // no-chat sources aren't contacts
+        .filter(id => this.cast.get(id).active && !this.cast.get(id).def.noChat)
         .map(id => {
+          const def = this.cast.get(id).def;
           const thread = this.threads[id];
           const last = thread.length ? thread[thread.length - 1] : null;
-          const def = DEFS[id] || {};
           return {
-            id,
-            name: def.name || id,
-            role: def.role || "",
+            id, name: def.name, role: def.role || "",
             isJournal: id === "founder",
-            preview: last ? this._preview(last) : "",
+            preview: last ? ((last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ").trim()).slice(0, 64) : "",
             hasAction: !!this.open[id],
-            actionCardId: this.openCardId(id),
+            actionNodeId: this.open[id] ? this.open[id].nodeId : null,
             empty: thread.length === 0,
-            // During a focus arc, non-participant contacts are dimmed/on hold.
-            onHold: !!(this.s.focus && !this.s.focus.charIds.includes(id)),
+            onHold: !!(this.scene && !this.scene.scene.cast.includes(id)),
           };
         });
     }
-    _preview(entry) {
-      const b = (entry.body || "").replace(/\s+/g, " ").trim();
-      const tag = entry.type === "reply" ? "You: " : entry.type === "outcome" ? "" : "";
-      return (tag + b).slice(0, 64);
-    }
-
-    // The hand: every currently-open slot that carries a real decision (has at
-    // least one available option). This is the single action surface — people's
-    // asks and the founder's own moves alike. Pure narration (intros, pending
-    // texts, drop follow-ups) never enters `open[]`, so it's naturally excluded;
-    // a card can also opt out explicitly with `notify: true`. Ordered by the
-    // engine's surfacing order, then urgency-first within that.
     openActions() {
       const out = [];
       for (const charId of this.order) {
         const o = this.open[charId];
         if (!o) continue;
-        const card = o.def;
-        if (card.notify) continue;
-        const opts = this.options(card.id);
+        const node = this.nodes.get(o.nodeId);
+        const opts = this.options(node.id);
         if (!opts.length) continue;
-        const char = this.chars.get(charId);
-        const def = DEFS[charId] || {};
+        const char = this.cast.get(charId);
+        const arc = this.arcOf.get(node.id);
         out.push({
-          charId,
-          cardId: card.id,
-          name: card.from || def.name || charId,
-          role: def.role || "",
-          cat: card.cat || "e",
-          noChat: !!def.noChat,
-          urgency: this._rankVal(card, char),
-          body: this._resolveBody(card, char),
-          subtext: card.subtext || null,
-          options: opts,
-          week: o.week,
-          // While a focus arc runs, only its tagged card is live; the rest is on hold.
-          onHold: !!(this.s.focus && card.focus !== this.s.focus.id),
-          focus: card.focus || null,
+          charId, nodeId: node.id,
+          name: node.from || char.def.name, role: char.def.role || "",
+          noChat: !!char.def.noChat,
+          kind: node.filler ? "filler" : node.ambient ? "ambient" : "story",
+          body: this._text(node.text, char),
+          subtext: node.subtext || null,
+          options: opts, week: o.week,
+          onHold: !!(this.scene && arc !== this.scene),
+          scene: arc && arc.scene ? arc.id : null,
         });
       }
-      out.sort((a, b) => b.urgency - a.urgency);
       return out;
     }
-
-    // snapshot of headline numbers for the status bar
     stats() {
       return {
-        week: this.s.week,
-        cash: this.s.cash,
-        runway: this.runwayWeeks,
+        week: this.s.week, cash: this.s.cash, runway: this.runwayWeeks,
         actionsLeft: this.actionsLeft,
-        signal: Math.round(this.s.signal),
-        marketFit: Math.round(this.s.market_fit),
+        signal: Math.round(this.s.signal), marketFit: Math.round(this.s.market_fit),
         incorporated: this.s.incorporated,
-        equity: this.chars.get("jordan").flags.equity_proposal || null,
-        equitySigned: !!this.s.jordan_equity,
-        act1Complete: this.act1Complete,
-        gameOver: this.s.game_over,
-        gameWon: this.s.game_won,
-        ycRejected: !!this.s.ycRejected,
-        ycWeek: this.ycWeek,
-        ycApplied: !!this.s.ycApplied,
-        ycDeciding: !!this.s.ycDeciding,
-        ycAccepted: !!this.s.ycAccepted,
-        focus: this.s.focus,   // { id, charIds } while a war-room arc is active, else null
+        gameOver: this.s.game_over, gameWon: this.s.game_won,
+        scene: this.scene ? this.scene.id : null,
       };
     }
   }
 
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { Engine };
+    module.exports = { Game };
   } else {
-    window.Engine = Engine;
+    window.Engine = Game;
   }
 })();
