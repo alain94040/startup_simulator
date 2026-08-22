@@ -234,13 +234,21 @@
               : "The split was never signed. Every later conversation got harder." },
           { faced: g.done("ff_family"), weight: 1, got: g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") ? 1 : 0.3,
             note: g.took("ff_family:ask") ? "Took the friends-and-family money early." : null },
-          { faced: !!s.jordan_resolved || !!s.jordan_quit, weight: 2,
-            got: s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 1,
-            note: s.jordan_equity_gifted
-              ? "Gave a departed co-founder her full " + pct + " rather than have the buyback conversation. The kindest cheque this company ever wrote."
-              : !s.jordan_cleanup_needed ? "Bought back the departed co-founder's stake — the cap table survived the exit."
-                : s.jordan_quit ? "She resigned holding " + pct + " and no reason to sign anything. The lawyer buys a negotiation now, not a signature."
-                  : "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there." },
+          // The compromise counts as faced. A founder who reached the room,
+          // decided, and then blinked has a co-founder they have already
+          // written off sitting on the cap table with the question reopened —
+          // and now applies to YC that way. Blinking must not read as a clean
+          // cap table just because nobody got as far as leaving.
+          { faced: !!s.jordan_resolved || !!s.jordan_quit || !!s.jordan_compromised, weight: 2,
+            got: s.jordan_compromised && !s.jordan_resolved && !s.jordan_quit ? 0
+              : s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 1,
+            note: s.jordan_compromised && !s.jordan_resolved && !s.jordan_quit
+              ? "Decided a co-founder was off the team, said so, then took it back — and applied with her " + pct + " and the question both exactly where they were."
+              : s.jordan_equity_gifted
+                ? "Gave a departed co-founder her full " + pct + " rather than have the buyback conversation. The kindest cheque this company ever wrote."
+                : !s.jordan_cleanup_needed ? "Bought back the departed co-founder's stake — the cap table survived the exit."
+                  : s.jordan_quit ? "She resigned holding " + pct + " and no reason to sign anything. The lawyer buys a negotiation now, not a signature."
+                    : "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there." },
           // The practical half of a firing, and the half founders forget.
           { faced: g.done("firing_logistics"), weight: 1,
             got: s.appstore_on_jordan ? 0 : 1,

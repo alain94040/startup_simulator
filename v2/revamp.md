@@ -409,6 +409,75 @@ every branch of the scene is exercised by some run.
 compromise costs ~10 points, which an otherwise-perfect run absorbs. Whether
 blinking should be able to cost the batch is a dial, not a bug.
 
+## Pass 7 — the application stops being a scene
+
+**Why.** Measured on the sample book, the firing scene and the application scene
+both landed in week 22 — in 85 of 192 archetype runs, the same week; in 17 of
+them the founder fired a co-founder *after* submitting the answer to "why this
+team." That was the visible complaint. Probing it turned up a worse one: the
+application scene's choices changed nothing. Playing all three questions as
+evidence versus all three as bluffs produced an identical outcome in 20/20
+seeds, because `app_learned` / `app_why` / `app_growth` / `app_bluffs` were read
+by exactly one thing — flavour text in the rejection letter. Nothing in
+`scoring.js` touched them, and the verdict reads `gradeScore()` plus the
+traction bar, both fully settled before the scene opens. The final exam was a
+recap quiz administered after the grading had finished, and the always-present
+bluff option cost nothing in a scene whose beats are free of action cost.
+
+**What changed.**
+- The `application` arc is gone (four beats). `yc_apply` is now one node with
+  one button: applying computes the verdict in the same act and ends the run,
+  so the report card follows immediately. No three-week letter — nothing
+  between submitting and hearing could change the answer, so the wait was only
+  a wait.
+- Window unchanged at `deadline_week - 3`. Narrowing it to `- 1` was tried and
+  reverted: the win rate fell 53% → 23%, because `yc_apply` loses the action
+  race in an already-crowded week 24 and the run ends never having applied. The
+  three-week window is scaffolding for an action-starved endgame, not padding.
+
+**What the shorter run broke, and how it was fixed.** Ending the run on submit
+removed weeks 23–25, which turned out to be load-bearing for two tails:
+- **The cap table.** `jordan_cap_table` sits on Alex's contended thread and used
+  to land at wk 24. With the run ending at 22–23 it never surfaced, and 61 runs
+  were graded down on "Keep the cap table clean" for a decision the game never
+  offered. The firing scene's three exits now carry
+  `effects.surface: "jordan_cap_table"`, so the question is asked the same night
+  she leaves — which reads better anyway than Alex raising it a fortnight later.
+- **That created a cash trap**: firing week now carried $500 handoff + $99
+  App Store + $2,000 lawyer against a ~$2,600 balance, and bankruptcies went
+  18/192 → 22/192, killing three archetypes that should win. The lawyer option
+  is now gated on `s.cash >= 2750`. Below that the bill doesn't disappear — it
+  stops being a choice, leaving the gift or the deferral, which *is* the lesson:
+  cleaning up after a co-founder costs money you have to still have.
+  Bankruptcies back to 18/192, all in archetypes that were already losing.
+- **The compromise fuse.** `firing_reaction:fold` schedules Jordan's
+  resignation five weeks out; at a wk-22 fold that only ever landed because the
+  run kept playing after the application went out. Now she is still there when
+  the founder hits submit — so folding was *protecting* the cap table (score
+  67 → 100, grade 90 → 95). `scoring.js` now counts `jordan_compromised` as
+  faced and grades it 0: you decided a co-founder was off the team, took it
+  back, and applied with her stake and the question both where they were. The
+  G2 contract was rewritten to check that grade rather than the resignation.
+
+**Measured.** test_slice 161/161, test_scenes 20/20, test_narrative 0
+realistic-play violations (the same two documented fuzzer-only findings),
+sim_behaviors 34 passing / the same 3 documented failures, phase_map 100% win ·
+0 bankrupt · 0 quiet weeks. Median run end wk 25 → 24. Pacing is otherwise
+untouched: demo wk 9, launch wk 13, summit wk 18, relaunch wk 21, firing wk 22.
+The firing and the application no longer share a week in any run.
+
+**Not done, deliberately.** The arcs still run
+equity → demo night → launch → pivot → fire Jordan, and the two-week
+compression that would put clear water between the firing and the application
+was scoped out — the collision is resolved by the application no longer being
+an arc, not by moving the spine.
+
+**Still open.** The grade bar is not the binding constraint: every archetype
+that clears the traction gate scores ≥ 89, and every loss in the table is a
+traction loss, not a grade loss. `features-wont-save-you` scores 100 for 15 of
+16 archetypes. And `gradeScore()` at verdict time runs 6–11 points below the
+card the player is then shown, because `default-alive` flips to 100 on the win.
+
 ## Open items (next passes)
 - **Re-balance** (tools now exist): the angel round win path, the Marcus
   warmth soft-lock, the demo→launch gap, the action-starvation tail. Drive with

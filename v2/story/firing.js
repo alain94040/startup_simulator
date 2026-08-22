@@ -230,7 +230,7 @@
                 reply: "i should have said this three weeks ago and i didn't. you're off the founding team. i'm sorry i made you sit through it twice.",
                 journal: (s) => "Went back to Jordan and finished what I started three weeks ago. Her " + pctOf(s)
                   + " gets papered this week. Three weeks of everyone pretending, and Alex reading her code cold.",
-                effects: { scene: null, say: { char: "jordan", text: "okay. thank you for coming back and saying it." } },
+                effects: { scene: null, surface: "jordan_cap_table", say: { char: "jordan", text: "okay. thank you for coming back and saying it." } },
                 fx: (s, e) => jordanLeaves(s, e, "exit"),
               },
               {
@@ -446,7 +446,7 @@
                 reply: "one more thing. the intake screen — the one your sister screenshotted into her group chat — is still the only organic share this company has ever had. that was you. tonight doesn't erase it.",
                 journal: (s) => "Told Jordan tonight, myself, in her thread. She wasn't surprised and she didn't pretend to be. Her "
                   + pctOf(s) + " gets papered this week; Alex has iOS from Monday. She's writing the handoff up before she goes dark.",
-                effects: { scene: null },
+                effects: { scene: null, surface: "jordan_cap_table" },
                 fx(s, e) {
                   s.jordan_handoff = true;
                   e.say({ char: "jordan", text: "…thanks. that lands better than you'd think." });
@@ -459,7 +459,7 @@
                 reply: "that's everything. i'll send the paperwork.",
                 journal: (s) => "Told Jordan tonight, myself, in her thread. She wasn't surprised and she didn't pretend to be. Her "
                   + pctOf(s) + " gets papered this week; Alex has iOS from Monday.",
-                effects: { scene: null, say: { char: "jordan", text: "okay. goodnight." } },
+                effects: { scene: null, surface: "jordan_cap_table", say: { char: "jordan", text: "okay. goodnight." } },
                 fx: (s, e) => jordanLeaves(s, e, "exit"),
               },
             ],

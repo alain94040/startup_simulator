@@ -189,7 +189,14 @@
         when: { cooldown: 4, if: (s) => s.jordan_resolved && s.jordan_cleanup_needed },
         choices: [
           {
+            // Only on the table if the company survives paying it. Below that
+            // the bill doesn't vanish — it stops being a choice, which is the
+            // lesson: cleaning up after a co-founder costs money you have to
+            // still have. A cash-poor founder is left with the gift or the
+            // deferral, and the cap table stays dirty for the reason it always
+            // does.
             key: "lawyer", label: "Hire a lawyer — $2,000",
+            if: (s) => s.cash >= 2000 + 500 + 250,
             journal: "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
             effects: { cash: -2000, flags: { jordan_cleanup_needed: false } },
             fx: () => "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.",

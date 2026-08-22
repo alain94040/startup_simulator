@@ -163,12 +163,20 @@ check(`keep_jordan.wins (${S.keep_jordan.wins}%) <= half of decent.wins (${S.dec
   S.keep_jordan.wins <= S.decent.wins / 2);
 
 // G2 · the compromise (new with the firing scene): reaching the room and
-// blinking is worse than deferring, not better. She resigns on her own, so the
-// founder never gets the decision — and the report card must say so.
+// blinking is worse than deferring, not better. The founder never gets the
+// decision — and the report card must say so.
+//
+// The old form of this contract asserted she resigns on her own inside the
+// horizon. That fuse was five weeks long and only ever landed because the run
+// used to keep playing for three weeks after the application went out; now
+// that applying ends the run, a fold at the co-founder conversation is still
+// unresolved when the founder hits submit. That IS the outcome — she is on the
+// team, on the cap table, on a question you already answered once — so the
+// contract now checks the grade of it rather than the resignation.
 check(`fold_jordan.jordanFired = ${S.fold_jordan.jordanFired}% (expected 0 — blinked in the room)`,
   S.fold_jordan.jordanFired === 0);
-check(`fold_jordan.jordanQuit (${S.fold_jordan.jordanQuit}%) >= 80% — she leaves on her own`,
-  S.fold_jordan.jordanQuit >= 80);
+check(`fold_jordan cap table (${Math.round(S.fold_jordan.capScore)}) < decent (${Math.round(S.decent.capScore)}) — blinking is not a clean cap table`,
+  S.fold_jordan.capScore < S.decent.capScore);
 check(`fold_jordan.grade (${Math.round(S.fold_jordan.grade)}) < decent.grade (${Math.round(S.decent.grade)})`,
   S.fold_jordan.grade < S.decent.grade);
 

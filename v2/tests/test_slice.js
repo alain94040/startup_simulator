@@ -296,9 +296,8 @@ console.log("the deadline (seed 4, decent, subsidized)");
 {
   const g = run(4, decent, 40, { subsidy: 500 });
   ok(g.s.week <= 25, "no run outlives the deadline (ended wk " + g.s.week + ")");
-  ok(g.took("yc_apply:start"), "application started (wk " + g.weekOf("yc_apply") + ")");
-  ok(g.took("app_send:submit"), "…written as the three-question scene and submitted (wk " + g.weekOf("app_send") + ")");
-  ok(g.s.ycAccepted || g.s.ycRejected, "the verdict arrived at the deadline");
+  ok(g.took("yc_apply:submit"), "applied to YC (wk " + g.weekOf("yc_apply") + ")");
+  ok(g.s.ycAccepted || g.s.ycRejected, "…and the verdict came back in the same breath");
   ok(g.s.game_won || g.s.game_over, "…and ended the run (" + (g.s.ycAccepted ? "accepted" : "rejected") + ")");
   ok(g.threads.yc.some(m => m.from === "Y Combinator" && /passing|You're in/.test(m.body || "")),
     "the verdict letter landed on the YC thread");

@@ -82,7 +82,6 @@ const SPINE = [
   ["feature_spree", "features"], ["pivot_day_decide", "verdict"],
   ["pivot_day_evidence", "evidence"], ["pivot_relaunch", "relaunch"],
   ["jordan_confrontation", "jordan"], ["channel_test", "channel"],
-  ["app_q_learned", "app_learned"], ["app_send", "app"],
 ];
 
 function endingOf(g) {

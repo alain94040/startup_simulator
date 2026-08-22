@@ -815,7 +815,7 @@ const STAGES = [
     { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? "she's off the team" : s.jordan_drifting ? "she's drifting — Alex is covering" : null },
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped, note: (s, g) => g && g.took && g.took("pivot_relaunch:sarah_event") ? "debuted at Sarah's event" : g && g.took && g.took("pivot_relaunch:press") ? "the pivot story ran" : null },
   ]},
-  { id: "apply", label: "Ch 5 · Ace the application",
+  { id: "apply", label: "Ch 5 · Earn the application",
     goal: s => "Prove it before week " + s.deadline_week + ": revenue, a channel, a clean cap table.",
     active: () => true, items: [
     { t: "Take the friends & family money", done: (s, g) => g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") },
@@ -823,8 +823,7 @@ const STAGES = [
     { t: "Test channels cheaply (2)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 2, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 2 tested" },
     { t: "Go all-in on the one with legs", done: s => !!s.primary_channel, note: s => s.primary_channel ? "all chips on " + s.primary_channel : null },
     { t: "Keep the cap table clean", done: s => !s.jordan_cleanup_needed, note: s => s.jordan_cleanup_needed ? "a departed co-founder still owns her stake" : null },
-    { t: "Write the three answers", done: (s, g) => g.done("app_send"), note: s => !s.ycApplied ? null : (s.app_bluffs || 0) > 0 ? s.app_bluffs + " borrowed from the pile" : "every answer earned" },
-    { t: "Send the application", done: s => !!s.ycApplied, note: s => "deadline · wk " + s.deadline_week },
+    { t: "Apply to Y Combinator", done: s => !!s.ycApplied, note: s => "deadline · wk " + s.deadline_week },
     { t: "The verdict", done: s => !!s.ycAccepted },
   ]},
 ];
