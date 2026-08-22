@@ -67,7 +67,7 @@
       {
         // Ch 3 — the slide: their shiny feature ships exactly when your graph flattens.
         id: "flare_feature", char: "techcrunch", from: "TechCrunch",
-        text: "Flare shipped video dates to a wave of press — the same week your signups flatlined. two of your users emailed asking if kindred will match it. alex forwarded both without comment.",
+        text: "Flare shipped video dates to a wave of press — the same week your signups flatlined. two of your users emailed asking if plusone will match it. alex forwarded both without comment.",
         when: { if: (s) => s.launched && !s.activities_pivot && !s.pivot_summit_done && s.users >= 3 },
         choices: [
           {
@@ -131,7 +131,7 @@
       // ── SOCIAL & PRESS ───────────────────────────────────────────────────────
       {
         id: "public_complaint", char: "twitter", from: "Twitter",
-        text: "'@kindredapp matched me with the same guy THREE times. we already dated. this is a bug AND a nightmare.' — 40 retweets and counting.",
+        text: "'@plusoneapp matched me with the same guy THREE times. we already dated. this is a bug AND a nightmare.' — 40 retweets and counting.",
         when: { if: (s) => s.launched && (s.users >= 10 || s.customers >= 2) },
         choices: [
           {
@@ -174,9 +174,9 @@
         choices: [
           {
             key: "call", label: "Call Tom",
-            journal: "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
+            journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
             effects: { customers: -1, signal: 16, marketFit: 10 },
-            fx: () => "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.",
+            fx: () => "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.",
           },
         ],
         timeout: { weeks: 3, effects: { signal: -8, customers: -1 } },

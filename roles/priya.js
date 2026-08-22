@@ -15,17 +15,17 @@
     role: "Advisor",
     name: "Priya",  // chat display name
     // Two ways in: the founder meetup (early), or — if the player never went —
-    // she reaches out herself once the launch makes Kindred visible. Either way
+    // she reaches out herself once the launch makes PlusOne visible. Either way
     // the pivot summit always has its second voice.
     intro: (s) => s.met_priya
       ? "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute."
-      : "hey — you don't know me. priya. a friend sent me kindred's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
+      : "hey — you don't know me. priya. a friend sent me plusone's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
     unlockCondition: (s) => (s.met_priya === true && s.week >= s.met_priya_week + 2)
       || (s.launched && s.week >= (s.launch_week || 0) + 2),
     cards: [
       {
         id: 'mentor_competitor_bomb', cat: 'c', from: 'Priya (advisor)',
-        body: "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why kindred.'",
+        body: "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why plusone.'",
         urgency: 3, weeks: 1,
         available: (s, char) => s.week <= 10 && s.signal < 60 && !char.flags.competitor_resolved,
         options: [
@@ -99,7 +99,7 @@
       {
         // Beat 5: what "pivot" even means — a reframe, not a feature.
         id: 'pivot_day_shape', cat: 'p', from: 'Priya (advisor)', focus: 'pivot',
-        body: "so say it's the product. one warning first: don't just bolt an 'events tab' onto the app. every dying dating app does that, and users can smell it. flip the whole thing instead. you don't browse people — you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again — it's 'i'm in.' kindred stops being a chat app full of dead ends and becomes a calendar with people on it.",
+        body: "so say it's the product. one warning first: don't just bolt an 'events tab' onto the app. every dying dating app does that, and users can smell it. flip the whole thing instead. you don't browse people — you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again — it's 'i'm in.' plusone stops being a chat app full of dead ends and becomes a calendar with people on it.",
         urgency: 18.5, patience: Infinity,
         available: (s, char, e) => {
           const alex = e.chars.get('alex');

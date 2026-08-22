@@ -97,7 +97,7 @@
               const rounds = [
                 "Five calls. One woman keeps a spreadsheet of her matches across four apps — the HN thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
                 "Five more calls. A teacher who deleted every app twice. A guy who wrote three drafts of a first message and sent none. The pattern doesn't move: getting matches isn't the problem — what comes after is.",
-                "Another round of calls. Someone asked, dead serious, if kindred could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
+                "Another round of calls. Someone asked, dead serious, if plusone could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
               ];
               return rounds[(n - 1) % rounds.length];
             } },
@@ -196,8 +196,8 @@
                 if (!char.flags.matching_pair_intro) {
                   char.flags.matching_pair_intro = true;
                   return researched
-                    ? "Paired with Alex on the matching engine — the core of Kindred. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
-                    : "Paired with Alex on the matching engine — the core of Kindred. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
+                    ? "Paired with Alex on the matching engine — the core of PlusOne. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
+                    : "Paired with Alex on the matching engine — the core of PlusOne. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
                 }
                 const pairN = (char.flags.matching_pair_count = (char.flags.matching_pair_count || 0) + 1);
                 const researchedMsgs = [
@@ -380,13 +380,13 @@
           && s.week >= (s.launch_week || 0) + 2 && !char.flags.maya_done,
         options: [
           { label: 'Call her', key: 'call',
-            journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted Kindred because it made me feel worse, not better.'",
+            journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted PlusOne because it made me feel worse, not better.'",
             execute(s, char) {
               char.flags.maya_done = true;
               s.maya_quote = true;
               s.market_fit = clamp(s.market_fit + 4, 0, 100);
               s.signal = clamp(s.signal + 3, 0, 100);
-              return "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. Kindred made me feel worse, not better.' You wrote down every word.";
+              return "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. PlusOne made me feel worse, not better.' You wrote down every word.";
             } },
           { label: 'Send an email survey', key: 'survey',
             journal: "Sent Maya (and the other quiet accounts) a churn survey. Two replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
@@ -548,7 +548,7 @@
       // ── RECURRING: deep user research (post-launch) ──────────────────────────
       {
         id: 'founder_user_depth', cat: 'c', from: 'You',
-        body: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on kindred — are they going on dates? are they happy with their matches?",
+        body: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on plusone — are they going on dates? are they happy with their matches?",
         urgency: 2, weeks: 1,
         available: (s) => s.launched && (s.users >= 5 || s.customers >= 2)
           && (s.user_depth_count || 0) < 2 && s.week >= (s.user_depth_last || 0) + 6,
@@ -649,7 +649,7 @@
       },
       {
         id: 'reference_checkin', cat: 'c', from: 'You',
-        body: "your reference user has been on kindred for 3 weeks. they've been on two dates. time to collect that story while the experience is fresh.",
+        body: "your reference user has been on plusone for 3 weeks. they've been on two dates. time to collect that story while the experience is fresh.",
         urgency: 2, weeks: 1,
         available: (s) => s.reference_customer && !s.testimonial && s.week >= (s.reference_customer_week || 0) + 3,
         options: [
@@ -658,7 +658,7 @@
               s.testimonial = true;
               s.market_fit = clamp(s.market_fit + 3, 0, 100);
               s.signal = clamp(s.signal + 6, 0, 100);
-              return "One hour call. They walked you through what actually leads to a date on kindred — two patterns you hadn't designed around. And a quote you can use anywhere.";
+              return "One hour call. They walked you through what actually leads to a date on plusone — two patterns you hadn't designed around. And a quote you can use anywhere.";
             } },
           { label: 'Ask over email', key: 'email',
             journal: "Asked the reference customer for a testimonial over email. Short paragraph back — honest and usable.",
@@ -672,7 +672,7 @@
       },
       {
         id: 'website_social_proof', cat: 'p', from: 'You',
-        body: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of kindred. features tell, stories sell.",
+        body: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of plusone. features tell, stories sell.",
         urgency: 2, weeks: 1,
         available: (s) => s.testimonial && !s.website_updated,
         options: [
@@ -745,7 +745,7 @@
               const n = (char.flags.reflect_count = (char.flags.reflect_count || 0) + 1);
               const msgs = [
                 "Spent time thinking about the pitch. Small refinements. Nothing dramatic.",
-                "Wrote out the 'why now' for Kindred again. Tighter than before, but still not crisp enough for a cold email.",
+                "Wrote out the 'why now' for PlusOne again. Tighter than before, but still not crisp enough for a cold email.",
                 "Mapped out how we talk about the problem. Some clarity — nothing that changes the strategy.",
                 "Refined the one-liner. Closer, but still not the version that makes someone lean in.",
                 "Ran through the positioning again. A few word changes, one sharper framing. Progress.",

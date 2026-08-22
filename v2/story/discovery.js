@@ -130,7 +130,7 @@
       // ── POST-LAUNCH RESEARCH HABIT ───────────────────────────────────────────
       {
         id: "founder_user_depth", char: "founder", ambient: true,
-        text: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on kindred — are they going on dates? are they happy with their matches?",
+        text: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on plusone — are they going on dates? are they happy with their matches?",
         when: {
           cooldown: 6,
           if: (s, e) => s.launched && (s.users >= 5 || s.customers >= 2) && e.timesResolved("founder_user_depth") < 2,
@@ -155,7 +155,7 @@
       // ── THE REFERENCE CHAIN: testimonial → website social proof ─────────────
       {
         id: "reference_checkin", char: "founder", ambient: true,
-        text: "your reference user has been on kindred for 3 weeks. they've been on two dates. time to collect that story while the experience is fresh.",
+        text: "your reference user has been on plusone for 3 weeks. they've been on two dates. time to collect that story while the experience is fresh.",
         when: {
           if: (s, e) => s.reference_customer && !s.testimonial
             && (e.weeksSince("first_customer_offer") >= 3 || e.weeksSince("dont_scale_seed") >= 3),
@@ -164,7 +164,7 @@
           {
             key: "call", label: "Schedule a call, get the full story",
             effects: { marketFit: 3, signal: 6, flags: { testimonial: true } },
-            fx: () => "One hour call. They walked you through what actually leads to a date on kindred — two patterns you hadn't designed around. And a quote you can use anywhere.",
+            fx: () => "One hour call. They walked you through what actually leads to a date on plusone — two patterns you hadn't designed around. And a quote you can use anywhere.",
           },
           {
             key: "email", label: "Ask over email",
@@ -176,7 +176,7 @@
       },
       {
         id: "website_social_proof", char: "founder", ambient: true,
-        text: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of kindred. features tell, stories sell.",
+        text: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of plusone. features tell, stories sell.",
         when: { if: (s) => !!s.testimonial && !s.website_updated },
         choices: [
           {
@@ -222,8 +222,8 @@
                   s.items.matching_algo.quality = "solid";
                 }
                 return researched
-                  ? "Paired with Alex on the matching engine — the core of Kindred. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
-                  : "Paired with Alex on the matching engine — the core of Kindred. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
+                  ? "Paired with Alex on the matching engine — the core of PlusOne. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
+                  : "Paired with Alex on the matching engine — the core of PlusOne. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
               }
               return "Paired up. You worked on the profiles UI, Alex handled the matching algorithm. Your contribution was modest but Alex shipped faster with you there.";
             },

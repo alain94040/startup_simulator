@@ -9,12 +9,12 @@
     ],
 
     role: "Social media",
-    intro: "people are talking about kindred on social media.",
+    intro: "people are talking about plusone on social media.",
     unlockCondition: (s) => s.launched && (s.users >= 10 || s.customers >= 2),
     cards: [
       {
         id: 'public_complaint', cat: 'c', from: 'Twitter',
-        body: "'@kindredapp matched me with the same guy THREE times. we already dated. this is a bug AND a nightmare.' — 40 retweets and counting.",
+        body: "'@plusoneapp matched me with the same guy THREE times. we already dated. this is a bug AND a nightmare.' — 40 retweets and counting.",
         urgency: 3, weeks: 1,
         available: (s) => s.launched && (s.users >= 10 || s.customers >= 2) && !s.public_complaint_done,
         options: [

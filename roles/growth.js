@@ -104,7 +104,7 @@
               return "The piece ran with the 'dating app that wants you to delete it' angle. ~12 signups in a day, plus an investor reply-all. Quality over volume.";
             } },
           { label: 'Pay 3 TikTok creators to post', key: 'tiktok',
-            journal: "Paid three TikTok creators to post about Kindred — the same playbook Flare used. Spendy ($1,200), but it put real daters in the door fast.",
+            journal: "Paid three TikTok creators to post about PlusOne — the same playbook Flare used. Spendy ($1,200), but it put real daters in the door fast.",
             execute(s) {
               s.launch_surface_done = true; s.launch_surface_week = s.week;
               s.cash = clamp(s.cash - 1200, 0, 9999999);

@@ -315,7 +315,7 @@
       // on the founder's interviews — GOALS.md's "research → better build options".
       {
         id: 'jordan_dir_first_screen', cat: 'p', from: 'Jordan',
-        body: "first real iOS question. someone installs kindred, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in TestFlight friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
+        body: "first real iOS question. someone installs plusone, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in TestFlight friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
         urgency: 12, weeks: 1,
         available: (s, char) => s.dev_plan != null && s.dev_start_week != null
           && s.week >= s.dev_start_week + 1 && !char.flags.first_screen_done
@@ -341,7 +341,7 @@
               grantEffort(char, 1.0);
               s.market_fit = clamp(s.market_fit + 3, 0, 100);
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Intake-first onboarding";
-              return "Intake-first. Riskier open — five questions before a single face — but nobody will mistake kindred for another swipe app.";
+              return "Intake-first. Riskier open — five questions before a single face — but nobody will mistake plusone for another swipe app.";
             } },
           { label: 'Intake — built from the interview questions', key: 'intake_interviews',
             available: (s, char, e) => {
@@ -382,7 +382,7 @@
       // ── BUILD vs BUY: MATCHING (the core → BUILD is right) ───────────────────
       // Jordan pushes to license the *core* matching engine from a vendor — an early
       // red flag that she's the wrong co-founder (she'd outsource the one thing that
-      // makes Kindred Kindred). Right call: overrule her and build it. Licensing is a
+      // makes PlusOne PlusOne). Right call: overrule her and build it. Licensing is a
       // black box that can't be re-tuned for the pivot — it bites later (see
       // applyActivitiesPivot in roles/alex.js). Lives here so Jordan owns the proposal;
       // reads/writes Alex via e.chars.get('alex').
@@ -396,7 +396,7 @@
           && s.dev_start_week != null && s.week >= s.dev_start_week + 1 && s.week <= s.dev_start_week + 6,
         options: [
           { label: "No — matching is the whole product, we build it", key: 'build',
-            reply: "no. the matching engine *is* kindred — it's the one thing we can't outsource. we build it ourselves.",
+            reply: "no. the matching engine *is* plusone — it's the one thing we can't outsource. we build it ourselves.",
             journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
             execute(s, char, e) {
               char.flags.matching_choice_done = true;

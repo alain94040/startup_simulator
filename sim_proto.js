@@ -1658,7 +1658,7 @@ if (WINNERS_FLAG) {
     }
 
     const priyaWithAttend = pct(attend, r => r.activeChars.includes('priya'));
-    // Skipping the meetup no longer locks Priya out: the launch makes Kindred
+    // Skipping the meetup no longer locks Priya out: the launch makes PlusOne
     // visible and she reaches out herself (launch_week + 2) — the pivot summit
     // always has its second voice. Measure her post-launch arrival instead.
     const skipLaunched    = skip.filter(r => r.launched);

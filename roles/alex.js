@@ -233,7 +233,7 @@
       // ── DEVELOPMENT PLANNING ────────────────────────────────────────────────
       {
         id: 'dev_planning_session', cat: 'p', from: 'Alex',
-        body: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
+        body: "couldn't sleep — mocked up three directions for plusone. tap through them and take a real look before we lock scope. which one do we actually build?",
         // urgency 12: the plan choice is the dev arc's opening headline — it starts the
         // clock (s.dev_start_week) that every sprint-direction card keys off, so it can't
         // sit behind flavor cards. Window rides the equity signing instead of a fixed wk8.
@@ -372,7 +372,7 @@
       // the conversation-odds thesis — GOALS.md's "research → better build options".
       {
         id: 'alex_dir_ranking', cat: 'p', from: 'Alex',
-        body: "matching engine update: it runs end to end — profiles in, pairs out. one problem. the scoring function is literally `return Math.random()`. before i write the real one i need product direction, not code: what makes two people a good kindred match?",
+        body: "matching engine update: it runs end to end — profiles in, pairs out. one problem. the scoring function is literally `return Math.random()`. before i write the real one i need product direction, not code: what makes two people a good plusone match?",
         urgency: 12, weeks: 1,
         available: (s, char) => s.matching_owned && char.flags.plan_done && !char.flags.ranking_done
           && !s.has_demo && !s.launched,
@@ -1424,7 +1424,7 @@
         },
         options: [
           { key: 'maya', label: "Maya's call — she liked her match",
-            reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. kindred made me feel worse.' we didn't lose her because the room was empty. we lost her after the match — the part that's ours.",
+            reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. plusone made me feel worse.' we didn't lose her because the room was empty. we lost her after the match — the part that's ours.",
             available: (s) => !!s.maya_quote,
             journal: null,
             execute(s, char, e) { pdPlayChip(s, char, e, 'maya'); return null; } },
@@ -1475,7 +1475,7 @@
         options: [
           { key: 'pivot', label: 'We pivot — the plan is the product',
             reply: "we pivot. the plan is the product — a match needs somewhere to go, and monday we start building the somewhere.",
-            journal: "Pivot day, 6pm. I called it: we pivot. The thing you browse won't be a person anymore — it'll be a plan. Three weeks, $2k, and Kindred becomes a calendar with people attached.",
+            journal: "Pivot day, 6pm. I called it: we pivot. The thing you browse won't be a person anymore — it'll be a plan. Three weeks, $2k, and PlusOne becomes a calendar with people attached.",
             execute(s, char, e) {
               char.flags.pd_decide_done = true;
               s.pivot_summit_done = true;

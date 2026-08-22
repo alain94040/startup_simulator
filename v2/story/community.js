@@ -106,7 +106,7 @@
     // ── Indie Hackers ladder ─────────────────────────────────────────────────
     rung({
       id: "community_ih_1", from: "Indie Hackers",
-      text: "a thread on Indie Hackers: 'how do you validate a consumer social app before you build?' — half the comments describe the exact frustration kindred is trying to solve.",
+      text: "a thread on Indie Hackers: 'how do you validate a consumer social app before you build?' — half the comments describe the exact frustration plusone is trying to solve.",
       when: { if: (s) => !s.launched && s.week >= 8 },
       engageLabel: "Share what you've learned",
       engageJournal: "Posted an honest update on Indie Hackers. 5 people followed up with their own experiences.",

@@ -1,4 +1,4 @@
-# The Kindred engine revamp — from card-dealer to story graph
+# The PlusOne engine revamp — from card-dealer to story graph
 
 A running summary of the v2 rewrite, phase by phase. Everything lives under
 `v2/`, side-by-side with the untouched v1 game (`engine.js`, `roles/`,

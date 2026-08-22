@@ -138,7 +138,7 @@
       // ── SEQUENCE: pre-launch Indie Hackers signal (3 one-shot cards) ─────────
       {
         id: 'community_signal_slack_1', cat: 'e', from: 'Indie Hackers',
-        body: "a thread on Indie Hackers: 'how do you validate a consumer social app before you build?' — half the comments describe the exact frustration kindred is trying to solve.",
+        body: "a thread on Indie Hackers: 'how do you validate a consumer social app before you build?' — half the comments describe the exact frustration plusone is trying to solve.",
         urgency: 1, weeks: 1,
         available: (s, char) => !s.launched && s.week >= 8 && (char.flags.ih_stage || 0) === 0,
         options: [

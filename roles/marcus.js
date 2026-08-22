@@ -13,7 +13,7 @@
 
     role: "Angel investor",
     name: "Marcus",  // chat display name
-    intro: "heard about kindred through the network. genuinely curious about what you're building in the dating space — would love to connect when you have a minute.",
+    intro: "heard about plusone through the network. genuinely curious about what you're building in the dating space — would love to connect when you have a minute.",
     unlockCondition: (s) => s.week >= 6 && s.network.advisors >= 1,
     cards: [
       {

@@ -20,14 +20,14 @@
         available: (s, char) => s.launched && s.customers >= 10 && !char.flags.done && s.week >= (s.power_user_quiet_last || 0) + 6,
         options: [
           { label: 'Call Tom', key: 'call',
-            journal: "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
+            journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
             execute(s, char) {
               char.flags.done = true;
               s.power_user_quiet_last = s.week;
               s.customers = clamp(s.customers - 1, 0, 9999);
               s.signal = clamp(s.signal + 16, 0, 100);
               s.market_fit = clamp(s.market_fit + 10, 0, 100);
-              return "Called Tom. He met someone on kindred 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.";
+              return "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.";
             } },
         ],
         dropDelay: 0, dropMsg: null,

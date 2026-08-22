@@ -50,7 +50,7 @@
         // well-played early game routinely pushes signal past 60 before Priya
         // unlocks, dead-locking the entire fundraising arc.)
         id: "mentor_competitor_bomb", char: "priya",
-        text: "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why kindred.'",
+        text: "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why plusone.'",
         when: { if: (s) => s.week <= 16 },
         choices: [
           {
@@ -259,9 +259,9 @@
         choices: [
           {
             key: "call", label: "Call her",
-            journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted Kindred because it made me feel worse, not better.'",
+            journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted PlusOne because it made me feel worse, not better.'",
             effects: { marketFit: 4, signal: 3, flags: { maya_quote: true } },
-            fx: () => "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. Kindred made me feel worse, not better.' You wrote down every word.",
+            fx: () => "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. PlusOne made me feel worse, not better.' You wrote down every word.",
           },
           {
             key: "survey", label: "Send an email survey",

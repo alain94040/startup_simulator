@@ -55,7 +55,7 @@
       },
       {
         id: "ff_family_3", char: "mom", ambient: true,
-        text: "dad looked up kindred and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird — but he's really proud.",
+        text: "dad looked up plusone and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird — but he's really proud.",
         when: { took: ["ff_family_2:@ignored"], if: (s) => s.week <= 12 },
         choices: [
           {
@@ -79,7 +79,7 @@
       // burns a week of focus against the deadline.
       {
         id: "founder_consulting", char: "founder",
-        text: (s) => "the bank balance says $" + Math.max(0, Math.round(s.cash)).toLocaleString() + ". your old firm keeps a freelance list — one week of contract work is $2,500, no questions asked. it's rent money. it's also a week not spent on kindred.",
+        text: (s) => "the bank balance says $" + Math.max(0, Math.round(s.cash)).toLocaleString() + ". your old firm keeps a freelance list — one week of contract work is $2,500, no questions asked. it's rent money. it's also a week not spent on plusone.",
         when: {
           cooldown: 3,
           if: (s) => s.week >= 4 && s.cash < 2500 && !s.game_over,
@@ -87,13 +87,13 @@
         choices: [
           {
             key: "take", label: "Take the contract week — $2,500",
-            journal: "Took a week of contract work to keep the lights on. $2,500 in, one week of kindred momentum out. Nobody puts this part in the founding story.",
+            journal: "Took a week of contract work to keep the lights on. $2,500 in, one week of plusone momentum out. Nobody puts this part in the founding story.",
             effects: { cash: 2500, signal: -2 },
             fx: () => "Invoice sent, $2,500 in. A week of someone else's roadmap. The runway breathes; the deadline doesn't.",
           },
           {
-            key: "decline", label: "No — every week belongs to kindred",
-            journal: "Turned down the contract week. Every remaining week belongs to kindred — and the bank balance knows it.",
+            key: "decline", label: "No — every week belongs to plusone",
+            journal: "Turned down the contract week. Every remaining week belongs to plusone — and the bank balance knows it.",
             fx: () => "All in. The balance is what it is.",
           },
         ],
@@ -121,7 +121,7 @@
             fx(s, e) {
               const msgs = [
                 "Spent time thinking about the pitch. Small refinements. Nothing dramatic.",
-                "Wrote out the 'why now' for Kindred again. Tighter than before, but still not crisp enough for a cold email.",
+                "Wrote out the 'why now' for PlusOne again. Tighter than before, but still not crisp enough for a cold email.",
                 "Mapped out how we talk about the problem. Some clarity — nothing that changes the strategy.",
                 "Refined the one-liner. Closer, but still not the version that makes someone lean in.",
                 "Ran through the positioning again. A few word changes, one sharper framing. Progress.",

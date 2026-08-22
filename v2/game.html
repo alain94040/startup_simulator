@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kindred</title>
+<title>PlusOne</title>
 <style>
   /* ── tokens ─────────────────────────────────────────────────────────────── */
   :root {
@@ -592,7 +592,7 @@
 <body>
 
 <header>
-  <div class="logo">Kindred<small id="hWeek"></small></div>
+  <div class="logo">PlusOne<small id="hWeek"></small></div>
   <nav class="surfaces">
     <button class="cur" data-surface="msgs">Messages<span class="n-badge" id="bMsgs" style="display:none"></span></button>
     <button data-surface="feed">News Feed<span class="n-badge" id="bFeed" style="display:none"></span></button>
@@ -686,7 +686,7 @@
 <script src="tests/harness.js"></script>
 <script>
 "use strict";
-/* ═══ Kindred v2 UI ═══════════════════════════════════════════════════════════
+/* ═══ PlusOne v2 UI ═══════════════════════════════════════════════════════════
    The interaction grammar:
    - someone texted you        → answer in their thread (Messages)
    - your own move             → act on the card in "This week" (founder/growth)
@@ -1080,7 +1080,7 @@ function renderThread(opts) {
 const MK_STATUSBAR = '<div class="mk-statusbar"><span>9:41</span><span class="mk-sysicons"><i></i><i></i><i class="bat"></i></span></div>';
 function mkRich() {
   return MK_STATUSBAR +
-    '<div class="mk-rhead"><span class="mk-brand">kindred<b>♥</b></span><span class="mk-rhead-ico"><i class="ic-sliders"></i><i class="ic-bell"><em>3</em></i></span></div>' +
+    '<div class="mk-rhead"><span class="mk-brand">plusone<b>♥</b></span><span class="mk-rhead-ico"><i class="ic-sliders"></i><i class="ic-bell"><em>3</em></i></span></div>' +
     '<div class="mk-stories"><span class="st st-you"></span><span class="st"></span><span class="st"></span><span class="st"></span><span class="st"></span></div>' +
     '<div class="mk-prof"><div class="mk-portrait"></div><span class="mk-match">92% match</span><span class="mk-verif">✓</span>' +
     '<div class="mk-prof-info"><div class="mk-name">Maya, 26 <span class="vdot"></span></div><div class="mk-sub">Photographer · 2 miles away</div>' +
@@ -1090,13 +1090,13 @@ function mkRich() {
 }
 function mkMinimal() {
   return MK_STATUSBAR +
-    '<div class="mk-mhead">KINDRED</div><div class="mk-mphoto"><div class="mk-portrait"></div></div>' +
+    '<div class="mk-mhead">PLUSONE</div><div class="mk-mphoto"><div class="mk-portrait"></div></div>' +
     '<div class="mk-mmeta"><div class="mk-mname">Maya, 26</div><div class="mk-mbio">Photographer who\'d rather be hiking.</div></div>' +
     '<div class="mk-mactions"><button class="mact m-no">✕</button><button class="mact m-like">♥</button></div>';
 }
 function mkGeneric() {
   return MK_STATUSBAR +
-    '<div class="mk-ghead"><span class="mk-gbrand">Kindred</span><span class="mk-ggear"></span></div>' +
+    '<div class="mk-ghead"><span class="mk-gbrand">PlusOne</span><span class="mk-ggear"></span></div>' +
     '<div class="mk-gcard"><div class="mk-portrait"></div><div class="mk-ginfo"><div class="mk-gname">Maya, 26</div><div class="mk-gsub">2 miles away</div></div></div>' +
     '<div class="mk-gacts"><button class="gact g-no">✕</button><button class="gact g-star">★</button><button class="gact g-like">♥</button></div>' +
     '<div class="mk-gtabs"><i class="gt on"></i><i class="gt"></i><i class="gt"></i></div>';
@@ -1768,7 +1768,7 @@ document.addEventListener("click", (e) => {
 // game still has a ladder to climb. Same code path either way.
 const LB = (function () {
   const ENDPOINT = "leaderboard.php";
-  const LKEY = "kindred_leaderboard";
+  const LKEY = "plusone_leaderboard";
   const MAX = 50;
 
   const readLocal = () => { try { return JSON.parse(localStorage.getItem(LKEY)) || []; } catch { return []; } };
@@ -1797,7 +1797,7 @@ const LB = (function () {
   }
   async function submit(entry) {
     entry.ts = entry.ts || Date.now();
-    try { localStorage.setItem("kindred_name", entry.name); } catch {}
+    try { localStorage.setItem("plusone_name", entry.name); } catch {}
     try {
       const r = await fetch(ENDPOINT, {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(entry),
@@ -1810,7 +1810,7 @@ const LB = (function () {
       return { board: data.board, rank: data.rank, online: true };
     } catch { return insertLocal(entry); }
   }
-  const lastName = () => { try { return localStorage.getItem("kindred_name") || ""; } catch { return ""; } };
+  const lastName = () => { try { return localStorage.getItem("plusone_name") || ""; } catch { return ""; } };
   return { MAX, qualifies, fetchBoard, submit, lastName };
 })();
 
@@ -1981,7 +1981,7 @@ $("endModal").addEventListener("click", (e) => {
 
 // ── intro ─────────────────────────────────────────────────────────────────────
 const INTRO = [
-  ["The team", "You're the founder.", "Kindred is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until YC applications close. Build something worth the batch before the clock — or the cash — runs out."],
+  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until YC applications close. Build something worth the batch before the clock — or the cash — runs out."],
   ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
   ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
 ];

@@ -102,7 +102,7 @@
       },
       {
         id: 'feature_request_custom', cat: 'p', from: 'Your most active subscriber',
-        body: "a power user who's been on 4 dates from kindred messaged this week: 'i'd pay double if you add video dates. i always need to move to FaceTime before i'm comfortable meeting someone. it breaks the flow.'",
+        body: "a power user who's been on 4 dates from plusone messaged this week: 'i'd pay double if you add video dates. i always need to move to FaceTime before i'm comfortable meeting someone. it breaks the flow.'",
         urgency: 2, weeks: 1,
         available: (s, char) => s.launched && s.customers >= 3 && !char.flags.custom_request_done,
         options: [

@@ -41,18 +41,18 @@
     {
       id: "priya", name: "Priya", role: "Advisor", type: "advisor",
       // Two ways in: the founder meetup (early), or — if the player never went —
-      // she reaches out herself once the launch makes Kindred visible. Either
+      // she reaches out herself once the launch makes PlusOne visible. Either
       // way the pivot summit always has its second voice.
       unlock: (s) => (s.met_priya === true && s.week >= (s.met_priya_week || 0) + 2)
         || (s.launched && s.week >= (s.launch_week || 0) + 2),
       intro: (s) => s.met_priya
         ? "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute."
-        : "hey — you don't know me. priya. a friend sent me kindred's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
+        : "hey — you don't know me. priya. a friend sent me plusone's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
     },
     {
       id: "sarah", name: "Sarah", role: "Community leader", type: "connector",
       unlock: (s) => s.launched && !!s.activities_pivot,
-      intro: "hey — heard about kindred from a mutual friend. i run a singles community in SF and i think there could be a fit.",
+      intro: "hey — heard about plusone from a mutual friend. i run a singles community in SF and i think there could be a fit.",
     },
     {
       id: "jamie", name: "Jamie", role: "College friend", type: "family",
@@ -83,7 +83,7 @@
     {
       id: "twitter", name: "Twitter", role: "Social media", type: "platform",
       unlock: (s) => s.launched && (s.users >= 10 || s.customers >= 2),
-      intro: "people are talking about kindred on social media.",
+      intro: "people are talking about plusone on social media.",
     },
     {
       id: "lena", name: "Lena", role: "Tech journalist", type: "press",

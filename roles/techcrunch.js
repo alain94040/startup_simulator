@@ -69,7 +69,7 @@
             } },
         ],
         dropDelay: 2, dropFrom: 'Market signal',
-        dropMsg: "Flare has 10,000 users and is well-funded. you need a sharper answer to 'why kindred and not them.'",
+        dropMsg: "Flare has 10,000 users and is well-funded. you need a sharper answer to 'why plusone and not them.'",
         dropFx(s, char) {
           char.flags.done = true;
           s.competitor_launch_week = s.week;
@@ -121,7 +121,7 @@
 
       {
         id: 'investor_moat_question', cat: 'e', from: 'Investor',
-        body: "an investor you're pitching asks directly: 'Flare raised $3M and has 10,000 users. why does kindred win?'",
+        body: "an investor you're pitching asks directly: 'Flare raised $3M and has 10,000 users. why does plusone win?'",
         urgency: 2, weeks: 1,
         available: (s) => s.deck_ready && s.competitor_launch_week && !s.moat_answered,
         options: [

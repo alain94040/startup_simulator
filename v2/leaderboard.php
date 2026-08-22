@@ -1,6 +1,6 @@
 <?php
 /**
- * Kindred leaderboard — the whole server side.
+ * PlusOne leaderboard — the whole server side.
  *
  * GET  leaderboard.php            → the top-50 board as JSON: [{name,score,won,week,ts}, ...]
  * POST leaderboard.php  {name,score,won,week}   (Content-Type: application/json)
@@ -31,7 +31,7 @@ const MAX_BODY    = 2048;   // bytes — a real submission is ~100; anything lar
 // drop a deny rule in the dir (Apache 2.4: `Require all denied`).
 const DATA_FILE = __DIR__ . "/score/leaderboard.json";
 
-// Optional write gate: set to a non-empty string to require an X-Kindred-Key
+// Optional write gate: set to a non-empty string to require an X-PlusOne-Key
 // header on POST (and have the client send it). Honest caveat — a secret shipped
 // in public client JS only deters casual curl abuse, not someone who reads the
 // page source. Leave "" to disable.
@@ -81,7 +81,7 @@ if ($method !== "POST") {
 
 // ── POST ─────────────────────────────────────────────────────────────────────
 // Optional shared-secret gate (constant-time compare).
-if (WRITE_KEY !== "" && !hash_equals(WRITE_KEY, $_SERVER["HTTP_X_KINDRED_KEY"] ?? "")) {
+if (WRITE_KEY !== "" && !hash_equals(WRITE_KEY, $_SERVER["HTTP_X_PLUSONE_KEY"] ?? "")) {
   send(["error" => "unauthorized"], 401);
 }
 

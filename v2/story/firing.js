@@ -166,7 +166,7 @@
             choices: [
               {
                 key: "own", label: "I've made a decision, and you should hear it from me",
-                reply: "jordan — i'm sorry, this isn't about the staging build. i've made a decision and i want you to hear it from me: i'm taking you off the founding team. you're not going to be building kindred with us.",
+                reply: "jordan — i'm sorry, this isn't about the staging build. i've made a decision and i want you to hear it from me: i'm taking you off the founding team. you're not going to be building plusone with us.",
                 journal: null,
                 effects: { say: { char: "jordan", text: "…okay. say the rest." } },
                 fx(s) { s.firing_open_key = "own"; return null; },
@@ -378,7 +378,7 @@
             // The practical half — the half founders actually botch. She raises
             // the developer account herself, helpfully; the landmine is yours.
             id: "firing_logistics", char: "jordan",
-            text: (s) => "what happens to my shares?\n\nand one practical thing while i think of it — the app store listing is on my apple developer account. it's been mine since before kindred existed. we never opened an org one because it was $99 and we were being careful with money.",
+            text: (s) => "what happens to my shares?\n\nand one practical thing while i think of it — the app store listing is on my apple developer account. it's been mine since before plusone existed. we never opened an org one because it was $99 and we were being careful with money.",
             when: { after: ["firing_counter"] },
             choices: [
               {

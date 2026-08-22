@@ -13,12 +13,12 @@
 
     role: "Angel investor",
     name: "Fatima",  // chat display name
-    intro: "a few people i trust have mentioned kindred. i invest in consumer social — would love to hear more.",
+    intro: "a few people i trust have mentioned plusone. i invest in consumer social — would love to hear more.",
     unlockCondition: (s) => s.week >= 8 && s.network.advisors >= 1,
     cards: [
       {
         id: 'fatima_intro', cat: 'e', from: 'Fatima (angel)',
-        body: "heard good things about kindred from a few people in the network. would love a quick intro call this week.",
+        body: "heard good things about plusone from a few people in the network. would love a quick intro call this week.",
         urgency: 2, weeks: 1,
         available: (s, char) => !char.flags.intro_done,
         options: [

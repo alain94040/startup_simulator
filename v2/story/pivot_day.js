@@ -114,7 +114,7 @@
               {
                 key: "maya", label: "Maya's call — she liked her match",
                 if: (s) => !!s.maya_quote,
-                reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. kindred made me feel worse.' we didn't lose her because the room was empty. we lost her after the match — the part that's ours.",
+                reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those on hinge. plusone made me feel worse.' we didn't lose her because the room was empty. we lost her after the match — the part that's ours.",
                 journal: null,
                 fx: (s, e) => playChip(s, e, "maya"),
               },
@@ -159,7 +159,7 @@
           {
             // What "pivot" even means — a reframe, not a feature.
             id: "pivot_day_shape", char: "priya",
-            text: "so say it's the product. one warning first: don't just bolt an 'events tab' onto the app. every dying dating app does that, and users can smell it. flip the whole thing instead. you don't browse people — you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again — it's 'i'm in.' kindred stops being a chat app full of dead ends and becomes a calendar with people on it.",
+            text: "so say it's the product. one warning first: don't just bolt an 'events tab' onto the app. every dying dating app does that, and users can smell it. flip the whole thing instead. you don't browse people — you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again — it's 'i'm in.' plusone stops being a chat app full of dead ends and becomes a calendar with people on it.",
             when: { after: ["pivot_day_evidence"] },
             choices: [
               {
@@ -198,7 +198,7 @@
               {
                 key: "pivot", label: "We pivot — the plan is the product",
                 reply: "we pivot. the plan is the product — a match needs somewhere to go, and monday we start building the somewhere.",
-                journal: "Pivot day, 6pm. I called it: we pivot. The thing you browse won't be a person anymore — it'll be a plan. Three weeks, $2k, and Kindred becomes a calendar with people attached.",
+                journal: "Pivot day, 6pm. I called it: we pivot. The thing you browse won't be a person anymore — it'll be a plan. Three weeks, $2k, and PlusOne becomes a calendar with people attached.",
                 fx(s, e) {
                   s.pivot_summit_done = true;
                   s.pivot_choice = "pivot";
@@ -329,7 +329,7 @@
             fx(s, e) {
               if (s.pivot_effort_base != null) s.pivot_effort_base += 1.5;
               s.pivot_kept_legacy = true;
-              e.say({ char: "alex", text: "okay. for the record: that's two products in one app, and 'what is kindred' just got harder to answer. it also costs us at least an extra week." });
+              e.say({ char: "alex", text: "okay. for the record: that's two products in one app, and 'what is plusone' just got harder to answer. it also costs us at least an extra week." });
               return null;
             },
           },
@@ -391,7 +391,7 @@
           {
             key: "sarah_event", label: "Debut v2 at Sarah's event",
             if: (s) => !!s.sarah_onboard,
-            journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a board of plans, not a grid of faces. People RSVP'd to real plans on the spot. Kindred v2 walked out of that room with a heartbeat.",
+            journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a board of plans, not a grid of faces. People RSVP'd to real plans on the spot. PlusOne v2 walked out of that room with a heartbeat.",
             fx(s, e) {
               s.pivot_shipped = true;
               s.users += 15 + (s.beta_invited ? 4 : 0);

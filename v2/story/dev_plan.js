@@ -31,7 +31,7 @@
         beats: [
           {
             id: "dev_plan", char: "alex",
-            text: "couldn't sleep — mocked up three directions for kindred. tap through them and take a real look before we lock scope. which one do we actually build?",
+            text: "couldn't sleep — mocked up three directions for plusone. tap through them and take a real look before we lock scope. which one do we actually build?",
             // Lands the week after the equity question closes — one week later
             // still if the answer left Alex grudging: anything but 40/40/20,
             // or the dodge that tabled the split (the signing never fires on
@@ -156,7 +156,7 @@
           // ── direction: the first screen (research-gated C-option) ────────────
           {
             id: "first_screen", char: "jordan",
-            text: "first real iOS question. someone installs kindred, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in TestFlight friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
+            text: "first real iOS question. someone installs plusone, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in TestFlight friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
             when: { after: ["dev_plan"], delay: 1, if: (s) => !s.has_demo },
             choices: [
               {
@@ -180,7 +180,7 @@
                 effects: { marketFit: 3, char: { jordan: { effort: 1.0 } } },
                 fx(s) {
                   if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Intake-first onboarding";
-                  return "Intake-first. Riskier open — five questions before a single face — but nobody will mistake kindred for another swipe app.";
+                  return "Intake-first. Riskier open — five questions before a single face — but nobody will mistake plusone for another swipe app.";
                 },
               },
               {
@@ -246,7 +246,7 @@
               const rounds = [
                 "Five calls. One woman keeps a spreadsheet of her matches across four apps — the HN thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
                 "Five more calls. A teacher who deleted every app twice. A guy who wrote three drafts of a first message and sent none. The pattern doesn't move: getting matches isn't the problem — what comes after is.",
-                "Another round of calls. Someone asked, dead serious, if kindred could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
+                "Another round of calls. Someone asked, dead serious, if plusone could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
               ];
               return rounds[e.timesResolved("waitlist_calls") % rounds.length];
             },

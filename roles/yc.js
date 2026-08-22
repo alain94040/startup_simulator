@@ -41,7 +41,7 @@
                   } else {
                     st.ycApplied = false;
                     st.ycRejected = true;              // final — the run ends at the verdict
-                    post("Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever kindred becomes, this application wasn't the end of it.");
+                    post("Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever plusone becomes, this application wasn't the end of it.");
                   }
                 },
               });

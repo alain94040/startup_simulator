@@ -31,7 +31,7 @@
       // hands the community to Flare.
       {
         id: "sarah_intro", char: "sarah", from: "Sarah (mutual)",
-        text: "sarah runs a 'singles in SF' facebook group — 18,000 members, weekly events, huge trust in the community. she heard through a mutual that kindred is rebuilding around real-world plans, and that's exactly what her events are. she wants to talk about debuting the new version at one of them. she's also talking to flare.",
+        text: "sarah runs a 'singles in SF' facebook group — 18,000 members, weekly events, huge trust in the community. she heard through a mutual that plusone is rebuilding around real-world plans, and that's exactly what her events are. she wants to talk about debuting the new version at one of them. she's also talking to flare.",
         when: { if: (s, e) => e.chapter === 4 && s.pivot_week != null && s.week >= s.pivot_week + 1 },
         choices: [
           {
@@ -83,7 +83,7 @@
               {
                 key: "maya", label: "Quote Maya, verbatim",
                 if: (s) => !!s.maya_quote,
-                journal: "Application, Q1: Maya's words, verbatim — 'I already have seven dead chat windows on Hinge. Kindred made me feel worse, not better.' Then what we built because of them. You can't fake a sentence like that.",
+                journal: "Application, Q1: Maya's words, verbatim — 'I already have seven dead chat windows on Hinge. PlusOne made me feel worse, not better.' Then what we built because of them. You can't fake a sentence like that.",
                 effects: { signal: 3 },
                 fx: (s) => { s.app_learned = "maya"; return "You write her words exactly as she said them, and then what you built because of them. It reads like nothing else in the pile."; },
               },
@@ -243,7 +243,7 @@
                             ? "Thanks for applying — we're passing. We fund launched products with users who pay; the application reads like a company that's still ahead of you. The ones that come back are the founders who shipped anyway."
                             : (st.app_bluffs || 0) >= 2
                               ? "Thanks for applying — we're passing. The strongest applications quote their users and show their numbers; yours mostly told us what every application tells us. The ones that come back are the companies that kept going."
-                              : "Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever kindred becomes, this application wasn't the end of it.",
+                              : "Thanks for applying — we're passing. We look at thousands of these; the ones that come back are the companies that kept going. Whatever plusone becomes, this application wasn't the end of it.",
                         });
                       }
                     },

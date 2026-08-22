@@ -36,7 +36,7 @@
         choices: [
           {
             key: "build", label: "No — matching is the whole product, we build it",
-            reply: "no. the matching engine *is* kindred — it's the one thing we can't outsource. we build it ourselves.",
+            reply: "no. the matching engine *is* plusone — it's the one thing we can't outsource. we build it ourselves.",
             journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
             effects: { flags: { matching_owned: true }, char: { jordan: { morale: -3 }, alex: { morale: 5, effort: 1.0 } } },
             fx(s) {
@@ -76,7 +76,7 @@
       // the ignore). The C-option is the research payoff.
       {
         id: "ranking", char: "alex",
-        text: "matching engine update: it runs end to end — profiles in, pairs out. one problem. the scoring function is literally `return Math.random()`. before i write the real one i need product direction, not code: what makes two people a good kindred match?",
+        text: "matching engine update: it runs end to end — profiles in, pairs out. one problem. the scoring function is literally `return Math.random()`. before i write the real one i need product direction, not code: what makes two people a good plusone match?",
         when: {
           took: [["matching_choice:build", "matching_choice:@ignored"]],
           if: (s) => !s.has_demo && !s.launched,
