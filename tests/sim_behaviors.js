@@ -46,7 +46,7 @@ function runStrategy(name, spec) {
       m.pivoted = !!s.activities_pivot;
       m.v2 = !!s.pivot_shipped;
       m.v2Wk = m.v2 ? g.weekOf("pivot_relaunch") : null;
-      m.applied = !!s.ycApplied;
+      m.qualified = !!(s.launched && s.pivot_shipped && s.customers >= 1);
       m.alexLeft = !g.cast.get("alex").active;
       m.jordanFired = !!s.jordan_resolved;
       m.jordanQuit = !!s.jordan_quit;
@@ -66,7 +66,7 @@ function runStrategy(name, spec) {
     name, errors,
     wins: share(m => m.won), launched: share(m => m.launched),
     pivoted: share(m => m.pivoted), v2: share(m => m.v2),
-    applied: share(m => m.applied), alexLeft: share(m => m.alexLeft),
+    qualified: share(m => m.qualified), alexLeft: share(m => m.alexLeft),
     jordanFired: share(m => m.jordanFired),
     jordanQuit: share(m => m.jordanQuit),
     priyaSeen: share(m => m.priya == null ? m.launched : m.priya), // filled below for no_meetup
@@ -95,9 +95,9 @@ for (const [name, spec] of Object.entries(STRATEGIES)) S[name] = runStrategy(nam
 S.no_meetup.priyaSeen = priyaShare(STRATEGIES.no_meetup);
 
 // ── the strategy table ────────────────────────────────────────────────────────
-console.log(`  ${pad("strategy", 13)} ${padL("win", 5)} ${padL("launch", 7)} ${padL("pivot", 6)} ${padL("v2", 4)} ${padL("apply", 6)} ${padL("alexLeft", 9)} ${padL("fired", 6)} ${padL("items", 6)} ${padL("grade", 6)}`);
+console.log(`  ${pad("strategy", 13)} ${padL("win", 5)} ${padL("launch", 7)} ${padL("pivot", 6)} ${padL("v2", 4)} ${padL("qual", 6)} ${padL("alexLeft", 9)} ${padL("fired", 6)} ${padL("items", 6)} ${padL("grade", 6)}`);
 for (const r of Object.values(S)) {
-  console.log(`  ${pad(r.name, 13)} ${padL(r.wins + "%", 5)} ${padL(r.launched + "%", 7)} ${padL(r.pivoted + "%", 6)} ${padL(r.v2 + "%", 4)} ${padL(r.applied + "%", 6)} ${padL(r.alexLeft + "%", 9)} ${padL(r.jordanFired + "%", 6)} ${padL(r1(r.itemsDone), 6)} ${padL(r.grade == null ? "—" : Math.round(r.grade), 6)}`);
+  console.log(`  ${pad(r.name, 13)} ${padL(r.wins + "%", 5)} ${padL(r.launched + "%", 7)} ${padL(r.pivoted + "%", 6)} ${padL(r.v2 + "%", 4)} ${padL(r.qualified + "%", 6)} ${padL(r.alexLeft + "%", 9)} ${padL(r.jordanFired + "%", 6)} ${padL(r1(r.itemsDone), 6)} ${padL(r.grade == null ? "—" : Math.round(r.grade), 6)}`);
 }
 
 // ── the contracts ─────────────────────────────────────────────────────────────
@@ -134,8 +134,9 @@ check(`ignore_alex morale declining: wk3 (${r1(S.ignore_alex.moraleWk3)}) > wk10
 check(`ignore_alex morale wk10 (${r1(S.ignore_alex.moraleWk10)}) crashed < 30`, S.ignore_alex.moraleWk10 < 30);
 check(`decent morale wk10 (${r1(S.decent.moraleWk10)}) healthy > 50`, S.decent.moraleWk10 > 50);
 
-// E · the application — one window, no skips, so decent play must reach it
-check(`decent.applied (${S.decent.applied}%) >= 90%`, S.decent.applied >= 90);
+// E · the traction bar — decent play must clear it (launched, shipped the
+// pivot, at least one paying customer) well before the deadline grades it
+check(`decent.qualified (${S.decent.qualified}%) >= 90%`, S.decent.qualified >= 90);
 
 // F · the cap-table bill: the lesson lives on the report card, so skipping the
 // lawyer must show up as a visibly worse card, category and rollup both)

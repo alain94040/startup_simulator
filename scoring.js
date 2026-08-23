@@ -149,7 +149,7 @@
       // deadline the launch and pivot parts grade as failures instead of
       // dropping out of the denominator — otherwise a run that never reached
       // the game's central lesson could ace this category (and the report card
-      // would contradict the rejection letter).
+      // would contradict the verdict).
       const ended = s.game_over || s.game_won || s.week >= (s.deadline_week || Infinity);
       const chips = [!!s.maya_quote, !!s.rachel_answer, !!s.demo_question_seen, !!s.analytics_dropoff_seen]
         .filter(Boolean).length;
@@ -262,20 +262,19 @@
     {
       let minBalance = s.cash;
       for (const wk of g.ledger) minBalance = Math.min(minBalance, wk.balanceAfter);
-      // A run can end three ways short of the deadline: the bank, the calendar,
-      // or the team. Money in the bank is no consolation for the last one —
+      // A run can end three ways short of the win: the calendar, the team, or
+      // the bank. Money in the bank is no consolation for the second one —
       // the company stopped existing while it was still solvent.
       const score = s.game_won ? 100
         : !s.game_over ? clamp(40 + g.runwayWeeks * 3, 40, 90)
-          : s.ycRejected ? 55 : s.deadline_passed ? 45 : s.cofounder_left ? 20 : 10;
+          : s.deadline_passed ? 45 : s.cofounder_left ? 20 : 10;
       out.push({
         key: "default-alive", label: "Stay default alive", ref: "📚 PG, \"Default Alive or Default Dead?\"",
         score, verdict: s.game_won ? "You reached the other side with the lights on."
           : !s.game_over ? "Still alive — runway is the scoreboard."
-            : s.ycRejected ? "The run ended on a verdict, not on the bank balance."
-              : s.deadline_passed ? "Alive at the deadline — but the application never went out."
-                : s.cofounder_left ? "Money in the bank and nobody left to build. Runway was never the binding constraint."
-                  : "Cash hit zero. Everything else became irrelevant.",
+            : s.deadline_passed ? "Alive at the deadline — but the grade didn't clear the bar."
+              : s.cofounder_left ? "Money in the bank and nobody left to build. Runway was never the binding constraint."
+                : "Cash hit zero. Everything else became irrelevant.",
         notes: ["Lowest bank balance: $" + Math.max(0, Math.round(minBalance)).toLocaleString() + "."],
       });
     }

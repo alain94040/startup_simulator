@@ -295,17 +295,14 @@ console.log("summit-ignored driver (seed 42)");
   ok(g.s.game_over && !g.s.ycAccepted, "…and YC passed — no shipped pivot, no batch");
 }
 
-// ── the horizon: week 25 ends every run, graded ──────────────────────────────
+// ── the horizon: week 25 ends every run, graded on the spot ─────────────────
 console.log("the deadline (seed 4, decent, subsidized)");
 {
   const g = run(4, decent, 40, { subsidy: 500 });
   ok(g.s.week <= 25, "no run outlives the deadline (ended wk " + g.s.week + ")");
-  ok(g.took("yc_apply:start"), "application started (wk " + g.weekOf("yc_apply") + ")");
-  ok(g.took("app_send:submit"), "…written as the three-question scene and submitted (wk " + g.weekOf("app_send") + ")");
-  ok(g.s.ycAccepted || g.s.ycRejected, "the verdict arrived at the deadline");
-  ok(g.s.game_won || g.s.game_over, "…and ended the run (" + (g.s.ycAccepted ? "accepted" : "rejected") + ")");
-  ok(g.threads.yc.some(m => m.from === "Y Combinator" && /passing|You're in/.test(m.body || "")),
-    "the verdict letter landed on the YC thread");
+  ok(g.s.ycAccepted || g.s.deadline_passed, "graded automatically at the deadline — no application to write");
+  ok(g.s.game_won || g.s.game_over, "…and ended the run (" + (g.s.ycAccepted ? "accepted" : "not this batch") + ")");
+  if (g.s.ycAccepted) ok(g.s.cash > 500000, "acceptance pays out the $500k");
 
   // Scoring smoke on a full run.
   const Scoring = require("../scoring.js");
@@ -315,19 +312,6 @@ console.log("the deadline (seed 4, decent, subsidized)");
   const by = {}; for (const c of cats) by[c.key] = c;
   ok(by["edge-vs-commodity"].score === 100, "edge-vs-commodity scored 100 (buy/build/buy)");
   ok(by["clean-cap-table"].score != null, "the cap-table lesson graded (" + by["clean-cap-table"].score + ")");
-}
-
-// ── never applying is an ending too ──────────────────────────────────────────
-console.log("never-applied driver (seed 42, subsidized)");
-{
-  const noApply = (a) => a.nodeId === "yc_apply" ? null : decent(a);
-  const g = run(42, noApply, 40, { subsidy: 500 });
-  ok(!g.s.ycApplied && !g.s.ycAccepted && !g.s.ycRejected, "the application never went out");
-  ok(g.s.deadline_passed && g.s.game_over && g.s.week === 25,
-    "the deadline still ended the run at wk 25");
-  const by = {};
-  for (const c of require("../scoring.js").scoreGame(g)) by[c.key] = c;
-  ok(/deadline/.test(by["default-alive"].verdict), "default-alive names the missed application");
 }
 
 // ── pass 3: the Bullseye loop, played to completion ──────────────────────────

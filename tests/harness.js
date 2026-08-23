@@ -48,11 +48,10 @@
     "slide_maya_call", "slide_cohort", "slide_first_echo",
     "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
     "pivot_relaunch", "public_complaint",
-    // The co-founder conversation outranks the application: it now sits on the
-    // founder's thread, where founder_codebuild (which a decent player never
-    // answers) can otherwise squat the slot until the deadline.
+    // The co-founder conversation outranks everything else late-game: it now
+    // sits on the founder's thread, where founder_codebuild (which a decent
+    // player never answers) can otherwise squat the slot until the deadline.
     "jordan_confrontation", "jordan_cap_table",
-    "yc_apply",
   ];
   const actPriority = (a) => {
     const i = ANSWER_ORDER.indexOf(a.nodeId);
@@ -106,10 +105,6 @@
     pivot_relaunch: ["sarah_event", "press", "quiet"], pivot_fifty_verdict: ["pivot_now"],
     pivot_payoff_maya: ["ack"],
     sarah_intro: ["reply"],
-    yc_apply: ["start"],
-    app_q_learned: ["maya", "cohort", "fixes", "bluff"], app_q_team: ["killed", "team_call", "bluff"],
-    app_q_founders_left: ["honest"],
-    app_q_growth: ["channel", "community", "tested", "bluff"], app_send: ["submit"],
     beachhead_choice: ["narrow"], launch_surface: ["quiet"], launch_scramble: ["firefight"],
     channel_test: ["referrals", "creators", "community", "paid"], channel_double_down: ["referrals"],
     dont_scale_seed: ["concierge"], first_customer_offer: ["pitch"], pricing_experiment: ["prompt"],
@@ -180,13 +175,11 @@
     alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
     alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",
     jordan_confrontation: "team",
-    // money — checks in, checks out, the application
+    // money — checks in, checks out
     ff_family: "money", ff_family_2: "money", ff_family_3: "money",
     founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
     ff_mentor: "money", ff_mentor_pitch: "money", consultant_growth: "money",
-    consultant_brand: "money", jordan_cap_table: "money", yc_apply: "money",
-    app_q_learned: "money", app_q_team: "money", app_q_growth: "money", app_send: "money",
-    app_q_founders_left: "money",
+    consultant_brand: "money", jordan_cap_table: "money",
     early_funding_goal: "money",
     // growth — distribution: markets, channels, press, pricing
     seed_strategy: "growth", beachhead_choice: "growth", launch_surface: "growth",

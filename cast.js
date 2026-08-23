@@ -96,13 +96,6 @@
       intro: "your most active subscriber just went quiet.",
     },
     {
-      id: "yc", name: "YC", role: "Y Combinator", type: "institution",
-      // The application window: the thread opens three weeks before the
-      // deadline that ends every run (see story/fundraising.js).
-      unlock: (s) => s.week >= s.deadline_week - 3,
-      intro: "Applications for the batch are open. The deadline is firm.",
-    },
-    {
       id: "users", name: "Users", role: "Your customers", type: "customer",
       unlock: (s) => s.waitlist >= 5 || s.users >= 3 || s.customers >= 1,
       intro: (s) => (s.users >= 3 || s.customers >= 1)
@@ -130,7 +123,6 @@
         { key: "launched", cls: "green", label: "Launched", test: (s) => !!s.launched },
         { key: "pivotshipped", cls: "green", label: "Shipped v2", test: (s) => !!s.pivot_shipped },
         { key: "firstcust", cls: "blue", label: "First Customer", test: (s) => s.customers >= 1 },
-        { key: "applied", cls: "blue", label: "Applied to YC", test: (s) => !!s.ycApplied },
         { key: "yc", cls: "red", label: "YC Accepted", test: (s) => !!s.ycAccepted },
       ],
     },

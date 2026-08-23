@@ -710,7 +710,7 @@ const STYLE = {
   sarah: { color: "#ff2d55", initials: "S" }, brett: { color: "#8e8e93", initials: "B" },
   kevin: { color: "#8e8e93", initials: "K" }, mom: { color: "#ffcc02", initials: "👩" },
   jamie: { color: "#64d2ff", initials: "Ja" }, david: { color: "#30b0c7", initials: "D" },
-  hacker_news: { color: "#ff6600", initials: "📰" }, yc: { color: "#f26522", initials: "Y" },
+  hacker_news: { color: "#ff6600", initials: "📰" },
   lena: { color: "#bf5af2", initials: "L" }, techcrunch: { color: "#00c853", initials: "📊" },
   users: { color: "#007aff", initials: "👥" }, analytics: { color: "#5856d6", initials: "📈" },
   twitter: { color: "#1da1f2", initials: "𝕏" }, tom: { color: "#34c759", initials: "T" },
@@ -815,7 +815,7 @@ const STAGES = [
     { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? "she's off the team" : s.jordan_drifting ? "she's drifting — Alex is covering" : null },
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped, note: (s, g) => g && g.took && g.took("pivot_relaunch:sarah_event") ? "debuted at Sarah's event" : g && g.took && g.took("pivot_relaunch:press") ? "the pivot story ran" : null },
   ]},
-  { id: "apply", label: "Ch 5 · Ace the application",
+  { id: "apply", label: "Ch 5 · Make the case",
     goal: s => "Prove it before week " + s.deadline_week + ": revenue, a channel, a clean cap table.",
     active: () => true, items: [
     { t: "Take the friends & family money", done: (s, g) => g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") },
@@ -823,9 +823,6 @@ const STAGES = [
     { t: "Test channels cheaply (2)", done: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length >= 2, note: s => Object.keys(s.channels || {}).filter(k => k !== "mixed").length + " of 2 tested" },
     { t: "Go all-in on the one with legs", done: s => !!s.primary_channel, note: s => s.primary_channel ? "all chips on " + s.primary_channel : null },
     { t: "Keep the cap table clean", done: s => !s.jordan_cleanup_needed, note: s => s.jordan_cleanup_needed ? "a departed co-founder still owns her stake" : null },
-    { t: "Write the three answers", done: (s, g) => g.done("app_send"), note: s => !s.ycApplied ? null : (s.app_bluffs || 0) > 0 ? s.app_bluffs + " borrowed from the pile" : "every answer earned" },
-    { t: "Send the application", done: s => !!s.ycApplied, note: s => "deadline · wk " + s.deadline_week },
-    { t: "The verdict", done: s => !!s.ycAccepted },
   ]},
 ];
 
@@ -911,9 +908,9 @@ function renderHeader() {
   $("gRunB").style.width = Math.min(100, (st.runway / 20) * 100) + "%";
   $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
   const dIn = game.s.deadline_week - st.week;
-  if (game.s.ycApplied) { $("gYcL").textContent = "YC verdict"; $("gYcV").textContent = "wk " + game.s.deadline_week; $("gYcB").style.width = "100%"; }
-  else if (dIn > 0) { $("gYcL").textContent = "YC deadline"; $("gYcV").textContent = dIn + " wks left"; $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
-  else { $("gYcL").textContent = "YC deadline"; $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
+  $("gYcL").textContent = "YC deadline";
+  if (dIn > 0) { $("gYcV").textContent = dIn + " wks left"; $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
+  else { $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
   const stg = currentStage(), c = stageCounts(stg);
   $("gTdL").textContent = "☑ " + stg.label + " ▾";
   $("gTdV").textContent = c.done + " of " + c.total;
@@ -1950,20 +1947,18 @@ function checkEndgame() {
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
-  const emoji = madeYC ? "🎉" : s.ycRejected ? "📮" : s.deadline_passed ? "⏳" : s.cofounder_left ? "🚪" : "🕰️";
+  const emoji = madeYC ? "🎉" : s.deadline_passed ? "⏳" : s.cofounder_left ? "🚪" : "🕰️";
   const title = madeYC ? "You're in."
-    : s.ycRejected ? "YC passed."
-      : s.deadline_passed ? "The deadline came and went."
-        : s.cofounder_left ? "Alex took the other offer." : "Out of runway.";
+    : s.deadline_passed ? "The deadline came and went."
+      : s.cofounder_left ? "Alex took the other offer." : "Out of runway.";
   const sub = madeYC ? "Your grade cleared the bar — welcome to the batch. The company lives."
-    : s.ycRejected ? "Graded below the B+ line — the batch filled without you."
-      : s.deadline_passed ? "The application never went out. The batch filled without you — here's the company you built anyway."
-        : s.cofounder_left ? "Week " + s.week + ", and the person who was building the product is gone. There's no version of the next "
-          + Math.max(0, s.deadline_week - s.week) + " weeks where you ship, launch and sell this alone — so this is where the run ends."
-          : "Cash hit zero at week " + s.week + ".";
+    : s.deadline_passed ? "Graded at the deadline — the bar wasn't cleared. Here's the company you built anyway."
+      : s.cofounder_left ? "Week " + s.week + ", and the person who was building the product is gone. There's no version of the next "
+        + Math.max(0, s.deadline_week - s.week) + " weeks where you ship, launch and sell this alone — so this is where the run ends."
+        : "Cash hit zero at week " + s.week + ".";
   const batch = madeYC
     ? '<div class="eg-batch">YC Summer 2027 · $500k for 7%</div>'
-    : s.ycRejected ? '<div class="eg-batch" style="background:var(--soft);color:#55555c">Missed the bar · needs a B+</div>' : "";
+    : s.deadline_passed ? '<div class="eg-batch" style="background:var(--soft);color:#55555c">Missed the bar · needs a B+</div>' : "";
 
   const rowsHtml = cats.map(c => {
     const [g, col] = GRADE(c.score);
@@ -1999,7 +1994,7 @@ $("endModal").addEventListener("click", (e) => {
 
 // ── intro ─────────────────────────────────────────────────────────────────────
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until YC applications close. Build something worth the batch before the clock — or the cash — runs out."],
+  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until the YC deadline. Build something worth the batch before the clock — or the cash — runs out."],
   ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
   ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
 ];
@@ -2096,12 +2091,12 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   };
 }
 $("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
-// Auto-play decent runs from the seed box until one reaches a real YC verdict
-// (accept/reject decided by the grade), then jump straight to its reveal.
+// Auto-play decent runs from the seed box until one reaches the deadline
+// having been accepted into YC (grade decided it), then jump to its reveal.
 $("dbgYC").onclick = () => {
   const base = dbgSeed();
   let g = Harness.playGame(base, "decent"), used = base;
-  for (let i = 1; i < 200 && !g.s.ycAccepted && !g.s.ycRejected; i++) {
+  for (let i = 1; i < 200 && !g.s.ycAccepted; i++) {
     used = base + i;
     g = Harness.playGame(used, "decent");
   }

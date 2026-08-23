@@ -82,15 +82,13 @@ const SPINE = [
   ["feature_spree", "features"], ["pivot_day_decide", "verdict"],
   ["pivot_day_evidence", "evidence"], ["pivot_relaunch", "relaunch"],
   ["jordan_confrontation", "jordan"], ["channel_test", "channel"],
-  ["app_q_learned", "app_learned"], ["app_send", "app"],
 ];
 
 function endingOf(g) {
   const s = g.s;
   if (s.game_won || s.ycAccepted) return "accepted";
-  if (s.ycRejected) return "rejected";
   if (s.cash <= 0) return "bankrupt";
-  if (s.deadline_passed) return "never applied";
+  if (s.deadline_passed) return "not funded";
   return "unresolved";
 }
 
@@ -270,7 +268,7 @@ function statLine(st) {
 
 const CHAPTER_NAMES = {
   1: "Ship the demo", 2: "Get to launch", 3: "The trough of sorrow",
-  4: "Rebuild as v2", 5: "Ace the application",
+  4: "Rebuild as v2", 5: "Make the case",
 };
 
 function renderText(run, o) {
@@ -375,7 +373,7 @@ function renderText(run, o) {
       lastSpeaker = null;
     }
   }
-  // A run can end inside a scene (the deadline lands mid-application) — say so
+  // A run can end inside a scene (the deadline lands mid-sitting) — say so
   // rather than closing the band as if the sitting finished.
   if (scene) L.push(C.y("   ╰── end of scene · " + scene + "  (run ended mid-scene)"));
   if (heldChapter != null) drawChapter(heldChapter);

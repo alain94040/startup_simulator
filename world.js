@@ -14,6 +14,12 @@
   // ("auto") roadmap item — the full/A plan's tax (see story/dev_plan.js).
   const AUTO_BUILD_INCREMENT = 11;
 
+  // Minimum report-card grade (0-100 rollup, per Scoring) for YC admission,
+  // graded automatically at the deadline below — no application to write.
+  // 80 is a B+ on the endgame scale (A ≥ 85, B ≥ 70), so YC takes the top of
+  // the B band and better.
+  const YC_ADMISSION_GRADE = 80;
+
   function tick(game) {
     const s = game.s;
 
@@ -145,19 +151,26 @@
     }
     s.revenue = s.customers * 50;
 
-    // The horizon: entering deadline week, every run ends. An applied run's
-    // verdict (accept/reject) was already delivered by the scheduled letter in
-    // story/fundraising.js — scheduled consequences fire before this tick. A
-    // run that never applied ends here too: the batch filled without you, and
-    // the report card prints regardless.
-    if (!s.game_won && !s.game_over && s.week >= s.deadline_week
-      && !s.ycAccepted && !s.ycRejected) {
-      s.deadline_passed = true;
-      s.game_over = true;
+    // The horizon: entering deadline week, every run ends and is graded on
+    // the spot — no application to write, no wait for a verdict. Admission
+    // needs both the grade (a B+, engine.gradeScore() >= YC_ADMISSION_GRADE)
+    // and the traction bar (launched && pivot_shipped && customers >= 1 —
+    // wise answers without a shipped company don't get funded).
+    if (!s.game_won && !s.game_over && s.week >= s.deadline_week) {
+      const grade = game.gradeScore();
+      const qualified = s.launched && s.pivot_shipped && s.customers >= 1;
+      if (qualified && grade != null && grade >= YC_ADMISSION_GRADE) {
+        s.ycAccepted = true;
+        s.cash += 500000;
+        s.signal = Math.min(100, s.signal + 25);
+        s.game_won = true;
+      } else {
+        s.deadline_passed = true;
+        s.game_over = true;
+      }
     }
-    // Win condition: YC acceptance. Lose: rejection, never applying, or $0.
-    if (!s.game_won && s.ycAccepted) s.game_won = true;
-    if (s.ycRejected) s.game_over = true;
+    // Lose condition: cash hitting $0 (losing the technical co-founder ends
+    // the run on the spot elsewhere, in story/team.js).
     if (s.cash <= 0) s.game_over = true;
   }
 

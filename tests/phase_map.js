@@ -42,7 +42,6 @@ const PHASES = [
   { key: "first_customer", label: "First customer",    reached: s => s.customers >= 1 },
   { key: "first_issue",    label: "First cust. issue", log: ["bug_reports", "churn_interview", "feature_request_custom"] },
   { key: "jordan_fired",   label: "Jordan let go",     fact: "jordan_confrontation", outcome: "fire" },
-  { key: "applied",        label: "Applied to YC",     reached: s => !!s.ycApplied },
 ];
 
 // ── the chapter economy ───────────────────────────────────────────────────────
@@ -60,13 +59,12 @@ const UNCLASSIFIED = new Set();
 // uses: demo → launch → pivot committed → v2 shipped → the deadline.
 const CHAPTER_LABELS = [
   "Ch1 · Ship the demo", "Ch2 · Get to launch", "Ch3 · Why they leave",
-  "Ch4 · Rebuild as v2", "Ch5 · The application",
+  "Ch4 · Rebuild as v2", "Ch5 · Make the case",
 ];
 
 function classifyOutcome(s) {
   if (s.game_won) return "won_yc";
-  if (s.ycRejected) return "yc_rejected";
-  if (s.deadline_passed) return "never_applied";
+  if (s.deadline_passed) return "not_funded";
   if (s.game_over) return "bankrupt";
   return "timeout"; // shouldn't happen: the deadline ends every run by wk 25
 }
@@ -156,11 +154,11 @@ function report(records, opts) {
     console.log(`(only ${winners.length} winning game(s) — too few for a winners-only cohort, so timing is over all games)`);
 
   // outcome mix
-  const outcomes = { won_yc: 0, yc_rejected: 0, never_applied: 0, bankrupt: 0, timeout: 0 };
+  const outcomes = { won_yc: 0, not_funded: 0, bankrupt: 0, timeout: 0 };
   const endByOutcome = {};
   for (const r of all) { outcomes[r.outcome]++; (endByOutcome[r.outcome] ||= []).push(r.endWeek); }
   console.log("\n── Outcomes ────────────────────────────────────────────────");
-  for (const k of ["won_yc", "yc_rejected", "never_applied", "bankrupt", "timeout"]) {
+  for (const k of ["won_yc", "not_funded", "bankrupt", "timeout"]) {
     const ended = (endByOutcome[k] || []).sort((a, b) => a - b);
     console.log(`  ${pad(k, 12)} ${padL(outcomes[k], 5)}  ${padL(pct(outcomes[k], all.length), 4)}` +
       `   median end wk ${r1(quantile(ended, 0.5))}`);
