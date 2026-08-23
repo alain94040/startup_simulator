@@ -1164,10 +1164,11 @@ function renderSide() {
         '<button data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ' class="' + (gk.has(o.key) ? "gated" : "") + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("") + "</div></div>";
   };
 
-  // End-week fallback pill: actions remain but nothing story-tier is pending —
-  // an ambient-only week you can just skip (the turn otherwise auto-advances when
-  // both moves are spent).
-  const canSkip = !game.scene && !uiBusy && game.actionsLeft > 0 && move.length === 0 && story.length === 0
+  // End-week fallback pill: actions remain, but the only cards left are ambient
+  // — a week you can choose to skip. A week with NOTHING open doesn't get the
+  // pill: scheduleTurn() is already carrying the player through it.
+  const canSkip = !game.scene && !uiBusy && game.actionsLeft > 0
+    && move.length === 0 && story.length === 0 && later.length > 0
     && !game.s.game_over && !game.s.game_won;
   let html = canSkip ? '<button class="endpill" id="endPill">End week →</button>' : "";
   html += '<div class="tier"><h5>◉ Needs a call</h5>' +
@@ -1296,8 +1297,7 @@ function doAct(nodeId, key, charId) {
 
   render();
   if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
-  // both moves spent → the week turns automatically (no End-week button)
-  if (game.actionsLeft <= 0) { uiBusy = true; renderHeader(); setTimeout(advanceWeek, 620); }
+  scheduleTurn(620);
 }
 
 // ── focus-arc cinematic: staged lines, per-arc accent, click-to-skip ──────────
@@ -1604,11 +1604,24 @@ function exitScene() {
     // call, the ship call), and doAct returns into enterScene() before it can
     // schedule the turn. Without this the player comes back to a spent week
     // with nothing to answer and no End-week pill — stuck on the same week.
-    if (!game.s.game_over && !game.s.game_won && game.actionsLeft <= 0) {
-      uiBusy = true; renderHeader(); setTimeout(advanceWeek, 620);
-    }
+    scheduleTurn(620);
   };
   if (lines) showCine(lines, meta.accent, back); else back();
+}
+
+// ── when the week turns by itself ─────────────────────────────────────────────
+// Two cases: both moves are spent, or there is nothing left to answer at all.
+// The second is a safety net behind the "every live week offers at least one
+// action" invariant (Layer C of tests/test_narrative.js) — if the content ever
+// leaves a hole, the player rolls through it instead of staring at an empty
+// triage. The End-week pill still covers the ordinary ambient-only week, where
+// the cards are real and skipping them IS the choice.
+function scheduleTurn(delay) {
+  if (uiBusy || game.scene || game.s.game_over || game.s.game_won) return false;
+  const nothingToAnswer = game.openActions().every(a => a.onHold);
+  if (game.actionsLeft > 0 && !nothingToAnswer) return false;
+  uiBusy = true; renderHeader(); setTimeout(advanceWeek, delay);
+  return true;
 }
 
 // ── the week turn: the reveal, in the old order ──────────────────────────────
@@ -1685,6 +1698,8 @@ function advanceWeek() {
     // blue dot for the person who just texted you, and a stale preview line.
     // Refresh with the buzz instead, so the dots land with the notification.
     render();
+    // A week that opened with nothing to answer turns straight through.
+    scheduleTurn(900);
   }
 }
 // runway digit + bar count from → to (fast, ~500ms)
@@ -1935,14 +1950,17 @@ function checkEndgame() {
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
-  const emoji = madeYC ? "🎉" : s.ycRejected ? "📮" : s.deadline_passed ? "⏳" : "🕰️";
+  const emoji = madeYC ? "🎉" : s.ycRejected ? "📮" : s.deadline_passed ? "⏳" : s.cofounder_left ? "🚪" : "🕰️";
   const title = madeYC ? "You're in."
     : s.ycRejected ? "YC passed."
-      : s.deadline_passed ? "The deadline came and went." : "Out of runway.";
+      : s.deadline_passed ? "The deadline came and went."
+        : s.cofounder_left ? "Alex took the other offer." : "Out of runway.";
   const sub = madeYC ? "Your grade cleared the bar — welcome to the batch. The company lives."
     : s.ycRejected ? "Graded below the B+ line — the batch filled without you."
       : s.deadline_passed ? "The application never went out. The batch filled without you — here's the company you built anyway."
-        : "Cash hit zero at week " + s.week + ".";
+        : s.cofounder_left ? "Week " + s.week + ", and the person who was building the product is gone. There's no version of the next "
+          + Math.max(0, s.deadline_week - s.week) + " weeks where you ship, launch and sell this alone — so this is where the run ends."
+          : "Cash hit zero at week " + s.week + ".";
   const batch = madeYC
     ? '<div class="eg-batch">YC Summer 2027 · $500k for 7%</div>'
     : s.ycRejected ? '<div class="eg-batch" style="background:var(--soft);color:#55555c">Missed the bar · needs a B+</div>' : "";

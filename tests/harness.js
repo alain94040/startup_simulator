@@ -74,11 +74,12 @@
     dev_plan: ["lean"], auth_choice: ["buy"], auth_forced: ["buy"],
     interviews: ["interview"], first_screen: ["intake_interviews", "intake"],
     ff_family: ["ask"], ff_family_2: ["ask"], ff_family_3: ["ask"],
-    founder_reflect: ["review"], founder_consulting: ["take"],
+    founder_consulting: ["take"],
     alex_commitment: ["accept"], vision_mismatch: ["test"],
     matching_choice: ["build"], ranking: ["conversation", "interests"],
     ios_sprint_1: ["wire_backend"], ios_sprint_2: ["ack"],
-    demo_ready: ["rough"], demo_watch: ["watch"], demo_bug: ["note"], demo_first_message: ["note"],
+    demo_ready: ["rough"], demo_stall: ["build"], launch_stall: ["ship"], scope_grind: ["ack"],
+    demo_watch: ["watch"], demo_bug: ["note"], demo_first_message: ["note"],
     demo_jordan_late: ["tell"],
     analytics_choice: ["buy"], seed_strategy: ["waitlist_city", "local"],
     trust_safety: ["report_now"], waitlist_calls: ["call"], waitlist_cold: ["reach"],
@@ -149,11 +150,12 @@
     first_screen: "build", matching_choice: "build", ranking: "build",
     ios_sprint_1: "build", ios_sprint_2: "build", analytics_choice: "build",
     trust_safety: "build", proto_to_product: "build", good_enough_launch: "build",
+    demo_stall: "build", launch_stall: "build", scope_grind: "build",
     feature_spree: "build", bug_reports: "build", feature_request_custom: "build",
     feature_cluster: "build", pivot_relaunch: "build", pivot_fifty_verdict: "build",
     pivot_scope_call: "build",
     founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
-    founder_solo_launch: "build", founder_solo_build: "build", jordan_launch_blocker: "build",
+    jordan_launch_blocker: "build",
     // research — the market: interviews, communities, the competitor, evidence
     interviews: "research", waitlist_calls: "research", waitlist_cold: "research",
     hn_thread: "research", community_hn_1: "research", community_hn_2: "research",
@@ -170,7 +172,7 @@
     churn_interview: "research", first_interview_shock: "research", cold_silence: "research",
     random_reframe: "research", pivot_insight_1: "research", pivot_insight_2: "research",
     pmf_lock: "research", founder_user_depth: "research", reference_checkin: "research",
-    alex_sync_discover: "research", founder_solo_discover: "research", early_customer_target: "research",
+    alex_sync_discover: "research", early_customer_target: "research",
     // team — co-founders, family, the company itself
     incorporate: "team", incorporate_again: "team", alex_commitment: "team",
     jordan_working_style: "team",
@@ -190,7 +192,7 @@
     seed_strategy: "growth", beachhead_choice: "growth", launch_surface: "growth",
     launch_scramble: "growth", channel_test: "growth", channel_double_down: "growth",
     dont_scale_seed: "growth", first_customer_offer: "growth", pricing_experiment: "growth",
-    sarah_intro: "growth", pivot_beta_invite: "growth", website_social_proof: "growth", founder_solo_growth: "growth",
+    sarah_intro: "growth", pivot_beta_invite: "growth", website_social_proof: "growth",
     public_complaint: "growth", reporter_deadline: "growth", early_name: "growth",
     // the firing scene's beats (free of action cost, like every scene beat)
     firing_open: "team", firing_restate: "team", firing_reentry: "team",
@@ -198,8 +200,6 @@
     firing_counter: "team", firing_logistics: "team", firing_alex_after: "team",
     firing_last_word: "team",
     demo_jordan_late: "team",
-    // other — filler
-    founder_reflect: "other",
   };
   const CAT_LIST = ["build", "research", "team", "money", "growth", "other"];
 

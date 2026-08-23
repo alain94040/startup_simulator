@@ -116,7 +116,14 @@
       {
         id: "pmf_lock", char: "alex",
         text: "three users said the exact same thing unprompted this week: 'i actually went on a date because of this.' never seen that before. i think we finally know what to build.",
-        when: { after: ["pivot_insight_2"], if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 55 },
+        // "three users went on a date because of this" needs users, which needs
+        // a launched product. Without the clause a stalled pre-launch run that
+        // ground its market_fit up through interviews could hear Alex report
+        // dates from an app nobody outside the team had ever opened.
+        when: {
+          after: ["pivot_insight_2"],
+          if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 55 && s.launched,
+        },
         choices: [
           {
             key: "lock", label: "Lock in the direction",
@@ -235,84 +242,6 @@
               if (!s.launched) s.waitlist += 3; else s.users += 3;
               return "Ran 3 demos instead. 3 people signed up for early access. Alex kept building solo.";
             },
-          },
-        ],
-      },
-
-      // ── SOLO MODE: the game after Alex walks (win chances are slim) ──────────
-      {
-        id: "founder_solo_launch", char: "founder",
-        text: "alex is gone. you're the one who has to decide when to ship now. nobody is going to tell you it's ready. it's not perfect — but it works.",
-        when: { cooldown: 2, if: (s, e) => !e.cast.get("alex").active && s.has_demo && !s.launched },
-        choices: [
-          {
-            key: "ship", label: "Ship it",
-            effects: { signal: 6 },
-            fx(s) {
-              s.launched = true;
-              s.launch_week = s.week;
-              if (s.items) for (const k of Object.keys(s.items)) {
-                const it = s.items[k];
-                if (it && (it.status === "active" || it.status === "todo")) { it.status = "done"; it.quality = it.quality || "rough"; }
-              }
-              return "Launched solo. No fanfare. But it's live.";
-            },
-          },
-          {
-            key: "wait", label: "One more week of polish",
-            fx: () => "Polished a few things. Still not launched.",
-          },
-        ],
-      },
-      {
-        id: "founder_solo_build", char: "founder", ambient: true,
-        text: "no co-founder to pair with, no one to review PRs. you're putting in double shifts to keep the product moving.",
-        when: { cooldown: 6, if: (s, e) => !e.cast.get("alex").active },
-        choices: [
-          {
-            key: "build", label: "Put in the hours",
-            effects: { marketFit: 2 },
-            fx: () => "Two weeks of solo heads-down. Much slower without Alex — things that used to take a day take a week. The product is barely moving.",
-          },
-          {
-            key: "min", label: "Do the minimum",
-            fx: () => "Kept things barely moving. Not much progress but nothing broke.",
-          },
-        ],
-      },
-      {
-        id: "founder_solo_discover", char: "founder", ambient: true,
-        text: "nobody's doing discovery anymore. you have to reach out yourself — message 3 people who've given up on dating apps and ask what would bring them back.",
-        when: { cooldown: 6, if: (s, e) => !e.cast.get("alex").active },
-        choices: [
-          {
-            key: "calls", label: "Do the calls",
-            effects: { signal: 8, marketFit: 5 },
-            fx: () => "Three calls done. One person asked if they could pay now. Signal is still there.",
-          },
-          {
-            key: "survey", label: "Send a survey instead",
-            journal: "Sent a survey instead of doing calls. Lower signal but saves time.",
-            effects: { signal: 3 },
-            fx: () => "Survey sent. Lower signal than real calls but saves time.",
-          },
-        ],
-      },
-      {
-        id: "founder_solo_growth", char: "founder", ambient: true,
-        text: "nobody's coming to you. post in two communities where single people actually talk, and follow up with people who signed up but went quiet.",
-        when: { cooldown: 2, if: (s, e) => !e.cast.get("alex").active && s.launched },
-        choices: [
-          {
-            key: "outreach", label: "Do the outreach",
-            journal: "Cold batch sent. 2 signups from people I messaged directly.",
-            effects: { users: 2, signal: 3 },
-            fx: () => "Cold batch sent. 2 signups from people you messaged directly.",
-          },
-          {
-            key: "light", label: "Post in one community",
-            effects: { signal: 2 },
-            fx: () => "Posted an update. Small ripple. Keeps the light on.",
           },
         ],
       },

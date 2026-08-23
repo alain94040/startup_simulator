@@ -279,7 +279,7 @@
         when: {
           // Delay 4 (was 3): the trough gets a real stretch of falling numbers
           // and failed fixes before the diagnosis room convenes.
-          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored", "founder_solo_launch:ship"]], delay: 4,
+          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored"]], delay: 4,
           if: (s, e) => !s.activities_pivot && !s.pivot_summit_done && !s.pivot_deferred
             && e.cast.get("priya").active,
         },

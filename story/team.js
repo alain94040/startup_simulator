@@ -324,12 +324,20 @@
             fx: () => "Long, honest conversation. Alex is staying. Things need to improve — but you're aligned now.",
           },
         ],
+        // Losing the technical co-founder ENDS the run, like cash hitting $0.
+        // There is no solo mode: one founder cannot build, launch, pivot and
+        // sell a product inside the horizon, and pretending otherwise left the
+        // player grinding out empty weeks against a company that was already
+        // over. The report card prints on the spot — and it grades badly, which
+        // is the lesson (GOALS.md: keep your co-founders close).
         timeout: {
           weeks: 2,
           fx(s, e) {
             const alex = e.cast.get("alex");
             alex.active = false;
             s.alex_departure_risk = false;
+            s.cofounder_left = true;
+            s.game_over = true;
           },
           say: { char: "alex", text: "i've decided to take the other opportunity. i'm sorry — i'll do a proper handoff this week." },
         },

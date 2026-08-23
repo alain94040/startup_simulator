@@ -132,6 +132,11 @@
             note: Math.round(ratio * 100) + "% of your co-founders' messages got an answer." },
           { faced: true, weight: 2, got: rel,
             note: "Team morale/trust ended around " + Math.round(rel * 100) + "." },
+          // The terminal case. Driving the technical co-founder out IS this
+          // lesson's failure, so it has to outweigh the two gradual measures —
+          // otherwise the run that lost the company to neglect grades a C.
+          { faced: !!s.cofounder_left, weight: 5, got: 0,
+            note: "Alex left in week " + s.week + ". Everything else in this category is a footnote to that." },
         ]),
         ["They texted, you answered. It shows in the trust.",
           "Left on read more than once — they noticed.",
@@ -257,16 +262,20 @@
     {
       let minBalance = s.cash;
       for (const wk of g.ledger) minBalance = Math.min(minBalance, wk.balanceAfter);
+      // A run can end three ways short of the deadline: the bank, the calendar,
+      // or the team. Money in the bank is no consolation for the last one —
+      // the company stopped existing while it was still solvent.
       const score = s.game_won ? 100
         : !s.game_over ? clamp(40 + g.runwayWeeks * 3, 40, 90)
-          : s.ycRejected ? 55 : s.deadline_passed ? 45 : 10;
+          : s.ycRejected ? 55 : s.deadline_passed ? 45 : s.cofounder_left ? 20 : 10;
       out.push({
         key: "default-alive", label: "Stay default alive", ref: "📚 PG, \"Default Alive or Default Dead?\"",
         score, verdict: s.game_won ? "You reached the other side with the lights on."
           : !s.game_over ? "Still alive — runway is the scoreboard."
             : s.ycRejected ? "The run ended on a verdict, not on the bank balance."
               : s.deadline_passed ? "Alive at the deadline — but the application never went out."
-                : "Cash hit zero. Everything else became irrelevant.",
+                : s.cofounder_left ? "Money in the bank and nobody left to build. Runway was never the binding constraint."
+                  : "Cash hit zero. Everything else became irrelevant.",
         notes: ["Lowest bank balance: $" + Math.max(0, Math.round(minBalance)).toLocaleString() + "."],
       });
     }

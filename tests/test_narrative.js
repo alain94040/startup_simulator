@@ -88,7 +88,6 @@ const CARD_RULES = [
 // discovery, waitlist, and meta beats, each exempt with a reason.
 const ALLOW = new Set([
   "interviews",             // pre-launch customer discovery interviews
-  "founder_solo_discover",  // discovery after Alex leaves
   "cold_silence",           // cold outreach with no responses, pre-launch
   "first_interview_shock",  // Alex's first discovery interview, pre-demo
   "random_reframe",         // a stranger reframes the idea, discovery phase
@@ -195,6 +194,7 @@ function playGame(seed, driver, trace) {
       }
       // A-layer + coverage each week boundary
       for (const inv of STATE_INVARIANTS) if (!inv.holds(g.s)) recordA(inv, g.s, { seed, driver, week: g.s.week });
+      if (!offered.some(a => !a.onHold)) recordDeadAir(g, { seed, driver });
       if (g.s.launched) seen.launched = true;
       if (g.s.activities_pivot) seen.pivot = true;
       if (g.s.jordan_resolved) seen.fired = true;
@@ -227,6 +227,52 @@ function playGame(seed, driver, trace) {
     }
   } catch (err) {
     scoringFailures.push({ seed, driver, why: `scoreGame threw: ${err.message}` });
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LAYER C — no dead air. Every week of a live run must offer the player at
+// least one card they can actually answer.
+//
+// A week with an empty triage is a bug, not a pacing choice: the player is
+// asked to spend two actions on nothing, and the only thing that moves is the
+// burn. This used to be papered over by a filler card (founder_reflect, "a
+// quiet stretch…") that sat in the triage from week 1 of every run — including
+// the weeks that were not remotely quiet — and was retired for exactly that
+// reason. game.html's scheduleTurn() carries the player through a hole if one
+// ever appears; this check is what keeps one from appearing.
+//
+// Swept across every archetype, not just decent/pivot/random: the holes this
+// found all lived in stalled runs (the build spine never started, a product
+// that could never launch), which the lopsided and attention-shuffled players
+// reach and a well-behaved one never does.
+// ─────────────────────────────────────────────────────────────────────────────
+const deadAir = new Map();
+function recordDeadAir(g, ctx) {
+  totalViolations++;
+  const s = g.s, alex = g.cast.get("alex");
+  const key = [
+    "ch" + g.chapter,
+    alex.active ? "alex" : "no-alex",
+    s.has_demo ? "demo" : "no-demo",
+    s.launched ? "launched" : "pre-launch",
+  ].join("·");
+  const e = entry(deadAir, key);
+  e.count++; e.byDriver[ctx.driver] = (e.byDriver[ctx.driver] || 0) + 1;
+  bumpExample(e, { ...ctx, week: s.week }, { detail: key, state: snapshot(s) });
+}
+
+function sweepDeadAir(games) {
+  for (const name of Object.keys(H.STRATEGIES)) {
+    for (let seed = 1; seed <= games; seed++) {
+      const { driver, priority } = H.strategyOpts(name, seed);
+      H.playGame(seed, driver, {
+        weeks: WEEK_CAP, priority,
+        onWeekStart(g, offered) {
+          if (!offered.some(a => !a.onHold)) recordDeadAir(g, { seed, driver: name });
+        },
+      });
+    }
   }
 }
 
@@ -272,6 +318,13 @@ function report(games, drivers, verbose) {
     console.log("\n(— verbose: first example per group shown above; counts are total occurrences —)");
   }
 
+  console.log("\n── Layer C · no dead air (every live week offers an action) ─");
+  if (!deadAir.size) console.log("  ok   no run ever reached a week with an empty triage");
+  for (const e of [...deadAir.values()].sort((a, b) => b.count - a.count)) {
+    console.log(`  FAIL ${e.first.detail} — ${e.count} empty week${e.count === 1 ? "" : "s"} [${fmtDrivers(e)}]`);
+    console.log(`         e.g. ${fmtFirst(e.first)}`);
+  }
+
   console.log("\n── Endgame scorecard (scoring.js smoke check) ───────────");
   if (!scoringFailures.length) console.log(`  ok   scoreGame returned ${CATEGORY_COUNT} well-formed categories at every game end`);
   for (const f of scoringFailures.slice(0, 5)) console.log(`  FAIL seed ${f.seed} · ${f.driver} — ${f.why}`);
@@ -279,10 +332,13 @@ function report(games, drivers, verbose) {
 
   const realB = [...layerB.values()].filter(realistic).length;
   const realA = [...layerA.values()].filter(realistic).length;
+  // Dead air fails the build from ANY driver — an empty week is a hole in the
+  // content, and "only the fuzzer walks into it" doesn't make it less of one.
+  const realC = deadAir.size;
   console.log(`\n${totalViolations ? "VIOLATIONS FOUND" : "ALL NARRATIVE CHECKS PASSED"} ` +
     `(${layerA.size} invariant group(s), ${layerB.size} card/message group(s); ` +
     `${realA + realB} reachable by realistic play; ${totalViolations} total occurrences)`);
-  return realA + realB; // the CI bar: realistic-play violations must be 0
+  return realA + realB + realC; // the CI bar: realistic-play violations must be 0
 }
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
@@ -308,6 +364,9 @@ function main() {
   for (const driver of drivers) {
     for (let i = 0; i < games; i++) playGame(seed++, driver, false);
   }
+  // Layer C sweeps the archetypes too — fewer seeds each, since there are 16
+  // of them and the check is cheap per week rather than per card.
+  if (!val("--driver")) sweepDeadAir(Math.max(50, Math.round(games / 3)));
   // Exit code tracks the repo's stated bar: realistic-play violations at 0.
   // Fuzzer-only findings stay visible in the report but don't fail CI.
   const realCount = report(games, drivers, verbose);

@@ -166,7 +166,9 @@ console.log("decent driver (seed 42)");
 // ── ignore driver: every "@ignored" edge is a real story path ────────────────
 // With the full relationship texture in place, total neglect no longer settles
 // the equity by inertia: Alex's grievance queue crowds his one slot, he walks
-// at ~wk20, and the company dies at wk21 with nothing ever signed.
+// at ~wk20, and the run ENDS there with nothing ever signed — losing the
+// technical co-founder is terminal, like cash hitting zero, so the report card
+// prints on the spot instead of the player grinding out five empty weeks.
 console.log("ignore driver (seed 42, 26 weeks)");
 {
   const g = run(42, ignore, 26);
@@ -183,7 +185,9 @@ console.log("ignore driver (seed 42, 26 weeks)");
   ok(!g.log.some(l => l.surfaced === "dev_plan"), "the dev arc never started (gated on a signing that never came)");
   ok(g.outcome("ff_family") === "@ignored" && g.outcome("ff_family_2") === "@ignored" && g.done("ff_family_3"),
     "Mom's nag chain rode the @ignored edges");
-  ok(g.s.game_over && g.s.cash === 0, "the company died on autopilot (wk " + g.s.week + ")");
+  ok(g.s.game_over && g.s.cofounder_left && g.s.cash > 0,
+    "the company died on autopilot when Alex walked — solvent to the end (wk "
+    + g.s.week + ", $" + Math.round(g.s.cash) + ")");
   const alex = g.cast.get("alex");
   ok(alex.morale < 30, "Alex's morale was gutted by then (" + Math.round(alex.morale) + ")");
 }
@@ -465,7 +469,7 @@ console.log("week 2: the paperwork, then the split (seed 42)");
       if (a.nodeId === "incorporate") afterFiling = game.openActions().map(x => x.nodeId);
     },
   });
-  ok(wk2Open && wk2Open.filter(id => id !== "founder_reflect").join() === "incorporate",
+  ok(wk2Open && wk2Open.join() === "incorporate",
     "week 2 opens on the paperwork and nothing else: " + (wk2Open || []).join(", "));
   ok(afterFiling && afterFiling.includes("equity_open"),
     "filing brings Jordan in the same week — no waiting for the boundary");
@@ -487,8 +491,6 @@ console.log("week 2: the paperwork, then the split (seed 42)");
     "…and it still costs a move, like the filing (" + JSON.stringify(spend) + ")");
   ok(spend.equity_signing === 0 && spend.equity_impasse === 0,
     "…while every beat answered inside the room is free");
-  ok(!g.done("founder_reflect") || g.weekOf("founder_reflect") !== 2,
-    "so week 2 is spent on the company, not on the filler card");
 }
 
 // ── a scene hands the week back ──────────────────────────────────────────────
@@ -497,13 +499,19 @@ console.log("week 2: the paperwork, then the split (seed 42)");
 // triage until the next week boundary. Since the beats are free, a sitting that
 // opened and closed inside one week left the player holding unspent actions
 // with nothing to answer, and the displaced card silently slid a week.
-console.log("a scene hands the week back (seed 1, attention-shuffled)");
+console.log("a scene hands the week back (seed 7, attention-shuffled)");
 {
-  // This founder deferred the paperwork, so the equity sitting lands in week 4
-  // on top of two live cards of their own.
+  // This founder leaves the incorporation card on read for two weeks, so the
+  // whole equity sitting lands mid-chapter on top of live cards of their own.
+  // (The deferral is deliberate: it used to happen by accident, because the
+  // retired founder_reflect filler sat in every early triage and occasionally
+  // won the shuffled attention roll — a filler card outbidding the paperwork
+  // was the bug, not the fixture.)
+  const deferPaperwork = (a, g) =>
+    (a.nodeId === "incorporate" && g.s.week <= 2) ? null : decent(a, g);
   let atExit = null;
-  const g = run(1, decent, 6, {
-    priority: makeAttentionPriority(1),
+  const g = run(7, deferPaperwork, 10, {
+    priority: makeAttentionPriority(7),
     onAct: (game, a) => {
       if (a.nodeId === "equity_signing") atExit = {
         left: game.actionsLeft,
@@ -511,12 +519,15 @@ console.log("a scene hands the week back (seed 1, attention-shuffled)");
       };
     },
   });
-  ok(g.weekOf("equity_signing") === 4, "the sitting ran in week 4, mid-chapter");
-  ok(atExit && atExit.open.includes("interviews") && atExit.open.includes("alex_side_project"),
-    "both cards the room pushed aside are back in the triage the moment it empties: "
+  ok(g.weekOf("equity_signing") === 5, "the sitting ran in week 5, mid-chapter");
+  ok(atExit && atExit.left >= 1,
+    "the room opened and closed inside one week, and the week still owes a move ("
+    + (atExit ? atExit.left : "?") + " left)");
+  ok(atExit && atExit.open.includes("alex_side_project") && atExit.open.includes("flare_stealth"),
+    "…and the cards the room pushed aside are back in the triage the moment it empties: "
     + (atExit ? atExit.open.join(", ") || "(nothing — the week is dead)" : "?"));
-  ok(g.took("interviews:interview"),
-    "…and the displaced research card was still there to answer, not lost with the room");
+  ok(g.done("alex_side_project"),
+    "…so the displaced card was still there to answer, not lost with the room");
 }
 
 // ── the paperwork gates the paperwork, and nothing else ──────────────────────

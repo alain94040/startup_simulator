@@ -462,7 +462,13 @@
         id: "good_enough_launch", char: "alex",
         text: "the product is solid. we could keep polishing or we could ship it and learn from real users. nothing's on fire — let's launch.",
         when: {
-          cooldown: 4,
+          // Every week, not every four. Once the product is hardened and the
+          // scope is clear, "are we shipping?" is the only thing on Alex's mind
+          // and the card's own timeout says so ("another week building in a
+          // vacuum. runway is ticking"). At 4 a founder who answered "two more
+          // weeks" got silence instead — including whole weeks with nothing to
+          // answer at all, on the one question the chapter is about.
+          cooldown: 1,
           if: (s, e, char) => s.productPhase === "product" && allScopeBuilt(s)
             && s.ios_unblocked && !s.launched && char.focus === "build",
         },
@@ -492,6 +498,124 @@
           effects: { cash: -800, char: { alex: { morale: -10 } } },
           say: { char: "alex", text: "another week building in a vacuum. runway is ticking and real users are waiting." },
         },
+      },
+
+      // ── the stall: a finished product nobody outside this chat has opened ────
+      // good_enough_launch is the only door out of chapter 2, and two of its
+      // clauses can jam it shut for the rest of a run by accident: parking Alex
+      // on discovery after the hardening week, or never resolving the iOS build
+      // (jordan_launch_blocker only covers the drifting case). Either leaves a
+      // finished product, a ticking calendar, and no beat anywhere offering to
+      // ship. This is the recovery ramp back to that door — ambient, like every
+      // backstop here, so it can never outrank a real beat on Alex's thread.
+      //
+      // The over-scope backlog is deliberately NOT treated as a jam on its own.
+      // Never finishing plan A is the designed cost of choosing it (GOALS.md:
+      // "if you are too ambitious … the player should run out of money"), and
+      // an escape hatch that cut the leftover scope took plan A from never
+      // launching to winning as often as a lean plan. So the gate asks about
+      // the CAUSE, not the symptom: a backlog that isn't finishing because the
+      // build is parked is an accidental lock (world.js burns auto items down
+      // out of cumulative buildEffort, which stops accruing the moment Alex is
+      // on "discover" — park him and the backlog freezes for good). A backlog
+      // that isn't finishing because it is simply enormous, with Alex heads-down
+      // on it, is plan A working as intended and gets no card.
+      {
+        id: "launch_stall", char: "alex", ambient: true,
+        text: (s) => !s.ios_unblocked
+          ? "the web build is hardened and working. iOS never happened — it's been on the board since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
+          : !allScopeBuilt(s)
+            ? "nobody has written a line of product code in weeks — i'm on calls, jordan's on calls, and the list we said we'd finish before launch hasn't moved since. it isn't going to finish itself. put me back on the build."
+            : "the product has been sitting on a server since week " + Math.max(1, s.week - 3)
+              + ". it works. nobody outside this chat has ever opened it. i'm on user calls because you asked me to be — but at some point the calls are just a way of not launching.",
+        when: {
+          cooldown: 1,
+          // Jordan's drift owns its own version of this conversation.
+          if: (s, e, char) => {
+            if (s.productPhase !== "product" || s.launched) return false;
+            if (s.jordan_drifting && !s.jordan_resolved) return false;  // Jordan's card owns this
+            if (allScopeBuilt(s) && s.ios_unblocked && char.focus === "build") return false;  // door is open
+            // team.js's alex_sync_build is the softer version of the same ask
+            // and owns the moment two weeks into a discovery sprint; this
+            // story-class card would otherwise take Alex's slot every time.
+            if (char.focus === "discover" && e.weeksSince("alex_sync_discover") >= 2
+              && e.weeksSince("alex_sync_build") >= 2) return false;
+            return char.focus !== "build" || !s.ios_unblocked;
+          },
+        },
+        choices: [
+          {
+            key: "ship", label: "You're right — back on the build, then we ship",
+            reply: "you're right and i've been avoiding it. back on the build, finish what's left, and we point it at real people.",
+            journal: "Alex called it: the user calls had become a way of not launching. Put him back on the build to finish the list and get the thing in front of strangers.",
+            effects: {
+              char: { alex: { focus: "build", morale: 10 } },
+              surface: "good_enough_launch",
+            },
+            fx(s) {
+              // Putting him back on "build" is the whole fix: buildEffort starts
+              // accruing again, so world.js resumes burning the backlog down.
+              // Nothing is cut and nothing is skipped — a plan too big to finish
+              // is still too big to finish. Shipping without mobile costs signal,
+              // the same trade jordan_launch_blocker:web_only charges.
+              const webOnly = !s.ios_unblocked;
+              if (webOnly) { s.ios_unblocked = true; s.signal = Math.max(0, s.signal - 10); }
+              return (webOnly
+                ? "Going out web-only: no mobile on day one, and a dating app without a phone app will feel it. "
+                : "He was right. The research was real, and it was also cover. ")
+                + "Alex is back on the build, and whatever is left on the list is moving again.";
+            },
+          },
+          {
+            key: "wait", label: "Not yet — keep learning",
+            journal: "Kept the product off the internet another week. There's always one more thing to learn first.",
+            effects: { char: { alex: { morale: -10 } } },
+            fx: () => "Another week with a working product and no users. Alex stopped pushing, which is worse than when he pushed.",
+          },
+        ],
+        // Standing offer, no timeout — same reason as demo_stall: a backstop
+        // that resolves itself leaves a hole on the week it resolves.
+      },
+
+      // ── the over-scope tax, said out loud ────────────────────────────────────
+      // Plan A's punishment is that the list never finishes: world.js burns the
+      // auto items down out of cumulative build effort, and an ambitious plan
+      // needs more of it than the horizon has weeks. That was previously
+      // SILENT — the weeks just went by with a hardened product and no launch
+      // card, which is both a dead-air hole and a wasted lesson. This is the
+      // grind on-screen. Ambient on purpose: it can never out-compete a real
+      // beat, and it offers no way out, because there isn't one. Cutting the
+      // list is a week-4 decision (story/dev_plan.js), not a week-20 one.
+      {
+        id: "scope_grind", char: "alex", ambient: true,
+        text: (s) => {
+          const left = s.items
+            ? Object.keys(s.items).filter(k => s.items[k].auto
+                && s.items[k].status !== "done" && s.items[k].status !== "deferred").length
+            : 0;
+          return "status: still " + left + " thing" + (left === 1 ? "" : "s")
+            + " left on the pre-launch list. heads-down on it. i know how this sounds in week "
+            + s.week + " — it's the plan we picked and it's the plan we're finishing.";
+        },
+        when: {
+          cooldown: 1,
+          if: (s, e, char) => s.productPhase === "product" && !s.launched
+            && !allScopeBuilt(s) && char.focus === "build",
+        },
+        choices: [
+          {
+            key: "all_hands", label: "Put everyone on it — nothing else until the list is done",
+            reply: "everyone on the list. no calls, no side quests, until it's done.",
+            journal: (s) => "Week " + s.week + ", still finishing the plan-A list. Pulled the whole team onto it — no calls, no side quests.",
+            effects: { char: { alex: { effort: 0.5 }, jordan: { effort: 0.5, focus: "build" } } },
+            fx: () => "Everyone on the list. It moves a little faster with two people on it — which is the arithmetic you were doing back when you picked the plan.",
+          },
+          {
+            key: "ack", label: "Understood — keep going",
+            journal: null,
+            fx: () => "Still building the list. The calendar isn't waiting for it.",
+          },
+        ],
       },
     ],
   };

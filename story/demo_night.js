@@ -20,6 +20,65 @@
   }
 
   const mod = {
+    // ── the stall: week after week, and still nothing to demo ────────────────
+    // demo_ready is gated on Alex's actual build output (buildEffort >= 6). A
+    // founder who keeps him on discovery, or leaves him on read, freezes that
+    // number — and chapter 1 quietly runs out of clock with no beat saying so.
+    // This is that beat: the same decision demo night asks, asked by the person
+    // watching the calendar. Ambient on purpose — a backstop must never outrank
+    // the spine it exists to restart. As a story beat it took Alex's slot every
+    // week of a stalled run and starved his own thread (alex_sync_build went
+    // from 384 to 30 firings across 1500 fuzzer runs); as an ambient one it
+    // surfaces only when he has nothing else to say, which is the whole point.
+    nodes: [
+      {
+        id: "demo_stall", char: "alex", ambient: true,
+        text: (s, e, char) => char.focus === "discover"
+          ? "honest question. i've been on user calls and roadmap docs since week " + Math.max(1, s.week - 4)
+            + " because that's what you asked for. it's week " + s.week
+            + " and there is still nothing a stranger can open. put me back on the build and leave me there and i can get profiles + matching working end to end."
+          : "it's week " + s.week + ". we have a plan, a company, and no product. i'm getting maybe a day a week on this between everything else you send me. i need a stretch where the build is the only thing i'm doing.",
+        // demo_ready's own predicate, negated: it fires once Alex has banked 6
+        // effort weeks on a settled matching call, so this fires while either
+        // of those is still missing. Exactly one of the two is ever live, so
+        // the nag can never squat the slot the demo call needs.
+        when: {
+          cooldown: 1,
+          if: (s, e, char) => !s.has_demo && !s.launched && s.week >= 10
+            && (char.buildEffort < 6 || !e.done("matching_choice"))
+            // team.js's alex_sync_build is the softer version of this same ask
+            // ("ready to get back to building?") and owns the moment two weeks
+            // into a discovery sprint. This is story-class and would otherwise
+            // take Alex's slot every time and answer itself, so stand down
+            // while that card is actually live (its gate, plus its cooldown).
+            && !(char.focus === "discover" && e.weeksSince("alex_sync_discover") >= 2
+              && e.weeksSince("alex_sync_build") >= 2),
+        },
+        choices: [
+          {
+            key: "build", label: "Back on the build — nothing else until there's a demo",
+            reply: "you're right. the build is the only thing until a stranger can open it. everything else waits.",
+            journal: (s) => "Week " + s.week + " and still nothing to demo. Put Alex back on the build and took everything else off him.",
+            effects: { char: { alex: { focus: "build", effort: 2, morale: 8 } } },
+            fx: (s) => "Alex is back on the build and nothing else. Week " + s.week
+              + ", and the first thing a stranger can open is still ahead of you — but it's moving again.",
+          },
+          {
+            key: "hold", label: "Keep learning first — we still don't know what to build",
+            reply: "not yet. we still don't know what we're building. keep talking to people.",
+            journal: "Kept Alex on discovery instead of the build. Another week where nothing exists that anyone can open.",
+            effects: { char: { alex: { morale: -6 } } },
+            fx: () => "Another week of learning, another week of nothing to show. Alex didn't argue. That's the part that stung.",
+          },
+        ],
+        // No timeout on purpose. A timeout resolves the card at the week
+        // boundary and `cooldown` then holds it out for a week — which is a
+        // one-week hole in exactly the run this card exists to keep populated.
+        // As a standing offer it never auto-resolves, and the engine hands its
+        // slot to any higher-class beat the moment Alex has real news
+        // (_poll's `if (!curNode.timeout)` branch), so it can't squat either.
+      },
+    ],
     arcs: [
       {
         id: "demo",

@@ -1,8 +1,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// story/ambient.js — flavor and filler: Mom's check-in chain and the
-// founder's quiet-week card. Proves the class ordering (ambient/filler never
-// out-compete a story beat) and the "@ignored" chain (each of Mom's nags only
-// exists because the previous one went unanswered).
+// story/ambient.js — flavor: Mom's check-in chain and the ramen valve. Proves
+// the class ordering (an ambient card never out-competes a story beat) and the
+// "@ignored" chain (each of Mom's nags only exists because the previous one
+// went unanswered).
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
@@ -98,39 +98,6 @@
           },
         ],
         timeout: { weeks: 2 },
-      },
-
-      // ── the safety valve: only surfaces when the founder has nothing real ────
-      {
-        id: "founder_reflect", char: "founder", filler: true,
-        text: (s) => {
-          if (s.cash < 3000) return "runway is nearly gone. whatever you focus on this sprint, it has to matter.";
-          if (s.cash < 7000) return "a quieter stretch — but the runway is shrinking. no fires right now, but don't mistake that for safety.";
-          const quietVariants = [
-            "a quiet stretch. no fires, no urgent asks. a rare chance to get ahead instead of staying afloat.",
-            "no crises this week. good moment to look at match-to-date conversion — the number most dating app founders ignore until it's too late.",
-            "things are quiet. worth a sprint looking at what your most active users actually do in the app — not what they say they want.",
-          ];
-          return quietVariants[Math.floor(s.week / 4) % quietVariants.length];
-        },
-        when: { cooldown: 1 },
-        choices: [
-          {
-            key: "review", label: "Review your positioning",
-            effects: { signal: 2 },
-            fx(s, e) {
-              const msgs = [
-                "Spent time thinking about the pitch. Small refinements. Nothing dramatic.",
-                "Wrote out the 'why now' for PlusOne again. Tighter than before, but still not crisp enough for a cold email.",
-                "Mapped out how we talk about the problem. Some clarity — nothing that changes the strategy.",
-                "Refined the one-liner. Closer, but still not the version that makes someone lean in.",
-                "Ran through the positioning again. A few word changes, one sharper framing. Progress.",
-                "Wrote down the three objections we always get. No good answers yet — but naming them is a start.",
-              ];
-              return msgs[e.timesResolved("founder_reflect") % msgs.length];
-            },
-          },
-        ],
       },
     ],
   };
