@@ -777,7 +777,7 @@ const LAUNCH_BG = {
 };
 // ── the founder's to-do list: one checklist per stage of the company ─────────
 const STAGES = [
-  { id: "demo", label: "Ch 1 · Ship the demo",
+  { id: "demo", label: "Ch 1 · Build the prototype",
     goal: "Become a real company — paperwork, the split, and something a stranger can touch.",
     active: (s, g) => !s.has_demo, items: [
     { t: "Incorporate", done: s => !!s.incorporated, note: () => null },
@@ -785,7 +785,7 @@ const STAGES = [
     { t: "Matching engine", done: (s, g) => g.done("matching_choice"), note: s => s.matching_owned ? "ours — the IP" : s.matching_licensed ? "licensed · $100/wk" : null },
     { t: "Put it in front of a stranger", done: s => !!s.has_demo },
   ]},
-  { id: "launch", label: "Ch 2 · Get to launch",
+  { id: "launch", label: "Ch 2 · Launch the product",
     goal: "Launch before the waitlist — and the runway — go cold.",
     active: (s, g) => s.has_demo && !s.launched, items: [
     { t: "Instrument the funnel", done: (s, g) => g.done("analytics_choice"), note: s => s.analytics_live ? "SDK · $30/wk — you can see" : null },
@@ -796,7 +796,7 @@ const STAGES = [
     { t: "Plan the launch splash", done: (s, g) => g.done("launch_surface"), note: s => s.launch_splash === "quiet" ? "soft — the waitlist first" : s.launch_splash === "press" ? "the reporter's exclusive" : s.launch_splash === "tiktok" ? "TikTok creators · $1,200" : s.launch_splash === "show_hn" ? "Show HN — go big" : null },
     { t: "Flip the switch", done: s => !!s.launched },
   ]},
-  { id: "slide", label: (s, g, done) => done ? "Ch 3 · The trough of sorrow" : "Ch 3 · Read the numbers",
+  { id: "slide", label: (s, g, done) => done ? "Ch 3 · The trough of sorrow" : "Ch 3 · Grow the business",
     goal: "Retention is sliding. Figure out why — and get the team looking at the same evidence.",
     active: (s, g) => s.launched && !s.pivot_summit_done && !s.pivot_deferred && !s.activities_pivot, items: [
     { t: "Watch retention, not signups", done: (s, g) => g.done("slide_hangover") },
@@ -805,7 +805,7 @@ const STAGES = [
     { t: "Hear Alex's thesis out", done: (s, g) => g.done("slide_alex_thesis") },
     { t: "Get both sides in a room", done: s => !!s.pivot_summit_done },
   ]},
-  { id: "v2", label: (s, g, done) => done ? "Ch 4 · Rebuild as v2" : "Ch 4 · The next move",
+  { id: "v2", label: (s, g, done) => done ? "Ch 4 · Rebuild as v2" : "Ch 4 · Scale the team",
     goal: "Ship the pivot — and keep the team aligned behind it.",
     active: (s, g) => s.activities_pivot && !s.pivot_shipped, items: [
     { t: "Call the pivot", done: s => !!s.activities_pivot, note: () => "plans, not profiles" },
@@ -815,7 +815,7 @@ const STAGES = [
     { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? "she's off the team" : s.jordan_drifting ? "she's drifting — Alex is covering" : null },
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped, note: (s, g) => g && g.took && g.took("pivot_relaunch:sarah_event") ? "debuted at Sarah's event" : g && g.took && g.took("pivot_relaunch:press") ? "the pivot story ran" : null },
   ]},
-  { id: "apply", label: "Ch 5 · Make the case",
+  { id: "apply", label: "Ch 5 · Get into YC",
     goal: s => "Prove it before week " + s.deadline_week + ": revenue, a channel, a clean cap table.",
     active: () => true, items: [
     { t: "Take the friends & family money", done: (s, g) => g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") },
