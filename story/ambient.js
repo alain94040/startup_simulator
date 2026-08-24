@@ -86,12 +86,12 @@
         choices: [
           {
             key: "take", label: "Take the contract week — $2,500",
-            journal: "Contract week: $2,500 in, a week of plusone momentum out.",
+            journal: "Took a week of contract work to keep the lights on. $2,500 in, one week of plusone momentum out. Nobody puts this part in the founding story.",
             effects: { cash: 2500, signal: -2 },
           },
           {
             key: "decline", label: "No — every week belongs to plusone",
-            journal: "Turned down the contract week — every remaining week belongs to plusone.",
+            journal: "Turned down the contract week. Every remaining week belongs to plusone — and the bank balance knows it.",
           },
         ],
         timeout: { weeks: 2 },

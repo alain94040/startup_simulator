@@ -75,7 +75,7 @@
         choices: [
           {
             key: "dig", label: "Dig into the drop-off",
-            journal: "The pre-launch pattern is banked: people don't leave before the match, they leave after it.",
+            journal: "Pulled the test group's numbers apart. Matches that never become conversations, conversations that never become dates — twelve people is a small sample and an unambiguous one. The analytics paid for themselves before launch: I can see the pivot from here.",
             effects: { marketFit: 8, signal: 4, flags: { analytics_dropoff_seen: true } },
           },
         ],
@@ -95,7 +95,7 @@
           {
             key: "open", label: "Good flag — write it down verbatim",
             reply: "write it down, word for word. 'i matched, but then what.' if it's still true with strangers, we'll know exactly where to look.",
-            journal: "'I matched, but then what' — written down verbatim, from the TestFlight group.",
+            journal: "Jordan flagged a pattern from the TestFlight group: people keep saying 'I matched, but then what?' Wrote it down verbatim. Launch will tell us if it's noise or the whole story.",
             effects: { flags: { pivot_flagged: true } },
           },
         ],
@@ -156,7 +156,7 @@
           },
           {
             key: "faq", label: "Add it to the FAQ pile",
-            journal: "The support question got the standard answer: 'check back as more people join.'",
+            journal: "A user asked what's supposed to happen after a match. Sent the standard answer — 'check back as more people join.' The just-wait-for-more-users answer, given without thinking.",
           },
         ],
         timeout: { weeks: 2 },
@@ -177,7 +177,7 @@
         choices: [
           {
             key: "dig", label: "Sit with the numbers",
-            journal: "The week-one numbers confirmed the test group's pattern, just bigger — too big to un-know.",
+            journal: "Friday. The week-one numbers came in and it's the TestFlight group's pattern, just bigger: matches happen, conversations don't, dates — zero. It's not that we don't know. It's that the number is now too big to un-know.",
             effects: { marketFit: 4, signal: 2, flags: { cohort_seen: true } },
           },
         ],

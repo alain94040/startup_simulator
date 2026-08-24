@@ -14,7 +14,7 @@
         choices: [
           {
             key: "reach", label: "Reach out now",
-            journal: "Waitlist touched base — still excited, asking when we launch.",
+            journal: "Reached out to the waitlist. Good feedback — people are still excited, want to know when we're launching.",
             effects: { signal: 8, marketFit: 5 },
           },
         ],
@@ -56,12 +56,12 @@
         choices: [
           {
             key: "call", label: "Call them — 20 minutes",
-            journal: "Called the churned subscriber — nothing was wrong with the product; the plans near them dried up. They live 40 minutes out. Density again.",
+            journal: "Called the churned subscriber. Nothing was wrong with the product — the plans near them dried up. They live 40 minutes out, and the calendar in their area went quiet. It's the density lesson wearing a new shirt: own one neighborhood before you promise the whole map.",
             effects: { marketFit: 10, signal: 5 },
           },
           {
             key: "email", label: "Send a quick email",
-            journal: "Emailed the churned subscriber — one paragraph back.",
+            journal: "Emailed the churned subscriber. One paragraph back. Less than a call, more than nothing.",
             effects: { marketFit: 4 },
           },
           {

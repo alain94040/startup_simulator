@@ -312,7 +312,7 @@
           {
             key: "cut", label: "One thing. Cut everything else",
             reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
-            journal: "v2 ships one thing — the plans board. No legacy mode.",
+            journal: "Scope call for v2: one thing. Plans board, nothing else — no legacy matching mode limping alongside. The lean lesson, learned twice. Alex says the cut buys him most of a week.",
             effects: { marketFit: 4 },
             fx(s, e) {
               if (s.pivot_effort_base != null) s.pivot_effort_base -= 0.8;
@@ -355,7 +355,7 @@
           {
             key: "invite", label: "Write them — they diagnosed it",
             reply: "write it. they told us exactly what was wrong — they've earned the first look.",
-            journal: "The quiet list becomes the beta list — Jordan's writing to everyone who left.",
+            journal: "Jordan is writing to everyone who left, before the relaunch: 'you told us what was wrong. we rebuilt it. want to see?' The people who walked away are the only beta list that already knows why v1 failed.",
             effects: {
               marketFit: 5, flags: { beta_invited: true }, char: { jordan: { morale: 5 } },
               schedule: {
@@ -446,7 +446,7 @@
           {
             key: "pivot_now", label: "Pivot now — late beats never",
             reply: "zero at fifty. priya said we'd know, and we know. we pivot — now, with whatever runway is left.",
-            journal: "Zero at fifty. We pivot late — $3k instead of $2k, runway nearly spent.",
+            journal: "Zero plans to meet out of 54 matches. Alex erased his own column. We're pivoting late — $3k instead of $2k, with runway nearly spent. The lesson was on the whiteboard weeks ago.",
             fx(s, e) {
               s.activities_pivot = true;
               s.pivot_week = s.week;
@@ -496,7 +496,7 @@
           {
             key: "ack", label: "It is a different app now",
             reply: "it is a different app now. she told us exactly what was wrong with the old one — feels right that she's first back.",
-            journal: "Maya RSVP'd to a Thursday climbing plan — the first user v1 lost is the first v2 wins back.",
+            journal: "Maya came back. The first launch-day signup, the one who told me the app made her feel worse — she RSVP'd to a Thursday climbing plan on her own. That's the whole pivot in one notification.",
             effects: { signal: 5 },
           },
         ],

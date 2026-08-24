@@ -192,12 +192,12 @@
             // The guilt payment, moved out of the firing scene: on this card
             // it is a cold decision with a price on it, not a midnight flinch.
             key: "keep", label: "Let her keep it — she earned the early part",
-            journal: "Jordan keeps her full stake — a departed co-founder owns a fifth of the company, forever.",
+            journal: "Decided to let Jordan keep her full stake. It felt like the decent thing. It is also the largest cheque this company will ever write, and it is written to someone who does not work here.",
             effects: { flags: { jordan_cleanup_needed: false, jordan_equity_gifted: true } },
           },
           {
             key: "defer", label: "Can't afford it right now",
-            journal: "Cap-table cleanup deferred — the money isn't there. It's still on the table.",
+            journal: "Can't afford cap table cleanup right now. Every investor who looks will ask about Jordan's stake.",
           },
         ],
         timeout: { weeks: 3 },

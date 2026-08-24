@@ -46,7 +46,7 @@
           {
             key: "license", label: "Good find — license it and ship faster",
             reply: "nice find. plug in MatchKit — if we can ship matching in days, let's not waste weeks on it.",
-            journal: "MatchKit licensed — matching works in days, $100/wk. Alex went quiet the minute it was signed.",
+            journal: "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
             effects: {
               flags: { matching_licensed: true },
               saas: { label: "MatchKit license", cost: 100 },
@@ -102,7 +102,7 @@
             key: "conversation", label: "Rank on conversation odds — the research answered this",
             if: freshResearch,
             reply: "neither. every conversation with users says the same thing — matches don't fail at the match, they die in the chat. rank on conversation odds: profile specificity, question-askers, people who actually reply. optimize the first message, not the first look.",
-            journal: "Conversation-odds ranking is live — the thesis from the user calls is now in the engine. Nobody else ranks this way.",
+            journal: "Gave Alex the ranking thesis straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a thesis.' The engine ranks conversation odds now — nobody else's does.",
             effects: {
               marketFit: 8, signal: 4,
               char: { alex: { effort: 1.2, flags: { ranking_thesis: true } } },
@@ -251,7 +251,7 @@
             key: "waitlist_city", label: "Launch where the waitlist lives — Austin",
             if: (s, e) => s.analytics_live || freshResearch(s, e),
             reply: "austin. the waitlist already voted — demand beats home-field advantage. we run it remote, fly out for launch week, and every invite lands somewhere dense.",
-            journal: "Launch city: Austin — where the waitlist actually lives. We'll run it remote until launch week.",
+            journal: "The waitlist data made the launch call for us: Austin, where our signups actually are — three times our home city. We're launching a dating app in a city none of us has set foot in, because that's where the demand lives.",
             effects: {
               marketFit: 4, waitlist: 4,
               flags: { beachhead: "narrow", seed_strategy: "austin", launch_city: "Austin" },

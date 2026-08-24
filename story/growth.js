@@ -63,12 +63,12 @@
         choices: [
           {
             key: "narrow", label: "Own one city / campus first",
-            journal: "Launch density: one campus at a time — dense before wide.",
+            journal: "Decided to launch one neighborhood at a time — pick a single campus, get it dense enough that people actually match, then expand. Smaller top-line, real liquidity.",
             effects: { signal: 4, marketFit: 4, flags: { beachhead: "narrow" } },
           },
           {
             key: "broad", label: "Launch everywhere — bigger TAM",
-            journal: "Launch density: nationwide from day one.",
+            journal: "Opened it nationwide on day one. The market-size slide looks incredible. Quietly worried everyone will open the app, see nobody within 50 miles, and leave.",
             effects: { signal: 7, flags: { beachhead: "broad" } },
           },
         ],
@@ -85,24 +85,24 @@
         choices: [
           {
             key: "quiet", label: "Soft-launch to the waitlist + friends",
-            journal: "Launch plan: soft — waitlist and friends first.",
+            journal: "Launch plan: soft-launch to the waitlist and a few dozen friends. No fireworks — but every single one will be a real person who wants this to work, telling me exactly what's broken.",
             effects: { marketFit: 5, signal: 4, flags: { launch_splash: "quiet" } },
           },
           {
             key: "press", label: "Give a reporter the exclusive",
-            journal: "Launch plan: the reporter's exclusive, embargoed until launch morning.",
+            journal: "Launch plan: a reporter gets the exclusive — the anti-Tinder angle. Smaller than a viral hit, but people who come in from a thoughtful piece actually read the whole thing first.",
             effects: { signal: 10, flags: { launch_splash: "press" } },
           },
           {
             key: "tiktok", label: "Pay 3 TikTok creators to post",
-            journal: "Launch plan: three creator posts on launch day. $1,200 committed.",
+            journal: "Launch plan: three TikTok creators post on launch day — the same playbook Flare used. Spendy ($1,200), but it puts real daters in the door fast.",
             effects: { cash: -1200, signal: 8, marketFit: 2, flags: { launch_splash: "tiktok" } },
           },
           {
             // No market_fit gain on purpose: the wrong audience. The spike
             // deflates on its own (the trough drains what doesn't retain).
             key: "show_hn", label: "Go big — post to Show HN / Product Hunt",
-            journal: "Launch plan: Show HN + Product Hunt, launch morning.",
+            journal: "Launch plan: Show HN and Product Hunt, launch morning. If it front-pages, the signup graph goes vertical. Whether any of them are single people looking to date is tomorrow's problem.",
             effects: { signal: 12, flags: { launch_splash: "show_hn" } },
           },
         ],
@@ -116,7 +116,7 @@
         choices: [
           {
             key: "firefight", label: "Drop everything — keep it up and triage live",
-            journal: "All-nighter keeping the launch alive: queue patched, every stuck day-one user personally unblocked.",
+            journal: "Pulled an all-nighter with Alex keeping the launch alive — patched the queue, DM'd every stuck user personally. Exhausting. But nobody who showed up on day one walked away because we weren't there.",
             effects: { marketFit: 4, signal: 4 },
           },
           {
