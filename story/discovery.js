@@ -82,7 +82,6 @@
             key: "stay", label: "Stay the course",
             journal: "Logged the feedback but staying the course for now. Alex isn't convinced either.",
             effects: { marketFit: 5 },
-            fx: () => "Stayed the course. Alex logged the feedback but we're not changing direction yet.",
           },
         ],
         timeout: {
@@ -127,9 +126,8 @@
         choices: [
           {
             key: "lock", label: "Lock in the direction",
-            journal: "Locked in. Three users said the same thing unprompted this week: 'I actually went on a date because of this.' This is the product. Now build it right.",
             effects: { marketFit: 15, signal: 15 },
-            fx: () => "Locked in. This is the product. Now build it right.",
+            fx: () => "Locked in. The product is the date, not the match — build it right.",
           },
         ],
       },
@@ -154,7 +152,6 @@
             key: "survey", label: "Send a structured survey",
             journal: "Sent a structured survey. 60% response rate. Useful signal, but nothing I didn't already suspect.",
             effects: { marketFit: 5, signal: 3 },
-            fx: () => "Survey sent. 60% response rate. Useful signal, but nothing you didn't already suspect.",
           },
         ],
       },
@@ -177,7 +174,6 @@
             key: "email", label: "Ask over email",
             journal: "Asked the reference customer for a testimonial over email. Short paragraph back — honest and usable.",
             effects: { signal: 3, flags: { testimonial: true } },
-            fx: () => "They sent a short paragraph. Honest and usable. Not as rich as a call, but it's real.",
           },
         ],
       },

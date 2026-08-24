@@ -31,13 +31,11 @@
             key: "steady", label: "Steady the team — their launch isn't our roadmap",
             journal: "Flare came out of stealth with $3M and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
             effects: { marketFit: 3, char: { alex: { morale: 6 }, jordan: { morale: 4 } } },
-            fx: () => "You called both of them that morning. A funded competitor is proof the problem is real — and everything in their screenshots is broad and shallow, the exact thing you're not building. Alex exhaled. Back to work.",
           },
           {
             key: "copy", label: "Rework our plan around what they shipped",
             journal: "Panicked at Flare's launch and reworked the plan around their feature list. We're building for their users now, not ours — and Alex knows it.",
             effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -10, effort: -1.0 } } },
-            fx: () => "You spent the week rebuilding the roadmap around their screenshots. Alex shipped none of it happily. You're building their product a year late now, with $2.99M less.",
           },
         ],
         // On read: the company is fine — but nobody talked Alex down.
@@ -53,13 +51,11 @@
             key: "course", label: "Our launch, our scope — nothing gets added",
             journal: "Flare hit 10K and Alex wanted to stuff their top features into our launch. Held the scope: we launch our product, not a reaction to theirs. He deleted the app store tab.",
             effects: { signal: 3, char: { alex: { morale: 5 } } },
-            fx: () => "You held the scope. 'We're not launching a reaction to their product.' Alex closed the app store tab and went back to the launch list — faster, if anything.",
           },
           {
             key: "copy", label: "Add their top three features first",
             journal: "Delayed our launch to bolt on Flare's top three features. Scope creep in its purest form — and the launch list just got two weeks longer.",
             effects: { marketFit: -5, flags: { copied_competitor: true }, char: { alex: { morale: -8, effort: -1.2 } } },
-            fx: () => "Three borrowed features went on the launch list. None of them serve your niche, all of them cost build weeks, and Flare will have shipped three more by the time you're live.",
           },
         ],
         timeout: { weeks: 3, effects: { char: { alex: { morale: -5 } } } },
@@ -74,13 +70,11 @@
             key: "hold", label: "The evidence work comes first — their feature isn't our leak",
             journal: "Flare shipped video dates the week our graph flattened, and the pressure to match them was real. Held the line: our users aren't leaving for video dates, they're leaving after the match. The evidence work continues.",
             effects: { marketFit: 4, char: { alex: { morale: 3 } } },
-            fx: () => "You put the two emails next to Maya's quote and the cohort numbers. Nobody churned asking for video dates — they churned when nothing happened after the match. Their feature is not your leak. Back to the evidence.",
           },
           {
             key: "copy", label: "Match them — build video dates now",
             journal: "Dropped the retention investigation to chase Flare's video dates. Weeks of build for a feature none of our churned users asked for. The real leak is still open.",
             effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -6, effort: -1.5 } } },
-            fx: () => "Alex went heads-down on WebRTC while the week-one cohort kept evaporating. Nobody who churned had asked for video dates. The real leak stayed open the whole time.",
           },
         ],
         timeout: { weeks: 3, effects: { char: { alex: { morale: -4 } } } },
@@ -95,13 +89,11 @@
             key: "screenshot", label: "Save the receipt — then back to the rebuild",
             journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their stumble is our thesis, written by their users.",
             effects: { signal: 4, marketFit: 3, char: { alex: { morale: 6 }, jordan: { morale: 3 } } },
-            fx: () => "Screenshot saved — a competitor's users writing your pivot thesis for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
           },
           {
             key: "gloat", label: "Write the told-you-so thread",
             journal: "Spent a day writing a told-you-so thread about Flare's stumble. Felt great, read petty, moved nothing. The rebuild lost a day.",
             effects: { signal: 2, char: { alex: { morale: 2, effort: -0.5 } } },
-            fx: () => "The thread did numbers. It also cost the rebuild a day and read exactly as petty as it was. Their users' complaints were already making your argument better than you could.",
           },
         ],
         timeout: { weeks: 3 },
@@ -116,13 +108,11 @@
             key: "work", label: "No panic — they validated us. Let the work answer",
             journal: "Flare is pivoting to copy our plans-first model. Told the team the only answer is the work: we're months ahead on the thing that matters and we talk to our users every week. Their copy of our screens won't come with our understanding.",
             effects: { signal: 5, marketFit: 3, char: { alex: { morale: 6 } } },
-            fx: () => "A $3M competitor just told the market your pivot was right. They can copy the screens; they can't copy fifty user calls and a rebuilt matching engine. It goes in the application word for word. Back to work.",
           },
           {
             key: "panic", label: "They'll crush us — rush everything out now",
             journal: "Panicked at Flare copying our pivot and rushed half-finished work out the door. Quality dipped exactly when the application needed proof of the opposite.",
             effects: { signal: -4, marketFit: -4, char: { alex: { morale: -8 } } },
-            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked for your retention numbers. Panic is a strategy the way falling is flying.",
           },
         ],
         timeout: { weeks: 3 },
@@ -136,9 +126,8 @@
         choices: [
           {
             key: "respond", label: "Respond publicly",
-            journal: "Responded publicly to the Twitter complaint, fixed the duplicate match bug. The user deleted the tweet and posted an apology.",
+            journal: "Responded publicly, fixed the bug. The user deleted the tweet and posted an apology.",
             effects: { signal: 5 },
-            fx: () => "Responded publicly, fixed the duplicate match bug. The user deleted the tweet and posted an apology. A few people replied saying they'd sign up now.",
           },
         ],
         timeout: {
@@ -161,7 +150,6 @@
             fx(s, e) {
               const n = 10 + Math.floor(e.rng() * 10);
               s.users += n;
-              return "Story ran. " + n + " signups in 24 hours.";
             },
           },
         ],
@@ -176,7 +164,6 @@
             key: "call", label: "Call Tom",
             journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
             effects: { customers: -1, signal: 16, marketFit: 10 },
-            fx: () => "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.",
           },
         ],
         timeout: { weeks: 3, effects: { signal: -8, customers: -1 } },
@@ -191,7 +178,6 @@
             key: "hire", label: "Hire Kevin for a week — $2,000",
             journal: "Hired Kevin for a growth audit. Got a 58-slide deck titled 'Growth Architecture 2.0.' Top recommendation: post more on LinkedIn. $2,000.",
             effects: { cash: -2000 },
-            fx: () => "Kevin delivered a 58-slide deck titled 'Growth Architecture 2.0'. His top recommendation: post more on LinkedIn. He invoiced before the final call.",
           },
         ],
         timeout: {
@@ -207,7 +193,6 @@
             key: "hire", label: "Book the session — $1,500",
             journal: "Hired Brett for a brand workshop. 45 minutes of sticky notes and a 'narrative architecture' framework. His main insight: 'lean into your why.' I already knew this. $1,500.",
             effects: { cash: -1500 },
-            fx: () => "45 minutes of sticky notes and a 'narrative architecture' framework. Brett's main insight: 'lean into your why.' You already knew this. He emailed his invoice immediately.",
           },
         ],
         timeout: {
@@ -226,7 +211,6 @@
             key: "tell", label: "Tell him about it",
             journal: "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the waitlist.",
             effects: { waitlist: 1 },
-            fx: () => "Caught up over coffee. Told him everything. He was into it — 'a dating app that actually works? I need to try this.' You put him on the waitlist.",
           },
         ],
         timeout: { weeks: 3 },
@@ -255,7 +239,6 @@
           {
             key: "lunch", label: "Have lunch with David",
             journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes people stay.",
-            fx: () => "Good lunch. David asked sharp questions about the dating app space. 'Send me something concrete this week — what makes people actually stay?'",
           },
         ],
         timeout: { weeks: 3 },

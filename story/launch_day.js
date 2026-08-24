@@ -448,11 +448,10 @@
           {
             key: "delay", label: "Ship as-is — we'll firefight",
             reply: "no hardening week. we ship with the bugs and firefight — write them on the whiteboard so we at least know our own landmines.",
-            journal: "Skipped the hardening week — the bugs are on the whiteboard under the heading 'known landmines.' Alex didn't argue. He just circled the photo-url one twice.",
+            journal: "Shipped with the bugs — the whiteboard's new heading is 'known landmines.' Alex circled the photo-url one twice.",
             effects: { flags: { productPhase: "product" }, char: { alex: { effort: 0.6, morale: -3 } } },
             fx(s) {
               s.tech_debt = (s.tech_debt || 0) + 5;
-              return "No hardening week. The known bugs went up on the whiteboard under 'landmines.' Alex didn't argue — he just circled the photo-url one twice.";
             },
           },
         ],
@@ -489,7 +488,6 @@
             key: "wait", label: "Two more weeks",
             journal: "Polished a few more things instead of launching. Alex thinks I'm stalling — and he might be right.",
             effects: { char: { alex: { morale: -12 } } },
-            fx: () => "Polished a few more things. Alex thinks you're stalling — and he might be right.",
           },
         ],
         // Stalling by silence costs real money and morale — and he re-raises it.

@@ -37,17 +37,16 @@
           {
             key: "build", label: "No — matching is the whole product, we build it",
             reply: "no. the matching engine *is* plusone — it's the one thing we can't outsource. we build it ourselves.",
-            journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
             effects: { flags: { matching_owned: true }, char: { jordan: { morale: -3 }, alex: { morale: 5, effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — the IP";
-              return "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the IP, the one thing we can't outsource. Alex was visibly relieved.";
+              return "Matching stays in-house — the IP, ours to be slow at. Alex approved; Jordan took it as a slight.";
             },
           },
           {
             key: "license", label: "Good find — license it and ship faster",
             reply: "nice find. plug in MatchKit — if we can ship matching in days, let's not waste weeks on it.",
-            journal: "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
+            journal: "MatchKit licensed — matching works in days, $100/wk. Alex went quiet the minute it was signed.",
             effects: {
               flags: { matching_licensed: true },
               saas: { label: "MatchKit license", cost: 100 },
@@ -59,7 +58,6 @@
                 s.items.matching_algo.status = "done"; s.items.matching_algo.quality = "generic";
                 s.items.matching_algo.assignee = null; s.items.matching_algo.note = "Licensed: MatchKit · $100/wk";
               }
-              return "Licensed MatchKit. Matching working in days — but it's a black box everyone else can rent too. $100/wk, and Alex went quiet.";
             },
           },
         ],
@@ -104,7 +102,7 @@
             key: "conversation", label: "Rank on conversation odds — the research answered this",
             if: freshResearch,
             reply: "neither. every conversation with users says the same thing — matches don't fail at the match, they die in the chat. rank on conversation odds: profile specificity, question-askers, people who actually reply. optimize the first message, not the first look.",
-            journal: "Gave Alex the ranking thesis straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a thesis.' The engine ranks conversation odds now — nobody else's does.",
+            journal: "Conversation-odds ranking is live — the thesis from the user calls is now in the engine. Nobody else ranks this way.",
             effects: {
               marketFit: 8, signal: 4,
               char: { alex: { effort: 1.2, flags: { ranking_thesis: true } } },
@@ -112,7 +110,6 @@
             },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks conversation odds (from research)";
-              return "The ranking thesis came straight out of the research: optimize the first message, not the first look. Alex is proxying it with profile-text specificity until there's real response data. No other app ranks on this.";
             },
           },
         ],
@@ -254,14 +251,13 @@
             key: "waitlist_city", label: "Launch where the waitlist lives — Austin",
             if: (s, e) => s.analytics_live || freshResearch(s, e),
             reply: "austin. the waitlist already voted — demand beats home-field advantage. we run it remote, fly out for launch week, and every invite lands somewhere dense.",
-            journal: "The waitlist data made the launch call for us: Austin, where our signups actually are — three times our home city. We're launching a dating app in a city none of us has set foot in, because that's where the demand lives.",
+            journal: "Launch city: Austin — where the waitlist actually lives. We'll run it remote until launch week.",
             effects: {
               marketFit: 4, waitlist: 4,
               flags: { beachhead: "narrow", seed_strategy: "austin", launch_city: "Austin" },
               char: { alex: { effort: 0.8 } },
               say: { char: "alex", text: "booked two flights to austin for launch week. jordan found a bar for the mixer on yelp. this is either very smart or very funny." },
             },
-            fx: () => "Austin it is — invite waves by neighborhood, launch-week flights booked, a mixer venue picked off Yelp. Every invite lands somewhere dense enough to matter.",
           },
         ],
         // Ignored: Alex plans around home by default — without ever checking the data.
@@ -305,11 +301,10 @@
             key: "verify_flagship", label: "Verification as THE feature — the threads called it",
             if: (s) => (s.community_engaged_count || 0) >= 2,
             reply: "look at every dating thread we've been in — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
-            journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we engaged had fake profiles as complaint #1 — now it's our headline.",
+            journal: "'No fakes' is the headline now — the threads' complaint #1, flipped into the brand.",
             effects: { marketFit: 6, waitlist: 3, char: { jordan: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Verified-only (from community)";
-              return "Verification became the headline: photo-verified at signup, checkmark on every card, 'no fakes' on the landing page. Three waitlist signups came in the day the copy changed.";
             },
           },
         ],

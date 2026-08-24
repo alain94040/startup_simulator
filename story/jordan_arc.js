@@ -34,13 +34,11 @@
             key: "talk", label: "Talk to Jordan directly",
             journal: "Talked to Jordan directly about slowing down. She was apologetic, said it's temporary. I'm not sure.",
             effects: { flags: { jordan_drifting: true }, char: { jordan: { focus: null }, alex: { morale: -5 } } },
-            fx: () => "Jordan was apologetic. Said it's temporary. You're not sure.",
           },
           {
             key: "cover", label: "Alex can cover for now",
             journal: "Let Alex cover for Jordan. He nodded, but his backlog just got longer.",
             effects: { flags: { jordan_drifting: true }, char: { jordan: { focus: null }, alex: { morale: -10 } } },
-            fx: () => "Alex nodded. He'll cover it. The iOS backlog keeps growing.",
           },
         ],
         timeout: {
@@ -62,7 +60,6 @@
             key: "talk", label: "Talk to Jordan directly",
             journal: "Sat down with Jordan. She heard the weight of it. Alex noticed I followed up.",
             effects: { flags: { jordan_confrontation_triggered: true }, char: { alex: { morale: 5 } } },
-            fx: () => "Sat down with Jordan. She heard the weight of it. Alex noticed you followed up — the real conversation is coming.",
           },
         ],
         // Left unanswered twice, Alex breaks — and forces the conversation himself.
@@ -111,7 +108,6 @@
             key: "confront", label: "Confront Jordan — this has to be resolved",
             journal: "Decided to confront Jordan about the launch blocker. This conversation is overdue.",
             effects: { flags: { jordan_confrontation_triggered: true } },
-            fx: () => "Agreed. This conversation is overdue.",
           },
         ],
         // Ignored: Alex ships web-only on his own — worse, and without you.
@@ -169,7 +165,6 @@
             fx(s) {
               s.jordan_confrontation_triggered = false;
               s.jordan_confrontation_defer_until = s.week + 4;
-              return "Alex went quiet. Jordan will try again. You both know how this ends.";
             },
           },
         ],
@@ -192,20 +187,17 @@
             key: "lawyer", label: "Hire a lawyer — $2,000",
             journal: "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
             effects: { cash: -2000, flags: { jordan_cleanup_needed: false } },
-            fx: () => "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.",
           },
           {
             // The guilt payment, moved out of the firing scene: on this card
             // it is a cold decision with a price on it, not a midnight flinch.
             key: "keep", label: "Let her keep it — she earned the early part",
-            journal: "Decided to let Jordan keep her full stake. It felt like the decent thing. It is also the largest cheque this company will ever write, and it is written to someone who does not work here.",
+            journal: "Jordan keeps her full stake — a departed co-founder owns a fifth of the company, forever.",
             effects: { flags: { jordan_cleanup_needed: false, jordan_equity_gifted: true } },
-            fx: () => "Left her stake alone. Nothing to clean up now — a departed co-founder simply owns a fifth of the company, forever.",
           },
           {
             key: "defer", label: "Can't afford it right now",
-            journal: "Can't afford cap table cleanup right now. Every investor who looks will ask about Jordan's stake.",
-            fx: () => "Left it for now. Every investor who looks at the cap table will ask about Jordan's stake.",
+            journal: "Cap-table cleanup deferred — the money isn't there. It's still on the table.",
           },
         ],
         timeout: { weeks: 3 },

@@ -14,9 +14,8 @@
         choices: [
           {
             key: "reach", label: "Reach out now",
-            journal: "Reached out to the waitlist. Good feedback — people are still excited, want to know when we're launching.",
+            journal: "Waitlist touched base — still excited, asking when we launch.",
             effects: { signal: 8, marketFit: 5 },
-            fx: () => "Reached out to waitlist. Good feedback — people are still excited, want to know when you're launching.",
           },
         ],
         timeout: {
@@ -40,7 +39,6 @@
           {
             key: "fix", label: "Drop everything and fix it",
             journal: "Dropped everything and fixed the RSVP crash. Users notified. Goodwill recovered.",
-            fx: () => "Fixed the crash. Users notified. Goodwill recovered.",
           },
         ],
         timeout: {
@@ -58,20 +56,17 @@
         choices: [
           {
             key: "call", label: "Call them — 20 minutes",
-            journal: "Called the churned subscriber. Nothing was wrong with the product — the plans near them dried up. They live 40 minutes out, and the calendar in their area went quiet. It's the density lesson wearing a new shirt: own one neighborhood before you promise the whole map.",
+            journal: "Called the churned subscriber — nothing was wrong with the product; the plans near them dried up. They live 40 minutes out. Density again.",
             effects: { marketFit: 10, signal: 5 },
-            fx: () => "20-minute call. The product wasn't the problem — the plans near them dried up. They live 40 minutes out. Density, again: the app is only alive where the calendar is.",
           },
           {
             key: "email", label: "Send a quick email",
-            journal: "Emailed the churned subscriber. One paragraph back. Less than a call, more than nothing.",
+            journal: "Emailed the churned subscriber — one paragraph back.",
             effects: { marketFit: 4 },
-            fx: () => "They replied with one paragraph. Less than a call, more than nothing. You have a direction.",
           },
           {
             key: "ignore", label: "Let them go",
             journal: "Let the churned subscriber go. I'll never know why they left.",
-            fx: () => "Moved on. You'll never know why they left.",
           },
         ],
         timeout: { weeks: 3 },
@@ -83,25 +78,22 @@
         choices: [
           {
             key: "build", label: "Build standing plans — keep them happy",
-            journal: "Built recurring plans for our best host — repeat scheduling, auto-invites, attendance history. They doubled their subscription. It's also two weeks of Alex's time spent on one person's Thursday.",
+            journal: "Standing plans built for our best host — they doubled their subscription. It cost two weeks of Alex's time, on one person's Thursday.",
             effects: { char: { alex: { morale: -8 } } },
             fx(s, e) {
               const alex = e.cast.get("alex");
               if (s.items) s.items.standing_plans = { status: "active", quality: null, assignee: "alex", owner: "alex", effortStart: alex.buildEffort, effortTarget: alex.buildEffort + 3.0 };
-              return "Said yes. Alex is heads-down on recurrence rules, auto-invites, and attendance edge cases — for one user's Thursday.";
             },
           },
           {
             key: "decline", label: "Decline — stay on roadmap",
             journal: "Declined the standing-plans request. They churned. The clarity on what NOT to build was worth it.",
             effects: { customers: -1, marketFit: 6 },
-            fx: () => "Declined politely. They churned. The clarity on what NOT to build was worth it.",
           },
           {
             key: "negotiate", label: "Build a lightweight version for everyone",
             journal: "Proposed a one-tap 'run it back' button — clone last week's plan, same people invited — instead of a full recurrence engine. Low friction, easy to build. Five other hosts used it the first week.",
             effects: { marketFit: 4 },
-            fx: () => "Proposed 'run it back' — one tap clones last week's plan and re-invites the same people. They agreed. Five other hosts used it the first week.",
           },
         ],
         timeout: {
@@ -119,7 +111,6 @@
             key: "build", label: "Build the feature",
             journal: "Built the attendee preview three users independently asked for. All 3 loved it. Two immediately referred a friend.",
             effects: { signal: 10, marketFit: 4 },
-            fx: () => "Built it — you see the group before you commit to the plan. All 3 users loved it. Two immediately referred a friend.",
           },
         ],
         timeout: {

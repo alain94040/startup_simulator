@@ -241,7 +241,6 @@
                 fx(s, e) {
                   e.say({ char: "jordan", text: "no. nothing has changed since last time and you've now asked me twice to pretend it will. i'm out. i'll keep my shares." });
                   jordanLeaves(s, e, "quit");
-                  return "She's gone. You asked twice and she answered once.";
                 },
               },
             ],
@@ -261,7 +260,6 @@
                 effects: { scene: null },
                 fx(s, e) {
                   jordanLeaves(s, e, "quit");
-                  return "She resigned before you could say it. You didn't make the call — you got beaten to it by ninety seconds.";
                 },
               },
             ],
@@ -504,7 +502,6 @@
         });
       },
     });
-    return "One more sprint. Alex typed \"okay.\" and nothing else. You both know how this ends.";
   }
 
   if (typeof module !== "undefined" && module.exports) module.exports = mod;

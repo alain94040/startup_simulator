@@ -24,14 +24,12 @@
             reply: "that's fair. evenings and weekends works for now. let's set a milestone to revisit — once we hit traction, we talk again.",
             journal: "Agreed Alex stays part-time for now — evenings and weekends. Slower, but he won't resent it. We set a milestone to revisit once we have traction.",
             effects: { signal: -5 },
-            fx: () => "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit.",
           },
           {
             key: "push", label: "Push for full-time",
             reply: "i hear you but i need you all in. evenings and weekends won't cut it — we'll get outrun. can you make the jump now?",
             journal: "Pushed Alex to go full-time. He said yes, but I could tell he wasn't ready. I'll need to watch how he's doing.",
             effects: { char: { alex: { morale: -10, trust: -10, flags: { committed_fulltime: true } } } },
-            fx: () => "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood.",
           },
         ],
         // Left hanging, he takes a recruiter's call.
@@ -57,21 +55,18 @@
             reply: "you're right, casual is the bigger market. let's go with your framing — 'casual dating done right.'",
             journal: "Conceded the framing to Alex — we're 'casual dating done right.' Broader market, easier to explain. A few old 'serious matches' conversations are awkward now, but at least we're aligned.",
             effects: { signal: -4, char: { alex: { trust: 8, morale: 10 } } },
-            fx: () => "Went with casual dating. Broader market, easier to explain. Some earlier conversations about 'serious matches' are now awkward, but at least you're aligned.",
           },
           {
             key: "yours", label: "Serious relationships",
             reply: "i've been saying serious relationships because that's what we're building. the investor story is cleaner and the users pay more. i want to stay with that.",
             journal: "Held the line on serious relationships. Alex went along with it — he still thinks casual is bigger, but the investor story is cleaner. The tension isn't really gone.",
             effects: { signal: 8, char: { alex: { morale: -8, trust: -4 } } },
-            fx: () => "Alex went along with it. He thinks the casual market is bigger, but the investor story is cleaner. Tension unresolved.",
           },
           {
             key: "test", label: "Test it with users",
             reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
             journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
             effects: { signal: 14, marketFit: 8, char: { alex: { morale: 5, trust: 6 } } },
-            fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less.",
           },
         ],
         timeout: {
@@ -174,7 +169,6 @@
             reply: "hey — noticed you've been quiet. everything ok? no pressure, just checking in.",
             journal: "Noticed Alex had gone quiet. Checked in. Honest conversation — he's exhausted. Adjusted expectations for the week.",
             effects: { char: { alex: { morale: 20 } } },
-            fx: () => "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week.",
           },
         ],
         timeout: {
@@ -198,7 +192,6 @@
             key: "fair", label: "Revise fairly",
             journal: "Revised the equity split. Both sides signed. Relationship's back on solid ground.",
             effects: { char: { alex: { morale: 30, trust: 15 } } },
-            fx: () => "Revised the split. Both sides signed. Relationship back on solid ground.",
           },
           {
             key: "hard", label: "Bargain hard",
@@ -226,7 +219,6 @@
             key: "talk", label: "Remind each other why",
             journal: "Long talk with Alex about family pressure. Reminded each other why we're doing this. Morale reset.",
             effects: { char: { alex: { morale: 12 } } },
-            fx: () => "Long talk. Reminded each other why you're doing this. Morale reset.",
           },
         ],
         timeout: { weeks: 3 },

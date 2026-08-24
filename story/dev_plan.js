@@ -72,7 +72,6 @@
               {
                 key: "lean", label: "Build version B",
                 reply: "let's build B. core hypothesis only — ship and learn. we can spec the rest when we know what works.",
-                journal: "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
                   return "Ninety minutes. Five items on the board. Alex seemed relieved.";
@@ -83,7 +82,6 @@
                 // real decision is avoiding A (the over-scoped build).
                 key: "sprint", label: "Build version C",
                 reply: "let's build C. strip it to the essentials and ship — we can layer the rest on once it's working.",
-                journal: "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
                   return "Ninety minutes. Five items on the board. Alex seemed relieved.";
@@ -137,11 +135,10 @@
               {
                 key: "buy", label: "Tell him to buy it",
                 reply: "stop — buy the hosted provider. we should've done that two weeks ago. let's move on.",
-                journal: "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
+                journal: "Bought the auth provider two weeks late — the throwaway code is tossed, and the $30/wk was coming either way.",
                 effects: { saas: { label: "Auth provider", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },
                 fx(s) {
                   buyAuth(s);
-                  return "Bought the hosted provider in the end — same $30/wk we'd have paid on day one, plus two weeks of Alex's time gone. The throwaway code got tossed.";
                 },
               },
             ],
@@ -189,7 +186,7 @@
                 key: "intake_interviews", label: "Intake — built from the interview questions",
                 if: (s, e) => e.took("interviews:interview"),
                 reply: "intake — and use the interview questions verbatim. open with 'how many matches went nowhere for you last month?' make them feel seen in ten seconds.",
-                journal: "Gave Jordan the first screen straight from the interviews: open with the question every user we talked to already answered — 'how many matches went nowhere last month?' She built it word for word.",
+                journal: "The intake flow opens with the interview question, verbatim — research paying for itself in onboarding.",
                 effects: {
                   marketFit: 7, signal: 3, char: { jordan: { effort: 1.2 } },
                   schedule: {
@@ -199,7 +196,6 @@
                 },
                 fx(s) {
                   if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Intake-first (from interviews)";
-                  return "The interview questions became the first screen, word for word. Ten seconds in, a new user feels like the app already knows why they're here.";
                 },
               },
             ],
@@ -254,7 +250,6 @@
           {
             key: "skip", label: "Not this week — the build needs you",
             journal: "Skipped the waitlist calls this week. The build needed me — but the research is going stale.",
-            fx: () => "Skipped. The build got the afternoon instead — and the user signal gets a week staler.",
           },
         ],
       },
@@ -276,7 +271,6 @@
             key: "interview", label: "Block off this week for 5 customer interviews",
             journal: "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
             effects: { signal: 15, marketFit: 12, waitlist: 1 },
-            fx: () => "5 calls done. Two insights you didn't expect. One person said they'd pay right now if it existed. Signal much clearer.",
           },
         ],
       },

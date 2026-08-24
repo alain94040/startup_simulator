@@ -24,9 +24,8 @@
   const incorporateChoice = {
     key: "atlas", label: "Incorporate via Stripe Atlas — $500",
     reply: "do it. stripe atlas, delaware c-corp. let's get this done today.",
-    journal: "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
+    journal: "Incorporated: Delaware C-corp via Stripe Atlas, $500. We're a real company now.",
     effects: { cash: -500, flags: { incorporated: true }, surface: "equity_open" },
-    fx: () => "Delaware C-corp registered. EIN assigned, bank account open. $500 gone — you're officially a company.",
   };
 
   const mod = {
@@ -38,10 +37,9 @@
           {
             key: "build", label: "Game on — everyone start building",
             reply: "let's do this. you take backend, jordan takes iOS. i'll handle everything else. game on.",
-            journal: "Told the team to start building today. Alex took profiles and matching, Jordan's on iOS, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.",
+            journal: "The build starts today — core first. The activity-planning idea is shelved: it's a second product.",
             fx(s) {
               kickoff(s);
-              return "Alex is on profiles and matching. Jordan's on the iOS build. Activity planning goes on the backlog — that's a second product. You're building the core first.";
             },
           },
         ],
@@ -57,15 +55,13 @@
           {
             key: "standup", label: "Daily 15-min standup",
             reply: "let's do a daily 15-minute standup at 9am. keeps us both honest while you're still juggling the day job.",
-            journal: "Set a daily 15-minute standup at 9am with Jordan. Keeps us both honest while she's still juggling her day job.",
+            journal: "Daily 9am standup with Jordan while she juggles her day job.",
             effects: { char: { jordan: { morale: 5 } } },
-            fx: () => "Daily standup at 9am. Keeps both of you honest.",
           },
           {
             key: "async", label: "Async — ping when blocked",
             reply: "let's stay async — ping me when you're blocked, otherwise heads down.",
-            journal: "Decided to work async with Jordan — ping when blocked. Fewer interruptions, more deep work.",
-            fx: () => "Async by default. Fewer interruptions, more deep work.",
+            journal: "Async with Jordan by default — ping when blocked.",
           },
         ],
         timeout: { weeks: 1 },

@@ -32,7 +32,6 @@
     {
       key: "intro", label: "Ask for investor introductions",
       journal: "Asked Mom for investor introductions. Turns out she doesn't know any investors.",
-      fx: () => "Mom asked around. Turns out she doesn't know any investors. \"Not everyone has a mom like Bill Gates.\"",
     },
   ]);
 
@@ -87,14 +86,12 @@
         choices: [
           {
             key: "take", label: "Take the contract week — $2,500",
-            journal: "Took a week of contract work to keep the lights on. $2,500 in, one week of plusone momentum out. Nobody puts this part in the founding story.",
+            journal: "Contract week: $2,500 in, a week of plusone momentum out.",
             effects: { cash: 2500, signal: -2 },
-            fx: () => "Invoice sent, $2,500 in. A week of someone else's roadmap. The runway breathes; the deadline doesn't.",
           },
           {
             key: "decline", label: "No — every week belongs to plusone",
-            journal: "Turned down the contract week. Every remaining week belongs to plusone — and the bank balance knows it.",
-            fx: () => "All in. The balance is what it is.",
+            journal: "Turned down the contract week — every remaining week belongs to plusone.",
           },
         ],
         timeout: { weeks: 2 },

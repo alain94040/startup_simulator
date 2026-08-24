@@ -38,7 +38,6 @@
             fx(s) {
               s.met_priya = true;
               s.met_priya_week = s.week;
-              return "Good crowd. You talked to a few people building in adjacent spaces. Had a long conversation with Priya — she launched a consumer app a few years ago, has strong opinions on retention, and seemed genuinely interested in what you're working on.";
             },
           },
         ],
@@ -57,7 +56,6 @@
             key: "research", label: "Do a competitive deep-dive",
             journal: "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's our wedge. Priya's officially advising now.",
             effects: { signal: 8, marketFit: 6, flags: { priya_advising: true } },
-            fx: () => "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor.",
           },
         ],
         timeout: {
@@ -77,9 +75,8 @@
         choices: [
           {
             key: "dig", label: "Dig into the drop-off",
-            journal: "Pulled the test group's numbers apart. Matches that never become conversations, conversations that never become dates — twelve people is a small sample and an unambiguous one. The analytics paid for themselves before launch: I can see the pivot from here.",
+            journal: "The pre-launch pattern is banked: people don't leave before the match, they leave after it.",
             effects: { marketFit: 8, signal: 4, flags: { analytics_dropoff_seen: true } },
-            fx: () => "Pulled the test group's numbers apart. The story's unambiguous even at twelve people — matches that never become conversations, conversations that never become dates. You can see the pivot from here, with time to act on it before a single stranger signs up.",
           },
         ],
         // Even unread, the number exists — the chip is banked either way (old behavior).
@@ -98,9 +95,8 @@
           {
             key: "open", label: "Good flag — write it down verbatim",
             reply: "write it down, word for word. 'i matched, but then what.' if it's still true with strangers, we'll know exactly where to look.",
-            journal: "Jordan flagged a pattern from the TestFlight group: people keep saying 'I matched, but then what?' Wrote it down verbatim. Launch will tell us if it's noise or the whole story.",
+            journal: "'I matched, but then what' — written down verbatim, from the TestFlight group.",
             effects: { flags: { pivot_flagged: true } },
-            fx: () => "Written down, word for word. If strangers say it too, you'll know where to look.",
           },
         ],
         timeout: { weeks: 3 }, // buried by launch prep — the receipt is just missing later
@@ -117,7 +113,7 @@
           {
             key: "retention", label: "Watch retention, not signups",
             reply: "agreed — ignore the top of the funnel for now. friday, i want to know who came back.",
-            journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday — retention, not signups.",
+            journal: "Launch rule: the number that matters is Friday's return rate, not signups.",
             effects: {
               signal: 2, say: { char: "alex", text: "that's the correct question. most founders ask the other one." },
               schedule: [
@@ -127,12 +123,11 @@
                   say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(3, s.users) + " accounts left active. matches still happen; conversations still don't. whatever this is, more weeks of it won't change the shape." } },
               ],
             },
-            fx: () => "Friday it is. Whoever comes back is the real launch number.",
           },
           {
             key: "funnel", label: "We need another traffic push",
             reply: "2 a day won't cut it. we need another traffic push this week.",
-            journal: "Told Alex to run another traffic push. It netted five signups and cost two days — and a week later the graph had swallowed them whole. The lesson was loud: the leak isn't at the top of the funnel.",
+            journal: "Second traffic push: +5 signups, two days of work — gone within a week.",
             effects: {
               users: 5, flags: { funnel_first: true },
               say: { char: "alex", text: "ran the re-blast plus a post in two local subreddits. five signups. cost us two days. the leak isn't at the top." },
@@ -143,7 +138,6 @@
                   say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(2, Math.round(s.users * 0.4)) + " of " + Math.max(3, s.users) + " accounts opened the app this week. the traffic push shows up as a one-week blip, already fading." } },
               ],
             },
-            fx: () => "Five signups for two days of work. The leak isn't at the top.",
           },
         ],
         timeout: { weeks: 2 },
@@ -159,12 +153,10 @@
             key: "reply_honest", label: "Write her back yourself",
             journal: "Rachel K. emailed support: 'is something supposed to happen next?' I wrote back myself and asked what she'd hoped would happen. Her answer, word for word: 'I hoped the app would give one of us an excuse. A place to say yes to.' Kept it.",
             effects: { signal: 3, marketFit: 3, flags: { rachel_answer: true } },
-            fx: () => "You wrote back: 'You're not missing anything — tell me what you hoped would happen?' Rachel's answer, verbatim: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.",
           },
           {
             key: "faq", label: "Add it to the FAQ pile",
-            journal: "A user asked what's supposed to happen after a match. Sent the standard answer — 'check back as more people join.' The just-wait-for-more-users answer, given without thinking.",
-            fx: () => "Filed under FAQ: 'check back as more people join.' The just-wait-for-more-users answer, given without thinking.",
+            journal: "The support question got the standard answer: 'check back as more people join.'",
           },
         ],
         timeout: { weeks: 2 },
@@ -185,9 +177,8 @@
         choices: [
           {
             key: "dig", label: "Sit with the numbers",
-            journal: "Friday. The week-one numbers came in and it's the TestFlight group's pattern, just bigger: matches happen, conversations don't, dates — zero. It's not that we don't know. It's that the number is now too big to un-know.",
+            journal: "The week-one numbers confirmed the test group's pattern, just bigger — too big to un-know.",
             effects: { marketFit: 4, signal: 2, flags: { cohort_seen: true } },
-            fx: () => "You sat with the numbers until the pattern stopped being deniable: people don't leave before the match. They leave right after it.",
           },
         ],
         timeout: { weeks: 2 },
@@ -207,19 +198,17 @@
           {
             key: "hear_him", label: "Fair read — draft the growth plan",
             reply: "it's a fair read. get me the growth plan — but i'm watching what happens *after* a match, not just how many we make.",
-            journal: "Alex made his case: too few users for matching to work — fill the room before you blame the menu. It's a fair read. I asked for the growth plan — and I'm watching what happens after a match.",
-            fx: () => "He's drafting the growth plan. You're watching the after-match numbers.",
+            journal: "Growth plan in motion — with a rider: we keep watching what happens after a match.",
           },
           {
             key: "push_back", label: "Our test group was a full room",
             if: (s) => s.analytics_dropoff_seen || s.demo_question_seen,
             reply: "our testflight group was twelve people who all knew each other — a full room, by your own logic. 11 of their 14 matches still went nowhere. explain that.",
-            journal: "Alex blamed the empty room and I hit him with the TestFlight group: twelve people who all knew each other, and 11 of 14 matches still went nowhere. He didn't have an answer. First crack in the wall.",
+            journal: "The TestFlight numbers answered Alex's empty-room theory. First crack in the wall.",
             effects: {
               flags: { alex_crack: true },
               say: { char: "alex", text: "…i don't have a clean answer to that one. friday's numbers will tell us." },
             },
-            fx: () => "He went quiet, then honest: no clean answer. Friday's numbers will tell.",
           },
         ],
         timeout: {
@@ -237,16 +226,14 @@
           {
             key: "real_numbers", label: "Give her the real numbers",
             reply: "honestly? day one was great and it's been gravity ever since. matches happen, then nothing.",
-            journal: "Priya asked about week two — retention, not signups. I gave her the real answer: matches happen, then nothing. She said 'then nothing' is the whole ballgame, and offered to clear a Saturday.",
+            journal: "The Saturday is on the table — Priya's waiting for us to take 'then nothing' seriously.",
             effects: { say: { char: "priya", text: "'then nothing' is the whole ballgame. when you're ready to take that seriously, i'll clear a saturday." } },
-            fx: () => "'Then nothing' is the whole ballgame, she said. She's ready to clear a Saturday.",
           },
           {
             key: "deflect", label: "Still reading the data",
             reply: "still reading the data. early days.",
-            journal: "Priya asked about week-two retention and I deflected — 'still reading the data.' Her reply landed anyway: data doesn't read itself. The offer stands.",
+            journal: "Priya didn't take 'still reading the data' as an answer. The offer stands.",
             effects: { say: { char: "priya", text: "sure. data doesn't read itself though. offer stands." } },
-            fx: () => "She didn't push. 'Data doesn't read itself though. Offer stands.'",
           },
         ],
         timeout: { weeks: 2 },
@@ -261,18 +248,15 @@
             key: "call", label: "Call her",
             journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted PlusOne because it made me feel worse, not better.'",
             effects: { marketFit: 4, signal: 3, flags: { maya_quote: true } },
-            fx: () => "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. PlusOne made me feel worse, not better.' You wrote down every word.",
           },
           {
             key: "survey", label: "Send an email survey",
             journal: "Sent Maya (and the other quiet accounts) a churn survey. Two replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
             effects: { marketFit: 1 },
-            fx: () => "Two survey replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
           },
           {
             key: "let_go", label: "Churned users churn — focus forward",
             journal: "Decided not to chase Maya. Churned users churn. Focus forward.",
-            fx: () => "Focused forward. Whatever Maya knew about why she left, she took with her.",
           },
         ],
         timeout: { weeks: 2 },
@@ -287,7 +271,7 @@
             key: "ack", label: "You called it first",
             reply: "you called it first — that's on the record. it's on the agenda, for real this time.",
             effects: { flags: { pivot_flagged: true }, char: { jordan: { morale: 4 } } },
-            fx: () => "Jordan called it before launch and she's calling it again now. On the record.",
+            fx: () => "Jordan called it first — on the record.",
           },
         ],
         timeout: { weeks: 2 },
@@ -308,13 +292,11 @@
               marketFit: -6, signal: -4, flags: { feature_spree: true },
               schedule: { in: 1, char: "alex", say: { char: "alex", text: "streaks is live. daily active streak users: 1. it's me." } },
             },
-            fx: () => "Streaks shipped by Friday. A handful of users tapped it once. The graph didn't move — you're not learning, you're guessing.",
           },
           {
             key: "no", label: "Nothing new ships until we know why they leave",
             journal: "Told Alex nothing new ships until we know why users leave. He grumbled, then admitted the streaks idea was a dice roll.",
             effects: { marketFit: 4, char: { alex: { morale: -4 } } },
-            fx: () => "You held the line: no new features until you know why users leave. Alex grumbled, then admitted the streaks idea was a dice roll.",
           },
         ],
         timeout: {
@@ -345,14 +327,12 @@
                 say: { from: "The quiet accounts", text: "win-back, one week later: everyone the email brought back has gone quiet again. same spot — right after the match. they came back to the exact wall they left over." },
               },
             },
-            fx: () => "The email went out to every quiet account. A third opened it. A handful reinstalled. Watch what happens next week.",
           },
           {
             key: "skip", label: "Don't beg — fix the reason they left",
             reply: "no. if we don't know why they left, 'we miss you' is just asking them to leave twice.",
-            journal: "Skipped the win-back email. If we don't know why they left, 'we miss you' is just asking them to leave twice. The sends can wait until there's something new to come back to.",
+            journal: "Skipped the win-back email — the sends can wait until there's something new to come back to.",
             effects: { marketFit: 3 },
-            fx: () => "No blast. Whatever brings them back, it won't be an apology email for the same product.",
           },
         ],
         timeout: { weeks: 2 },

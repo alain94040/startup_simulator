@@ -63,15 +63,13 @@
         choices: [
           {
             key: "narrow", label: "Own one city / campus first",
-            journal: "Decided to launch one neighborhood at a time — pick a single campus, get it dense enough that people actually match, then expand. Smaller top-line, real liquidity.",
+            journal: "Launch density: one campus at a time — dense before wide.",
             effects: { signal: 4, marketFit: 4, flags: { beachhead: "narrow" } },
-            fx: () => "Picked one campus and its three closest neighborhoods. Everything points there. The TAM slide is smaller — but the people who join will actually find someone nearby.",
           },
           {
             key: "broad", label: "Launch everywhere — bigger TAM",
-            journal: "Opened it nationwide on day one. The market-size slide looks incredible. Quietly worried everyone will open the app, see nobody within 50 miles, and leave.",
+            journal: "Launch density: nationwide from day one.",
             effects: { signal: 7, flags: { beachhead: "broad" } },
-            fx: () => "Open nationwide. The TAM slide looks incredible. Whether anyone finds a match within 50 miles of them is a different question.",
           },
         ],
       },
@@ -87,29 +85,25 @@
         choices: [
           {
             key: "quiet", label: "Soft-launch to the waitlist + friends",
-            journal: "Launch plan: soft-launch to the waitlist and a few dozen friends. No fireworks — but every single one will be a real person who wants this to work, telling me exactly what's broken.",
+            journal: "Launch plan: soft — waitlist and friends first.",
             effects: { marketFit: 5, signal: 4, flags: { launch_splash: "quiet" } },
-            fx: () => "Plan set: the people who already raised their hands get it first. Small day one — but every signup high-intent and loud with feedback. The kind of start that compounds.",
           },
           {
             key: "press", label: "Give a reporter the exclusive",
-            journal: "Launch plan: a reporter gets the exclusive — the anti-Tinder angle. Smaller than a viral hit, but people who come in from a thoughtful piece actually read the whole thing first.",
+            journal: "Launch plan: the reporter's exclusive, embargoed until launch morning.",
             effects: { signal: 10, flags: { launch_splash: "press" } },
-            fx: () => "Plan set: the exclusive goes out under embargo, the piece runs launch morning. 'The dating app that wants you to delete it.' Quality over volume.",
           },
           {
             key: "tiktok", label: "Pay 3 TikTok creators to post",
-            journal: "Launch plan: three TikTok creators post on launch day — the same playbook Flare used. Spendy ($1,200), but it puts real daters in the door fast.",
+            journal: "Launch plan: three creator posts on launch day. $1,200 committed.",
             effects: { cash: -1200, signal: 8, marketFit: 2, flags: { launch_splash: "tiktok" } },
-            fx: () => "Plan set: three creator posts queued for launch morning. $1,200 committed — actual daters in the door within 48 hours of the switch.",
           },
           {
             // No market_fit gain on purpose: the wrong audience. The spike
             // deflates on its own (the trough drains what doesn't retain).
             key: "show_hn", label: "Go big — post to Show HN / Product Hunt",
-            journal: "Launch plan: Show HN and Product Hunt, launch morning. If it front-pages, the signup graph goes vertical. Whether any of them are single people looking to date is tomorrow's problem.",
+            journal: "Launch plan: Show HN + Product Hunt, launch morning.",
             effects: { signal: 12, flags: { launch_splash: "show_hn" } },
-            fx: () => "Plan set: Show HN post drafted, Product Hunt page scheduled. If it hits, the graph will look unbelievable for a day. Who actually shows up is another question.",
           },
         ],
         // Never planned → launch day gets a modest organic trickle (world.js).
@@ -122,9 +116,8 @@
         choices: [
           {
             key: "firefight", label: "Drop everything — keep it up and triage live",
-            journal: "Pulled an all-nighter with Alex keeping the launch alive — patched the queue, DM'd every stuck user personally. Exhausting. But nobody who showed up on day one walked away because we weren't there.",
+            journal: "All-nighter keeping the launch alive: queue patched, every stuck day-one user personally unblocked.",
             effects: { marketFit: 4, signal: 4 },
-            fx: () => "All hands, all night. Queue patched, stuck users personally unblocked. You lost a night of sleep and saved the launch.",
           },
           {
             key: "triage", label: "Triage the worst bug, let the rest wait",
@@ -184,19 +177,16 @@
             fx(s) {
               // Hand-picking your happiest early user jump-starts the testimonial chain.
               if (s.customers === 0 && !s.reference_customer) s.reference_customer = true;
-              return "Became the matching engine for a week — introductions by hand, nudges by text. Two first dates out of it, and one user who now thinks you hung the moon. It doesn't scale. It doesn't have to yet.";
             },
           },
           {
             key: "mixer", label: "Host a singles night — make the first match in the room",
             journal: "Threw a small singles night for early users — manufactured the first real match in person. Doesn't scale, but I walked away with a story I can actually sell and a room full of believers.",
             effects: { cash: -300, users: 5, signal: 8, marketFit: 4 },
-            fx: () => "Twelve early users in a room, two drinks in, one introduction that actually clicked. $300 on snacks and a story you can tell every investor for the next year. Five of them invited friends on the spot.",
           },
           {
             key: "wait", label: "Let the algorithm do its thing",
             journal: "Decided not to put my thumb on the scale — let the matching run on its own. Cleaner, more honest. Also colder: the cold-start stayed cold.",
-            fx: () => "Stayed hands-off and let the system run. Fewer awkward DMs from the founder — and a lot fewer matches. The cold-start stayed cold.",
           },
         ],
       },
@@ -217,7 +207,6 @@
             key: "pitch", label: "Pitch them at $49/month",
             journal: "Pitched our most active user at $49/month for unlimited plans. They converted. First paying subscriber. Not much, but it's real — and it's revenue the application can point at.",
             effects: { users: -1, customers: 1, signal: 5 },
-            fx: () => "Made the ask. They converted. First paying subscriber. $49/month — not much, but it's real.",
           },
         ],
       },
@@ -251,7 +240,6 @@
             key: "hold", label: "Hold — grow the free tier first",
             journal: "Held off on pricing. Free users keep coming. The conversion problem isn't going anywhere.",
             effects: { users: 5 },
-            fx: () => "Held off. Free users keep coming. The conversion problem isn't going anywhere.",
           },
         ],
       },

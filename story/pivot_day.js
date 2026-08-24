@@ -288,7 +288,6 @@
             key: "call_it", label: "Call it — Saturday, whiteboard",
             journal: "Called the summit. Saturday, whiteboard, nobody leaves until we know what we're building Monday. Alex will argue we just need more users; Priya's bringing four years of scar tissue.",
             effects: { scene: "pivot" },
-            fx: () => "Saturday. Whiteboard. Nobody leaves until you know what you're building Monday.",
           },
         ],
         // Never called the room: the default direction wins by inertia. No summit
@@ -313,7 +312,7 @@
           {
             key: "cut", label: "One thing. Cut everything else",
             reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
-            journal: "Scope call for v2: one thing. Plans board, nothing else — no legacy matching mode limping alongside. The lean lesson, learned twice. Alex says the cut buys him most of a week.",
+            journal: "v2 ships one thing — the plans board. No legacy mode.",
             effects: { marketFit: 4 },
             fx(s, e) {
               if (s.pivot_effort_base != null) s.pivot_effort_base -= 0.8;
@@ -356,7 +355,7 @@
           {
             key: "invite", label: "Write them — they diagnosed it",
             reply: "write it. they told us exactly what was wrong — they've earned the first look.",
-            journal: "Jordan is writing to everyone who left, before the relaunch: 'you told us what was wrong. we rebuilt it. want to see?' The people who walked away are the only beta list that already knows why v1 failed.",
+            journal: "The quiet list becomes the beta list — Jordan's writing to everyone who left.",
             effects: {
               marketFit: 5, flags: { beta_invited: true }, char: { jordan: { morale: 5 } },
               schedule: {
@@ -364,13 +363,11 @@
                 say: { char: "jordan", text: "beta invites are out. first replies already warmer than anything the old app ever got. one just says 'finally.'" },
               },
             },
-            fx: () => "Jordan's writing the email tonight. The quiet list becomes the beta list.",
           },
           {
             key: "fresh", label: "Clean slate — save it for launch day",
             reply: "save the reveal. i'd rather relaunch to fresh eyes than re-litigate v1 with the people it burned.",
-            journal: "Skipped the beta invite to the people who left — v2 relaunches to fresh eyes instead of re-litigating v1 with the people it burned.",
-            fx: () => "Clean slate it is. The quiet list stays quiet until launch day.",
+            journal: "V2 relaunches to fresh eyes — the quiet list stays quiet until launch day.",
           },
         ],
         timeout: { weeks: 2 },
@@ -398,7 +395,6 @@
               s.signal = clamp(s.signal + 12, 0, 100);
               s.market_fit = clamp(s.market_fit + 20, 0, 100);
               e.say({ char: "sarah", text: "that went better than i pitched it to you. three of my regulars made plans on the spot. told you this crowd was your crowd." });
-              return "V2 debuted live at Sarah's event. Real plans, made in the room, by strangers. The relaunch has a pulse — and a channel.";
             },
           },
           {
@@ -409,7 +405,6 @@
               s.users += 8 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 15, 0, 100);
               s.market_fit = clamp(s.market_fit + 20, 0, 100);
-              return "The piece ran: 'the dating app that killed its own product.' A pivot is a better story than a launch — it has a before and after. Signups followed the honesty.";
             },
           },
           {
@@ -420,7 +415,6 @@
               s.users += 4 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 6, 0, 100);
               s.market_fit = clamp(s.market_fit + 24, 0, 100);
-              return "Pushed to production, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
             },
           },
           {
@@ -452,7 +446,7 @@
           {
             key: "pivot_now", label: "Pivot now — late beats never",
             reply: "zero at fifty. priya said we'd know, and we know. we pivot — now, with whatever runway is left.",
-            journal: "Zero plans to meet out of 54 matches. Alex erased his own column. We're pivoting late — $3k instead of $2k, with runway nearly spent. The lesson was on the whiteboard weeks ago.",
+            journal: "Zero at fifty. We pivot late — $3k instead of $2k, runway nearly spent.",
             fx(s, e) {
               s.activities_pivot = true;
               s.pivot_week = s.week;
@@ -471,7 +465,6 @@
                 if (c && c.active) teamEffort += c.buildEffort;
               }
               s.pivot_effort_base = teamEffort - 2.0;
-              return "Pivoting weeks late. $3k, less runway, same rebuild. Alex is already sketching the plans screen — he got there on his own this time, and he's been building it in his head for days.";
             },
           },
           {
@@ -479,7 +472,6 @@
             reply: "we made our call at the summit. we ride it.",
             journal: "54 matches, zero plans to meet — and I chose to ride Plan A anyway. Alex went quiet. Priya stopped texting.",
             effects: { marketFit: -15, signal: -15, char: { alex: { morale: -10 } } },
-            fx: () => "Riding Plan A. The graph doesn't care about resolve.",
           },
         ],
         timeout: { weeks: 3, effects: { marketFit: -15, signal: -15, char: { alex: { morale: -12 } } } },
@@ -504,9 +496,8 @@
           {
             key: "ack", label: "It is a different app now",
             reply: "it is a different app now. she told us exactly what was wrong with the old one — feels right that she's first back.",
-            journal: "Maya came back. The first launch-day signup, the one who told me the app made her feel worse — she RSVP'd to a Thursday climbing plan on her own. That's the whole pivot in one notification.",
+            journal: "Maya RSVP'd to a Thursday climbing plan — the first user v1 lost is the first v2 wins back.",
             effects: { signal: 5 },
-            fx: () => "The first churned user, back on her own. That's the whole pivot in one notification.",
           },
         ],
         timeout: { weeks: 3 },
