@@ -1866,6 +1866,7 @@ const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] :
 let egTimers = [];
 let egDone = true;
 let egScore = null, egWon = false, egWeek = 0, egLbMounted = false, egCardHtml = "";
+let egSubmitted = false, egSubmittedRank = null;   // this run's leaderboard entry, once posted — sticky across report-card reopens
 function egClearTimers() { egTimers.forEach(clearTimeout); egTimers = []; }
 function egRevealBadge(el) {
   if (!el) return;
@@ -1911,7 +1912,9 @@ function egRunReveal() {
 }
 // Fetch the board once the reveal lands, then either offer name-entry (top 50)
 // or just show the ladder with where this run placed. Idempotent — the reveal
-// and the tap-to-skip path both call it.
+// and the tap-to-skip path both call it. Once this run has actually posted a
+// score (egSubmitted), reopening the report card must never re-offer the
+// entry form — that's how the same run got submitted over and over.
 async function mountEndgameLeaderboard() {
   if (egLbMounted) return;
   egLbMounted = true;
@@ -1920,9 +1923,14 @@ async function mountEndgameLeaderboard() {
   slot.innerHTML = '<div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div>';
   const { board, online } = await LB.fetchBoard();
   if ($("egLeaderboard") !== slot) return;   // player restarted mid-fetch
+  if (egSubmitted) { renderEndgameLadder(slot, board, online, egSubmittedRank); return; }
   if (LB.qualifies(board, egScore)) { renderEndgameEntry(slot, board, online); return; }
-  const wouldRank = egScore == null ? null : board.filter(e => e.score > egScore).length + 1;
-  slot.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Leaderboard") + lbRowsHtml(board, -1)
+  renderEndgameLadder(slot, board, online, null);
+}
+function renderEndgameLadder(slot, board, online, myRank) {
+  const meIndex = myRank && myRank <= board.length ? myRank - 1 : -1;
+  const wouldRank = meIndex < 0 && egScore != null ? board.filter(e => e.score > egScore).length + 1 : null;
+  slot.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Leaderboard") + lbRowsHtml(board, meIndex)
     + (wouldRank ? '<div class="lb-empty">You placed #' + wouldRank + " — the top " + LB.MAX + " makes the board. Run it back to climb.</div>" : "")
     + "</div>";
 }
@@ -1939,6 +1947,7 @@ function renderEndgameEntry(slot, board, online) {
     if (btn.disabled) return;
     btn.disabled = true; input.disabled = true; btn.textContent = "…";
     const res = await LB.submit({ name: input.value, score: egScore, won: egWon, week: egWeek });
+    egSubmitted = true; egSubmittedRank = res.rank || null;
     const meIndex = res.rank && res.rank <= res.board.length ? res.rank - 1 : -1;
     slot.innerHTML = '<div class="lb">' + lbHeadHtml(res.online, "Leaderboard") + lbRowsHtml(res.board, meIndex)
       + (meIndex < 0 && res.rank ? '<div class="lb-empty">You placed #' + res.rank + ".</div>" : "")
@@ -1956,6 +1965,7 @@ function checkEndgame() {
   const avg = game.gradeScore();
   const [og, ocol] = GRADE(avg);
   egScore = avg; egWon = !!s.ycAccepted; egWeek = s.week; egLbMounted = false;
+  egSubmitted = false; egSubmittedRank = null;
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
@@ -2022,7 +2032,7 @@ function openReportCard() {
 }
 $("hScore").onclick = openReportCard;
 function restartGame() {
-  if (!gameEnded() && !confirm("Restart the run? Your current progress will be lost.")) return;
+  if (!confirm("Start a new run? " + (gameEnded() ? "This run's chat history won't be reachable afterward." : "Your current progress will be lost."))) return;
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
 $("hRestart").onclick = restartGame;
