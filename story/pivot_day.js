@@ -391,6 +391,7 @@
           {
             key: "sarah_event", label: "Debut v2 at Sarah's event",
             if: (s) => !!s.sarah_onboard,
+            reply: "staging's green — we're ready. still want us for the event?", replyTo: "sarah",
             journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a board of plans, not a grid of faces. People RSVP'd to real plans on the spot. PlusOne v2 walked out of that room with a heartbeat.",
             fx(s, e) {
               s.pivot_shipped = true;

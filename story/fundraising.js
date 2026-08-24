@@ -23,6 +23,7 @@
         choices: [
           {
             key: "reply", label: "Meet with Sarah now",
+            reply: "let's talk. we just rebuilt the whole app around real-world plans — your events might be exactly where it belongs.",
             journal: "Met with Sarah — 18,000 singles, weekly events, and she got the pivot in one sentence: 'so the app is the plan now.' She's holding a slot at her next event for the v2 debut. That's our relaunch stage if we want it.",
             effects: { signal: 7, flags: { sarah_onboard: true } },
             fx: () => "Met with Sarah. She got the pivot instantly — 'so the app is the plan now.' She's holding a slot at her next event for the v2 debut. Your relaunch has a stage, if you want it.",
