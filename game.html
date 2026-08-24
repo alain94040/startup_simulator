@@ -368,6 +368,9 @@
   .notif .n-text { font-size: 12px; color: #3a3a40; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .bell { position: relative; border: 1px solid var(--line); background: var(--soft); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 15px; display: grid; place-items: center; transition: .13s; }
   .bell:hover { background: #e8eaef; transform: translateY(-1px); }
+  .hdr-btn { border: 1px solid var(--line); background: var(--soft); border-radius: 10px; height: 34px; padding: 0 12px; font-size: 12.5px; font-weight: 600; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; transition: .13s; white-space: nowrap; }
+  .hdr-btn:hover { background: #e8eaef; transform: translateY(-1px); }
+  .hdr-btn.icon { width: 34px; padding: 0; justify-content: center; font-size: 15px; }
   .bell-badge { position: absolute; top: -6px; right: -6px; min-width: 17px; height: 17px; padding: 0 4px; border-radius: 9px; background: #ff3b30; color: #fff; font-size: 10.5px; font-weight: 700; display: grid; place-items: center; box-shadow: 0 0 0 2px var(--panel); }
   #noteCenter { position: fixed; top: 56px; right: 18px; z-index: 46; width: 330px; max-height: 64vh; overflow-y: auto; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 18px 50px rgba(0,0,0,.24); padding: 8px; display: none; }
   #noteCenter.show { display: block; animation: noteIn .24s ease both; }
@@ -603,6 +606,8 @@
   <div class="hdr-right">
     <div class="stats" id="stats"></div>
     <div class="dots" id="dots"></div>
+    <button class="hdr-btn" id="hScore" title="see your founder report card again" style="display:none">🎓 Report card</button>
+    <button class="hdr-btn icon" id="hRestart" title="start a new run">↻</button>
     <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
   </div>
   <div id="todoPop"></div>
@@ -830,6 +835,7 @@ const STAGES = [
 const urlSeed = new URLSearchParams(location.search).get("seed");
 let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
 let game = new Engine({ seed });
+const gameEnded = () => game.s.game_over || game.s.game_won;   // run is over — browsing only, no more calls
 let selected = "alex";
 let surface = "msgs";
 let feedSeenLen = {};           // feed charId -> entries seen
@@ -948,6 +954,7 @@ function renderHeader() {
   const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0);
   setBadge("bFeed", feedNew);
   updateBell();
+  $("hScore").style.display = gameEnded() ? "" : "none";
 }
 function setBadge(id, n) {
   const el = $(id);
@@ -1053,7 +1060,7 @@ function renderThread(opts) {
     rbox.innerHTML = '<div class="chat-blocked">This user blocked you.</div>';
     return;
   }
-  const a = game.openActions().find(x => x.charId === selected && !x.onHold);
+  const a = gameEnded() ? null : game.openActions().find(x => x.charId === selected && !x.onHold);
   const caughtUp = shown >= t.length;
   if (!a || !caughtUp) {
     rbox.innerHTML = a && !caughtUp ? '<div class="hint">…</div>'
@@ -1143,7 +1150,7 @@ function openMockupLightbox(mockups, startKey) {
 
 // ── the right column: triage + journal mirror ─────────────────────────────────
 function renderSide() {
-  const acts = game.openActions().filter(a => !a.onHold);
+  const acts = gameEnded() ? [] : game.openActions().filter(a => !a.onHold);
   const move = acts.filter(a => SELF.has(a.charId));
   const story = acts.filter(a => !SELF.has(a.charId) && a.kind === "story");
   const later = acts.filter(a => !SELF.has(a.charId) && a.kind !== "story");
@@ -1172,9 +1179,10 @@ function renderSide() {
     && !game.s.game_over && !game.s.game_won;
   let html = canSkip ? '<button class="endpill" id="endPill">End week →</button>' : "";
   html += '<div class="tier"><h5>◉ Needs a call</h5>' +
-    (move.map(moveCard).join("") + story.map(linkCard).join("") || '<div class="empty-tier">nothing urgent — rare. enjoy it.</div>') + "</div>";
+    (move.map(moveCard).join("") + story.map(linkCard).join("")
+      || '<div class="empty-tier">' + (gameEnded() ? "the run's over — this is the record now." : "nothing urgent — rare. enjoy it.") + "</div>") + "</div>";
   html += '<div class="tier later"><h5>When you have a minute</h5>' +
-    (later.map(linkCard).join("") || '<div class="empty-tier">quiet out there.</div>') + "</div>";
+    (later.map(linkCard).join("") || '<div class="empty-tier">' + (gameEnded() ? "&nbsp;" : "quiet out there.") + "</div>") + "</div>";
 
   // journal mirror — only up to jShown (the turn-end reveal inks new entries one
   // at a time); the newest inking entry glows via jArrive.
@@ -1213,7 +1221,7 @@ function renderFeed() {
     feedSeenLen[id] = game.threads[id].length;
   }
   items.sort((a, b) => (a.seq || 0) - (b.seq || 0));
-  const acts = game.openActions();
+  const acts = gameEnded() ? [] : game.openActions();
   let lastWk = null, html = "";
   for (const m of items.slice(-24)) {
     if (m.week !== lastWk) { html += '<div class="f-wk">week ' + m.week + "</div>"; lastWk = m.week; }
@@ -1275,7 +1283,7 @@ document.addEventListener("click", (e) => {
 
 // ── acting ────────────────────────────────────────────────────────────────────
 function doAct(nodeId, key, charId) {
-  if (uiBusy) return;
+  if (uiBusy || gameEnded()) return;
   // A room blocks out the rest of the world — and that has to include clicks.
   // The HUD behind a scene keeps whatever it rendered before the room opened
   // (renderSide doesn't run while the overlay is up), so its buttons are live,
@@ -1857,7 +1865,7 @@ const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] :
 // pending steps so a tap can fast-forward to the full card (egFinish).
 let egTimers = [];
 let egDone = true;
-let egScore = null, egWon = false, egWeek = 0, egLbMounted = false;
+let egScore = null, egWon = false, egWeek = 0, egLbMounted = false, egCardHtml = "";
 function egClearTimers() { egTimers.forEach(clearTimeout); egTimers = []; }
 function egRevealBadge(el) {
   if (!el) return;
@@ -1984,9 +1992,10 @@ function checkEndgame() {
       + '<h2 class="eg-title">' + esc(title) + "</h2>"
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
-    + '<button id="egBtn" class="ok eg-reveal" onclick="location.search=\'?seed=\'+((Date.now()%100000)|0)">Run it back →</button>'
+    + '<button id="egBtn" class="ok eg-reveal" onclick="closeReportCard()">OK</button>'
     + '<div id="egSkipHint" class="eg-skiphint">tap anywhere to reveal faster</div>';
 
+  egCardHtml = $("endModal").innerHTML;
   $("endOv").classList.add("on");
   egRunReveal();
 }
@@ -1995,6 +2004,28 @@ $("endModal").addEventListener("click", (e) => {
   if (e.target.closest(".ok")) return;
   if (!egDone) egFinish();
 });
+// Dismissing the report card doesn't end the session — it drops the player
+// back into the chat history of the run they just played (read-only: doAct,
+// renderSide and renderThread all gate on gameEnded()). The score itself
+// stays one tap away via the header's Report card button.
+function closeReportCard() {
+  egClearTimers();
+  $("endOv").classList.remove("on");
+  render();
+}
+function openReportCard() {
+  if (!gameEnded() || !egCardHtml) return;
+  $("endModal").innerHTML = egCardHtml;
+  $("endOv").classList.add("on");
+  egLbMounted = false;   // re-fetch the leaderboard fresh on reopen
+  egFinish();
+}
+$("hScore").onclick = openReportCard;
+function restartGame() {
+  if (!gameEnded() && !confirm("Restart the run? Your current progress will be lost.")) return;
+  location.search = "?seed=" + ((Date.now() % 100000) | 0);
+}
+$("hRestart").onclick = restartGame;
 
 // ── intro ─────────────────────────────────────────────────────────────────────
 const INTRO = [
