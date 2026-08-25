@@ -1047,11 +1047,16 @@ function renderThread(opts) {
   const el = $("thread");
   el.innerHTML = html || '<div class="m-wk">no messages yet</div>';
   el.scrollTop = el.scrollHeight;
-  // wire mockup thumbnails → lightbox
-  for (const th of el.querySelectorAll(".mk-thumb")) {
-    const mk = t.find(m => m.mockups) && t.find(m => m.mockups).mockups;
-    if (mk) th.onclick = () => openMockupLightbox(mk, th.dataset.mk);
-  }
+  // wire mockup thumbnails → lightbox, one .mk-row per message: a thread can
+  // carry more than one mockup-bearing message (e.g. the equity calc receipt
+  // and the dev-plan A/B/C), so each row has to bind to its own message's
+  // mockups rather than whichever one comes first in the thread.
+  const mkMsgs = t.slice(0, shown).filter(m => m.mockups);
+  el.querySelectorAll(".mk-row").forEach((row, i) => {
+    const mk = mkMsgs[i] && mkMsgs[i].mockups;
+    if (!mk) return;
+    for (const th of row.querySelectorAll(".mk-thumb")) th.onclick = () => openMockupLightbox(mk, th.dataset.mk);
+  });
 
   // ── the response surface, in-flow at the bottom of the thread ──
   const rbox = $("reply");
@@ -1560,10 +1565,12 @@ function renderFocusThread(opts) {
   el.innerHTML = html || '<div class="m-wk">…</div>';
   el.scrollTop = el.scrollHeight;
   // wire mockup thumbnails → lightbox (same pattern as the main thread renderer)
-  for (const th of el.querySelectorAll(".mk-thumb")) {
-    const mk = t.find(m => m.mockups) && t.find(m => m.mockups).mockups;
-    if (mk) th.onclick = () => openMockupLightbox(mk, th.dataset.mk);
-  }
+  const mkMsgs = t.slice(0, shown).filter(m => m.mockups);
+  el.querySelectorAll(".mk-row").forEach((row, i) => {
+    const mk = mkMsgs[i] && mkMsgs[i].mockups;
+    if (!mk) return;
+    for (const th of row.querySelectorAll(".mk-thumb")) th.onclick = () => openMockupLightbox(mk, th.dataset.mk);
+  });
 
   // composer: this thread's open beat, or a nudge toward whoever's waiting
   const rbox = $("scReply");
