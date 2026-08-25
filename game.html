@@ -707,7 +707,10 @@ const money = n => "$" + Math.round(n).toLocaleString();
 
 // Who renders where.
 const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
-const SELF = new Set(["founder", "growth"]);   // "your own moves" — acted in-column
+// "your own moves" — acted in-column, not a text from a person. Analytics and
+// Users are dashboard readouts / aggregate reports (no choice on either ever
+// uses `reply` — nothing texts back), not a contact you converse with.
+const SELF = new Set(["founder", "growth", "analytics", "users"]);
 // iOS palette + initials, ported from the old UI's STYLE map.
 const STYLE = {
   alex: { color: "#0b84ff", initials: "A" }, jordan: { color: "#34c759", initials: "J" },
@@ -857,9 +860,19 @@ let weekNotes = [];             // this week's notifications (the bell reopens t
 let notesSeen = true;
 let noteQueue = [], noteTimer = null;
 
-// The journal mirror source: outcomes + stamps + orphan drops (founder thread).
+// The journal mirror source: outcomes + stamps (always the founder thread —
+// the engine only ever records those there) + orphan drops — incoming
+// messages with no nodeId. Those come from the founder's own thread, and
+// from any other SELF character (Growth, Analytics, Users): a cast intro
+// line or a scheduled data pulse ("weekly pulse: ...") that isn't an action
+// card, so with no thread to show it in it reads as journal recap instead.
 function journalMirror() {
-  return game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+  const entries = game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+  for (const id of SELF) {
+    if (id === "founder") continue;
+    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) entries.push(m);
+  }
+  return entries.sort((a, b) => a.seq - b.seq);
 }
 function resetUiState() {
   feedSeenLen = {}; sceneStartSeq = null; inScene = false;

@@ -54,7 +54,7 @@ function sourceOf(nodeId) {
 //   SELF    → "your own moves", acted on as a card in the right column
 //   journal → the founder thread, rendered by journalMirror() as recap prose
 const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
-const SELF = new Set(["founder", "growth"]);
+const SELF = new Set(["founder", "growth", "analytics", "users"]);
 const FEED_SRC = {
   hacker_news: "Y · HACKER NEWS", techcrunch: "TC · TECHCRUNCH", twitter: "𝕏 · TWITTER",
 };
@@ -62,12 +62,14 @@ const FEED_SRC = {
 // Returns the surface a player would have seen this entry on, or "hidden" when
 // the UI shows it nowhere at all (a real defect — see --audit).
 function uiSurface(charId, type, nodeId) {
-  // journalMirror(): stamps + outcomes + orphan drops, founder thread only
+  // journalMirror(): stamps + outcomes (founder thread only — the engine only
+  // ever records those there) + orphan drops (no nodeId) from the founder or
+  // any other SELF character (a cast intro line, a scheduled data pulse).
   if (type === "outcome" || type === "stamp") return charId === "founder" ? "journal" : "hidden";
   if (SELF.has(charId)) {
     if (type === "reply") return "hidden";            // no thread renders these
     if (nodeId) return "move";                        // the "Your move" card
-    return charId === "founder" ? "journal" : "hidden";
+    return "journal";                                 // orphan drop — journal recap
   }
   if (FEED.has(charId)) return type === "reply" ? "hidden" : "feed";
   return type === "reply" ? "bubbleOut" : "bubbleIn"; // an ordinary chat thread

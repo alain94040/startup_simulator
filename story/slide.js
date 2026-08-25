@@ -349,7 +349,6 @@
           },
           {
             key: "skip", label: "Don't beg — fix the reason they left",
-            reply: "no. if we don't know why they left, 'we miss you' is just asking them to leave twice.",
             journal: "Skipped the win-back email. If we don't know why they left, 'we miss you' is just asking them to leave twice. The sends can wait until there's something new to come back to.",
             effects: { marketFit: 3 },
             fx: () => "No blast. Whatever brings them back, it won't be an apology email for the same product.",
