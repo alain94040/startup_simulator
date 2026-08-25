@@ -190,6 +190,7 @@
         choices: [
           {
             key: "lawyer", label: "Hire a lawyer — $2,000",
+            payee: "Lawyer",
             journal: "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
             effects: { cash: -2000, flags: { jordan_cleanup_needed: false } },
             fx: () => "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.",

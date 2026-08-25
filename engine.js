@@ -420,7 +420,11 @@
       let outcome = null;
       if (choice.effects) this._applyEffects(choice.effects, char, node);
       if (choice.fx) outcome = choice.fx(this.s, this, char) || null;
-      this._tx(node.from || char.def.name, cashBefore);
+      // The Bank ledger normally credits/debits whoever the card is from — but
+      // a choice can spend money on a third party the sender merely raised
+      // (Alex flags the cap table; the $2k goes to a lawyer). `payee`
+      // overrides the ledger label without touching who the message is from.
+      this._tx(choice.payee || node.from || char.def.name, cashBefore);
 
       // `journal` may be a string, a (s,e,char) function (like `text`), or null
       // to say "this beat leaves no journal line"; omitted falls back to the fx

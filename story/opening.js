@@ -23,6 +23,7 @@
   // "no equity split without one."
   const incorporateChoice = {
     key: "atlas", label: "Incorporate via Stripe Atlas — $500",
+    payee: "Stripe Atlas",
     reply: "do it. stripe atlas, delaware c-corp. let's get this done today.",
     journal: "Filed through Stripe Atlas. Delaware C-corp, EIN, bank account in two days. $500 gone, but we're a real company now.",
     effects: { cash: -500, flags: { incorporated: true }, surface: "equity_open" },
