@@ -27,7 +27,7 @@
             journal: "Met with Sarah — she's holding a slot at her next event for the v2 debut. That's our relaunch stage if we want it.",
             effects: {
               signal: 7, flags: { sarah_onboard: true },
-              say: { char: "sarah", text: "so the app is the plan now? that's literally my events. i've got a slot at the next one — it's yours if you want it." },
+              say: { char: "sarah", text: "i've got a slot at my next event for the v2 debut — it's yours if you want it." },
             },
           },
         ],
