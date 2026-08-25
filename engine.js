@@ -570,7 +570,7 @@
         const cashBefore = this.s.cash;
         if (ev.effects) this._applyEffects(ev.effects, char, { char: p.charId });
         if (ev.fx) ev.fx(this.s, this, char);
-        this._tx("Consequence", cashBefore);
+        this._tx((char && char.def.name) || "Consequence", cashBefore);
         if (ev.say) this._say(ev.say, p.charId);
       }
 
