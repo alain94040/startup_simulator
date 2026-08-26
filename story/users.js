@@ -58,9 +58,12 @@
         choices: [
           {
             key: "call", label: "Call them — 20 minutes",
+            reply: "hey — saw you went quiet. got a couple minutes to talk about what happened?",
             journal: "Called the churned subscriber. Nothing was wrong with the product — the plans near them dried up. They live 40 minutes out, and the calendar in their area went quiet. It's the density lesson wearing a new shirt: own one neighborhood before you promise the whole map.",
-            effects: { marketFit: 10, signal: 5 },
-            fx: () => "20-minute call. The product wasn't the problem — the plans near them dried up. They live 40 minutes out. Density, again: the app is only alive where the calendar is.",
+            effects: {
+              marketFit: 10, signal: 5,
+              say: { from: "Subscriber", text: "nothing was wrong with it, honestly — the plans near me just dried up. i'm like 40 minutes out and the calendar in my area went quiet." },
+            },
           },
           {
             key: "email", label: "Send a quick email",

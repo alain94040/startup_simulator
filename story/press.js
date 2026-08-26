@@ -174,9 +174,12 @@
         choices: [
           {
             key: "call", label: "Call Tom",
+            reply: "hey — noticed you went quiet. everything ok?",
             journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
-            effects: { customers: -1, signal: 16, marketFit: 10 },
-            fx: () => "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription and was a bit embarrassed about it. He's canceling, but he wrote you a glowing review before hanging up. Best churn you've ever had.",
+            effects: {
+              customers: -1, signal: 16, marketFit: 10,
+              say: { char: "tom", text: "ha, sorry — i actually met someone on here 5 weeks ago. we've been on 7 dates. totally forgot to cancel. leaving a review before i go — this thing worked." },
+            },
           },
         ],
         timeout: { weeks: 3, effects: { signal: -8, customers: -1 } },
@@ -243,7 +246,12 @@
             key: "ask", label: "Ask him to invest",
             reply: "sure thing.",
             fx(s, e) {
-              if (e.rng() < 0.7) { s.cash += 5000; return "Jamie sent $5,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'"; }
+              if (e.rng() < 0.7) {
+                s.cash += 5000;
+                e.say({ char: "jamie", text: "just venmo'd you $5,000. least i could do — you'd have done the same for me. go build something great." });
+                return "Jamie sent $5,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'";
+              }
+              e.say({ char: "jamie", text: "hate to say it but my cash is tied up right now — car loan, wedding coming up. i'm rooting for you though." });
               return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
             },
           },
@@ -273,11 +281,14 @@
         choices: [
           {
             key: "pitch", label: "Show him the deck",
+            reply: "let's do it — coffee, numbers, the whole pitch.",
             fx(s, e) {
               if (e.rng() < 0.7) {
                 s.cash += 4000;
+                e.say({ char: "david", text: "just wired you $4,000 — pay me back by building the thing." });
                 return "David pulled out his checkbook. $4,000. 'Pay me back by building the thing.'";
               }
+              e.say({ char: "david", text: "gonna sit this one out — new baby on the way, being careful with money this year. i'm rooting for you though." });
               return "Great coffee. David's being conservative with money this year — new baby coming. 'I'm rooting for you though.'";
             },
           },
