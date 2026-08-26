@@ -224,9 +224,12 @@
         choices: [
           {
             key: "tell", label: "Tell him about it",
+            reply: "ha — yes, seriously, a dating app. coffee this week and i'll tell you the whole thing.",
             journal: "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the waitlist.",
-            effects: { waitlist: 1 },
-            fx: () => "Caught up over coffee. Told him everything. He was into it — 'a dating app that actually works? I need to try this.' You put him on the waitlist.",
+            effects: {
+              waitlist: 1,
+              note: "Jamie, over coffee: 'a dating app that actually works? I need to try this.' Put him on the waitlist.",
+            },
           },
         ],
         timeout: { weeks: 3 },
@@ -254,8 +257,11 @@
         choices: [
           {
             key: "lunch", label: "Have lunch with David",
+            reply: "would love to. lunch this week — it's been too long, and i've actually got a lot to tell you.",
             journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes people stay.",
-            fx: () => "Good lunch. David asked sharp questions about the dating app space. 'Send me something concrete this week — what makes people actually stay?'",
+            effects: {
+              note: "David, over lunch: 'send me something concrete this week — what makes people actually stay?'",
+            },
           },
         ],
         timeout: { weeks: 3 },

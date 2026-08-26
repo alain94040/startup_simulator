@@ -157,9 +157,12 @@
         choices: [
           {
             key: "reply_honest", label: "Write her back yourself",
+            reply: "you're not missing a feature, rachel — tell me what you were hoping would happen next?",
             journal: "Rachel K. emailed support: 'is something supposed to happen next?' I wrote back myself and asked what she'd hoped would happen. Her answer, word for word: 'I hoped the app would give one of us an excuse. A place to say yes to.' Kept it.",
-            effects: { signal: 3, marketFit: 3, flags: { rachel_answer: true } },
-            fx: () => "You wrote back: 'You're not missing anything — tell me what you hoped would happen?' Rachel's answer, verbatim: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.",
+            effects: {
+              signal: 3, marketFit: 3, flags: { rachel_answer: true },
+              note: "Rachel wrote back within the hour: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.",
+            },
           },
           {
             key: "faq", label: "Add it to the FAQ pile",
