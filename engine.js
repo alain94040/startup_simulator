@@ -515,6 +515,12 @@
         if (d.flags) Object.assign(c.flags, d.flags);
       }
       if (fx.say) this._say(fx.say, node && node.char);
+      // A note is not a message: it's a rare, explicitly-authored aside (the
+      // UI renders it unlike a bubble on purpose) for a detail — usually a
+      // verbatim quote — the thread doesn't already carry as a real `say`.
+      // Lands in the node's own thread; not scene-aware (not currently
+      // authored inside one).
+      if (fx.note) this._push(node.char, { type: "note", body: this._text(fx.note, char) });
       if (fx.schedule) for (const ev of [].concat(fx.schedule)) this.schedule(ev);
       if (fx.surface) for (const id of [].concat(fx.surface)) this._surfaceNow.push(id);
       if ("scene" in fx) {

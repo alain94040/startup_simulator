@@ -98,6 +98,14 @@
   .m-out.tail::after { content: ""; position: absolute; right: -6px; bottom: 0; width: 12px; height: 17px; background: var(--blue); border-bottom-left-radius: 14px 15px; }
   .m-out.tail::before { content: ""; position: absolute; right: -12px; bottom: 0; width: 12px; height: 17px; background: var(--bg); border-bottom-left-radius: 10px; z-index: 1; }
   .m-in.dropped { opacity: .7; }
+  /* An aside, not a text: a short founder note pinned to the moment it
+     belongs to. Distinct from m-in/m-out on purpose — parchment tint and
+     handwritten font borrow the journal's voice so it never reads as a
+     bubble somebody sent. Opt-in only (effects.note) and rare by design. */
+  .m-note {
+    align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
+    border-radius: 10px; padding: 7px 12px; font: 13px var(--hand); color: #6b6045;
+  }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
   @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
   @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, .stat.changed, #scRail .conv.unread .unread-dot { animation: none !important; transition: none !important; } }
@@ -1040,7 +1048,11 @@ function openThread() {
 // A chat thread holds messages and nothing else: bubbles somebody actually
 // sent. Recaps of what a choice did belong to the journal mirror (the engine
 // already files them there) — never inline in the conversation, where a
-// third-person aside reads as a text the character never typed.
+// third-person aside reads as a text the character never typed. The one
+// deliberate exception is `type: "note"` (engine.js's `effects.note`): a
+// rare, explicitly-authored aside, styled unlike a bubble on purpose so it
+// never reads as one, reserved for a detail (usually a verbatim quote) the
+// thread doesn't already carry as a real message.
 function threadEntryHtml(m, isNew, tail) {
   const anim = isNew ? " msg-new" : "";
   let out = "";
@@ -1050,6 +1062,8 @@ function threadEntryHtml(m, isNew, tail) {
       (m.subtext ? '<div class="m-sub">' + esc(m.subtext) + "</div>" : "");
     // the dev-plan message carries three CSS phone mockups → thumbnails + lightbox
     if (m.mockups) out += mockupRowHtml(m.mockups);
+  } else if (m.type === "note") {
+    out = '<div class="m-note' + anim + '">' + esc(m.body) + "</div>";
   }
   return out;
 }
