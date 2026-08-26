@@ -53,6 +53,9 @@ function sourceOf(nodeId) {
 //   FEED    → the News Feed surface (posts you engage inline)
 //   SELF    → "your own moves", acted on as a card in the right column
 //   journal → the founder thread, rendered by journalMirror() as recap prose
+// A `type: "note"` entry (engine.js's `effects.note`) is its own surface too:
+// a parchment-tinted aside game.html renders inline in an ordinary thread —
+// unlike a bubble on purpose, so it never reads as a text someone sent.
 const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
 const SELF = new Set(["founder", "growth", "analytics", "users"]);
 const FEED_SRC = {
@@ -67,11 +70,14 @@ function uiSurface(charId, type, nodeId) {
   // any other SELF character (a cast intro line, a scheduled data pulse).
   if (type === "outcome" || type === "stamp") return charId === "founder" ? "journal" : "hidden";
   if (SELF.has(charId)) {
-    if (type === "reply") return "hidden";            // no thread renders these
+    if (type === "reply" || type === "note") return "hidden"; // no thread renders these
     if (nodeId) return "move";                        // the "Your move" card
     return "journal";                                 // orphan drop — journal recap
   }
-  if (FEED.has(charId)) return type === "reply" ? "hidden" : "feed";
+  // the feed surface only renders incoming posts (renderFeed()) — a `note`
+  // authored on a feed character wouldn't render there either
+  if (FEED.has(charId)) return (type === "reply" || type === "note") ? "hidden" : "feed";
+  if (type === "note") return "note";                 // effects.note — a parchment-tinted aside, not a bubble
   return type === "reply" ? "bubbleOut" : "bubbleIn"; // an ordinary chat thread
 }
 
@@ -352,6 +358,16 @@ function renderText(run, o) {
       }
       L.push(C.g(wrap(`↳ you → ${nameOf[e.charId] || e.charId}: ` + e.body, W - 8, "      ")));
       lastSpeaker = null;
+    } else if (e.t === "note") {
+      if (e.ui === "hidden") {
+        // effects.note authored on a SELF/feed character — no surface renders it
+        L.push(C.y(wrap(`⚠ note shown nowhere (${e.nodeId}): "${e.body}"`, W - 10, "      ")));
+        lastSpeaker = null;
+        continue;
+      }
+      if (o.compact) { L.push("  " + C.y("✎".padEnd(14)) + " " + clip(e.body, W - 20)); continue; }
+      L.push(C.y(wrap("✎ " + e.body, W - 6, "    ")));
+      lastSpeaker = null;
     } else if (e.t === "act") {
       if (o.compact) {
         L.push(C.g(`  ▸ ${(e.name + ":").padEnd(14).slice(0, 14)} ${clip(e.label, W - 34)} `) +
@@ -465,6 +481,13 @@ function runHtml(run, idx) {
       } else {
         parts.push(`<div class="row out ${cls}"><div><div class="who to">to ${esc(nameOf[e.charId] || e.charId)}</div>` +
           `<div class="bub me">${esc(e.body)}</div></div></div>`);
+      }
+    } else if (e.t === "note") {
+      if (e.ui === "hidden") {
+        parts.push(`<div class="ghost">effects.note authored on a SELF/feed character — no surface renders it ` +
+          `${idTag}<div>${esc(e.body)}</div></div>`);
+      } else {
+        parts.push(`<div class="tnote ${cls}">✎ ${esc(e.body)}</div>`);
       }
     } else if (e.t === "act") {
       const alts = e.alts.map(a => `<span class="alt">${esc(a.label)}</span>`).join("");
@@ -600,6 +623,10 @@ function renderHtml(runs, title) {
   .choice .where { color:var(--dim); margin-left:6px; font-size:11.5px; }
   .jr { background:#fffbe8; border:1px solid #f0e6b8; color:#5b5340; border-radius:10px; padding:8px 13px; margin:8px 0 8px 37px; font-size:13.5px; }
   body.nojr .jr { display:none; }
+  /* effects.note: same parchment tint as the journal mirror, but rendered
+     inline in the thread — game.html's deliberate exception to "bubbles only" */
+  .tnote { background:#fdf9ee; border:1px solid #eee3c2; color:#6b6045; border-radius:10px; padding:7px 13px;
+    margin:8px auto; max-width:70%; text-align:center; font:italic 13px Georgia,serif; }
   .stamp { text-align:center; margin:12px 0; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:11.5px; color:#1d8f3c; }
   .ign { margin:6px 0 6px 37px; font-size:12px; color:#b0442f; }
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-top:16px; }
