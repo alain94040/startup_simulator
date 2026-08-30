@@ -13,6 +13,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
+  // The run is over — at which point an unreached lesson grades as a failure
+  // rather than dropping out of the denominator.
+  const runEnded = (s) => s.game_over || s.game_won || s.week >= (s.deadline_week || Infinity);
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
   // Ratio of answered-vs-ignored among the given nodes (only counting resolved
@@ -84,19 +87,22 @@
           // Reaching the room is one thing; what happened in it is another.
           // The compromise grades BELOW deferring: you got there and blinked,
           // and she now knows you considered it.
-          { faced: g.done("jordan_confrontation"), weight: 3,
+          { faced: g.done("jordan_confrontation") || (runEnded(s) && !!s.jordan_drifting), weight: 3,
             got: s.jordan_resolved ? 1
               : g.took("firing_preempt:nothing") ? 0
                 : g.took("firing_reentry:fold_again") ? 0
                   : s.jordan_quit ? 0.1
-                    : g.took("jordan_confrontation:defer") ? 0.3 : 0,
+                    // Deferred and never went back: at the deadline that is not
+                    // a partial credit, it is the conversation never had.
+                    : g.took("jordan_confrontation:defer") ? (runEnded(s) ? 0.1 : 0.3) : 0,
             note: s.jordan_resolved
               ? (s.jordan_compromised
                 ? "Blinked the first time, went back three weeks later and finished it. Late, and it counted."
                 : "Told a drifting co-founder to her face, while it was still fixable.")
               : g.took("firing_preempt:nothing") ? "Jordan resigned mid-sentence. You never made the call — you were beaten to it."
                 : s.jordan_quit ? "Got as far as the conversation and asked for one more sprint. She quit four weeks later."
-                  : g.done("jordan_confrontation") ? "The Jordan conversation kept getting deferred." : null },
+                  : g.done("jordan_confrontation") ? "The Jordan conversation kept getting deferred — and never happened."
+                    : "A co-founder stopped contributing and was never spoken to about it." },
           // How it was delivered. Leading with the decision is the whole craft;
           // hiding behind Alex or reading the charge sheet reaches the same
           // place having spent her respect on the way.
@@ -150,10 +156,10 @@
       // dropping out of the denominator — otherwise a run that never reached
       // the game's central lesson could ace this category (and the report card
       // would contradict the verdict).
-      const ended = s.game_over || s.game_won || s.week >= (s.deadline_week || Infinity);
+      const ended = runEnded(s);
       const chips = [!!s.maya_quote, !!s.rachel_answer, !!s.demo_question_seen, !!s.analytics_dropoff_seen]
         .filter(Boolean).length;
-      const pivotGot = g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? 1 : 0.5)
+      const pivotGot = g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? (s.pivot_shipped_rough ? 0.5 : 1) : 0.5)
         : g.took("pivot_fifty_verdict:pivot_now") ? (s.pivot_shipped ? 0.5 : 0.3)
           : (s.pivot_deferred || g.took("pivot_day_decide:growth|hedge")) ? 0.1 : 0;
       add("build-something-people-want", "Build something people want", "📚 Steve Blank / PG, \"How to Get Startup Ideas\"",
@@ -170,7 +176,7 @@
             note: s.launched ? chips + "/4 evidence chips banked before pivot day."
               : ended ? "Never launched — no stranger ever touched the product." : null },
           { faced: g.done("pivot_day_decide") || s.pivot_deferred || ended, weight: 2, got: pivotGot,
-            note: g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? "Pivoted on evidence, with cash left to survive it." : "Called the pivot — but v2 never shipped.")
+            note: g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? (s.pivot_shipped_rough ? "Pivoted on evidence — but relaunched on a stand-in for the screen v2 was built around." : "Pivoted on evidence, with cash left to survive it.") : "Called the pivot — but v2 never shipped.")
               : g.took("pivot_fifty_verdict:pivot_now") ? "Pivoted late — right call, three weeks and $1k dearer."
                 : s.pivot_deferred ? "The default direction won by inertia."
                   : ended ? "The run ended without the product ever being questioned." : null },
@@ -239,9 +245,12 @@
               : "The split was never signed. Every later conversation got harder." },
           { faced: g.done("ff_family"), weight: 1, got: g.took("ff_family:ask") || g.took("ff_family_2:ask") || g.took("ff_family_3:ask") ? 1 : 0.3,
             note: g.took("ff_family:ask") ? "Took the friends-and-family money early." : null },
-          { faced: !!s.jordan_resolved || !!s.jordan_quit, weight: 2,
-            got: s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 1,
-            note: s.jordan_equity_gifted
+          { faced: !!s.jordan_resolved || !!s.jordan_quit || (runEnded(s) && !!s.jordan_drifting), weight: 2,
+            got: !(s.jordan_resolved || s.jordan_quit) ? 0
+              : s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 1,
+            note: !(s.jordan_resolved || s.jordan_quit)
+              ? "A co-founder who stopped shipping still holds " + pct + ", fully vested. Nobody ever raised it."
+              : s.jordan_equity_gifted
               ? "Gave a departed co-founder her full " + pct + " rather than have the buyback conversation. The kindest cheque this company ever wrote."
               : !s.jordan_cleanup_needed ? "Bought back the departed co-founder's stake — the cap table survived the exit."
                 : s.jordan_quit ? "She resigned holding " + pct + " and no reason to sign anything. The lawyer buys a negotiation now, not a signature."

@@ -381,7 +381,11 @@ console.log("part-time vs full-time (seed 42)");
   // Alex's own cards get first call so the commitment decision lands the same
   // week in both runs — the comparison isolates the effort multipliers.
   const alexFirst = { priority: (a) => a.charId === "alex" ? -1 : actPriority(a) };
-  const pt = run(42, decent, 20, alexFirst), ft = run(42, decentFT, 20, alexFirst);
+  // 16 weeks, not 20: this comparison is about a week-5 decision and its effect
+  // through the demo (~wk 9). A 20-week window now reaches the Jordan endgame,
+  // whose clean firing pays Alex +8 trust and clamps BOTH runs to 100 — washing
+  // out the -10 the push is supposed to cost. Keep the window on the lesson.
+  const pt = run(42, decent, 16, alexFirst), ft = run(42, decentFT, 16, alexFirst);
   ok(ft.took("alex_commitment:push") && ft.cast.get("alex").flags.committed_fulltime,
     "full-time run: Alex committed");
   ok(ft.done("demo_ready") && pt.done("demo_ready"), "both runs reached the demo");

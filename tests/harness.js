@@ -47,7 +47,7 @@
                           // player picks the splash before flipping the switch
     "slide_maya_call", "slide_cohort", "slide_first_echo",
     "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
-    "pivot_relaunch", "public_complaint",
+    "pivot_relaunch", "pivot_relaunch_rough", "public_complaint",
     // The co-founder conversation outranks everything else late-game: it now
     // sits on the founder's thread, where founder_codebuild (which a decent
     // player never answers) can otherwise squat the slot until the deadline.
@@ -103,6 +103,7 @@
     pivot_day_close: ["night"],
     pivot_scope_call: ["cut"], pivot_beta_invite: ["invite"],
     pivot_relaunch: ["sarah_event", "press", "quiet"], pivot_fifty_verdict: ["pivot_now"],
+    pivot_relaunch_rough: ["wait"],
     pivot_payoff_maya: ["ack"],
     sarah_intro: ["reply"],
     beachhead_choice: ["narrow"], launch_surface: ["quiet"], launch_scramble: ["firefight"],
@@ -111,7 +112,7 @@
     bug_reports: ["fix"], churn_interview: ["call"], feature_request_custom: ["negotiate"],
     feature_cluster: ["build"],
     jordan_drift_start: ["talk"], jordan_drag: ["talk"], jordan_launch_blocker: ["confront"],
-    jordan_confrontation: ["fire"], jordan_cap_table: ["lawyer"],
+    jordan_confrontation: ["fire"], jordan_cap_table: ["lawyer", "defer"],
     firing_open: ["own"], firing_restate: ["say_it"], firing_reentry: ["finish"],
     firing_preempt: ["nothing"], firing_reaction: ["ask", "hold"],
     firing_ask_finish: ["hold_informed"], firing_counter: ["buy_handoff"],
@@ -148,6 +149,7 @@
     demo_stall: "build", launch_stall: "build", scope_grind: "build",
     feature_spree: "build", bug_reports: "build", feature_request_custom: "build",
     feature_cluster: "build", pivot_relaunch: "build", pivot_fifty_verdict: "build",
+    pivot_relaunch_rough: "build",
     pivot_scope_call: "build",
     founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
     jordan_launch_blocker: "build",
@@ -345,8 +347,23 @@
     outside_only: { chooser: onlyChars(OUTSIDE), blurb: "all market, no team, no build" },
     fulltime: { chooser: withPrefs({ alex_commitment: ["push"] }),
       blurb: "pushes Alex to commit full-time instead of accepting part-time" },
-    keep_jordan: { chooser: withPrefs({ jordan_confrontation: ["defer"] }),
-      blurb: "never has the Jordan conversation" },
+    // The keep-vs-fire ladder. `decent` is the top rung (fires at the first
+    // ask); these two are the rungs below it. Both must still reach a shipped
+    // v2 — a founder who won't have the conversation ships around Jordan on
+    // Alex's stand-in screen rather than never relaunching at all.
+    keep_jordan: { chooser: withPrefs({
+        jordan_confrontation: ["defer"], pivot_relaunch_rough: ["ship_rough"],
+      }), blurb: "never has the Jordan conversation — ships around her instead" },
+    // Lets it slide twice before having it: the same conversation, three weeks
+    // and a chunk of runway later. Per-game closure state, so `makeChooser`
+    // (called once per game) rather than a shared `chooser`.
+    fire_late: { makeChooser: () => {
+        let deferrals = 0;
+        return withPrefs({
+          jordan_confrontation: () => (deferrals++ < 1 ? ["defer"] : ["fire"]),
+          pivot_relaunch_rough: ["wait"],
+        });
+      }, blurb: "lets the Jordan conversation slide once, then has it" },
     skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"], firing_logistics: ["defer"] }),
       blurb: "fires Jordan but never does the paperwork" },
     fold_jordan: { chooser: withPrefs({ firing_reaction: ["fold"], firing_reentry: ["fold_again"] }),
@@ -360,6 +377,12 @@
     // tier-3 reaction and the pre-emptive resignation.
     ghost_jordan: { chooser: withPrefs({
         jordan_working_style: null, slide_jordan_echo: null, pivot_beta_invite: null,
+        // pivot_open too: Jordan flagging user feedback is exactly the
+        // not-build-critical card this archetype is defined by leaving on read.
+        // It also keeps her tier-3 reaction reachable — the firing now lands
+        // early enough to close pivot_beta_invite's window before it can time
+        // out, which used to supply the third ignored card on its own.
+        pivot_open: null,
         firing_open: ["litigate"],
       }), blurb: "leaves Jordan on read all run, then opens with the charge sheet" },
     // Opens the firing by hiding behind Alex — exercises firing_restate, the

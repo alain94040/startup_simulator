@@ -414,6 +414,53 @@ every branch of the scene is exercised by some run.
 compromise costs ~10 points, which an otherwise-perfect run absorbs. Whether
 blinking should be able to cost the batch is a dial, not a bug.
 
+## Pass 7 — the firing moves inside the rebuild
+
+**The problem.** GOALS.md says firing Jordan is required to win; `keep_jordan`
+won 100% at grade 97. Pass 5c diagnosed why — *"the firing normally happens
+after v2 ships anyway"* — and measurement confirmed it: Jordan was fired after
+v2 shipped in **120/120** seeds. The firing scene's own text assumed the
+opposite (`firing_counter` offers to rescue a relaunch that already happened;
+forcing that branch, 40/40 runs paid $3,000 for already-merged work and the
+payoff message was suppressed by its own `unless`).
+
+**The fix is a boolean, not arithmetic.** The rebuild effort math was inert
+anyway — a ±2.3 swing from `pivot_scope_call` moved the ship week by zero, and
+`plans_ui` landed wk 21 in 40/40 runs (range 21-21). So `world.js` now simply
+refuses to complete `plans_ui` while Jordan is drifting and on the team. Her
+screen is the one v2 is built around; Alex's half lands, hers doesn't, and the
+drag is visible on the to-do gauge instead of narrated. `pivot_relaunch_rough`
+is the escape hatch so refusing the conversation is costly, not fatal.
+
+**Four bugs found on the way**, all pre-existing and all exposed by the tighter
+timing:
+- **Soft-lock.** A quit leaves `jordan_resolved` false, so `jordan_confrontation`
+  stayed eligible and re-entered the firing scene with an inactive Jordan — no
+  beat could surface, the scene never exited, and it held every other slot for
+  the rest of the run. All four drift-arc gates now close on `jordan_quit` too.
+- **Dead-end deferral.** `jordan_confrontation:defer` cleared
+  `jordan_confrontation_triggered`, and the fallback gate needed drift+8 — week
+  28 on a 25-week horizon. Deferring once silently ended the arc. Now drift+3.
+- **Unreachable cleanup.** `jordan_cap_table` gated on `jordan_resolved`, but
+  `jordanLeaves` sets `jordan_cleanup_needed` on the quit path too — so a
+  founder Jordan quit on was scored for a dirty cap table with no card to fix it.
+- **Bankruptcy trap.** The $2,000 lawyer bill lands the week after the firing,
+  before the relaunch has earned anything; paying it out of a $2k balance ended
+  7/25 good runs. The option is now gated on surviving it.
+
+**Measured.** Phase map: *Pivot committed → Jordan let go +1 → Pivot shipped
++2* (was: shipped before she left). Dead air unchanged at 4%, longest quiet run
+1 week. Behavior contracts **45/47** (was 34/37) with ten new keep-vs-fire
+contracts; `keep_jordan v2 ships later` is green. Ladder: decent ships wk 21 at
+grade 98 · `fire_late` wk 23 at 96 · `keep_jordan` wk 23 degraded at 86.
+
+**Open balance question.** `keep_jordan` sits at **68%** wins against a design
+target of 20-30%. It asymptotes there: the traction bar asks for only ONE paying
+customer, and the YC grade bar (80) sits below where nearly every archetype
+lands (see `no_pivot` 87, `full_plan` 82 — both 0% wins on traction alone).
+Closing the rest is a calibration change to those two bars, not to the Jordan
+arc, so the contract is left failing and documented rather than tuned around.
+
 ## Open items (next passes)
 - **Re-balance** (tools now exist): the angel round win path, the Marcus
   warmth soft-lock, the demo→launch gap, the action-starvation tail. Drive with

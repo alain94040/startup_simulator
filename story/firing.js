@@ -158,7 +158,9 @@
             // been free in a month, and she is asking about tomorrow. That is
             // the whole beat: you have to answer this with something else.
             id: "firing_open", char: "jordan",
-            text: "hey! good timing — i just pushed the plans screen to staging. it's rough but the flow works end to end. first clear evening i've had in weeks.\n\nwant me to walk you through it tomorrow?",
+            text: (s) => s.activities_pivot
+              ? "hey — i know. the plans screen. i've been rubbish about it and i'm not going to pretend otherwise.\n\ni've blocked out the whole weekend for it, properly this time. no work stuff, no excuses. i'll have something you can click by sunday.\n\nsound okay?"
+              : "hey! good timing — i just pushed the ios build to testflight. it's rough but the flow works end to end. first clear evening i've had in weeks.\n\nwant me to walk you through it tomorrow?",
             when: {
               took: ["jordan_confrontation:fire"],
               if: (s) => !s.jordan_compromised,
@@ -348,7 +350,10 @@
 
           {
             id: "firing_counter", char: "jordan",
-            text: "one thing before shares. the plans UI is half built and most of it is in my head, not in the repo.\n\nlet me finish it as a contractor. three weeks, $3k, then i'm gone clean. you relaunch on time and alex doesn't have to learn my code with a deadline on his neck.",
+            text: (s) => (s.activities_pivot
+              ? "one thing before shares. the plans UI is barely started, and what there is of it is in my head, not the repo — the flows, the empty states, why the board is grouped the way it is."
+              : "one thing before shares. the plans UI is half built and most of it is in my head, not in the repo.")
+              + "\n\nlet me finish it as a contractor. three weeks, $3k, then i'm gone clean. you relaunch on time and alex doesn't have to learn my code with a deadline on his neck.",
             when: { took: [["firing_reaction:hold", "firing_ask_finish:hold_informed"]] },
             choices: [
               {
@@ -446,7 +451,7 @@
                 reply: "one more thing. the intake screen — the one your sister screenshotted into her group chat — is still the only organic share this company has ever had. that was you. tonight doesn't erase it.",
                 journal: (s) => "Told Jordan tonight, myself, in her thread. She wasn't surprised and she didn't pretend to be. Her "
                   + pctOf(s) + " gets papered this week; Alex has iOS from Monday. She's writing the handoff up before she goes dark.",
-                effects: { scene: null },
+                effects: { scene: null, surface: "pivot_relaunch" },
                 fx(s, e) {
                   s.jordan_handoff = true;
                   e.say({ char: "jordan", text: "…thanks. that lands better than you'd think." });
@@ -459,7 +464,7 @@
                 reply: "that's everything. i'll send the paperwork.",
                 journal: (s) => "Told Jordan tonight, myself, in her thread. She wasn't surprised and she didn't pretend to be. Her "
                   + pctOf(s) + " gets papered this week; Alex has iOS from Monday.",
-                effects: { scene: null, say: { char: "jordan", text: "okay. goodnight." } },
+                effects: { scene: null, surface: "pivot_relaunch", say: { char: "jordan", text: "okay. goodnight." } },
                 fx: (s, e) => jordanLeaves(s, e, "exit"),
               },
             ],

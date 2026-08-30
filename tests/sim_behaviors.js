@@ -29,13 +29,23 @@ function runStrategy(name, spec) {
   let errors = 0;
   for (let i = 0; i < N; i++) {
     const seed = 1000 + i;
-    const m = { moraleWk3: null, moraleWk10: null };
+    const m = { moraleWk3: null, moraleWk10: null,
+      plansUiWk: null, firedWk: null, blockedWeeks: 0, degraded: false, uiAfterFiring: false };
     try {
       const g = H.playGame(seed, spec.makeChooser ? spec.makeChooser(seed) : spec.chooser, {
         priority: spec.priority ? spec.priority(seed) : undefined,
         onWeekStart(game) {
           if (game.s.week === 3) m.moraleWk3 = game.cast.get("alex").morale;
           if (game.s.week === 10) m.moraleWk10 = game.cast.get("alex").morale;
+          // The drag, measured: Jordan owns plans_ui after the pivot and it
+          // cannot land while she is drifting and still on the team. The
+          // ordering of plansUiWk vs firedWk is the whole point of the arc.
+          const st = game.s;
+          const ui = st.items && st.items.plans_ui;
+          if (m.plansUiWk == null && ui && ui.status === "done") m.plansUiWk = st.week;
+          if (m.firedWk == null && (st.jordan_resolved || st.jordan_quit)) m.firedWk = st.week;
+          if (ui && ui.status === "todo" && st.jordan_blocking_ui
+              && !st.jordan_resolved && !st.jordan_quit) m.blockedWeeks++;
         },
       });
       const s = g.s;
@@ -45,10 +55,18 @@ function runStrategy(name, spec) {
       m.demoWk = g.weekOf("demo_ready");
       m.pivoted = !!s.activities_pivot;
       m.v2 = !!s.pivot_shipped;
-      m.v2Wk = m.v2 ? g.weekOf("pivot_relaunch") : null;
+      m.v2Wk = m.v2 ? (g.weekOf("pivot_relaunch") != null
+        ? g.weekOf("pivot_relaunch") : g.weekOf("pivot_relaunch_rough")) : null;
       m.qualified = !!(s.launched && s.pivot_shipped && s.customers >= 1);
       m.alexLeft = !g.cast.get("alex").active;
+      if (m.plansUiWk == null && s.items && s.items.plans_ui
+        && s.items.plans_ui.status === "done") m.plansUiWk = s.week;
+      if (m.firedWk == null && (s.jordan_resolved || s.jordan_quit)) m.firedWk = s.week;
       m.jordanFired = !!s.jordan_resolved;
+      m.degraded = !!s.pivot_shipped_rough;
+      // Did her screen land only after she left? (Both null = never
+      // shipped, which contract 3 catches separately.)
+      m.uiAfterFiring = m.firedWk != null && (m.plansUiWk == null || m.plansUiWk >= m.firedWk);
       m.jordanQuit = !!s.jordan_quit;
       m.itemsDone = Object.values(s.items || {}).filter(it => it && it.status === "done").length;
       m.grade = g.gradeScore();
@@ -69,6 +87,10 @@ function runStrategy(name, spec) {
     qualified: share(m => m.qualified), alexLeft: share(m => m.alexLeft),
     jordanFired: share(m => m.jordanFired),
     jordanQuit: share(m => m.jordanQuit),
+    degraded: share(m => m.degraded),
+    uiAfterFiring: share(m => m.uiAfterFiring),
+    meanPlansUiWk: avg(m => m.plansUiWk), meanFiredWk: avg(m => m.firedWk),
+    meanBlockedWeeks: avg(m => m.blockedWeeks),
     priyaSeen: share(m => m.priya == null ? m.launched : m.priya), // filled below for no_meetup
     meanDemoWk: avg(m => m.demoWk), meanLaunchWk: avg(m => m.launchWk),
     meanV2Wk: avg(m => m.v2Wk), itemsDone: avg(m => m.itemsDone),
@@ -154,8 +176,54 @@ check(`keep_jordan.jordanFired = ${S.keep_jordan.jordanFired}% (expected 0 — n
 check(`decent.jordanFired (${S.decent.jordanFired}%) >= 80%`, S.decent.jordanFired >= 80);
 check(`keep_jordan v2 ships later: wk ${r1(S.keep_jordan.meanV2Wk)} > decent wk ${r1(S.decent.meanV2Wk)}`,
   (S.keep_jordan.meanV2Wk || Infinity) > S.decent.meanV2Wk);
+// OPEN BALANCE TODO (see revamp.md): the design target is "costly but
+// survivable" at 20-30%. The reorder moved this from 100% to ~70% — v2 ships
+// later, degraded, and converts at half — but it asymptotes there because the
+// traction bar only asks for ONE paying customer and the YC grade bar (80) sits
+// below where nearly every archetype lands. Closing the rest is a calibration
+// change to those two bars, not to the Jordan arc, so it is left documented
+// rather than tuned around.
 check(`keep_jordan.wins (${S.keep_jordan.wins}%) <= half of decent.wins (${S.decent.wins}%)`,
   S.keep_jordan.wins <= S.decent.wins / 2);
+
+// G1b · the mechanism itself: Jordan owns the plans UI after the pivot, and it
+// must not land while she is drifting and still on the team. If these fail the
+// drag is narrated but not real, and the firing goes back to arriving after the
+// work is already done.
+check(`decent: plans UI lands only after Jordan leaves (${S.decent.uiAfterFiring}% of runs) >= 80%`,
+  S.decent.uiAfterFiring >= 80);
+check(`decent: plans UI sat blocked ${r1(S.decent.meanBlockedWeeks)} wks >= 2 (Alex has something to escalate about)`,
+  S.decent.meanBlockedWeeks >= 2);
+
+// G1c · ANTI-SOFT-LOCK. Blocking plans_ui on Jordan is what makes the drag
+// real; it must never make a run unshippable. A founder who refuses the
+// conversation ships around her on Alex's stand-in screen (pivot_relaunch_rough)
+// — worse product, worse card, but a shipped v2. If this one fails, fix the
+// degraded relaunch before anything else in this suite.
+check(`keep_jordan still ships v2 (${S.keep_jordan.v2}%) >= 80% — no soft-lock`,
+  S.keep_jordan.v2 >= 80);
+check(`keep_jordan ships the degraded relaunch (${S.keep_jordan.degraded}%) >= 80%`,
+  S.keep_jordan.degraded >= 80);
+check(`keep_jordan.grade (${r1(S.keep_jordan.grade)}) < decent.grade (${r1(S.decent.grade)}) - 5`,
+  S.keep_jordan.grade < S.decent.grade - 5);
+
+// G1d · the ladder: never fire < fire late < fire promptly. Dealing with it
+// earlier must ship earlier and score at least as well, or the arc teaches
+// nothing about timing.
+check(`fire_late.jordanFired (${S.fire_late.jordanFired}%) >= 80% — gets there eventually`,
+  S.fire_late.jordanFired >= 80);
+check(`fire_late v2 later than decent: wk ${r1(S.fire_late.meanV2Wk)} > ${r1(S.decent.meanV2Wk)}`,
+  (S.fire_late.meanV2Wk || Infinity) > S.decent.meanV2Wk);
+check(`fire_late.grade (${r1(S.fire_late.grade)}) <= decent.grade (${r1(S.decent.grade)})`,
+  S.fire_late.grade <= S.decent.grade);
+check(`ladder holds: keep (${r1(S.keep_jordan.grade)}) <= fire_late (${r1(S.fire_late.grade)}) <= decent (${r1(S.decent.grade)})`,
+  S.keep_jordan.grade <= S.fire_late.grade && S.fire_late.grade <= S.decent.grade);
+
+// G1e · no perverse incentive: ghosting Jordan all run and THEN firing her must
+// stay worse than engaging with her and then firing. Without this the change
+// teaches "cut people fast" instead of "have the hard conversation early".
+check(`ghost_jordan.grade (${r1(S.ghost_jordan.grade)}) < decent.grade (${r1(S.decent.grade)})`,
+  S.ghost_jordan.grade < S.decent.grade);
 
 // G2 · the compromise (new with the firing scene): reaching the room and
 // blinking is worse than deferring, not better. She resigns on her own, so the

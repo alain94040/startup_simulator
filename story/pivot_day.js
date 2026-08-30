@@ -38,6 +38,10 @@
     }
     s.items.plans_matching = { status: "active", quality: null, assignee: "alex" };
     s.items.plans_ui = { status: "todo", quality: null, assignee: "jordan" };
+    // Her screen is blocked from the moment the pivot lands, not from the week
+    // Alex finally says so (story/jordan_arc.js jordan_drift_start). Skipped on
+    // a late pivot she is no longer around for.
+    if (!s.jordan_resolved && !s.jordan_quit) s.jordan_blocking_ui = true;
   }
 
   // The player plays an evidence chip and Alex responds in character.
@@ -263,7 +267,13 @@
                 key: "night", label: "Thank her — long day, right call",
                 reply: "thank you for today. whichever way it goes — that was the most useful room this company has ever been in.",
                 journal: "Pivot day ended after dark. Whiteboard full, coffee cold, decision made. Whatever happens next, that room was the most useful eight hours this company has spent.",
-                effects: { scene: null },
+                // The decision made in this room is what obsoletes Jordan's
+                // work, so Alex's message about it lands the same night rather
+                // than at the next week boundary — the same idiom incorporation
+                // uses to open the equity question. Degrades gracefully: if his
+                // slot is still holding a pre-summit card, it arrives at the
+                // boundary like anything else.
+                effects: { scene: null, surface: "jordan_drift_start" },
               },
             ],
           },
@@ -277,9 +287,11 @@
         id: "pivot_summit_call", char: "founder",
         text: (s, e) => "A month since launch and the graph only goes down — every push bought a bump, every bump evaporated. Two explanations on the table. Alex: the product is fine, there just aren't enough users yet. Priya: more users won't help — every match hits a dead end. You can't chase both. With " + e.runwayWeeks + " weeks of cash left, you get to be wrong exactly once. Clear Saturday. Get them both in a room. Settle it.",
         when: {
-          // Delay 4 (was 3): the trough gets a real stretch of falling numbers
-          // and failed fixes before the diagnosis room convenes.
-          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored"]], delay: 4,
+          // Delay 3: the trough still gets a stretch of falling numbers and
+          // failed fixes, but the rebuild now stalls behind Jordan's screen —
+          // that week has to come from somewhere, and the evidence chips are
+          // fully banked by then anyway (they saturate a week before the room).
+          took: [["good_enough_launch:ship", "jordan_launch_blocker:web_only", "jordan_launch_blocker:@ignored"]], delay: 3,
           if: (s, e) => !s.activities_pivot && !s.pivot_summit_done && !s.pivot_deferred
             && e.cast.get("priya").active,
         },
@@ -382,7 +394,7 @@
         id: "pivot_relaunch", char: "founder",
         text: (s) => "Alex's message is three words: 'staging is green.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the new screens are in. This is a different product wearing the same name — and how it meets the world is your call.",
         when: {
-          cooldown: 2,
+          cooldown: 1,
           if: (s, e) => e.chapter === 4
             && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
             && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved || s.jordan_quit),
@@ -431,6 +443,54 @@
           },
         ],
         timeout: { weeks: 3, effects: { char: { alex: { morale: -10 } } } },
+      },
+      {
+        // The escape hatch, and the reason keeping Jordan is costly rather than
+        // fatal. Her screen is never going to land (world.js holds plans_ui
+        // while she is drifting and still on the team), so after three weeks of
+        // that, Alex offers to ship around her: his own stub instead of the
+        // screen v2 was designed around.
+        //
+        // Deliberately a STANDING OFFER (no timeout): a card that resolves
+        // itself could leave a run with no way to ever relaunch. `cooldown`
+        // brings it back after a "wait" so the choice is never spent.
+        id: "pivot_relaunch_rough", char: "founder",
+        text: "Alex has said the same sentence three weeks running: staging is green except for the plans screen. He's stopped asking about it. Instead there's a new message — he's built a stripped-down version of the screen himself, from what he could infer. 'it's ugly and it's missing half of what she scoped. but it works, and it means we can ship. your call.'",
+        when: {
+          cooldown: 1,
+          if: (s, e) => e.chapter === 4
+            && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
+            && s.items.plans_ui && s.items.plans_ui.status === "todo"
+            && s.jordan_blocking_ui && !s.jordan_resolved && !s.jordan_quit
+            && e.weeksSince("jordan_drift_start") >= 4,
+        },
+        choices: [
+          {
+            key: "ship_rough", label: "Ship it — Alex's version, as is",
+            reply: "ship it. an ugly screen in front of users beats a beautiful one nobody is writing.", replyTo: "alex",
+            journal: "Relaunched v2 on Alex's stand-in for the plans screen — ugly, half the scope, built by the wrong person on top of his own work. It shipped. It shipped worse than it should have, because the person who owned that screen never wrote it and I never had the conversation.",
+            fx(s, e) {
+              s.pivot_shipped = true;
+              s.pivot_shipped_rough = true;
+              if (s.items && s.items.plans_ui) { s.items.plans_ui.status = "done"; s.items.plans_ui.quality = "rough"; }
+              s.users += 1;
+              s.signal = clamp(s.signal + 2, 0, 100);
+              // A sixth of the worst deliberate relaunch's fit lift (quiet, +24).
+              // v2's whole thesis IS the plans screen; a stand-in for it is not
+              // the pivot shipping, it is the pivot being approximated.
+              s.market_fit = clamp(s.market_fit + 4, 0, 100);
+              e.say({ char: "alex", text: "it's live. i'm not proud of that screen. it's the best i could do around someone who's still on the team." });
+              return "V2 is live on a screen Alex reverse-engineered in his spare hours. It works. It is visibly not the product you designed at the whiteboard.";
+            },
+          },
+          {
+            key: "wait", label: "No — Jordan's screen, or nothing",
+            reply: "no. that screen is the product. i'd rather wait for the real one.", replyTo: "alex",
+            journal: "Told Alex to hold the relaunch for Jordan's screen. Another week of a finished backend sitting behind an empty branch.",
+            effects: { char: { alex: { morale: -10 } } },
+            fx: () => "Alex didn't argue. Another week of a finished backend sitting behind an empty branch.",
+          },
+        ],
       },
       {
         // The redemption card: three weeks after choosing growth (or the hedge),

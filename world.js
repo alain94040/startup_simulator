@@ -80,7 +80,27 @@
         const pivotEffort = teamEffort - s.pivot_effort_base;
         if (pivotEffort >= 3.0 && s.items.plans_matching && s.items.plans_matching.status === "active")
           s.items.plans_matching.status = "done";
-        if (pivotEffort >= 4.5 && s.items.plans_ui && s.items.plans_ui.status === "todo")
+        // The plans UI is Jordan's piece (applyActivitiesPivot assigns it to
+        // her). While she is drifting and still on the team it does NOT land,
+        // no matter how much effort the team accrues — that is the whole drag:
+        // the pivot obsoleted her old work, she owns the one new screen, and
+        // she is not delivering it. Alex's half (plans_matching, above) still
+        // completes, so the to-do gauge shows his item check off and hers sit
+        // open. Firing her hands it to Alex (story/firing.js reassign) and
+        // pivot_relaunch's gate stops asking for it.
+        const jordanBlocking = s.jordan_blocking_ui && !s.jordan_resolved && !s.jordan_quit;
+        // Every week Alex holds a finished backend behind an empty branch costs
+        // him something. It is the one number the player watches that says the
+        // drag is real, it compounds the longer the conversation is dodged, and
+        // it feeds the "keep your co-founders close" lesson on the report card.
+        // Floored well above the departure thresholds in story/team.js — this
+        // wears him down, it does not make him walk.
+        if (jordanBlocking && s.items.plans_ui && s.items.plans_ui.status === "todo") {
+          const alex = game.cast.get("alex");
+          if (alex && alex.morale != null) alex.morale = Math.max(35, alex.morale - 4);
+        }
+        if (pivotEffort >= 4.5 && !jordanBlocking
+            && s.items.plans_ui && s.items.plans_ui.status === "todo")
           s.items.plans_ui.status = "done";
       }
     }
@@ -130,8 +150,13 @@
 
     // True product-market fit: pre-pivot the raw score overstates reality.
     if (s.activities_pivot && s.fit_at_pivot == null) s.fit_at_pivot = s.market_fit;
+    // Shipping v2 on Alex's stand-in for the plans screen is not the pivot
+    // landing — it is the pivot approximated. Raw market_fit saturates at 100
+    // in most runs, so the relaunch's own fit bump can't express the
+    // difference; the honest place for it is what the product converts at.
+    const roughShipPenalty = s.pivot_shipped_rough ? 0.5 : 1;
     const trueFit = Math.max(0,
-      s.pivot_shipped ? s.market_fit
+      s.pivot_shipped ? s.market_fit * roughShipPenalty
         : s.activities_pivot ? s.fit_at_pivot * 0.3 + (s.market_fit - s.fit_at_pivot) * 0.5
           : s.market_fit / 6);
 
