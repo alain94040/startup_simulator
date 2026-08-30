@@ -266,7 +266,11 @@
 
     collectMessages(); // week-1 surfacing
     for (let w = 0; w < weeks && !game.s.game_over && !game.s.game_won; w++) {
-      if (opts.subsidy) game.s.cash += opts.subsidy;
+      if (opts.subsidy) {
+        const cashBefore = game.s.cash;
+        game.s.cash += opts.subsidy;
+        game._tx("Debug subsidy", cashBefore, { type: "income" });
+      }
       if (opts.onWeekStart) opts.onWeekStart(game, game.openActions());
       if (hit()) return game;
 
