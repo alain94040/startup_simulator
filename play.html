@@ -64,6 +64,8 @@
   #debug button { border: 1px solid #444; background: #2c2c2e; color: #ddd; border-radius: 6px; padding: 3px 9px; font-size: 12px; cursor: pointer; }
   #debug button:hover { background: #3a3a3c; }
   #debug input { width: 70px; background: #2c2c2e; border: 1px solid #444; color: #ddd; border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+  #debug input[type=checkbox] { width: auto; }
+  #debug label { display: inline-flex; align-items: center; gap: 4px; }
 </style>
 </head>
 <body>
@@ -89,6 +91,7 @@
   <summary>debug</summary>
   <div class="tools">
     seed <input id="dbgSeed" type="number" value="">
+    <label><input type="checkbox" id="dbgIgnoreCash" checked> ignore negative cash</label>
     <button data-jump="equity_open">equity talk</button>
     <button data-jump="dev_plan">dev plan</button>
     <button data-jump="demo_ready">demo night</button>
@@ -201,17 +204,26 @@
     const v = parseInt($("dbgSeed").value, 10);
     return Number.isFinite(v) ? v : seed;
   };
+  // Ignores the cash-hits-$0 lose condition while the debug tab is doing the
+  // advancing (a jump, a skip) — never while the player is actually playing.
+  const dbgIgnoreCash = () => $("dbgIgnoreCash").checked;
   for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     btn.onclick = () => {
       seed = dbgSeed();
       // Suppresses the cash-hits-$0 lose condition so a late jump survives a
       // bankrupt stretch of simulated play without needing a cash subsidy.
-      game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
+      game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: dbgIgnoreCash() });
+      game.debugKeepAlive = false; // the jump is over — real play means real cash rules
       $("over").style.display = "none";
       render();
     };
   }
-  $("dbgSkip").onclick = () => { for (let i = 0; i < 5 && !game.s.game_over; i++) game.nextWeek(); render(); };
+  $("dbgSkip").onclick = () => {
+    game.debugKeepAlive = dbgIgnoreCash();
+    for (let i = 0; i < 5 && !game.s.game_over; i++) game.nextWeek();
+    game.debugKeepAlive = false; // back to real cash rules once the skip is done
+    render();
+  };
   $("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); $("over").style.display = "none"; render(); };
 
   render();

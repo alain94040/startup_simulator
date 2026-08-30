@@ -172,9 +172,10 @@
       }
     }
     // Lose condition: cash hitting $0 (losing the technical co-founder ends
-    // the run on the spot elsewhere, in story/team.js). Debug jumps opt out
-    // via game.debugKeepAlive so a synthetic playthrough can reach a late
-    // scene without needing a cash subsidy to survive the trip.
+    // the run on the spot elsewhere, in story/team.js). game.debugKeepAlive
+    // is a transient flag the debug tab sets only while it's the one driving
+    // play forward (a jump, a skip) — see game.html/play.html — so a real
+    // player answering messages is never exempt from going broke.
     if (s.cash <= 0 && !game.debugKeepAlive) s.game_over = true;
   }
 

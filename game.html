@@ -598,6 +598,8 @@
   #debug .tools { padding: 6px 14px 10px; display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   #debug button { border: 1px solid #444; background: #2c2c2e; color: #ddd; border-radius: 6px; padding: 3px 9px; font-size: 12px; }
   #debug input { width: 74px; background: #2c2c2e; border: 1px solid #444; color: #ddd; border-radius: 6px; padding: 3px 6px; font-size: 12px; }
+  #debug input[type=checkbox] { width: auto; }
+  #debug label { display: inline-flex; align-items: center; gap: 4px; }
 </style>
 </head>
 <body>
@@ -659,6 +661,7 @@
   <summary>debug</summary>
   <div class="tools">
     seed <input id="dbgSeed" type="number">
+    <label><input type="checkbox" id="dbgIgnoreCash" checked> ignore negative cash</label>
     <button data-jump="equity_open">equity</button>
     <button data-jump="dev_plan">dev plan</button>
     <button data-jump="demo_ready">demo night</button>
@@ -2162,6 +2165,9 @@ function render() {
 // ── debug ─────────────────────────────────────────────────────────────────────
 $("dbgSeed").value = seed;
 const dbgSeed = () => { const v = parseInt($("dbgSeed").value, 10); return Number.isFinite(v) ? v : seed; };
+// Ignores the cash-hits-$0 lose condition while the debug tab is doing the
+// advancing (a jump, a skip) — never while the player is actually playing.
+const dbgIgnoreCash = () => $("dbgIgnoreCash").checked;
 function dbgReset() {
   clearTimeout(revealTimer); clearTimeout(noteTimer); noteTimer = null;
   egClearTimers(); egDone = true;
@@ -2172,7 +2178,8 @@ function dbgReset() {
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   btn.onclick = () => {
     seed = dbgSeed();
-    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
+    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: dbgIgnoreCash() });
+    game.debugKeepAlive = false; // the jump is over — real play means real cash rules
     resetUiState(); dbgReset();
     // leave fresh arrivals unread so the state reads naturally, but the thread
     // you land on is read (like opening the app on your current chat)
@@ -2181,18 +2188,26 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     render();
   };
 }
-$("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
+$("dbgSkip").onclick = () => {
+  if (uiBusy) return;
+  game.debugKeepAlive = dbgIgnoreCash();
+  for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek();
+  game.debugKeepAlive = false; // back to real cash rules once the skip is done
+  resetUiState(); render(); checkEndgame();
+};
 // Auto-play decent runs from the seed box until one reaches the deadline
 // having been accepted into YC (grade decided it), then jump to its reveal.
 $("dbgYC").onclick = () => {
   const base = dbgSeed();
-  let g = Harness.playGame(base, "decent"), used = base;
+  const keepAlive = dbgIgnoreCash();
+  let g = Harness.playGame(base, "decent", { debugKeepAlive: keepAlive }), used = base;
   for (let i = 1; i < 200 && !g.s.ycAccepted; i++) {
     used = base + i;
-    g = Harness.playGame(used, "decent");
+    g = Harness.playGame(used, "decent", { debugKeepAlive: keepAlive });
   }
   seed = used; $("dbgSeed").value = used;
   game = g;
+  game.debugKeepAlive = false; // landed — real play means real cash rules
   resetUiState(); dbgReset(); render(); checkEndgame();
 };
 $("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); resetUiState(); dbgReset(); render(); };
