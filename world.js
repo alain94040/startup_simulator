@@ -161,7 +161,9 @@
       const qualified = s.launched && s.pivot_shipped && s.customers >= 1;
       if (qualified && grade != null && grade >= YC_ADMISSION_GRADE) {
         s.ycAccepted = true;
+        const cashBefore = s.cash;
         s.cash += 500000;
+        game._tx("YC", cashBefore, { type: "income" });
         s.signal = Math.min(100, s.signal + 25);
         s.game_won = true;
       } else {
