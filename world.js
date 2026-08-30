@@ -172,8 +172,10 @@
       }
     }
     // Lose condition: cash hitting $0 (losing the technical co-founder ends
-    // the run on the spot elsewhere, in story/team.js).
-    if (s.cash <= 0) s.game_over = true;
+    // the run on the spot elsewhere, in story/team.js). Debug jumps opt out
+    // via game.debugKeepAlive so a synthetic playthrough can reach a late
+    // scene without needing a cash subsidy to survive the trip.
+    if (s.cash <= 0 && !game.debugKeepAlive) s.game_over = true;
   }
 
   const api = { tick, AUTO_BUILD_INCREMENT };

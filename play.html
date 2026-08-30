@@ -204,8 +204,9 @@
   for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     btn.onclick = () => {
       seed = dbgSeed();
-      // The subsidy keeps late jumps from dying of the (unbalanced) cash gap.
-      game = Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
+      // Suppresses the cash-hits-$0 lose condition so a late jump survives a
+      // bankrupt stretch of simulated play without needing a cash subsidy.
+      game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
       $("over").style.display = "none";
       render();
     };

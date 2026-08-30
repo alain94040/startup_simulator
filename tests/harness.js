@@ -235,11 +235,14 @@
   }
 
   // ── the game loop ───────────────────────────────────────────────────────────
-  // opts: { weeks=120, subsidy, priority, onWeekStart(game, offered),
+  // opts: { weeks=120, subsidy, debugKeepAlive, priority, onWeekStart(game, offered),
   //         onNewMessages(game, msgs), onAct(game, action, key), until(game) }
   // `onAct` fires immediately after each `game.act`, with the pre-act action
   // snapshot (body + the options that were on offer) — that's how transcript.js
   // reconstructs "what was chosen, and what wasn't".
+  // `debugKeepAlive` suppresses the cash-hits-$0 lose condition for the life of
+  // the returned game (see world.js) — for a debug jump that needs to survive
+  // a bankrupt stretch of simulated play without a cash subsidy propping it up.
   // Returns the game, with `game.seenOptions[nodeId]` = options offered when a
   // node first surfaced (for option-gating assertions).
   function playGame(seed, driver, opts) {
@@ -248,6 +251,7 @@
     const chooser = makeChooser(driver, seed);
     const pri = opts.priority || actPriority;
     const game = new Game({ seed });
+    if (opts.debugKeepAlive) game.debugKeepAlive = true;
     game.seenOptions = {};
     const cursors = {};
     for (const id of game.order) cursors[id] = 0;

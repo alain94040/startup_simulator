@@ -2172,7 +2172,7 @@ function dbgReset() {
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   btn.onclick = () => {
     seed = dbgSeed();
-    game = Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
+    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
     resetUiState(); dbgReset();
     // leave fresh arrivals unread so the state reads naturally, but the thread
     // you land on is read (like opening the app on your current chat)
