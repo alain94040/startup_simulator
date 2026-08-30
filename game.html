@@ -665,9 +665,10 @@
     <button data-jump="good_enough_launch">launch day</button>
     <button data-jump="slide_hangover">the slide</button>
     <button data-jump="pivot_summit_call">pivot day</button>
-    <button data-jump="pivot_relaunch">post-pivot</button>
     <button data-jump="jordan_confrontation">the firing</button>
-    <button data-jump="seed_pitch">fundraising</button>
+    <button data-jump="pivot_relaunch">v2 relaunch</button>
+    <button data-jump="pivot_relaunch_rough" data-driver="keep_jordan">…without firing her</button>
+    <button data-jump="sarah_intro">Sarah / relaunch stage</button>
     <button id="dbgSkip">+5 weeks</button>
     <button id="dbgYC">→ YC result</button>
     <button id="dbgRestart">restart</button>
@@ -2172,7 +2173,11 @@ function dbgReset() {
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   btn.onclick = () => {
     seed = dbgSeed();
-    game = Harness.jumpTo(btn.dataset.jump, { seed, subsidy: 600 });
+    const strat = btn.dataset.driver && Harness.STRATEGIES[btn.dataset.driver];
+    game = Harness.jumpTo(btn.dataset.jump, {
+      seed, subsidy: 600,
+      driver: strat ? (strat.makeChooser ? strat.makeChooser(seed) : strat.chooser) : undefined,
+    });
     resetUiState(); dbgReset();
     // leave fresh arrivals unread so the state reads naturally, but the thread
     // you land on is read (like opening the app on your current chat)
