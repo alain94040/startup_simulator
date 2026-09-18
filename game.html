@@ -747,42 +747,36 @@
     /* ── scenes: the room, on one column ──
        The rail becomes a strip of faces across the top — who is in the room,
        who just texted — and the open thread takes the rest of the screen. */
-    .sc-head { padding: calc(9px + env(safe-area-inset-top)) 16px 8px; }
+    .sc-head { padding: calc(8px + env(safe-area-inset-top)) 16px 8px; }
     .sc-head .sc-title { font-size: 15px; }
     .sc-head .sc-sub { font-size: 11.5px; }
     .sc-head .sc-focusnote { font-size: 10px; margin-top: 4px; }
+    /* A room is not a group chat. Each beat is authored on its own
+       character's thread, so a scene on the phone is the same push stack as
+       the Chat tab — one private one-on-one filling the screen, with the
+       other participant sitting behind it as a separate conversation, exactly
+       what the desktop's rail + thread shows side by side. */
     .sc-body { flex-direction: column; padding: 0; gap: 0; }
-    #scRail {
-      width: 100%; flex: none; display: flex; gap: 6px; border-radius: 0;
-      padding: 8px 10px; overflow-x: auto; overflow-y: hidden; box-shadow: none;
-      border-bottom: 1px solid var(--line); scrollbar-width: none;
-    }
-    #scRail::-webkit-scrollbar { display: none; }
-    #scRail .conv {
-      flex: none; flex-direction: column; width: 66px; gap: 4px; padding: 2px 2px 1px;
-      border-bottom: 0; align-items: center; position: relative; background: none;
-    }
-    #scRail .conv .who { flex: none; width: 100%; text-align: center; }
-    #scRail .conv .who b { font-size: 10.5px; font-weight: 600; }
-    #scRail .conv .who span { display: none; }
-    #scRail .conv .unread-dot { position: absolute; top: 1px; right: 12px; z-index: 2; }
-    /* the ring only belongs on a dot that is actually there — an invisible dot
-       with a halo reads as a rendering glitch on the avatar */
-    #scRail .conv.unread .unread-dot { box-shadow: 0 0 0 2px var(--panel); }
-    #scRail .conv.cur .av { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--blue); }
-    #scRail .conv.cur .who b { color: var(--blue); }
+    #scRail { width: 100%; flex: 1 1 auto; display: block; border-radius: 0; box-shadow: none; }
+    body.sc-thread-open #scRail { display: none; }
+    body:not(.sc-thread-open) .sc-threadcol { display: none; }
+    body.sc-thread-open .sc-threadcol { animation: pushIn .22s cubic-bezier(.3,.9,.4,1); }
     .sc-threadcol { border-radius: 0; box-shadow: none; }
-    #scChatHead { text-align: center; padding: 7px 14px; }
-    #scThread { padding: 12px 12px 4px; gap: 6px; }
+    #scChatHead { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 52px 7px; }
+    #scChatHead .ch-av { width: 30px; height: 30px; font-size: 12px; margin-bottom: 2px; }
+    #scChatHead b { font-size: 13.5px; }
+    #scChatHead span { margin-left: 0; font-size: 11px; }
+    .sc-back {
+      position: absolute; left: 6px; top: 50%; transform: translateY(-50%);
+      border: 0; background: none; color: var(--blue); font-size: 14.5px; font-weight: 600;
+      display: flex; align-items: center; gap: 1px; padding: 6px 8px;
+    }
+    .sc-back .chev { font-size: 19px; line-height: 1; font-weight: 400; position: relative; top: -1px; }
+    #scThread { padding: 12px 12px 8px; gap: 6px; }
     #scReply { padding: 9px 12px calc(10px + env(safe-area-inset-bottom)); max-height: 46dvh; overflow-y: auto; overscroll-behavior: contain; }
     #scDone { padding: 12px 0; }
     #scene.launch #scRail, #scene.launch .sc-threadcol { flex: 1 1 auto; max-width: none; }
-    #scene.launch #scRail { flex: none; border-bottom-color: rgba(255,255,255,.08); }
-    #scene.launch #scRail .conv.unread .unread-dot { box-shadow: 0 0 0 2px rgba(18,20,30,.9); }
-    #scene.launch #scRail .conv.cur .av { box-shadow: 0 0 0 2px rgba(18,20,30,.9), 0 0 0 4px var(--blue); }
-    /* the selected face is marked by its ring, not by a panel behind it — the
-       desktop rail's row highlight makes no sense on an avatar chip */
-    #scene.launch #scRail .conv, #scene.launch #scRail .conv.cur, #scene.launch #scRail .conv:hover { background: none; }
+    #scene.launch .sc-back { color: #c3d4ff; }
     .launch-clock { font-size: clamp(34px, 12vw, 52px); }
 
     /* ── overlays as bottom sheets ── */
@@ -1001,6 +995,7 @@ const MOBILE_Q = matchMedia("(max-width: 1023px)");   // keep in step with the p
 let isMobile = MOBILE_Q.matches;
 let mobileView = "list";                 // "list" | "thread", within the Chat tab
 const viewingThread = () => !isMobile || mobileView === "thread";
+const viewingSceneThread = () => !isMobile || scMobileView === "thread";
 const TAB_TITLE = { msgs: "Messages", feed: "News", bank: "Bank", journal: "Journal" };
 
 // Who renders where.
@@ -1146,6 +1141,10 @@ let inScene = false;
 let scSelected = null;          // focus-arc: the participant thread on screen
 let scRendered = {};            // focus-arc: per-thread read cursor
 let scHeadSig = null;           // focus-arc: last-rendered header signature (scene|clock)
+// On the phone a room is a push stack too, for the same reason the Chat tab is:
+// each beat lives on its own character's thread, so only one one-on-one is on
+// screen at a time and the others sit behind it as separate conversations.
+let scMobileView = "thread";    // focus-arc, phone: "list" | "thread"
 let scClockShown = null;        // launch: the time string currently on the clock face
 let scClockTimer = null;        // launch: the count-up ticker interval
 let pendingStatPulse = [];      // stat keys that changed this turn, to pulse once
@@ -1175,7 +1174,7 @@ function journalMirror() {
   return entries.sort((a, b) => a.seq - b.seq);
 }
 function resetUiState() {
-  feedSeenLen = {}; sceneStartSeq = null; inScene = false; mobileView = "list";
+  feedSeenLen = {}; sceneStartSeq = null; inScene = false; mobileView = "list"; scMobileView = "thread";
   scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   selected = "alex"; surface = "msgs"; threadRendered = {};
@@ -1875,6 +1874,7 @@ function enterScene(startSeq) {
     const beats = sceneOpenBeats().filter(a => !SELF.has(a.charId));
     scSelected = (beats[0] && beats[0].charId) || sceneCast()[0]
       || (game.scene && game.scene.scene.cast.find(id => !SELF.has(id)));
+    scMobileView = "thread";   // the room opens on whoever is talking, not on a roster
     openSceneThread(scSelected);
   });
 }
@@ -1884,12 +1884,21 @@ function enterScene(startSeq) {
 // current conversation reveals here; anything said in another thread just lights
 // its blue unread dot in the rail, iMessage-style, for the player to open.
 function focusFlow() {
+  // Standing on the room's conversation list, a new beat only lights its blue
+  // dot — same contract as the Chat tab's list.
+  if (!viewingSceneThread()) { renderFocus(); return; }
   openSceneThread(scSelected);
+}
+// Back out of a one-on-one to the room's other conversations.
+function popToSceneList() {
+  scMobileView = "list";
+  renderFocus();
 }
 
 // Reveal a thread's unread bubbles with typing dots, then hand off to render.
 function openSceneThread(charId) {
   scSelected = charId;
+  if (isMobile) scMobileView = "thread";
   const entries = sceneThread(charId);
   const from = scRendered[charId] || 0;
   if (from >= entries.length) { renderFocus(); return; }
@@ -1897,7 +1906,7 @@ function openSceneThread(charId) {
   clearTimeout(scTimer);
   const step = () => {
     const cur = scRendered[charId] || 0;
-    if (!inScene || charId !== scSelected || cur >= entries.length) { uiBusy = false; renderFocus(); return; }
+    if (!inScene || charId !== scSelected || !viewingSceneThread() || cur >= entries.length) { uiBusy = false; renderFocus(); return; }
     const typing = entries[cur].type === "incoming";
     renderFocus({ typing });
     scTimer = setTimeout(() => {
@@ -1926,9 +1935,8 @@ function renderSceneHead() {
   if (!isLaunch) {
     $("scHead").innerHTML = '<div class="sc-title">' + esc(meta.title || "") + "</div>" +
       '<div class="sc-sub">' + esc(meta.sub || "") + "</div>" +
-      '<div class="sc-focusnote">' + (isMobile
-        ? "everything else is on hold · your moves here are free"
-        : "everything else is on hold · these conversations are private · your moves here are free") + "</div>";
+      (isMobile ? "" :
+        '<div class="sc-focusnote">everything else is on hold · these conversations are private · your moves here are free</div>');
     return;
   }
   const now = game.s.launch_time || "8AM";
@@ -1979,20 +1987,30 @@ function renderFocus(opts) {
   opts = opts || {};
   renderSceneHead();
 
-  // rail: one row per person in the room (reuses the regular conversation rail)
+  // rail: one row per person in the room — the regular conversation list,
+  // restricted to the room. On the phone it is the back half of the push stack,
+  // so it shows every row unselected (nothing is "current" while you're
+  // standing on the list) and a tap opens that one-on-one.
   const cast = sceneCast();
+  // a room of one is just a chat: no list to go back to, so no back chevron
+  document.body.classList.toggle("sc-thread-open", isMobile && (scMobileView === "thread" || cast.length < 2));
   $("scRail").innerHTML = cast.map(id => {
     const def = game.cast.get(id).def, stl = styleFor(id), t = sceneThread(id);
     const last = t.length ? t[t.length - 1] : null;
-    const unread = sceneUnread(id) && id !== scSelected;
+    const unread = sceneUnread(id) && !(id === scSelected && viewingSceneThread());
     const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
-    return '<div class="conv ' + (id === scSelected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
+    return '<div class="conv ' + (id === scSelected && viewingSceneThread() ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
       '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
       '<div class="who"><b>' + esc(def.name) + '</b><span>' + esc(prev.slice(0, 52)) + "</span></div></div>";
   }).join("");
   for (const el of $("scRail").querySelectorAll(".conv")) {
-    el.onclick = () => { if (!uiBusy && el.dataset.id !== scSelected) openSceneThread(el.dataset.id); };
+    el.onclick = () => {
+      if (uiBusy) return;
+      // on the phone, re-tapping the open conversation is how you push back in
+      if (el.dataset.id === scSelected && viewingSceneThread()) return;
+      openSceneThread(el.dataset.id);
+    };
   }
 
   renderFocusThread(opts);
@@ -2027,7 +2045,15 @@ function renderFocusThread(opts) {
   opts = opts || {};
   const c = scSelected && game.cast.get(scSelected);
   if (!c) { $("scChatHead").innerHTML = ""; $("scThread").innerHTML = ""; $("scReply").innerHTML = ""; return; }
-  $("scChatHead").innerHTML = "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + "</span>";
+  const stl = styleFor(scSelected);
+  // On the phone this bar is the room's nav bar: who you're talking to, and the
+  // way back to the room's other conversation (absent in a one-on-one room).
+  const canBack = isMobile && sceneCast().length > 1;
+  $("scChatHead").innerHTML =
+    (canBack ? '<button class="sc-back"><span class="chev">‹</span>Chats</button>' : "") +
+    (isMobile ? '<div class="av ch-av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" : "") +
+    "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + "</span>";
+  if (canBack) $("scChatHead").querySelector(".sc-back").onclick = () => { if (!uiBusy) popToSceneList(); };
 
   const t = sceneThread(scSelected);
   const shown = scRendered[scSelected] || 0;
@@ -2089,6 +2115,8 @@ function renderFocusThread(opts) {
 function exitScene() {
   clearTimeout(scTimer);
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
+  scMobileView = "thread";
+  document.body.classList.remove("sc-thread-open");
   $("scSelfOv").classList.remove("on");
   $("scene").classList.remove("on", "launch");
   $("scene").style.background = "";
@@ -2612,11 +2640,14 @@ MOBILE_Q.addEventListener("change", (e) => {
   if (!isMobile) {
     if (surface === "journal") surface = "msgs";
     mobileView = "list";
+    scMobileView = "thread";
+    document.body.classList.remove("sc-thread-open");
   }
   $("todoPop").classList.remove("on");
   $("noteCenter").classList.remove("show");
   syncSurfaceTabs();
   render();
+  if (inScene && game.scene) renderFocus();
 });
 
 function render() {
@@ -2640,6 +2671,7 @@ function dbgReset() {
   clearTimeout(revealTimer); clearTimeout(noteTimer); noteTimer = null;
   egClearTimers(); egDone = true;
   $("scene").classList.remove("on"); $("cine").classList.remove("show");
+  document.body.classList.remove("sc-thread-open"); scMobileView = "thread";
   $("endOv").classList.remove("on"); $("noteCenter").classList.remove("show");
   [...$("notifs").children].forEach(e => e.remove());
 }
