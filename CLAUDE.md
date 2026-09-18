@@ -114,6 +114,15 @@ The UI renders a scene as the **same iMessage chat, restricted to the room**: a 
 
 Self-contained. Three surfaces — **Messages** (rail · thread), **News Feed** (press/community posts you engage inline), and **Bank** (the ledger; opened from the clickable Runway gauge, not a tab). A persistent right column carries the **triage** ("Needs a call" / "When you have a minute" — your own moves you act on in-column) and the **journal mirror** (a read-only, handwritten-font recap of outcomes + milestone stamps) — the journal is the **only** surface for recap prose; threads render bubbles only. A header **☑ to-do gauge** is the chapter guide: one checklist + goal line per chapter (Ch 1 · Ship the demo → Ch 2 · Get to launch → Ch 3 · The trough of sorrow → Ch 4 · Rebuild as v2 → Ch 5 · Make the case), derived from the facts ledger + `s.items`; a second header gauge counts down to the week-25 YC deadline. The turn-end reveal is ordered: runway counts down → the journal inks in → iOS-style notifications buzz under a header bell → the active thread refreshes → changed stats pulse. Endgame shows the `Scoring` report card. Avatar colors/initials live in a `STYLE` map here — presentation, not engine state.
 
+### Two shapes, one renderer
+
+The same renderers drive a **desktop** three-column layout and a **phone** single-column one; the switch is `isMobile` (kept in step with the `@media (max-width: 1023px)` block — the width at which rail 250 + right column 312 + a readable thread stop fitting, so a rotated phone and a portrait tablet get the phone shape too). On the phone:
+
+- **Four tabs at the bottom — Chat · Bank · News · Journal.** The desktop's right column splits along the seam it already had: the **triage** pins to the top of the conversation list (`#railTriage`, rendered by the same `triageHtml`), and the **journal mirror** becomes the Journal tab (`renderJournalSurface`, which also carries the chapter checklist — the ☑ gauge taps through to it instead of opening the desktop's popover).
+- **Chat is a push stack**: conversation list ⇄ one thread filling the screen (`mobileView`, `body.thread-open`). `viewingThread()` — "the open thread is actually in front of the player" — is what the read cursor, the unread badges and the turn-end thread refresh key off, because on the list the selected thread is *not* being read. For the same reason a run **opens on the list with every thread unread**, where the desktop lands you inside Alex's. Back is the nav bar's "‹ Messages" *and* the browser/Android back gesture (`pushThreadState`).
+- **A conversation that owes an answer is flagged on its own row** (`.tag.call`), so the triage above the list only carries what has no conversation of its own: your own moves and the News Feed. Don't reintroduce "↗ open chat" cards there — they'd say the same thing twice.
+- Scenes keep their own rules: the room's rail becomes a **horizontal strip of faces** (unread dot on the avatar), and launch day keeps its dark stage and clock. Overlays (report card, intro, the founder's "Your call" card) become bottom sheets.
+
 ## Coding conventions
 
 - 2-space indentation, double quotes, semicolons.
