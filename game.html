@@ -2635,7 +2635,7 @@ $("gRunway").onclick = () => setSurface(surface === "bank" ? "msgs" : "bank");
 // Rotating a phone, or dragging a desktop window narrow, swaps the whole shape
 // mid-run. Land on something coherent: the desktop has no Journal tab and no
 // push stack, so fold both back into Messages.
-MOBILE_Q.addEventListener("change", (e) => {
+function onModeChange(e) {
   isMobile = e.matches;
   if (!isMobile) {
     if (surface === "journal") surface = "msgs";
@@ -2648,7 +2648,18 @@ MOBILE_Q.addEventListener("change", (e) => {
   syncSurfaceTabs();
   render();
   if (inScene && game.scene) renderFocus();
-});
+}
+// MediaQueryList.addEventListener is a Safari-14+/modern-browser API; older
+// WebKit (and some in-app WebViews trailing behind system Safari) only have
+// the deprecated addListener. This is a top-level boot statement, so an
+// unguarded call that throws here would abort the whole script AFTER
+// showIntro() has already run — the intro would show, then nothing behind it
+// ever would (no rail, no thread: exactly "the chat is empty"). Feature-detect
+// and never let a rotate/resize listener take the rest of the boot down with it.
+try {
+  if (MOBILE_Q.addEventListener) MOBILE_Q.addEventListener("change", onModeChange);
+  else if (MOBILE_Q.addListener) MOBILE_Q.addListener(onModeChange);
+} catch (e) { /* no live mode-switch on this browser — the app still boots */ }
 
 function render() {
   // viewing the feed marks its posts seen before the badge is computed, so the
