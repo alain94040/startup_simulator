@@ -2,6 +2,100 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+/* ── on-page error reporter ─────────────────────────────────────────────────
+   Loaded first, before every other script tag, so it catches a failure
+   anywhere: a syntax error or thrown exception in this file's own inline
+   script, a thrown exception in cast.js/engine.js/story/*.js, or one of
+   those <script src> tags failing to load at all (a 404, a case-sensitivity
+   mismatch, a network hiccup) — the last of those doesn't bubble as an
+   ordinary error event, only a capturing listener on window sees it.
+   A boot-time crash otherwise looks like a blank or half-drawn page with
+   nothing in the browser's own console to point at, and on a phone there
+   usually is no console to check. This renders whatever threw, in place,
+   so a report of "the chat is empty" comes with the actual error attached.
+   TEMPORARY: meant to come back out once real device failures are diagnosed. */
+(function () {
+  "use strict";
+  var MAX = 20;
+  var shown = 0, pending = [], mounted = false, panel = null, body = null;
+
+  function mount() {
+    if (mounted || !document.body) return;
+    mounted = true;
+    panel = document.createElement("div");
+    panel.id = "bootErrPanel";
+    panel.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1b0000;color:#ffd7d7;" +
+      "font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow:auto;padding:14px;" +
+      "white-space:pre-wrap;word-break:break-word;display:none;";
+    var head = document.createElement("div");
+    head.style.cssText = "display:flex;justify-content:space-between;align-items:center;" +
+      "gap:12px;margin-bottom:10px;position:sticky;top:0;background:#1b0000;padding-bottom:6px;";
+    var title = document.createElement("b");
+    title.style.cssText = "color:#ff8080;font-size:14px;font-family:-apple-system,sans-serif;";
+    title.textContent = "⚠ a script error happened";
+    var closeBtn = document.createElement("button");
+    closeBtn.textContent = "hide";
+    closeBtn.style.cssText = "background:#3a0000;color:#ffd7d7;border:1px solid #ff8080;" +
+      "border-radius:6px;padding:6px 14px;font:13px -apple-system,sans-serif;";
+    closeBtn.onclick = function () { panel.style.display = "none"; };
+    head.appendChild(title);
+    head.appendChild(closeBtn);
+    panel.appendChild(head);
+    body = document.createElement("div");
+    panel.appendChild(body);
+    document.documentElement.appendChild(panel);
+    for (var i = 0; i < pending.length; i++) render(pending[i]);
+    pending = [];
+  }
+
+  function render(text) {
+    panel.style.display = "block";
+    if (shown >= MAX) return;
+    shown++;
+    var entry = document.createElement("div");
+    entry.style.cssText = "border-top:1px solid #4a0000;padding-top:10px;margin-top:10px;";
+    entry.textContent = text;
+    body.appendChild(entry);
+    if (shown === MAX) {
+      var note = document.createElement("div");
+      note.style.cssText = "color:#ff8080;margin-top:10px;font-style:italic;";
+      note.textContent = "(further errors suppressed)";
+      body.appendChild(note);
+    }
+  }
+
+  function report(text) {
+    if (document.body) { mount(); render(text); }
+    else {
+      pending.push(text);
+      document.addEventListener("DOMContentLoaded", mount, { once: true });
+    }
+  }
+
+  // capture: true so this also sees a failed <script src>/<link> load, which
+  // fires a plain "error" event on the element itself, not on window, and
+  // never bubbles — only reachable by listening on the way down.
+  window.addEventListener("error", function (e) {
+    var tgt = e.target;
+    if (tgt && tgt !== window && (tgt.tagName === "SCRIPT" || tgt.tagName === "LINK")) {
+      report("Failed to load: " + (tgt.src || tgt.href || "(unknown url)"));
+      return;
+    }
+    var msg = "Error: " + (e.message || "unknown") +
+      "\n" + (e.filename || "") + ":" + (e.lineno || "?") + ":" + (e.colno || "?");
+    if (e.error && e.error.stack) msg += "\n\n" + e.error.stack;
+    report(msg);
+  }, true);
+
+  window.addEventListener("unhandledrejection", function (e) {
+    var reason = e.reason;
+    var msg = "Unhandled promise rejection: " + (reason && reason.message ? reason.message : String(reason));
+    if (reason && reason.stack) msg += "\n\n" + reason.stack;
+    report(msg);
+  });
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
