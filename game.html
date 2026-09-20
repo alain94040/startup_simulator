@@ -324,6 +324,17 @@
   #scReply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
   #scReply .who-asks { font-size: 11px; color: var(--dim); margin-bottom: 2px; }
   #scReply .who-asks .free { color: var(--amber-ink); font-weight: 600; }
+  /* a persistent nudge that someone ELSE in the room said something you
+     haven't looked at — the desktop's rail shows this as a pulsing dot,
+     always in view; the room's rail is a tap away on the phone, so this sits
+     above whatever the current thread's own composer shows, not in place
+     of it — it survives even while your own thread still owes an answer. */
+  #scReply .other-ping {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    background: var(--blue-soft); color: var(--blue); border-radius: 8px;
+    padding: 7px 11px; margin-bottom: 8px; font-size: 12px; font-weight: 600;
+  }
+  #scReply .other-ping button { border: 0; background: none; color: var(--blue); font: inherit; font-weight: 700; cursor: pointer; padding: 0; }
   #scDone { display: block; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 9px 0; font-weight: 600; margin-top: 2px; }
 
   /* ── launch day: a cinematic dark stage where the day passes overhead ────────
@@ -357,6 +368,8 @@
   #scene.launch #scReply { background: rgba(8,10,18,.5); border-top-color: rgba(255,255,255,.08); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   #scene.launch #scReply .who-asks { color: rgba(255,255,255,.55); }
   #scene.launch #scReply .who-asks .free { color: #ffd76a; }
+  #scene.launch #scReply .other-ping { background: rgba(47,107,255,.24); color: #c3d4ff; }
+  #scene.launch #scReply .other-ping button { color: #c3d4ff; }
   #scene.launch .chip { background: rgba(20,22,32,.66); border-color: rgba(120,160,255,.6); color: #c3d4ff; }
   #scene.launch .chip:hover:not(:disabled) { background: rgba(47,107,255,.26); }
   #scene.launch .chip.gated { border-color: #d8a83a; color: #ffd98a; }
@@ -455,7 +468,10 @@
   .intro-next:active { transform: scale(.97); }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
-  #notifs { position: fixed; top: 56px; right: 18px; z-index: 45; width: 330px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+  /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
+     able to banner "someone else in the room just texted" over itself; below
+     the cinematic (72), which is the one moment meant to blank out everything. */
+  #notifs { position: fixed; top: 56px; right: 18px; z-index: 65; width: 330px; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
   .notif {
     pointer-events: auto; display: flex; gap: 11px; align-items: flex-start; cursor: pointer;
     background: rgba(255,255,255,.93); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
@@ -1873,6 +1889,10 @@ function doAct(nodeId, key, charId) {
   if (held && held.onHold) return;
   const preScene = game.scene;
   const preSeq = game._seq;
+  // Snapshot every room participant's thread length before acting: a beat
+  // that lands in someone ELSE's thread (not the one just answered) needs to
+  // be caught the moment it happens — see pingOtherSceneThreads.
+  const preSceneLens = inScene ? sceneThreadLens() : null;
   game.act(nodeId, key);
   if (charId) threadRendered[charId] = game.threads[charId].length;
   // your own mid-week choices ink into the journal mirror at once (ungLowed);
@@ -1881,7 +1901,7 @@ function doAct(nodeId, key, charId) {
 
   // entering a scene → the world freezes; play its entry cinematic then the beats
   if (!preScene && game.scene) { enterScene(preSeq); return; }
-  if (inScene) { focusFlow(); return; }
+  if (inScene) { focusFlow(preSceneLens); return; }
 
   render();
   if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
@@ -1951,6 +1971,19 @@ function sceneCast() {
     .filter(id => !SELF.has(id) && (sceneThread(id).length > 0 || sceneOpenBeat(id)))
     .sort((a, b) => game.order.indexOf(a) - game.order.indexOf(b));
 }
+// Every non-founder participant the room could ever have — unlike sceneCast(),
+// not filtered to "has said something yet": pingOtherSceneThreads needs to
+// catch a first message landing, which is exactly the moment sceneCast()
+// wouldn't have included them yet.
+function sceneFullCast() {
+  const arc = game.arcs.get(lastSceneId);
+  return (arc ? arc.scene.cast : []).filter(id => !SELF.has(id));
+}
+function sceneThreadLens() {
+  const lens = {};
+  for (const id of sceneFullCast()) lens[id] = (game.threads[id] || []).length;
+  return lens;
+}
 function sceneUnread(charId) {
   return sceneThread(charId).slice(scRendered[charId] || 0).some(m => m.type === "incoming");
 }
@@ -1977,11 +2010,36 @@ function enterScene(startSeq) {
 // waiting. We never switch threads for the player — a reply that continues the
 // current conversation reveals here; anything said in another thread just lights
 // its blue unread dot in the rail, iMessage-style, for the player to open.
-function focusFlow() {
+function focusFlow(preLens) {
+  if (preLens) pingOtherSceneThreads(preLens);
   // Standing on the room's conversation list, a new beat only lights its blue
   // dot — same contract as the Chat tab's list.
   if (!viewingSceneThread()) { renderFocus(); return; }
   openSceneThread(scSelected);
+}
+// A phone shows one room conversation at a time, so a beat landing in someone
+// ELSE's thread while you're in this one otherwise passes completely silently
+// until you happen to back out and look — the bug this fixes: "I was in
+// Alex's chat and Jordan reacted, and there was no way to tell." Banner it the
+// moment it lands, reusing the same iOS-style notification the app already
+// uses for arrivals between turns, so it's caught in the moment rather than
+// only inferred later from the composer's persistent "X texted too" line
+// (see renderFocusThread). The desktop's rail already shows this via its own
+// always-visible pulsing dot, so this is phone-only.
+function pingOtherSceneThreads(preLens) {
+  if (!isMobile || !inScene || !game.scene) return;
+  for (const id of sceneFullCast()) {
+    if (id === scSelected) continue;
+    const before = preLens[id] || 0;
+    const fresh = (game.threads[id] || []).slice(before).filter(m => m.type === "incoming" && m.scene === lastSceneId);
+    if (!fresh.length) continue;
+    const def = game.cast.get(id).def, stl = styleFor(id);
+    queueNotifications([{
+      ico: stl.initials, color: stl.color, charId: id, title: def.name,
+      text: String(fresh[fresh.length - 1].body || ""),
+      go: () => { if (!uiBusy && inScene) openSceneThread(id); },
+    }]);
+  }
 }
 // Back out of a one-on-one to the room's other conversations.
 function popToSceneList() {
@@ -2183,22 +2241,36 @@ function renderFocusThread(opts) {
     $("scDone").onclick = exitScene;
     return;
   }
+  // Someone ELSE in the room said something you haven't looked at yet — an
+  // open beat of theirs, or just a message with nothing to answer (a reaction
+  // with no reply expected still needs to be seen). Driven by sceneUnread(),
+  // the same signal that lights the desktop rail's pulsing dot, so this stays
+  // in lockstep with it rather than tracking its own notion of "new." Shown
+  // regardless of whether your own thread ALSO has something to answer —
+  // that "also" is exactly the gap this fixes: answering Alex used to hide
+  // any sign that Jordan had reacted in the meantime.
+  const otherId = sceneCast().find(id => id !== scSelected && sceneUnread(id));
+  const otherName = otherId ? game.cast.get(otherId).def.name : null;
   const beat = sceneOpenBeat(scSelected);
   if (beat) {
     const gk = gatedKeys(beat.nodeId);
-    rbox.innerHTML = '<div class="who-asks">reply to ' + esc(c.def.name) + ' <span class="free">· moves in the room are free</span></div>' +
+    const ping = otherId ? '<div class="who-asks other-ping">' + esc(otherName) +
+      ' texted too <button class="ping-go" data-goto="' + esc(otherId) + '">open →</button></div>' : "";
+    rbox.innerHTML = ping +
+      '<div class="who-asks">reply to ' + esc(c.def.name) + ' <span class="free">· moves in the room are free</span></div>' +
       beat.options.map(o => '<button class="chip' + (gk.has(o.key) ? " gated" : "") + '" data-n="' + esc(beat.nodeId) + '" data-k="' + esc(o.key) + '">' +
         (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("");
+    const pg = rbox.querySelector(".ping-go");
+    if (pg) pg.onclick = () => { if (!uiBusy) openSceneThread(pg.dataset.goto); };
     for (const b of rbox.querySelectorAll(".chip")) b.onclick = () => { if (!uiBusy) doAct(b.dataset.n, b.dataset.k, scSelected); };
     return;
   }
-  const waiting = sceneOpenBeats().filter(a => !SELF.has(a.charId));
-  if (waiting.length) {
+  if (otherId) {
     // Nudge toward whoever texted back in another thread — and make it a live
     // button, so the reply you provoked elsewhere is one click away (the scene
     // still never auto-switches for you).
-    rbox.innerHTML = '<div class="who-asks">nothing to add here — ' + esc(waiting[0].name) + " texted back →</div>" +
-      '<button class="chip" data-goto="' + esc(waiting[0].charId) + '">Open ' + esc(waiting[0].name) + "'s thread →</button>";
+    rbox.innerHTML = '<div class="who-asks">nothing to add here — ' + esc(otherName) + " texted back →</div>" +
+      '<button class="chip" data-goto="' + esc(otherId) + '">Open ' + esc(otherName) + "'s thread →</button>";
     const b = rbox.querySelector(".chip");
     if (b) b.onclick = () => { if (!uiBusy) openSceneThread(b.dataset.goto); };
     return;
