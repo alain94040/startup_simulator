@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Equity arc — dialogue draft v2</title>
+<style>
+  :root { --bg:#f2f2f7; --panel:#fff; --line:#e3e3e8; --ink:#1c1c1e; --dim:#8e8e93; --blue:#0a84ff;
+          --alex:#0a84ff; --jordan:#af52de; --amber:#b25000; }
+  * { box-sizing:border-box; margin:0; }
+  body { font:15px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:5; background:var(--panel); border-bottom:1px solid var(--line); padding:12px 20px; }
+  header h1 { font-size:17px; }
+  header p.sub { color:var(--dim); font-size:13px; margin-top:2px; }
+  main { max-width:820px; margin:0 auto; padding:20px; }
+
+  .act { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 22px; margin-bottom:22px; }
+  .act-h { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; }
+  .act-h .n { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#7b3fb5; }
+  .act-h h2 { font-size:18px; }
+  .act-note { color:var(--dim); font-size:13px; margin:4px 0 16px; }
+
+  .beat { margin:18px 0; padding-top:14px; border-top:1px dashed var(--line); }
+  .beat:first-child { border-top:0; padding-top:0; }
+  .beat-tag { font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+
+  .row { display:flex; gap:9px; margin:7px 0; align-items:flex-start; }
+  .row.out { justify-content:flex-end; }
+  .av { width:26px; height:26px; border-radius:50%; color:#fff; font-weight:700; font-size:12px;
+        display:flex; align-items:center; justify-content:center; flex:none; margin-top:2px; }
+  .av.alex { background:var(--alex); } .av.jordan { background:var(--jordan); } .av.founder { background:#8e8e93; }
+  .who { font-size:11px; color:var(--dim); margin-bottom:2px; }
+  .who.to { text-align:right; }
+  .bub { background:#e9e9eb; border-radius:16px; border-bottom-left-radius:5px; padding:8px 13px; max-width:66ch; white-space:pre-wrap; }
+  .bub.me { background:var(--blue); color:#fff; border-bottom-left-radius:16px; border-bottom-right-radius:5px; }
+  .stage { text-align:center; color:var(--dim); font-size:12px; font-style:italic; margin:8px 0; }
+
+  .fork { margin-top:12px; }
+  .fork-h { font-size:12px; font-weight:700; color:var(--amber); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+  .opt { border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:10px; background:#fafafc; }
+  .opt-label { font-weight:700; font-size:13.5px; margin-bottom:6px; }
+  .opt-label .key { font-size:10.5px; font-weight:600; color:#2456c4; background:#eef4ff; border-radius:4px; padding:1px 5px; margin-right:6px; }
+  .opt .row { margin:6px 0; }
+  .opt-note { color:var(--dim); font-size:12px; margin-top:6px; font-style:italic; }
+
+  .paths { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 18px; position:sticky; top:66px; z-index:4;
+           background:var(--bg); padding:8px 0; }
+  .paths button { border:1px solid var(--line); background:#fff; border-radius:20px; padding:6px 14px; font-size:13px; cursor:pointer; }
+  .paths button.on { background:#7b3fb5; color:#fff; border-color:#7b3fb5; }
+  .path-body { display:none; }
+  .path-body.on { display:block; }
+
+  .callback { background:#fffbe8; border:1px solid #f0e6b8; color:#5b5340; border-radius:10px; padding:8px 13px; margin:8px 0; font-size:13px; }
+  details.q { margin-top:6px; }
+  summary { cursor:pointer; font-size:13px; color:var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Equity arc — dialogue draft v2</h1>
+  <p class="sub">Dance (group) → confess (DM) → propose (group) → push back (DM) → dictate (group). No signing scene. Same four endings: 33/33/33 · 40/40/20 · 50/25/25 · table.</p>
+</header>
+<main id="app"></main>
+
+<script>
+const A = (id, cls, lines) => ({ speaker: id, cls, lines: Array.isArray(lines) ? lines : [lines] });
+const OUT = (lines) => ({ speaker: "founder", cls: "out", lines: Array.isArray(lines) ? lines : [lines] });
+const STAGE = (text) => ({ stage: text });
+
+const NAME = { alex: "Alex", jordan: "Jordan", founder: "You" };
+
+function renderMsg(m) {
+  if (m.stage) return `<div class="stage">${esc(m.stage)}</div>`;
+  const bubbles = m.lines.map(l => `<div class="bub${m.cls === "out" ? " me" : ""}">${esc(l)}</div>`).join("");
+  if (m.cls === "out") {
+    return `<div class="row out"><div><div class="who to">to group</div>${bubbles}</div></div>`;
+  }
+  return `<div class="row"><div class="av ${m.speaker}">${NAME[m.speaker][0]}</div>
+    <div><div class="who">${NAME[m.speaker]}</div>${bubbles}</div></div>`;
+}
+
+function renderOpt(o) {
+  const reply = o.reply ? renderMsg(OUT(o.reply)) : "";
+  const reactions = (o.reactions || []).map(r => renderMsg(A(r.who, r.who, r.line))).join("");
+  const note = o.note ? `<div class="opt-note">${esc(o.note)}</div>` : "";
+  return `<div class="opt">
+    <div class="opt-label"><span class="key">${esc(o.key)}</span>${esc(o.label)}</div>
+    ${reply}${reactions}${note}
+  </div>`;
+}
+
+function renderBeat(b) {
+  const msgs = (b.msgs || []).map(renderMsg).join("");
+  const forkH = b.forkLabel ? `<div class="fork-h">${esc(b.forkLabel)}</div>` : "";
+  const opts = (b.options || []).map(renderOpt).join("");
+  return `<div class="beat">
+    ${b.tag ? `<div class="beat-tag">${esc(b.tag)}</div>` : ""}
+    ${msgs}
+    ${b.options ? `<div class="fork">${forkH}${opts}</div>` : ""}
+  </div>`;
+}
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+// ── ACT 1 — the dance (shared) ────────────────────────────────────────────
+const act1 = {
+  title: "Act 1 — The group chat: the dance",
+  note: "Trigger is the Atlas incorporation paperwork, not a character deciding it's time. Nobody names a number.",
+  beats: [
+    {
+      tag: "equity_open · group",
+      msgs: [
+        A("jordan", "jordan", ["ok, the atlas form just asked how many shares each of us gets. we should figure this out before it's a whole thing.", "...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?"]),
+        A("alex", "alex", "not it."),
+      ],
+      forkLabel: "founder's move",
+      options: [
+        {
+          key: "A", label: "Let's just say equal thirds and move on — the shortcut",
+          reply: "easiest answer: equal thirds. can we just go with that and get back to work?",
+          reactions: [
+            { who: "alex", line: "sure. fine." },
+            { who: "jordan", line: "👍" },
+          ],
+          note: "Flat agreement, not real agreement — the dance just goes quiet instead of stopping.",
+        },
+        {
+          key: "B", label: "Let's actually talk about what everyone wants — opens it up",
+          reply: "let's not default our way into this. tell me — actually — what feels fair to each of you. i'll listen to both before anyone signs anything.",
+          reactions: [
+            { who: "jordan", line: "ok. can we not do this in the group though? no offense — i don't want to negotiate against alex in real time." },
+            { who: "alex", line: "yeah. honestly same." },
+          ],
+        },
+      ],
+    },
+    { msgs: [STAGE("Both branches route into Act 2 — the DMs.")] },
+  ],
+};
+
+// ── ACT 2 — DMs: what they actually want (shared) ─────────────────────────
+const act2 = {
+  title: "Act 2 — DMs: what they actually want",
+  note: "Written independently — Jordan doesn't know what Alex asked for, and neither does the player yet.",
+  beats: [
+    {
+      tag: "Alex, privately — the calculator lives here",
+      msgs: [
+        A("alex", "alex", [
+          "ok, not in front of jordan, but — here's what i actually think. i quit a $140k job for this. she didn't quit anything. i'm not saying that to be a dick, i'm saying the risk isn't the same and the split shouldn't pretend it is.",
+          "i want to be even with you. and ahead of her. 40/40/20.",
+          "...and look, i know how \"i did math about this\" sounds. but i ran our situation through a co-founder equity calculator last night — foundrs.com has one — and it said 40/40/20 too. i'm not just making this up to sound fair.",
+        ]),
+      ],
+      forkLabel: "founder's response",
+      options: [
+        { key: "A", label: "That's a real number — I hear you.", reply: "that's a real number, alex. i hear you.",
+          reactions: [{ who: "alex", line: "that's all i wanted. i wasn't sure i was allowed to want that." }],
+          note: "Alex feels heard — softens his Act 4 pushback later if overruled." },
+        { key: "B", label: "Send me the calculator — I want to run it myself.", reply: "send it to me. i want to look at the actual numbers, not just the number.",
+          reactions: [{ who: "alex", line: "...yeah, fair. here.  [sends link]  i'm not trying to hide behind a website. i just wanted backup." }] },
+        { key: "C", label: "I hear you, but I'm not deciding anything until I've talked to Jordan too.", reply: "i hear you. i'm not committing to a number until i've heard her side too.",
+          reactions: [{ who: "alex", line: "...ok. fair. i just didn't want my case to get lost." }],
+          note: "The neutral, correct founder move — costs Alex a small morale hit for not getting an immediate answer." },
+      ],
+    },
+    {
+      tag: "Jordan, privately — her own case, same weight as the calculator",
+      msgs: [
+        A("jordan", "jordan", [
+          "not in the group, but — i need you to actually hear this part. i had an offer. full-time, with equity, from an actual company, three weeks ago. i turned it down to keep building this.",
+          "so when the argument is \"jordan still has a job to fall back on\" — i want you to know that's not free. i gave up a real one to be here. i just didn't tell alex, because i didn't want it to sound like a threat.",
+          "i'm not saying i need more than thirds. i'm saying don't let \"she's not all-in\" be the thing that costs me. i am all-in. i just didn't quit loudly.",
+        ]),
+      ],
+      forkLabel: "founder's response",
+      options: [
+        { key: "A", label: "Why didn't you tell either of us that?", reply: "why didn't you say something? that changes how i'm thinking about this.",
+          reactions: [{ who: "jordan", line: "because the second i say it, it's leverage, not truth. i wanted you to believe me without needing proof." }] },
+        { key: "B", label: "Does Alex know you turned that down?", reply: "does alex know?",
+          reactions: [{ who: "jordan", line: "no. and i'd rather it stayed that way unless it actually matters to what you decide." }],
+          note: "Sets up a live tension: the founder now holds a secret Alex doesn't have." },
+        { key: "C", label: "That doesn't change the math for me — but I hear you.", reply: "i hear you. i'm not sure it changes the number, but it changes how i see you.",
+          reactions: [{ who: "jordan", line: "that's... actually all i wanted. i wasn't asking you to pay me for it." }] },
+      ],
+    },
+  ],
+};
+
+// ── ACT 3 — back to the group: the founder's first offer (the fork point) ─
+const act3 = {
+  title: "Act 3 — Back to the group: the founder's first offer",
+  note: "This is where s.equity_proposal actually gets set. The founder holds Jordan's secret and can choose whether to let it shape the offer without spilling it.",
+};
+const act3offers = {
+  thirds: { label: "thirds", reply: "different risk, different shapes, but everyone here gave up something to be in this. i think it's thirds.",
+    reactions: [{ who: "alex", line: "...ok." }] },
+  forty: { label: "40/40/20", reply: "alex — you're right that day-one risk isn't equal between the two of you. i'm going 40/40/20.",
+    reactions: [{ who: "jordan", line: "wow. ok." }] },
+  fifty: { label: "50/25/25 (founder takes 50)", reply: "i'm taking 50. i started this, i'm the one who doesn't get to walk away when it's bad. 25 each for you two.",
+    reactions: [{ who: "alex", line: "you're kidding." }, { who: "jordan", line: "...that's a choice." }] },
+};
+
+// ── ACT 4 + 5 per path ─────────────────────────────────────────────────────
+const paths = {
+  thirds: {
+    label: "Path A — Thirds",
+    act4: {
+      tag: "Act 4 · Alex DMs again — sharper",
+      msgs: [ A("alex", "alex", ["i told you exactly what i needed and you went with the easy number anyway. i get that \"everyone's essential\" sounds nice in a group chat. it also isn't what i asked for.", "so — did you not believe me, or did you just not want the fight?"]) ],
+      forkLabel: "founder's response (foreshadows Act 5)",
+      options: [
+        { key: "A", label: "I believed you. I still think thirds is right.", reply: "i believed you. i still think thirds is right.",
+          reactions: [{ who: "alex", line: "ok. at least say it's a choice and not a compromise." }] },
+        { key: "B", label: "It wasn't about you — it was about not starting this company already unequal.", reply: "it wasn't about you. it was about not starting this company already unequal.",
+          reactions: [{ who: "alex", line: "...i can live with that framing. i still don't love it." }] },
+        { key: "C", label: "You're right, I flinched. Let me think about it again.", reply: "you're right. i flinched. let me think about it again.",
+          reactions: [{ who: "alex", line: "don't tell me that unless you mean it." }],
+          note: "Cracks the door for Act 5's cave option — doesn't guarantee it." },
+      ],
+    },
+    act5: {
+      tag: "Act 5 · The ruling — final, sent to the group",
+      options: [
+        { key: "hold", label: "Hold — \"thirds, final\"", reply: "equal thirds. final. i'd rather lose points than partners — that's not a cop-out, it's the actual reason.",
+          reactions: [{ who: "jordan", line: "thank you." }, { who: "alex", line: "ran the numbers and still lost the argument. noted, i guess." }] },
+        { key: "cave", label: "Cave — \"you're right, 40/40/20\"", reply: "you're right. i went with the easy number instead of the real one. 40/40/20 — that's what full-time risk should actually get.",
+          reactions: [{ who: "alex", line: "...thank you. i wasn't sure i'd said it clearly enough the first time." }, { who: "jordan", line: "so the group vote didn't count. good to know for next time." }] },
+        { key: "table", label: "Table it", reply: "we're going in circles and we have a company to build. i'm parking this until after launch. i mean that — we come back to it.",
+          reactions: [{ who: "alex", line: "so we're back to \"fine.\" cool. that's new." }, { who: "jordan", line: "we did two rounds of this to land back on the emoji. impressive, honestly." }] },
+      ],
+    },
+  },
+  forty: {
+    label: "Path B — 40/40/20",
+    act4: {
+      tag: "Act 4 · Jordan DMs again — closer to the edge",
+      msgs: [ A("jordan", "jordan", ["you heard about the offer. you know what i turned down. and you still went with the number that makes it look like i wasn't all-in.", "i'm not going to bring up the offer again like it's a bargaining chip. but i need you to understand — you're not just picking a percentage, you're telling me what my \"yes\" was worth. and you said 20%."]) ],
+      forkLabel: "founder's response (foreshadows Act 5)",
+      options: [
+        { key: "A", label: "You're right — it should be closer. Let me fix it.", reply: "you're right. it should be closer. let me fix it.",
+          reactions: [{ who: "jordan", line: "...don't say that unless you mean it." }],
+          note: "Cracks the door for Act 5's cave option." },
+        { key: "B", label: "20% today isn't a verdict on you. It's where we start.", reply: "20% today isn't a verdict on you. it's where we start, not where it ends.",
+          reactions: [{ who: "jordan", line: "i've heard that before. from other people, about other things." }] },
+        { key: "C", label: "I can't undo it in a DM. I need to say this to both of you.", reply: "i can't undo this in a dm. i need to say whatever i decide to both of you.",
+          reactions: [{ who: "jordan", line: "fine. but you already know what i think." }] },
+      ],
+    },
+    act5: {
+      tag: "Act 5 · The ruling — final, sent to the group",
+      options: [
+        { key: "hold", label: "Hold — \"40/40/20, final\"", reply: "40/40/20. final. full-time risk gets full-time equity — that's the whole argument and i'm not pretending it's more complicated than that.",
+          reactions: [{ who: "alex", line: "thank you for saying it plainly." }, { who: "jordan", line: "i said no to a real job for this. twenty percent it is." }] },
+        { key: "cave", label: "Cave — \"let's do thirds\"", reply: "i keep coming back to this: you didn't quit loudly, but you didn't stay small either. thirds. equal.",
+          reactions: [{ who: "jordan", line: "...thank you. i didn't think i'd have to say it three times." }, { who: "alex", line: "so the calculator was just for my own information, then." }] },
+        { key: "table", label: "Table it", reply: "we're going in circles and we have a company to build. i'm parking this until after launch. i mean that — we come back to it.",
+          reactions: [{ who: "jordan", line: "so we're back to \"fine.\" cool. that's new." }, { who: "alex", line: "we did two rounds of this to land back on the emoji. impressive, honestly." }] },
+      ],
+    },
+  },
+  fifty: {
+    label: "Path C — 50/25/25",
+    act4: {
+      tag: "Act 4 · Both DM separately — neither knows the other is doing this",
+      msgs: [
+        A("alex", "alex", "you kept half. i left a job for this and i'm getting the same as jordan, who didn't. i'm not trying to be petty — i genuinely don't understand how you landed here."),
+        A("jordan", "jordan", "you gave yourself double what either of us gets. i get that you started this. i don't get why that means you get to un-equal it the second there's actually something to divide."),
+        STAGE("Dramatic irony: two people saying almost the same thing, each unaware the other is too. Worth a line at Act 5 noting it explicitly."),
+      ],
+      forkLabel: "founder's response (same shape to both, answered separately; foreshadows Act 5)",
+      options: [
+        { key: "A", label: "You're right. I'm not comfortable with it either.", reply: "you're right. i'm not comfortable with it either.",
+          note: "Cracks the door for Act 5's cave option." },
+        { key: "B", label: "I need the room to build something. That's what the 50 is for.", reply: "i need the room to build something. that's what the 50 is for." },
+      ],
+    },
+    act5: {
+      tag: "Act 5 · The ruling — final, sent to the group",
+      options: [
+        { key: "hold", label: "Hold — \"50/25/25 stands, final\"", reply: "the 50 stands. i'll carry what that costs me with both of you. i need it to build this the way it needs building.",
+          reactions: [{ who: "alex", line: "for the record — jordan and i actually agree on something. wish it wasn't this." }, { who: "jordan", line: "he's right. mark the date." }] },
+        { key: "cave", label: "Cave — \"thirds, all three of us equal\"", reply: "you're both right, and neither of you should've had to say it twice to two different people to get here. thirds. all three of us equal.",
+          reactions: [{ who: "alex", line: "it's not the 40 i wanted. but at least nobody's taking more than their share anymore. i can live with equal." }, { who: "jordan", line: "thank you. i can work with equal — i just couldn't work with you keeping half." }],
+          note: "The closest thing to a win-win — but Alex settles rather than celebrates, to keep \"no split fully satisfies both\" intact." },
+        { key: "table", label: "Table it", reply: "we're going in circles and we have a company to build. i'm parking this until after launch. i mean that — we come back to it.",
+          reactions: [{ who: "alex", line: "so we're back to \"fine.\" cool. that's new." }, { who: "jordan", line: "we did two rounds of this to land back on the emoji. impressive, honestly." }] },
+      ],
+    },
+  },
+};
+
+function renderAct(act) {
+  return `<div class="act"><div class="act-h"><h2>${esc(act.title)}</h2></div>
+    ${act.note ? `<div class="act-note">${esc(act.note)}</div>` : ""}
+    ${(act.beats || []).map(renderBeat).join("")}
+  </div>`;
+}
+
+function renderAct3() {
+  const opts = Object.entries(act3offers).map(([k, o]) => renderOpt({ key: k, label: o.label, reply: o.reply, reactions: o.reactions })).join("");
+  return `<div class="act"><div class="act-h"><h2>${esc(act3.title)}</h2></div>
+    <div class="act-note">${esc(act3.note)}</div>
+    <div class="beat"><div class="fork"><div class="fork-h">founder's offer (sets the anchor)</div>${opts}</div></div>
+  </div>`;
+}
+
+function renderPaths() {
+  const buttons = Object.entries(paths).map(([k, p], i) =>
+    `<button data-path="${k}" class="${i === 0 ? "on" : ""}">${esc(p.label)}</button>`).join("");
+  const bodies = Object.entries(paths).map(([k, p], i) => `
+    <div class="path-body ${i === 0 ? "on" : ""}" data-path="${k}">
+      ${renderAct({ title: "Act 4 — DMs again: pushback, sharper", beats: [p.act4] })}
+      ${renderAct({ title: "Act 5 — The ruling: final, no negotiating", beats: [p.act5] })}
+    </div>`).join("");
+  return `<div class="paths">${buttons}</div>${bodies}`;
+}
+
+document.getElementById("app").innerHTML =
+  renderAct(act1) + renderAct(act2) + renderAct3() + renderPaths();
+
+document.querySelectorAll(".paths button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".paths button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".path-body").forEach(x => x.classList.toggle("on", x.dataset.path === b.dataset.path));
+  };
+});
+</script>
+</body>
+</html>
