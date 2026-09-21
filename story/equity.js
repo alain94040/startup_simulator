@@ -201,22 +201,32 @@
             when: { after: ["equity_split_off"] },
             choices: [
               {
-                key: "why_not_told", label: "Why didn't you tell either of us that?",
-                reply: "why didn't you say something? that changes how i'm thinking about this.",
+                // Same three registers as Alex's DM above (validate / verify /
+                // defer-and-it-costs-something), not by coincidence — both DMs
+                // are the founder deciding how to receive a private confession,
+                // and it reads oddly if only one side of that decision has
+                // real weight. This used to offer "why didn't you tell either
+                // of us" and "does Alex know" as separate choices, which asked
+                // the same thing twice: her answer never actually stays secret
+                // either way (Act 5 surfaces the offer to Alex regardless of
+                // which split it lands on), so the two were pure flavor
+                // duplicates rather than a real fork.
+                key: "big_deal", label: "That's a big deal — thank you for trusting me with it",
+                reply: "that's a big deal, jordan. thank you for trusting me with it.",
                 journal: null,
-                effects: { char: { jordan: { trust: 5 } }, say: { char: "jordan", text: "because the second i say it, it's leverage, not truth. i wanted you to believe me without needing proof." } },
-              },
-              {
-                key: "does_alex_know", label: "Does Alex know you turned that down?",
-                reply: "does alex know?",
-                journal: null,
-                effects: { say: { char: "jordan", text: "no. and i'd rather it stayed that way unless it actually matters to what you decide." } },
+                effects: { char: { jordan: { trust: 5 } }, say: { char: "jordan", text: "...yeah. it felt like a big deal to turn down, too." } },
               },
               {
                 key: "doesnt_change_math", label: "That doesn't change the math for me — but I hear you",
                 reply: "i hear you. i'm not sure it changes the number, but it changes how i see you.",
                 journal: null,
                 effects: { char: { jordan: { trust: 3 } }, say: { char: "jordan", text: "that's... actually all i wanted. i wasn't asking you to pay me for it." } },
+              },
+              {
+                key: "need_a_minute", label: "I need to sit with that — give me a minute",
+                reply: "i need to sit with that. give me a minute.",
+                journal: null,
+                effects: { char: { jordan: { trust: -3 } }, say: { char: "jordan", text: "...yeah. that's kind of what i was afraid you'd say." } },
               },
             ],
             timeout: { weeks: 2, effects: { char: { jordan: { trust: -4 } } } },

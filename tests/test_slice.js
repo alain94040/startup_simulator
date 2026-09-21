@@ -66,7 +66,7 @@ console.log("decent driver (seed 42)");
   // → Jordan pushes back → the founder caves to thirds at the impasse.
   ok(g.took("equity_open:open_up"), "opened the real conversation instead of the shortcut");
   ok(g.took("equity_dm_alex:take_seriously"), "took Alex's ask seriously without committing yet");
-  ok(g.took("equity_dm_jordan:why_not_told"), "asked Jordan why she hadn't said something sooner");
+  ok(g.took("equity_dm_jordan:big_deal"), "took Jordan's confession seriously, not as an interrogation");
   ok(g.took("equity_offer:forty"), "offered 40/40/20 after hearing both sides");
   ok(g.took("equity_pushback_jordan:fix_it"), "Jordan pushed back and the founder admitted it should be closer");
   ok(g.took("equity_impasse:cave_thirds_from_forty"), "the founder caved to thirds at the impasse");
