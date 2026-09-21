@@ -67,29 +67,39 @@
             when: { after: ["incorporate"] },
             choices: [
               {
+                // `say` fires before `scene` takes effect (engine.js applies
+                // the effects vocabulary in a fixed order), so a reaction
+                // fired from the SAME effects object that also enters the
+                // scene gets stamped scene:null and is invisible once the
+                // player is inside the room. `fx` runs after the static
+                // `effects` have applied, so the scene is already set by the
+                // time `e.say(...)` fires here — that's what actually scopes
+                // these lines to the sitting.
                 key: "shortcut", label: "Let's just say equal thirds and move on",
                 reply: "easiest answer: equal thirds. can we just go with that and get back to work?",
                 journal: null,
-                effects: {
-                  scene: "equity",
-                  say: [
+                effects: { scene: "equity" },
+                fx(s, e) {
+                  e.say([
                     { char: "jordan", text: "👍" },
                     { char: "alex", text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
                     { char: "jordan", text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
                     { char: "alex", text: "...no, yeah. that's fair." },
-                  ],
+                  ]);
+                  return null;
                 },
               },
               {
                 key: "open_up", label: "Let's actually talk about what everyone wants first",
                 reply: "let's not default our way into this. tell me — actually — what feels fair to each of you. i'll listen to both before anyone signs anything.",
                 journal: null,
-                effects: {
-                  scene: "equity",
-                  say: [
+                effects: { scene: "equity" },
+                fx(s, e) {
+                  e.say([
                     { char: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
                     { char: "jordan", text: "sure, whatever's easier. i'm not trying to put anyone on the spot." },
-                  ],
+                  ]);
+                  return null;
                 },
               },
             ],
