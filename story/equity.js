@@ -5,7 +5,10 @@
 //
 // Jordan opens the topic (the Atlas paperwork forces it) but nobody names a
 // number in the open — that's the dance: everyone dodges, in their own way,
-// in the group. The real asks come out in private DMs instead (Alex's case,
+// in the group. Closing the room is its own beat (`equity_split_off`): the
+// player has to say "i'll talk to each of you separately" before anyone will,
+// so the DMs arrive as a consequence rather than on top of the group's last
+// word. The real asks come out in those private DMs (Alex's case,
 // with the equity calculator as his private homework; Jordan's case, with a
 // turned-down job offer she doesn't want read as leverage). Only then does
 // the founder go back to the GROUP with a first offer — that's where
@@ -97,7 +100,6 @@
                     { char: "founders", speaker: "jordan", text: "👍" },
                     { char: "founders", speaker: "alex", text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
                     { char: "founders", speaker: "jordan", text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
-                    { char: "founders", speaker: "alex", text: "...no, yeah. that's fair." },
                   ]);
                   return null;
                 },
@@ -110,7 +112,6 @@
                 fx(s, e) {
                   e.say([
                     { char: "founders", speaker: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
-                    { char: "founders", speaker: "jordan", text: "sure, whatever's easier. i'm not trying to put anyone on the spot." },
                   ]);
                   return null;
                 },
@@ -121,7 +122,44 @@
             timeout: { weeks: 2 },
           },
 
+          // ── The room going quiet: Act 1 → Act 2 ───────────────────────────
+          // A beat of its own, because the DMs mean nothing if they arrive in
+          // the same instant as the group's last word — it reads as everyone
+          // talking over each other. The player has to actually close the room
+          // ("i'll talk to each of you separately") before either of them will
+          // say what they think. Whoever spoke last in the group says it, so
+          // both openings land somewhere different: the polite shortcut ends
+          // on Alex conceding, the honest one on Jordan standing aside.
+          {
+            id: "equity_split_off", char: "founders",
+            speaker: (s, e) => e.took("equity_open:open_up") ? "jordan" : "alex",
+            text: (s, e) => e.took("equity_open:open_up")
+              ? "sure, whatever's easier. i'm not trying to put anyone on the spot."
+              : "...no, yeah. that's fair.",
+            when: { after: ["equity_open"] },
+            choices: [
+              {
+                // A transition, not a fork — the same "continue" shape as
+                // launch day's discover→scope→decide setup beats.
+                key: "separate", label: "I'll talk to each of you separately",
+                reply: "ok — this isn't a group conversation. i'm going to talk to each of you on your own. tell me what you actually think, not what's polite.",
+                journal: null,
+                fx(s, e) {
+                  e.say(e.took("equity_open:open_up")
+                    ? { char: "founders", speaker: "alex", text: "yeah. thanks." }
+                    : { char: "founders", speaker: "jordan", text: "ok. that's probably fairer anyway." });
+                  return null;
+                },
+              },
+            ],
+            // Ignored: the room goes quiet on its own and they come to you
+            // anyway — nobody was going to let this sit forever.
+            timeout: { weeks: 1 },
+          },
+
           // ── Act 2: DMs — what they actually want (parallel, independent) ──
+          // Both land together, on purpose: two people messaging you within a
+          // minute of the group going quiet, neither knowing the other did.
           {
             id: "equity_dm_alex", char: "alex",
             text: [
@@ -130,7 +168,7 @@
               "...and look, i know how \"i did math about this\" sounds. but i ran our situation through a co-founder equity calculator last night — foundrs.com has one — and it said 40/40/20 too. i'm not just making this up to sound fair.",
             ].join("\n\n"),
             mockups: { calc: { variant: "calc" } },
-            when: { after: ["equity_open"] },
+            when: { after: ["equity_split_off"] },
             choices: [
               {
                 key: "take_seriously", label: "That's a fair ask — I'm taking it seriously",
@@ -160,7 +198,7 @@
               "so when the argument is \"jordan still has a job to fall back on\" — i want you to know that's not free. i gave up a real one to be here. i just didn't tell alex, because i didn't want it to sound like a threat.",
               "i'm not saying i need more than thirds. i'm saying don't let \"she's not all-in\" be the thing that costs me. i am all-in. i just didn't quit loudly.",
             ].join("\n\n"),
-            when: { after: ["equity_open"] },
+            when: { after: ["equity_split_off"] },
             choices: [
               {
                 key: "why_not_told", label: "Why didn't you tell either of us that?",

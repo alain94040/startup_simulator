@@ -374,11 +374,14 @@
       // `speaker` is who actually said it, which only differs from the thread's
       // owner in a group chat (char: "founders", speaker: "jordan"). The UI
       // needs the id, not just the name, to draw the right avatar per bubble.
-      const spk = node.speaker ? this.cast.get(node.speaker) : null;
+      // Like `text`, it may be a (s,e,char) function — which beat closes a
+      // group conversation can depend on how the conversation went.
+      const spkId = node.speaker ? this._text(node.speaker, char) : null;
+      const spk = spkId ? this.cast.get(spkId) : null;
       this._push(charId, {
         type: "incoming", nodeId: node.id,
         from: node.from || (spk ? spk.def.name : char.def.name),
-        fromId: node.speaker || null,
+        fromId: spkId || null,
         body: this._text(node.text, char),
         subtext: node.subtext || null,
         mockups: node.mockups || null,

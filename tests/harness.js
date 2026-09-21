@@ -65,7 +65,8 @@
   const PREF = {
     start_prototype: ["build"], jordan_working_style: ["standup"],
     incorporate: ["atlas"], incorporate_again: ["atlas"],
-    equity_open: ["open_up"], equity_dm_alex: ["take_seriously"], equity_dm_jordan: ["why_not_told"],
+    equity_open: ["open_up"], equity_split_off: ["separate"],
+    equity_dm_alex: ["take_seriously"], equity_dm_jordan: ["why_not_told"],
     equity_offer: ["forty"],
     equity_pushback_alex: ["believed_him"], equity_pushback_jordan: ["fix_it"],
     equity_pushback_alex_50: ["not_comfortable"], equity_pushback_jordan_50: ["not_comfortable"],
