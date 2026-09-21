@@ -113,7 +113,9 @@
     {
       const cofounderNodes = [];
       for (const [id, node] of g.nodes) {
-        if (node.char === "alex" || node.char === "jordan") cofounderNodes.push(id);
+        // "founders" is the co-founders' group chat, not a third person —
+        // leaving the room on read is leaving BOTH of them on read.
+        if (node.char === "alex" || node.char === "jordan" || node.char === "founders") cofounderNodes.push(id);
       }
       const ratio = answeredRatio(g, cofounderNodes);
       const alex = g.cast.get("alex"), jordan = g.cast.get("jordan");

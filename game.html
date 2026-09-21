@@ -209,6 +209,14 @@
   @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, .stat.changed, #scRail .conv.unread .unread-dot { animation: none !important; transition: none !important; } }
   .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
+  /* Group chat: a thread where the bubbles aren't all from the same person, so
+     each run of them is labelled with who's talking (iMessage does the same). */
+  .m-from { align-self: flex-start; display: flex; align-items: center; gap: 5px; margin: 7px 0 3px 3px; font-size: 11px; font-weight: 700; color: var(--dim); }
+  .m-from i { width: 15px; height: 15px; border-radius: 50%; color: #fff; font-style: normal; font-size: 8.5px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex: none; }
+  /* Two members' colours split across one circle, so a group reads as a group
+     at a glance in the rail and the chat header. */
+  .av-group { overflow: hidden; display: flex; flex-direction: row; }
+  .av-group span { flex: 1 1 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; height: 100%; }
   #reply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
   #reply .hint { font-size: 11px; color: var(--dim); margin-bottom: 4px; }
   .chip { display: block; width: 100%; text-align: left; border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 18px; padding: 8px 14px; font-size: 13px; margin-top: 6px; }
@@ -1128,6 +1136,34 @@ const STYLE = {
   growth: { color: "#30d158", initials: "🚀" }, founder: { color: "#8e8e93", initials: "Me" },
 };
 const styleFor = id => STYLE[id] || { color: "#8e8e93", initials: "?" };
+// A group chat is a thread that's a room, not a person (cast.js `type: "group"`).
+const isGroupChat = (id) => { const c = game.cast.get(id); return !!(c && c.def.type === "group"); };
+const groupMembers = (id) => { const c = game.cast.get(id); return (c && c.def.members) || []; };
+// One avatar for a conversation: a person's initials, or a group's members'
+// colours split across the same circle.
+function convAvatarHtml(id, cls) {
+  const extra = cls ? " " + cls : "";
+  if (isGroupChat(id)) {
+    return '<div class="av av-group' + extra + '">' + groupMembers(id).slice(0, 2).map(m => {
+      const s = styleFor(m);
+      return '<span style="background:' + s.color + '">' + esc(s.initials) + "</span>";
+    }).join("") + "</div>";
+  }
+  const stl = styleFor(id);
+  return '<div class="av' + extra + '" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>";
+}
+// In a group, a run of bubbles from one person gets a name label above it.
+// `prev` is the message rendered immediately before (null at the top). Only
+// groups get these: in a one-on-one the sender is the thread, and labelling
+// every bubble with it would be noise.
+function senderLabelHtml(m, prev, group) {
+  if (!group || m.type !== "incoming" || !m.from) return "";
+  if (prev && prev.type === "incoming" && prev.from === m.from) return "";
+  const stl = m.fromId ? styleFor(m.fromId) : null;
+  return '<div class="m-from">' +
+    (stl ? '<i style="background:' + stl.color + '">' + esc(stl.initials) + "</i>" : "") +
+    esc(m.from) + "</div>";
+}
 const FEED_META = {
   hacker_news: { cls: "f-hn", src: "Y · HACKER NEWS" },
   techcrunch: { cls: "f-tc", src: "TC · TECHCRUNCH" },
@@ -1446,12 +1482,13 @@ function renderRail() {
     const t = game.threads[id];
     const last = t.length ? t[t.length - 1] : null;
     const unread = hasUnread(id) && !(id === selected && viewingThread());   // blue dot, iMessage-style
-    const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : c.role;
-    const stl = styleFor(id);
+    // In a group the preview needs to say WHO — "Jordan: ok, the atlas form…"
+    const who = last && last.type === "incoming" && isGroupChat(id) && last.from ? last.from + ": " : "";
+    const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : c.role;
     const flag = owed[id] && owed[id].kind === "story" ? '<span class="tag call">needs a call</span>' : "";
     return '<div class="conv ' + (id === selected && viewingThread() ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
-      '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
+      convAvatarHtml(id) +
       '<div class="who"><b>' + esc(c.name) + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div>" + flag + "</div>";
   }).join("");
   for (const el of $("railList").querySelectorAll(".conv")) {
@@ -1529,12 +1566,13 @@ function openThread() {
 // rare, explicitly-authored aside, styled unlike a bubble on purpose so it
 // never reads as one, reserved for a detail (usually a verbatim quote) the
 // thread doesn't already carry as a real message.
-function threadEntryHtml(m, isNew, tail) {
+function threadEntryHtml(m, isNew, tail, prev, group) {
   const anim = isNew ? " msg-new" : "";
   let out = "";
   if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
   else if (m.type === "incoming") {
-    out = '<div class="m-in' + (tail ? " tail" : "") + (m.dropped ? " dropped" : "") + anim + '">' + esc(m.body) + "</div>" +
+    out = senderLabelHtml(m, prev, group) +
+      '<div class="m-in' + (tail ? " tail" : "") + (m.dropped ? " dropped" : "") + anim + '">' + esc(m.body) + "</div>" +
       (m.subtext ? '<div class="m-sub">' + esc(m.subtext) + "</div>" : "");
     // the dev-plan message carries three CSS phone mockups → thumbnails + lightbox
     if (m.mockups) out += mockupRowHtml(m.mockups);
@@ -1548,9 +1586,9 @@ function renderThread(opts) {
   opts = opts || {};
   const c = game.cast.get(selected);
   if (!c) return;
-  const hStl = styleFor(selected);
+  const group = isGroupChat(selected);
   $("chatHead").innerHTML =
-    (isMobile ? '<div class="av ch-av" style="background:' + hStl.color + '">' + esc(hStl.initials) + "</div>" : "") +
+    (isMobile ? convAvatarHtml(selected, "ch-av") : "") +
     "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + (c.active ? "" : " · gone") + "</span>";
   const t = game.threads[selected];
   const shown = threadRendered[selected] || 0;   // how far the read cursor has revealed
@@ -1558,8 +1596,11 @@ function renderThread(opts) {
   t.slice(0, shown).forEach((m, i) => {
     if (m.week !== lastWk) { html += '<div class="m-wk">week ' + m.week + "</div>"; lastWk = m.week; }
     const next = t[i + 1] && i + 1 < shown ? t[i + 1] : null;
-    const tail = !next || next.type !== m.type || next.week !== m.week;
-    html += threadEntryHtml(m, false, tail);
+    // In a group, a new speaker also ends the previous bubble's run (so the
+    // tail lands on the last bubble each person actually sent).
+    const tail = !next || next.type !== m.type || next.week !== m.week
+      || (group && next.type === "incoming" && next.from !== m.from);
+    html += threadEntryHtml(m, false, tail, i > 0 ? t[i - 1] : null, group);
   });
   if (opts.typing) html += '<div class="row in"><div class="typing"><i></i><i></i><i></i></div></div>';
   const el = $("thread");
@@ -1969,7 +2010,9 @@ function sceneCast() {
   const arc = game.arcs.get(lastSceneId);
   return (arc ? arc.scene.cast : [])
     .filter(id => !SELF.has(id) && (sceneThread(id).length > 0 || sceneOpenBeat(id)))
-    .sort((a, b) => game.order.indexOf(a) - game.order.indexOf(b));
+    // Group chats sit above the one-on-ones: the room's shared conversation is
+    // the room, and the DMs hanging off it are the asides.
+    .sort((a, b) => (isGroupChat(b) - isGroupChat(a)) || (game.order.indexOf(a) - game.order.indexOf(b)));
 }
 // Every non-founder participant the room could ever have — unlike sceneCast(),
 // not filtered to "has said something yet": pingOtherSceneThreads needs to
@@ -1999,19 +2042,17 @@ function enterScene(startSeq, charId) {
   showCine(meta.enter || [meta.title || ""], meta.accent, () => {
     $("scene").classList.add("on");
     const beats = sceneOpenBeats().filter(a => !SELF.has(a.charId));
-    // Tiebreak toward whoever's card just opened the room, but ONLY when
-    // they're genuinely one of the beats tied for "opens first" — never as
-    // an override of an unambiguous single beat (e.g. firing's entry card is
-    // Alex's, but the room's only live beat at that instant is Jordan's; the
-    // cast including Alex doesn't make his empty thread the right default).
-    // Without this tiebreak at all, a room whose opener triggers more than
-    // one simultaneously-open beat picks whichever comes first in engine
-    // order, which can strand the player on a reply to a message they never
-    // saw (equity's Act 2: both DMs open together, and Alex's side reacts to
-    // context that only exists in Jordan's thread — the one that just
-    // invited you in).
-    const tiedWithJustAnswered = charId && beats.some(b => b.charId === charId);
-    scSelected = (tiedWithJustAnswered ? charId : null) || (beats[0] && beats[0].charId) || sceneCast()[0]
+    const roster = sceneCast();
+    // Stay in the conversation that just opened the room, when that thread is
+    // actually part of it — sceneCast() is exactly "has something to read or
+    // answer in here", so this lands on the equity group chat (whose opener,
+    // your reply and both reactions are sitting in it) instead of jumping
+    // into a DM that reacts to context the player hasn't been shown yet.
+    // It falls through where the entry card's thread is NOT part of the room:
+    // firing is invited by Alex but the only thing in that room is Jordan, and
+    // his thread there is empty.
+    const stayPut = charId && roster.includes(charId) ? charId : null;
+    scSelected = stayPut || (beats[0] && beats[0].charId) || roster[0]
       || (game.scene && game.scene.scene.cast.find(id => !SELF.has(id)));
     scMobileView = "thread";   // the room opens on whoever is talking, not on a roster
     openSceneThread(scSelected);
@@ -2159,13 +2200,14 @@ function renderFocus(opts) {
   // a room of one is just a chat: no list to go back to, so no back chevron
   document.body.classList.toggle("sc-thread-open", isMobile && (scMobileView === "thread" || cast.length < 2));
   $("scRail").innerHTML = cast.map(id => {
-    const def = game.cast.get(id).def, stl = styleFor(id), t = sceneThread(id);
+    const def = game.cast.get(id).def, t = sceneThread(id);
     const last = t.length ? t[t.length - 1] : null;
     const unread = sceneUnread(id) && !(id === scSelected && viewingSceneThread());
-    const prev = last ? (last.type === "reply" ? "You: " : "") + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
+    const who = last && last.type === "incoming" && isGroupChat(id) && last.from ? last.from + ": " : "";
+    const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
     return '<div class="conv ' + (id === scSelected && viewingSceneThread() ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
-      '<div class="av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" +
+      convAvatarHtml(id) +
       '<div class="who"><b>' + esc(def.name) + '</b><span>' + esc(prev.slice(0, 52)) + "</span></div></div>";
   }).join("");
   for (const el of $("scRail").querySelectorAll(".conv")) {
@@ -2209,13 +2251,13 @@ function renderFocusThread(opts) {
   opts = opts || {};
   const c = scSelected && game.cast.get(scSelected);
   if (!c) { $("scChatHead").innerHTML = ""; $("scThread").innerHTML = ""; $("scReply").innerHTML = ""; return; }
-  const stl = styleFor(scSelected);
+  const group = isGroupChat(scSelected);
   // On the phone this bar is the room's nav bar: who you're talking to, and the
   // way back to the room's other conversation (absent in a one-on-one room).
   const canBack = isMobile && sceneCast().length > 1;
   $("scChatHead").innerHTML =
     (canBack ? '<button class="sc-back"><span class="chev">‹</span>Chats</button>' : "") +
-    (isMobile ? '<div class="av ch-av" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>" : "") +
+    (isMobile ? convAvatarHtml(scSelected, "ch-av") : "") +
     "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + "</span>";
   if (canBack) $("scChatHead").querySelector(".sc-back").onclick = () => { if (!uiBusy) popToSceneList(); };
 
@@ -2224,10 +2266,12 @@ function renderFocusThread(opts) {
   let html = "";
   t.slice(0, shown).forEach((m, i) => {
     const next = i + 1 < shown ? t[i + 1] : null;
-    const tail = !next || next.type !== m.type;
+    const tail = !next || next.type !== m.type
+      || (group && next.type === "incoming" && next.from !== m.from);
     const anim = i === shown - 1 ? " msg-new" : "";
     if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
     else {
+      html += senderLabelHtml(m, i > 0 ? t[i - 1] : null, group);
       html += '<div class="m-in' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
       if (m.subtext) html += '<div class="m-sub">' + esc(m.subtext) + "</div>";
       if (m.mockups) html += mockupRowHtml(m.mockups);

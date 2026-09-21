@@ -31,10 +31,15 @@
 // leaks away).
 //
 // Everything a co-founder says here is a real message (`effects.say` /
-// `e.say`) in their own thread — no narrator asides in the chat (see
-// CLAUDE.md). Every ending writes exactly ONE journal line — the ruling
-// itself, whichever choice it lands on. There's no separate signing beat:
-// the founder's dictate IS the close.
+// `e.say`) — no narrator asides in the chat (see CLAUDE.md). WHERE it lands
+// is the arc's whole structure: Act 1 and the ruling go to the founders'
+// group thread (`char`/`say` target "founders", with `speaker` naming who's
+// talking; the founder's own announcements get there with `replyTo`), while
+// Acts 2 and 4 are DMs on the co-founders' own threads. "not in the group,
+// but—" only means something because the group is a real room you stepped
+// out of. Every ending writes exactly ONE journal line — the ruling itself,
+// whichever choice it lands on. There's no separate signing beat: the
+// founder's dictate IS the close.
 //
 // Shared state: `s.equity_proposal` (the split currently on the table — set
 // at the Act 3 offer, and the impasse ruling can move it again), `s.equity_
@@ -56,11 +61,19 @@
     arcs: [
       {
         id: "equity",
-        scene: { cast: ["jordan", "alex", "founder"] },
+        // The room is the group chat plus the two private threads hanging off
+        // it — that split IS the arc: Act 1 and the ruling happen in front of
+        // everyone, Acts 2 and 4 happen where the other one can't see.
+        scene: { cast: ["founders", "jordan", "alex", "founder"] },
         beats: [
           // ── Act 1: the group chat — the dance ─────────────────────────────
+          // This one lands in the founders' GROUP thread (cast.js `founders`),
+          // not in Jordan's DM: the whole act is three people in one room
+          // being careful in front of each other, and the DMs in Act 2 only
+          // mean something ("not in the group, but—") because there is a
+          // group to step out of. `speaker` names who's actually talking.
           {
-            id: "equity_open", char: "jordan",
+            id: "equity_open", char: "founders", speaker: "jordan",
             text: (s) => s.incorporated
               ? "ok, the atlas form just asked how many shares each of us gets. we should figure this out before it's a whole thing.\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?"
               : "hey — we're going to have to answer this eventually, might as well be now: how many shares does each of us get?\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?",
@@ -81,10 +94,10 @@
                 effects: { scene: "equity" },
                 fx(s, e) {
                   e.say([
-                    { char: "jordan", text: "👍" },
-                    { char: "alex", text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
-                    { char: "jordan", text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
-                    { char: "alex", text: "...no, yeah. that's fair." },
+                    { char: "founders", speaker: "jordan", text: "👍" },
+                    { char: "founders", speaker: "alex", text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
+                    { char: "founders", speaker: "jordan", text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
+                    { char: "founders", speaker: "alex", text: "...no, yeah. that's fair." },
                   ]);
                   return null;
                 },
@@ -96,8 +109,8 @@
                 effects: { scene: "equity" },
                 fx(s, e) {
                   e.say([
-                    { char: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
-                    { char: "jordan", text: "sure, whatever's easier. i'm not trying to put anyone on the spot." },
+                    { char: "founders", speaker: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
+                    { char: "founders", speaker: "jordan", text: "sure, whatever's easier. i'm not trying to put anyone on the spot." },
                   ]);
                   return null;
                 },
@@ -179,31 +192,34 @@
             when: { after: ["equity_dm_alex", "equity_dm_jordan"], if: (s) => !s.equity_proposal },
             choices: [
               {
-                // Founder-thread `reply` text never reaches any surface (see
-                // reading_the_game.md's writeup of this exact node) — the
-                // journal mirror keeps stamps and outcomes, not replies. So
-                // the actual number has to be legible from Alex/Jordan's own
-                // reactions, not from the reply the player never sees.
+                // The deliberation is private (a founder "Your move" card),
+                // but the ANSWER is a message to the group — `replyTo` posts
+                // it there. That also keeps it visible: a reply left on the
+                // founder's own thread renders nowhere, since that thread is
+                // the journal mirror (see reading_the_game.md on this node).
                 key: "thirds", label: "Thirds — everyone's essential",
                 reply: "different risk, different shapes, but everyone here gave up something to be in this. i think it's thirds.",
+                replyTo: "founders",
                 journal: null,
-                effects: { flags: { equity_proposal: "33/33/33" }, say: { char: "alex", text: "...ok. thirds, then." } },
+                effects: { flags: { equity_proposal: "33/33/33" }, say: { char: "founders", speaker: "alex", text: "...ok. thirds, then." } },
               },
               {
                 key: "forty", label: "40/40/20 — Alex's case",
                 reply: "alex — you're right that day-one risk isn't equal between the two of you. i'm going 40/40/20.",
+                replyTo: "founders",
                 journal: null,
-                effects: { flags: { equity_proposal: "40/40/20" }, say: { char: "jordan", text: "wow. ok. forty-forty-twenty." } },
+                effects: { flags: { equity_proposal: "40/40/20" }, say: { char: "founders", speaker: "jordan", text: "wow. ok. forty-forty-twenty." } },
               },
               {
                 key: "fifty", label: "50/25/25 — I'm taking half",
                 reply: "i'm taking 50. i started this, i'm the one who doesn't get to walk away when it's bad. 25 each for you two.",
+                replyTo: "founders",
                 journal: null,
                 effects: {
                   flags: { equity_proposal: "50/25/25" },
                   say: [
-                    { char: "alex", text: "you're kidding — you're keeping fifty for yourself?" },
-                    { char: "jordan", text: "...that's a choice, keeping half for yourself." },
+                    { char: "founders", speaker: "alex", text: "you're kidding — you're keeping fifty for yourself?" },
+                    { char: "founders", speaker: "jordan", text: "...that's a choice, keeping half for yourself." },
                   ],
                 },
               },
@@ -333,72 +349,78 @@
               {
                 key: "hold_thirds", label: "Hold — thirds, final", if: (s) => s.equity_proposal === "33/33/33",
                 reply: "equal thirds. final. i'd rather lose points than partners — that's not a cop-out, it's the actual reason.",
+                replyTo: "founders",
                 journal: "The cap table's set: equal thirds. Jordan got what she wanted from the start. Alex signed anyway. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "jordan", text: "thank you." },
-                    { char: "alex", text: "ran the numbers and still lost the argument. noted, i guess." },
+                    { char: "founders", speaker: "jordan", text: "thank you." },
+                    { char: "founders", speaker: "alex", text: "ran the numbers and still lost the argument. noted, i guess." },
                   ],
                 },
               },
               {
                 key: "cave_forty", label: "Cave — you're right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33",
                 reply: "you're right. i went with the easy number instead of the real one. 40/40/20 — that's what full-time risk should actually get.",
+                replyTo: "founders",
                 journal: "The cap table's set: 40/40/20. I walked back my own first call once I heard Alex out again. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "40/40/20", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "alex", text: "...thank you. i wasn't sure i'd said it clearly enough the first time." },
-                    { char: "jordan", text: "so the group vote didn't count. good to know for next time." },
+                    { char: "founders", speaker: "alex", text: "...thank you. i wasn't sure i'd said it clearly enough the first time." },
+                    { char: "founders", speaker: "jordan", text: "so the group vote didn't count. good to know for next time." },
                   ],
                 },
               },
               {
                 key: "hold_forty", label: "Hold — 40/40/20, final", if: (s) => s.equity_proposal === "40/40/20",
                 reply: "40/40/20. final. full-time risk gets full-time equity — that's the whole argument and i'm not pretending it's more complicated than that.",
+                replyTo: "founders",
                 journal: "The cap table's set: 40/40/20. Alex got what he asked for. Jordan said the work would argue for her from here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "alex", text: "thank you for saying it plainly." },
-                    { char: "jordan", text: "i said no to a real job for this. twenty percent it is." },
+                    { char: "founders", speaker: "alex", text: "thank you for saying it plainly." },
+                    { char: "founders", speaker: "jordan", text: "i said no to a real job for this. twenty percent it is." },
                   ],
                 },
               },
               {
                 key: "cave_thirds_from_forty", label: "Cave — let's do thirds", if: (s) => s.equity_proposal === "40/40/20",
                 reply: "you turned down a real offer to be here. you just didn't make it a whole thing when you did. and you're right — seven points isn't going to change how alex or i sleep at night. thirds. equal.",
+                replyTo: "founders",
                 journal: "The cap table's set: equal thirds. I walked back 40/40/20 once I actually weighed what Jordan gave up to be here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "jordan", text: "...thank you. i didn't think i'd have to say it three times." },
-                    { char: "alex", text: "so the calculator was just for my own information, then." },
+                    { char: "founders", speaker: "jordan", text: "...thank you. i didn't think i'd have to say it three times." },
+                    { char: "founders", speaker: "alex", text: "so the calculator was just for my own information, then." },
                   ],
                 },
               },
               {
                 key: "hold_fifty", label: "Hold — 50/25/25 stands, final", if: (s) => s.equity_proposal === "50/25/25",
                 reply: "the 50 stands. i'll carry what that costs me with both of you. i need it to build this the way it needs building.",
+                replyTo: "founders",
                 journal: "The cap table's set: 50/25/25. I kept half. Alex and Jordan agreed on something for the first time all week — that it shouldn't be this. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "alex", text: "for the record — jordan and i actually agree on something. wish it wasn't this." },
-                    { char: "jordan", text: "he's right. mark the date." },
+                    { char: "founders", speaker: "alex", text: "for the record — jordan and i actually agree on something. wish it wasn't this." },
+                    { char: "founders", speaker: "jordan", text: "he's right. mark the date." },
                   ],
                 },
               },
               {
                 key: "cave_thirds_from_fifty", label: "Cave — thirds, all three of us equal", if: (s) => s.equity_proposal === "50/25/25",
                 reply: "you're both right, and neither of you should've had to say it twice to two different people to get here. thirds. all three of us equal.",
+                replyTo: "founders",
                 journal: "The cap table's set: equal thirds. I gave back the extra 25 once Alex and Jordan made almost the same argument without knowing it. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "alex", text: "it's not the 40 i wanted. but at least nobody's taking more than their share anymore. i can live with equal." },
-                    { char: "jordan", text: "thank you. genuinely — equal is all i ever wanted. i just couldn't sit with you keeping half." },
+                    { char: "founders", speaker: "alex", text: "it's not the 40 i wanted. but at least nobody's taking more than their share anymore. i can live with equal." },
+                    { char: "founders", speaker: "jordan", text: "thank you. genuinely — equal is all i ever wanted. i just couldn't sit with you keeping half." },
                   ],
                 },
               },
@@ -409,13 +431,14 @@
                 // based money-grab Jordan rejected outright back in Act 1.
                 key: "table", label: "Table it until after launch",
                 reply: "we're going in circles and we have a company to build. i'm parking this until after launch — once we're live, we'll actually be able to see who's carrying what, and we can settle it then.",
+                replyTo: "founders",
                 journal: "We tabled equity until after launch — and agreed we'd settle it by who's carrying what once we're live. Everyone typed something short. Nobody meant it. The default thirds went into the paperwork unexamined, like an unpaid bill.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, equity_tabled: true, jordan_equity: true },
                   char: { alex: { morale: -8, flags: { equity_set: true } }, jordan: { morale: -8 } },
                   say: [
-                    { char: "alex", text: "so we're back to \"fine.\" cool. that's new." },
-                    { char: "jordan", text: "we did two rounds of this to land back on the emoji. impressive, honestly." },
+                    { char: "founders", speaker: "alex", text: "so we're back to \"fine.\" cool. that's new." },
+                    { char: "founders", speaker: "jordan", text: "we did two rounds of this to land back on the emoji. impressive, honestly." },
                   ],
                   scene: null,
                 },

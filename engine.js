@@ -256,10 +256,16 @@
         (!this.scene || this.arcOf.get(n.id) === this.scene) && this._eligible(n));
     }
 
-    // ── surfacing ──────────────────────────────────────────────────────────────
-    _poll() {
-      // 1) unlock characters whose condition now passes (suppressed mid-scene).
-      if (!this.scene) for (const [id, char] of this.cast) {
+    // Unlock characters whose condition now passes (suppressed mid-scene).
+    // Runs at the week boundary AND before an `effects.surface` flush: a beat
+    // pulled into the current week can belong to a character the same answer
+    // just unlocked (filing the incorporation opens the founders' group chat
+    // and drops Jordan's opener into it in one move), and _flushSurface skips
+    // inactive characters — so without this the beat would be dropped and
+    // re-surface a week late, on a thread the rail wasn't showing yet.
+    _unlockCast() {
+      if (this.scene) return;
+      for (const [id, char] of this.cast) {
         if (!char.active && char.def.unlock && char.def.unlock(this.s, this)) {
           char.active = true;
           if (char.def.intro) this._push(id, {
@@ -268,6 +274,12 @@
           });
         }
       }
+    }
+
+    // ── surfacing ──────────────────────────────────────────────────────────────
+    _poll() {
+      // 1) unlock characters whose condition now passes (suppressed mid-scene).
+      this._unlockCast();
       // 2) sweep eligibility for FIFO ordering.
       for (const [id, node] of this.nodes) {
         if (this._eligible(node)) {
@@ -343,6 +355,7 @@
       const ids = this._surfaceNow;
       this._surfaceNow = [];
       if (this.scene) return; // a room is talking — the boundary will do it
+      this._unlockCast();
       for (const id of ids) {
         const node = this.nodes.get(id);
         if (!node) continue;
@@ -358,9 +371,14 @@
       if (cur && cur.nodeId === node.id) return;
       const char = this.cast.get(charId);
       this.open[charId] = { nodeId: node.id, week: this.s.week };
+      // `speaker` is who actually said it, which only differs from the thread's
+      // owner in a group chat (char: "founders", speaker: "jordan"). The UI
+      // needs the id, not just the name, to draw the right avatar per bubble.
+      const spk = node.speaker ? this.cast.get(node.speaker) : null;
       this._push(charId, {
         type: "incoming", nodeId: node.id,
-        from: node.from || char.def.name,
+        from: node.from || (spk ? spk.def.name : char.def.name),
+        fromId: node.speaker || null,
         body: this._text(node.text, char),
         subtext: node.subtext || null,
         mockups: node.mockups || null,
@@ -535,9 +553,11 @@
       for (const m of [].concat(spec)) {
         const charId = m.char || fallbackCharId;
         const char = this.cast.get(charId);
+        const spk = m.speaker ? this.cast.get(m.speaker) : null;
         this._push(charId, {
           type: "incoming",
-          from: m.from || (char ? char.def.name : charId),
+          from: m.from || (spk ? spk.def.name : (char ? char.def.name : charId)),
+          fromId: m.speaker || null,
           body: this._text(m.text, char),
           // a line spoken while a scene is running belongs to that scene, so the
           // focus UI can scope each private thread to its own sitting.

@@ -71,10 +71,20 @@ console.log("decent driver (seed 42)");
   ok(g.took("equity_pushback_jordan:fix_it"), "Jordan pushed back and the founder admitted it should be closer");
   ok(g.took("equity_impasse:cave_thirds_from_forty"), "the founder caved to thirds at the impasse");
   ok(g.s.equity_proposal === "33/33/33", "final split is equal thirds");
-  ok(g.threads.alex.some(m => (m.body || "").includes("calculator was just for my own information")),
-    "Alex — the split's loser — got the last word on losing the argument");
-  ok(g.threads.jordan.some(m => (m.body || "").includes("didn't think i'd have to say it three times")),
-    "Jordan's relief landed in her thread once the founder caved");
+  // The ruling is announced in the founders' group chat, and both react there
+  // — in front of each other, which is the whole point of the room.
+  const grp = g.threads.founders || [];
+  ok(grp.some(m => m.from === "Alex" && (m.body || "").includes("calculator was just for my own information")),
+    "Alex — the split's loser — got the last word, in the group");
+  ok(grp.some(m => m.from === "Jordan" && (m.body || "").includes("didn't think i'd have to say it three times")),
+    "…and Jordan's relief landed in the same room, not a private thread");
+  ok(grp.some(m => m.type === "reply" && (m.body || "").includes("thirds. equal.")),
+    "the founder's ruling itself was posted to the group (not lost on the founder's own thread)");
+  // The DMs are DMs: the private cases stay off the group thread.
+  ok(g.threads.jordan.some(m => (m.body || "").includes("not in the group, but")),
+    "Jordan's offer confession is a DM…");
+  ok(!grp.some(m => (m.body || "").includes("not in the group, but")),
+    "…and never leaks into the group chat she's stepping out of");
   ok(g.s.jordan_equity === true, "equity decided");
   ok(!g.s.equity_tabled, "nothing was tabled");
   ok(g.weekOf("equity_impasse") === g.weekOf("equity_open"),

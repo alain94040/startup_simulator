@@ -8,7 +8,14 @@
 //     skills?: { build, discover, pitch },       // passive weekly contribution
 //     effortMult?(s, char),                       // scales direction-call effort grants
 //     passiveMult?(s, char),                      // scales passive weekly accrual
+//     members?,                                   // group chats only: who's in the room
 //     milestones? }                                // founder only: journal stamps
+//
+// A `type: "group"` entry is a thread that is a room rather than a person: it
+// has `members` and no stats, and every message in it names its own `speaker`
+// (see engine.js's _show/_say). Content addresses it like any other thread —
+// `char: "founders"` to have someone talk in it, `replyTo: "founders"` to post
+// the founder's own answer there.
 //
 // Order matters: it is the rail order; founder stays last.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -29,6 +36,20 @@
       id: "jordan", name: "Jordan", role: "Co-founder · iOS", type: "cofounder",
       start: { morale: 80, trust: 90, focus: "build" },
       skills: { build: 0.7 },
+    },
+    {
+      // The founders' group chat — a thread that is a ROOM, not a person.
+      // `members` is what the UI draws (stacked avatars, "Alex, Jordan" in the
+      // header); every message in here carries its own `speaker`, because the
+      // thread's owner isn't the one talking. It holds no morale/trust of its
+      // own: what gets said here lands on the members, via their own stats.
+      //
+      // It opens with the incorporation — the moment "who owns what" becomes a
+      // real question — on ANY outcome of that card, including leaving it on
+      // read, so the equity conversation always has a room to happen in.
+      id: "founders", name: "Alex & Jordan", role: "Group · you, Alex, Jordan",
+      type: "group", members: ["alex", "jordan"],
+      unlock: (s, e) => e.done("incorporate"),
     },
     {
       id: "mom", name: "Mom", role: "Family", type: "family",
