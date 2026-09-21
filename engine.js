@@ -382,6 +382,11 @@
         type: "incoming", nodeId: node.id,
         from: node.from || (spk ? spk.def.name : char.def.name),
         fromId: spkId || null,
+        // A `system: true` beat is a cue, not dialogue — nobody in the room
+        // said it (a group thread otherwise has no way to prompt "it's your
+        // move" without falsely attributing it to the group as a whole). The
+        // UI renders it centered, unattributed, distinct from a bubble.
+        system: !!node.system,
         body: this._text(node.text, char),
         subtext: node.subtext || null,
         mockups: node.mockups || null,

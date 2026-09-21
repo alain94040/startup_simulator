@@ -204,6 +204,11 @@
     align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
     border-radius: 10px; padding: 7px 12px; font: 13px var(--hand); color: #6b6045;
   }
+  /* A `system: true` beat: a cue ("it's your move"), not something anyone
+     said — centered and unattributed, so a group thread never falsely
+     credits the room itself with a line nobody in it actually typed. */
+  .m-sys { align-self: center; max-width: 80%; text-align: center; font-size: 11.5px;
+    font-style: italic; color: var(--dim); margin: 6px 0 2px; }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
   @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
   @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, .stat.changed, #scRail .conv.unread .unread-dot { animation: none !important; transition: none !important; } }
@@ -1483,7 +1488,7 @@ function renderRail() {
     const last = t.length ? t[t.length - 1] : null;
     const unread = hasUnread(id) && !(id === selected && viewingThread());   // blue dot, iMessage-style
     // In a group the preview needs to say WHO — "Jordan: ok, the atlas form…"
-    const who = last && last.type === "incoming" && isGroupChat(id) && last.from ? last.from + ": " : "";
+    const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";
     const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : c.role;
     const flag = owed[id] && owed[id].kind === "story" ? '<span class="tag call">needs a call</span>' : "";
     return '<div class="conv ' + (id === selected && viewingThread() ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
@@ -1570,7 +1575,9 @@ function threadEntryHtml(m, isNew, tail, prev, group) {
   const anim = isNew ? " msg-new" : "";
   let out = "";
   if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
-  else if (m.type === "incoming") {
+  else if (m.type === "incoming" && m.system) {
+    out = '<div class="m-sys' + anim + '">' + esc(m.body) + "</div>";
+  } else if (m.type === "incoming") {
     out = senderLabelHtml(m, prev, group) +
       '<div class="m-in' + (tail ? " tail" : "") + (m.dropped ? " dropped" : "") + anim + '">' + esc(m.body) + "</div>" +
       (m.subtext ? '<div class="m-sub">' + esc(m.subtext) + "</div>" : "");
@@ -2203,7 +2210,7 @@ function renderFocus(opts) {
     const def = game.cast.get(id).def, t = sceneThread(id);
     const last = t.length ? t[t.length - 1] : null;
     const unread = sceneUnread(id) && !(id === scSelected && viewingSceneThread());
-    const who = last && last.type === "incoming" && isGroupChat(id) && last.from ? last.from + ": " : "";
+    const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";
     const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
     return '<div class="conv ' + (id === scSelected && viewingSceneThread() ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
@@ -2270,7 +2277,9 @@ function renderFocusThread(opts) {
       || (group && next.type === "incoming" && next.from !== m.from);
     const anim = i === shown - 1 ? " msg-new" : "";
     if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
-    else {
+    else if (m.system) {
+      html += '<div class="m-sys' + anim + '">' + esc(m.body) + "</div>";
+    } else {
       html += senderLabelHtml(m, i > 0 ? t[i - 1] : null, group);
       html += '<div class="m-in' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
       if (m.subtext) html += '<div class="m-sub">' + esc(m.subtext) + "</div>";

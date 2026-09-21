@@ -36,8 +36,12 @@
 // Everything a co-founder says here is a real message (`effects.say` /
 // `e.say`) — no narrator asides in the chat (see CLAUDE.md). WHERE it lands
 // is the arc's whole structure: Act 1 and the ruling go to the founders'
-// group thread (`char`/`say` target "founders", with `speaker` naming who's
-// talking; the founder's own announcements get there with `replyTo`), while
+// group thread (`char: "founders"`, with `speaker` naming who's talking —
+// the founder's own offer and ruling are real group-thread beats too, not
+// founder "Your call" pop-ups, since announcing a number to the room is
+// exactly the kind of thing that belongs in the room; `system: true` marks
+// their framing text as a cue nobody in the room actually said, rendered
+// unattributed rather than falsely credited to the group as a whole), while
 // Acts 2 and 4 are DMs on the co-founders' own threads. "not in the group,
 // but—" only means something because the group is a real room you stepped
 // out of. Every ending writes exactly ONE journal line — the ruling itself,
@@ -67,7 +71,7 @@
         // The room is the group chat plus the two private threads hanging off
         // it — that split IS the arc: Act 1 and the ruling happen in front of
         // everyone, Acts 2 and 4 happen where the other one can't see.
-        scene: { cast: ["founders", "jordan", "alex", "founder"] },
+        scene: { cast: ["founders", "jordan", "alex"] },
         beats: [
           // ── Act 1: the group chat — the dance ─────────────────────────────
           // This one lands in the founders' GROUP thread (cast.js `founders`),
@@ -233,35 +237,31 @@
           },
 
           // ── Act 3: back to the group — the founder's first offer ──────────
-          // This is where s.equity_proposal actually gets set.
+          // This is where s.equity_proposal actually gets set. It's a real
+          // group-thread beat (char: "founders"), not a founder "Your call"
+          // pop-up — announcing a number to the room is exactly the kind of
+          // thing that belongs IN the room, gated the same way any group beat
+          // would be (after both DMs), not pulled out of it into a modal.
           {
-            id: "equity_offer", char: "founder",
-            text: "you've heard both of them now. whatever you send to the group next is the number.",
+            id: "equity_offer", char: "founders", system: true,
+            text: "you've heard both of them now — everyone's waiting on what you send next.",
             when: { after: ["equity_dm_alex", "equity_dm_jordan"], if: (s) => !s.equity_proposal },
             choices: [
               {
-                // The deliberation is private (a founder "Your move" card),
-                // but the ANSWER is a message to the group — `replyTo` posts
-                // it there. That also keeps it visible: a reply left on the
-                // founder's own thread renders nowhere, since that thread is
-                // the journal mirror (see reading_the_game.md on this node).
                 key: "thirds", label: "Thirds — everyone's essential",
                 reply: "different risk, different shapes, but everyone here gave up something to be in this. i think it's thirds.",
-                replyTo: "founders",
                 journal: null,
                 effects: { flags: { equity_proposal: "33/33/33" }, say: { char: "founders", speaker: "alex", text: "...ok. thirds, then." } },
               },
               {
                 key: "forty", label: "40/40/20 — Alex's case",
                 reply: "alex — you're right that day-one risk isn't equal between the two of you. i'm going 40/40/20.",
-                replyTo: "founders",
                 journal: null,
                 effects: { flags: { equity_proposal: "40/40/20" }, say: { char: "founders", speaker: "jordan", text: "wow. ok. forty-forty-twenty." } },
               },
               {
                 key: "fifty", label: "50/25/25 — I'm taking half",
                 reply: "i'm taking 50. i started this, i'm the one who doesn't get to walk away when it's bad. 25 each for you two.",
-                replyTo: "founders",
                 journal: null,
                 effects: {
                   flags: { equity_proposal: "50/25/25" },
@@ -380,12 +380,16 @@
           // The founder's own call, sent to the group. Ends the scene. No
           // consent round, no signing ceremony — this beat is the ending.
           {
-            id: "equity_impasse", char: "founder",
+            // Same reasoning as equity_offer: the ruling is a real group-
+            // thread beat, not a founder "Your call" pop-up — announcing the
+            // final split is exactly the kind of thing that belongs in the
+            // room it closes.
+            id: "equity_impasse", char: "founders", system: true,
             text: (s, e) => s.equity_proposal === "50/25/25"
-              ? "alex and jordan just made almost the same argument to me, separately, without knowing it. neither of them thinks i should keep half. whatever i send next is final."
+              ? "alex and jordan just made almost the same argument, separately, without knowing it — neither thinks you should keep half. whatever you send next is final."
               : s.equity_proposal === "40/40/20"
-                ? "jordan's made her case twice now. whatever i send next is final."
-                : "alex's made his case twice now. whatever i send next is final.",
+                ? "jordan's made her case twice now. whatever you send next is final."
+                : "alex's made his case twice now. whatever you send next is final.",
             when: {
               if: (s, e) => !s.equity_decided && (
                 (s.equity_proposal === "33/33/33" && e.done("equity_pushback_alex"))
@@ -397,7 +401,6 @@
               {
                 key: "hold_thirds", label: "Hold — thirds, final", if: (s) => s.equity_proposal === "33/33/33",
                 reply: "equal thirds. final. i'd rather lose points than partners — that's not a cop-out, it's the actual reason.",
-                replyTo: "founders",
                 journal: "The cap table's set: equal thirds. Jordan got what she wanted from the start. Alex signed anyway. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
@@ -410,7 +413,6 @@
               {
                 key: "cave_forty", label: "Cave — you're right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33",
                 reply: "you're right. i went with the easy number instead of the real one. 40/40/20 — that's what full-time risk should actually get.",
-                replyTo: "founders",
                 journal: "The cap table's set: 40/40/20. I walked back my own first call once I heard Alex out again. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "40/40/20", equity_decided: true, jordan_equity: true }, scene: null,
@@ -423,7 +425,6 @@
               {
                 key: "hold_forty", label: "Hold — 40/40/20, final", if: (s) => s.equity_proposal === "40/40/20",
                 reply: "40/40/20. final. full-time risk gets full-time equity — that's the whole argument and i'm not pretending it's more complicated than that.",
-                replyTo: "founders",
                 journal: "The cap table's set: 40/40/20. Alex got what he asked for. Jordan said the work would argue for her from here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
@@ -436,7 +437,6 @@
               {
                 key: "cave_thirds_from_forty", label: "Cave — let's do thirds", if: (s) => s.equity_proposal === "40/40/20",
                 reply: "you turned down a real offer to be here. you just didn't make it a whole thing when you did. and you're right — seven points isn't going to change how alex or i sleep at night. thirds. equal.",
-                replyTo: "founders",
                 journal: "The cap table's set: equal thirds. I walked back 40/40/20 once I actually weighed what Jordan gave up to be here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
@@ -449,7 +449,6 @@
               {
                 key: "hold_fifty", label: "Hold — 50/25/25 stands, final", if: (s) => s.equity_proposal === "50/25/25",
                 reply: "the 50 stands. i'll carry what that costs me with both of you. i need it to build this the way it needs building.",
-                replyTo: "founders",
                 journal: "The cap table's set: 50/25/25. I kept half. Alex and Jordan agreed on something for the first time all week — that it shouldn't be this. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
@@ -462,7 +461,6 @@
               {
                 key: "cave_thirds_from_fifty", label: "Cave — thirds, all three of us equal", if: (s) => s.equity_proposal === "50/25/25",
                 reply: "you're both right, and neither of you should've had to say it twice to two different people to get here. thirds. all three of us equal.",
-                replyTo: "founders",
                 journal: "The cap table's set: equal thirds. I gave back the extra 25 once Alex and Jordan made almost the same argument without knowing it. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
@@ -479,7 +477,6 @@
                 // based money-grab Jordan rejected outright back in Act 1.
                 key: "table", label: "Table it until after launch",
                 reply: "we're going in circles and we have a company to build. i'm parking this until after launch — once we're live, we'll actually be able to see who's carrying what, and we can settle it then.",
-                replyTo: "founders",
                 journal: "We tabled equity until after launch — and agreed we'd settle it by who's carrying what once we're live. Everyone typed something short. Nobody meant it. The default thirds went into the paperwork unexamined, like an unpaid bill.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, equity_tabled: true, jordan_equity: true },
