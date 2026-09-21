@@ -399,7 +399,7 @@
             },
             choices: [
               {
-                key: "hold_thirds", label: "Hold — thirds, final", if: (s) => s.equity_proposal === "33/33/33",
+                key: "hold_thirds", label: "Hold — thirds, final", if: (s) => s.equity_proposal === "33/33/33", branch: true,
                 reply: "equal thirds. final. i'd rather lose points than partners — that's not a cop-out, it's the actual reason.",
                 journal: "The cap table's set: equal thirds. Jordan got what she wanted from the start. Alex signed anyway. Nobody set up vesting schedules.",
                 effects: {
@@ -411,7 +411,7 @@
                 },
               },
               {
-                key: "cave_forty", label: "Cave — you're right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33",
+                key: "cave_forty", label: "Cave — you're right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33", branch: true,
                 reply: "you're right. i went with the easy number instead of the real one. 40/40/20 — that's what full-time risk should actually get.",
                 journal: "The cap table's set: 40/40/20. I walked back my own first call once I heard Alex out again. Nobody set up vesting schedules.",
                 effects: {
@@ -423,7 +423,7 @@
                 },
               },
               {
-                key: "hold_forty", label: "Hold — 40/40/20, final", if: (s) => s.equity_proposal === "40/40/20",
+                key: "hold_forty", label: "Hold — 40/40/20, final", if: (s) => s.equity_proposal === "40/40/20", branch: true,
                 reply: "40/40/20. final. full-time risk gets full-time equity — that's the whole argument and i'm not pretending it's more complicated than that.",
                 journal: "The cap table's set: 40/40/20. Alex got what he asked for. Jordan said the work would argue for her from here. Nobody set up vesting schedules.",
                 effects: {
@@ -435,7 +435,7 @@
                 },
               },
               {
-                key: "cave_thirds_from_forty", label: "Cave — let's do thirds", if: (s) => s.equity_proposal === "40/40/20",
+                key: "cave_thirds_from_forty", label: "Cave — let's do thirds", if: (s) => s.equity_proposal === "40/40/20", branch: true,
                 reply: "you turned down a real offer to be here. you just didn't make it a whole thing when you did. and you're right — seven points isn't going to change how alex or i sleep at night. thirds. equal.",
                 journal: "The cap table's set: equal thirds. I walked back 40/40/20 once I actually weighed what Jordan gave up to be here. Nobody set up vesting schedules.",
                 effects: {
@@ -447,7 +447,7 @@
                 },
               },
               {
-                key: "hold_fifty", label: "Hold — 50/25/25 stands, final", if: (s) => s.equity_proposal === "50/25/25",
+                key: "hold_fifty", label: "Hold — 50/25/25 stands, final", if: (s) => s.equity_proposal === "50/25/25", branch: true,
                 reply: "the 50 stands. i'll carry what that costs me with both of you. i need it to build this the way it needs building.",
                 journal: "The cap table's set: 50/25/25. I kept half. Alex and Jordan agreed on something for the first time all week — that it shouldn't be this. Nobody set up vesting schedules.",
                 effects: {
@@ -459,7 +459,7 @@
                 },
               },
               {
-                key: "cave_thirds_from_fifty", label: "Cave — thirds, all three of us equal", if: (s) => s.equity_proposal === "50/25/25",
+                key: "cave_thirds_from_fifty", label: "Cave — thirds, all three of us equal", if: (s) => s.equity_proposal === "50/25/25", branch: true,
                 reply: "you're both right, and neither of you should've had to say it twice to two different people to get here. thirds. all three of us equal.",
                 journal: "The cap table's set: equal thirds. I gave back the extra 25 once Alex and Jordan made almost the same argument without knowing it. Nobody set up vesting schedules.",
                 effects: {

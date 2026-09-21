@@ -1383,10 +1383,16 @@ function todoSnapshot() {
   return out;
 }
 function gatedKeys(nodeId) {
-  // which currently-offered options exist only because of banked evidence
+  // which currently-offered options exist only because of banked evidence —
+  // NOT every per-option `if`: some just pick among mutually-exclusive
+  // alternatives for the current state (e.g. equity_impasse's hold/cave
+  // choices differ by which split is on the table), which is a structural
+  // fact of the beat, not something the player earned by researching. A
+  // choice marks itself `branch: true` to say "my `if` is filtering, not
+  // gating" and opt out of the ⚑ "unlocked by what you've learned" treatment.
   const node = game.nodes.get(nodeId);
   if (!node) return new Set();
-  return new Set((node.choices || []).filter(c => c.if).map(c => c.key));
+  return new Set((node.choices || []).filter(c => c.if && !c.branch).map(c => c.key));
 }
 
 // ── header ────────────────────────────────────────────────────────────────────
