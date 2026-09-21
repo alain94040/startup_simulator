@@ -30,7 +30,7 @@ const DEFAULT_GAMES = 300;
 // Beats: `fact` reads the ledger post-game (exact resolution week, any outcome);
 // `reached` is polled weekly for multi-source state.
 const PHASES = [
-  { key: "equity",         label: "Equity signed",     fact: "equity_signing" },
+  { key: "equity",         label: "Equity signed",     reached: s => !!s.equity_decided && !s.equity_tabled },
   { key: "dev_plan",       label: "Dev plan chosen",   fact: "dev_plan" },
   { key: "incorporated",   label: "Incorporated",      reached: s => !!s.incorporated },
   { key: "demo",           label: "Demo night",        fact: "demo_ready" },

@@ -55,32 +55,24 @@
     // ── 1. Have the hard conversations ───────────────────────────────────────
     {
       const talkRatio = answeredRatio(g, [
-        "equity_open", "equity_alex", "equity_alex_why", "equity_worry",
-        "equity_counter_alex", "equity_counter_alex_50", "equity_counter_jordan",
-        "equity_impasse_alex", "equity_impasse_jordan", "equity_impasse",
-        "equity_impasse_alex_report", "equity_impasse_jordan_report",
-        "equity_consent_alex", "equity_consent_jordan",
-        "equity_signing", "alex_commitment",
+        "equity_open", "equity_dm_alex", "equity_dm_jordan", "equity_offer",
+        "equity_pushback_alex", "equity_pushback_jordan",
+        "equity_pushback_alex_50", "equity_pushback_jordan_50",
+        "equity_impasse", "alex_commitment",
       ]);
       add("hard-conversations", "Have the hard conversations", "📚 Wasserman, The Founder's Dilemmas",
         talkRatio == null ? null : parts([
           { faced: true, weight: 3, got: talkRatio,
             note: talkRatio === 1 ? "Every equity and commitment talk got an answer." : "Some of the hardest conversations resolved by silence." },
-          { faced: g.done("equity_alex"), weight: 1, got: g.took("equity_alex:probe") ? 1 : 0.4,
-            note: g.took("equity_alex:probe") ? "Asked where Alex's head was before naming a number." : null },
-          // Sending Alex to negotiate with Jordan himself is the founder
-          // dodging the one call that's actually theirs to make — it settles
-          // nothing and leaves both of them waiting on you anyway.
-          { faced: g.done("equity_impasse_alex"), weight: 2,
-            got: g.took("equity_impasse_alex:convince_jordan") ? 0.2 : 1,
-            note: g.took("equity_impasse_alex:convince_jordan")
-              ? "Told Alex to go negotiate equity with Jordan himself instead of deciding — nothing moved, and both were left waiting on you." : null },
+          { faced: g.done("equity_open"), weight: 1, got: g.took("equity_open:open_up") ? 1 : 0.4,
+            note: g.took("equity_open:open_up") ? "Opened the real conversation about equity instead of defaulting past it." : null },
           // Tabling the split is worse than never assembling the room: the
-          // whole company was on the call, both cases were made, and the
-          // founder blinked.
+          // whole company went through it twice, both cases were made, and
+          // the founder still blinked — and proposed settling it later by
+          // contribution, the exact dynamic Jordan asked them not to become.
           { faced: g.done("equity_impasse"), weight: 2, got: g.took("equity_impasse:table") ? 0 : 1,
             note: g.took("equity_impasse:table")
-              ? "Got the whole room assembled for the equity call, then tabled it 'until after launch.' After launch never came." : null },
+              ? "Got the whole room through it twice, then tabled the split 'until after launch' — and proposed settling it later by who contributed what." : null },
           // Reaching the room is one thing; what happened in it is another.
           // The compromise grades BELOW deferring: you got there and blinked,
           // and she now knows you considered it.

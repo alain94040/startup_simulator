@@ -34,9 +34,10 @@
             text: "couldn't sleep — mocked up three directions for plusone. tap through them and take a real look before we lock scope. which one do we actually build?",
             // Lands the week after the equity question closes — one week later
             // still if the answer left Alex grudging: anything but 40/40/20,
-            // or the dodge that tabled the split (the signing never fires on
-            // that path, so the impasse is the clock). A disappointed CTO
-            // costs the company a week before he picks the work back up.
+            // or the dodge that tabled the split. A disappointed CTO costs the
+            // company a week before he picks the work back up. The founder's
+            // ruling (equity_impasse) is now the sole close of the arc — no
+            // separate signing beat — so it's the clock on every path.
             //
             // NOTE ON THE THRESHOLDS: new messages surface at the week
             // boundary, so a node eligible in week W first appears in week
@@ -49,9 +50,8 @@
             // until he gets an answer.
             when: {
               if: (s, e) => {
-                const dep = s.equity_tabled ? "equity_impasse" : "equity_signing";
                 const grudging = s.equity_tabled || s.equity_proposal !== "40/40/20";
-                return e.done(dep) && e.weeksSince(dep) >= (grudging ? 2 : 1);
+                return e.done("equity_impasse") && e.weeksSince("equity_impasse") >= (grudging ? 2 : 1);
               },
             },
             mockups: {

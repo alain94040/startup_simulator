@@ -62,26 +62,27 @@ console.log("decent driver (seed 42)");
   const g = run(42, decent, 20);
   ok(!g.s.game_over, "alive after 20 weeks (cash $" + g.s.cash + ")");
 
-  // Equity arc, 40/40/20 anchor → Jordan counters → thirds at the impasse →
-  // Alex (the disappointed party) consents → signing.
-  ok(g.took("equity_alex:probe"), "probed Alex before naming a split");
-  ok(g.took("equity_worry:reassure"), "answered Jordan's worry before the split landed");
-  ok(g.took("equity_alex_why:propose_40"), "proposed 40/40/20");
-  ok(g.took("equity_counter_jordan:hear_her"), "Jordan countered the 40 and got heard");
-  ok(g.took("equity_impasse_alex:ack") && g.took("equity_impasse_jordan:heard"),
-    "both demands collided out loud before the call");
-  ok(g.took("equity_impasse:thirds_final"), "the founder called it at the impasse: thirds");
+  // Equity arc: opens it up in the group → hears both DMs → offers 40/40/20
+  // → Jordan pushes back → the founder caves to thirds at the impasse.
+  ok(g.took("equity_open:open_up"), "opened the real conversation instead of the shortcut");
+  ok(g.took("equity_dm_alex:take_seriously"), "took Alex's ask seriously without committing yet");
+  ok(g.took("equity_dm_jordan:why_not_told"), "asked Jordan why she hadn't said something sooner");
+  ok(g.took("equity_offer:forty"), "offered 40/40/20 after hearing both sides");
+  ok(g.took("equity_pushback_jordan:fix_it"), "Jordan pushed back and the founder admitted it should be closer");
+  ok(g.took("equity_impasse:cave_thirds_from_forty"), "the founder caved to thirds at the impasse");
   ok(g.s.equity_proposal === "33/33/33", "final split is equal thirds");
-  ok(g.took("equity_consent_alex:own_it"), "Alex — the split's loser — had his say before the signing");
-  ok(!g.done("equity_consent_jordan"), "Jordan needed no consent round — thirds is her ask");
-  ok(g.s.jordan_equity === true, "equity signed");
+  ok(g.threads.alex.some(m => (m.body || "").includes("calculator was just for my own information")),
+    "Alex — the split's loser — got the last word on losing the argument");
+  ok(g.threads.jordan.some(m => (m.body || "").includes("didn't think i'd have to say it three times")),
+    "Jordan's relief landed in her thread once the founder caved");
+  ok(g.s.jordan_equity === true, "equity decided");
   ok(!g.s.equity_tabled, "nothing was tabled");
-  ok(g.weekOf("equity_signing") === g.weekOf("equity_open"),
-    "scene: opener and signing resolved in the same week (one sitting)");
+  ok(g.weekOf("equity_impasse") === g.weekOf("equity_open"),
+    "scene: opener and the ruling resolved in the same week (one sitting)");
   const equityWeek = g.weekOf("equity_open");
   const sceneActs = g.log.filter(l => l.acted && l.week === equityWeek).length;
   ok(sceneActs >= 5, "scene beats were free (" + sceneActs + " answers landed in week " + equityWeek + ")");
-  ok(g.stats().scene === null, "scene closed after the signing");
+  ok(g.stats().scene === null, "scene closed after the ruling");
 
   // Dev spine.
   ok(g.s.dev_plan === "lean", "picked the lean plan");
@@ -90,9 +91,9 @@ console.log("decent driver (seed 42)");
   // mockups arrive a week LATE. Exact equality on purpose: the old `>=` form
   // passed whether the disappointment cost a week or nothing at all, which is
   // how the delay stayed broken (see "the cost of a grudging split" below).
-  ok(g.weekOf("dev_plan") === g.weekOf("equity_signing") + 2,
-    "dev plan landed signing+2 — the grudging split cost a week (signed wk "
-    + g.weekOf("equity_signing") + ", plan wk " + g.weekOf("dev_plan") + ")");
+  ok(g.weekOf("dev_plan") === g.weekOf("equity_impasse") + 2,
+    "dev plan landed impasse+2 — the grudging split cost a week (impasse wk "
+    + g.weekOf("equity_impasse") + ", plan wk " + g.weekOf("dev_plan") + ")");
   ok(g.took("auth_choice:buy"), "bought auth day one");
   ok(g.s.saas.some(x => x.label === "Auth provider"), "auth SaaS on the burn ($30/wk)");
   ok(!g.log.some(l => l.surfaced === "auth_forced"), "auth_forced never surfaced after buying");
@@ -176,13 +177,13 @@ console.log("ignore driver (seed 42, 26 weeks)");
   ok(g.outcome("start_prototype") === "@ignored" && !!g.s.items, "kickoff timed out — the team started anyway");
   ok(g.outcome("equity_open") === "@ignored", "no sit-down: Jordan's opener expired");
   ok(g.stats().scene === null && !g.log.some(l => l.acted === "equity_open"), "scene never entered");
-  ok(g.outcome("equity_alex") === "@ignored" && g.s.equity_proposal === "33/33/33" && g.s.equity_skipped,
-    "Alex's ask expired — equal thirds won by default");
-  ok(!g.s.jordan_equity, "nothing was ever signed — the counter round drowned in Alex's grievance queue");
+  ok(g.outcome("equity_offer") === "@ignored" && g.s.equity_proposal === "33/33/33" && g.s.equity_skipped,
+    "the founder's offer expired — equal thirds won by default");
+  ok(!g.s.jordan_equity, "nothing was ever decided — the pushback round never got the chance to fire before Alex left");
   ok(g.outcome("alex_leaving_threat") === "@ignored" && !g.cast.get("alex").active,
     "sustained neglect surfaced the leaving threat; ignoring that too, Alex walked (wk " + g.weekOf("alex_leaving_threat") + ")");
   ok(g.threads.alex.some(m => (m.body || "").includes("proper handoff")), "his goodbye landed in the thread");
-  ok(!g.log.some(l => l.surfaced === "dev_plan"), "the dev arc never started (gated on a signing that never came)");
+  ok(!g.log.some(l => l.surfaced === "dev_plan"), "the dev arc never started (gated on a ruling that never came)");
   ok(g.outcome("ff_family") === "@ignored" && g.outcome("ff_family_2") === "@ignored" && g.done("ff_family_3"),
     "Mom's nag chain rode the @ignored edges");
   ok(g.s.game_over && g.s.cofounder_left && g.s.cash > 0,
@@ -408,27 +409,31 @@ console.log("part-time vs full-time (seed 42)");
 // cost anything. Assert the exact weeks — a `>=` here proves nothing.
 console.log("equity: the grudging delay (seed 42)");
 {
+  // decent always offers 40/40/20 at equity_offer (see harness PREF), so by
+  // the time the impasse is reached the anchor is always 40/40/20 — the
+  // interceptor below only overrides the founder's FINAL call, same seed and
+  // same choices up to that point across all three runs.
   const atImpasse = (key) => (a, g) => a.nodeId === "equity_impasse" ? [key] : decent(a, g);
-  const happy   = run(42, atImpasse("forty_final"), 8);   // Alex got what he asked for
-  const grudge  = run(42, atImpasse("thirds_final"), 8);  // he didn't
-  const tabled  = run(42, atImpasse("table"), 8);         // nobody got anything
+  const happy   = run(42, atImpasse("hold_forty"), 8);            // Alex got what he asked for
+  const grudge  = run(42, atImpasse("cave_thirds_from_forty"), 8); // he didn't
+  const tabled  = run(42, atImpasse("table"), 8);                  // nobody got anything
 
-  ok(happy.s.equity_proposal === "40/40/20" && happy.done("equity_signing"),
-    "40/40/20 signed — Alex got the parity he argued for");
-  ok(happy.weekOf("dev_plan") === happy.weekOf("equity_signing") + 1,
-    "…so the mockups land the very next week (signed wk " + happy.weekOf("equity_signing")
+  ok(happy.s.equity_proposal === "40/40/20" && happy.done("equity_impasse"),
+    "40/40/20 stands — Alex got the parity he argued for");
+  ok(happy.weekOf("dev_plan") === happy.weekOf("equity_impasse") + 1,
+    "…so the mockups land the very next week (impasse wk " + happy.weekOf("equity_impasse")
     + ", plan wk " + happy.weekOf("dev_plan") + ")");
 
-  ok(grudge.s.equity_proposal === "33/33/33" && grudge.done("equity_signing"),
-    "thirds signed over Alex's objection");
-  ok(grudge.weekOf("dev_plan") === grudge.weekOf("equity_signing") + 2,
-    "…so the mockups land a week late (signed wk " + grudge.weekOf("equity_signing")
+  ok(grudge.s.equity_proposal === "33/33/33" && grudge.done("equity_impasse"),
+    "thirds decided over Alex's objection");
+  ok(grudge.weekOf("dev_plan") === grudge.weekOf("equity_impasse") + 2,
+    "…so the mockups land a week late (impasse wk " + grudge.weekOf("equity_impasse")
     + ", plan wk " + grudge.weekOf("dev_plan") + ")");
   ok(grudge.weekOf("dev_plan") === happy.weekOf("dev_plan") + 1,
     "the disappointment costs exactly one week against the happy split");
 
-  ok(tabled.s.equity_tabled && !tabled.done("equity_signing"),
-    "tabling ends the arc with nothing signed");
+  ok(tabled.s.equity_tabled && tabled.done("equity_impasse"),
+    "tabling ends the arc on the ruling itself — nothing signed after it");
   ok(tabled.weekOf("dev_plan") === tabled.weekOf("equity_impasse") + 2,
     "…and the dodge costs the same week (tabled wk " + tabled.weekOf("equity_impasse")
     + ", plan wk " + tabled.weekOf("dev_plan") + ")");
@@ -460,7 +465,7 @@ console.log("week 2: the paperwork, then the split (seed 42)");
   ok(g.weekOf("incorporate") === 2 && g.weekOf("equity_open") === 2,
     "both land in week 2 (paperwork wk " + g.weekOf("incorporate")
     + ", opener wk " + g.weekOf("equity_open") + ")");
-  ok(g.weekOf("equity_signing") === 2, "…and the sitting still settles the split in week 2");
+  ok(g.weekOf("equity_impasse") === 2, "…and the sitting still settles the split in week 2");
 
   // The week's two moves are the filing and the invitation. Entering a room is
   // answering a message: it costs one move, and that move buys the WHOLE
@@ -473,7 +478,7 @@ console.log("week 2: the paperwork, then the split (seed 42)");
     "the invitation is the arc's own first beat");
   ok(spend.incorporate === 1 && spend.equity_open === 1,
     "…and it still costs a move, like the filing (" + JSON.stringify(spend) + ")");
-  ok(spend.equity_signing === 0 && spend.equity_impasse === 0,
+  ok(spend.equity_impasse === 0,
     "…while every beat answered inside the room is free");
 }
 
@@ -497,13 +502,13 @@ console.log("a scene hands the week back (seed 7, attention-shuffled)");
   const g = run(7, deferPaperwork, 10, {
     priority: makeAttentionPriority(7),
     onAct: (game, a) => {
-      if (a.nodeId === "equity_signing") atExit = {
+      if (a.nodeId === "equity_impasse") atExit = {
         left: game.actionsLeft,
         open: game.openActions().filter(x => !x.onHold).map(x => x.nodeId),
       };
     },
   });
-  ok(g.weekOf("equity_signing") === 5, "the sitting ran in week 5, mid-chapter");
+  ok(g.weekOf("equity_impasse") === 5, "the sitting ran in week 5, mid-chapter");
   ok(atExit && atExit.left >= 1,
     "the room opened and closed inside one week, and the week still owes a move ("
     + (atExit ? atExit.left : "?") + " left)");

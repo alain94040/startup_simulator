@@ -41,8 +41,10 @@
   const ANSWER_ORDER = [
     "founder_consulting", // rent money first — a sensible player never lets it expire
     "start_prototype", "jordan_working_style", // week 1: one message per founder
-    "equity_worry", "equity_jordan_relief", "equity_alex_justify",
-    "equity_5050_interject", "interviews", "waitlist_cold",
+    "equity_dm_alex", "equity_dm_jordan", "equity_offer",
+    "equity_pushback_alex", "equity_pushback_jordan",
+    "equity_pushback_alex_50", "equity_pushback_jordan_50",
+    "interviews", "waitlist_cold",
     "launch_surface",     // the launch plan beats the ship call — a sensible
                           // player picks the splash before flipping the switch
     "slide_maya_call", "slide_cohort", "slide_first_echo",
@@ -63,13 +65,11 @@
   const PREF = {
     start_prototype: ["build"], jordan_working_style: ["standup"],
     incorporate: ["atlas"], incorporate_again: ["atlas"],
-    equity_open: ["open"], equity_alex: ["probe"], equity_alex_why: ["propose_40"],
-    equity_worry: ["reassure"], equity_jordan_relief: ["not_yet"], equity_alex_justify: ["mine"],
-    equity_counter_jordan: ["hear_her"], equity_counter_alex: ["risk_real"],
-    equity_counter_alex_50: ["hear_him"], equity_5050_interject: ["ack"],
-    equity_impasse_alex: ["ack"], equity_impasse_jordan: ["heard"],
-    equity_impasse: ["thirds_final"], equity_consent_alex: ["own_it"],
-    equity_consent_jordan: ["heard"], equity_signing: ["sign"],
+    equity_open: ["open_up"], equity_dm_alex: ["take_seriously"], equity_dm_jordan: ["why_not_told"],
+    equity_offer: ["forty"],
+    equity_pushback_alex: ["believed_him"], equity_pushback_jordan: ["fix_it"],
+    equity_pushback_alex_50: ["not_comfortable"], equity_pushback_jordan_50: ["not_comfortable"],
+    equity_impasse: ["cave_thirds_from_forty"],
     dev_plan: ["lean"], auth_choice: ["buy"], auth_forced: ["buy"],
     interviews: ["interview"], first_screen: ["intake_interviews", "intake"],
     ff_family: ["ask"], ff_family_2: ["ask"], ff_family_3: ["ask"],
