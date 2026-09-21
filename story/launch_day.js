@@ -434,16 +434,7 @@
       {
         id: "proto_to_product", char: "alex",
         text: "before we point real strangers at this: honesty hour. password-reset emails land in spam. the match queue crashes on profiles with zero photos. and i'm about 80% sure you can see other people's photos by editing a url. one hardening week and i can sleep at night. or we ship as-is and firefight.",
-        // The spine gate into chapter 2: nothing else moves a demo-stage run
-        // forward, and BOTH backstops for a stalled build (launch_stall,
-        // scope_grind) require `productPhase === "product"` — the very thing
-        // this card grants. So it's a standing offer, like dev_plan: Alex
-        // holds the question until he gets an answer. It used to resolve
-        // itself on a 3-week timeout and re-ask on a 4-week cooldown, which
-        // left a one-week hole with nothing answerable in it every cycle —
-        // a run that never takes the hardening week can't reach any card
-        // that would restart it (Layer C dead air; e.g. seed 646 wk 22).
-        when: { if: (s) => s.has_demo && s.productPhase !== "product" },
+        when: { cooldown: 4, if: (s) => s.has_demo && s.productPhase !== "product" },
         choices: [
           {
             key: "commit", label: "Take the hardening week",
@@ -465,7 +456,7 @@
             },
           },
         ],
-        // No timeout — see the gate above.
+        timeout: { weeks: 3 }, // he asks again in a few weeks (cooldown)
       },
       {
         id: "good_enough_launch", char: "alex",
