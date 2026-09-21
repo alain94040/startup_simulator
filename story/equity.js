@@ -1,11 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // story/equity.js — the equity arc, complete, in one file.
 //
-// Five beats, one scene: dance → confess → propose → push back → dictate.
+// Invite → dance → confess → propose → push back → dictate, one scene.
 //
-// Jordan opens the topic (the Atlas paperwork forces it) but nobody names a
-// number in the open — that's the dance: everyone dodges, in their own way,
-// in the group. Closing the room is its own beat (`equity_split_off`): the
+// Jordan opens the topic (the Atlas paperwork forces it), and the ONLY
+// choice at that point is whether to sit down at all (`equity_open`) — no
+// tone-setting yet, so agreeing to talk doesn't already feel like the
+// negotiation started. The real first move — `equity_dance` — only surfaces
+// once the player is actually in the room, and nobody names a number in it:
+// everyone dodges, in their own way, in the group. Closing the room is its
+// own beat (`equity_split_off`): the
 // player has to say "i'll talk to each of you separately" before anyone will,
 // so the DMs arrive as a consequence rather than on top of the group's last
 // word. The real asks come out in those private DMs (Alex's case,
@@ -73,12 +77,12 @@
         // everyone, Acts 2 and 4 happen where the other one can't see.
         scene: { cast: ["founders", "jordan", "alex"] },
         beats: [
-          // ── Act 1: the group chat — the dance ─────────────────────────────
-          // This one lands in the founders' GROUP thread (cast.js `founders`),
-          // not in Jordan's DM: the whole act is three people in one room
-          // being careful in front of each other, and the DMs in Act 2 only
-          // mean something ("not in the group, but—") because there is a
-          // group to step out of. `speaker` names who's actually talking.
+          // ── Act 1a: the invitation ─────────────────────────────────────────
+          // Jordan's opener lands in the founders' GROUP thread (cast.js
+          // `founders`), not a DM — but this beat is just the invitation: one
+          // choice, sitting down. The real tone-setting decision (Act 1b,
+          // below) only happens once the player is actually IN the room, so
+          // it never feels like the arc started before they agreed to it.
           {
             id: "equity_open", char: "founders", speaker: "jordan",
             text: (s) => s.incorporated
@@ -87,42 +91,50 @@
             when: { after: ["incorporate"] },
             choices: [
               {
-                // `say` fires before `scene` takes effect (engine.js applies
-                // the effects vocabulary in a fixed order), so a reaction
-                // fired from the SAME effects object that also enters the
-                // scene gets stamped scene:null and is invisible once the
-                // player is inside the room. `fx` runs after the static
-                // `effects` have applied, so the scene is already set by the
-                // time `e.say(...)` fires here — that's what actually scopes
-                // these lines to the sitting.
+                key: "open", label: "Let's sit down right now and settle it",
+                reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
+                journal: null,
+                effects: { scene: "equity" },
+              },
+            ],
+            // Ignored: no sit-down — the same conversation happens piecemeal,
+            // one text at a time, over the coming weeks.
+            timeout: { weeks: 2 },
+          },
+
+          // ── Act 1b: the dance — now that everyone's actually in the room ──
+          // Mid-scene, so it lands the instant the sitting opens. `system` is
+          // the cue that the room's open and waiting; the two options are
+          // where the founder actually sets the tone for the sitting.
+          {
+            id: "equity_dance", char: "founders", system: true,
+            text: "the call's started — how do you want to open it?",
+            when: { after: ["equity_open"] },
+            choices: [
+              {
                 key: "shortcut", label: "Let's just say equal thirds and move on",
                 reply: "easiest answer: equal thirds. can we just go with that and get back to work?",
                 journal: null,
-                effects: { scene: "equity" },
-                fx(s, e) {
-                  e.say([
+                effects: {
+                  say: [
                     { char: "founders", speaker: "jordan", text: "👍" },
                     { char: "founders", speaker: "alex", text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
                     { char: "founders", speaker: "jordan", text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
-                  ]);
-                  return null;
+                  ],
                 },
               },
               {
                 key: "open_up", label: "Let's actually talk about what everyone wants first",
                 reply: "let's not default our way into this. tell me — actually — what feels fair to each of you. i'll listen to both before anyone signs anything.",
                 journal: null,
-                effects: { scene: "equity" },
-                fx(s, e) {
-                  e.say([
-                    { char: "founders", speaker: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
-                  ]);
-                  return null;
+                effects: {
+                  say: { char: "founders", speaker: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
                 },
               },
             ],
-            // Ignored: no sit-down — the same conversation happens piecemeal,
-            // one text at a time, over the coming weeks.
+            // Ignored (real-world-rare — you're already in the room): silence
+            // reads as the shortcut, same as the timed-out path below reads
+            // as Alex's "...no, yeah. that's fair."
             timeout: { weeks: 2 },
           },
 
@@ -136,11 +148,11 @@
           // on Alex conceding, the honest one on Jordan standing aside.
           {
             id: "equity_split_off", char: "founders",
-            speaker: (s, e) => e.took("equity_open:open_up") ? "jordan" : "alex",
-            text: (s, e) => e.took("equity_open:open_up")
+            speaker: (s, e) => e.took("equity_dance:open_up") ? "jordan" : "alex",
+            text: (s, e) => e.took("equity_dance:open_up")
               ? "sure, whatever's easier. i'm not trying to put anyone on the spot."
               : "...no, yeah. that's fair.",
-            when: { after: ["equity_open"] },
+            when: { after: ["equity_dance"] },
             choices: [
               {
                 // A transition, not a fork — the same "continue" shape as

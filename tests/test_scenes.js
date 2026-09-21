@@ -36,7 +36,7 @@ const CAP = capArg >= 0 ? parseInt(process.argv[capArg + 1], 10) : 800; // max r
 const RANDOM_PATHS = 40;   // extra seeded random walks per scene
 
 const SCENES = [
-  { id: "equity", entry: { node: "equity_open", keys: ["shortcut", "open_up"] }, seed: 42 },
+  { id: "equity", entry: { node: "equity_open", keys: ["open"] }, seed: 42 },
   { id: "demo", entry: { node: "demo_ready", keys: ["rough", "polish"] }, seed: 42 },
   { id: "launch", entry: { node: "good_enough_launch", keys: ["ship"] }, seed: 42 },
   { id: "pivot", entry: { node: "pivot_summit_call", keys: ["call_it"] }, seed: 42 },

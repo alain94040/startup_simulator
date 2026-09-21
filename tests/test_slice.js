@@ -64,7 +64,8 @@ console.log("decent driver (seed 42)");
 
   // Equity arc: opens it up in the group → hears both DMs → offers 40/40/20
   // → Jordan pushes back → the founder caves to thirds at the impasse.
-  ok(g.took("equity_open:open_up"), "opened the real conversation instead of the shortcut");
+  ok(g.took("equity_open:open"), "sat down to settle it");
+  ok(g.took("equity_dance:open_up"), "opened the real conversation instead of the shortcut");
   ok(g.took("equity_dm_alex:take_seriously"), "took Alex's ask seriously without committing yet");
   ok(g.took("equity_dm_jordan:big_deal"), "took Jordan's confession seriously, not as an interrogation");
   ok(g.took("equity_offer:forty"), "offered 40/40/20 after hearing both sides");
@@ -177,7 +178,7 @@ console.log("decent driver (seed 42)");
 // ── ignore driver: every "@ignored" edge is a real story path ────────────────
 // With the full relationship texture in place, total neglect no longer settles
 // the equity by inertia: Alex's grievance queue crowds his one slot, he walks
-// at ~wk20, and the run ENDS there with nothing ever signed — losing the
+// at ~wk17, and the run ENDS there with nothing ever signed — losing the
 // technical co-founder is terminal, like cash hitting zero, so the report card
 // prints on the spot instead of the player grinding out five empty weeks.
 console.log("ignore driver (seed 42, 26 weeks)");
@@ -187,9 +188,14 @@ console.log("ignore driver (seed 42, 26 weeks)");
   ok(g.outcome("start_prototype") === "@ignored" && !!g.s.items, "kickoff timed out — the team started anyway");
   ok(g.outcome("equity_open") === "@ignored", "no sit-down: Jordan's opener expired");
   ok(g.stats().scene === null && !g.log.some(l => l.acted === "equity_open"), "scene never entered");
-  ok(g.outcome("equity_offer") === "@ignored" && g.s.equity_proposal === "33/33/33" && g.s.equity_skipped,
-    "the founder's offer expired — equal thirds won by default");
-  ok(!g.s.jordan_equity, "nothing was ever decided — the pushback round never got the chance to fire before Alex left");
+  // Alex's grievance queue (incorporate, his side project, its escalation,
+  // the leaving threat) crowds his one thread slot for the whole run, so his
+  // equity DM never even gets a turn before he walks — equity_offer never
+  // opens (it needs both DMs) and s.equity_proposal never gets set at all.
+  ok(g.outcome("equity_dance") === "@ignored" && !g.s.equity_proposal,
+    "the room's tone was never set either — Alex's grievance queue crowded out his DM before an offer could ever be made");
+  ok(!g.done("equity_offer") && !g.s.jordan_equity,
+    "nothing was ever decided — the offer itself never got the chance to fire before Alex left");
   ok(g.outcome("alex_leaving_threat") === "@ignored" && !g.cast.get("alex").active,
     "sustained neglect surfaced the leaving threat; ignoring that too, Alex walked (wk " + g.weekOf("alex_leaving_threat") + ")");
   ok(g.threads.alex.some(m => (m.body || "").includes("proper handoff")), "his goodbye landed in the thread");

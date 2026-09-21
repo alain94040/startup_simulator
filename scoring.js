@@ -55,7 +55,7 @@
     // ── 1. Have the hard conversations ───────────────────────────────────────
     {
       const talkRatio = answeredRatio(g, [
-        "equity_open", "equity_dm_alex", "equity_dm_jordan", "equity_offer",
+        "equity_open", "equity_dance", "equity_dm_alex", "equity_dm_jordan", "equity_offer",
         "equity_pushback_alex", "equity_pushback_jordan",
         "equity_pushback_alex_50", "equity_pushback_jordan_50",
         "equity_impasse", "alex_commitment",
@@ -64,8 +64,8 @@
         talkRatio == null ? null : parts([
           { faced: true, weight: 3, got: talkRatio,
             note: talkRatio === 1 ? "Every equity and commitment talk got an answer." : "Some of the hardest conversations resolved by silence." },
-          { faced: g.done("equity_open"), weight: 1, got: g.took("equity_open:open_up") ? 1 : 0.4,
-            note: g.took("equity_open:open_up") ? "Opened the real conversation about equity instead of defaulting past it." : null },
+          { faced: g.done("equity_dance"), weight: 1, got: g.took("equity_dance:open_up") ? 1 : 0.4,
+            note: g.took("equity_dance:open_up") ? "Opened the real conversation about equity instead of defaulting past it." : null },
           // Tabling the split is worse than never assembling the room: the
           // whole company went through it twice, both cases were made, and
           // the founder still blinked — and proposed settling it later by
