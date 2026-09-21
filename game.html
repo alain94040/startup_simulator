@@ -1900,7 +1900,7 @@ function doAct(nodeId, key, charId) {
   jShown = journalMirror().length;
 
   // entering a scene → the world freezes; play its entry cinematic then the beats
-  if (!preScene && game.scene) { enterScene(preSeq); return; }
+  if (!preScene && game.scene) { enterScene(preSeq, charId); return; }
   if (inScene) { focusFlow(preSceneLens); return; }
 
   render();
@@ -1988,7 +1988,7 @@ function sceneUnread(charId) {
   return sceneThread(charId).slice(scRendered[charId] || 0).some(m => m.type === "incoming");
 }
 
-function enterScene(startSeq) {
+function enterScene(startSeq, charId) {
   inScene = true;
   lastSceneId = game.scene.id;
   scRendered = {}; scHeadSig = null; scClockShown = null;
@@ -1999,7 +1999,19 @@ function enterScene(startSeq) {
   showCine(meta.enter || [meta.title || ""], meta.accent, () => {
     $("scene").classList.add("on");
     const beats = sceneOpenBeats().filter(a => !SELF.has(a.charId));
-    scSelected = (beats[0] && beats[0].charId) || sceneCast()[0]
+    // Tiebreak toward whoever's card just opened the room, but ONLY when
+    // they're genuinely one of the beats tied for "opens first" — never as
+    // an override of an unambiguous single beat (e.g. firing's entry card is
+    // Alex's, but the room's only live beat at that instant is Jordan's; the
+    // cast including Alex doesn't make his empty thread the right default).
+    // Without this tiebreak at all, a room whose opener triggers more than
+    // one simultaneously-open beat picks whichever comes first in engine
+    // order, which can strand the player on a reply to a message they never
+    // saw (equity's Act 2: both DMs open together, and Alex's side reacts to
+    // context that only exists in Jordan's thread — the one that just
+    // invited you in).
+    const tiedWithJustAnswered = charId && beats.some(b => b.charId === charId);
+    scSelected = (tiedWithJustAnswered ? charId : null) || (beats[0] && beats[0].charId) || sceneCast()[0]
       || (game.scene && game.scene.scene.cast.find(id => !SELF.has(id)));
     scMobileView = "thread";   // the room opens on whoever is talking, not on a roster
     openSceneThread(scSelected);
