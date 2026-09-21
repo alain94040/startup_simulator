@@ -55,7 +55,8 @@
     // ── 1. Have the hard conversations ───────────────────────────────────────
     {
       const talkRatio = answeredRatio(g, [
-        "equity_open", "equity_dance", "equity_dm_alex", "equity_dm_jordan", "equity_offer",
+        "equity_open", "equity_dance", "equity_dm_alex", "equity_dm_alex_ask",
+        "equity_dm_jordan", "equity_dm_jordan_ask", "equity_offer",
         "equity_pushback_alex", "equity_pushback_jordan",
         "equity_pushback_alex_50", "equity_pushback_jordan_50",
         "equity_impasse", "alex_commitment",

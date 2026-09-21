@@ -2056,15 +2056,16 @@ function enterScene(startSeq, charId) {
     $("scene").classList.add("on");
     const beats = sceneOpenBeats().filter(a => !SELF.has(a.charId));
     const roster = sceneCast();
-    // Stay in the conversation that just opened the room, when that thread is
-    // actually part of it — sceneCast() is exactly "has something to read or
-    // answer in here", so this lands on the equity group chat (whose opener,
-    // your reply and both reactions are sitting in it) instead of jumping
-    // into a DM that reacts to context the player hasn't been shown yet.
-    // It falls through where the entry card's thread is NOT part of the room:
-    // firing is invited by Alex but the only thing in that room is Jordan, and
-    // his thread there is empty.
-    const stayPut = charId && roster.includes(charId) ? charId : null;
+    // Stay in the conversation that just opened the room, when that thread
+    // actually has something waiting — not just when it's part of the room's
+    // roster. Equity's invitation now lives on Jordan's own 1:1 (so agreeing
+    // to talk doesn't already feel like it happened in the group), but the
+    // next beat (equity_dance) is on the group thread, so staying on Jordan's
+    // now-empty DM would strand the player. It also covers the older case:
+    // firing is invited by Alex but the only thing in that room is Jordan,
+    // and Alex's thread there is empty.
+    const stayPut = charId && roster.includes(charId) && beats.some(a => a.charId === charId)
+      ? charId : null;
     scSelected = stayPut || (beats[0] && beats[0].charId) || roster[0]
       || (game.scene && game.scene.scene.cast.find(id => !SELF.has(id)));
     scMobileView = "thread";   // the room opens on whoever is talking, not on a roster

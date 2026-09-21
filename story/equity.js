@@ -84,7 +84,7 @@
           // below) only happens once the player is actually IN the room, so
           // it never feels like the arc started before they agreed to it.
           {
-            id: "equity_open", char: "founders", speaker: "jordan",
+            id: "equity_open", char: "jordan",
             text: (s) => s.incorporated
               ? "ok, the atlas form just asked how many shares each of us gets. we should figure this out before it's a whole thing.\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?"
               : "hey — we're going to have to answer this eventually, might as well be now: how many shares does each of us get?\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?",
@@ -178,13 +178,29 @@
           // minute of the group going quiet, neither knowing the other did.
           {
             id: "equity_dm_alex", char: "alex",
+            text: "ok, not in front of jordan, but — here's what i actually think. i quit a $140k job for this. she didn't quit anything. i'm not saying that to be harsh, i'm saying the risk isn't the same and the split shouldn't pretend it is.",
+            when: { after: ["equity_split_off"] },
+            choices: [
+              {
+                // A transition, not a fork — same shape as equity_split_off's
+                // "I'll talk to each of you separately": the real decision is
+                // one beat away, once Alex actually names a number.
+                key: "ask", label: "What do you want?",
+                reply: "ok. what do you want?",
+                journal: null,
+              },
+            ],
+            // Ignored: he doesn't wait to be asked twice.
+            timeout: { weeks: 1 },
+          },
+          {
+            id: "equity_dm_alex_ask", char: "alex",
             text: [
-              "ok, not in front of jordan, but — here's what i actually think. i quit a $140k job for this. she didn't quit anything. i'm not saying that to be harsh, i'm saying the risk isn't the same and the split shouldn't pretend it is.",
               "i want the same equity as you. not close — the same number. that's the difference between being your co-founder and being your first hire. jordan's still got a paycheck behind her, and i think that shows up in her number too. 40/40/20.",
               "...and look, i know how \"i did math about this\" sounds. but i ran our situation through a co-founder equity calculator last night — foundrs.com has one — and it said 40/40/20 too. i'm not just making this up to sound fair.",
             ].join("\n\n"),
             mockups: { calc: { variant: "calc" } },
-            when: { after: ["equity_split_off"] },
+            when: { after: ["equity_dm_alex"] },
             choices: [
               {
                 key: "take_seriously", label: "That's a fair ask — I'm taking it seriously",
@@ -209,12 +225,27 @@
           },
           {
             id: "equity_dm_jordan", char: "jordan",
+            text: "not in the group, but — i need you to actually hear this part. i had an offer. full-time, with equity, from an actual company, three weeks ago. i turned it down to keep building this.",
+            when: { after: ["equity_split_off"] },
+            choices: [
+              {
+                // A transition, not a fork — same shape as equity_dm_alex's
+                // "what do you want?": the real ask is one beat away.
+                key: "ask", label: "What are you saying?",
+                reply: "what are you saying?",
+                journal: null,
+              },
+            ],
+            // Ignored: she doesn't wait to be asked twice either.
+            timeout: { weeks: 1 },
+          },
+          {
+            id: "equity_dm_jordan_ask", char: "jordan",
             text: [
-              "not in the group, but — i need you to actually hear this part. i had an offer. full-time, with equity, from an actual company, three weeks ago. i turned it down to keep building this.",
               "so when the argument is \"jordan still has a job to fall back on\" — i want you to know that's not free. i gave up a real one to be here. i just didn't tell alex, because i didn't want it to sound like a threat.",
               "i'm not saying i need more than thirds. i'm saying don't let \"she's not all-in\" be the thing that costs me. i am all-in. i just didn't quit loudly.",
             ].join("\n\n"),
-            when: { after: ["equity_split_off"] },
+            when: { after: ["equity_dm_jordan"] },
             choices: [
               {
                 // Same three registers as Alex's DM above (validate / verify /
@@ -257,7 +288,7 @@
           {
             id: "equity_offer", char: "founders", system: true,
             text: "you've heard both of them now — everyone's waiting on what you send next.",
-            when: { after: ["equity_dm_alex", "equity_dm_jordan"], if: (s) => !s.equity_proposal },
+            when: { after: ["equity_dm_alex_ask", "equity_dm_jordan_ask"], if: (s) => !s.equity_proposal },
             choices: [
               {
                 key: "thirds", label: "Thirds — everyone's essential",
