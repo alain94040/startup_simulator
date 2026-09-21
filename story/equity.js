@@ -242,8 +242,8 @@
           {
             id: "equity_dm_jordan_ask", char: "jordan",
             text: [
-              "so when the argument is \"jordan still has a job to fall back on\" — i want you to know that's not free. i gave up a real one to be here. i just didn't tell alex, because i didn't want it to sound like a threat.",
               "i'm not saying i need more than thirds. i'm saying don't let \"she's not all-in\" be the thing that costs me. i am all-in. i just didn't quit loudly.",
+              "so when the argument is \"jordan still has a job to fall back on\" — i want you to know that's not free. i gave up a real one to be here. i just didn't tell alex, because i didn't want it to sound like a threat.",
             ].join("\n\n"),
             when: { after: ["equity_dm_jordan"] },
             choices: [

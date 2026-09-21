@@ -44,12 +44,15 @@
       // thread's owner isn't the one talking. It holds no morale/trust of its
       // own: what gets said here lands on the members, via their own stats.
       //
-      // It opens with the incorporation — the moment "who owns what" becomes a
-      // real question — on ANY outcome of that card, including leaving it on
-      // read, so the equity conversation always has a room to happen in.
+      // It opens once Jordan's invitation is actually resolved — answered
+      // (into the formal sit-down) or left on read (into the same
+      // conversation happening piecemeal, one text at a time, over the
+      // coming weeks). Unlocking any earlier, on the incorporation or the
+      // invitation itself, would show an empty "Alex & Jordan" row in the
+      // rail before the room has anything in it.
       id: "founders", name: "Alex & Jordan", role: "Group · you, Alex, Jordan",
       type: "group", members: ["alex", "jordan"],
-      unlock: (s, e) => e.done("incorporate"),
+      unlock: (s, e) => e.done("equity_open"),
     },
     {
       id: "mom", name: "Mom", role: "Family", type: "family",

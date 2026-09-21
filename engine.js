@@ -265,14 +265,19 @@
     // re-surface a week late, on a thread the rail wasn't showing yet.
     _unlockCast() {
       if (this.scene) return;
-      for (const [id, char] of this.cast) {
-        if (!char.active && char.def.unlock && char.def.unlock(this.s, this)) {
-          char.active = true;
-          if (char.def.intro) this._push(id, {
-            type: "incoming", from: char.def.name,
-            body: this._text(char.def.intro, char),
-          });
-        }
+      for (const [id, char] of this.cast) this._tryUnlock(id, char);
+    }
+    // The unlock check for one character, regardless of scene state. Split out
+    // of _unlockCast so _poll() can also unlock an active scene's own cast
+    // (below) without lifting the suppression that keeps everyone ELSE locked
+    // out mid-scene.
+    _tryUnlock(id, char) {
+      if (!char.active && char.def.unlock && char.def.unlock(this.s, this)) {
+        char.active = true;
+        if (char.def.intro) this._push(id, {
+          type: "incoming", from: char.def.name,
+          body: this._text(char.def.intro, char),
+        });
       }
     }
 
@@ -280,6 +285,12 @@
     _poll() {
       // 1) unlock characters whose condition now passes (suppressed mid-scene).
       this._unlockCast();
+      // 1b) the active scene's own cast still gets a chance to unlock, even
+      // mid-scene — a participant whose unlock condition is exactly "the
+      // scene just started" (the founders' group chat unlocks on entering
+      // the equity talk, not earlier) would otherwise never flip active,
+      // since _unlockCast() above is suppressed for the rest of the sitting.
+      if (this.scene) for (const id of this.scene.scene.cast) this._tryUnlock(id, this.cast.get(id));
       // 2) sweep eligibility for FIFO ordering.
       for (const [id, node] of this.nodes) {
         if (this._eligible(node)) {
