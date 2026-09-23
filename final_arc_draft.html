@@ -38,6 +38,7 @@
   .who.to { text-align:right; }
   .bub { background:#e9e9eb; border-radius:16px; border-bottom-left-radius:5px; padding:8px 13px; max-width:66ch; white-space:pre-wrap; margin-bottom:3px; }
   .bub.me { background:var(--blue); color:#fff; border-bottom-left-radius:16px; border-bottom-right-radius:5px; }
+  .nd { color:#ff3b30; font-size:11px; text-align:right; margin-top:-2px; }
   .bub.img { background:#fff; border:1px dashed #c7c7cc; color:var(--dim); font-style:italic; }
   .stage { text-align:center; color:var(--dim); font-size:12px; font-style:italic; margin:8px 0; }
   .system { text-align:center; color:var(--dim); font-size:12px; margin:12px 0; }
@@ -99,6 +100,7 @@ function renderMsg(m) {
   if (m.stage) return `<div class="stage">${esc(m.stage)}</div>`;
   if (m.system) return `<div class="system"><span>${esc(m.system)}</span></div>`;
   if (m.callback) return `<div class="callback">${m.callback}</div>`;
+  if (m.notDelivered) return `<div class="row out"><div class="nd">Not Delivered ⓘ</div></div>`;
   if (m.card) return `<div class="card"><div class="k">${esc(m.kicker)}</div>${esc(m.card)}</div>`;
   if (m.typing) return `<div class="row"><div class="av jordan">J</div><div><div class="typing${m.stopped ? " stopped" : ""}"><i></i><i></i><i></i></div></div></div>`;
   if (m.img) return `<div class="row"><div class="av ${m.who}">${NAME[m.who][0]}</div>
@@ -486,14 +488,30 @@ const paths = {
             to: "Jordan",
             options: [
               { key: "sorry", label: "I know. I'm sorry.", reply: "i know. i'm sorry.",
-                then: [A("jordan", "…yeah.")] },
+                next: "the cold ending, below" },
               { key: "ask", label: "What's actually going on with you?",
                 reply: "can i ask what's actually going on with you? not the work. you.",
                 then: [A("jordan", ["honestly? nothing. that's the whole answer, and i know how it sounds.", "i'm doing exactly what i said i'd do in week one. evenings and weekends, around a job i can't afford to quit. that hasn't changed once.", "you two went full-time and i didn't. i was never going to be able to match that. nobody said a word about it, so i thought maybe it was fine."])],
-                note: "Removes the player's last excuse: nobody did anything wrong. That is the whole lesson." },
+                note: "Removes the player's last excuse: nobody did anything wrong. That is the whole lesson.", next: "the rest of the conversation, below" },
             ],
           },
           {
+            tag: "the cold ending — after “I know. I'm sorry.”",
+            msgs: [
+              A("jordan", [
+                "sorry.",
+                "two years. i turned down a real job. and i get a text at midnight and 'sorry'.",
+                "you didn't even ask me anything. you'd decided before you opened this thread.",
+                "anything else about shares or accounts can go through a lawyer. don't text me.",
+              ]),
+              STAGE("four minutes later"),
+              OUT("Jordan", "jordan, the app store account is still on yours. can we at least—"),
+              { notDelivered: true },
+            ],
+            after: [CB("<b>Not every split is amicable.</b> “I'm sorry” sounds kind, but after two pushbacks it's the one reply that shows no curiosity about her, and she takes it as proof the decision was made without her. She ends it herself and blocks you. Everything the rest of the conversation would have settled is left undone: the App Store listing stays on her personal account (the landmine arms itself), no notes for Alex, and her shares go through lawyers (a higher cap-table bill, and slower). In the real game her temperature would also read the whole run (today's neglect tier), so a player who ignored her for months could get this ending even after asking the right question.")],
+          },
+          {
+            tag: "the rest of the conversation — after “What's actually going on with you?”",
             msgs: [A("jordan", ["what happens to my shares?", "and one practical thing — the app store listing is on my personal developer account. it was $99 and we were being careful with money."])],
             fork: "founder's reply",
             to: "Jordan",
