@@ -1,207 +1,242 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// story/jordan_arc.js — the wrong-co-founder arc: Jordan drifts, Alex covers,
-// and the player either has the conversation or lets it rot. Firing her leaves
-// her stake on the cap table (s.jordan_cleanup_needed) — the vesting lesson the
-// investors' diligence flags until a lawyer cleans it up.
+// story/jordan_arc.js — the Jordan question between the two conversations,
+// and the bill after.
 //
-// Every drift beat lives on Alex's thread (he's the one telling you) but
-// mutates Jordan via effects.char.jordan / e.cast.get("jordan"). Answering the
-// confrontation — telling Alex you'll have the talk — opens the firing scene in
-// story/firing.js.
+// The question is asked on the pivot night (story/pivot_day.js): Alex's DM,
+// then Jordan's thread. If the founder doesn't finish the sentence, Jordan
+// keeps the board and builds it at her part-time pace (world.js) — and the
+// next two weeks show it:
+//   - jordan_slip: the promise slips ("weekend got eaten by a release at work").
+//   - jordan_door_again: Alex opens the door one last time — or, after a late
+//     pivot that skipped the pivot night, for the first time. "I'll talk to
+//     her" enters the second-chance room (story/firing.js). Fires once.
 //
-// Timing note: the drift waits until pivot day has resolved — the pivot marks
-// her iOS work obsolete, and THEN she checks out. Starting it earlier, mid
-// dev-spine, would silently disable Jordan's own direction cards. Waiting
-// keeps the dev arc she owns intact, keeps her present for the launch scene
-// (whose beats need her), and keeps the drift from eating the slide's
-// evidence weeks.
+// After she's gone: jordan_cap_table, the vesting bill. Her stake stays on the
+// cap table until a lawyer cleans it up; the investors' diligence flags it
+// (see seed_pitch in story/fundraising.js). A cold exit (she blocked you)
+// makes it a negotiation with her lawyer, not a signature.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const pctOf = (s) => s.equity_proposal === "33/33/33" ? "33%"
+    : s.equity_proposal === "50/25/25" ? "25%" : "20%";
+  const boardTodo = (s) => !!(s.items && s.items.plans_ui && s.items.plans_ui.status === "todo");
 
   const mod = {
     nodes: [
       {
-        id: "jordan_drift_start", char: "alex",
-        text: "jordan's been slower this week. said she's swamped at work. i covered the iOS push — took me two days. not complaining, just flagging it.",
+        // A week after she kept the board: the promise slips. Harmless to
+        // answer either way — the point is that the player watches it happen.
+        id: "jordan_slip", char: "jordan",
+        text: "ugh, weekend got eaten by a release at work 😩\n\nboard's half there. i'll have it this week, promise.",
         when: {
-          if: (s) => !s.jordan_drifting && !s.jordan_resolved
-            && s.launched && (s.pivot_summit_done || s.pivot_deferred),
+          if: (s, e) => !!s.jordan_kept && !s.jordan_resolved && e.cast.get("jordan").active
+            && s.week >= (s.jordan_kept_week || 0) + 1 && boardTodo(s),
         },
         choices: [
+          { key: "great", label: "Great work — no stress.", reply: "great work. no stress.", journal: null },
           {
-            key: "talk", label: "Talk to Jordan directly",
-            journal: "Talked to Jordan directly about slowing down. She was apologetic, said it's temporary. I'm not sure.",
-            effects: { flags: { jordan_drifting: true }, char: { jordan: { focus: null }, alex: { morale: -5 } } },
-            fx: () => "Jordan was apologetic. Said it's temporary. You're not sure.",
-          },
-          {
-            key: "cover", label: "Alex can cover for now",
-            journal: "Let Alex cover for Jordan. He nodded, but his backlog just got longer.",
-            effects: { flags: { jordan_drifting: true }, char: { jordan: { focus: null }, alex: { morale: -10 } } },
-            fx: () => "Alex nodded. He'll cover it. The iOS backlog keeps growing.",
+            key: "when", label: "When's 'this week'?",
+            reply: "when's 'this week'? alex is waiting on it.",
+            journal: null,
+            effects: { say: { char: "jordan", text: "thursday. friday latest." } },
           },
         ],
-        timeout: {
-          weeks: 3,
-          effects: { flags: { jordan_drifting: true }, char: { jordan: { focus: null }, alex: { morale: -8 } } },
-        },
+        timeout: { weeks: 2 },
       },
       {
-        id: "jordan_drag", char: "alex",
-        text: (s, e) => e.timesResolved("jordan_drag") === 0
-          ? "pushed the iOS release back again. jordan said she'd review my PR by tuesday — it's friday. i've covered it, but this is the second time this sprint."
-          : "user reported a crash on iphone 12. jordan's the only one who knows that part of the codebase. i've been waiting two days. this can't keep going.",
+        // Once the door is closed for good, the board keeps not arriving —
+        // one cheerful, sincere promise every other week until the deadline.
+        // This IS the cost of keeping her, felt instead of narrated.
+        id: "jordan_board_promise", char: "jordan",
+        text: (s, e) => [
+          "RSVP flow is done-ish! join screen next. this weekend for real 🙌",
+          "sorry, launch week at work 😩 board by friday. promise.",
+          "almost there. i know i keep saying that. this is the last week, i swear.",
+        ][Math.min(2, e.timesResolved("jordan_board_promise"))],
         when: {
-          after: ["jordan_drift_start"], delay: 2, cooldown: 4,
-          if: (s, e) => s.jordan_drifting && !s.jordan_resolved && e.timesResolved("jordan_drag") < 2,
+          cooldown: 2,
+          if: (s, e) => !!s.jordan_kept_final && !s.jordan_resolved && e.cast.get("jordan").active
+            && boardTodo(s) && e.done("jordan_slip"),
+        },
+        choices: [
+          { key: "ok", label: "No stress.", reply: "no stress.", journal: null },
+          {
+            key: "when", label: "You know the deadline doesn't move, right?",
+            reply: "you know the deadline doesn't move, right?",
+            journal: null,
+            effects: { say: { char: "jordan", text: "i know. i know. i've got it." } },
+          },
+        ],
+        timeout: { weeks: 1 },
+      },
+      {
+        // Alex's door, one last time. Not a complaint — a status, from someone
+        // who said his piece once and won't say it the same way twice. Or,
+        // after a late pivot (no pivot night), the first time he says it.
+        id: "jordan_door_again", char: "alex",
+        text: (s) => s.jordan_kept
+          ? "matching's done. repointed, tested, merged.\n\nboard's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
+          : "can i say something i've been sitting on?\n\njordan's great. i mean that. she's also been a week behind on everything since demo night — the picker, the ios sprint, the review on my PR. every time there's a good reason. every time it's a week.\n\nand v2 doesn't have a week in it. …or maybe that's on me. i don't know if i'm being fair to her.",
+        when: {
+          if: (s, e) => s.activities_pivot && s.pivot_week != null
+            && e.cast.get("jordan").active && !s.jordan_resolved && !s.jordan_kept_final
+            && boardTodo(s)
+            && (s.jordan_kept
+              ? s.week >= (s.jordan_kept_week || 0) + 2
+              : !e.done("pivot_alex_door") && s.week >= s.pivot_week + 1),
         },
         choices: [
           {
-            key: "talk", label: "Talk to Jordan directly",
-            journal: "Sat down with Jordan. She heard the weight of it. Alex noticed I followed up.",
-            effects: { flags: { jordan_confrontation_triggered: true }, char: { alex: { morale: 5 } } },
-            fx: () => "Sat down with Jordan. She heard the weight of it. Alex noticed you followed up — the real conversation is coming.",
+            key: "talk", label: (s) => s.jordan_kept ? "I'll talk to her. Properly this time." : "I'll talk to her.",
+            reply: (s) => s.jordan_kept ? "i'll talk to her. properly this time." : "i'll talk to her. tonight.",
+            journal: null,
+            effects: { scene: "firing", say: { char: "alex", text: "okay." } },
+          },
+          {
+            key: "almost", label: "She's almost there.",
+            reply: "she's almost there.",
+            journal: "Alex told me the board hasn't moved. I told him she's almost there. He said 'sure', and I don't think he'll bring it up again.",
+            effects: { say: { char: "alex", text: "sure." } },
+            fx(s) {
+              if (!s.jordan_kept) { s.jordan_kept = true; s.jordan_kept_week = s.week; }
+              s.jordan_kept_final = true;
+              return null;
+            },
           },
         ],
-        // Left unanswered twice, Alex breaks — and forces the conversation himself.
+        // Left on read, Alex stops asking. She stays.
         timeout: {
           weeks: 3,
           fx(s, e) {
+            if (!s.jordan_kept) { s.jordan_kept = true; s.jordan_kept_week = s.week; }
+            s.jordan_kept_final = true;
             const alex = e.cast.get("alex");
-            if (e.timesResolved("jordan_drag") >= 2) {
-              alex.morale = 5;
-              alex.trust = clamp(alex.trust - 20, 0, 100);
-              s.jordan_confrontation_triggered = true;
-              e.schedule({
-                in: 1, char: "alex",
-                say: { char: "alex", text: "you've been aware of the jordan situation for weeks. i've been covering for her and saying nothing. it's been affecting me more than i let on." },
-              });
-            } else {
-              alex.morale = clamp(alex.morale - 12, 0, 100);
-            }
+            alex.morale = clamp(alex.morale - 10, 0, 100);
           },
         },
       },
       {
-        // Only exists if the drift caught the launch un-shipped: web works,
-        // iOS doesn't, and a dating app without mobile is a real handicap.
-        id: "jordan_launch_blocker", char: "alex",
-        text: "backend's solid. web works end to end. i've been ready to ship for two weeks. but we can't launch a dating app without mobile — nobody will use it. jordan needs to finish the iOS build or we need to talk about what's actually happening.",
+        // A couple of weeks on: the founders' chat is two people now. The
+        // empty chair, said out loud by the person who asked for it to be
+        // empty. (Two weeks, not one: the week after the firing is crowded
+        // with the rebuild's own calls, and this beat is what fills the
+        // quiet stretch before the board lands.)
+        id: "founders_first_standup", char: "founders", speaker: "alex",
+        text: "two weeks of standups with two of us. still weird.\n\ni keep typing '@j' out of habit.",
         when: {
-          if: (s) => s.jordan_drifting && !s.jordan_resolved && s.productPhase === "product"
-            && !s.launched && !s.ios_unblocked,
+          if: (s) => !!s.jordan_resolved && s.jordan_fired_week != null && s.week >= s.jordan_fired_week + 2
+            && !s.pivot_shipped,
         },
         choices: [
           {
-            key: "web_only", label: "Launch web-only — fix iOS later",
-            effects: { signal: -10 },
-            fx(s) {
-              s.launched = true;
-              s.launch_week = s.week;
-              if (s.items) for (const k of Object.keys(s.items)) {
-                const it = s.items[k];
-                if (it && (it.status === "active" || it.status === "todo")) { it.status = "done"; it.quality = it.quality || "rough"; }
-              }
-              return "Launched. Web-only. A dating app without iOS is a real handicap — early retention will show it.";
-            },
+            key: "weird", label: "Weird for me too.",
+            reply: "weird for me too. i almost texted her about the board this morning.",
+            journal: "Two weeks of standups with two of us. Alex keeps typing '@j' out of habit. So do I.",
+            effects: { char: { alex: { morale: 4, trust: 2 } }, say: { char: "founders", speaker: "alex", text: "yeah. okay. board's at the RSVP flow. i'll have it by friday — and i mean friday." } },
           },
           {
-            key: "confront", label: "Confront Jordan — this has to be resolved",
-            journal: "Decided to confront Jordan about the launch blocker. This conversation is overdue.",
-            effects: { flags: { jordan_confrontation_triggered: true } },
-            fx: () => "Agreed. This conversation is overdue.",
+            key: "go", label: "Two people, one board. Let's go.",
+            reply: "two people, one board. let's go.",
+            journal: "Two weeks of standups with two of us. We didn't talk about Jordan. We talked about the board.",
+            effects: { char: { alex: { morale: 2 } }, say: { char: "founders", speaker: "alex", text: "board's at the RSVP flow. friday." } },
           },
         ],
-        // Ignored: Alex ships web-only on his own — worse, and without you.
-        timeout: {
-          weeks: 3,
-          effects: { signal: -15 },
-          fx(s) {
-            s.launched = true;
-            s.launch_week = s.week;
-            if (s.items) for (const k of Object.keys(s.items)) {
-              const it = s.items[k];
-              if (it && (it.status === "active" || it.status === "todo")) { it.status = "done"; it.quality = it.quality || "rough"; }
-            }
-          },
-        },
+        timeout: { weeks: 2 },
       },
       {
-        // Alex's message, answered in Alex's thread: the player agrees to have
-        // the conversation, and that agreement opens the scene. It deliberately
-        // is NOT a founder-thread card — a "Your move" card can be skimmed past,
-        // and this is the one call in chapter 4 that must be made to somebody's
-        // face. Alex's slot is contested here, which is why pivot_payoff_maya
-        // yields to this beat (see story/pivot_day.js).
-        id: "jordan_confrontation", char: "alex",
-        text: (s, e) => {
-          const pct = s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%";
-          return "i need to say something out loud. jordan's been part-time for two months. i'm covering her work and mine. she has "
-            + pct + " of the company and i don't think she's earning it anymore.\n\ni can't be the one to have this conversation. you can.";
-        },
+        // Jordan's beta-list idea outlives her on the team — it's in her notes
+        // if she wrote them, and on the founder's own list if she didn't.
+        id: "beta_list_after", char: "founder",
+        text: (s) => s.jordan_handoff
+          ? "Jordan's notes came in. Most of it is the board — and on the last page, a list: everyone who left the old app, and a two-line email she'd drafted. 'You told us what was wrong. We rebuilt it. Want to see?' Send it before the relaunch?"
+          : "The people who left the old app are still on a list somewhere. They're the only ones who already know why v1 failed. Write to them before the relaunch — or relaunch to fresh eyes?",
         when: {
-          cooldown: 4,
-          // Triggered by following up on the drag — or, if the drag was left to
-          // fester, by inertia ~8 weeks into the drift (relative, not the old
-          // absolute week-20 gate, which predates the drift's post-pivot timing).
-          if: (s, e) => s.jordan_drifting && !s.jordan_resolved
-            && (s.jordan_confrontation_triggered
-              || (e.weeksSince("jordan_drift_start") >= 8 && s.week >= (s.jordan_confrontation_defer_until || 0))),
+          if: (s, e) => e.chapter === 4 && !!s.jordan_resolved && !s.beta_invited && !e.done("pivot_beta_invite")
+            && s.jordan_fired_week != null && s.week >= s.jordan_fired_week + 1,
         },
         choices: [
           {
-            // The door, not the resolution: everything that used to happen in
-            // this fx now happens in the scene (story/firing.js), where Jordan
-            // is actually in the room. The old one-click fire never let the
-            // player say a word to her.
-            key: "fire", label: "You're right. I'll talk to her tonight.",
-            reply: "you're right, and it's mine to do. i'm messaging her tonight.",
-            journal: null,
-            effects: { scene: "firing" },
-            fx: () => null,
+            key: "invite", label: (s) => s.jordan_handoff ? "Send Jordan's email" : "Write to them",
+            journal: (s) => s.jordan_handoff
+              ? "Sent Jordan's email to everyone who left: 'you told us what was wrong. we rebuilt it. want to see?' Her idea, her words, sent after she'd gone."
+              : "Wrote to everyone who left the old app before the relaunch: we rebuilt it — want to see?",
+            effects: { marketFit: 5, flags: { beta_invited: true } },
           },
           {
-            key: "defer", label: "Not yet — put it off another month",
-            journal: "Put the Jordan conversation off another month. Alex went quiet. We both know how this ends.",
-            effects: { char: { alex: { morale: -8 } } },
-            fx(s) {
-              s.jordan_confrontation_triggered = false;
-              s.jordan_confrontation_defer_until = s.week + 4;
-              return "Alex went quiet. Jordan will try again. You both know how this ends.";
-            },
+            key: "fresh", label: "Clean slate — relaunch to fresh eyes",
+            journal: "Left the quiet list alone. v2 relaunches to fresh eyes.",
           },
         ],
-        // Jordan stays — only the player can fire her. Alex can't take it anymore.
-        timeout: { weeks: 3, fx(s, e) { const a = e.cast.get("alex"); a.morale = 0; a.trust = clamp(a.trust - 25, 0, 100); } },
+        timeout: { weeks: 2 },
+      },
+      {
+        // A few weeks on, the outsider checks in — on the rebuild, and on the
+        // founder. Her own story lands here, after the decision, not as advice
+        // before it: the game never tells the player the answer in advance.
+        id: "priya_after_jordan", char: "priya",
+        text: (s) => (s.pivot_shipped ? "saw v2 is out. congratulations — it looks like the thing you should have built the first time." : "how's the rebuild?")
+          + "\n\nand — how are you doing, after jordan? alex mentioned it.",
+        when: {
+          if: (s, e) => !!s.jordan_resolved && s.jordan_fired_week != null && s.week >= s.jordan_fired_week + 3
+            && s.week <= s.jordan_fired_week + 5,
+        },
+        choices: [
+          {
+            key: "honest", label: "Honestly? Not great.",
+            reply: (s) => "honestly? not great. " + (s.pivot_shipped ? "v2 shipped faster than anything we've ever built." : "the board's moving faster than it ever did.") + " i still feel like i did something wrong.",
+            journal: "Priya asked how I was doing after Jordan. I told her the truth: the work is moving, and I still feel like I did something wrong. She told me about the co-founder she kept a year too long.",
+            effects: { say: { char: "priya", text: "that's the right feeling to have about the right call.\n\ni kept a co-founder a year too long once. lovely guy, always one week behind, always a good reason. by the time i said it, he'd heard it from everyone but me. you said it yourself, and early. that's the part that counts." } },
+          },
+          {
+            key: "fine", label: "Heads down. It was the right call.",
+            reply: "heads down. it was the right call.",
+            journal: "Priya asked how I was doing after Jordan. I said it was the right call. She said it probably was — and that it's allowed to hurt anyway.",
+            effects: { say: { char: "priya", text: "it probably was. it's allowed to hurt anyway.\n\ni kept one a year too long once. the year cost more than the conversation would have." } },
+          },
+        ],
+        timeout: { weeks: 2 },
       },
       {
         // The vesting bill. Until the lawyer cleans it up, Marcus's diligence
         // bounces the round (see seed_pitch in story/fundraising.js).
         id: "jordan_cap_table", char: "alex",
-        text: (s) => {
-          const pct = s.equity_proposal === "33/33/33" ? "33%" : s.equity_proposal === "50/25/25" ? "25%" : "20%";
-          return "jordan's " + pct + " is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.";
-        },
+        text: (s) => s.jordan_cold_exit
+          ? "jordan's " + pctOf(s) + " is still on the cap table — fully vested, no cliff — and she's not answering either of us. any investor who looks at this will ask questions we can't answer. we need a lawyer to talk to her lawyer."
+          : "jordan's " + pctOf(s) + " is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.",
         // Recurs until cleaned up — a one-shot card would let a single defer
         // lock the round out permanently.
-        when: { cooldown: 4, if: (s) => s.jordan_resolved && s.jordan_cleanup_needed },
+        // Only once the bill won't sink the company: the firing now lands on
+        // the pivot night, when the rebuild has just eaten the runway, and a
+        // $2k card there bankrupted otherwise-sound runs. A founder raises
+        // the lawyer when the bank can cover it.
+        when: {
+          cooldown: 4,
+          if: (s, e) => s.jordan_resolved && s.jordan_cleanup_needed
+            && s.cash >= (s.jordan_cold_exit ? 3500 : 2000) + 2 * e.burnPerWeek,
+        },
         choices: [
           {
-            key: "lawyer", label: "Hire a lawyer — $2,000",
+            key: "lawyer", label: (s) => s.jordan_cold_exit ? "Hire a lawyer — $3,500" : "Hire a lawyer — $2,000",
             payee: "Lawyer",
-            journal: "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
-            effects: { cash: -2000, flags: { jordan_cleanup_needed: false } },
-            fx: () => "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.",
+            journal: (s) => s.jordan_cold_exit
+              ? "Hired a lawyer to negotiate Jordan's equity with her lawyer. $3,500 and three weeks of emails, but the buyback is signed. Cap table clean."
+              : "Hired a lawyer to clean up Jordan's equity. $2,000, buyback agreement signed. Cap table clean.",
+            fx(s) {
+              s.cash = Math.max(0, s.cash - (s.jordan_cold_exit ? 3500 : 2000));
+              s.jordan_cleanup_needed = false;
+              return s.jordan_cold_exit
+                ? "Her lawyer made it a negotiation. It closed. Cap table clean."
+                : "Lawyer drafted a buyback agreement. Jordan signed for a nominal amount. Cap table clean.";
+            },
           },
           {
-            // The guilt payment, moved out of the firing scene: on this card
-            // it is a cold decision with a price on it, not a midnight flinch.
+            // The guilt payment: a cold decision with a price on it.
             key: "keep", label: "Let her keep it — she earned the early part",
             journal: "Decided to let Jordan keep her full stake. It felt like the decent thing. It is also the largest cheque this company will ever write, and it is written to someone who does not work here.",
             effects: { flags: { jordan_cleanup_needed: false, jordan_equity_gifted: true } },
-            fx: () => "Left her stake alone. Nothing to clean up now — a departed co-founder simply owns a fifth of the company, forever.",
+            fx: () => "Left her stake alone. Nothing to clean up now — a departed co-founder simply owns a piece of the company, forever.",
           },
           {
             key: "defer", label: "Can't afford it right now",

@@ -55,6 +55,16 @@
       unlock: (s, e) => e.done("equity_open"),
     },
     {
+      // The pivot-night thread: the founder starts it (story/pivot_day.js) to
+      // stop Alex's growth push long enough to ask one question. A room, like
+      // `founders` — every message names its speaker, and Priya's in it.
+      // Unlocks the moment the founder asks for it, never before, so the rail
+      // never shows an empty row.
+      id: "summit", name: "what are we building monday", role: "Group · you, Alex, Jordan, Priya",
+      type: "group", members: ["alex", "jordan", "priya"],
+      unlock: (s, e) => e.took("pivot_hail_mary:hold"),
+    },
+    {
       id: "mom", name: "Mom", role: "Family", type: "family",
       // Mom texts from week 3 — she waits a beat, but she is family, not a
       // consequence of the paperwork: gating her on `s.incorporated` (as this

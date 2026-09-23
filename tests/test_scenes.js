@@ -3,7 +3,8 @@
 // tests/test_scenes.js — scene permutation test: every scene arc, every path
 // through it, rather than one hand-coded walkthrough per arc.
 //
-// For each scene (equity, demo, launch, pivot, firing): play a decent game up to
+// For each scene (equity, demo, launch, pivot, firing): play a decent game (or
+// the scene's own `driver`, when only one kind of founder reaches it) up to
 // scene's entry beat, then explore the choice tree through the scene by
 // replaying from seed with an incremental choice script (game state is not
 // clonable, so each path replays). Every completed path must:
@@ -39,8 +40,11 @@ const SCENES = [
   { id: "equity", entry: { node: "equity_open", keys: ["open"] }, seed: 42 },
   { id: "demo", entry: { node: "demo_ready", keys: ["rough", "polish"] }, seed: 42 },
   { id: "launch", entry: { node: "good_enough_launch", keys: ["ship"] }, seed: 42 },
-  { id: "pivot", entry: { node: "pivot_summit_call", keys: ["call_it"] }, seed: 42 },
-  { id: "firing", entry: { node: "jordan_confrontation", keys: ["fire"] }, seed: 42 },
+  { id: "pivot", entry: { node: "pivot_hail_mary", keys: ["hold"] }, seed: 42 },
+  // The second-chance room only exists once Jordan was kept on the pivot
+  // night, so the approach is played by a founder who put Alex off.
+  { id: "firing", entry: { node: "jordan_door_again", keys: ["talk"] }, seed: 42,
+    driver: H.withPrefs({ pivot_alex_door: ["later"] }) },
 ];
 
 let failures = 0, checks = 0;
@@ -54,7 +58,7 @@ function ok(cond, label) {
 // current frontier when it runs out); `mode.rng` = pick randomly and never stop.
 // Returns { status: "exited"|"frontier"|"deadlock"|"noentry", ... }.
 function runPath(cfg, mode) {
-  const g = H.jumpTo(cfg.entry.node, { seed: cfg.seed, subsidy: 600 });
+  const g = H.jumpTo(cfg.entry.node, { seed: cfg.seed, subsidy: 600, driver: cfg.driver });
   const isOpen = Object.values(g.open).some(o => o && o.nodeId === cfg.entry.node);
   if (!isOpen) return { status: "noentry", week: g.s.week };
 

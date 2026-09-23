@@ -418,7 +418,10 @@
       const char = this.cast.get(hit.charId);
       return (this.nodes.get(nodeId).choices || [])
         .filter(c => !c.if || c.if(this.s, this, char))
-        .map(c => ({ key: c.key, label: c.label }));
+        // Like `text`, a label may be a (s,e,char) function — one beat reused
+        // across two moments (the Jordan talk, first time and second chance)
+        // can word its chips for the moment it's in.
+        .map(c => ({ key: c.key, label: this._text(c.label, char) }));
     }
     _openByNode(nodeId) {
       for (const charId of this.order) {
@@ -447,10 +450,13 @@
       // default. `replyTo` sends it somewhere else instead — which is what a
       // decision made on the founder's own "Your move" card needs, since the
       // founder thread is the journal mirror and renders no bubbles at all.
-      if (typeof choice.reply === "string") {
+      // `reply` may also be a (s,e,char) function, resolved before the
+      // choice's effects run (it's what the founder typed, not a consequence).
+      const replyBody = typeof choice.reply === "function" ? this._text(choice.reply, char) : choice.reply;
+      if (typeof replyBody === "string") {
         const toId = choice.replyTo || charId;
         const to = this.cast.get(toId);
-        if (to && !to.def.noChat) this._push(toId, { type: "reply", nodeId, body: choice.reply });
+        if (to && !to.def.noChat) this._push(toId, { type: "reply", nodeId, body: replyBody });
       }
 
       const cashBefore = this.s.cash;
@@ -484,7 +490,7 @@
       // already in this room when this answer was made) is free; the answer
       // that opens the room is not, whether the content authored it as the
       // arc's first beat (equity, demo night) or as a standalone card
-      // (the summit call, the ship call, Jordan's confrontation).
+      // (Alex's Hail Mary, the ship call, Alex's last door on Jordan).
       const free = inSceneBefore;
       if (!free) this.actionsLeft--;
       this.log.push({ week: this.s.week, charId, acted: nodeId, key: choice.key });
@@ -568,12 +574,27 @@
     // Public alias for content code that needs a conditional in-character
     // message mid-fx (e.g. pivot day's evidence-chip responses).
     say(spec) { this._say(spec); }
+    //
+    // Two variants besides a character's line:
+    //  - `system: true` — a centered, unattributed thread event ("Jordan left
+    //    the conversation"), the same cue a `system` beat renders as.
+    //  - `outgoing: true` — a bubble the FOUNDER sent without it being a
+    //    choice's reply (a follow-up typed after the conversation ended);
+    //    `undelivered: true` marks it as never arriving (she blocked you).
     _say(spec, fallbackCharId) {
       for (const m of [].concat(spec)) {
         const charId = m.char || fallbackCharId;
         const char = this.cast.get(charId);
+        if (m.outgoing) {
+          this._push(charId, {
+            type: "reply", body: this._text(m.text, char), undelivered: !!m.undelivered,
+            scene: this.scene ? this.scene.id : null,
+          });
+          continue;
+        }
         const spk = m.speaker ? this.cast.get(m.speaker) : null;
         this._push(charId, {
+          system: !!m.system,
           type: "incoming",
           from: m.from || (spk ? spk.def.name : (char ? char.def.name : charId)),
           fromId: m.speaker || null,

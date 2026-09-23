@@ -87,9 +87,9 @@ function uiSurface(charId, type, nodeId) {
 const SPINE = [
   ["equity_signing", "equity"], ["equity_impasse", "split"], ["dev_plan", "scope"],
   ["good_enough_launch", "launch"], ["launch_surface", "splash"],
-  ["feature_spree", "features"], ["pivot_day_decide", "verdict"],
-  ["pivot_day_evidence", "evidence"], ["pivot_relaunch", "relaunch"],
-  ["jordan_confrontation", "jordan"], ["channel_test", "channel"],
+  ["feature_spree", "features"], ["pivot_hail_mary", "door"], ["pivot_fork", "dig"],
+  ["pivot_day_decide", "verdict"], ["pivot_relaunch", "relaunch"],
+  ["pivot_alex_concern", "jordan"], ["firing_stops", "exit"], ["channel_test", "channel"],
 ];
 
 function endingOf(g) {

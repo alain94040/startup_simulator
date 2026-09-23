@@ -272,44 +272,67 @@ console.log("decent driver — launch through pivot (seed 42, 32 weeks, subsidiz
   ok(g.s.cohort_seen === true, "the Friday cohort number landed (bought analytics)");
   ok(g.took("feature_spree:no"), "held the line on the feature spree");
 
-  // Pivot day.
-  ok(g.took("pivot_summit_call:call_it"), "called the summit (wk " + g.weekOf("pivot_summit_call") + ")");
-  ok(g.weekOf("pivot_day_close") === g.weekOf("pivot_summit_call"),
-    "pivot day: eight beats in one Saturday");
-  ok(g.took("pivot_day_evidence:maya"), "played the Maya chip");
-  ok(g.s.alex_converted === true, "cohort + human quote converted Alex");
+  // The pivot night: Alex's Hail Mary stopped, the meeting, the dig, the call.
+  ok(g.took("pivot_hail_mary:hold"), "stopped Alex's growth push (wk " + g.weekOf("pivot_hail_mary") + ")");
+  ok(g.cast.get("summit").active, "…and started the group thread");
+  ok(g.weekOf("firing_after") === g.weekOf("pivot_hail_mary"),
+    "pivot night: meeting, call, Alex's DM and Jordan's thread in one sitting");
+  ok(["alex", "priya", "jordan"].every(w => (g.s.pivot_asked || []).includes(w)), "called on all three");
+  ok(g.took("pivot_fork:dig_alex") && g.took("pivot_dig:maya_quote"), "dug: the best matches, then Maya's words");
+  ok(g.s.alex_converted === true, "Alex cancelled his own push");
   ok(g.took("pivot_day_decide:pivot") && g.s.activities_pivot, "decided to pivot");
-  ok(g.threads.alex.some(m => (m.body || "").includes("erase my side of the board")),
-    "converted Alex conceded in the room — no morale hit");
+  ok(g.s.cash >= 0 && !g.threads.alex.some(m => (m.body || "").includes("mixer report")), "…and never spent the $1,500");
+
+  // The Jordan question, the same night.
+  ok(g.took("pivot_board_claim:priya") && g.took("pivot_alex_door:say"), "Jordan claimed the board; Alex asked to talk");
+  ok(g.took("pivot_alex_concern:talk"), "\"I'll talk to her.\"");
+  ok(g.took("jordan_ladder_names:yes"), "she asked if you were asking her to leave — you said yes");
+  ok(g.done("firing_protest") && g.took("firing_bargain:no"), "she argued twice; you held");
+  ok(g.took("firing_stops:ask") && g.s.jordan_handoff, "asked what was going on; she wrote up her notes");
+  ok(g.s.jordan_resolved && !g.cast.get("jordan").active && !g.s.jordan_blocked, "she's off the team, amicably");
+  ok(g.threads.founders.some(m => m.system && m.body === "Jordan left the conversation"),
+    "\"Jordan left the conversation\" in the founders' chat");
+  ok(g.s.items.plans_ui.assignee === "alex", "the board went to Alex");
 
   // Aftermath.
   ok(g.s.pivot_shipped === true, "v2 shipped (wk " + g.weekOf("pivot_relaunch") + ")");
+  ok(g.s.pivot_ship_week - g.s.pivot_week <= 4, "…within four weeks of the pivot call");
   ok(g.took("pivot_payoff_maya:ack"), "Maya came back — the bookend fired");
   ok(!g.done("pivot_fifty_verdict"), "no redemption card needed on the pivot path");
   ok(g.firedStamps.has("launched") && g.firedStamps.has("pivotshipped"), "launched + shipped-v2 stamps fired");
 }
 
-// ── growth path: wrong at the summit, redeemed at fifty ──────────────────────
+// ── growth path: yes to the Hail Mary, redeemed at fifty ─────────────────────
 console.log("growth-path driver (seed 42)");
 {
-  const growth = (a) => a.nodeId === "pivot_day_decide" ? ["growth"] : decent(a);
+  const growth = (a) => a.nodeId === "pivot_hail_mary" ? ["go"] : decent(a);
   const g = run(42, growth, 30);
-  ok(g.took("pivot_day_decide:growth") && g.s.pivot_deferred, "sided with Alex at the summit");
+  ok(g.took("pivot_hail_mary:go") && g.s.pivot_deferred, "said yes to Alex's growth push");
+  ok(!g.cast.get("summit").active, "…so there was never a meeting");
   ok(g.threads.alex.some(m => (m.body || "").includes("mixer report")), "the mixer report landed (+20 users)");
   ok(g.done("pivot_fifty_verdict"), "Priya's number came due");
-  ok(g.weekOf("pivot_fifty_verdict") >= g.weekOf("pivot_day_decide") + 2, "…on the 2-week clock (the deadline leaves no slack for a third)");
-  ok(g.took("pivot_fifty_verdict:pivot_now") && g.s.activities_pivot, "pivoted late — $3k instead of $2k");
+  ok(g.weekOf("pivot_fifty_verdict") >= g.weekOf("pivot_hail_mary") + 2, "…on the 2-week clock");
+  ok(g.took("pivot_fifty_verdict:pivot_now") && g.s.activities_pivot, "pivoted late");
+  ok(g.took("jordan_door_again:talk"), "a late pivot skips the pivot night — Alex raises Jordan on his own");
+  ok(g.s.jordan_resolved, "…and the second-chance room still lets you have the conversation");
 }
 
-// ── drift: never calling the room is the scored failure ──────────────────────
-console.log("summit-ignored driver (seed 42)");
+// ── the meeting that stops short: taking Alex's plan inside the room ─────────
+console.log("round-table growth exit (seed 42)");
 {
-  const drift = (a) => a.nodeId === "pivot_summit_call" ? null : decent(a);
+  const g = run(42, (a) => a.nodeId === "pivot_fork" ? ["users"] : decent(a), 30);
+  ok(g.took("pivot_fork:users") && g.s.pivot_choice === "growth", "heard everyone, then booked the gym");
+  ok(g.took("pivot_close_growth:deal") && !g.done("pivot_day_decide"), "the room closed on Priya's number, no eureka");
+}
+
+// ── drift: ignoring the Hail Mary is a yes ───────────────────────────────────
+console.log("hail-mary-ignored driver (seed 42)");
+{
+  const drift = (a) => ["pivot_hail_mary", "pivot_fifty_verdict"].includes(a.nodeId) ? null : decent(a);
   const g = run(42, drift, 30);
-  ok(g.outcome("pivot_summit_call") === "@ignored" && g.s.pivot_deferred && g.s.pivot_summit_done,
-    "never called the room — the default won silently");
-  ok(!g.done("pivot_day_open"), "no summit, no pivot day");
-  ok(!g.done("pivot_fifty_verdict"), "and no redemption card either — drift has no exit");
+  ok(g.outcome("pivot_hail_mary") === "@ignored" && g.s.pivot_deferred && g.s.pivot_summit_done,
+    "never answered Alex — he booked the gym anyway");
+  ok(!g.done("pivot_roundtable"), "no meeting");
   // The admission bar: wise answers without a shipped pivot don't get funded.
   ok(g.s.game_over && !g.s.ycAccepted, "…and YC passed — no shipped pivot, no batch");
 }
@@ -362,23 +385,38 @@ console.log("community-first driver (seed 42)");
   ok(g.took("trust_safety:verify_flagship"), "verification became the brand");
 }
 
-// ── pass 3.5: the wrong-co-founder arc, fired and cleaned up ─────────────────
-console.log("jordan firing arc (seed 42, 30 weeks, subsidized)");
+// ── pass 3.5: the Jordan question, every way it can go ───────────────────────
+console.log("jordan: kept (seed 42)");
 {
-  const g = run(42, decent, 30, {
-    subsidy: 500,
-    priority: (a) => ["jordan_drift_start", "jordan_drag", "jordan_confrontation", "jordan_cap_table"].includes(a.nodeId)
-      ? -1 : actPriority(a),
-  });
-  ok(g.s.jordan_drifting === true, "Jordan drifted once her iOS milestones were done");
-  ok(g.took("jordan_drag:talk"), "Alex flagged the drag; you followed up");
-  ok(g.took("jordan_confrontation:fire") && g.s.jordan_resolved, "had the conversation — Jordan is off the team");
-  ok(!g.cast.get("jordan").active, "her thread went quiet");
-  ok(g.took("jordan_cap_table:lawyer") && g.s.jordan_cleanup_needed === false,
-    "lawyer cleaned up the un-vested stake ($2k)");
-  const cats = require("../scoring.js").scoreGame(g);
-  const hard = cats.find(c => c.key === "hard-conversations");
-  ok(hard.score >= 70, "firing counted toward hard-conversations (" + hard.score + ")");
+  const keep = (a) => a.nodeId === "pivot_alex_concern" ? ["week"] : a.nodeId === "jordan_door_again" ? ["almost"] : decent(a);
+  const g = run(42, keep, 30);
+  ok(g.s.jordan_kept && g.s.jordan_kept_final && !g.s.jordan_resolved, "never had the conversation");
+  ok(g.done("jordan_slip"), "watched the promise slip");
+  ok(!g.s.pivot_shipped, "the board never got built in time — v2 never reached users");
+  ok(!g.s.ycAccepted, "…and YC passed");
+  const by = {}; for (const c of require("../scoring.js").scoreGame(g)) by[c.key] = c;
+  ok(by["hard-conversations"].score < 60, "hard-conversations graded it (" + by["hard-conversations"].score + ")");
+  ok(by["build-something-people-want"].score < 70, "build-something-people-want graded it (" + by["build-something-people-want"].score + ")");
+}
+console.log("jordan: fired two weeks late (seed 42)");
+{
+  const g = run(42, (a) => a.nodeId === "pivot_alex_door" ? ["later"] : decent(a), 30);
+  ok(g.took("pivot_alex_door:later") && g.took("jordan_door_again:talk"), "said not tonight; Alex opened the door again");
+  ok(g.took("jordan_ladder_names_2:yes") && g.s.jordan_resolved, "had the conversation in the second-chance room");
+  ok(g.s.jordan_fired_week >= g.s.pivot_week + 2, "…two weeks later (wk " + g.s.jordan_fired_week + ")");
+}
+console.log("jordan: the cold ending (seed 42)");
+{
+  const g = run(42, (a) => a.nodeId === "firing_stops" ? ["sorry"] : decent(a), 30);
+  ok(g.s.jordan_resolved && g.s.jordan_blocked && g.s.appstore_on_jordan, "she blocked you; the App Store listing is still hers");
+  ok(g.threads.jordan.some(m => m.type === "reply" && m.undelivered), "the follow-up text shows Not Delivered");
+  ok(!g.done("firing_shares"), "…and the paperwork conversation never happened");
+}
+console.log("jordan: the fold (seed 42)");
+{
+  const g = run(42, (a) => ["jordan_ladder_names", "jordan_ladder_names_2"].includes(a.nodeId) ? ["no"] : decent(a), 30);
+  ok(g.s.jordan_folded && !g.s.jordan_resolved, "said 'forget I said anything' — twice");
+  ok(g.took("jordan_door_again:talk"), "…after Alex opened the door once more");
 }
 
 // ── pass 3: scoring degrades gracefully on the ignore run ────────────────────
@@ -400,7 +438,9 @@ console.log("part-time vs full-time (seed 42)");
   // Alex's own cards get first call so the commitment decision lands the same
   // week in both runs — the comparison isolates the effort multipliers.
   const alexFirst = { priority: (a) => a.charId === "alex" ? -1 : actPriority(a) };
-  const pt = run(42, decent, 20, alexFirst), ft = run(42, decentFT, 20, alexFirst);
+  // 17 weeks: measured before the pivot night, where letting Jordan go
+  // lifts Alex's trust in both runs and would mask the difference.
+  const pt = run(42, decent, 17, alexFirst), ft = run(42, decentFT, 17, alexFirst);
   ok(ft.took("alex_commitment:push") && ft.cast.get("alex").flags.committed_fulltime,
     "full-time run: Alex committed");
   ok(ft.done("demo_ready") && pt.done("demo_ready"), "both runs reached the demo");

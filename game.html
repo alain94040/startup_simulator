@@ -207,6 +207,7 @@
   /* A `system: true` beat: a cue ("it's your move"), not something anyone
      said — centered and unattributed, so a group thread never falsely
      credits the room itself with a line nobody in it actually typed. */
+  .m-nd { align-self: flex-end; color: #ff3b30; font-size: 11px; margin: -2px 4px 4px; }
   .m-sys { align-self: center; max-width: 80%; text-align: center; font-size: 11.5px;
     font-style: italic; color: var(--dim); margin: 6px 0 2px; }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
@@ -1052,9 +1053,9 @@
     <button data-jump="demo_ready">demo night</button>
     <button data-jump="good_enough_launch">launch day</button>
     <button data-jump="slide_hangover">the slide</button>
-    <button data-jump="pivot_summit_call">pivot day</button>
+    <button data-jump="pivot_hail_mary">pivot night</button>
     <button data-jump="pivot_relaunch">post-pivot</button>
-    <button data-jump="jordan_confrontation">the firing</button>
+    <button data-jump="pivot_alex_concern">the Jordan talk</button>
     <button data-jump="seed_pitch">fundraising</button>
     <button id="dbgSkip">+5 weeks</button>
     <button id="dbgYC">→ YC result</button>
@@ -1072,6 +1073,7 @@
 <script src="story/users.js"></script>
 <script src="story/launch_day.js"></script>
 <script src="story/slide.js"></script>
+<script src="story/jordan_talk.js"></script>
 <script src="story/pivot_day.js"></script>
 <script src="story/community.js"></script>
 <script src="story/fundraising.js"></script>
@@ -1197,20 +1199,19 @@ const SCENE_META = {
     exit: () => ["Day one is over.", "You're a different founder now."],
   },
   pivot: {
-    title: "Pivot day", sub: "whiteboard, two columns: NOT ENOUGH USERS / WRONG PRODUCT.",
+    title: "What are we building Monday", sub: "one group thread, one question — and you're running the meeting.",
     accent: "rgba(255,140,140,1)",
-    enter: ["Pivot Day.", "Two columns on the whiteboard.", "Nobody leaves until it's decided."],
-    exit: (s) => s.pivot_choice === "pivot" ? ["The decision is made.", "Monday morning, the rebuild begins."]
-      : s.pivot_choice === "growth" ? ["The decision is made.", "The next fifty matches will tell you if it was right."]
-        : ["Half a pivot.", "Priya hopes she's wrong. She usually isn't."],
+    enter: ["Tonight.", "One thread. One question.", "Nobody logs off until it's decided."],
+    exit: (s) => s.jordan_resolved ? (s.jordan_cold_exit ? ["It's done.", "She won't answer anymore. Alex has the board from Monday."] : ["It's done.", "Two founders now. Monday, the rebuild."])
+      : s.pivot_choice === "pivot" ? ["The decision is made.", "Monday morning, the rebuild begins."]
+        : ["The decision is made.", "The next fifty matches will tell you if it was right."],
   },
   firing: {
     title: "The conversation", sub: "just you and Jordan. everything else can wait until morning.",
     accent: "rgba(150,165,190,1)",
-    enter: ["Nearly midnight.", "Jordan is still up, still working.", "Nobody can help you with this one."],
-    exit: (s) => s.jordan_quit ? ["She resigned before you finished.", "The call was never yours to make."]
-      : s.jordan_resolved ? ["It's done.", "Alex has iOS from Monday."]
-        : ["Nothing changed.", "You both know how this ends."],
+    enter: ["Late.", "Jordan is still up, still promising.", "Nobody can help you with this one."],
+    exit: (s) => s.jordan_resolved ? (s.jordan_cold_exit ? ["It's done.", "She won't answer anymore."] : ["It's done.", "Alex has the board from Monday."])
+      : ["Nothing changed.", "The board is where it was."],
   },
 };
 // Launch day walks the clock through the hours; the sky (background) shifts with
@@ -1255,7 +1256,7 @@ const STAGES = [
     { t: "Call Maya", done: (s, g) => g.done("slide_maya_call"), note: s => s.maya_quote ? "her words, kept" : null },
     { t: "Read the Friday cohort", done: (s, g) => g.done("slide_cohort") || !s.analytics_live, note: s => !s.analytics_live ? "no analytics — flying on gut" : null },
     { t: "Hear Alex's thesis out", done: (s, g) => g.done("slide_alex_thesis") },
-    { t: "Get both sides in a room", done: s => !!s.pivot_summit_done },
+    { t: "Stop and ask the whole team", done: s => !!s.pivot_summit_done, note: s => s.pivot_choice === "growth" ? "went with Alex's growth push" : null },
   ]},
   { id: "v2", label: (s, g, done) => done ? "Ch 4 · Rebuild as v2" : "Ch 4 · Scale the team",
     goal: "Ship the pivot — and keep the team aligned behind it.",
@@ -1263,8 +1264,8 @@ const STAGES = [
     { t: "Call the pivot", done: s => !!s.activities_pivot, note: () => "plans, not profiles" },
     { t: "Make the scope call", done: (s, g) => g.done("pivot_scope_call"), note: s => s.pivot_kept_legacy ? "kept classic mode — slower" : null },
     { t: "Repoint the matching engine", done: s => !!(s.items && s.items.plans_matching && s.items.plans_matching.status === "done") },
-    { t: "The plans UI", done: s => !!(s.items && (!s.items.plans_ui || s.items.plans_ui.status === "done" || s.jordan_resolved)) },
-    { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? "she's off the team" : s.jordan_drifting ? "she's drifting — Alex is covering" : null },
+    { t: "Build the board", done: s => !!(s.items && s.items.plans_ui && s.items.plans_ui.status === "done"), note: s => s.items && s.items.plans_ui && s.items.plans_ui.status !== "done" ? (s.items.plans_ui.assignee === "jordan" && !s.jordan_resolved ? "Jordan's — first version by sunday" : "Alex's now") : null },
+    { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? (s.jordan_cold_exit ? "she's off the team — and not speaking to you" : "she's off the team") : s.jordan_kept ? "she kept the board" : null },
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped, note: (s, g) => g && g.took && g.took("pivot_relaunch:sarah_event") ? "debuted at Sarah's event" : g && g.took && g.took("pivot_relaunch:press") ? "the pivot story ran" : null },
   ]},
   { id: "apply", label: "Ch 5 · Get into YC",
@@ -1577,10 +1578,13 @@ function openThread() {
 // rare, explicitly-authored aside, styled unlike a bubble on purpose so it
 // never reads as one, reserved for a detail (usually a verbatim quote) the
 // thread doesn't already carry as a real message.
+// A founder bubble that never arrived (engine _say `undelivered`): she
+// blocked you, and iMessage says so the only way it does — in red, under it.
+const undeliveredHtml = (m) => m.undelivered ? '<div class="m-nd">Not Delivered</div>' : "";
 function threadEntryHtml(m, isNew, tail, prev, group) {
   const anim = isNew ? " msg-new" : "";
   let out = "";
-  if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+  if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>" + undeliveredHtml(m);
   else if (m.type === "incoming" && m.system) {
     out = '<div class="m-sys' + anim + '">' + esc(m.body) + "</div>";
   } else if (m.type === "incoming") {
@@ -1632,8 +1636,8 @@ function renderThread(opts) {
 
   // ── the response surface, in-flow at the bottom of the thread ──
   const rbox = $("reply");
-  // Jordan blocks you once fired.
-  if (selected === "jordan" && game.s.jordan_resolved && !game.scene) {
+  // Jordan blocked you (the cold ending of the firing).
+  if (selected === "jordan" && game.s.jordan_blocked && !game.scene) {
     rbox.innerHTML = '<div class="chat-blocked">This user blocked you.</div>';
     return;
   }
@@ -2283,7 +2287,7 @@ function renderFocusThread(opts) {
     const tail = !next || next.type !== m.type
       || (group && next.type === "incoming" && next.from !== m.from);
     const anim = i === shown - 1 ? " msg-new" : "";
-    if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+    if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>" + undeliveredHtml(m);
     else if (m.system) {
       html += '<div class="m-sys' + anim + '">' + esc(m.body) + "</div>";
     } else {
@@ -2365,8 +2369,8 @@ function exitScene() {
     inScene = false; scSelected = null; jShown = journalMirror().length;
     render(); checkEndgame();
     // The beats in a room are free, but the week around it is not: the answer
-    // that OPENS a room can be a paid one (Jordan's confrontation, the summit
-    // call, the ship call), and doAct returns into enterScene() before it can
+    // that OPENS a room can be a paid one (Alex's Hail Mary, his last door
+    // on Jordan, the ship call), and doAct returns into enterScene() before it can
     // schedule the turn. Without this the player comes back to a spent week
     // with nothing to answer and no End-week pill — stuck on the same week.
     scheduleTurn(620);

@@ -48,16 +48,26 @@
     "launch_surface",     // the launch plan beats the ship call — a sensible
                           // player picks the splash before flipping the switch
     "slide_maya_call", "slide_cohort", "slide_first_echo",
-    "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_summit_call",
+    "slide_alex_thesis", "slide_priya_ping", "feature_spree", "pivot_hail_mary",
+    // the rebuild's own calls: the channel offer and the beta list first
+    "sarah_intro", "beta_list_after",
     "pivot_relaunch", "public_complaint",
-    // The co-founder conversation outranks everything else late-game: it now
-    // sits on the founder's thread, where founder_codebuild (which a decent
-    // player never answers) can otherwise squat the slot until the deadline.
-    "jordan_confrontation", "jordan_cap_table",
+    // The co-founder conversation outranks everything else late-game: Alex's
+    // last door is the only way back to it once the pivot night has passed.
+    "jordan_door_again", "jordan_cap_table",
   ];
   const actPriority = (a) => {
     const i = ANSWER_ORDER.indexOf(a.nodeId);
     return i >= 0 ? i : a.charId === "hacker_news" ? 500 : 99;
+  };
+
+  // The Jordan conversation exists twice (story/jordan_talk.js): on the pivot
+  // night, and as the "_2" second chance. A preference for one is a
+  // preference for both.
+  const bothTalks = (prefs) => {
+    const out = {};
+    for (const [id, v] of Object.entries(prefs)) { out[id] = v; out[id + "_2"] = v; }
+    return out;
   };
 
   // Preferred option keys (first available wins; unknown nodes take the first
@@ -99,10 +109,12 @@
     slide_alex_thesis: ["push_back", "hear_him"], slide_priya_ping: ["real_numbers"],
     slide_maya_call: ["call"], slide_jordan_echo: ["ack"], feature_spree: ["no"],
     win_back_blast: ["skip"],
-    pivot_summit_call: ["call_it"], pivot_day_open: ["deal"], pivot_day_alex_case: ["probe"],
-    pivot_day_priya_case: ["pull_it"], pivot_day_evidence: ["maya", "circle", "fixes", "gut"],
-    pivot_day_shape: ["flip"], pivot_day_cost: ["ack"], pivot_day_decide: ["pivot"],
-    pivot_day_close: ["night"],
+    // the pivot night: stop the growth push, hear everyone, dig, pivot
+    pivot_hail_mary: ["hold"],
+    pivot_roundtable: ["alex", "priya", "jordan"], pivot_round_2: ["alex", "priya", "jordan"],
+    pivot_round_3: ["alex", "priya", "jordan"], pivot_fork: ["dig_alex"],
+    pivot_dig: ["maya_quote", "jordan_maya"], pivot_day_decide: ["pivot"], pivot_close_growth: ["deal"],
+    pivot_who_builds: ["jordan"], pivot_alex_door: ["say"], pivot_alex_concern: ["talk"],
     pivot_scope_call: ["cut"], pivot_beta_invite: ["invite"],
     pivot_relaunch: ["sarah_event", "press", "quiet"], pivot_fifty_verdict: ["pivot_now"],
     pivot_payoff_maya: ["ack"],
@@ -112,13 +124,17 @@
     dont_scale_seed: ["concierge"], first_customer_offer: ["pitch"], pricing_experiment: ["prompt"],
     bug_reports: ["fix"], churn_interview: ["call"], feature_request_custom: ["negotiate"],
     feature_cluster: ["build"],
-    jordan_drift_start: ["talk"], jordan_drag: ["talk"], jordan_launch_blocker: ["confront"],
-    jordan_confrontation: ["fire"], jordan_cap_table: ["lawyer"],
-    firing_open: ["own"], firing_restate: ["say_it"], firing_reentry: ["finish"],
-    firing_preempt: ["nothing"], firing_reaction: ["ask", "hold"],
-    firing_ask_finish: ["hold_informed"], firing_counter: ["buy_handoff"],
-    firing_logistics: ["transfer"], firing_alex_after: ["keep_confidence"],
-    firing_last_word: ["human"],
+    jordan_slip: ["when"], jordan_door_again: ["talk"], jordan_cap_table: ["lawyer"],
+    founders_first_standup: ["weird"], beta_list_after: ["invite"], priya_after_jordan: ["honest"],
+    // the Jordan conversation (both copies: pivot night, and the "_2" second
+    // chance): climb the ladder honestly, say yes, hold, ask, do the paperwork
+    ...bothTalks({
+      jordan_ladder_open: ["real"], jordan_ladder_defend: ["late"],
+      jordan_ladder_names: ["yes"], jordan_ladder_names_again: ["yes"],
+      firing_protest: ["sooner"], firing_bargain: ["no"], firing_stops: ["ask"],
+      firing_shares: ["transfer"], firing_notes: ["handoff"],
+      firing_last: ["intake", "maya", "close"], firing_after: ["not_really"],
+    }),
     flare_stealth: ["steady"], flare_10k: ["course"], flare_feature: ["hold"],
     flare_stumble: ["screenshot"], flare_epilogue: ["work"],
     public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
@@ -152,7 +168,6 @@
     feature_cluster: "build", pivot_relaunch: "build", pivot_fifty_verdict: "build",
     pivot_scope_call: "build",
     founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
-    jordan_launch_blocker: "build",
     // research — the market: interviews, communities, the competitor, evidence
     interviews: "research", waitlist_calls: "research", waitlist_cold: "research",
     hn_thread: "research", community_hn_1: "research", community_hn_2: "research",
@@ -165,7 +180,7 @@
     slide_first_echo: "research", slide_cohort: "research", slide_alex_thesis: "research",
     slide_priya_ping: "research", slide_maya_call: "research", slide_jordan_echo: "research",
     win_back_blast: "research",
-    pivot_summit_call: "research", pivot_payoff_maya: "research", power_user_quiet: "research",
+    pivot_hail_mary: "research", pivot_payoff_maya: "research", power_user_quiet: "research",
     churn_interview: "research", first_interview_shock: "research", cold_silence: "research",
     random_reframe: "research", pivot_insight_1: "research", pivot_insight_2: "research",
     pmf_lock: "research", founder_user_depth: "research", reference_checkin: "research",
@@ -175,8 +190,8 @@
     jordan_working_style: "team",
     vision_mismatch: "team", alex_side_project: "team", alex_side_project_escalation: "team",
     alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
-    alex_leaving_threat: "team", jordan_drift_start: "team", jordan_drag: "team",
-    jordan_confrontation: "team",
+    alex_leaving_threat: "team", jordan_slip: "team", jordan_door_again: "team", jordan_board_promise: "team",
+    founders_first_standup: "team", beta_list_after: "research", priya_after_jordan: "team",
     // money — checks in, checks out
     ff_family: "money", ff_family_2: "money", ff_family_3: "money",
     founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",
@@ -189,11 +204,9 @@
     dont_scale_seed: "growth", first_customer_offer: "growth", pricing_experiment: "growth",
     sarah_intro: "growth", pivot_beta_invite: "growth", website_social_proof: "growth",
     public_complaint: "growth", reporter_deadline: "growth", early_name: "growth",
-    // the firing scene's beats (free of action cost, like every scene beat)
-    firing_open: "team", firing_restate: "team", firing_reentry: "team",
-    firing_preempt: "team", firing_reaction: "team", firing_ask_finish: "team",
-    firing_counter: "team", firing_logistics: "team", firing_alex_after: "team",
-    firing_last_word: "team",
+    // Scene beats are NOT classified: phase_map's chapter economy skips them
+    // (they cost no action), and a lopsided driver that skips a category would
+    // otherwise stall inside a room — a player can't leave a sitting half-read.
     demo_jordan_late: "team",
   };
   const CAT_LIST = ["build", "research", "team", "money", "growth", "other"];
@@ -355,29 +368,22 @@
     outside_only: { chooser: onlyChars(OUTSIDE), blurb: "all market, no team, no build" },
     fulltime: { chooser: withPrefs({ alex_commitment: ["push"] }),
       blurb: "pushes Alex to commit full-time instead of accepting part-time" },
-    keep_jordan: { chooser: withPrefs({ jordan_confrontation: ["defer"] }),
-      blurb: "never has the Jordan conversation" },
-    skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"], firing_logistics: ["defer"] }),
+    keep_jordan: { chooser: withPrefs({ pivot_alex_concern: ["week"], jordan_door_again: ["almost"] }),
+      blurb: "hears Alex out on the pivot night, then never has the Jordan conversation" },
+    skip_captable: { chooser: withPrefs({ jordan_cap_table: ["defer"], ...bothTalks({ firing_shares: ["defer"] }) }),
       blurb: "fires Jordan but never does the paperwork" },
-    fold_jordan: { chooser: withPrefs({ firing_reaction: ["fold"], firing_reentry: ["fold_again"] }),
-      blurb: "has the Jordan conversation and blinks in it" },
-    // Ghosts Jordan for the whole run, then opens the firing with the charge
-    // sheet — the only archetype that reaches her tier-3 reaction and the
-    // pre-emptive resignation (firing_preempt), and the one that exercises
-    // firing_restate on the way.
-    // Leaves every Jordan card that isn't build-critical on read, then opens
-    // the firing with the charge sheet — the only archetype that reaches her
-    // tier-3 reaction and the pre-emptive resignation.
-    ghost_jordan: { chooser: withPrefs({
-        jordan_working_style: null, slide_jordan_echo: null, pivot_beta_invite: null,
-        firing_open: ["litigate"],
-      }), blurb: "leaves Jordan on read all run, then opens with the charge sheet" },
-    // Opens the firing by hiding behind Alex — exercises firing_restate, the
-    // beat that charges you a message for not leading with the decision.
-    blame_alex: { chooser: withPrefs({ firing_open: ["outsource"] }),
-      blurb: "fires Jordan, but makes it Alex's fault" },
-    no_pivot: { chooser: withPrefs({ pivot_day_decide: ["growth"], pivot_fifty_verdict: ["ride"] }),
-      blurb: "explicitly refuses the pivot, twice" },
+    fold_jordan: { chooser: withPrefs(bothTalks({ jordan_ladder_names: ["ask_back"], jordan_ladder_names_again: ["no"] })),
+      blurb: "gets to 'are you asking me to leave?', asks what she thinks, then says no — both times" },
+    // The cold ending: says "I know. I'm sorry." instead of asking what's
+    // going on, and Jordan ends it herself and blocks the founder.
+    cold_jordan: { chooser: withPrefs(bothTalks({ firing_stops: ["sorry"] })),
+      blurb: "fires Jordan, and says 'sorry' instead of asking" },
+    // Tells Alex "not tonight" on the pivot night, and has the conversation
+    // two weeks later, when he opens the door again.
+    fire_late: { chooser: withPrefs({ pivot_alex_door: ["later"] }),
+      blurb: "puts Alex off on the pivot night, fires Jordan two weeks later" },
+    no_pivot: { chooser: withPrefs({ pivot_fork: ["users"], pivot_fifty_verdict: ["ride"] }),
+      blurb: "calls the meeting, hears everyone, books the gym anyway — then refuses the pivot again" },
     no_meetup: { chooser: withPrefs({ founder_meetup: null }), blurb: "never goes to the founder meetup" },
     full_plan: { chooser: withPrefs({ dev_plan: ["full"] }), blurb: "picks the over-scoped plan A" },
     builder: { makeChooser: lopsided(["research", "growth"], 0.25),

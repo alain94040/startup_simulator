@@ -36,12 +36,12 @@ const PHASES = [
   { key: "demo",           label: "Demo night",        fact: "demo_ready" },
   { key: "priya_active",   label: "Priya unlocked",    reached: (s, g) => g.cast.get("priya").active },
   { key: "launched",       label: "Launched",          reached: s => !!s.launched },
-  { key: "summit",         label: "Pivot day",         fact: "pivot_day_decide" },
+  { key: "summit",         label: "Pivot night",       fact: "pivot_hail_mary" },
   { key: "pivot",          label: "Pivot committed",   reached: s => !!s.activities_pivot },
   { key: "pivot_shipped",  label: "Pivot shipped (v2)", reached: s => !!s.pivot_shipped },
   { key: "first_customer", label: "First customer",    reached: s => s.customers >= 1 },
   { key: "first_issue",    label: "First cust. issue", log: ["bug_reports", "churn_interview", "feature_request_custom"] },
-  { key: "jordan_fired",   label: "Jordan let go",     fact: "jordan_confrontation", outcome: "fire" },
+  { key: "jordan_fired",   label: "Jordan let go",     reached: s => !!s.jordan_resolved },
 ];
 
 // ── the chapter economy ───────────────────────────────────────────────────────

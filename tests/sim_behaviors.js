@@ -49,7 +49,10 @@ function runStrategy(name, spec) {
       m.qualified = !!(s.launched && s.pivot_shipped && s.customers >= 1);
       m.alexLeft = !g.cast.get("alex").active;
       m.jordanFired = !!s.jordan_resolved;
-      m.jordanQuit = !!s.jordan_quit;
+      m.jordanFiredWk = s.jordan_fired_week != null ? s.jordan_fired_week : null;
+      m.jordanCold = !!s.jordan_cold_exit;
+      const hard = Scoring.scoreGame(g).find(c => c.key === "hard-conversations");
+      m.hardScore = hard ? hard.score : null;
       m.itemsDone = Object.values(s.items || {}).filter(it => it && it.status === "done").length;
       m.grade = g.gradeScore();
       const cap = Scoring.scoreGame(g).find(c => c.key === "clean-cap-table");
@@ -68,7 +71,8 @@ function runStrategy(name, spec) {
     pivoted: share(m => m.pivoted), v2: share(m => m.v2),
     qualified: share(m => m.qualified), alexLeft: share(m => m.alexLeft),
     jordanFired: share(m => m.jordanFired),
-    jordanQuit: share(m => m.jordanQuit),
+    jordanCold: share(m => m.jordanCold),
+    meanFiredWk: avg(m => m.jordanFiredWk), hardScore: avg(m => m.hardScore),
     priyaSeen: share(m => m.priya == null ? m.launched : m.priya), // filled below for no_meetup
     meanDemoWk: avg(m => m.demoWk), meanLaunchWk: avg(m => m.launchWk),
     meanV2Wk: avg(m => m.v2Wk), itemsDone: avg(m => m.itemsDone),
@@ -146,9 +150,10 @@ check(`skip_captable.grade (${r1(S.skip_captable.grade)}) < decent.grade (${r1(S
   S.skip_captable.grade < S.decent.grade);
 
 // G · the Jordan question — GOALS.md: "to win the game you will have to fire
-// Jordan". These contracts encode that: dodging the conversation must drag the
-// rebuild and cost most wins — if they fail, keeping a drifting co-founder is
-// currently free and needs design teeth.
+// Jordan". She claims the board on the pivot night and builds it at her
+// part-time pace, so dodging the conversation must drag the rebuild past the
+// deadline and cost the wins — and the report card must say which
+// conversation was dodged.
 check(`keep_jordan.jordanFired = ${S.keep_jordan.jordanFired}% (expected 0 — never has the talk)`,
   S.keep_jordan.jordanFired === 0);
 check(`decent.jordanFired (${S.decent.jordanFired}%) >= 80%`, S.decent.jordanFired >= 80);
@@ -156,16 +161,30 @@ check(`keep_jordan v2 ships later: wk ${r1(S.keep_jordan.meanV2Wk)} > decent wk 
   (S.keep_jordan.meanV2Wk || Infinity) > S.decent.meanV2Wk);
 check(`keep_jordan.wins (${S.keep_jordan.wins}%) <= half of decent.wins (${S.decent.wins}%)`,
   S.keep_jordan.wins <= S.decent.wins / 2);
+check(`keep_jordan hard-conversations (${r1(S.keep_jordan.hardScore)}) < 60 — the dodged talk is on the card`,
+  S.keep_jordan.hardScore != null && S.keep_jordan.hardScore < 60);
 
-// G2 · the compromise (new with the firing scene): reaching the room and
-// blinking is worse than deferring, not better. She resigns on her own, so the
-// founder never gets the decision — and the report card must say so.
-check(`fold_jordan.jordanFired = ${S.fold_jordan.jordanFired}% (expected 0 — blinked in the room)`,
+// G2 · the fold: reaching "are you asking me to leave?" and saying no is still
+// keeping her — same drag, same card.
+check(`fold_jordan.jordanFired = ${S.fold_jordan.jordanFired}% (expected 0 — said no to her question)`,
   S.fold_jordan.jordanFired === 0);
-check(`fold_jordan.jordanQuit (${S.fold_jordan.jordanQuit}%) >= 80% — she leaves on her own`,
-  S.fold_jordan.jordanQuit >= 80);
 check(`fold_jordan.grade (${Math.round(S.fold_jordan.grade)}) < decent.grade (${Math.round(S.decent.grade)})`,
   S.fold_jordan.grade < S.decent.grade);
+
+// G3 · the cold ending: "I'm sorry" instead of asking — she blocks you, and
+// the paperwork (and the App Store account) is left in a mess.
+check(`cold_jordan.jordanCold (${S.cold_jordan.jordanCold}%) >= 80% — she ended it and blocked you`,
+  S.cold_jordan.jordanCold >= 80);
+check(`cold_jordan cap-table (${r1(S.cold_jordan.capScore)}) < decent cap-table (${r1(S.decent.capScore)})`,
+  S.cold_jordan.capScore < S.decent.capScore);
+
+// G4 · late beats never: putting Alex off on the pivot night and firing her
+// at his second door still gets there, two weeks and some grade later.
+check(`fire_late.jordanFired (${S.fire_late.jordanFired}%) >= 80%`, S.fire_late.jordanFired >= 80);
+check(`fire_late fired later: wk ${r1(S.fire_late.meanFiredWk)} > decent wk ${r1(S.decent.meanFiredWk)}`,
+  (S.fire_late.meanFiredWk || Infinity) > S.decent.meanFiredWk);
+check(`fire_late.grade (${Math.round(S.fire_late.grade)}) < decent.grade (${Math.round(S.decent.grade)})`,
+  S.fire_late.grade < S.decent.grade);
 
 // H · the pivot is required — the YC traction bar makes refusing it fatal
 check(`decent.pivoted (${S.decent.pivoted}%) >= 80%`, S.decent.pivoted >= 80);

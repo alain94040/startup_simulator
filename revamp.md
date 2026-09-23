@@ -414,6 +414,43 @@ every branch of the scene is exercised by some run.
 compromise costs ~10 points, which an otherwise-perfect run absorbs. Whether
 blinking should be able to cost the batch is a dial, not a bug.
 
+## Pass 7 — the pivot night: the pivot and the firing as one arc
+
+Pass 6 gave Jordan's firing its own scene, but the story still ran as two
+unrelated events. The pivot was settled at wk 18, and the firing came at
+wk 22, after v2 had already shipped (600 of 600 runs). Alex's drift beats told
+the player the answer ("she's not earning it… you can [have the
+conversation]"). Keeping her was free: `keep_jordan` won 100%. The dialogue
+was drafted first (`final_arc_draft.html`) and implemented from it.
+
+- **One night, all over chat.** The door is Alex's Hail Mary in the founders'
+  chat (`pivot_hail_mary`): $1,500 of what's left on a growth push, and saying
+  yes is the default. Holding him opens a group thread with Priya
+  (`summit`, the `pivot` room). The player runs the meeting (one tap, one
+  voice), and the pivot has to be dug out: Alex's plan ends the night without
+  it, while curiosity (the best matches, what Maya did after she matched)
+  gets everyone to the eureka one reply at a time.
+- **The Jordan question, the same sitting.** Jordan claims the board with a
+  promise; Priya's goodnight carries a quiet doubt; Alex answers her with 👍
+  and then DMs the founder. That is the old door, at the worst moment. None
+  of his chips says "fire". Jordan's thread (`story/jordan_talk.js`, a beat
+  factory) is an honest ladder where every rung has a warm exit. She asks
+  "are you asking me to leave?", argues twice, and the reply that follows
+  decides whether the split is amicable or she blocks you.
+- **Keeping her costs the company, not a flag.** The rebuild is now a week
+  clock (`world.js`), not an effort sum. Under the effort sum, firing her
+  subtracted her passive effort and made the rebuild slower, the opposite of
+  the story. The board builds at `JORDAN_PACE` (0.4) while she holds it, so
+  v2 misses the deadline. Alex opens the door once more two weeks later
+  (`jordan_door_again` → the `firing` room, the `_2` beats).
+- **Balance notes.** The lawyer card now waits until the bank can cover it:
+  the firing lands on the pivot night, when cash is lowest, and the old
+  timing bankrupted 6/20 sound runs. Alex's aftermath fills the rebuild weeks:
+  the two-person standup, Jordan's beta list from her notes, and Priya
+  checking in afterwards. With them, quiet weeks stay at the week-2 baseline.
+  Contracts: 41/42, up from 34/37. `keep_jordan` now wins 0% (grade 77) and
+  `fire_late` wins at grade 95.
+
 ## Open items (next passes)
 - **Re-balance** (tools now exist): the angel round win path, the Marcus
   warmth soft-lock, the demo→launch gap, the action-starvation tail. Drive with

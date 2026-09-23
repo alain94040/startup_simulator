@@ -14,6 +14,13 @@
   // ("auto") roadmap item — the full/A plan's tax (see story/dev_plan.js).
   const AUTO_BUILD_INCREMENT = 11;
 
+  // The pivot rebuild clock (see tick): weeks for Alex to repoint matching,
+  // weeks for a full-time owner to build the board, and the rate a part-time
+  // owner (Jordan, while she holds it) builds at.
+  const MATCHING_WEEKS = 2;
+  const BOARD_WEEKS = 3;
+  const JORDAN_PACE = 0.4;
+
   // Minimum report-card grade (0-100 rollup, per Scoring) for YC admission,
   // graded automatically at the deadline below — no application to write.
   // 80 is a B+ on the endgame scale (A ≥ 85, B ≥ 70), so YC takes the top of
@@ -69,19 +76,33 @@
           it.quality = it.quality || "solid";
         }
       }
-      // Pivot rebuild burn-down: after pivot day, team effort accrued since the
-      // decision completes the plans-first replacements (see story/pivot_day.js).
-      if (s.activities_pivot && s.launched) {
-        if (s.pivot_effort_base == null) s.pivot_effort_base = teamEffort;
-        // If the team shrinks after pivot day (Jordan fired, Alex walks), the
-        // active-cofounder effort sum drops below the recorded base — clamp the
-        // base down so the rebuild clock resumes instead of going negative.
-        if (teamEffort < s.pivot_effort_base) s.pivot_effort_base = teamEffort;
-        const pivotEffort = teamEffort - s.pivot_effort_base;
-        if (pivotEffort >= 3.0 && s.items.plans_matching && s.items.plans_matching.status === "active")
-          s.items.plans_matching.status = "done";
-        if (pivotEffort >= 4.5 && s.items.plans_ui && s.items.plans_ui.status === "todo")
-          s.items.plans_ui.status = "done";
+    }
+
+    // The pivot rebuild, counted in weeks rather than effort. Two pieces:
+    // Alex repoints the matching engine (MATCHING_WEEKS), and whoever owns
+    // the board — the plans screen v2 is built around — builds it
+    // (BOARD_WEEKS). The owner is the whole story of chapter 4: Jordan claims
+    // the board on pivot night, and a part-time owner builds at JORDAN_PACE —
+    // "a week behind on everything", which is the fact the player has to act
+    // on. Firing her hands the board to Alex (story/firing.js adds the cost
+    // of reading her work cold via s.board_extra); keeping her means the board
+    // lands at half speed. Weeks, not effort, on purpose: firing a co-founder
+    // removes her passive effort from the team sum, which under the old
+    // effort clock made the rebuild SLOWER after she left — the opposite of
+    // what the story says happens.
+    if (s.items && s.activities_pivot && s.launched) {
+      const m = s.items.plans_matching, b = s.items.plans_ui;
+      s.rebuild_weeks = (s.rebuild_weeks || 0) + 1;
+      if (m && m.status === "active" && s.rebuild_weeks >= MATCHING_WEEKS + (s.matching_extra || 0)) {
+        m.status = "done"; m.quality = m.quality || "solid";
+      }
+      if (b && b.status === "todo") {
+        const jordan = game.cast.get("jordan");
+        const hers = b.assignee === "jordan" && jordan && jordan.active;
+        s.board_progress = (s.board_progress || 0) + (hers ? JORDAN_PACE : 1);
+        if (s.board_progress >= BOARD_WEEKS + (s.board_extra || 0)) {
+          b.status = "done"; b.quality = b.quality || "solid";
+        }
       }
     }
 
@@ -178,7 +199,7 @@
     if (s.cash <= 0 && !game.debugKeepAlive) s.game_over = true;
   }
 
-  const api = { tick, AUTO_BUILD_INCREMENT };
+  const api = { tick, AUTO_BUILD_INCREMENT, MATCHING_WEEKS, BOARD_WEEKS, JORDAN_PACE };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.WORLD = api;
 })();

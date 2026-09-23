@@ -74,40 +74,33 @@
           { faced: g.done("equity_impasse"), weight: 2, got: g.took("equity_impasse:table") ? 0 : 1,
             note: g.took("equity_impasse:table")
               ? "Got the whole room through it twice, then tabled the split 'until after launch' — and proposed settling it later by who contributed what." : null },
-          // Reaching the room is one thing; what happened in it is another.
-          // The compromise grades BELOW deferring: you got there and blinked,
-          // and she now knows you considered it.
-          { faced: g.done("jordan_confrontation"), weight: 3,
-            got: s.jordan_resolved ? 1
-              : g.took("firing_preempt:nothing") ? 0
-                : g.took("firing_reentry:fold_again") ? 0
-                  : s.jordan_quit ? 0.1
-                    : g.took("jordan_confrontation:defer") ? 0.3 : 0,
+          // The Jordan question, asked on the pivot night (or, after a late
+          // pivot, when Alex first raises it). What's graded is whether the
+          // founder finished the sentence, and when: that night, two weeks
+          // later at Alex's last door, or never. Keeping her — by any of the
+          // warm exits, the bargain, or "forget I said anything" — is the
+          // failure this lesson exists for.
+          { faced: g.done("pivot_alex_door") || g.done("jordan_door_again"), weight: 8,
+            got: s.jordan_resolved ? (s.jordan_kept ? 0.6 : 1) : 0,
             note: s.jordan_resolved
-              ? (s.jordan_compromised
-                ? "Blinked the first time, went back three weeks later and finished it. Late, and it counted."
-                : "Told a drifting co-founder to her face, while it was still fixable.")
-              : g.took("firing_preempt:nothing") ? "Jordan resigned mid-sentence. You never made the call — you were beaten to it."
-                : s.jordan_quit ? "Got as far as the conversation and asked for one more sprint. She quit four weeks later."
-                  : g.done("jordan_confrontation") ? "The Jordan conversation kept getting deferred." : null },
-          // How it was delivered. Leading with the decision is the whole craft;
-          // hiding behind Alex or reading the charge sheet reaches the same
-          // place having spent her respect on the way.
-          { faced: g.done("firing_open"), weight: 1,
-            got: g.took("firing_open:own") ? 1 : 0.4,
-            note: g.took("firing_open:own") ? "Led with the decision in the first message — no burying it."
-              : g.took("firing_open:outsource") ? "Opened by hiding behind Alex; she made you say it yourself anyway."
-                : "Opened with the charge sheet. You win that argument and lose the person." },
-          // Asking changes nothing about the decision and everything about
-          // what it cost.
-          { faced: g.done("firing_reaction"), weight: 1,
-            got: g.took("firing_reaction:ask") ? 1 : 0.5,
-            note: g.took("firing_reaction:ask")
-              ? "Asked what was actually going on before finishing — and heard that nothing had changed since week one, which was the whole problem." : null },
+              ? (s.jordan_kept
+                ? "Let the Jordan question slide on the pivot night, then had the conversation two weeks later. Late, and it counted."
+                : "Had the conversation with Jordan the night Alex raised it — before the board could slip.")
+              : s.jordan_folded ? "Jordan asked if you were asking her to leave. You said no, and the board kept slipping."
+                : s.jordan_bargained ? "Told Jordan it wasn't working, then took her deal for more time. The board kept slipping."
+                  : "Alex raised Jordan. You never had the conversation, and the board moved at her pace." },
+          // How it ended. Asking what was going on changes nothing about the
+          // decision and everything about what it cost; "I'm sorry" and
+          // nothing else is how a friend ends up blocking you.
+          { faced: !!s.jordan_resolved, weight: 1,
+            got: s.jordan_cold_exit ? 0.2 : 1,
+            note: s.jordan_cold_exit
+              ? "Said 'I'm sorry' and nothing else. She ended it herself and blocked you — no handoff, the App Store listing still on her account."
+              : "Asked what was actually going on before finishing — and heard that nothing had changed since week one, which was the whole problem." },
         ]),
-        ["You had the talks nobody wants to have — early, in person.",
-          "Some conversations happened; others were left to fester.",
-          "Equity and commitment settled themselves by default. That bill comes due."]);
+        ["You had the talks nobody wants to have — early, and yourself.",
+          "Some hard conversations happened; the hardest one didn't, or came late.",
+          "The hardest conversations settled themselves by default. That bill comes due."]);
     }
 
     // ── 2. Keep your co-founders close ───────────────────────────────────────
@@ -148,9 +141,9 @@
       const ended = s.game_over || s.game_won || s.week >= (s.deadline_week || Infinity);
       const chips = [!!s.maya_quote, !!s.rachel_answer, !!s.demo_question_seen, !!s.analytics_dropoff_seen]
         .filter(Boolean).length;
-      const pivotGot = g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? 1 : 0.5)
+      const pivotGot = g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? 1 : 0.3)
         : g.took("pivot_fifty_verdict:pivot_now") ? (s.pivot_shipped ? 0.5 : 0.3)
-          : (s.pivot_deferred || g.took("pivot_day_decide:growth|hedge")) ? 0.1 : 0;
+          : (s.pivot_deferred || g.took("pivot_day_decide:growth")) ? 0.1 : 0;
       add("build-something-people-want", "Build something people want", "📚 Steve Blank / PG, \"How to Get Startup Ideas\"",
         parts([
           { faced: g.done("interviews") || g.done("dev_plan"), weight: 1,
@@ -164,9 +157,16 @@
           { faced: s.launched || ended, weight: 1, got: s.launched ? chips / 4 : 0,
             note: s.launched ? chips + "/4 evidence chips banked before pivot day."
               : ended ? "Never launched — no stranger ever touched the product." : null },
+          // How fast the pivot reached users: v2 is only as fast as its
+          // slowest half, and the board sat with whoever held it.
+          { faced: !!s.activities_pivot && (s.pivot_shipped || ended), weight: 2,
+            got: !s.pivot_shipped ? 0 : s.pivot_ship_week - s.pivot_week <= 4 ? 1 : s.pivot_ship_week - s.pivot_week <= 5 ? 0.5 : 0.2,
+            note: !s.pivot_shipped ? "v2 never reached users — the board never got built."
+              : s.pivot_ship_week - s.pivot_week <= 4 ? "v2 reached users " + (s.pivot_ship_week - s.pivot_week) + " weeks after the pivot call."
+                : "v2 took " + (s.pivot_ship_week - s.pivot_week) + " weeks after the pivot call — the board was the slow half." },
           { faced: g.done("pivot_day_decide") || s.pivot_deferred || ended, weight: 2, got: pivotGot,
             note: g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? "Pivoted on evidence, with cash left to survive it." : "Called the pivot — but v2 never shipped.")
-              : g.took("pivot_fifty_verdict:pivot_now") ? "Pivoted late — right call, three weeks and $1k dearer."
+              : g.took("pivot_fifty_verdict:pivot_now") ? "Pivoted late — right call, weeks and a growth push dearer."
                 : s.pivot_deferred ? "The default direction won by inertia."
                   : ended ? "The run ended without the product ever being questioned." : null },
         ]),
@@ -186,8 +186,6 @@
             note: g.took("feature_request_custom:build") ? "Built one power-user's workflow into the product." : null },
           { faced: g.done("feature_cluster"), weight: 1, got: g.took("feature_cluster:build") ? 1 : 0,
             note: g.took("feature_cluster:build") ? "Built the thing three users asked for independently — that one counts." : null },
-          { faced: g.done("pivot_day_decide"), weight: 1, got: g.took("pivot_day_decide:hedge") ? 0 : 1,
-            note: g.took("pivot_day_decide:hedge") ? "The hedge: an events tab bolted onto a dating app." : null },
           { faced: ["flare_stealth", "flare_10k", "flare_feature", "flare_epilogue"].some(id => g.done(id)),
             weight: 2, got: s.copied_competitor ? 0 : 1,
             note: s.copied_competitor ? "Chased Flare's feature list instead of your own users."
@@ -242,10 +240,12 @@
                 : s.jordan_quit ? "She resigned holding " + pct + " and no reason to sign anything. The lawyer buys a negotiation now, not a signature."
                   : "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there." },
           // The practical half of a firing, and the half founders forget.
-          { faced: g.done("firing_logistics"), weight: 1,
+          { faced: g.done("firing_shares") || g.done("firing_shares_2") || !!s.jordan_cold_exit, weight: 1,
             got: s.appstore_on_jordan ? 0 : 1,
             note: s.appstore_on_jordan
-              ? "The App Store listing is still on a departed co-founder's personal developer account."
+              ? (s.jordan_cold_exit
+                ? "The App Store listing is still on the personal account of a co-founder who has blocked you."
+                : "The App Store listing is still on a departed co-founder's personal developer account.")
               : "Moved the App Store listing off her personal account before she signed anything." },
         ]),
         ["Paper first, feelings second — the cap table stayed clean through everything.",

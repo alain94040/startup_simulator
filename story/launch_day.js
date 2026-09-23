@@ -504,7 +504,7 @@
       // good_enough_launch is the only door out of chapter 2, and two of its
       // clauses can jam it shut for the rest of a run by accident: parking Alex
       // on discovery after the hardening week, or never resolving the iOS build
-      // (jordan_launch_blocker only covers the drifting case). Either leaves a
+      // (nothing else offers to ship without mobile). Either leaves a
       // finished product, a ticking calendar, and no beat anywhere offering to
       // ship. This is the recovery ramp back to that door — ambient, like every
       // backstop here, so it can never outrank a real beat on Alex's thread.
@@ -530,10 +530,8 @@
               + ". it works. nobody outside this chat has ever opened it. i'm on user calls because you asked me to be — but at some point the calls are just a way of not launching.",
         when: {
           cooldown: 1,
-          // Jordan's drift owns its own version of this conversation.
           if: (s, e, char) => {
             if (s.productPhase !== "product" || s.launched) return false;
-            if (s.jordan_drifting && !s.jordan_resolved) return false;  // Jordan's card owns this
             if (allScopeBuilt(s) && s.ios_unblocked && char.focus === "build") return false;  // door is open
             // team.js's alex_sync_build is the softer version of the same ask
             // and owns the moment two weeks into a discovery sprint; this
@@ -556,8 +554,7 @@
               // Putting him back on "build" is the whole fix: buildEffort starts
               // accruing again, so world.js resumes burning the backlog down.
               // Nothing is cut and nothing is skipped — a plan too big to finish
-              // is still too big to finish. Shipping without mobile costs signal,
-              // the same trade jordan_launch_blocker:web_only charges.
+              // is still too big to finish. Shipping without mobile costs signal.
               const webOnly = !s.ios_unblocked;
               if (webOnly) { s.ios_unblocked = true; s.signal = Math.max(0, s.signal - 10); }
               return (webOnly
