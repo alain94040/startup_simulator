@@ -14,6 +14,7 @@ Related docs:
 |------|------------|
 | `CLAUDE.md` | The codebase guide. Start here. |
 | `GOALS.md` | The educational lessons the game is built to teach. |
+| `characters.md` | Character bible and dialogue rules. Read before writing dialogue. |
 | `readme.md` | Player-facing overview: how to run it, how it plays. |
 | `revamp.md` | Design log for the story-graph engine — why it is built this way. |
 | `reading_the_game.md` | Background on `tests/transcript.js`, the story reader. |
