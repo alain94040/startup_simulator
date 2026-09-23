@@ -444,18 +444,51 @@ const paths = {
       },
       {
         time: "12:05am · Jordan's DM", title: "Act 4 — The firing",
-        note: "Today's firing.js beats, re-voiced: quieter, no charge sheet — she already said it. Every mechanical consequence still lands once, at the end.",
+        note: "Today's firing.js beats, re-voiced. She argues twice (a protest, then a bargain) before she stops. Every mechanical consequence still lands once, at the end.",
         beats: [
           {
-            msgs: [A("jordan", ["okay.", "i honestly didn't see this coming. i thought i was doing fine."])],
+            tag: "pushback 1 — she protests",
+            msgs: [A("jordan", [
+              "no. wait.",
+              "you're doing this over text? at midnight? the night we finally figured out what we're building?",
+              "the board is my idea. the intake screen was my idea. i turned down a real job for this, you KNOW that.",
+            ])],
             fork: "founder's reply",
             to: "Jordan",
             options: [
-              { key: "hold", label: "You're right about me, and it's still the decision.",
-                reply: "i should have said something months ago instead of saying 'no stress'. that's mine. it's still the decision.",
-                then: [A("jordan", "…yeah. okay.")] },
+              { key: "true", label: "All true. It's still the decision.", reply: "all of that is true. it's still the decision." },
+              { key: "sooner", label: "You should have heard this sooner. That's on me.",
+                reply: "you should have heard this months ago, and that's on me, not you. it's still the decision." },
+            ],
+            after: [CB("<b>She argues, and she's partly right.</b> Over text, at midnight, on the night her idea saved the company: every point lands. The player has nothing to win here; the only move is not to take it back.")],
+          },
+          {
+            tag: "pushback 2 — she bargains",
+            msgs: [A("jordan", [
+              "then give me the three weeks.",
+              "if the board isn't live by then, i'll leave on my own. you won't even have to say it.",
+              "that's fair. you know that's fair.",
+            ])],
+            fork: "founder's reply",
+            to: "Jordan",
+            options: [
+              { key: "no", label: "No. I'm sorry.",
+                reply: "no. i'm sorry. if i say yes, we have this conversation again in three weeks, and it's worse for both of us." },
+              { key: "deal", label: "…Okay. Three weeks.", reply: "…okay. three weeks.",
+                then: [A("jordan", "thank you. you'll see.")],
+                note: "The bargain sounds fair, which is why it works. It's backing off with a deadline attached: she keeps the board, and now she knows.", next: "path ②" },
+            ],
+          },
+          {
+            tag: "she stops arguing",
+            msgs: [A("jordan", ["…okay.", "i honestly didn't see this coming. i thought i was doing fine."])],
+            fork: "founder's reply",
+            to: "Jordan",
+            options: [
+              { key: "sorry", label: "I know. I'm sorry.", reply: "i know. i'm sorry.",
+                then: [A("jordan", "…yeah.")] },
               { key: "ask", label: "What's actually going on with you?",
-                reply: "before anything else. what's actually going on with you? not the work. you.",
+                reply: "can i ask what's actually going on with you? not the work. you.",
                 then: [A("jordan", ["honestly? nothing. that's the whole answer, and i know how it sounds.", "i'm doing exactly what i said i'd do in week one. evenings and weekends, around a job i can't afford to quit. that hasn't changed once.", "you two went full-time and i didn't. i was never going to be able to match that. nobody said a word about it, so i thought maybe it was fine."])],
                 note: "Removes the player's last excuse: nobody did anything wrong. That is the whole lesson." },
             ],
@@ -530,10 +563,10 @@ const paths = {
     acts: [
       {
         time: "tonight", title: "Every way of not saying it",
-        note: "Six different exits, one outcome. The player never picks “keep Jordan” — they just don't finish the sentence.",
+        note: "Seven different exits, one outcome. The player never picks “keep Jordan” — they just don't finish the sentence.",
         beats: [
           {
-            msgs: [CB("<b>From Alex's DM:</b> “Not tonight.” · “Let's see how her first week goes.” · “That's not fair to her.”<br><b>From Jordan's thread:</b> “Sounds great. Go to bed.” · “No, nothing. Let's do it.” · “No. Forget I said anything.”<br>All six end the night the same way: Jordan keeps the board. What differs is what's left behind: Alex's morale (“not fair” stings most), and whether Jordan now knows someone had a doubt (anything past rung 1). “Forget I said anything” is the worst of them — she answers <i>“okay. you can't un-ask that, you know.”</i>")],
+            msgs: [CB("<b>From Alex's DM:</b> “Not tonight.” · “Let's see how her first week goes.” · “That's not fair to her.”<br><b>From Jordan's thread:</b> “Sounds great. Go to bed.” · “No, nothing. Let's do it.” · “No. Forget I said anything.”<br><b>From the firing itself:</b> “…Okay. Three weeks.” (her bargain)<br>All seven end the night the same way: Jordan keeps the board. What differs is what's left behind: Alex's morale (“not fair” stings most), and whether Jordan now knows someone had a doubt (anything past rung 1). “Forget I said anything” is the worst of them — she answers <i>“okay. you can't un-ask that, you know.”</i>")],
           },
           {
             tag: "12:02am · Alex's DM (if you'd said you would talk to her)",
