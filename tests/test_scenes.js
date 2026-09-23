@@ -65,6 +65,7 @@ function runPath(cfg, mode) {
   const entryWeek = g.s.week;
   let started = false, si = 0, acted = 0;
   const steps = [];
+  let forced = 0, maxForced = 0, forcedRun = [], worstRun = [];  // single-option beats in a row
   const script = mode.script || null;
 
   for (let guard = 0; guard < 60; guard++) {
@@ -75,7 +76,7 @@ function runPath(cfg, mode) {
       const ids = sceneSurfaced.map(l => l.surfaced);
       const dup = ids.find((id, i) => ids.indexOf(id) !== i) || null;
       return {
-        status: "exited", acted, steps, beats: ids,
+        status: "exited", acted, steps, beats: ids, maxForced, worstRun,
         sameWeek: g.s.week === entryWeek, dup,
       };
     }
@@ -91,6 +92,12 @@ function runPath(cfg, mode) {
     let offered = a.options.map(o => o.key);
     if (a.nodeId === cfg.entry.node && !started) {
       offered = offered.filter(k => cfg.entry.keys.includes(k)); // only scene-entering keys
+    }
+    if (started || a.nodeId !== cfg.entry.node) {
+      if (a.options.length === 1) {
+        forced++; forcedRun.push(a.nodeId);
+        if (forced > maxForced) { maxForced = forced; worstRun = forcedRun.slice(); }
+      } else { forced = 0; forcedRun = []; }
     }
     let key;
     if (script) {
@@ -112,7 +119,7 @@ function exploreScene(cfg) {
   console.log(`scene "${cfg.id}"`);
   const queue = [[]];
   let probes = 0, exitedPaths = 0, capped = false, capLen = null;
-  let maxBeats = 0, dupFail = null, weekFail = null;
+  let maxBeats = 0, dupFail = null, weekFail = null, forcedWorst = { n: 0, run: [] };
   const bad = [];
   const paths = []; // every BFS-completed path: { steps, beats }
 
@@ -132,6 +139,7 @@ function exploreScene(cfg) {
       exitedPaths++;
       paths.push({ steps: res.steps, beats: res.beats });
       maxBeats = Math.max(maxBeats, res.beats.length);
+      if (res.maxForced > forcedWorst.n) forcedWorst = { n: res.maxForced, run: res.worstRun };
       if (res.dup && !dupFail) dupFail = { script, dup: res.dup };
       if (!res.sameWeek && !weekFail) weekFail = { script };
       if (VERBOSE) console.log(`    path [${script.join(",")}] → ${res.beats.length} beats`);
@@ -162,6 +170,11 @@ function exploreScene(cfg) {
       (bad[0].res.node ? ` at ${bad[0].res.node} (offered: ${(bad[0].res.offered || []).join("/")})` : ""));
   ok(!dupFail, dupFail ? `beat surfaced twice (${dupFail.dup}) on [${dupFail.script.join(",")}]` : "no beat surfaced twice on any path");
   ok(!weekFail, weekFail ? `scene spilled past its week on [${weekFail.script.join(",")}]` : `every path finished in one sitting (max ${maxBeats} beats)`);
+  // The player stays in control: a run of beats with a single option is the
+  // player tapping through dialogue, and three in a row reads as a cutscene.
+  ok(forcedWorst.n <= 2, forcedWorst.n <= 2
+    ? `never more than 2 single-option beats in a row (worst: ${forcedWorst.n})`
+    : `${forcedWorst.n} single-option beats in a row: ${forcedWorst.run.join(" → ")}`);
 
   return reportPaths(cfg, paths, capped, capLen);
 }

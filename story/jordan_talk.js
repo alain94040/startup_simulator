@@ -144,6 +144,13 @@
               : "sunday. with the job. can you actually do that?",
             journal: null,
           },
+          {
+            key: "back", label: "Back off",
+            reply: "…never mind. it's late. get some sleep.",
+            journal: "Started to ask Jordan whether she could really build the board around her job. Then I told her to get some sleep.",
+            effects: { scene: null, say: { char: "jordan", text: "okay?? you're being weird. night 💜" } },
+            fx(s) { s.jordan_doubted = true; keepHer(s, final); return null; },
+          },
         ],
       },
       {

@@ -111,8 +111,7 @@
     win_back_blast: ["skip"],
     // the pivot night: stop the growth push, hear everyone, dig, pivot
     pivot_hail_mary: ["hold"],
-    pivot_roundtable: ["alex", "priya", "jordan"], pivot_round_2: ["alex", "priya", "jordan"],
-    pivot_round_3: ["alex", "priya", "jordan"], pivot_fork: ["dig_alex"],
+    pivot_roundtable: ["priya", "jordan"], pivot_round_2: ["priya", "jordan"], pivot_fork: ["dig_alex"],
     pivot_dig: ["maya_quote", "jordan_maya"], pivot_day_decide: ["pivot"], pivot_close_growth: ["deal"],
     pivot_alex_door: ["say"], pivot_alex_concern: ["talk"],
     pivot_scope_call: ["cut"], pivot_beta_invite: ["invite"],

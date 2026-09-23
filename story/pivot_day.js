@@ -83,19 +83,19 @@
   // Each voice's opening case, spoken in the group the moment the founder
   // calls on them.
   const CASE = {
-    alex: (s) => "the room's empty. " + Math.max(5, s.users) + " users. anyone would leave an empty app — even hinge would die at " + Math.max(5, s.users) + " users.\n\n$1,500, six weeks, 300 users. then we'll know if anything's actually broken.",
     priya: () => "retention, not signups. the people who come don't stay — even the ones who matched.\n\ni don't know why yet. and neither do you. that's the problem with spending the $1,500.",
     jordan: () => "honestly? it looked like it was working. maya signed up, filled out everything, matched in an hour.\n\n…and then i kind of stopped watching. i figured the hard part was done.",
   };
   const CALL_ON = {
-    alex: { label: "Alex — make your case.", reply: "alex, you first. make your case." },
     priya: { label: "Priya — what do you see?", reply: "priya — what do you see from the outside?" },
     jordan: { label: "Jordan — you watched launch day.", reply: "jordan, you watched launch day closer than anyone. what did you see?" },
   };
   const asked = (s) => s.pivot_asked || [];
-  // The three call-on chips, minus whoever has already spoken. `branch`:
-  // which chips are left is a fact of the meeting, not something earned.
-  const callOnChoices = (first) => ["alex", "priya", "jordan"].map(who => ({
+  // The call-on chips, minus whoever has already spoken — Alex made his case
+  // in the opener, so it's Priya and Jordan. `branch`: which chips are left
+  // is a fact of the meeting, not something earned. Alex's plan stays on the
+  // table beside them, so no beat of the meeting is a forced tap.
+  const callOnChoices = (first) => ["priya", "jordan"].map(who => ({
     key: who, label: CALL_ON[who].label, branch: true,
     if: (s) => !asked(s).includes(who),
     reply: (s) => (first ? "thanks for jumping on, everyone. " : "") + CALL_ON[who].reply,
@@ -123,30 +123,31 @@
           // ── 1 · the round-table ──────────────────────────────────────────
           {
             // The thread opens on the context, not a blank room: Alex's pitch
-            // lived in the founders' chat, so he restates it for Priya — the
-            // player lands knowing what the meeting is about, and that it's
-            // theirs to run.
+            // lived in the founders' chat, so he restates it for Priya — and
+            // makes his case while he's at it. The player lands knowing what
+            // the meeting is about, and that it's theirs to run.
             id: "pivot_roundtable", char: "summit", speaker: "alex",
-            text: "ok, everyone's here. context for priya: i want $1,500 of what's left for a growth push — mixer at the climbing gym, referral codes, flyers on three campuses. the gym holds the slot till midnight.\n\nbefore i book it, we talk it through. so: what are we building monday? your meeting.",
+            text: (s) => "ok, everyone's here. context for priya: i want $1,500 of what's left for a growth push — mixer at the climbing gym, referral codes, flyers on three campuses. the gym holds the slot till midnight.\n\nmy case: the room's empty. " + Math.max(5, s.users) + " users. anyone would leave an empty app. 300 users and we'll know if anything's actually broken.\n\nbut it's your meeting.",
             when: { took: ["pivot_hail_mary:hold"] },
-            choices: callOnChoices(true),
+            choices: callOnChoices(true).concat([
+              takeGrowth("users", "Alex is right — book the gym.", "you're right. the room's empty. book the gym."),
+            ]),
           },
           {
             id: "pivot_round_2", char: "summit", speaker: speakerAt(0),
             text: caseAt(0),
-            choices: callOnChoices(false),
-          },
-          {
-            id: "pivot_round_3", char: "summit", speaker: speakerAt(1),
-            text: caseAt(1),
-            choices: callOnChoices(false),
+            when: { took: ["pivot_roundtable:priya|jordan"] },
+            choices: callOnChoices(false).concat([
+              takeGrowth("users", "Enough — book the gym.", "i've heard enough. the room's empty. book the gym."),
+            ]),
           },
           {
             // ── 2 · the dig ───────────────────────────────────────────────
             // One way to stop here, two ways down: Alex's plan, or plain
             // curiosity about his numbers or Priya's symptom.
-            id: "pivot_fork", char: "summit", speaker: speakerAt(2),
-            text: caseAt(2),
+            id: "pivot_fork", char: "summit", speaker: speakerAt(1),
+            text: caseAt(1),
+            when: { took: ["pivot_round_2:priya|jordan"] },
             choices: [
               takeGrowth("users", "Alex is right — get the users.", "alex is right. the room's empty. book the gym."),
               {
@@ -190,17 +191,40 @@
               ? "…that's exactly what i watched on launch day. she matched with a guy she liked, and the app gave her a chat box and walked away."
               : "…nothing. she didn't do anything. there was nothing TO do.\n\nshe matched with a guy she liked, and the app gave her a chat box and walked away.",
             when: { took: ["pivot_dig:jordan_maya|maya_quote"] },
-            choices: [{ key: "is_it", label: "Priya — is that it?", reply: "priya. is that it?", journal: null }],
+            // Two ways to the same insight: hand it to Priya, or say it
+            // yourself — the founder can be the one who connects it.
+            choices: [
+              { key: "is_it", label: "Priya — is that it?", reply: "priya. is that it?", journal: null },
+              {
+                key: "name_it", label: "The match works — it's what comes after",
+                reply: "wait. so the matching isn't broken. the match works — it's what comes after the match that's missing.",
+                journal: null,
+              },
+            ],
           },
           {
             id: "pivot_cause", char: "summit", speaker: "priya",
-            text: "that's it. you don't have a matching problem. you have an 'and then what' problem.\n\nnobody knows what to say after 'hey'. so give them something to say yes to.",
-            choices: [{ key: "look", label: "Jordan — what would that look like?", reply: "jordan — what would that look like? something to say yes to.", journal: null }],
+            text: (s, e) => (e.took("pivot_maya:name_it") ? "exactly. you just said it." : "that's it.")
+              + " you don't have a matching problem. you have an 'and then what' problem.\n\nnobody knows what to say after 'hey'. so give them something to say yes to.",
+            choices: [
+              { key: "look", label: "Jordan — what would that look like?", reply: "jordan — what would that look like? something to say yes to.", journal: null },
+              {
+                // The tempting half-measure, which Priya shuts down on the spot.
+                key: "tab", label: "So we add an events tab?",
+                reply: "so we add an events tab? plans people can join?",
+                journal: null,
+                effects: { say: { char: "summit", speaker: "priya", text: "no. every dying dating app bolts on an events tab, and users can smell it. don't add plans to the app. make the plan the app." } },
+              },
+            ],
           },
           {
             id: "pivot_idea", char: "summit", speaker: "jordan",
-            text: "a plan. thursday, climbing gym, six people, two spots.\n\nyou don't message a stranger. you just tap 'i'm in'.",
-            choices: [{ key: "alex", label: "Alex?", reply: "alex?", journal: null }],
+            text: (s, e) => (e.took("pivot_cause:tab") ? "so you don't browse people at all. you browse plans. " : "a plan. ")
+              + "thursday, climbing gym, six people, two spots.\n\nyou don't message a stranger. you just tap 'i'm in'.",
+            choices: [
+              { key: "alex", label: "Alex?", reply: "alex?", journal: null },
+              { key: "that_it", label: "That's the product.", reply: "that's it. that's the product.", journal: null },
+            ],
           },
           {
             // ── 3 · the call ────────────────────────────────────────────────
@@ -243,7 +267,7 @@
             // Every growth exit closes the room here, with Priya's number.
             id: "pivot_close_growth", char: "summit", speaker: "priya",
             text: "okay, it's your call. do one thing for me: keep count. of the next 50 matches, how many actually make plans to meet up?\n\nif the answer is zero, more users won't fix it. the app itself is the problem, and you change it. deal?",
-            when: { took: [["pivot_fork:users", "pivot_dig:users", "pivot_day_decide:growth"]] },
+            when: { took: [["pivot_roundtable:users", "pivot_round_2:users", "pivot_fork:users", "pivot_dig:users", "pivot_day_decide:growth"]] },
             choices: [
               {
                 key: "deal", label: "Deal.",
@@ -266,11 +290,18 @@
             // The founder's moment: after months of a graph that only went
             // down, this is the first night the company knows what it is.
             // Said out loud to the whole room before Priya gets the last word.
-            choices: [{
-              key: "priya", label: "This is it. We finally know.",
-              reply: "this is it. months of watching people match and vanish, and tonight we finally know why — and what to build instead. i haven't felt like this since the day we started.\n\npriya, anything before we sign off?",
-              journal: null,
-            }],
+            choices: [
+              {
+                key: "priya", label: "This is it. We finally know.",
+                reply: "this is it. months of watching people match and vanish, and tonight we finally know why — and what to build instead. i haven't felt like this since the day we started.\n\npriya, anything before we sign off?",
+                journal: null,
+              },
+              {
+                key: "sober", label: "Three weeks. Let's not waste one.",
+                reply: "okay. this is the one. three weeks, and we don't waste a single one of them.\n\npriya, anything before we sign off?",
+                journal: null,
+              },
+            ],
           },
           {
             // Two readings. Jordan hears encouragement; the player hears an
@@ -281,6 +312,18 @@
               {
                 key: "night", label: "Goodnight, everyone.",
                 reply: "goodnight, everyone. big three weeks.",
+                journal: null,
+                effects: {
+                  say: [
+                    { char: "summit", speaker: "jordan", text: "i know!! best job in the company 🙌" },
+                    { char: "summit", system: true, text: "Priya left the conversation" },
+                    { char: "summit", speaker: "alex", text: "👍" },
+                  ],
+                },
+              },
+              {
+                key: "thanks", label: "Thank Priya.",
+                reply: "priya — thank you. tonight doesn't happen without you. goodnight, everyone.",
                 journal: null,
                 effects: {
                   say: [

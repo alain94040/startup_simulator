@@ -277,7 +277,7 @@ console.log("decent driver — launch through pivot (seed 42, 32 weeks, subsidiz
   ok(g.cast.get("summit").active, "…and started the group thread");
   ok(g.weekOf("firing_after") === g.weekOf("pivot_hail_mary"),
     "pivot night: meeting, call, Alex's DM and Jordan's thread in one sitting");
-  ok(["alex", "priya", "jordan"].every(w => (g.s.pivot_asked || []).includes(w)), "called on all three");
+  ok(["priya", "jordan"].every(w => (g.s.pivot_asked || []).includes(w)), "Alex made his case; called on Priya and Jordan");
   ok(g.took("pivot_fork:dig_alex") && g.took("pivot_dig:maya_quote"), "dug: the best matches, then Maya's words");
   ok(g.s.alex_converted === true, "Alex cancelled his own push");
   ok(g.took("pivot_day_decide:pivot") && g.s.activities_pivot, "decided to pivot");
