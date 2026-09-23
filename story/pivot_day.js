@@ -522,7 +522,9 @@
         text: (s) => "Alex's message is three words: 'staging is green.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the board is in. This is a different product wearing the same name — and how it meets the world is your call.",
         when: {
           cooldown: 2,
-          if: (s, e) => e.chapter === 4
+          // …and while the app has an App Store listing to relaunch on (the
+          // cold firing's aftershock, appstore_delisted, can take it away).
+          if: (s, e) => e.chapter === 4 && !s.app_delisted
             && s.items && s.items.plans_matching && s.items.plans_matching.status === "done"
             && s.items.plans_ui && s.items.plans_ui.status === "done",
         },

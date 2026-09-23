@@ -72,6 +72,55 @@
         timeout: { weeks: 1 },
       },
       {
+        // The cold ending's aftershock: a week after she blocked the founder,
+        // Jordan closes the personal developer account the App Store listing
+        // lives on, and the app is simply gone. Nobody moved the account
+        // because nobody got to ask her. The team finds out the way teams do:
+        // a user can't find the app.
+        id: "appstore_delisted", char: "founders", speaker: "alex",
+        text: "we have a problem. a user just emailed: 'is plusone gone?' i checked.\n\nit's not down. it's GONE. the listing says 'this developer account has been closed.' jordan closed her apple account — the one the app lived on.\n\nnew installs are impossible, and anyone who deletes the app can't get it back. the relaunch can't happen with no listing.",
+        when: { if: (s) => !!s.app_delisted },
+        choices: [
+          {
+            key: "resubmit", label: "Resubmit under our own account ($99)",
+            reply: "open an org account tonight and resubmit. $99. we eat the reviews.",
+            payee: "Apple Developer",
+            journal: "Jordan closed her developer account and PlusOne vanished from the App Store. Resubmitted under our own account: $99, a week in review, zero reviews, and every user had to reinstall.",
+            effects: {
+              cash: -99,
+              say: { char: "founders", speaker: "alex", text: "on it. new listing, zero reviews, and everyone has to reinstall. a week in review if we're lucky." },
+              schedule: {
+                in: 1,
+                fx(st) { st.app_delisted = false; st.appstore_on_jordan = false; st.signal = clamp(st.signal - 5, 0, 100); },
+                say: { char: "founders", speaker: "alex", text: "we're back in the store. new listing, no reviews, no history. like launching twice, except the first one doesn't count." },
+              },
+            },
+          },
+          {
+            key: "lawyer", label: "Lawyer asks for the listing back ($1,000)",
+            reply: "get the lawyer to ask her lawyer to transfer the listing instead of us starting over. we keep the reviews.",
+            payee: "Lawyer",
+            journal: "Jordan closed her developer account and PlusOne vanished from the App Store. Paid a lawyer $1,000 to get the listing transferred back — two weeks of nobody able to install the app.",
+            effects: {
+              cash: -1000,
+              say: { char: "founders", speaker: "alex", text: "okay. that's two weeks with no app in the store. i'll keep building." },
+              schedule: {
+                in: 2,
+                fx(st) { st.app_delisted = false; st.appstore_on_jordan = false; },
+                say: { char: "founders", speaker: "alex", text: "listing's transferred. reviews intact. it cost a grand and two weeks, and she didn't write a single word to either of us." },
+              },
+            },
+          },
+        ],
+        // Ignored: Alex resubmits himself — and says so.
+        timeout: {
+          weeks: 1,
+          effects: { cash: -99, char: { alex: { morale: -8 } } },
+          say: { char: "founders", speaker: "alex", text: "i resubmitted under an org account myself. $99. i'd have liked you to answer me about the app disappearing." },
+          fx(s, e) { e.schedule({ in: 1, fx(st) { st.app_delisted = false; st.appstore_on_jordan = false; } }); },
+        },
+      },
+      {
         // Alex's door, one last time. Not a complaint — a status, from someone
         // who said his piece once and won't say it the same way twice. Or,
         // after a late pivot (no pivot night), the first time he says it.

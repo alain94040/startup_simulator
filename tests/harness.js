@@ -40,6 +40,7 @@
   // patience is designed to allow exactly that.
   const ANSWER_ORDER = [
     "founder_consulting", // rent money first — a sensible player never lets it expire
+    "appstore_delisted",  // the app vanished from the store — drop everything
     "start_prototype", "jordan_working_style", // week 1: one message per founder
     "equity_dance", "equity_dm_alex", "equity_dm_alex_ask", "equity_dm_jordan", "equity_dm_jordan_ask", "equity_offer",
     "equity_pushback_alex", "equity_pushback_jordan",
@@ -125,6 +126,7 @@
     feature_cluster: ["build"],
     jordan_slip: ["when"], jordan_door_again: ["talk"], jordan_cap_table: ["lawyer"],
     founders_first_standup: ["weird"], beta_list_after: ["invite"], priya_after_jordan: ["honest"],
+    appstore_delisted: ["resubmit"],
     // the Jordan conversation (both copies: pivot night, and the "_2" second
     // chance): climb the ladder honestly, say yes, hold, ask, do the paperwork
     ...bothTalks({
@@ -191,6 +193,7 @@
     alex_quiet: "team", alex_equity_regret: "team", family_doubt: "team",
     alex_leaving_threat: "team", jordan_slip: "team", jordan_door_again: "team", jordan_board_promise: "team",
     founders_first_standup: "team", beta_list_after: "research", priya_after_jordan: "team",
+    appstore_delisted: "build",
     // money — checks in, checks out
     ff_family: "money", ff_family_2: "money", ff_family_3: "money",
     founder_consulting: "money", ff_friend: "money", ff_friend_ask: "money",

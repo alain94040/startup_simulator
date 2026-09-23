@@ -61,6 +61,17 @@
       s.jordan_cold_exit = true;
       s.jordan_blocked = true;
       s.appstore_on_jordan = true;    // nobody got to ask her to move it
+      // …and a week later she closes the developer account the listing
+      // lives on. The app vanishes from the App Store; the team finds out
+      // from a user (appstore_delisted in story/jordan_arc.js).
+      e.schedule({
+        in: 1,
+        fx(st) {
+          st.app_delisted = true;
+          st.app_was_delisted = true;
+          st.users = Math.floor(st.users * 0.6);
+        },
+      });
     }
     e.say({ char: "founders", system: true, text: "Jordan left the conversation" });
     if (!s.jordan_equity) {

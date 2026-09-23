@@ -241,8 +241,10 @@
                   : "A departed co-founder still owns " + pct + ", fully vested, no cliff. Anyone doing diligence will stop there." },
           // The practical half of a firing, and the half founders forget.
           { faced: g.done("firing_shares") || g.done("firing_shares_2") || !!s.jordan_cold_exit, weight: 1,
-            got: s.appstore_on_jordan ? 0 : 1,
-            note: s.appstore_on_jordan
+            got: s.appstore_on_jordan || s.app_was_delisted ? 0 : 1,
+            note: s.app_was_delisted
+              ? "Jordan closed her developer account and the app vanished from the App Store — the listing had never been moved off it."
+              : s.appstore_on_jordan
               ? (s.jordan_cold_exit
                 ? "The App Store listing is still on the personal account of a co-founder who has blocked you."
                 : "The App Store listing is still on a departed co-founder's personal developer account.")

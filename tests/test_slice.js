@@ -408,9 +408,11 @@ console.log("jordan: fired two weeks late (seed 42)");
 console.log("jordan: the cold ending (seed 42)");
 {
   const g = run(42, (a) => a.nodeId === "firing_stops" ? ["sorry"] : decent(a), 30);
-  ok(g.s.jordan_resolved && g.s.jordan_blocked && g.s.appstore_on_jordan, "she blocked you; the App Store listing is still hers");
+  ok(g.s.jordan_resolved && g.s.jordan_blocked && g.s.jordan_cold_exit, "she blocked you, with the App Store listing still on her account");
   ok(g.threads.jordan.some(m => m.type === "reply" && m.undelivered), "the follow-up text shows Not Delivered");
   ok(!g.done("firing_shares"), "…and the paperwork conversation never happened");
+  ok(g.s.app_was_delisted && g.done("appstore_delisted"), "a week later she closed her developer account — the app vanished from the store");
+  ok(!g.s.app_delisted, "…and it came back once the team resubmitted");
 }
 console.log("jordan: the fold (seed 42)");
 {
