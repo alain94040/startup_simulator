@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Final arc — dialogue draft</title>
+<style>
+  :root { --bg:#f2f2f7; --panel:#fff; --line:#e3e3e8; --ink:#1c1c1e; --dim:#8e8e93; --blue:#0a84ff;
+          --alex:#0a84ff; --jordan:#af52de; --priya:#34a853; --amber:#b25000; }
+  * { box-sizing:border-box; margin:0; }
+  body { font:15px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif; background:var(--bg); color:var(--ink); }
+  header { position:sticky; top:0; z-index:5; background:var(--panel); border-bottom:1px solid var(--line); padding:12px 20px; }
+  header h1 { font-size:17px; }
+  header p.sub { color:var(--dim); font-size:13px; margin-top:2px; }
+  main { max-width:820px; margin:0 auto; padding:20px 16px; }
+
+  .intro { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:16px 22px; margin-bottom:22px; font-size:14px; }
+  .intro h2 { font-size:15px; margin-bottom:6px; }
+  .intro ol { padding-left:20px; }
+  .intro li { margin:4px 0; }
+
+  .act { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 22px; margin-bottom:22px; }
+  .act-h { display:flex; align-items:baseline; gap:10px; margin-bottom:4px; flex-wrap:wrap; }
+  .act-h .time { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#7b3fb5; }
+  .act-h h2 { font-size:18px; }
+  .act-note { color:var(--dim); font-size:13px; margin:4px 0 16px; }
+
+  .beat { margin:18px 0; padding-top:14px; border-top:1px dashed var(--line); }
+  .beat:first-child { border-top:0; padding-top:0; }
+  .beat-tag { font-size:11px; color:var(--dim); text-transform:uppercase; letter-spacing:.06em; margin-bottom:8px; }
+
+  .row { display:flex; gap:9px; margin:7px 0; align-items:flex-start; }
+  .row.out { justify-content:flex-end; }
+  .av { width:26px; height:26px; border-radius:50%; color:#fff; font-weight:700; font-size:12px;
+        display:flex; align-items:center; justify-content:center; flex:none; margin-top:2px; }
+  .av.alex { background:var(--alex); } .av.jordan { background:var(--jordan); } .av.priya { background:var(--priya); }
+  .who { font-size:11px; color:var(--dim); margin-bottom:2px; }
+  .who.to { text-align:right; }
+  .bub { background:#e9e9eb; border-radius:16px; border-bottom-left-radius:5px; padding:8px 13px; max-width:66ch; white-space:pre-wrap; margin-bottom:3px; }
+  .bub.me { background:var(--blue); color:#fff; border-bottom-left-radius:16px; border-bottom-right-radius:5px; }
+  .bub.img { background:#fff; border:1px dashed #c7c7cc; color:var(--dim); font-style:italic; }
+  .stage { text-align:center; color:var(--dim); font-size:12px; font-style:italic; margin:8px 0; }
+  .system { text-align:center; color:var(--dim); font-size:12px; margin:12px 0; }
+  .system span { background:#f2f2f7; border-radius:10px; padding:3px 10px; }
+  .typing { display:inline-flex; gap:4px; background:#e9e9eb; border-radius:16px; padding:11px 13px; }
+  .typing i { width:7px; height:7px; border-radius:50%; background:#9a9aa0; animation:blink 1.2s infinite; }
+  .typing i:nth-child(2) { animation-delay:.2s; } .typing i:nth-child(3) { animation-delay:.4s; }
+  .typing.stopped i { animation:none; opacity:.35; }
+  @keyframes blink { 0%,80%,100% { opacity:.3; } 40% { opacity:1; } }
+
+  .card { border:1px solid #d6d6db; border-radius:12px; padding:12px 16px; background:#fbfbfd; margin:8px 0; }
+  .card .k { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--dim); margin-bottom:4px; }
+
+  .fork { margin-top:12px; }
+  .fork-h { font-size:12px; font-weight:700; color:var(--amber); text-transform:uppercase; letter-spacing:.05em; margin-bottom:8px; }
+  .opt { border:1px solid var(--line); border-radius:10px; padding:10px 14px; margin-bottom:10px; background:#fafafc; }
+  .opt-label { font-weight:700; font-size:13.5px; margin-bottom:6px; }
+  .opt-label .key { font-size:10.5px; font-weight:600; color:#2456c4; background:#eef4ff; border-radius:4px; padding:1px 5px; margin-right:6px; }
+  .opt-label .gate { font-size:10.5px; font-weight:600; color:#8a5a00; background:#fff3d6; border-radius:4px; padding:1px 5px; margin-left:6px; }
+  .opt .row { margin:6px 0; }
+  .opt-note { color:var(--dim); font-size:12px; margin-top:6px; font-style:italic; }
+  .opt-next { font-size:12px; font-weight:600; color:#7b3fb5; margin-top:6px; }
+
+  .paths { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 18px; position:sticky; top:66px; z-index:4;
+           background:var(--bg); padding:8px 0; }
+  .paths button { border:1px solid var(--line); background:#fff; border-radius:20px; padding:6px 14px; font-size:13px; cursor:pointer; }
+  .paths button.on { background:#7b3fb5; color:#fff; border-color:#7b3fb5; }
+  .path-body { display:none; }
+  .path-body.on { display:block; }
+  .path-sum { color:var(--dim); font-size:13px; margin:0 0 14px; }
+
+  .callback { background:#fffbe8; border:1px solid #f0e6b8; color:#5b5340; border-radius:10px; padding:8px 13px; margin:10px 0; font-size:13px; }
+  .callback b { color:#3d372a; }
+  h3.split { font-size:13px; text-transform:uppercase; letter-spacing:.08em; color:var(--dim); margin:28px 0 10px; text-align:center; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Final arc — "what are we building monday" · dialogue draft</h1>
+  <p class="sub">One night, all over chat. The pivot call → who builds v2 → Alex's DM → Jordan's thread. No option ever says "fire".</p>
+</header>
+<main id="app"></main>
+
+<script>
+const NAME = { alex: "Alex", jordan: "Jordan", priya: "Priya", founder: "You" };
+const arr = (x) => Array.isArray(x) ? x : [x];
+const A = (who, lines) => ({ who, lines: arr(lines) });
+const OUT = (to, lines) => ({ who: "founder", to, lines: arr(lines) });
+const STAGE = (text) => ({ stage: text });
+const SYS = (text) => ({ system: text });
+const TYPING = (stopped) => ({ typing: true, stopped });
+const IMG = (who, caption) => ({ who, img: caption });
+const CARD = (kicker, text) => ({ card: text, kicker });
+const CB = (html) => ({ callback: html });
+
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+
+function renderMsg(m) {
+  if (m.stage) return `<div class="stage">${esc(m.stage)}</div>`;
+  if (m.system) return `<div class="system"><span>${esc(m.system)}</span></div>`;
+  if (m.callback) return `<div class="callback">${m.callback}</div>`;
+  if (m.card) return `<div class="card"><div class="k">${esc(m.kicker)}</div>${esc(m.card)}</div>`;
+  if (m.typing) return `<div class="row"><div class="av jordan">J</div><div><div class="typing${m.stopped ? " stopped" : ""}"><i></i><i></i><i></i></div></div></div>`;
+  if (m.img) return `<div class="row"><div class="av ${m.who}">${NAME[m.who][0]}</div>
+    <div><div class="who">${NAME[m.who]}</div><div class="bub img">[photo] ${esc(m.img)}</div></div></div>`;
+  if (m.who === "founder") {
+    const b = m.lines.map(l => `<div class="bub me">${esc(l)}</div>`).join("");
+    return `<div class="row out"><div><div class="who to">to ${esc(m.to)}</div>${b}</div></div>`;
+  }
+  const b = m.lines.map(l => `<div class="bub">${esc(l)}</div>`).join("");
+  return `<div class="row"><div class="av ${m.who}">${NAME[m.who][0]}</div>
+    <div><div class="who">${NAME[m.who]}</div>${b}</div></div>`;
+}
+
+function renderOpt(o, to) {
+  const reply = o.reply ? renderMsg(OUT(o.to || to, o.reply)) : "";
+  const reactions = (o.then || []).map(renderMsg).join("");
+  const gate = o.gate ? `<span class="gate">⚑ ${esc(o.gate)}</span>` : "";
+  const note = o.note ? `<div class="opt-note">${esc(o.note)}</div>` : "";
+  const next = o.next ? `<div class="opt-next">→ ${esc(o.next)}</div>` : "";
+  return `<div class="opt">
+    <div class="opt-label"><span class="key">${esc(o.key)}</span>${esc(o.label)}${gate}</div>
+    ${reply}${reactions}${note}${next}
+  </div>`;
+}
+
+function renderBeat(b) {
+  const msgs = (b.msgs || []).map(renderMsg).join("");
+  const forkH = b.fork ? `<div class="fork-h">${esc(b.fork)}</div>` : "";
+  const opts = (b.options || []).map(o => renderOpt(o, b.to)).join("");
+  const after = (b.after || []).map(renderMsg).join("");
+  return `<div class="beat">
+    ${b.tag ? `<div class="beat-tag">${esc(b.tag)}</div>` : ""}
+    ${msgs}
+    ${b.options ? `<div class="fork">${forkH}${opts}</div>` : ""}
+    ${after}
+  </div>`;
+}
+
+function renderAct(act) {
+  return `<div class="act"><div class="act-h">${act.time ? `<span class="time">${esc(act.time)}</span>` : ""}<h2>${esc(act.title)}</h2></div>
+    ${act.note ? `<div class="act-note">${esc(act.note)}</div>` : ""}
+    ${(act.beats || []).map(renderBeat).join("")}
+  </div>`;
+}
+
+// ═════════════════════════════════════════════════════════════════════════
+// SHARED — the door, the product question, who builds what, Alex's DM
+// ═════════════════════════════════════════════════════════════════════════
+
+const door = {
+  time: "wk ~18 · your move",
+  title: "The door — the founder's card",
+  note: "Chapter 3's climax, as today's pivot_summit_call — but it opens a group thread, not a Saturday in an office.",
+  beats: [
+    {
+      msgs: [
+        CARD("your move", "A month since launch and the graph only goes down. Every push bought a bump; every bump evaporated. Alex thinks we need more users. Priya thinks more users won't help — every match hits a dead end. You can't chase both. With 7 weeks of cash left, you get to be wrong exactly once."),
+      ],
+      fork: "founder's move",
+      options: [
+        { key: "call_it", label: "Get everyone on one thread tonight",
+          then: [SYS("You named the conversation “what are we building monday”"), SYS("Alex, Jordan and Priya were added")],
+          next: "Act 1" },
+        { key: "@ignored", label: "(left on read for 3 weeks)",
+          note: "The default direction wins by inertia — today's pivot_deferred. No room, no Jordan question either: the arc's failure mode is silence." },
+      ],
+    },
+  ],
+};
+
+const act1 = {
+  time: "8:40pm · group",
+  title: "Act 1 — The product question",
+  note: "Today's pivot-day debate moved from a whiteboard into a group chat, same evidence chips. Abridged — the new thing is Jordan being in it, and being good.",
+  beats: [
+    {
+      tag: "the cases",
+      msgs: [
+        OUT("group", "ok. everyone's here. one question tonight: what are we building monday."),
+        A("alex", ["my case. 9 users. everyone who left saw the same thing: three so-so matches, an empty screen, silence. that'd drive people off hinge, and hinge works.", "give me six weeks and $1,500 — the mixer, referrals, campus flyers — and we'll know if something's actually broken."]),
+        A("priya", ["'it'll get better when we're bigger' is the most expensive sentence in this business. i've said it myself. it cost me a year.", "alex, your analytics score every match. pull the best ones — the ones that should have worked. what happened to them?"]),
+        A("alex", ["…pulled our eleven best. both people liked each other, both still using the app.", "ten of them went: match → 'hey' → 'hey' → nothing."]),
+        A("jordan", ["that's what i watched on launch day.", "maya liked him. i saw her profile go live, i saw the match land. and then there was nothing to *do*. the app just… stopped."]),
+        CB("<b>Jordan at her best.</b> She saw it first — on launch day, watching Maya. The player must like her tonight. Everything after this line costs more because of it."),
+      ],
+    },
+    {
+      tag: "pivot_day_evidence · the hinge (as today)",
+      fork: "the evidence you put on the thread",
+      to: "group",
+      options: [
+        { key: "maya", label: "Maya's call — she liked her match", gate: "called Maya in the trough",
+          reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those.' we lost her after the match — the part that's ours.",
+          then: [A("alex", "…yeah. her words, next to my numbers, saying the same thing. i'm going to go quietly erase half my argument.")] },
+        { key: "fixes", label: "We already tried the growth answer", gate: "ran a failed fix",
+          reply: "we already ran your experiment. traffic push, win-back, a shiny feature. every bump gone in a week.",
+          then: [A("alex", "…i ran two of those myself. more water into a bucket i haven't patched.")] },
+        { key: "demo", label: "Demo night — 'so what happens now?'", gate: "demo night",
+          reply: "the first stranger who ever touched this app matched and typed 'so what happens now?' we've had the question since demo night." },
+        { key: "gut", label: "A feeling and a flat graph",
+          reply: "i don't have clean data. i have a feeling and a flat graph.",
+          then: [A("priya", "then we're guessing. just know which one this is.")] },
+      ],
+    },
+    {
+      tag: "the reframe + the call",
+      msgs: [
+        A("priya", ["so say it's the product. don't bolt an 'events tab' onto the app — users can smell it.", "flip the whole thing. you don't browse people, you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again. it's 'i'm in.'"]),
+        A("jordan", "oh. oh that's good."),
+      ],
+      fork: "the call",
+      to: "group",
+      options: [
+        { key: "pivot", label: "We pivot — the plan is the product",
+          reply: "we pivot. the plan is the product. monday we start building it.",
+          next: "Act 2" },
+        { key: "growth / hedge", label: "Alex is right — get users  ·  Split it",
+          note: "As today: the thread goes quiet, Priya leaves one number to watch. Act 2 and Alex's DM are held until the fifty-match verdict turns the pivot on — the Jordan question only exists once there's a v2 to build." },
+      ],
+    },
+  ],
+};
+
+const act2 = {
+  time: "9:55pm · group",
+  title: "Act 2 — Who builds it",
+  note: "The pivot is called. The practical question is asked in front of everyone — which is exactly why nobody can say the real thing here.",
+  beats: [
+    {
+      msgs: [
+        A("alex", ["ok. if we're doing this: three weeks, no slack, no second try. we'll be relaunching on fumes.", "i'll repoint the matching. who wants the board — the screen people actually see?"]),
+        A("jordan", ["board's mine.", "it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at. i've been sketching it in my head since priya said it.", "i'll do nights and both weekends. i know i've been slow. this one's different. i can feel it."]),
+        A("priya", "that's a good design instinct, jordan. go to bed, all of you. big three weeks."),
+        SYS("Priya left the conversation"),
+        A("alex", "👍"),
+        CB("<b>The 👍 is the only thing Alex says to her offer.</b> A player who's been paying attention notices. A player who hasn't reads it as a thumbs-up. Both are right. (Note the system line — the same one that closes the arc, used here first, harmlessly.)"),
+      ],
+    },
+  ],
+};
+
+const act2b = {
+  time: "10:12pm · Alex's DM",
+  title: "Act 2b — The door",
+  note: "The old mechanism (Alex's DM about Jordan's performance → “I'll talk to her”), moved to the worst possible moment: seventeen minutes after she volunteered, lit up.",
+  beats: [
+    {
+      msgs: [A("alex", "can i say something i've been sitting on. not in the group.")],
+      fork: "founder's reply",
+      to: "Alex",
+      options: [
+        { key: "say", label: "Say it.", reply: "say it.", next: "continues below" },
+        { key: "later", label: "Can it wait till Monday?", reply: "can it wait till monday? it's been a long night.",
+          then: [A("alex", "sure.")],
+          note: "Door closed for tonight — Jordan keeps the board by default. Alex brings it back in a couple of weeks, when it's harder (path ⑤)." },
+      ],
+    },
+    {
+      msgs: [
+        A("alex", [
+          "she's great. i mean that. the intake screen is still the best thing we've made.",
+          "she's also been a week behind on everything since demo night. the picker. the ios sprint. the review on my PR. every time there's a good reason. every time it's a week.",
+          "and v2 doesn't have a week in it.",
+          "…or maybe that's on me. i wanted 40% in week two. i don't know if i'm being fair to her. that's why i'm telling you and not her.",
+        ]),
+      ],
+      fork: "founder's reply — none of these says “fire”",
+      to: "Alex",
+      options: [
+        { key: "talk", label: "I'll talk to her.", reply: "i'll talk to her. tonight, if she's up.",
+          then: [A("alex", "thank you. i'm sorry it's yours.")], next: "Act 3 — Jordan's thread (path ①③④)" },
+        { key: "demo", label: "I know. Demo night.", gate: "missed demo night",
+          reply: "i know. demo night.",
+          then: [A("alex", "yeah. demo night. i didn't want to be the one to say it."), A("alex", "are you going to talk to her?")],
+          note: "The player who noticed says it first — Alex is relieved not to be the accuser.", next: "Act 3 — Jordan's thread" },
+        { key: "different", label: "She said this one's different.", reply: "she said this one's different. i believe her.",
+          then: [A("alex", "yeah. she did.")],
+          note: "Loyal, warm, and a week of slack v2 doesn't have. She keeps the board.", next: "path ②" },
+        { key: "unfair", label: "That's not fair to her.", reply: "that's not fair to her. she's been here since before there was anything to be here for.",
+          then: [A("alex", "maybe not. forget i said it.")],
+          note: "Sounds like the most loyal answer in the game. Costs Alex morale and trust — he said the hard thing and got told off for it. She keeps the board.", next: "path ②" },
+      ],
+      after: [CB("<b>Why this isn't obvious:</b> it lands an hour after the best thing Jordan has said all run; Alex opens with praise and closes by doubting his own motives (the 40% callback is real — the player was there); and both 'keep' chips read as loyalty, not avoidance. The only thing on the table is <i>“I'll talk to her”</i> — which could mean anything.")],
+    },
+  ],
+};
+
+const priya = {
+  time: "10:30pm · Priya's DM · optional",
+  title: "Priya — only if you text her",
+  note: "A standing option on Priya's thread during the sitting, never pushed. She gives a way to think, not an answer.",
+  beats: [
+    {
+      msgs: [
+        OUT("Priya", "can i ask you something that isn't about the product?"),
+        A("priya", [
+          "always. is it jordan?",
+          "i kept a co-founder a year too long once. he was lovely. he was also always one week behind, and every week he had a good reason.",
+          "the question isn't whether she's good. she's good. it's whether she can run at the speed you need now — and whether anyone has ever told her what that speed is.",
+        ]),
+      ],
+      fork: "founder's reply",
+      to: "Priya",
+      options: [
+        { key: "nobody", label: "Nobody has.", reply: "nobody has.", then: [A("priya", "then that's the first thing you owe her. whatever comes after.")] },
+        { key: "thanks", label: "Thank you.", reply: "thank you. that helps more than it should.", then: [A("priya", "go easy on yourself tonight. and on her.")] },
+      ],
+    },
+  ],
+};
+
+// ═════════════════════════════════════════════════════════════════════════
+// JORDAN'S THREAD — the ladder, shared by paths ①③④
+// ═════════════════════════════════════════════════════════════════════════
+
+const opener = {
+  tag: "11:48pm — before you can write, she texts first. she has no idea.",
+  msgs: [
+    A("jordan", "couldn't sleep."),
+    IMG("jordan", "a hand-drawn board: “THU · climbing gym · 6 going · 2 spots · [ i'm in ]”"),
+    A("jordan", ["no profiles on the front screen. no chat until you've said yes to something.", "i'm going to do the whole thing this weekend. tell me it's not beautiful."]),
+  ],
+};
+
+const rung1 = (warmNext, realNext) => ({
+  tag: "rung 1",
+  fork: "founder's reply",
+  to: "Jordan",
+  options: [
+    { key: "beautiful", label: "It's beautiful. Go to bed.", reply: "it's beautiful. go to bed.",
+      then: [A("jordan", "💜 night")], note: "You lost your nerve. Nothing happened — which is the point. She keeps the board.", next: warmNext },
+    { key: "real", label: "Can I ask you something real?", reply: "it is beautiful. can i ask you something real?",
+      then: [A("jordan", "…that's a scary sentence at midnight. go.")], next: realNext },
+  ],
+});
+
+const rung2 = (warmNext, realNext) => ({
+  tag: "rung 2",
+  msgs: [
+    OUT("Jordan", "three weeks of nights and both weekends. can you actually do that, with the job?"),
+    A("jordan", "yes."),
+    A("jordan", ["…i mean. i said that about demo night too.", "but this time is different."]),
+  ],
+  fork: "founder's reply",
+  to: "Jordan",
+  options: [
+    { key: "believe", label: "I believe you. Let's do it.", reply: "i believe you. let's do it.",
+      then: [A("jordan", "thank you. you won't regret it.")],
+      note: "Warm exit — dearer than rung 1: she knows you had a doubt, and she'll feel watched every time something slips.", next: warmNext },
+    { key: "always", label: "It's always this time.", reply: "it's always this time, jordan.", next: realNext },
+    { key: "six", label: "Launch day you went home at six.", gate: "launch_going_home",
+      reply: "launch day you went home at six.",
+      then: [A("jordan", ["that's not fair. i had work at eight.", "…it's a little fair."])], next: realNext },
+    { key: "heic", label: "The HEIC fix. Two days late. Clean — but late.", gate: "demo night",
+      reply: "the photo picker. you said tomorrow. it was two days. it was clean. it was late.",
+      then: [A("jordan", "you remember that?")], next: realNext },
+  ],
+});
+
+const rung3Msgs = [
+  TYPING(false),
+  STAGE("…"),
+  TYPING(true),
+  STAGE("…"),
+  TYPING(false),
+  A("jordan", "are you asking me to leave?"),
+];
+
+// ═════════════════════════════════════════════════════════════════════════
+// PATHS
+// ═════════════════════════════════════════════════════════════════════════
+
+const paths = {
+  honest: {
+    label: "① Honest all the way",
+    sum: "“I'll talk to her” → every rung honest → “yes”. The firing, and the group chat after.",
+    acts: [
+      {
+        time: "11:48pm · Jordan's DM", title: "Act 3 — The ladder",
+        note: "No chip ever says “fire”. Each rung has a warm way out. The player chooses honesty three times; Jordan says the word.",
+        beats: [
+          opener, rung1("path ③", "rung 2"), rung2("path ③", "rung 3"),
+          {
+            tag: "rung 3 — she names it",
+            msgs: rung3Msgs,
+            fork: "the decision — a one-word answer to her question",
+            to: "Jordan",
+            options: [
+              { key: "yes", label: "Yes. I think I am.", reply: "yes. i think i am.", next: "Act 4" },
+              { key: "ask_back", label: "I'm asking what you think.", reply: "i'm asking what you think.",
+                then: [A("jordan", ["i think if i were you i'd have asked a month ago.", "so. are you?"])],
+                note: "Buys one line. The yes / no comes back, with nothing else on it." },
+              { key: "no", label: "No. Forget I said anything.", reply: "no. no. forget i said anything.", next: "path ④ — the fold" },
+            ],
+            after: [CB("<b>Where the weight sits.</b> The typing indicator starts, stops, starts. The player never picks “fire” from a menu — they confirm what she has already worked out. Saying yes is the hardest click in the game because it is an answer to a friend, not a command.")],
+          },
+        ],
+      },
+      {
+        time: "12:05am · Jordan's DM", title: "Act 4 — The firing",
+        note: "Today's firing.js beats, re-voiced: quieter, no charge sheet — she already said it. Every mechanical consequence still lands once, at the end.",
+        beats: [
+          {
+            msgs: [A("jordan", ["okay.", "i think i knew when alex sent the thumbs up."])],
+            fork: "founder's reply",
+            to: "Jordan",
+            options: [
+              { key: "hold", label: "You're right about me, and it's still the decision.",
+                reply: "i should have said something months ago instead of saying 'no stress'. that's mine. it's still the decision.",
+                then: [A("jordan", "…yeah. okay.")] },
+              { key: "ask", label: "What's actually going on with you?",
+                reply: "before anything else. what's actually going on with you? not the work. you.",
+                then: [A("jordan", ["honestly? nothing. that's the whole answer, and i know how it sounds.", "i'm doing exactly what i said i'd do in week one. evenings and weekends, around a job i can't afford to quit. that hasn't changed once.", "you two went full-time and i didn't. i was never going to be able to match that. nobody said a word about it, so i thought maybe it was fine."])],
+                note: "Removes the player's last excuse: nobody did anything wrong. That is the whole lesson." },
+            ],
+          },
+          {
+            msgs: [A("jordan", ["what happens to my shares?", "and one practical thing — the app store listing is on my personal developer account. it was $99 and we were being careful with money."])],
+            fork: "founder's reply",
+            to: "Jordan",
+            options: [
+              { key: "transfer", label: "Paperwork this week, and I'll move the account ($99)",
+                reply: "you keep what's vested, i pay the lawyer. and i'll open the org account tomorrow — we transfer before you sign anything.",
+                then: [A("jordan", "yeah. do it while i still care about doing it properly.")] },
+              { key: "defer", label: "Paperwork's coming. Leave the account for now.",
+                reply: "paperwork this week. can the account stay where it is for now? i've got nine things ahead of it.",
+                then: [A("jordan", "sure. it's not going anywhere.")],
+                note: "The landmine, as today (appstore_on_jordan)." },
+            ],
+          },
+          {
+            msgs: [A("jordan", "the board sketch. do you still want it?")],
+            fork: "founder's reply",
+            to: "Jordan",
+            options: [
+              { key: "handoff", label: "Yes — if you're okay with that.", reply: "yes. if you're okay with that.",
+                then: [A("jordan", "it's yours. it was always for plusone.")], note: "The handoff — Alex builds from her sketch." },
+              { key: "fresh", label: "We'll start fresh.", reply: "we'll start fresh. you shouldn't have to hand us anything tonight.",
+                then: [A("jordan", "okay.")], note: "Kind-sounding, and it costs Alex the week her sketch would have saved." },
+            ],
+          },
+          {
+            msgs: [A("jordan", "is that everything?")],
+            fork: "the last word — gated on what the run banked",
+            to: "Jordan",
+            options: [
+              { key: "intake", label: "The intake screen was yours.", gate: "first_screen:intake",
+                reply: "one more thing. the intake screen — your sister's group chat — is still the only thing anyone ever shared on their own. that was you. tonight doesn't erase it.",
+                then: [A("jordan", "…thanks. that lands better than you'd think.")] },
+              { key: "maya", label: "You saw Maya before any of us did.", gate: "launch_first_signup:watch",
+                reply: "you saw maya before any of us did. launch day, and again tonight. we're building v2 on something you noticed.",
+                then: [A("jordan", "…i did, didn't i.")] },
+              { key: "close", label: "That's everything. I'm sorry.", reply: "that's everything. i'm sorry.",
+                then: [A("jordan", "okay. goodnight.")],
+                note: "A player who ignored her all run has only this line. The silence is the cost." },
+            ],
+          },
+        ],
+      },
+      {
+        time: "12:31am · founders' group chat", title: "After",
+        beats: [
+          {
+            msgs: [SYS("Jordan left the conversation"), STAGE("eleven minutes of nothing"), A("alex", "you okay?")],
+            to: "group",
+            fork: "founder's reply",
+            options: [
+              { key: "not_really", label: "Not really.", reply: "not really." },
+              { key: "right_call", label: "It was the right call.", reply: "it was the right call." },
+            ],
+            after: [
+              A("alex", ["yeah. both, probably.", "i'll put her sketch in the doc. board's mine now. we start monday."]),
+              CB("<b>No narrator.</b> The system line does what a journal entry can't. The group chat is two people now, and the rail shows it for the rest of the run."),
+            ],
+          },
+        ],
+      },
+    ],
+  },
+
+  declined: {
+    label: "② Alex's door declined",
+    sum: "“She said this one's different” / “That's not fair to her” at 10:12pm. Jordan keeps the board. What the next weeks look like.",
+    acts: [
+      {
+        time: "wk 19–20", title: "She keeps the board",
+        note: "No scene, no drama — the story just moves slower. Shown as the beats that land in the following weeks.",
+        beats: [
+          {
+            tag: "wk 19 · Jordan's DM · sunday 1:12am",
+            msgs: [A("jordan", ["weekend push done! RSVP button works end to end.", "the join screen is still ugly. i'll get it this week, promise."])],
+            to: "Jordan",
+            options: [
+              { key: "great", label: "Great work — no stress.", reply: "great work. no stress." },
+              { key: "when", label: "When's 'this week'?", reply: "when's 'this week'? alex is waiting on it.", then: [A("jordan", "thursday. friday latest.")] },
+            ],
+          },
+          {
+            tag: "wk 20 · Alex's DM",
+            msgs: [A("alex", ["matching's done. repointed, tested, merged.", "board's at the RSVP button. same as last week."])],
+            after: [CB("<b>Not a complaint — a status.</b> Alex said his piece once and was told no; he won't say it the same way twice. The item board shows his half done and hers not. This is what re-opens the door (path ⑤).")],
+          },
+        ],
+      },
+    ],
+  },
+
+  warm: {
+    label: "③ Warm exit on the ladder",
+    sum: "“I'll talk to her” → then “It's beautiful. Go to bed.” or “I believe you.” Nothing happened — except she now knows you had a doubt.",
+    acts: [
+      {
+        time: "11:48pm · Jordan's DM", title: "Act 3 — The ladder, stepped off",
+        beats: [opener, rung1("end of night", "rung 2"), rung2("end of night", "path ①")],
+      },
+      {
+        time: "12:02am · Alex's DM", title: "After",
+        beats: [
+          {
+            msgs: [A("alex", "did you talk to her?")],
+            to: "Alex",
+            fork: "founder's reply",
+            options: [
+              { key: "yes_ish", label: "Sort of. She's doing the board.", reply: "sort of. she's doing the board. she says this one's different.",
+                then: [A("alex", "okay.")] },
+              { key: "not_yet", label: "Not really. Not yet.", reply: "not really. not yet.",
+                then: [A("alex", "okay. i'll stop bringing it up then.")] },
+            ],
+            after: [CB("<b>“okay.”</b> — the same word Alex used after losing the equity argument in week 2. A player who remembers will hear it. The door re-opens in about two weeks (path ⑤), harder.")],
+          },
+        ],
+      },
+    ],
+  },
+
+  fold: {
+    label: "④ The fold",
+    sum: "She asks “are you asking me to leave?” and you say no. Worse than never asking.",
+    acts: [
+      {
+        time: "12:03am · Jordan's DM", title: "Rung 3 — “No. Forget I said anything.”",
+        beats: [
+          {
+            msgs: rung3Msgs.concat([
+              OUT("Jordan", "no. no. forget i said anything."),
+              A("jordan", ["okay.", "you can't un-ask that, you know."]),
+            ]),
+            after: [CB("<b>The compromise, as today's compromise():</b> she keeps the board, and she knows. Alex −12 morale/trust. Her resignation is scheduled with an <i>unless</i> — reopen the conversation in time and you still reach the firing, minus the weeks.")],
+          },
+        ],
+      },
+      {
+        time: "wk 22 · Jordan's DM · 9:40am", title: "Three weeks later",
+        beats: [
+          {
+            msgs: [
+              A("jordan", ["i'm stepping back.", "nothing's changed since that night and nothing was going to. i think we both knew when you said 'forget it'.", "i'll keep my shares. good luck with v2. i mean that."]),
+              SYS("Jordan left the conversation"),
+            ],
+          },
+          {
+            tag: "Alex's DM · same day",
+            msgs: [A("alex", "so we spent three weeks waiting to lose her, and now i'm reading a half-built board with no comments in it.")],
+            after: [CB("<b>She left; you didn't decide.</b> No handoff, no last word, full stake on the cap table. Scored under “Have the hard conversations” as the worst outcome short of never asking.")],
+          },
+        ],
+      },
+    ],
+  },
+
+  reentry: {
+    label: "⑤ Later re-entry",
+    sum: "Paths ②③ two weeks on. Alex's door re-opens — shorter, because he's done being gentle — and the ladder starts higher.",
+    acts: [
+      {
+        time: "wk 20 · Alex's DM", title: "The door, again",
+        beats: [
+          {
+            msgs: [A("alex", ["it's been two weeks. the board moved one screen.", "i'm not asking you to do anything. i'm telling you i've stopped waiting for it."])],
+            fork: "founder's reply",
+            to: "Alex",
+            options: [
+              { key: "talk", label: "I'll talk to her. Properly this time.", reply: "i'll talk to her. properly this time.", then: [A("alex", "okay.")], next: "below" },
+              { key: "different", label: "She's almost there.", reply: "she's almost there.",
+                then: [A("alex", "sure.")], note: "The last time Alex raises it. From here, only the report card will." },
+            ],
+          },
+        ],
+      },
+      {
+        time: "wk 20 · Jordan's DM · 2:04am", title: "The ladder, starting at rung 2",
+        note: "She texts first again — the same shape as the first night, which the player should recognize.",
+        beats: [
+          {
+            msgs: [
+              A("jordan", ["pushed the RSVP flow 🙃", "tell me it's not beautiful."]),
+              OUT("Jordan", "it's 2am, jordan."),
+              A("jordan", ["i know.", "is this the 'something real' conversation again?"]),
+            ],
+            after: [CB("<b>She saw you hesitate the first time.</b> Rung 1 is gone — she skips it for you. The honest chips carry what's happened since (“two weeks, one screen”), and the yes/no at the top is the same. The firing plays as in path ①, with one line added: <i>“you could have said this two weeks ago. i'd have taken it better.”</i>")],
+          },
+        ],
+      },
+    ],
+  },
+};
+
+// ═════════════════════════════════════════════════════════════════════════
+
+const intro = `<div class="intro">
+  <h2>How the decision surfaces — without a “fire Jordan” chip</h2>
+  <ol>
+    <li><b>Alex's DM is the door, as before</b> — but it lands 17 minutes after Jordan volunteered for v2's key screen, lit up. Alex praises her, names the pattern (“a week behind on everything since demo night”), and doubts his own motives. The chips are “I'll talk to her” / “She said this one's different” / “That's not fair to her”.</li>
+    <li><b>“I'll talk to her” opens her thread, not a verdict.</b> She texts first, with a sketch. Each honest step has a warm way out.</li>
+    <li><b>Jordan says the word, not the player.</b> At the top of the ladder she asks “are you asking me to leave?”. The major decision is a one-word answer to a friend.</li>
+  </ol>
+  <p style="margin-top:8px;color:var(--dim);font-size:13px">⚑ marks a chip that exists only if the run banked it. All texts are drafts.</p>
+</div>`;
+
+function renderPaths() {
+  const keys = Object.keys(paths);
+  const buttons = keys.map((k, i) => `<button data-path="${k}" class="${i === 0 ? "on" : ""}">${esc(paths[k].label)}</button>`).join("");
+  const bodies = keys.map((k, i) => `
+    <div class="path-body ${i === 0 ? "on" : ""}" data-path="${k}">
+      <p class="path-sum">${esc(paths[k].sum)}</p>
+      ${paths[k].acts.map(renderAct).join("")}
+    </div>`).join("");
+  return `<h3 class="split">— the paths split here —</h3><div class="paths">${buttons}</div>${bodies}`;
+}
+
+document.getElementById("app").innerHTML =
+  intro + renderAct(door) + renderAct(act1) + renderAct(act2) + renderAct(act2b) + renderAct(priya) + renderPaths();
+
+document.querySelectorAll(".paths button").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".paths button").forEach(x => x.classList.toggle("on", x === b));
+    document.querySelectorAll(".path-body").forEach(x => x.classList.toggle("on", x.dataset.path === b.dataset.path));
+  };
+});
+</script>
+</body>
+</html>
