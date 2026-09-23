@@ -203,26 +203,27 @@ const act1 = {
       after: [CB("<b>One chip, one or two messages.</b> Three chips, all taken (the one you've asked disappears). Nothing lands without the player asking — the group chat never floods.<br>Note what each says: Alex has a plan, Priya has a symptom without a cause, Jordan has a clue she doesn't know is a clue.")],
     },
     {
-      tag: "the first fork — you could stop here",
+      tag: "the first fork — one way to stop, two ways down",
       msgs: [A("alex", "so? mixer or not?")],
       fork: "founder's move",
       to: "group",
       options: [
         { key: "users", label: "Alex is right — get the users.", reply: "alex is right. the room's empty. book the gym.",
           note: "Growth path, as today. No pivot surfaced. The fifty-match verdict can still bring it back.", next: "end of act (no pivot)" },
-        { key: "matching", label: "Fix retention — make the matching smarter.", reply: "priya's right that it's retention. so the matches are bad — let's make the algorithm smarter.",
-          then: [A("alex", "…i can do that. two weeks."), A("priya", "maybe. you're guessing at the cause, though.")],
-          note: "The tempting wrong answer — today's hedge. It sounds like listening to Priya, but it's the feature-spree trap: fixing the part that already works.", next: "end of act (no pivot)" },
-        { key: "dig", label: "Wait. Alex — pull the best matches. What happened to them?",
+        { key: "dig_alex", label: "Wait. Alex — pull the best matches. What happened to them?",
           reply: "wait. before we decide — alex, pull our best matches. the ones that should have worked. what happened to them?",
           next: "dig 1" },
+        { key: "dig_priya", label: "Priya — why don't they stay?",
+          reply: "priya, you said even the ones who matched don't stay. why?",
+          then: [A("priya", "i don't know. but alex does, he just hasn't looked. alex — pull your best matches. the ones that should have worked.")],
+          next: "dig 1" },
       ],
-      after: [CB("<b>The pivot can stay buried.</b> Two of the three chips end the night with a reasonable-sounding plan. The third is just <i>curiosity</i> — the obvious thing to ask if you were listening to Priya — and it's the only way down.")],
+      after: [CB("<b>Harder to miss, still missable.</b> One chip takes Alex's Hail Mary. Two are plain curiosity — follow up on Alex's numbers, or on Priya's symptom — and both lead down the same hole.")],
     },
     {
       tag: "dig 1 · Alex looks",
       msgs: [
-        A("alex", ["…give me a minute.", "okay. eleven best matches since launch. both people liked each other, both still had the app.", "ten of them: match → 'hey' → 'hey' → nothing.", "huh."]),
+        A("alex", ["…give me a minute.", "okay. eleven best matches since launch. both people liked each other, both still had the app.", "ten of them: match → 'hey' → 'hey' → nothing."]),
       ],
       fork: "founder's move",
       to: "group",
@@ -231,21 +232,38 @@ const act1 = {
           then: [A("priya", "…okay. your call.")], next: "end of act (no pivot)" },
         { key: "jordan_maya", label: "Jordan — what did Maya do after she matched?",
           reply: "jordan. maya. what did she do after she matched?",
+          then: [A("jordan", ["…nothing. she didn't do anything. there was nothing TO do.", "she matched with a guy she liked, and the app gave her a chat box and walked away."])],
           next: "dig 2" },
         { key: "maya_quote", label: "Maya told me herself.", gate: "called Maya in the trough",
           reply: "i called maya last month. her words: 'it was just a chat window. i already have seven of those. plusone made me feel worse.'",
-          next: "dig 2 (skips Jordan's line — the eureka still lands)" },
+          next: "dig 2" },
       ],
     },
     {
-      tag: "dig 2 · the eureka, one person at a time",
-      msgs: [
-        A("jordan", ["…nothing. she didn't do anything. there was nothing TO do.", "she matched with a guy she liked, and the app gave her a chat box and walked away."]),
-        A("priya", ["that's it. that's the cause.", "you don't have a matching problem. you have an 'and then what' problem. nobody knows what to say after 'hey' — so give them something to say yes to."]),
-        A("jordan", "like — a plan. thursday, climbing gym, six people, two spots. you don't message a stranger, you just say 'i'm in'."),
-        A("alex", ["oh.", "oh no. my whole plan was to fill the room with more people to say 'hey' to.", "…the matching engine survives. picking people for a plan is the same math. what dies is every screen."]),
+      tag: "dig 2 · the eureka — one tap, one voice",
+      fork: "founder's move (single choice)",
+      to: "group",
+      options: [
+        { key: "priya", label: "Priya — is that it?", reply: "priya. is that it?",
+          then: [A("priya", ["that's it. you don't have a matching problem. you have an 'and then what' problem.", "nobody knows what to say after 'hey'. so give them something to say yes to."])] },
       ],
-      after: [CB("<b>Everyone gets there together</b> — Priya names the cause, Jordan (the clue-holder) names the product, Alex converts himself. The player's contribution was asking. That's today's alex_converted, earned by digging instead of by an evidence chip.")],
+    },
+    {
+      fork: "founder's move (single choice)",
+      to: "group",
+      options: [
+        { key: "jordan", label: "Jordan — what would that look like?", reply: "jordan — what would that look like? something to say yes to.",
+          then: [A("jordan", ["a plan. thursday, climbing gym, six people, two spots.", "you don't message a stranger. you just tap 'i'm in'."])] },
+      ],
+    },
+    {
+      fork: "founder's move (single choice)",
+      to: "group",
+      options: [
+        { key: "alex", label: "Alex?", reply: "alex?",
+          then: [A("alex", ["…so the $1,500 would have paid for 300 more people to get stuck at 'hey'.", "cancel the gym.", "good news: the matching engine survives. picking people for a plan is the same math. what has to go is every screen."])] },
+      ],
+      after: [CB("<b>Everyone gets there together, one tap at a time</b> — Priya names the cause, Jordan (the clue-holder) names the product, Alex cancels his own Hail Mary. Single-choice beats pace the eureka so no two voices land at once. That's today's alex_converted, earned by digging instead of by an evidence chip.")],
     },
     {
       tag: "the call",
@@ -269,11 +287,11 @@ const act2 = {
     {
       msgs: [
         A("alex", ["ok. if we're doing this: three weeks, no slack, no second try. we'll be relaunching on fumes.", "i'll repoint the matching. who wants the board — the screen people actually see?"]),
-        A("jordan", ["board's mine.", "it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.", "i'll do nights and both weekends. i know i've been slow. this one's different. i can feel it."]),
+        A("jordan", ["board's mine.", "it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.", "i'll have a first version by sunday. this is the fun part."]),
         A("priya", "that's a good design instinct, jordan. go to bed, all of you. big three weeks."),
         SYS("Priya left the conversation"),
         A("alex", "👍"),
-        CB("<b>The 👍 is the only thing Alex says to her offer.</b> A player who's been paying attention notices. A player who hasn't reads it as a thumbs-up. (The system line is the same one that closes the arc, used here first, harmlessly.)"),
+        CB("<b>Jordan has no idea anything is wrong</b> — she thinks she's been doing fine, which is what makes the rest of the night hurt. <b>The 👍 is the only thing Alex says to her offer.</b> A player who's been paying attention notices. A player who hasn't reads it as a thumbs-up. (The system line is the same one that closes the arc, used here first, harmlessly.)"),
       ],
     },
   ],
@@ -368,19 +386,19 @@ const rung2 = (warmNext, realNext) => ({
   tag: "rung 2",
   msgs: [
     OUT("Jordan", "three weeks of nights and both weekends. can you actually do that, with the job?"),
-    A("jordan", "yes."),
-    A("jordan", ["…i mean. i said that about demo night too.", "but this time is different."]),
+    A("jordan", ["yes? i've been doing it since day one.", "why — did alex say something?"]),
   ],
   fork: "founder's reply",
   to: "Jordan",
   options: [
-    { key: "believe", label: "I believe you. Let's do it.", reply: "i believe you. let's do it.",
+    { key: "believe", label: "No, nothing. Let's do it.", reply: "no, nothing. forget it. let's do it.",
       then: [A("jordan", "thank you. you won't regret it.")],
-      note: "Warm exit — dearer than rung 1: she knows you had a doubt, and she'll feel watched every time something slips.", next: warmNext },
-    { key: "always", label: "It's always this time.", reply: "it's always this time, jordan.", next: realNext },
-    { key: "six", label: "Launch day you went home at six.", gate: "launch_going_home",
-      reply: "launch day you went home at six.",
-      then: [A("jordan", ["that's not fair. i had work at eight.", "…it's a little fair."])], next: realNext },
+      note: "Warm exit — dearer than rung 1: she now knows somebody had a doubt, and she'll feel watched every time something slips.", next: warmNext },
+    { key: "late", label: "Everything's landed a week late.", reply: "no, i'm saying it. everything's landed about a week late. the picker, the ios sprint, alex's PR.",
+      then: [A("jordan", ["…has it?", "i mean — each of those had a reason."])], next: realNext },
+    { key: "demo", label: "Demo night. You weren't there.", gate: "demo_jordan_absent",
+      reply: "demo night. you weren't there, and it was your sister's friend testing.",
+      then: [A("jordan", ["that was a release cut. that wasn't—", "…okay. and the fix was two days late too."])], next: realNext },
   ],
 });
 
@@ -428,7 +446,7 @@ const paths = {
         note: "Today's firing.js beats, re-voiced: quieter, no charge sheet — she already said it. Every mechanical consequence still lands once, at the end.",
         beats: [
           {
-            msgs: [A("jordan", ["okay.", "i think i knew when alex sent the thumbs up."])],
+            msgs: [A("jordan", ["okay.", "i honestly didn't see this coming. i thought i was doing fine."])],
             fork: "founder's reply",
             to: "Jordan",
             options: [
@@ -548,7 +566,7 @@ const paths = {
             to: "Alex",
             fork: "founder's reply",
             options: [
-              { key: "yes_ish", label: "Sort of. She's doing the board.", reply: "sort of. she's doing the board. she says this one's different.",
+              { key: "yes_ish", label: "Sort of. She's doing the board.", reply: "sort of. she's doing the board. first version by sunday, she says.",
                 then: [A("alex", "okay.")] },
               { key: "not_yet", label: "Not really. Not yet.", reply: "not really. not yet.",
                 then: [A("alex", "okay. i'll stop bringing it up then.")] },
@@ -639,7 +657,7 @@ const intro = `<div class="intro">
   <ol>
     <li><b>The door is a chat, not a card.</b> Alex wants to spend $1,500 of what's left on a growth push and needs a yes tonight. The big decision is whether to <i>stop him</i> and get everyone on one thread.</li>
     <li><b>The player runs the meeting.</b> Every message in Act 1 answers someone the player called on, so the group chat never floods.</li>
-    <li><b>The pivot has to be dug out.</b> The obvious plans (“get users”, “smarter matching”) end the night without it. Asking “what happened to the best matches?” and then “what did Maya do after she matched?” leads everyone to the idea together.</li>
+    <li><b>The pivot has to be dug out.</b> Taking Alex's plan ends the night without it; plain curiosity (asking Alex or Priya to go deeper) leads there, one reply per tap. Asking “what happened to the best matches?” and then “what did Maya do after she matched?” leads everyone to the idea together.</li>
     <li><b>Alex's DM is still the door to the Jordan question</b>, right after she claims the board. At most 3 options per beat, and none of them says “fire”.</li>
     <li><b>Priya's side chat</b> only appears after Alex has spoken, and is marked as a cut candidate.</li>
   </ol>
