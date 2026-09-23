@@ -259,7 +259,14 @@
             id: "pivot_board_claim", char: "summit", speaker: "jordan",
             when: { took: ["pivot_day_decide:pivot"] },
             text: "board's mine. it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.\n\ni'll have a first version by sunday. this is the fun part.",
-            choices: [{ key: "priya", label: "Priya, anything before we sign off?", reply: "priya, anything before we sign off?", journal: null }],
+            // The founder's moment: after months of a graph that only went
+            // down, this is the first night the company knows what it is.
+            // Said out loud to the whole room before Priya gets the last word.
+            choices: [{
+              key: "priya", label: "This is it. We finally know.",
+              reply: "this is it. months of watching people match and vanish, and tonight we finally know why — and what to build instead. i haven't felt like this since the day we started.\n\npriya, anything before we sign off?",
+              journal: null,
+            }],
           },
           {
             // Two readings. Jordan hears encouragement; the player hears an
