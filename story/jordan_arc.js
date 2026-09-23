@@ -96,21 +96,6 @@
               },
             },
           },
-          {
-            key: "lawyer", label: "Lawyer asks for the listing back ($1,000)",
-            reply: "get the lawyer to ask her lawyer to transfer the listing instead of us starting over. we keep the reviews.",
-            payee: "Lawyer",
-            journal: "Jordan closed her developer account and PlusOne vanished from the App Store. Paid a lawyer $1,000 to get the listing transferred back — two weeks of nobody able to install the app.",
-            effects: {
-              cash: -1000,
-              say: { char: "founders", speaker: "alex", text: "okay. that's two weeks with no app in the store. i'll keep building." },
-              schedule: {
-                in: 2,
-                fx(st) { st.app_delisted = false; st.appstore_on_jordan = false; },
-                say: { char: "founders", speaker: "alex", text: "listing's transferred. reviews intact. it cost a grand and two weeks, and she didn't write a single word to either of us." },
-              },
-            },
-          },
         ],
         // Ignored: Alex resubmits himself — and says so.
         timeout: {
