@@ -364,11 +364,10 @@ const priya = {
 // ═════════════════════════════════════════════════════════════════════════
 
 const opener = {
-  tag: "11:48pm — before you can write, she texts first. she has no idea.",
+  tag: "11:48pm — before you can write, she texts first. she has no idea. nothing is built yet; it's all a promise.",
   msgs: [
     A("jordan", "couldn't sleep."),
-    IMG("jordan", "a hand-drawn board: “THU · climbing gym · 6 going · 2 spots · [ i'm in ]”"),
-    A("jordan", ["no profiles on the front screen. no chat until you've said yes to something.", "i'm going to do the whole thing this weekend. tell me it's not beautiful."]),
+    A("jordan", ["i've got the whole board in my head. thursday, climbing gym, 6 going, 2 spots, one big 'i'm in' button.", "no profiles on the front screen. no chat until you've said yes to something.", "first version by sunday. monday latest. you're going to love it."]),
   ],
 };
 
@@ -377,9 +376,9 @@ const rung1 = (warmNext, realNext) => ({
   fork: "founder's reply",
   to: "Jordan",
   options: [
-    { key: "beautiful", label: "It's beautiful. Go to bed.", reply: "it's beautiful. go to bed.",
+    { key: "beautiful", label: "Sounds great. Go to bed.", reply: "sounds great. go to bed.",
       then: [A("jordan", "💜 night")], note: "You lost your nerve. Nothing happened — which is the point. She keeps the board.", next: warmNext },
-    { key: "real", label: "Can I ask you something real?", reply: "it is beautiful. can i ask you something real?",
+    { key: "real", label: "Can I ask you something real?", reply: "it sounds great. can i ask you something real?",
       then: [A("jordan", "…that's a scary sentence at midnight. go.")], next: realNext },
   ],
 });
@@ -387,7 +386,7 @@ const rung1 = (warmNext, realNext) => ({
 const rung2 = (warmNext, realNext) => ({
   tag: "rung 2",
   msgs: [
-    OUT("Jordan", "three weeks of nights and both weekends. can you actually do that, with the job?"),
+    OUT("Jordan", "sunday. with the job. can you actually do that?"),
     A("jordan", ["yes? i've been doing it since day one.", "why — did alex say something?"]),
   ],
   fork: "founder's reply",
@@ -476,14 +475,14 @@ const paths = {
             ],
           },
           {
-            msgs: [A("jordan", "the board sketch. do you still want it?")],
+            msgs: [A("jordan", "the board. it's mostly in my head. do you want me to write it down for alex?")],
             fork: "founder's reply",
             to: "Jordan",
             options: [
               { key: "handoff", label: "Yes — if you're okay with that.", reply: "yes. if you're okay with that.",
-                then: [A("jordan", "it's yours. it was always for plusone.")], note: "The handoff — Alex builds from her sketch." },
+                then: [A("jordan", "i'll write it up tomorrow. it was always for plusone.")], note: "The handoff — Alex builds from her notes." },
               { key: "fresh", label: "We'll start fresh.", reply: "we'll start fresh. you shouldn't have to hand us anything tonight.",
-                then: [A("jordan", "okay.")], note: "Kind-sounding, and it costs Alex the week her sketch would have saved." },
+                then: [A("jordan", "okay.")], note: "Kind-sounding, and it costs Alex the week her notes would have saved." },
             ],
           },
           {
@@ -516,7 +515,7 @@ const paths = {
               { key: "right_call", label: "It was the right call.", reply: "it was the right call." },
             ],
             after: [
-              A("alex", ["yeah. both, probably.", "i'll put her sketch in the doc. board's mine now. we start monday."]),
+              A("alex", ["yeah. both, probably.", "if she sends her notes, they go in the doc. board's mine now. we start monday."]),
               CB("<b>No narrator.</b> The system line does what a journal entry can't. The group chat is two people now, and the rail shows it for the rest of the run."),
             ],
           },
@@ -534,7 +533,7 @@ const paths = {
         note: "Six different exits, one outcome. The player never picks “keep Jordan” — they just don't finish the sentence.",
         beats: [
           {
-            msgs: [CB("<b>From Alex's DM:</b> “Not tonight.” · “Let's see how her first week goes.” · “That's not fair to her.”<br><b>From Jordan's thread:</b> “It's beautiful. Go to bed.” · “No, nothing. Let's do it.” · “No. Forget I said anything.”<br>All six end the night the same way: Jordan keeps the board. What differs is what's left behind: Alex's morale (“not fair” stings most), and whether Jordan now knows someone had a doubt (anything past rung 1). “Forget I said anything” is the worst of them — she answers <i>“okay. you can't un-ask that, you know.”</i>")],
+            msgs: [CB("<b>From Alex's DM:</b> “Not tonight.” · “Let's see how her first week goes.” · “That's not fair to her.”<br><b>From Jordan's thread:</b> “Sounds great. Go to bed.” · “No, nothing. Let's do it.” · “No. Forget I said anything.”<br>All six end the night the same way: Jordan keeps the board. What differs is what's left behind: Alex's morale (“not fair” stings most), and whether Jordan now knows someone had a doubt (anything past rung 1). “Forget I said anything” is the worst of them — she answers <i>“okay. you can't un-ask that, you know.”</i>")],
           },
           {
             tag: "12:02am · Alex's DM (if you'd said you would talk to her)",
@@ -557,7 +556,7 @@ const paths = {
         beats: [
           {
             tag: "wk 19 · Jordan's DM · sunday 1:12am",
-            msgs: [A("jordan", ["weekend push done! RSVP button works end to end.", "the join screen is still ugly. i'll get it this week, promise."])],
+            msgs: [A("jordan", ["ugh, weekend got eaten by a release at work 😩", "board's half there. i'll have it this week, promise."])],
             to: "Jordan",
             fork: "founder's reply",
             options: [
@@ -584,11 +583,11 @@ const paths = {
         beats: [
           {
             msgs: [
-              A("jordan", ["pushed the RSVP flow 🙃", "tell me it's not beautiful."]),
+              A("jordan", ["almost done with the RSVP flow 🙃", "this weekend for sure. you're going to love it."]),
               OUT("Jordan", "it's 2am, jordan. can i ask you something real?"),
               A("jordan", "…go."),
-              OUT("Jordan", "the board was supposed to take three weeks. it's been two, and it's at the RSVP button."),
-              A("jordan", ["i know. the job's been insane.", "…is this about me?"]),
+              OUT("Jordan", "you said that two weeks ago. the board was supposed to take three weeks, and it's still not there."),
+              A("jordan", ["i know. the job's been insane. it'll be different once—", "…is this about me?"]),
             ],
           },
           {
