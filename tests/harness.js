@@ -114,7 +114,7 @@
     pivot_roundtable: ["alex", "priya", "jordan"], pivot_round_2: ["alex", "priya", "jordan"],
     pivot_round_3: ["alex", "priya", "jordan"], pivot_fork: ["dig_alex"],
     pivot_dig: ["maya_quote", "jordan_maya"], pivot_day_decide: ["pivot"], pivot_close_growth: ["deal"],
-    pivot_who_builds: ["jordan"], pivot_alex_door: ["say"], pivot_alex_concern: ["talk"],
+    pivot_alex_door: ["say"], pivot_alex_concern: ["talk"],
     pivot_scope_call: ["cut"], pivot_beta_invite: ["invite"],
     pivot_relaunch: ["sarah_event", "press", "quiet"], pivot_fifty_verdict: ["pivot_now"],
     pivot_payoff_maya: ["ack"],

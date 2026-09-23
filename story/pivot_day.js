@@ -18,10 +18,11 @@
 //      nothing to DO, and one tap at a time Priya names the cause, Jordan
 //      names the product, and Alex cancels his own push.
 //   3. The call (pivot_day_decide): pivot, or flinch into growth.
-//   4. Who builds it. Jordan claims the board — the screen v2 lives on — with
-//      a promise. Priya's goodnight carries a quiet doubt; Alex answers her
-//      offer with a 👍 and then DMs the founder: the door to the Jordan
-//      question (pivot_alex_concern). Nothing on it says "fire".
+//   4. Who builds it. Alex asks, and Jordan claims the board — the screen v2
+//      lives on — before the founder can answer, with a promise. Priya's
+//      goodnight carries a quiet doubt; Alex answers Jordan's offer with a 👍
+//      and then DMs the founder: the door to the Jordan question
+//      (pivot_alex_concern). Nothing on it says "fire".
 //   5. "I'll talk to her." opens Jordan's thread — the ladder and the firing,
 //      built by story/jordan_talk.js. Every way of not finishing the sentence
 //      keeps her (she builds the board at her part-time pace, world.js), and
@@ -222,6 +223,7 @@
                   applyActivitiesPivot(s);
                   const jordan = e.cast.get("jordan");
                   if (jordan.active) jordan.morale = clamp(jordan.morale + 5, 0, 100);
+                  e.say({ char: "summit", speaker: "alex", text: "ok. if we're doing this: three weeks, no slack, no second try.\n\ni'll repoint the matching. who wants the board — the screen people actually see?" });
                   return null;
                 },
               },
@@ -250,17 +252,12 @@
 
           // ── 4 · who builds it ──────────────────────────────────────────────
           {
-            id: "pivot_who_builds", char: "summit", speaker: "alex",
-            text: "ok. if we're doing this: three weeks, no slack, no second try.\n\ni'll repoint the matching. who wants the board — the screen people actually see?",
-            when: { took: ["pivot_day_decide:pivot"] },
-            choices: [
-              { key: "jordan", label: "Jordan, you've been itching for this.", reply: "jordan, you've been itching for this one.", journal: null },
-              { key: "open", label: "Anyone?", reply: "anyone?", journal: null },
-            ],
-          },
-          {
+            // Alex asks who wants the board (in the call's own reaction) and
+            // Jordan takes it before the founder can answer: the founder never
+            // hands it to her, so asking her about it later isn't a reversal.
             // A promise, not a delivery — and she has no idea anything is wrong.
             id: "pivot_board_claim", char: "summit", speaker: "jordan",
+            when: { took: ["pivot_day_decide:pivot"] },
             text: "board's mine. it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.\n\ni'll have a first version by sunday. this is the fun part.",
             choices: [{ key: "priya", label: "Priya, anything before we sign off?", reply: "priya, anything before we sign off?", journal: null }],
           },
