@@ -312,7 +312,7 @@ const act2b = {
         { key: "say", label: "Say it.", reply: "say it.", next: "continues below" },
         { key: "later", label: "Not tonight.", reply: "not tonight. it's been a long one.",
           then: [A("alex", "sure.")],
-          note: "Door closed for tonight — Jordan keeps the board. Alex brings it back in two weeks, when it's harder (path ⑤)." },
+          note: "Door closed for tonight — Jordan keeps the board. Alex brings it back in two weeks, when it's harder (path ②)." },
       ],
     },
     {
@@ -328,13 +328,13 @@ const act2b = {
       to: "Alex",
       options: [
         { key: "talk", label: "I'll talk to her.", reply: "i'll talk to her. tonight, if she's up.",
-          then: [A("alex", "thank you. i'm sorry it's yours.")], next: "Act 3 — Jordan's thread (paths ①③④)" },
+          then: [A("alex", "thank you. i'm sorry it's yours.")], next: "Act 3 — Jordan's thread (path ①)" },
         { key: "week", label: "Let's see how her first week goes.", reply: "let's see how her first week on the board goes. then we talk.",
           then: [A("alex", "okay. one week.")],
-          note: "Sounds like management. It's a delay — and Alex is now counting.", next: "path ② / ⑤" },
+          note: "Sounds like management. It's a delay — and Alex is now counting.", next: "path ②" },
         { key: "unfair", label: "That's not fair to her.", reply: "that's not fair to her. she's been here since before there was anything to be here for.",
           then: [A("alex", "maybe not. forget i said it.")],
-          note: "The most loyal-sounding answer in the game. Costs Alex morale and trust — he said the hard thing and got told off.", next: "path ② / ⑤" },
+          note: "The most loyal-sounding answer in the game. Costs Alex morale and trust — he said the hard thing and got told off.", next: "path ②" },
       ],
       after: [CB("<b>Why this isn't obvious:</b> it lands right after the best thing Jordan has said all run; Alex opens with praise and closes by doubting his own motives (the 40% callback is real — the player was there); and both other chips read as patience or loyalty. Nothing says “fire” — only <i>“I'll talk to her”</i>, which could mean anything.")],
     },
@@ -360,7 +360,7 @@ const priya = {
 };
 
 // ═════════════════════════════════════════════════════════════════════════
-// JORDAN'S THREAD — the ladder, shared by paths ①③④
+// JORDAN'S THREAD — the ladder, shared by both paths
 // ═════════════════════════════════════════════════════════════════════════
 
 const opener = {
@@ -419,14 +419,14 @@ const rung3Msgs = [
 
 const paths = {
   honest: {
-    label: "① Honest all the way",
-    sum: "“I'll talk to her” → every rung honest → “yes”. The firing, and the group chat after.",
+    label: "① Tonight",
+    sum: "“I'll talk to her” → honest answers in her thread → “yes”. The firing, and the group chat after.",
     acts: [
       {
         time: "11:48pm · Jordan's DM", title: "Act 3 — The ladder",
         note: "No chip ever says “fire”. Each rung has a warm way out. The player chooses honesty three times; Jordan says the word.",
         beats: [
-          opener, rung1("path ③", "rung 2"), rung2("path ③", "rung 3"),
+          opener, rung1("path ②", "rung 2"), rung2("path ②", "rung 3"),
           {
             tag: "rung 3 — she names it",
             msgs: rung3Msgs,
@@ -437,7 +437,7 @@ const paths = {
               { key: "ask_back", label: "I'm asking what you think.", reply: "i'm asking what you think.",
                 then: [A("jordan", ["i think if i were you i'd have asked a month ago.", "so. are you?"])],
                 note: "Buys one line. The yes / no comes back, with nothing else on it." },
-              { key: "no", label: "No. Forget I said anything.", reply: "no. no. forget i said anything.", next: "path ④ — the fold" },
+              { key: "no", label: "No. Forget I said anything.", reply: "no. no. forget i said anything.", next: "path ②" },
             ],
             after: [CB("<b>Where the weight sits.</b> The typing indicator starts, stops, starts. The player never picks “fire” from a menu — they confirm what she has already worked out. Saying yes is the hardest click in the game because it is an answer to a friend, not a command.")],
           },
@@ -525,126 +525,84 @@ const paths = {
     ],
   },
 
-  declined: {
-    label: "② Alex's door declined",
-    sum: "“Let's see how her first week goes” / “That's not fair to her” at 10:12pm. Jordan keeps the board. What the next weeks look like.",
+  later: {
+    label: "② Not tonight",
+    sum: "Every way of not saying it lands here: she keeps the board, the next two weeks show the cost, and Alex opens the door one last time.",
     acts: [
       {
-        time: "wk 19–20", title: "She keeps the board",
-        note: "No scene, no drama — the story just moves slower. Shown as the beats that land in the following weeks.",
+        time: "tonight", title: "Every way of not saying it",
+        note: "Six different exits, one outcome. The player never picks “keep Jordan” — they just don't finish the sentence.",
+        beats: [
+          {
+            msgs: [CB("<b>From Alex's DM:</b> “Not tonight.” · “Let's see how her first week goes.” · “That's not fair to her.”<br><b>From Jordan's thread:</b> “It's beautiful. Go to bed.” · “No, nothing. Let's do it.” · “No. Forget I said anything.”<br>All six end the night the same way: Jordan keeps the board. What differs is what's left behind: Alex's morale (“not fair” stings most), and whether Jordan now knows someone had a doubt (anything past rung 1). “Forget I said anything” is the worst of them — she answers <i>“okay. you can't un-ask that, you know.”</i>")],
+          },
+          {
+            tag: "12:02am · Alex's DM (if you'd said you would talk to her)",
+            msgs: [A("alex", "did you talk to her?")],
+            to: "Alex",
+            fork: "founder's reply",
+            options: [
+              { key: "sort_of", label: "Sort of. She's doing the board.", reply: "sort of. she's doing the board. first version by sunday, she says.",
+                then: [A("alex", "okay.")] },
+              { key: "not_yet", label: "Not really. Not yet.", reply: "not really. not yet.",
+                then: [A("alex", "okay.")] },
+            ],
+            after: [CB("<b>“okay.”</b> — the same word Alex used after losing the equity argument in week 2. A player who remembers will hear it.")],
+          },
+        ],
+      },
+      {
+        time: "wk 19–20", title: "Two weeks",
+        note: "No scene, no drama. The story just moves slower, in beats that land in the normal weekly flow.",
         beats: [
           {
             tag: "wk 19 · Jordan's DM · sunday 1:12am",
             msgs: [A("jordan", ["weekend push done! RSVP button works end to end.", "the join screen is still ugly. i'll get it this week, promise."])],
             to: "Jordan",
+            fork: "founder's reply",
             options: [
               { key: "great", label: "Great work — no stress.", reply: "great work. no stress." },
               { key: "when", label: "When's 'this week'?", reply: "when's 'this week'? alex is waiting on it.", then: [A("jordan", "thursday. friday latest.")] },
             ],
           },
           {
-            tag: "wk 20 · Alex's DM",
-            msgs: [A("alex", ["matching's done. repointed, tested, merged.", "board's at the RSVP button. same as last week."])],
-            after: [CB("<b>Not a complaint — a status.</b> Alex said his piece once and was told no; he won't say it the same way twice. The item board shows his half done and hers not. This is what re-opens the door (path ⑤).")],
-          },
-        ],
-      },
-    ],
-  },
-
-  warm: {
-    label: "③ Warm exit on the ladder",
-    sum: "“I'll talk to her” → then “It's beautiful. Go to bed.” or “I believe you.” Nothing happened — except she now knows you had a doubt.",
-    acts: [
-      {
-        time: "11:48pm · Jordan's DM", title: "Act 3 — The ladder, stepped off",
-        beats: [opener, rung1("end of night", "rung 2"), rung2("end of night", "path ①")],
-      },
-      {
-        time: "12:02am · Alex's DM", title: "After",
-        beats: [
-          {
-            msgs: [A("alex", "did you talk to her?")],
-            to: "Alex",
-            fork: "founder's reply",
-            options: [
-              { key: "yes_ish", label: "Sort of. She's doing the board.", reply: "sort of. she's doing the board. first version by sunday, she says.",
-                then: [A("alex", "okay.")] },
-              { key: "not_yet", label: "Not really. Not yet.", reply: "not really. not yet.",
-                then: [A("alex", "okay. i'll stop bringing it up then.")] },
-            ],
-            after: [CB("<b>“okay.”</b> — the same word Alex used after losing the equity argument in week 2. A player who remembers will hear it. The door re-opens in about two weeks (path ⑤), harder.")],
-          },
-        ],
-      },
-    ],
-  },
-
-  fold: {
-    label: "④ The fold",
-    sum: "She asks “are you asking me to leave?” and you say no. Worse than never asking.",
-    acts: [
-      {
-        time: "12:03am · Jordan's DM", title: "Rung 3 — “No. Forget I said anything.”",
-        beats: [
-          {
-            msgs: rung3Msgs.concat([
-              OUT("Jordan", "no. no. forget i said anything."),
-              A("jordan", ["okay.", "you can't un-ask that, you know."]),
-            ]),
-            after: [CB("<b>The compromise, as today's compromise():</b> she keeps the board, and she knows. Alex −12 morale/trust. Her resignation is scheduled with an <i>unless</i> — reopen the conversation in time and you still reach the firing, minus the weeks.")],
-          },
-        ],
-      },
-      {
-        time: "wk 22 · Jordan's DM · 9:40am", title: "Three weeks later",
-        beats: [
-          {
-            msgs: [
-              A("jordan", ["i'm stepping back.", "nothing's changed since that night and nothing was going to. i think we both knew when you said 'forget it'.", "i'll keep my shares. good luck with v2. i mean that."]),
-              SYS("Jordan left the conversation"),
-            ],
-          },
-          {
-            tag: "Alex's DM · same day",
-            msgs: [A("alex", "so we spent three weeks waiting to lose her, and now i'm reading a half-built board with no comments in it.")],
-            after: [CB("<b>She left; you didn't decide.</b> No handoff, no last word, full stake on the cap table. Scored under “Have the hard conversations” as the worst outcome short of never asking.")],
-          },
-        ],
-      },
-    ],
-  },
-
-  reentry: {
-    label: "⑤ Later re-entry",
-    sum: "Paths ②③ two weeks on. Alex's door re-opens — shorter, because he's done being gentle — and the ladder starts higher.",
-    acts: [
-      {
-        time: "wk 20 · Alex's DM", title: "The door, again",
-        beats: [
-          {
-            msgs: [A("alex", ["it's been two weeks. the board moved one screen.", "i'm not asking you to do anything. i'm telling you i've stopped waiting for it."])],
+            tag: "wk 20 · Alex's DM — the door, one last time",
+            msgs: [A("alex", ["matching's done. repointed, tested, merged.", "board's at the RSVP button. same as last week.", "i'm not asking you to do anything. i'm telling you i've stopped waiting for it."])],
             fork: "founder's reply",
             to: "Alex",
             options: [
-              { key: "talk", label: "I'll talk to her. Properly this time.", reply: "i'll talk to her. properly this time.", then: [A("alex", "okay.")], next: "below" },
+              { key: "talk", label: "I'll talk to her. Properly this time.", reply: "i'll talk to her. properly this time.", then: [A("alex", "okay.")], next: "her thread, below" },
               { key: "almost", label: "She's almost there.", reply: "she's almost there.",
-                then: [A("alex", "sure.")], note: "The last time Alex raises it. From here, only the report card will." },
+                then: [A("alex", "sure.")], note: "The last time Alex raises it. She stays to the end; the board lands late, the private beta slips, and the report card is where the conversation finally happens." },
             ],
           },
         ],
       },
       {
-        time: "wk 20 · Jordan's DM · 2:04am", title: "The ladder, starting at rung 2",
-        note: "She texts first again — the same shape as the first night, which the player should recognize.",
+        time: "wk 20 · Jordan's DM · 2:04am", title: "The second chance",
+        note: "She texts first again, the same shape as the first night, which the player should recognize. The ladder is shorter: it starts at the honest rung.",
         beats: [
           {
             msgs: [
               A("jordan", ["pushed the RSVP flow 🙃", "tell me it's not beautiful."]),
-              OUT("Jordan", "it's 2am, jordan."),
-              A("jordan", ["i know.", "is this the 'something real' conversation again?"]),
+              OUT("Jordan", "it's 2am, jordan. can i ask you something real?"),
+              A("jordan", "…go."),
+              OUT("Jordan", "the board was supposed to take three weeks. it's been two, and it's at the RSVP button."),
+              A("jordan", ["i know. the job's been insane.", "…is this about me?"]),
             ],
-            after: [CB("<b>She saw you hesitate the first time.</b> Rung 1 is gone — she skips it for you. The honest chips carry what's happened since (“two weeks, one screen”), and the yes/no at the top is the same. The firing plays as in path ①, with one line added: <i>“you could have said this two weeks ago. i'd have taken it better.”</i>")],
+          },
+          {
+            msgs: rung3Msgs,
+            fork: "the decision",
+            to: "Jordan",
+            options: [
+              { key: "yes", label: "Yes. I think I am.", reply: "yes. i think i am.",
+                then: [A("jordan", ["okay.", "you could have said this two weeks ago. i'd have taken it better."])],
+                note: "The firing plays as in path ①, two weeks later: less runway, Alex has been carrying both halves, and her first line lands harder.", next: "Act 4, as in ①" },
+              { key: "no", label: "No. Forget it. Go to bed.", reply: "no. forget it. go to bed.",
+                then: [A("jordan", "💜")],
+                note: "She stays to the end. The report card grades it: “Have the hard conversations” collapses, and the late board drags “Build something people want” down with it." },
+            ],
           },
         ],
       },
