@@ -149,22 +149,35 @@ function renderAct(act) {
 // ═════════════════════════════════════════════════════════════════════════
 
 const door = {
-  time: "wk ~18 · your move",
-  title: "The door — the founder's card",
-  note: "Chapter 3's climax, as today's pivot_summit_call — but it opens a group thread, not a Saturday in an office.",
+  time: "wk ~18 · 6:10pm · Alex's DM",
+  title: "The door — Alex wants to spend the money",
+  note: "Not a founder card: the arc opens because someone pushes over chat. Alex has a plan, a budget and momentum — and the big decision is whether to stop him.",
   beats: [
     {
       msgs: [
-        CARD("your move", "A month since launch and the graph only goes down. Every push bought a bump; every bump evaporated. Alex thinks we need more users. Priya thinks more users won't help — every match hits a dead end. You can't chase both. With 7 weeks of cash left, you get to be wrong exactly once."),
+        A("alex", [
+          "ok. i'm done watching the graph go down. i have a plan.",
+          "mixer at the climbing gym, referral codes, flyers on three campuses. $1,500. six weeks and we're at 300 users — and at 300 the app finally has enough people in it to work.",
+          "that's a quarter of what's left in the bank. i need a yes from you before i book the gym. they want an answer tonight.",
+        ]),
       ],
-      fork: "founder's move",
+      fork: "founder's reply",
+      to: "Alex",
       options: [
-        { key: "call_it", label: "Get everyone on one thread tonight",
-          then: [SYS("You named the conversation “what are we building monday”"), SYS("Alex, Jordan and Priya were added")],
+        { key: "go", label: "Do it. Book the gym.", reply: "do it. book the gym.",
+          then: [A("alex", "booking it now. you won't regret this.")],
+          note: "The growth path, taken without a word to anyone — today's pivot_choice: growth, minus the debate. Priya's fifty-match tally can still rescue it later, at a price." },
+        { key: "hold", label: "Hold on. Everyone on one thread tonight — Priya too.",
+          reply: "hold on. before we spend a quarter of the bank, i want everyone on one thread tonight. priya too.",
+          then: [A("alex", ["…fine. but i'm bringing the numbers, and i'm going to argue for this.", "the gym holds the slot till midnight."])],
           next: "Act 1" },
-        { key: "@ignored", label: "(left on read for 3 weeks)",
-          note: "The default direction wins by inertia — today's pivot_deferred. No room, no Jordan question either: the arc's failure mode is silence." },
+        { key: "@ignored", label: "(left on read)",
+          note: "Alex books it anyway at midnight. Silence is a yes." },
       ],
+      after: [CB("<b>Why this feels big:</b> the default is <i>yes</i>. Alex has a plan, a price, a deadline (“the gym holds the slot till midnight”) and a quarter of the bank on the table. The player's move isn't “start the pivot” — it's <i>stopping a confident co-founder to ask a question nobody has asked</i>. That's the decision the game wants to teach.")],
+    },
+    {
+      msgs: [SYS("You named the conversation “what are we building monday”"), SYS("Alex, Jordan and Priya were added")],
     },
   ],
 };
@@ -172,51 +185,77 @@ const door = {
 const act1 = {
   time: "8:40pm · group",
   title: "Act 1 — The product question",
-  note: "Today's pivot-day debate moved from a whiteboard into a group chat, same evidence chips. Abridged — the new thing is Jordan being in it, and being good.",
+  note: "The player runs the meeting: every message in this act is an answer to someone the player called on. The pivot is not on the table at the start — it has to be dug out.",
   beats: [
     {
-      tag: "the cases",
+      tag: "round 1 · you call on each of them (any order)",
+      msgs: [OUT("group", "ok. everyone's here. one question tonight: what are we building monday. i want to hear all three of you before anyone decides anything.")],
+      fork: "who speaks first — all three get called on, in the order you pick",
+      to: "group",
+      options: [
+        { key: "alex", label: "Alex — make your case.", reply: "alex, you first. make your case.",
+          then: [A("alex", ["the room's empty. nine users. anyone would leave an empty app — even hinge would die at nine users.", "$1,500, six weeks, 300 users. then we'll know if anything's actually broken."])] },
+        { key: "priya", label: "Priya — what do you see?", reply: "priya — what do you see from the outside?",
+          then: [A("priya", ["retention, not signups. the people who come don't stay — even the ones who matched.", "i don't know why yet. and neither do you. that's the problem with spending the $1,500."])] },
+        { key: "jordan", label: "Jordan — you watched launch day.", reply: "jordan, you watched launch day closer than anyone. what did you see?",
+          then: [A("jordan", ["honestly? it looked like it was working. maya signed up, filled out everything, matched in an hour.", "…and then i kind of stopped watching. i figured the hard part was done."])] },
+      ],
+      after: [CB("<b>One chip, one or two messages.</b> Three chips, all taken (the one you've asked disappears). Nothing lands without the player asking — the group chat never floods.<br>Note what each says: Alex has a plan, Priya has a symptom without a cause, Jordan has a clue she doesn't know is a clue.")],
+    },
+    {
+      tag: "the first fork — you could stop here",
+      msgs: [A("alex", "so? mixer or not?")],
+      fork: "founder's move",
+      to: "group",
+      options: [
+        { key: "users", label: "Alex is right — get the users.", reply: "alex is right. the room's empty. book the gym.",
+          note: "Growth path, as today. No pivot surfaced. The fifty-match verdict can still bring it back.", next: "end of act (no pivot)" },
+        { key: "matching", label: "Fix retention — make the matching smarter.", reply: "priya's right that it's retention. so the matches are bad — let's make the algorithm smarter.",
+          then: [A("alex", "…i can do that. two weeks."), A("priya", "maybe. you're guessing at the cause, though.")],
+          note: "The tempting wrong answer — today's hedge. It sounds like listening to Priya, but it's the feature-spree trap: fixing the part that already works.", next: "end of act (no pivot)" },
+        { key: "dig", label: "Wait. Alex — pull the best matches. What happened to them?",
+          reply: "wait. before we decide — alex, pull our best matches. the ones that should have worked. what happened to them?",
+          next: "dig 1" },
+      ],
+      after: [CB("<b>The pivot can stay buried.</b> Two of the three chips end the night with a reasonable-sounding plan. The third is just <i>curiosity</i> — the obvious thing to ask if you were listening to Priya — and it's the only way down.")],
+    },
+    {
+      tag: "dig 1 · Alex looks",
       msgs: [
-        OUT("group", "ok. everyone's here. one question tonight: what are we building monday."),
-        A("alex", ["my case. 9 users. everyone who left saw the same thing: three so-so matches, an empty screen, silence. that'd drive people off hinge, and hinge works.", "give me six weeks and $1,500 — the mixer, referrals, campus flyers — and we'll know if something's actually broken."]),
-        A("priya", ["'it'll get better when we're bigger' is the most expensive sentence in this business. i've said it myself. it cost me a year.", "alex, your analytics score every match. pull the best ones — the ones that should have worked. what happened to them?"]),
-        A("alex", ["…pulled our eleven best. both people liked each other, both still using the app.", "ten of them went: match → 'hey' → 'hey' → nothing."]),
-        A("jordan", ["that's what i watched on launch day.", "maya liked him. i saw her profile go live, i saw the match land. and then there was nothing to *do*. the app just… stopped."]),
-        CB("<b>Jordan at her best.</b> She saw it first — on launch day, watching Maya. The player must like her tonight. Everything after this line costs more because of it."),
+        A("alex", ["…give me a minute.", "okay. eleven best matches since launch. both people liked each other, both still had the app.", "ten of them: match → 'hey' → 'hey' → nothing.", "huh."]),
+      ],
+      fork: "founder's move",
+      to: "group",
+      options: [
+        { key: "users2", label: "Still an empty room. Book the gym.", reply: "that's still an empty room. people get bored when there's nobody around. book the gym.",
+          then: [A("priya", "…okay. your call.")], next: "end of act (no pivot)" },
+        { key: "jordan_maya", label: "Jordan — what did Maya do after she matched?",
+          reply: "jordan. maya. what did she do after she matched?",
+          next: "dig 2" },
+        { key: "maya_quote", label: "Maya told me herself.", gate: "called Maya in the trough",
+          reply: "i called maya last month. her words: 'it was just a chat window. i already have seven of those. plusone made me feel worse.'",
+          next: "dig 2 (skips Jordan's line — the eureka still lands)" },
       ],
     },
     {
-      tag: "pivot_day_evidence · the hinge (as today)",
-      fork: "the evidence you put on the thread",
-      to: "group",
-      options: [
-        { key: "maya", label: "Maya's call — she liked her match", gate: "called Maya in the trough",
-          reply: "maya matched with a guy she *liked*. her words: 'it was just a chat window. i already have seven of those.' we lost her after the match — the part that's ours.",
-          then: [A("alex", "…yeah. her words, next to my numbers, saying the same thing. i'm going to go quietly erase half my argument.")] },
-        { key: "fixes", label: "We already tried the growth answer", gate: "ran a failed fix",
-          reply: "we already ran your experiment. traffic push, win-back, a shiny feature. every bump gone in a week.",
-          then: [A("alex", "…i ran two of those myself. more water into a bucket i haven't patched.")] },
-        { key: "demo", label: "Demo night — 'so what happens now?'", gate: "demo night",
-          reply: "the first stranger who ever touched this app matched and typed 'so what happens now?' we've had the question since demo night." },
-        { key: "gut", label: "A feeling and a flat graph",
-          reply: "i don't have clean data. i have a feeling and a flat graph.",
-          then: [A("priya", "then we're guessing. just know which one this is.")] },
+      tag: "dig 2 · the eureka, one person at a time",
+      msgs: [
+        A("jordan", ["…nothing. she didn't do anything. there was nothing TO do.", "she matched with a guy she liked, and the app gave her a chat box and walked away."]),
+        A("priya", ["that's it. that's the cause.", "you don't have a matching problem. you have an 'and then what' problem. nobody knows what to say after 'hey' — so give them something to say yes to."]),
+        A("jordan", "like — a plan. thursday, climbing gym, six people, two spots. you don't message a stranger, you just say 'i'm in'."),
+        A("alex", ["oh.", "oh no. my whole plan was to fill the room with more people to say 'hey' to.", "…the matching engine survives. picking people for a plan is the same math. what dies is every screen."]),
       ],
+      after: [CB("<b>Everyone gets there together</b> — Priya names the cause, Jordan (the clue-holder) names the product, Alex converts himself. The player's contribution was asking. That's today's alex_converted, earned by digging instead of by an evidence chip.")],
     },
     {
-      tag: "the reframe + the call",
-      msgs: [
-        A("priya", ["so say it's the product. don't bolt an 'events tab' onto the app — users can smell it.", "flip the whole thing. you don't browse people, you browse plans: 'thursday. climbing gym. six of us, two spots open.' the first message is never 'hey' again. it's 'i'm in.'"]),
-        A("jordan", "oh. oh that's good."),
-      ],
-      fork: "the call",
+      tag: "the call",
+      fork: "founder's move",
       to: "group",
       options: [
-        { key: "pivot", label: "We pivot — the plan is the product",
-          reply: "we pivot. the plan is the product. monday we start building it.",
-          next: "Act 2" },
-        { key: "growth / hedge", label: "Alex is right — get users  ·  Split it",
-          note: "As today: the thread goes quiet, Priya leaves one number to watch. Act 2 and Alex's DM are held until the fifty-match verdict turns the pivot on — the Jordan question only exists once there's a v2 to build." },
+        { key: "pivot", label: "We pivot. You browse plans, not people.", reply: "we pivot. you browse plans, not people. monday we start building it.", next: "Act 2" },
+        { key: "cautious", label: "Too risky. Get users first, then rebuild.", reply: "it's a good idea. it's also a rebuild with seven weeks of cash. users first, then we rebuild.",
+          then: [A("priya", "then watch one number: of the next fifty matches, how many turn into a plan to meet.")],
+          note: "Saw it and flinched — the fifty-match verdict comes due, as today." },
       ],
     },
   ],
@@ -225,16 +264,16 @@ const act1 = {
 const act2 = {
   time: "9:55pm · group",
   title: "Act 2 — Who builds it",
-  note: "The pivot is called. The practical question is asked in front of everyone — which is exactly why nobody can say the real thing here.",
+  note: "The pivot is called. The practical question gets asked in front of everyone, which is exactly why nobody can say the real thing here.",
   beats: [
     {
       msgs: [
         A("alex", ["ok. if we're doing this: three weeks, no slack, no second try. we'll be relaunching on fumes.", "i'll repoint the matching. who wants the board — the screen people actually see?"]),
-        A("jordan", ["board's mine.", "it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at. i've been sketching it in my head since priya said it.", "i'll do nights and both weekends. i know i've been slow. this one's different. i can feel it."]),
+        A("jordan", ["board's mine.", "it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.", "i'll do nights and both weekends. i know i've been slow. this one's different. i can feel it."]),
         A("priya", "that's a good design instinct, jordan. go to bed, all of you. big three weeks."),
         SYS("Priya left the conversation"),
         A("alex", "👍"),
-        CB("<b>The 👍 is the only thing Alex says to her offer.</b> A player who's been paying attention notices. A player who hasn't reads it as a thumbs-up. Both are right. (Note the system line — the same one that closes the arc, used here first, harmlessly.)"),
+        CB("<b>The 👍 is the only thing Alex says to her offer.</b> A player who's been paying attention notices. A player who hasn't reads it as a thumbs-up. (The system line is the same one that closes the arc, used here first, harmlessly.)"),
       ],
     },
   ],
@@ -242,8 +281,8 @@ const act2 = {
 
 const act2b = {
   time: "10:12pm · Alex's DM",
-  title: "Act 2b — The door",
-  note: "The old mechanism (Alex's DM about Jordan's performance → “I'll talk to her”), moved to the worst possible moment: seventeen minutes after she volunteered, lit up.",
+  title: "Act 2b — The door to the Jordan question",
+  note: "The old mechanism (Alex's DM about Jordan's performance → “I'll talk to her”), seventeen minutes after she volunteered, lit up.",
   beats: [
     {
       msgs: [A("alex", "can i say something i've been sitting on. not in the group.")],
@@ -251,9 +290,9 @@ const act2b = {
       to: "Alex",
       options: [
         { key: "say", label: "Say it.", reply: "say it.", next: "continues below" },
-        { key: "later", label: "Can it wait till Monday?", reply: "can it wait till monday? it's been a long night.",
+        { key: "later", label: "Not tonight.", reply: "not tonight. it's been a long one.",
           then: [A("alex", "sure.")],
-          note: "Door closed for tonight — Jordan keeps the board by default. Alex brings it back in a couple of weeks, when it's harder (path ⑤)." },
+          note: "Door closed for tonight — Jordan keeps the board. Alex brings it back in two weeks, when it's harder (path ⑤)." },
       ],
     },
     {
@@ -265,46 +304,36 @@ const act2b = {
           "…or maybe that's on me. i wanted 40% in week two. i don't know if i'm being fair to her. that's why i'm telling you and not her.",
         ]),
       ],
-      fork: "founder's reply — none of these says “fire”",
+      fork: "founder's reply",
       to: "Alex",
       options: [
         { key: "talk", label: "I'll talk to her.", reply: "i'll talk to her. tonight, if she's up.",
-          then: [A("alex", "thank you. i'm sorry it's yours.")], next: "Act 3 — Jordan's thread (path ①③④)" },
-        { key: "demo", label: "I know. Demo night.", gate: "missed demo night",
-          reply: "i know. demo night.",
-          then: [A("alex", "yeah. demo night. i didn't want to be the one to say it."), A("alex", "are you going to talk to her?")],
-          note: "The player who noticed says it first — Alex is relieved not to be the accuser.", next: "Act 3 — Jordan's thread" },
-        { key: "different", label: "She said this one's different.", reply: "she said this one's different. i believe her.",
-          then: [A("alex", "yeah. she did.")],
-          note: "Loyal, warm, and a week of slack v2 doesn't have. She keeps the board.", next: "path ②" },
+          then: [A("alex", "thank you. i'm sorry it's yours.")], next: "Act 3 — Jordan's thread (paths ①③④)" },
+        { key: "week", label: "Let's see how her first week goes.", reply: "let's see how her first week on the board goes. then we talk.",
+          then: [A("alex", "okay. one week.")],
+          note: "Sounds like management. It's a delay — and Alex is now counting.", next: "path ② / ⑤" },
         { key: "unfair", label: "That's not fair to her.", reply: "that's not fair to her. she's been here since before there was anything to be here for.",
           then: [A("alex", "maybe not. forget i said it.")],
-          note: "Sounds like the most loyal answer in the game. Costs Alex morale and trust — he said the hard thing and got told off for it. She keeps the board.", next: "path ②" },
+          note: "The most loyal-sounding answer in the game. Costs Alex morale and trust — he said the hard thing and got told off.", next: "path ② / ⑤" },
       ],
-      after: [CB("<b>Why this isn't obvious:</b> it lands an hour after the best thing Jordan has said all run; Alex opens with praise and closes by doubting his own motives (the 40% callback is real — the player was there); and both 'keep' chips read as loyalty, not avoidance. The only thing on the table is <i>“I'll talk to her”</i> — which could mean anything.")],
+      after: [CB("<b>Why this isn't obvious:</b> it lands right after the best thing Jordan has said all run; Alex opens with praise and closes by doubting his own motives (the 40% callback is real — the player was there); and both other chips read as patience or loyalty. Nothing says “fire” — only <i>“I'll talk to her”</i>, which could mean anything.")],
     },
   ],
 };
 
 const priya = {
-  time: "10:30pm · Priya's DM · optional",
-  title: "Priya — only if you text her",
-  note: "A standing option on Priya's thread during the sitting, never pushed. She gives a way to think, not an answer.",
+  time: "10:20pm · Priya's DM · optional",
+  title: "Priya — appears only after Alex has spoken",
+  note: "Cut candidate. Once Alex has raised it, Priya's thread gets one chip until Jordan's text arrives. She gives a way to think, not an answer. If it's cut, the arc goes straight to Jordan's thread.",
   beats: [
     {
       msgs: [
         OUT("Priya", "can i ask you something that isn't about the product?"),
         A("priya", [
-          "always. is it jordan?",
-          "i kept a co-founder a year too long once. he was lovely. he was also always one week behind, and every week he had a good reason.",
+          "always. is it jordan? i saw the thumbs up.",
+          "i kept a co-founder a year too long once. lovely guy. always one week behind, and every week he had a good reason.",
           "the question isn't whether she's good. she's good. it's whether she can run at the speed you need now — and whether anyone has ever told her what that speed is.",
         ]),
-      ],
-      fork: "founder's reply",
-      to: "Priya",
-      options: [
-        { key: "nobody", label: "Nobody has.", reply: "nobody has.", then: [A("priya", "then that's the first thing you owe her. whatever comes after.")] },
-        { key: "thanks", label: "Thank you.", reply: "thank you. that helps more than it should.", then: [A("priya", "go easy on yourself tonight. and on her.")] },
       ],
     },
   ],
@@ -352,9 +381,6 @@ const rung2 = (warmNext, realNext) => ({
     { key: "six", label: "Launch day you went home at six.", gate: "launch_going_home",
       reply: "launch day you went home at six.",
       then: [A("jordan", ["that's not fair. i had work at eight.", "…it's a little fair."])], next: realNext },
-    { key: "heic", label: "The HEIC fix. Two days late. Clean — but late.", gate: "demo night",
-      reply: "the photo picker. you said tomorrow. it was two days. it was clean. it was late.",
-      then: [A("jordan", "you remember that?")], next: realNext },
   ],
 });
 
@@ -481,7 +507,7 @@ const paths = {
 
   declined: {
     label: "② Alex's door declined",
-    sum: "“She said this one's different” / “That's not fair to her” at 10:12pm. Jordan keeps the board. What the next weeks look like.",
+    sum: "“Let's see how her first week goes” / “That's not fair to her” at 10:12pm. Jordan keeps the board. What the next weeks look like.",
     acts: [
       {
         time: "wk 19–20", title: "She keeps the board",
@@ -582,7 +608,7 @@ const paths = {
             to: "Alex",
             options: [
               { key: "talk", label: "I'll talk to her. Properly this time.", reply: "i'll talk to her. properly this time.", then: [A("alex", "okay.")], next: "below" },
-              { key: "different", label: "She's almost there.", reply: "she's almost there.",
+              { key: "almost", label: "She's almost there.", reply: "she's almost there.",
                 then: [A("alex", "sure.")], note: "The last time Alex raises it. From here, only the report card will." },
             ],
           },
@@ -609,13 +635,15 @@ const paths = {
 // ═════════════════════════════════════════════════════════════════════════
 
 const intro = `<div class="intro">
-  <h2>How the decision surfaces — without a “fire Jordan” chip</h2>
+  <h2>What changed in this draft</h2>
   <ol>
-    <li><b>Alex's DM is the door, as before</b> — but it lands 17 minutes after Jordan volunteered for v2's key screen, lit up. Alex praises her, names the pattern (“a week behind on everything since demo night”), and doubts his own motives. The chips are “I'll talk to her” / “She said this one's different” / “That's not fair to her”.</li>
-    <li><b>“I'll talk to her” opens her thread, not a verdict.</b> She texts first, with a sketch. Each honest step has a warm way out.</li>
-    <li><b>Jordan says the word, not the player.</b> At the top of the ladder she asks “are you asking me to leave?”. The major decision is a one-word answer to a friend.</li>
+    <li><b>The door is a chat, not a card.</b> Alex wants to spend $1,500 of what's left on a growth push and needs a yes tonight. The big decision is whether to <i>stop him</i> and get everyone on one thread.</li>
+    <li><b>The player runs the meeting.</b> Every message in Act 1 answers someone the player called on, so the group chat never floods.</li>
+    <li><b>The pivot has to be dug out.</b> The obvious plans (“get users”, “smarter matching”) end the night without it. Asking “what happened to the best matches?” and then “what did Maya do after she matched?” leads everyone to the idea together.</li>
+    <li><b>Alex's DM is still the door to the Jordan question</b>, right after she claims the board. At most 3 options per beat, and none of them says “fire”.</li>
+    <li><b>Priya's side chat</b> only appears after Alex has spoken, and is marked as a cut candidate.</li>
   </ol>
-  <p style="margin-top:8px;color:var(--dim);font-size:13px">⚑ marks a chip that exists only if the run banked it. All texts are drafts.</p>
+  <p style="margin-top:8px;color:var(--dim);font-size:13px">⚑ marks an option that only exists if the run earned it. All texts are drafts.</p>
 </div>`;
 
 function renderPaths() {
