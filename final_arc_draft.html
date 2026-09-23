@@ -432,7 +432,7 @@ const paths = {
             fork: "the decision — a one-word answer to her question",
             to: "Jordan",
             options: [
-              { key: "yes", label: "Yes. I think I am.", reply: "yes. i think i am.", next: "Act 4" },
+              { key: "yes", label: "Yes. It's not working out.", reply: ["yes.", "it's not working out, jordan. plusone needs people who can go full speed right now, and that's not where you are. i'm taking you off the founding team."], next: "Act 4" },
               { key: "ask_back", label: "I'm asking what you think.", reply: "i'm asking what you think.",
                 then: [A("jordan", ["i think if i were you i'd have asked a month ago.", "so. are you?"])],
                 note: "Buys one line. The yes / no comes back, with nothing else on it." },
@@ -628,7 +628,7 @@ const paths = {
             fork: "the decision",
             to: "Jordan",
             options: [
-              { key: "yes", label: "Yes. I think I am.", reply: "yes. i think i am.",
+              { key: "yes", label: "Yes. It's not working out.", reply: ["yes.", "it's not working out, jordan. plusone needs people who can go full speed right now, and that's not where you are. i'm taking you off the founding team."],
                 then: [A("jordan", ["okay.", "you could have said this two weeks ago. i'd have taken it better."])],
                 note: "The firing plays as in path ①, two weeks later: less runway, Alex has been carrying both halves, and her first line lands harder.", next: "Act 4, as in ①" },
               { key: "no", label: "No. Forget it. Go to bed.", reply: "no. forget it. go to bed.",
