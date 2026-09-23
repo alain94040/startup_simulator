@@ -108,7 +108,11 @@
         when: { took: entry },
         choices: [
           {
-            key: "bed", label: "Sounds great. Go to bed.",
+            // Labels are the founder's intent, bubbles are the words (see
+            // ff_family: "Let them invest" → "can I come over for dinner").
+            // The warm exits are labelled as what they are — choosing not to
+            // say it — so they don't read as merely polite replies.
+            key: "bed", label: "Let her have tonight",
             reply: "sounds great. go to bed.",
             journal: (s) => again(s)
               ? "Jordan texted at 2am: the RSVP flow is almost done, this weekend for sure. I told her it sounded great. Again."
@@ -117,7 +121,7 @@
             fx(s) { keepHer(s, final); return null; },
           },
           {
-            key: "real", label: "Can I ask you something real?",
+            key: "real", label: (s) => again(s) ? "Ask again if she can keep up" : "Ask if she can keep up",
             reply: (s) => again(s) ? "it's 2am, jordan. can i ask you something real?" : "it sounds great. can i ask you something real?",
             journal: null,
           },
@@ -152,20 +156,20 @@
         when: { took: [id("jordan_ladder_go") + ":ask"] },
         choices: [
           {
-            key: "nothing", label: "No, nothing. Let's do it.",
+            key: "nothing", label: "Back off",
             reply: "no, nothing. forget it. let's do it.",
             journal: "Asked Jordan if she could really build the board around her job. She said yes, and asked if Alex had said something. I said no.",
             effects: { scene: null, say: { char: "jordan", text: "thank you. you won't regret it." } },
             fx(s) { s.jordan_doubted = true; keepHer(s, final); return null; },
           },
           {
-            key: "late", label: "Everything's landed a week late.",
+            key: "late", label: "Name the pattern: everything's a week late",
             reply: "no, i'm saying it. everything's landed about a week late. the picker, the ios sprint, alex's PR.",
             journal: null,
             effects: { say: { char: "jordan", text: "…has it?\n\ni mean — each of those had a reason." } },
           },
           {
-            key: "demo", label: "Demo night. You weren't there.",
+            key: "demo", label: "Name the pattern: demo night",
             if: (s) => !!s.demo_jordan_absent,
             reply: "demo night. you weren't there, and it was your sister's friend testing.",
             journal: null,

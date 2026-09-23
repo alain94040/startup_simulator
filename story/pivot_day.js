@@ -312,7 +312,10 @@
             when: { took: ["pivot_alex_door:say"] },
             choices: [
               {
-                key: "talk", label: "I'll talk to her.",
+                // Labels carry the founder's intent; the bubble is what a person
+                // would actually type (the same split as ff_family's "Let them
+                // invest" → "can I come over for dinner").
+                key: "talk", label: "I'll talk to her about her pace.",
                 reply: "i'll talk to her. tonight, if she's up.",
                 journal: null,
                 effects: { say: { char: "alex", text: "thank you. i'm sorry it's yours." } },

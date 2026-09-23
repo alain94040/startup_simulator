@@ -89,7 +89,7 @@
         },
         choices: [
           {
-            key: "talk", label: (s) => s.jordan_kept ? "I'll talk to her. Properly this time." : "I'll talk to her.",
+            key: "talk", label: (s) => s.jordan_kept ? "I'll talk to her about her pace. Properly this time." : "I'll talk to her about her pace.",
             reply: (s) => s.jordan_kept ? "i'll talk to her. properly this time." : "i'll talk to her. tonight.",
             journal: null,
             effects: { scene: "firing", say: { char: "alex", text: "okay." } },
