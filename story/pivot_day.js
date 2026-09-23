@@ -98,7 +98,7 @@
   const callOnChoices = (first) => ["alex", "priya", "jordan"].map(who => ({
     key: who, label: CALL_ON[who].label, branch: true,
     if: (s) => !asked(s).includes(who),
-    reply: (s) => (first ? "ok. one question tonight: what are we building monday. " : "") + CALL_ON[who].reply,
+    reply: (s) => (first ? "thanks for jumping on, everyone. " : "") + CALL_ON[who].reply,
     journal: null,
     fx(s) { s.pivot_asked = asked(s).concat(who); return null; },
   }));
@@ -122,8 +122,12 @@
         beats: [
           // ── 1 · the round-table ──────────────────────────────────────────
           {
-            id: "pivot_roundtable", char: "summit", system: true,
-            text: "Alex, Jordan and Priya are on the thread. It's your meeting — who speaks first?",
+            // The thread opens on the context, not a blank room: Alex's pitch
+            // lived in the founders' chat, so he restates it for Priya — the
+            // player lands knowing what the meeting is about, and that it's
+            // theirs to run.
+            id: "pivot_roundtable", char: "summit", speaker: "alex",
+            text: "ok, everyone's here. context for priya: i want $1,500 of what's left for a growth push — mixer at the climbing gym, referral codes, flyers on three campuses. the gym holds the slot till midnight.\n\nbefore i book it, we talk it through. so: what are we building monday? your meeting.",
             when: { took: ["pivot_hail_mary:hold"] },
             choices: callOnChoices(true),
           },
@@ -238,7 +242,7 @@
           {
             // Every growth exit closes the room here, with Priya's number.
             id: "pivot_close_growth", char: "summit", speaker: "priya",
-            text: "your call, and it was a real argument. watch one number for me: of your next 50 matches, how many turn into a plan to meet.\n\nzero at fifty and you move — no second meeting. deal?",
+            text: "okay, it's your call. do one thing for me: keep count. of the next 50 matches, how many actually make plans to meet up?\n\nif the answer is zero, more users won't fix it. the app itself is the problem, and you change it. deal?",
             when: { took: [["pivot_fork:users", "pivot_dig:users", "pivot_day_decide:growth"]] },
             choices: [
               {
@@ -539,8 +543,8 @@
         },
         choices: [
           {
-            key: "pivot_now", label: "Pivot now — late beats never",
-            reply: "zero at fifty. priya said we'd know, and we know. we pivot — now, with whatever runway is left.",
+            key: "pivot_now", label: "Change the app now, with what's left",
+            reply: "zero plans out of 54 matches. priya said we'd know, and now we do. we change the app — now, with whatever money is left.",
             journal: "Zero plans to meet out of 54 matches. Alex erased his own argument. We're pivoting late, with runway nearly spent. The lesson was on the table weeks ago.",
             fx(s, e) {
               s.activities_pivot = true;
