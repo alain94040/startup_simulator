@@ -51,7 +51,10 @@
         // This IS the cost of keeping her, felt instead of narrated.
         id: "jordan_board_promise", char: "jordan",
         text: (s, e) => [
-          "RSVP flow is done-ish! join screen next. this weekend for real 🙌",
+          // After a deal whose date came and went, her first promise owns it.
+          s.jordan_bargained
+            ? "i know we said it'd be live by now. it's SO close. join screen this weekend 🙌"
+            : "RSVP flow is done-ish! join screen next. this weekend for real 🙌",
           "sorry, launch week at work 😩 board by friday. promise.",
           "almost there. i know i keep saying that. this is the last week, i swear.",
         ][Math.min(2, e.timesResolved("jordan_board_promise"))],
@@ -109,22 +112,42 @@
         // Alex's door, one last time. Not a complaint — a status, from someone
         // who said his piece once and won't say it the same way twice. Or,
         // after a late pivot (no pivot night), the first time he says it.
+        //
+        // What he says depends on what already happened, not merely on
+        // Jordan having kept the board: whether he ever got to make his case
+        // (the founder may have said "not tonight"), and whether the founder
+        // then opened her thread (s.jordan_prior_talk, see jordan_talk.js).
+        // After the bargain he waits out her three weeks, and says so.
         id: "jordan_door_again", char: "alex",
-        text: (s) => s.jordan_kept
-          ? "matching's done. repointed, tested, merged.\n\nboard's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
-          : "can i say something i've been sitting on?\n\njordan's great. i mean that. she's also been a week behind on everything since demo night — the picker, the ios sprint, the review on my PR. every time there's a good reason. every time it's a week.\n\nand v2 doesn't have a week in it. …or maybe that's on me. i don't know if i'm being fair to her.",
+        text: (s, e) => s.jordan_prior_talk === "deal"
+          ? "three weeks today. board's at the RSVP button.\n\nshe said if it wasn't live she'd leave on her own. she hasn't said anything, and i don't think she's going to."
+          : e.took("pivot_alex_door:say")
+            ? "matching's done. repointed, tested, merged.\n\nboard's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
+            : (e.done("pivot_alex_door")
+              ? "the thing i wanted to say the other night. i'll just say it.\n\n"
+              : "can i say something i've been sitting on?\n\n")
+              + "jordan's great. i mean that. she's also been a week behind on everything since demo night — the picker, the ios sprint, the review on my PR. every time there's a good reason. every time it's a week."
+              + (e.done("pivot_alex_door") ? " and the board's been at the RSVP button for two weeks." : "")
+              + "\n\nand v2 doesn't have a week in it. …or maybe that's on me. i don't know if i'm being fair to her.",
         when: {
           if: (s, e) => s.activities_pivot && s.pivot_week != null
             && e.cast.get("jordan").active && !s.jordan_resolved && !s.jordan_kept_final
             && boardTodo(s)
             && (s.jordan_kept
-              ? s.week >= (s.jordan_kept_week || 0) + 2
+              ? s.week >= (s.jordan_kept_week || 0) + (s.jordan_prior_talk === "deal" ? 3 : 2)
               : !e.done("pivot_alex_door") && s.week >= s.pivot_week + 1),
         },
         choices: [
           {
-            key: "talk", label: (s) => s.jordan_kept ? "I'll talk to her about her pace. Properly this time." : "I'll talk to her about her pace.",
-            reply: (s) => s.jordan_kept ? "i'll talk to her. properly this time." : "i'll talk to her. tonight.",
+            // "Properly this time" only if the founder told Alex they would
+            // talk to her and then didn't finish the sentence.
+            key: "talk",
+            label: (s) => s.jordan_prior_talk === "deal" ? "I'll hold her to the deal."
+              : s.jordan_prior_talk ? "I'll talk to her about her pace. Properly this time."
+                : "I'll talk to her about her pace.",
+            reply: (s) => s.jordan_prior_talk === "deal" ? "i'll talk to her. we had a deal."
+              : s.jordan_prior_talk ? "i'll talk to her. properly this time."
+                : "i'll talk to her. tonight.",
             journal: null,
             effects: { scene: "firing", say: { char: "alex", text: "okay." } },
           },

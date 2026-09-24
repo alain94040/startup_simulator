@@ -37,8 +37,15 @@
   // the board (built at her part-time pace, see world.js). The first time,
   // Alex opens the door once more two weeks later (jordan_door_again); the
   // second time is final.
-  function keepHer(s, final) {
+  // `how` records what the founder actually said to HER on the pivot night —
+  // "bed" (let her have tonight), "backed" (started to ask, then backed off),
+  // "folded" (she asked straight out; the answer was no), "deal" (told her,
+  // then took her bargain). The second room reads it: "you said no last time"
+  // only makes sense if you did. Keeping her without ever opening her thread
+  // (Alex's "not tonight", "see how her week goes") leaves it unset.
+  function keepHer(s, final, how) {
     if (!s.jordan_kept) { s.jordan_kept = true; s.jordan_kept_week = s.week; }
+    if (!final && how) s.jordan_prior_talk = how;
     if (final) s.jordan_kept_final = true;
   }
 
@@ -90,9 +97,17 @@
   // exit the last one (no third door).
   function jordanTalk(sfx, entry, final) {
     const id = (b) => b + sfx;
-    // The second chance proper — Jordan kept the board two weeks ago and it's
-    // still not built — is worded differently from a first conversation.
-    const again = (s) => !!s.jordan_kept;
+    // Two different facts shape the wording, and they must not be conflated:
+    //   - `second`: which room. The pivot night is midnight, right after the
+    //     call; the second room is a later night (2am, after her day job) —
+    //     including after a late pivot, where there was no pivot night at all.
+    //   - `prior(s)`: what the founder already said to Jordan herself (see
+    //     keepHer). Only the second room has one.
+    const second = sfx !== "";
+    const prior = (s) => (second ? s.jordan_prior_talk || null : null);
+    // She's been holding the board since the pivot night, where she promised
+    // "a first version by sunday" in front of everyone.
+    const promised = (s, e) => second && e.done("pivot_board_claim");
 
     const yes = {
       key: "yes", label: "Yes. It's not working out.",
@@ -102,9 +117,14 @@
     const no = {
       key: "no", label: "No. Forget I said anything.",
       reply: "no. no. forget i said anything.",
-      journal: "Jordan asked me straight out if I was asking her to leave. I said no. She said you can't un-ask that.",
-      effects: { scene: null, say: { char: "jordan", text: "okay.\n\nyou can't un-ask that, you know." } },
-      fx(s) { s.jordan_folded = true; keepHer(s, final); return null; },
+      journal: (s) => prior(s) === "folded"
+        ? "Jordan asked me again if I was asking her to leave. Again I said no."
+        : "Jordan asked me straight out if I was asking her to leave. I said no. She said you can't un-ask that.",
+      effects: {
+        scene: null,
+        say: { char: "jordan", text: (s) => prior(s) === "folded" ? "okay.\n\nthat's twice now." : "okay.\n\nyou can't un-ask that, you know." },
+      },
+      fx(s) { s.jordan_folded = true; keepHer(s, final, "folded"); return null; },
     };
 
     return [
@@ -113,10 +133,12 @@
         // She texts first. She has no idea — and nothing is built yet, it's
         // all a promise. That is the pattern, in one message.
         id: id("jordan_ladder_open"), char: "jordan",
-        text: (s) => again(s)
+        text: () => second
           ? "almost done with the RSVP flow 🙃\n\nthis weekend for sure. you're going to love it."
           : "couldn't sleep. i've got the whole board in my head. thursday, climbing gym, 6 going, 2 spots, one big 'i'm in' button.\n\nno profiles on the front screen. no chat until you've said yes to something.\n\nfirst version by sunday. monday latest. you're going to love it.",
-        when: { took: entry },
+        // After the bargain, the second room opens on the deal coming due
+        // (jordan_deal_due) instead of climbing the ladder a second time.
+        when: { took: entry, if: (s) => !s.jordan_bargained },
         choices: [
           {
             // Labels are the founder's intent, bubbles are the words (see
@@ -125,22 +147,28 @@
             // say it — so they don't read as merely polite replies.
             key: "bed", label: "Let her have tonight",
             reply: "sounds great. go to bed.",
-            journal: (s) => again(s)
-              ? "Jordan texted at 2am: the RSVP flow is almost done, this weekend for sure. I told her it sounded great. Again."
+            journal: (s) => second
+              ? "Jordan texted at 2am: the RSVP flow is almost done, this weekend for sure. I told her it sounded great." + (prior(s) ? " Again." : "")
               : "Jordan texted at midnight with the whole board in her head, first version by Sunday. I told her it sounded great. I didn't ask.",
             effects: { scene: null, say: { char: "jordan", text: "💜 night" } },
-            fx(s) { keepHer(s, final); return null; },
+            fx(s) { keepHer(s, final, "bed"); return null; },
           },
           {
-            key: "real", label: (s) => again(s) ? "Ask again if she can keep up" : "Ask if she can keep up",
-            reply: (s) => again(s) ? "it's 2am, jordan. can i ask you something real?" : "it sounds great. can i ask you something real?",
+            key: "real",
+            label: (s) => prior(s) === "folded" ? "Bring back what she asked you last time"
+              : prior(s) === "backed" ? "Ask again if she can keep up"
+                : "Ask if she can keep up",
+            reply: (s) => prior(s) === "folded" ? "it's 2am, jordan. about what you asked me two weeks ago."
+              : second ? "it's 2am, jordan. can i ask you something real?"
+                : "it sounds great. can i ask you something real?",
             journal: null,
           },
         ],
       },
       {
         id: id("jordan_ladder_go"), char: "jordan",
-        text: (s) => again(s) ? "…go." : "…that's a scary sentence at midnight. go.",
+        text: (s) => prior(s) === "folded" ? "…i knew you'd come back to that. go."
+          : second ? "…go." : "…that's a scary sentence at midnight. go.",
         // Every step of the talk gates on the answer that CONTINUES it, not
         // just on the previous beat resolving: a warm exit closes the room,
         // and a plain `after` chain would then surface the next step later,
@@ -149,10 +177,13 @@
         choices: [
           {
             key: "ask",
-            label: (s) => again(s) ? "You said that two weeks ago." : "Sunday, with the job — can you actually do that?",
-            reply: (s) => again(s)
-              ? "you said that two weeks ago. the board was supposed to take three weeks, and it's still not there."
-              : "sunday. with the job. can you actually do that?",
+            label: (s, e) => promised(s, e) ? "You said Sunday, two weeks ago."
+              : second ? "This weekend, with the job — can you actually do that?"
+                : "Sunday, with the job — can you actually do that?",
+            reply: (s, e) => promised(s, e)
+              ? "you said sunday, two weeks ago. it's still not there."
+              : second ? "this weekend. with the job. can you actually do that?"
+                : "sunday. with the job. can you actually do that?",
             journal: null,
           },
           {
@@ -160,17 +191,19 @@
             reply: "…never mind. it's late. get some sleep.",
             journal: "Started to ask Jordan whether she could really build the board around her job. Then I told her to get some sleep.",
             effects: { scene: null, say: { char: "jordan", text: "okay?? you're being weird. night 💜" } },
-            fx(s) { s.jordan_doubted = true; keepHer(s, final); return null; },
+            fx(s) { s.jordan_doubted = true; keepHer(s, final, "backed"); return null; },
           },
         ],
       },
       {
         // She pushes back — she genuinely thinks she's been doing fine.
         id: id("jordan_ladder_defend"), char: "jordan",
-        text: (s) => (again(s)
-          ? "i know. the job's been insane. it'll be different once—"
-          : "yes? i've been doing it since day one.")
-          + "\n\nwhy — did alex say something?",
+        text: (s) => prior(s) === "folded"
+          ? "we did this two weeks ago. you asked, i said yes, and then you said forget it.\n\nis this alex again?"
+          : prior(s) === "backed"
+            ? "yes. i said yes last time too.\n\nis this what you almost asked me two weeks ago? did alex say something?"
+            : (second ? "yes? it's nearly there. work had a big couple of weeks, that's all." : "yes? i've been doing it since day one.")
+              + "\n\nwhy — did alex say something?",
         when: { took: [id("jordan_ladder_go") + ":ask"] },
         choices: [
           {
@@ -178,13 +211,20 @@
             reply: "no, nothing. forget it. let's do it.",
             journal: "Asked Jordan if she could really build the board around her job. She said yes, and asked if Alex had said something. I said no.",
             effects: { scene: null, say: { char: "jordan", text: "thank you. you won't regret it." } },
-            fx(s) { s.jordan_doubted = true; keepHer(s, final); return null; },
+            fx(s) { s.jordan_doubted = true; keepHer(s, final, "backed"); return null; },
           },
           {
             key: "late", label: "Name the pattern: everything's a week late",
             reply: "no, i'm saying it. everything's landed about a week late. the picker, the ios sprint, alex's PR.",
             journal: null,
-            effects: { say: { char: "jordan", text: "…has it?\n\ni mean — each of those had a reason." } },
+            effects: {
+              say: {
+                char: "jordan",
+                text: (s) => prior(s) === "folded"
+                  ? "you said all that last time.\n\nand each of those had a reason."
+                  : "…has it?\n\ni mean — each of those had a reason.",
+              },
+            },
           },
           {
             key: "demo", label: "Name the pattern: demo night",
@@ -199,7 +239,9 @@
         // She names it. The founder never picks "fire" from a menu — they
         // answer a friend's question.
         id: id("jordan_ladder_names"), char: "jordan",
-        text: "are you asking me to leave?",
+        text: (s) => prior(s) === "folded"
+          ? "last time i asked if you were asking me to leave, and you said no.\n\nare you now?"
+          : "are you asking me to leave?",
         when: { took: [id("jordan_ladder_defend") + ":late|demo"] },
         choices: [
           yes,
@@ -213,7 +255,9 @@
       },
       {
         id: id("jordan_ladder_names_again"), char: "jordan",
-        text: "i think if i were you i'd have asked a month ago.\n\nso. are you?",
+        text: (s) => prior(s) === "folded"
+          ? "you said no last time, and i believed you.\n\nso. are you?"
+          : "i think if i were you i'd have asked a month ago.\n\nso. are you?",
         when: { took: [id("jordan_ladder_names") + ":ask_back"] },
         choices: [yes, no],
       },
@@ -222,10 +266,13 @@
       {
         // Pushback 1: she protests — and she's partly right.
         id: id("firing_protest"), char: "jordan",
-        text: (s, e) => (again(s) ? "you could have said this two weeks ago. i'd have taken it better.\n\n" : "")
-          + "no. wait.\n\n"
-          + (again(s) ? "over text? at 2am?" : "you're doing this over text? at midnight? the night we finally figured out what we're building?")
-          + "\n\nthe board is my idea. "
+        // What she can hold against the founder depends on what they already
+        // said to her — and she can't reproach a conversation she never had.
+        text: (s, e) => "no. wait.\n\n"
+          + (prior(s) === "folded" ? "two weeks ago i asked you straight out, and you said no.\n\n"
+            : prior(s) === "backed" ? "you could have said this two weeks ago. i'd have taken it better.\n\n" : "")
+          + (second ? "over text? at 2am?" : "you're doing this over text? at midnight? the night we finally figured out what we're building?")
+          + "\n\n" + (e.done("pivot_board_claim") ? "the board is my idea. " : "")
           + (e.took("first_screen:intake_interviews|intake") ? "the intake screen was my idea. " : "the first screen anyone ever saw was mine. ")
           + "i turned down a real job for this, you KNOW that.",
         when: { took: [[id("jordan_ladder_names") + ":yes", id("jordan_ladder_names_again") + ":yes"]] },
@@ -242,28 +289,54 @@
         // Pushback 2: she bargains. Taking the bargain is backing off with a
         // deadline attached — the most reasonable-sounding way to keep her.
         id: id("firing_bargain"), char: "jordan",
-        text: (s) => (again(s) ? "then give me two more weeks." : "then give me the three weeks.")
+        text: () => (second ? "then give me two more weeks." : "then give me the three weeks.")
           + "\n\nif the board isn't live by then, i'll leave on my own. you won't even have to say it.\n\nthat's fair. you know that's fair.",
         when: { after: [id("firing_protest")] },
         choices: [
           {
             key: "no", label: "No. I'm sorry.",
-            reply: "no. i'm sorry. if i say yes, we have this conversation again in three weeks, and it's worse for both of us.",
+            reply: () => "no. i'm sorry. if i say yes, we have this conversation again in " + (second ? "two" : "three") + " weeks, and it's worse for both of us.",
             journal: null,
           },
           {
-            key: "deal", label: (s) => again(s) ? "…Okay. Two weeks." : "…Okay. Three weeks.",
-            reply: (s) => again(s) ? "…okay. two weeks." : "…okay. three weeks.",
+            key: "deal", label: () => second ? "…Okay. Two weeks." : "…Okay. Three weeks.",
+            reply: () => second ? "…okay. two weeks." : "…okay. three weeks.",
             journal: "Told Jordan it wasn't working out, then took her deal: more time on the board, and if it isn't live she leaves on her own.",
             effects: { scene: null, say: { char: "jordan", text: "thank you. you'll see." } },
-            fx(s) { s.jordan_bargained = true; keepHer(s, final); return null; },
+            fx(s) { s.jordan_bargained = true; keepHer(s, final, "deal"); return null; },
           },
         ],
       },
+      // The deal coming due. Taken on the pivot night, the bargain is a
+      // promise with a date on it, so the second room doesn't climb the
+      // ladder again: Alex's door opens on the day the three weeks run out,
+      // and Jordan knows what day it is. She already argued twice; what's
+      // left is holding her to her own words, or one more weekend.
+      ...(second ? [{
+        id: id("jordan_deal_due"), char: "jordan",
+        text: "i know what day it is.\n\nthe RSVP flow works. it's just the join screen now. one more weekend and it's live, i promise.",
+        when: { took: entry, if: (s) => !!s.jordan_bargained },
+        choices: [
+          {
+            key: "hold", label: "Hold her to the deal",
+            reply: "you said if it wasn't live in three weeks, you'd go on your own. it isn't live, jordan.",
+            journal: null,
+          },
+          {
+            key: "extend", label: "Give her one more weekend",
+            reply: "okay. one more weekend.",
+            journal: "Jordan's three weeks ran out with the board still not live. She asked for one more weekend, and I gave it to her.",
+            effects: { scene: null, say: { char: "jordan", text: "thank you. you'll see 💜" } },
+            fx(s) { keepHer(s, final); return null; },
+          },
+        ],
+      }] : []),
       {
         id: id("firing_stops"), char: "jordan",
-        text: "…okay.\n\ni honestly didn't see this coming. i thought i was doing fine.",
-        when: { took: [id("firing_bargain") + ":no"] },
+        text: (s, e) => second && e.took(id("jordan_deal_due") + ":hold")
+          ? "…yeah.\n\ni really thought i'd make it."
+          : "…okay.\n\ni honestly didn't see this coming. i thought i was doing fine.",
+        when: { took: [second ? [id("firing_bargain") + ":no", id("jordan_deal_due") + ":hold"] : id("firing_bargain") + ":no"] },
         choices: [
           {
             // The cold ending. After two pushbacks, "sorry" is the one reply
@@ -275,7 +348,7 @@
             fx(s, e) {
               e.say({
                 char: "jordan",
-                text: "sorry.\n\ni turned down a real job for this. every evening, every weekend. and i get a text at midnight and 'sorry'.\n\nyou didn't even ask me anything. you'd decided before you opened this thread.\n\nanything else about shares or accounts can go through a lawyer. don't text me.",
+                text: "sorry.\n\ni turned down a real job for this. every evening, every weekend. and i get a text at " + (second ? "2am" : "midnight") + " and 'sorry'.\n\nyou didn't even ask me anything. you'd decided before you opened this thread.\n\nanything else about shares or accounts can go through a lawyer. don't text me.",
               });
               e.say({ char: "jordan", outgoing: true, undelivered: true, text: "jordan, the app store account is still on yours. can we at least—" });
               jordanLeaves(s, e, "cold");
@@ -355,7 +428,7 @@
           {
             key: "maya", label: "You saw Maya before any of us did.",
             if: (s, e) => e.took("launch_first_signup:watch"),
-            reply: "you saw maya before any of us did. launch day, and again tonight. we're building v2 on something you noticed.",
+            reply: () => "you saw maya before any of us did" + (second ? ", on launch day" : ". launch day, and again tonight") + ". we're building v2 on something you noticed.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
               + " gets papered this week; Alex has the board from Monday. I told her v2 is built on something she noticed first.",
             fx(s, e) {

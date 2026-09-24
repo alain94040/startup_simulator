@@ -345,7 +345,7 @@
               {
                 key: "later", label: "Not tonight.",
                 reply: "not tonight. it's been a long one.",
-                journal: "Alex wanted to say something about Jordan after the pivot call. I said not tonight.",
+                journal: "After the pivot call, Alex wanted to tell me something — just the two of us. I said not tonight.",
                 effects: { scene: null, say: { char: "alex", text: "sure." } },
                 fx(s) { s.jordan_kept = true; s.jordan_kept_week = s.week; return null; },
               },

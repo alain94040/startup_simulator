@@ -10,7 +10,11 @@
 // weeks later (jordan_door_again, story/jordan_arc.js), or for the first time
 // after a late pivot (the fifty-match verdict skips the pivot night). Same
 // conversation, same beats (story/jordan_talk.js), ids suffixed "_2", and
-// every keep-her exit in here is final — there is no third door.
+// every keep-her exit in here is final — there is no third door. The wording
+// follows what the founder already said to her (s.jordan_prior_talk): after
+// "forget I said anything" she remembers it, and after the bargain the room
+// opens on her three weeks running out (jordan_deal_due_2) instead of the
+// ladder.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {

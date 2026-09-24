@@ -170,7 +170,12 @@
                 : s.pivot_deferred ? "The default direction won by inertia."
                   : ended ? "The run ended without the product ever being questioned." : null },
         ]),
-        ["You listened first, built second, and turned the ship while you still could.",
+        // The top line praises turning the ship, so it can't go to a founder
+        // who was shown the evidence and kept the old product anyway — good
+        // research and a lean build can still carry that run past 70.
+        [!s.activities_pivot && (s.pivot_deferred || g.done("pivot_day_decide"))
+          ? "You listened first and built lean — then kept the old product when the evidence said to change it."
+          : "You listened first, built second, and turned the ship while you still could.",
           "Some signal reached the roadmap; a lot of it didn't.",
           "The product was built on guesses and defended against evidence."]);
     }
