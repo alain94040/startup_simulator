@@ -1952,13 +1952,25 @@ function doAct(nodeId, key, charId) {
   // be caught the moment it happens — see pingOtherSceneThreads.
   const preSceneLens = inScene ? sceneThreadLens() : null;
   game.act(nodeId, key);
-  if (charId) threadRendered[charId] = game.threads[charId].length;
+  const entering = !preScene && game.scene;
+  if (charId) threadRendered[charId] = entering ? repliedThrough(charId, preSeq) : game.threads[charId].length;
   // your own mid-week choices ink into the journal mirror at once (ungLowed);
   // only week-turn consequences get the reveal glow (advanceWeek captures jBefore here).
   jShown = journalMirror().length;
 
-  // entering a scene → the world freezes; play its entry cinematic then the beats
-  if (!preScene && game.scene) { enterScene(preSeq, charId); return; }
+  // entering a scene → the world freezes; play its entry cinematic then the beats.
+  // When the answer that opens the room was typed into the thread on screen
+  // (agreeing to Jordan's "let's sit down"), let the player see it land there
+  // first — cutting straight to the cinematic sent a message nobody saw.
+  if (entering) {
+    const onScreen = charId && surface === "msgs" && selected === charId && viewingThread();
+    if (!onScreen) { enterScene(preSeq, charId); return; }
+    replyExpanded = false;
+    render();
+    uiBusy = true;
+    setTimeout(() => { uiBusy = false; enterScene(preSeq, charId); }, 1600);
+    return;
+  }
   if (inScene) { focusFlow(preSceneLens); return; }
 
   render();
@@ -2048,6 +2060,15 @@ function sceneUnread(charId) {
   return sceneThread(charId).slice(scRendered[charId] || 0).some(m => m.type === "incoming");
 }
 
+// The read cursor for the thread whose answer opens a room: up to and including
+// that answer, but not any room beat that landed after it in the same thread —
+// those belong to the sitting and get revealed there.
+function repliedThrough(charId, preSeq) {
+  const t = game.threads[charId];
+  const i = t.findIndex(m => m.type === "reply" && (m.seq || 0) >= preSeq);
+  return i < 0 ? t.length : i + 1;
+}
+
 function enterScene(startSeq, charId) {
   inScene = true;
   lastSceneId = game.scene.id;
@@ -2055,6 +2076,14 @@ function enterScene(startSeq, charId) {
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   const start = computeSceneStart(lastSceneId);
   sceneStartSeq = isFinite(start) ? start : (startSeq != null ? startSeq : 0);
+  // A room beat the player already read in the regular chat — the invitation
+  // that opened the room, and their own answer to it — is not news inside the
+  // room: start that thread's cursor past it, so it doesn't light a blue dot
+  // as if the other person had just texted.
+  for (const id of sceneFullCast()) {
+    const seen = new Set((game.threads[id] || []).slice(0, threadRendered[id] || 0));
+    scRendered[id] = sceneThread(id).filter(m => seen.has(m)).length;
+  }
   const meta = SCENE_META[lastSceneId] || {};
   showCine(meta.enter || [meta.title || ""], meta.accent, () => {
     $("scene").classList.add("on");
