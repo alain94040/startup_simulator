@@ -25,9 +25,9 @@
   const tested = (s) => Object.keys(s.channels || {}).filter(k => k !== "mixed");
   const testReadout = (id) => {
     const c = CHANNELS[id];
-    if (c.fit >= 0.7) return "Tested " + c.label + ". CAC came in around $" + c.cac + " — cheap — and the people it brought matched and stuck around. This one has legs.";
-    if (c.fit >= 0.4) return "Tested " + c.label + ". CAC ~$" + c.cac + ". Real users, decent retention — workable, not a rocket.";
-    return "Tested " + c.label + ". CAC ~$" + c.cac + " — brutal — and most bounced the same day. Looks like a vanity channel, not yours.";
+    if (c.fit >= 0.7) return "Tested " + c.label + ". Each signup cost around $" + c.cac + " — cheap — and the people it brought matched and stuck around. This one has legs.";
+    if (c.fit >= 0.4) return "Tested " + c.label + ". Each signup cost ~$" + c.cac + ". Real users, decent retention — workable, not a rocket.";
+    return "Tested " + c.label + ". Each signup cost ~$" + c.cac + " — brutal — and most left the same day. Looks good on a chart, useless for us.";
   };
   const testChoice = (id) => ({
     key: id, label: "Test " + CHANNELS[id].label + " ($" + CHANNELS[id].cost + ")",
@@ -48,7 +48,7 @@
       s.users += Math.round(ch.fit * 12);
       s.signal = clamp(s.signal + Math.round(ch.fit * 8), 0, 100);
       if (ch.fit >= 0.7) return "All chips on " + CHANNELS[id].label + ". With one channel to obsess over, the loop tightens every week — signups are compounding instead of trickling.";
-      return "Committed to " + CHANNELS[id].label + ". You're focused now, but you're focusing on a channel the data already flagged as weak — growth is a grind and the CAC eats runway.";
+      return "Committed to " + CHANNELS[id].label + ". You're focused now, but you're focusing on a channel the data already flagged as weak — growth is a grind and each new user costs so much it eats the cash.";
     },
   });
 
@@ -63,15 +63,15 @@
         choices: [
           {
             key: "narrow", label: "Own one city / campus first",
-            journal: "Decided to launch one neighborhood at a time — pick a single campus, get it dense enough that people actually match, then expand. Smaller top-line, real liquidity.",
+            journal: "Decided to launch one neighborhood at a time — pick a single campus, get it dense enough that people actually match, then expand. Smaller numbers, but enough people to actually match.",
             effects: { signal: 4, marketFit: 4, flags: { beachhead: "narrow" } },
-            fx: () => "Picked one campus and its three closest neighborhoods. Everything points there. The TAM slide is smaller — but the people who join will actually find someone nearby.",
+            fx: () => "Picked one campus and its three closest neighborhoods. Everything points there. The market-size slide is smaller — but the people who join will actually find someone nearby.",
           },
           {
-            key: "broad", label: "Launch everywhere — bigger TAM",
+            key: "broad", label: "Launch everywhere — bigger market",
             journal: "Opened it nationwide on day one. The market-size slide looks incredible. Quietly worried everyone will open the app, see nobody within 50 miles, and leave.",
             effects: { signal: 7, flags: { beachhead: "broad" } },
-            fx: () => "Open nationwide. The TAM slide looks incredible. Whether anyone finds a match within 50 miles of them is a different question.",
+            fx: () => "Open nationwide. The market-size slide looks incredible. Whether anyone finds a match within 50 miles of them is a different question.",
           },
         ],
       },
@@ -80,7 +80,7 @@
         // marketing decision, not just a ship call). The chosen splash's users
         // land at launch conversion in world.js (s.launch_splash).
         id: "launch_surface", char: "growth", from: "You",
-        text: "the hardening week is nearly done — you flip the switch within days. now the part nobody warns you about: a launch is only as big as where you announce it, and you get exactly one first impression. where do you make the splash?",
+        text: "the bug-fixing week is nearly done — you flip the switch within days. now the part nobody warns you about: a launch is only as big as where you announce it, and you get exactly one first impression. where do you make the splash?",
         // Chapter 2 only — the window closes the moment the switch flips, so
         // the plan question can't outlive the launch it was planning.
         when: { if: (s, e) => e.chapter === 2 && s.productPhase === "product" && s.beachhead != null },
@@ -95,7 +95,7 @@
             key: "press", label: "Give a reporter the exclusive",
             journal: "Launch plan: a reporter gets the exclusive — the anti-Tinder angle. Smaller than a viral hit, but people who come in from a thoughtful piece actually read the whole thing first.",
             effects: { signal: 10, flags: { launch_splash: "press" } },
-            fx: () => "Plan set: the exclusive goes out under embargo, the piece runs launch morning. 'The dating app that wants you to delete it.' Quality over volume.",
+            fx: () => "Plan set: the reporter gets the story first and holds it until launch morning. 'The dating app that wants you to delete it.' Quality over volume.",
           },
           {
             key: "tiktok", label: "Pay 3 TikTok creators to post",
@@ -106,10 +106,10 @@
           {
             // No market_fit gain on purpose: the wrong audience. The spike
             // deflates on its own (the trough drains what doesn't retain).
-            key: "show_hn", label: "Go big — post to Show HN / Product Hunt",
-            journal: "Launch plan: Show HN and Product Hunt, launch morning. If it front-pages, the signup graph goes vertical. Whether any of them are single people looking to date is tomorrow's problem.",
+            key: "show_hn", label: "Go big — post on Hacker News and Product Hunt",
+            journal: "Launch plan: Hacker News and Product Hunt, launch morning. If it hits the front page, the signup graph goes vertical. Whether any of them are single people looking to date is tomorrow's problem.",
             effects: { signal: 12, flags: { launch_splash: "show_hn" } },
-            fx: () => "Plan set: Show HN post drafted, Product Hunt page scheduled. If it hits, the graph will look unbelievable for a day. Who actually shows up is another question.",
+            fx: () => "Plan set: Hacker News post drafted, Product Hunt page scheduled. If it hits, the graph will look unbelievable for a day. Who actually shows up is another question.",
           },
         ],
         // Never planned → launch day gets a modest organic trickle (world.js).
@@ -140,7 +140,7 @@
       {
         id: "channel_test", char: "growth", from: "You",
         text: (s) => tested(s).length === 0
-          ? "the relaunch pop is real — but it's a pop, not a channel. v2 finally retains people, which means growth spend finally compounds. you can't fund every channel: pick one cheap experiment this sprint and see what the numbers say."
+          ? "the relaunch bump is real — but it's a one-time thing, not a steady source of users. v2 finally keeps people, so money spent getting users finally pays off. you can't fund every channel: pick one cheap experiment this week and see what the numbers say."
           : "one channel down, the picture's still fuzzy. run another cheap test — you only get a couple of these before the runway says pick one.",
         // Gated on the pivot relaunch: channel strategy only pays off once the
         // product actually retains. Before that you'd just be buying churn.
@@ -155,7 +155,7 @@
       },
       {
         id: "channel_double_down", char: "growth", from: "You",
-        text: "you've got data now, not opinions. the runway won't fund three channels. naval's line keeps echoing — be exceptional at one. where do all the chips go?",
+        text: "you've got data now, not opinions. the runway won't fund three channels. the oldest advice in the book: be great at one. where do all the chips go?",
         when: { if: (s) => s.pivot_shipped && !s.primary_channel && tested(s).length >= 2 },
         choices: [
           commitChoice("referrals"), commitChoice("creators"), commitChoice("community"), commitChoice("paid"),
@@ -174,7 +174,7 @@
       // ── HAND-MADE TRACTION (the founder's customer accelerators) ─────────────
       {
         id: "dont_scale_seed", char: "founder", ambient: true,
-        text: "the app is live but the early matches are thin — a real chicken-and-egg. paul graham's voice in your head: do things that don't scale. you could manufacture the magic for the first users by hand, just to get the flywheel turning.",
+        text: "the app is live but the early matches are thin — nobody joins an empty app, and the app stays empty until people join. paul graham (the guy who started YC) has a famous line for this: do things that don't scale. make the first matches by hand, even though it could never work for a million people.",
         when: { if: (s) => s.launched && s.users >= 3 && !s.pivot_shipped },
         choices: [
           {
@@ -195,8 +195,8 @@
           },
           {
             key: "wait", label: "Let the algorithm do its thing",
-            journal: "Decided not to put my thumb on the scale — let the matching run on its own. Cleaner, more honest. Also colder: the cold-start stayed cold.",
-            fx: () => "Stayed hands-off and let the system run. Fewer awkward DMs from the founder — and a lot fewer matches. The cold-start stayed cold.",
+            journal: "Decided not to put my thumb on the scale — let the matching run on its own. Cleaner, more honest. Also colder: the empty app stayed empty.",
+            fx: () => "Stayed hands-off and let the system run. Fewer awkward DMs from the founder — and a lot fewer matches. The empty app stayed empty.",
           },
         ],
       },

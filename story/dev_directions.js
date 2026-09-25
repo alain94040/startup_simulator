@@ -28,7 +28,7 @@
       // later (applyActivitiesPivot, ported with the pivot arc).
       {
         id: "matching_choice", char: "jordan",
-        text: "sprint 2 direction, my two cents. found something — MatchKit. they license a ready-made recommendation engine; we'd have matching working in days instead of weeks. alex will hate this because he hand-rolls everything, that's what CTOs do. but why reinvent the wheel? i say we plug it in.",
+        text: "next thing to build, my two cents. found something — MatchKit. you pay them monthly and plug in their ready-made matching; we'd have it working in days instead of weeks. alex will hate this because he likes to build everything himself. but why reinvent the wheel? i say we plug it in.",
         when: {
           after: ["dev_plan"], delay: 1,
           if: (s, e) => !s.has_demo && e.weeksSince("dev_plan") <= 6,
@@ -40,8 +40,8 @@
             journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
             effects: { flags: { matching_owned: true }, char: { jordan: { morale: -3 }, alex: { morale: 5, effort: 1.0 } } },
             fx(s) {
-              if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — the IP";
-              return "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the IP, the one thing we can't outsource. Alex was visibly relieved.";
+              if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — it's what makes us different";
+              return "Overruled Jordan — we build the matching engine ourselves. Slower, but it's what makes us different, the one thing we can't outsource. Alex was visibly relieved.";
             },
           },
           {
@@ -67,7 +67,7 @@
         timeout: {
           weeks: 3,
           effects: { flags: { matching_owned: true }, char: { alex: { morale: 3 } } },
-          fx(s) { if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — the IP"; },
+          fx(s) { if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — it's what makes us different"; },
         },
       },
 
@@ -76,14 +76,14 @@
       // the ignore). The C-option is the research payoff.
       {
         id: "ranking", char: "alex",
-        text: "matching engine update: it runs end to end — profiles in, pairs out. one problem. the scoring function is literally `return Math.random()`. before i write the real one i need product direction, not code: what makes two people a good plusone match?",
+        text: "matching engine update: it runs end to end — profiles in, pairs out. one problem. right now it pairs people completely at random. before i write the real one i need product direction, not code: what makes two people a good plusone match?",
         when: {
           took: [["matching_choice:build", "matching_choice:@ignored"]],
           if: (s) => !s.has_demo && !s.launched,
         },
         choices: [
           {
-            key: "proximity", label: "Distance, age, availability — the standard stack",
+            key: "proximity", label: "Distance, age, availability — what every app does",
             reply: "keep it simple. distance, age range, shared availability — the stuff every app ranks on. it works.",
             effects: { marketFit: 2, char: { alex: { effort: 1.2 } } },
             fx(s) {
@@ -108,7 +108,7 @@
             effects: {
               marketFit: 8, signal: 4,
               char: { alex: { effort: 1.2, flags: { ranking_thesis: true } } },
-              say: { char: "alex", text: "huh. that's… actually a thesis. i can proxy it — specificity score on the profile text now, response-rate signal once we have real data. writing it tonight." },
+              say: { char: "alex", text: "huh. that's… actually a thesis. i can fake it for now — favor people whose profiles actually say something, then switch to who really replies once we have data. writing it tonight." },
             },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks conversation odds (from research)";
@@ -133,11 +133,11 @@
       // ── JORDAN'S iOS SPRINTS (two effort-gated milestones) ───────────────────
       {
         id: "ios_sprint_1", char: "jordan",
-        text: "iOS milestone — the shell works: profile screens, photo upload, the first-screen flow. now i need a call on next sprint. i can polish what people will *see* at the demo, or i can start wiring the backend — login, the matching API, messaging. tempo or truth?",
+        text: "iphone app update — the screens work: profiles, photo upload, the first screen. but it's all fake data. this week i can make it look and feel great for the demo, or connect it to alex's engine so login, matching and messages actually work. pretty or real?",
         when: { after: ["first_screen"], if: (s, e, char) => !s.has_demo && char.buildEffort >= 2 },
         choices: [
           {
-            key: "demo_polish", label: "Polish the demo surface",
+            key: "demo_polish", label: "Make it look great for the demo",
             reply: "polish what they'll see. the demo has to feel good in someone's hand — we get one first impression.",
             effects: { signal: 4, marketFit: 2, char: { jordan: { effort: 1.0 } } },
             fx(s) {
@@ -145,12 +145,12 @@
                 if (s.items.ios_ui) { s.items.ios_ui.status = "done"; s.items.ios_ui.quality = "solid"; s.items.ios_ui.note = "Polished for the demo"; }
                 if (s.items.ios_server) s.items.ios_server.status = "active";
               }
-              return "Jordan spent the sprint on feel — transitions, haptics, the photo grid. The demo build is genuinely nice to hold. The backend wiring waits a week.";
+              return "Jordan spent the week on feel — transitions, haptics, the photo grid. The demo is genuinely nice to hold. Connecting it to the real engine waits a week.";
             },
           },
           {
-            key: "wire_backend", label: "Wire the backend first",
-            reply: "wire the backend first. a pretty shell with fake data is a lie we'd be telling ourselves.",
+            key: "wire_backend", label: "Make it real first",
+            reply: "make it real first. a pretty app with fake data is a lie we'd be telling ourselves.",
             effects: { char: { jordan: { effort: 1.4 } } },
             fx(s) {
               if (s.items) {
@@ -175,7 +175,7 @@
       },
       {
         id: "ios_sprint_2", char: "jordan",
-        text: "iOS is wired to the backend now — login, matching, and messaging all flowing through the API. same experience as web. ready to open it up.",
+        text: "the iphone app is connected to the real engine now — login, matching and messages all work, same as the website. ready to open it up.",
         when: { after: ["ios_sprint_1"], if: (s, e, char) => char.buildEffort >= 5 },
         choices: [
           {
@@ -183,7 +183,7 @@
             effects: { signal: 3, flags: { ios_unblocked: true }, char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.ios_server) { s.items.ios_server.status = "done"; s.items.ios_server.quality = "solid"; }
-              return "iOS feature-complete — login, matching, and messaging all wired through the API. Same experience as web. Ready to open it up.";
+              return "The iPhone app is done — login, matching and messages all work, same as the website. Ready to open it up.";
             },
           },
         ],
@@ -199,16 +199,16 @@
       // pivot signal. Building it leaves you blind until it's too late.
       {
         id: "analytics_choice", char: "alex",
-        text: "demo night bugged me. the only reason i saw her session at all is that i was tailing logs by hand. the testflight group is a dozen people and i can't tell you what a single one of them does in the app — and on launch day it'll be hundreds of strangers. i can wire an analytics SDK in a day — $30/wk, dashboards tomorrow. or i build our own event pipeline: a week of my time, free forever, and i kind of want to own our data anyway.",
+        text: "demo night bugged me. the only reason i saw what she did at all is that i was reading raw server records by hand. the test group is a dozen people and i can't tell you what a single one of them does in the app — and on launch day it'll be hundreds of strangers. i can plug in a ready-made analytics tool in a day — $30/wk, charts of what people do by tomorrow. or i build our own tracking: a week of my time, free forever, and i kind of want to own our data anyway.",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
-            key: "buy", label: "Drop in an analytics SDK",
-            reply: "drop in the SDK. i want to see what users actually do, not guess. the monthly cost is nothing next to shipping blind.",
-            effects: { flags: { analytics_live: true }, saas: { label: "Analytics SDK", cost: 30 }, char: { alex: { effort: 1.0 } } },
+            key: "buy", label: "Pay for a ready-made analytics tool",
+            reply: "get the ready-made tool. i want to see what users actually do, not guess. the monthly cost is nothing next to shipping blind.",
+            effects: { flags: { analytics_live: true }, saas: { label: "Analytics tool", cost: 30 }, char: { alex: { effort: 1.0 } } },
             fx(s) {
-              if (s.items && s.items.analytics) { s.items.analytics.status = "done"; s.items.analytics.quality = "bought"; s.items.analytics.assignee = null; s.items.analytics.note = "Bought: SDK · $30/wk"; }
-              return "Analytics SDK live in a day — funnels, retention, event tracking. Now we can see what's actually happening instead of guessing.";
+              if (s.items && s.items.analytics) { s.items.analytics.status = "done"; s.items.analytics.quality = "bought"; s.items.analytics.assignee = null; s.items.analytics.note = "Bought: analytics tool · $30/wk"; }
+              return "Analytics live in a day — where people drop off, who comes back. Now we can see what's actually happening instead of guessing.";
             },
           },
           {
@@ -246,7 +246,7 @@
           },
           {
             key: "everywhere", label: "Open everywhere — momentum is the story",
-            reply: "open it everywhere. momentum is the story — we densify later.",
+            reply: "open it everywhere. momentum is the story — we fill in the gaps later.",
             effects: { signal: 5, flags: { beachhead: "broad", seed_strategy: "open" }, char: { alex: { effort: 0.8 } } },
             fx: () => "Open signups, no gates. The launch-day number will look great. Whether anyone finds a match within 50 miles is a different question.",
           },
@@ -283,12 +283,12 @@
       // option simply never unlocks, which is correct).
       {
         id: "trust_safety", char: "jordan",
-        text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story — user-generated content moderation, reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
+        text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story — how we handle people posting nasty stuff — reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
-            key: "report_now", label: "Report button this sprint, verify later",
-            reply: "report button this sprint. it answers apple honestly — verification can come after launch, we can't gate the release behind a feature we haven't built.",
+            key: "report_now", label: "Report button this week, verify later",
+            reply: "report button this week. it answers apple honestly — verification can come after launch, we can't hold up the launch for a feature we haven't built.",
             effects: { marketFit: 2, char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Report button pre-launch";
@@ -299,7 +299,7 @@
             key: "verify_first", label: "Full verification before launch",
             reply: "verification before launch. the day strangers show up is the day it has to already work — one bad first week and the women never come back.",
             effects: { marketFit: 4, char: { jordan: { effort: 0.6 } } }, // real scope — it costs build time
-            fx: () => "Photo verification goes in before launch. It costs a chunk of Jordan's sprint — the launch-ready date slips — but the safety story is real before a single stranger is in the app.",
+            fx: () => "Photo verification goes in before launch. It costs a chunk of Jordan's week — the launch-ready date slips — but the safety story is real before a single stranger is in the app.",
           },
           {
             key: "verify_flagship", label: "Verification as THE feature — the threads called it",

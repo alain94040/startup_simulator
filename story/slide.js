@@ -72,7 +72,7 @@
         // Only exists if analytics were BOUGHT — sight, before a single stranger
         // signs up. This is the "circle" chip on pivot day.
         id: "post_match_dropoff", char: "analytics", from: "Analytics",
-        text: "first real pattern out of the analytics. the testflight group is tiny — a dozen people, 14 matches between them since the demo build went out. 11 of those matches never got past 'hey.' small numbers, but the pattern is loud: it's not the matching that loses people, it's what comes after a match. there's nowhere for them to go.",
+        text: "first real pattern out of the analytics. the test group is tiny — a dozen people, 14 matches between them since the demo build went out. 11 of those matches never got past 'hey.' small numbers, but the pattern is loud: it's not the matching that loses people, it's what comes after a match. there's nowhere for them to go.",
         when: { if: (s) => s.analytics_live && s.has_demo && !s.launched },
         choices: [
           {
@@ -91,14 +91,14 @@
         // day without it. No re-nag: launch prep swallows the conversation.
         id: "pivot_open", char: "jordan",
         text: (s) => s.demo_question_seen
-          ? "been going through the testflight group's feedback. remember demo night — 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. thought i'd flag it before we get closer to launch."
-          : "been going through the testflight group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
+          ? "been going through the test group's feedback. remember demo night — 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. thought i'd flag it before we get closer to launch."
+          : "been going through the test group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
         when: { if: (s) => s.activities_cut && s.has_demo && s.market_fit >= 5 && !s.launched },
         choices: [
           {
             key: "open", label: "Good flag — write it down verbatim",
             reply: "write it down, word for word. 'i matched, but then what.' if it's still true with strangers, we'll know exactly where to look.",
-            journal: "Jordan flagged a pattern from the TestFlight group: people keep saying 'I matched, but then what?' Wrote it down verbatim. Launch will tell us if it's noise or the whole story.",
+            journal: "Jordan flagged a pattern from the test group: people keep saying 'I matched, but then what?' Wrote it down verbatim. Launch will tell us if it's noise or the whole story.",
             effects: { flags: { pivot_flagged: true } },
             fx: () => "Written down, word for word. If strangers say it too, you'll know where to look.",
           },
@@ -116,7 +116,7 @@
         choices: [
           {
             key: "retention", label: "Watch retention, not signups",
-            reply: "agreed — ignore the top of the funnel for now. friday, i want to know who came back.",
+            reply: "agreed — forget new signups for now. friday, i want to know who came back.",
             journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday — retention, not signups.",
             effects: {
               signal: 2, say: { char: "alex", text: "that's the correct question. most founders ask the other one." },
@@ -132,7 +132,7 @@
           {
             key: "funnel", label: "We need another traffic push",
             reply: "2 a day won't cut it. we need another traffic push this week.",
-            journal: "Told Alex to run another traffic push. It netted five signups and cost two days — and a week later the graph had swallowed them whole. The lesson was loud: the leak isn't at the top of the funnel.",
+            journal: "Told Alex to run another traffic push. It netted five signups and cost two days — and a week later the graph had swallowed them whole. The lesson was loud: the problem isn't getting people in, it's keeping them.",
             effects: {
               users: 5, flags: { funnel_first: true },
               say: { char: "alex", text: "ran the re-blast plus a post in two local subreddits. five signups. cost us two days. the leak isn't at the top." },
@@ -182,13 +182,13 @@
           const matches = Math.max(10, Math.round(total * 1.4));
           const opened = Math.max(3, Math.round(total * 0.26));
           const convos = Math.max(2, Math.round(matches * 0.13));
-          return "week-one numbers are in. of " + total + " launch-week signups, " + opened + " opened the app this week. " + matches + " matches made since launch; " + convos + " conversations got past two messages; actual dates planned: 0. same pattern as the testflight group — just bigger.";
+          return "week-one numbers are in. of " + total + " launch-week signups, " + opened + " opened the app this week. " + matches + " matches made since launch; " + convos + " conversations got past two messages; actual dates planned: 0. same pattern as the test group — just bigger.";
         },
         when: { took: ["good_enough_launch:ship"], delay: 3, if: (s) => s.analytics_live && !s.activities_pivot },
         choices: [
           {
             key: "dig", label: "Sit with the numbers",
-            journal: "Friday. The week-one numbers came in and it's the TestFlight group's pattern, just bigger: matches happen, conversations don't, dates — zero. It's not that we don't know. It's that the number is now too big to un-know.",
+            journal: "Friday. The week-one numbers came in and it's the test group's pattern, just bigger: matches happen, conversations don't, dates — zero. It's not that we don't know. It's that the number is now too big to un-know.",
             effects: { marketFit: 4, signal: 2, flags: { cohort_seen: true } },
             fx: () => "You sat with the numbers until the pattern stopped being deniable: people don't leave before the match. They leave right after it.",
           },
@@ -216,8 +216,8 @@
           {
             key: "push_back", label: "Our test group was a full room",
             if: (s) => s.analytics_dropoff_seen || s.demo_question_seen,
-            reply: "our testflight group was twelve people who all knew each other — a full room, by your own logic. 11 of their 14 matches still went nowhere. explain that.",
-            journal: "Alex blamed the empty room and I hit him with the TestFlight group: twelve people who all knew each other, and 11 of 14 matches still went nowhere. He didn't have an answer. First crack in the wall.",
+            reply: "our test group was twelve people who all knew each other — a full room, by your own logic. 11 of their 14 matches still went nowhere. explain that.",
+            journal: "Alex blamed the empty room and I hit him with the test group: twelve people who all knew each other, and 11 of 14 matches still went nowhere. He didn't have an answer. First crack in the wall.",
             effects: {
               flags: { alex_crack: true },
               say: { char: "alex", text: "…i don't have a clean answer to that one. friday's numbers will tell us." },
@@ -268,13 +268,13 @@
           },
           {
             key: "survey", label: "Send an email survey",
-            journal: "Sent Maya (and the other quiet accounts) a churn survey. Two replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
+            journal: "Sent Maya (and the other quiet accounts) a 'why did you leave?' survey. Two replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
             effects: { marketFit: 1 },
             fx: () => "Two survey replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
           },
           {
-            key: "let_go", label: "Churned users churn — focus forward",
-            journal: "Decided not to chase Maya. Churned users churn. Focus forward.",
+            key: "let_go", label: "People who leave, leave — move on",
+            journal: "Decided not to chase Maya. People who leave, leave. Moved on.",
             fx: () => "Focused forward. Whatever Maya knew about why she left, she took with her.",
           },
         ],

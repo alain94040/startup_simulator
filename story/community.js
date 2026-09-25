@@ -32,12 +32,12 @@
   mod.nodes = [
     {
       id: "hn_thread", char: "hacker_news", from: "Hacker News", ambient: true,
-      text: "'Ask HN: Why are dating apps still so bad in 2026?' — top thread right now, 300 comments. this is your market talking openly.",
+      text: "'Why are dating apps still so bad in 2026?' — top thread on Hacker News right now, 300 comments. this is your market talking openly.",
       when: { if: (s) => !s.launched && s.week >= 3 },
       choices: [
         {
           key: "engage", label: "Engage the thread",
-          journal: "Engaged the HN thread authentically. 7 DMs requesting early access.",
+          journal: "Engaged the Hacker News thread authentically. 7 DMs requesting early access.",
           effects: { signal: 12, marketFit: 3, waitlist: 7 },
           fx: engage("Engaged the thread authentically. 7 DMs requesting early access."),
         },
@@ -48,28 +48,28 @@
     // ── HN ladder ────────────────────────────────────────────────────────────
     rung({
       id: "community_hn_1", from: "Hacker News",
-      text: "there's an Ask HN thread about what's broken with dating apps. 200 comments. the top answer is a shared Google spreadsheet where people manually track matches across apps. it has 50,000 views.",
+      text: "there's a Hacker News thread about what's broken with dating apps. 200 comments. the top answer is a shared Google spreadsheet where people manually track matches across apps. it has 50,000 views.",
       when: { if: (s) => !s.launched && s.week >= 4 },
       engageLabel: "Drop a comment",
-      engageJournal: "Commented on the HN thread with a genuine take. 4 people DM'd asking when we're launching.",
+      engageJournal: "Commented on the Hacker News thread with a genuine take. 4 people DM'd asking when we're launching.",
       engageEffects: { signal: 6, waitlist: 4, marketFit: 1 },
       engageOutcome: "Commented with a genuine take. 4 people DM'd asking when you're launching.",
     }),
     rung({
       id: "community_hn_2", from: "Hacker News",
-      text: "another HN thread about dating apps, bigger this time. people are explicitly asking for something that actually helps — not another swipe interface.",
+      text: "another Hacker News thread about dating apps, bigger this time. people are explicitly asking for something that actually helps — not another swipe interface.",
       when: { after: ["community_hn_1"], delay: 3, if: (s) => !s.launched },
       engageLabel: "Leave a detailed reply",
-      engageJournal: "Left a detailed reply on the HN thread. Two people asked to be notified at launch — one is a former PM at a big company.",
+      engageJournal: "Left a detailed reply on the Hacker News thread. Two people asked to be notified at launch — one is a former PM at a big company.",
       engageEffects: { signal: 7, waitlist: 5 },
       engageOutcome: "Left a detailed reply. Two people asked to be notified at launch. One is a former PM at a big company.",
     }),
     rung({
       id: "community_hn_3", from: "Hacker News",
-      text: "someone posted your exact frustration as an HN thread. it hit the front page. three comments specifically mention wanting a real product, not 'tinder but slightly different.'",
+      text: "someone posted your exact frustration as a Hacker News thread. it hit the front page. three comments specifically mention wanting a real product, not 'tinder but slightly different.'",
       when: { after: ["community_hn_2"], delay: 3, if: (s) => !s.launched },
       engageLabel: "Share the waitlist link",
-      engageJournal: "Shared the waitlist link on HN. 8 signups from the thread. One person asked for early access.",
+      engageJournal: "Shared the waitlist link on Hacker News. 8 signups from the thread. One person asked for early access.",
       engageEffects: { signal: 9, waitlist: 8, marketFit: 2 },
       engageOutcome: "Shared the link. 8 signups from the thread. One person asked for early access — you said yes.",
     }),

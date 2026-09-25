@@ -86,10 +86,10 @@
         id: "alex_sync_discover", char: "alex", ambient: true,
         text: (s, e, char) => {
           if (!e.done("alex_sync_discover"))
-            return "offer: i can take this sprint for user calls instead of code. the build slips a week — that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
+            return "offer: i can spend this week on user calls instead of code. the build slips a week — that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
           const weeksAgo = e.weeksSince("alex_sync_discover");
           return weeksAgo >= 12
-            ? "it's been " + weeksAgo + " weeks since we last did discovery. things shift — worth a sprint to check if we're still solving the right problem?"
+            ? "it's been " + weeksAgo + " weeks since we last did discovery. things shift — worth a week to check if we're still solving the right problem?"
             : "we're back in build mode. it's only been a few weeks since we last talked to customers, but the queue keeps growing. do another round or keep building?";
         },
         when: {
@@ -98,9 +98,9 @@
         },
         choices: [
           {
-            key: "discover", label: "Yes — take the sprint for user calls",
+            key: "discover", label: "Yes — take the week for user calls",
             effects: { char: { alex: { focus: "discover" } } },
-            fx: () => "Agreed. Alex is on user calls this sprint — the build slows while he listens.",
+            fx: () => "Agreed. Alex is on user calls this week — the build slows while he listens.",
           },
         ],
       },
@@ -166,7 +166,7 @@
       {
         id: "alex_quiet", char: "alex",
         text: "yeah. fine. just busy.",
-        subtext: "Short replies for 3 days. Skipped standup yesterday.",
+        subtext: "Short replies for 3 days. Missed yesterday's check-in.",
         when: { cooldown: 4, if: (s, e, char) => s.week > 4 && char.morale < 40 },
         choices: [
           {
@@ -264,7 +264,7 @@
         text: "been sitting on this: dating apps go one of three ways — VC-backed and scale fast (Hinge, Bumble), get acquired by Match Group, or build a quiet profitable subscription business. which are we aiming for? changes everything about how we make decisions.",
         when: { if: (s) => s.week >= 3 && s.week <= 9 },
         choices: [
-          { key: "vc", label: "VC route — raise, grow fast, aim for IPO or acquisition", effects: { signal: 3 },
+          { key: "vc", label: "Raise from investors, grow fast, then sell or go public", effects: { signal: 3 },
             fx: () => "Aligned on the VC path. Every conversation with investors gets sharper when you know what you're building toward." },
           { key: "profitable", label: "Profitable first — build a real business, no VC needed", effects: { marketFit: 3 },
             fx: () => "Profitable first. Every product decision gets cleaner when the bar is 'do people pay for this', not 'can we raise on this'." },

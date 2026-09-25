@@ -86,7 +86,7 @@
           {
             id: "equity_open", char: "jordan",
             text: (s) => s.incorporated
-              ? "ok, the atlas form just asked how many shares each of us gets. we should figure this out before it's a whole thing.\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?"
+              ? "ok, the company paperwork just asked how many shares each of us gets. we should figure this out before it's a whole thing.\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?"
               : "hey — we're going to have to answer this eventually, might as well be now: how many shares does each of us get?\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?",
             when: { after: ["incorporate"] },
             choices: [

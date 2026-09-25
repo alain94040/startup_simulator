@@ -20,7 +20,7 @@
   const buyAuth = (s) => {
     if (s.items && s.items.auth) {
       s.items.auth.status = "done"; s.items.auth.quality = "bought";
-      s.items.auth.assignee = null; s.items.auth.note = "Bought: hosted provider · $30/wk";
+      s.items.auth.assignee = null; s.items.auth.note = "Bought: login service · $30/wk";
     }
   };
 
@@ -31,7 +31,7 @@
         beats: [
           {
             id: "dev_plan", char: "alex",
-            text: "couldn't sleep — mocked up three directions for plusone. tap through them and take a real look before we lock scope. which one do we actually build?",
+            text: "couldn't sleep — mocked up three directions for plusone. tap through them and take a real look before we decide what to build. which one do we actually build?",
             // Lands the week after the equity question closes — one week later
             // still if the answer left Alex grudging: anything but 40/40/20,
             // or the dodge that tabled the split. A disappointed CTO costs the
@@ -66,13 +66,13 @@
                 fx(s) {
                   s.dev_plan = "full";
                   expandItems(s, "full");
-                  return "Three-hour session. Whiteboard filled. Twenty-plus items in the backlog. Jordan's excited. Alex is skeptical but admits it looks thorough.";
+                  return "Three-hour session. Whiteboard filled. Twenty-plus items on the to-do list. Jordan's excited. Alex is skeptical but admits it looks thorough.";
                 },
               },
               {
                 key: "lean", label: "Build version B",
-                reply: "let's build B. core hypothesis only — ship and learn. we can spec the rest when we know what works.",
-                journal: "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
+                reply: "let's build B. the one core idea only — ship and learn. we can plan the rest when we know what works.",
+                journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
                   return "Ninety minutes. Five items on the board. Alex seemed relieved.";
@@ -83,7 +83,7 @@
                 // real decision is avoiding A (the over-scoped build).
                 key: "sprint", label: "Build version C",
                 reply: "let's build C. strip it to the essentials and ship — we can layer the rest on once it's working.",
-                journal: "Kept the plan tight: ninety minutes, five items, core hypothesis only. Alex looked relieved. We can spec the rest once we know what works.",
+                journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
                   return "Ninety minutes. Five items on the board. Alex seemed relieved.";
@@ -97,16 +97,16 @@
           // strictly worse — he runs late, you buy anyway AND lose ~2 weeks.
           {
             id: "auth_choice", char: "alex",
-            text: "sprint 1 planning. first brick is accounts — login, account creation, password reset, social sign-in. i can hand-roll it, couple days tops, and we own it forever. or i wire up a hosted provider in an afternoon and we pay $30/wk for the privilege. your call — i genuinely don't mind building it. kind of want to, actually.",
+            text: "first thing to build: accounts — sign up, log in, reset password, 'sign in with google'. i can build it myself, couple days tops, and we own it forever. or i plug in a service that does logins for us in an afternoon and we pay $30/wk for the privilege. your call — i genuinely don't mind building it. kind of want to, actually.",
             when: { after: ["dev_plan"] },
             choices: [
               {
-                key: "buy", label: "Just buy a hosted auth provider",
-                reply: "let's not reinvent the wheel. wire up a hosted provider — auth is a solved problem. the monthly fee is worth it.",
-                effects: { saas: { label: "Auth provider", cost: 30 }, char: { alex: { effort: 1.0 } } },
+                key: "buy", label: "Pay for a ready-made login service",
+                reply: "let's not reinvent the wheel. plug in the login service — logins are a solved problem. the monthly fee is worth it.",
+                effects: { saas: { label: "Login service", cost: 30 }, char: { alex: { effort: 1.0 } } },
                 fx(s) {
                   buyAuth(s);
-                  return "Hosted auth wired up in an afternoon — login, signup, reset, social sign-in. $30/wk for it, but it's done and it's solid. Alex grumbled about the fee, then spent the rest of the sprint on the matching engine.";
+                  return "Login service plugged in in an afternoon — sign up, log in, password reset, 'sign in with google'. $30/wk for it, but it's done and it's solid. Alex grumbled about the fee, then spent the rest of the week on the matching engine.";
                 },
               },
               {
@@ -115,7 +115,7 @@
                 effects: { char: { alex: { morale: 4 } } },
                 fx(s) {
                   if (s.items && s.items.auth) { s.items.auth.status = "active"; s.items.auth.assignee = "alex"; s.items.auth.note = "Building our own"; }
-                  return "Alex is building our own auth. He's sure it's a few days of work.";
+                  return "Alex is building our own login system. He's sure it's a few days of work.";
                 },
               },
             ],
@@ -131,24 +131,24 @@
             // Two weeks into hand-rolled auth, reality arrives. The dependency
             // covers both the explicit "build" answer and the ignored default.
             id: "auth_forced", char: "alex",
-            text: "i'm behind. the auth thing is fighting me — oauth refresh tokens, password-reset edge cases, account recovery. it's eating the whole sprint. honestly... we should just buy it.",
+            text: "i'm behind. the login thing is fighting me — people getting logged out at random, password resets breaking in weird cases, account recovery. it's eating the whole week. honestly... we should just buy it.",
             when: { took: [["auth_choice:build", "auth_choice:@ignored"]], delay: 2 },
             choices: [
               {
                 key: "buy", label: "Tell him to buy it",
-                reply: "stop — buy the hosted provider. we should've done that two weeks ago. let's move on.",
-                journal: "Two weeks in, Alex was still fighting OAuth refresh tokens and password-reset edge cases. We bought the hosted provider in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
-                effects: { saas: { label: "Auth provider", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },
+                reply: "stop — buy the login service. we should've done that two weeks ago. let's move on.",
+                journal: "Two weeks in, Alex was still fighting random logouts and broken password resets. We bought the login service in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
+                effects: { saas: { label: "Login service", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },
                 fx(s) {
                   buyAuth(s);
-                  return "Bought the hosted provider in the end — same $30/wk we'd have paid on day one, plus two weeks of Alex's time gone. The throwaway code got tossed.";
+                  return "Bought the login service in the end — same $30/wk we'd have paid on day one, plus two weeks of Alex's time gone. The throwaway code got tossed.";
                 },
               },
             ],
             // Ignored too: he gives up and buys it himself — same cost, no decision made.
             timeout: {
               weeks: 3,
-              effects: { saas: { label: "Auth provider", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },
+              effects: { saas: { label: "Login service", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },
               fx(s) { buyAuth(s); },
             },
           },
@@ -156,7 +156,7 @@
           // ── direction: the first screen (research-gated C-option) ────────────
           {
             id: "first_screen", char: "jordan",
-            text: "first real iOS question. someone installs plusone, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in TestFlight friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
+            text: "first real iOS question. someone installs plusone, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in the test app by friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
             when: { after: ["dev_plan"], delay: 1, if: (s) => !s.has_demo },
             choices: [
               {
@@ -166,12 +166,12 @@
                   waitlist: 1, char: { jordan: { effort: 1.0 } },
                   schedule: {
                     in: 2, char: "jordan",
-                    say: { char: "jordan", text: "deck build's in TestFlight. showed my sister and her roommate — same reaction from both: 'nice — so it's like hinge?' not wrong. not great either." },
+                    say: { char: "jordan", text: "swipe version's in the test app. showed my sister and her roommate — same reaction from both: 'nice — so it's like hinge?' not wrong. not great either." },
                   },
                 },
                 fx(s) {
                   if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Swipe deck first";
-                  return "Deck it is — in TestFlight by Friday, and everyone who opens it knows exactly what to do. Whether they know why it's different is another matter.";
+                  return "Deck it is — in the test app by Friday, and everyone who opens it knows exactly what to do. Whether they know why it's different is another matter.";
                 },
               },
               {
@@ -194,7 +194,7 @@
                   marketFit: 7, signal: 3, char: { jordan: { effort: 1.2 } },
                   schedule: {
                     in: 1, char: "jordan",
-                    say: { char: "jordan", text: "intake flow is live in TestFlight. my sister answered question 3 and screenshotted it to her group chat. first organic share we've ever had." },
+                    say: { char: "jordan", text: "intake flow is live in the test app. my sister answered question 3 and screenshotted it to her group chat. first organic share we've ever had." },
                   },
                 },
                 fx(s) {
@@ -211,7 +211,7 @@
                 char: { jordan: { morale: -6, trust: -4, effort: -1.0 } },
                 schedule: {
                   in: 2, char: "jordan",
-                  say: { char: "jordan", text: "you never picked a first screen so i shipped the swipe deck. showed it to three friends this week and all three asked the same question: 'so how is this different from hinge?' i didn't have an answer. rebuilding the intake — there goes most of the sprint." },
+                  say: { char: "jordan", text: "you never picked a first screen so i shipped the swipe deck. showed it to three friends this week and all three asked the same question: 'so how is this different from hinge?' i didn't have an answer. rebuilding the intake — there goes most of the week." },
                 },
               },
               fx(s) {
@@ -244,7 +244,7 @@
             effects: { signal: 6, marketFit: 4 },
             fx(s, e) {
               const rounds = [
-                "Five calls. One woman keeps a spreadsheet of her matches across four apps — the HN thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
+                "Five calls. One woman keeps a spreadsheet of her matches across four apps — the Hacker News thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
                 "Five more calls. A teacher who deleted every app twice. A guy who wrote three drafts of a first message and sent none. The pattern doesn't move: getting matches isn't the problem — what comes after is.",
                 "Another round of calls. Someone asked, dead serious, if plusone could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
               ];

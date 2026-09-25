@@ -215,7 +215,7 @@
           },
           {
             key: "late", label: "Name the pattern: everything's a week late",
-            reply: "no, i'm saying it. everything's landed about a week late. the picker, the ios sprint, alex's PR.",
+            reply: "no, i'm saying it. everything's landed about a week late. the photo picker, the iphone app, checking alex's code.",
             journal: null,
             effects: {
               say: {
@@ -231,7 +231,7 @@
             if: (s) => !!s.demo_jordan_absent,
             reply: "demo night. you weren't there, and it was your sister's friend testing.",
             journal: null,
-            effects: { say: { char: "jordan", text: "that was a release cut. that wasn't—\n\n…okay. and the fix was two days late too." } },
+            effects: { say: { char: "jordan", text: "that was a big deadline at work. that wasn't—\n\n…okay. and the fix was two days late too." } },
           },
         ],
       },
@@ -376,7 +376,7 @@
         choices: [
           {
             key: "transfer", label: "Paperwork this week, and I'll move the account ($99)",
-            reply: "you keep what's vested, i pay the lawyer. and i'll open the org account tomorrow — we transfer before you sign anything.",
+            reply: "you keep what's vested, i pay the lawyer. and i'll open a company account tomorrow — we transfer before you sign anything.",
             payee: "Apple Developer",
             journal: null,
             effects: { cash: -99, say: { char: "jordan", text: "yeah. do it while i still care about doing it properly." } },
@@ -418,7 +418,7 @@
             if: (s, e) => e.took("first_screen:intake_interviews|intake"),
             reply: "one more thing. the intake screen — your sister's group chat — is still the only thing anyone ever shared on their own. that was you. tonight doesn't erase it.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
-              + " gets papered this week; Alex has the board from Monday. I told her the intake screen was hers, and that tonight doesn't erase it.",
+              + " gets put in writing this week; Alex has the board from Monday. I told her the intake screen was hers, and that tonight doesn't erase it.",
             fx(s, e) {
               e.say({ char: "jordan", text: "…thanks. that lands better than you'd think." });
               jordanLeaves(s, e, "warm");
@@ -430,7 +430,7 @@
             if: (s, e) => e.took("launch_first_signup:watch"),
             reply: () => "you saw maya before any of us did" + (second ? ", on launch day" : ". launch day, and again tonight") + ". we're building v2 on something you noticed.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
-              + " gets papered this week; Alex has the board from Monday. I told her v2 is built on something she noticed first.",
+              + " gets put in writing this week; Alex has the board from Monday. I told her v2 is built on something she noticed first.",
             fx(s, e) {
               e.say({ char: "jordan", text: "…i did, didn't i." });
               jordanLeaves(s, e, "warm");
@@ -441,7 +441,7 @@
             key: "close", label: "That's everything. I'm sorry.",
             reply: "that's everything. i'm sorry.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
-              + " gets papered this week; Alex has the board from Monday.",
+              + " gets put in writing this week; Alex has the board from Monday.",
             fx(s, e) {
               e.say({ char: "jordan", text: "okay. goodnight." });
               jordanLeaves(s, e, "warm");

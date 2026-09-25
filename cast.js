@@ -100,12 +100,12 @@
     {
       id: "kevin", name: "Kevin", role: "Growth consultant", type: "consultant",
       unlock: (s) => s.launched && s.customers >= 3,
-      intro: "saw your HN post. i do growth audits for consumer startups — think i can help.",
+      intro: "saw your Hacker News post. i do growth audits for consumer startups — think i can help.",
     },
     {
       id: "brett", name: "Brett", role: "Brand consultant", type: "consultant",
       unlock: (s, e) => s.incorporated && e.done("hn_thread") && s.week >= 4,
-      intro: "found you on crunchbase. i work with early-stage founders on positioning — dropping you a line.",
+      intro: "found you on a startup database. i work with early-stage founders on positioning — dropping you a line.",
     },
     {
       id: "hacker_news", name: "HN / Reddit", role: "Communities", type: "platform",

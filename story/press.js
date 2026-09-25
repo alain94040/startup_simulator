@@ -24,12 +24,12 @@
         // Ch 1 — mid-build, pre-demo: the gut punch. Someone shipped "your" idea
         // while your product is still a whiteboard.
         id: "flare_stealth", char: "techcrunch", from: "TechCrunch",
-        text: "Flare just came out of stealth with $3M — same space, serious relationships, same price point. 5,000 users from one TikTok campaign. alex sent the article at 1am with no comment. jordan replied with one word: 'oof.'",
+        text: "Flare just went public with $3M from investors — same space, serious relationships, same price point. 5,000 users from one TikTok campaign. alex sent the article at 1am with no comment. jordan replied with one word: 'oof.'",
         when: { if: (s) => s.items != null && !s.has_demo && s.week >= 5 },
         choices: [
           {
             key: "steady", label: "Steady the team — their launch isn't our roadmap",
-            journal: "Flare came out of stealth with $3M and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
+            journal: "Flare went public with $3M from investors and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
             effects: { marketFit: 3, char: { alex: { morale: 6 }, jordan: { morale: 4 } } },
             fx: () => "You called both of them that morning. A funded competitor is proof the problem is real — and everything in their screenshots is broad and shallow, the exact thing you're not building. Alex exhaled. Back to work.",
           },
@@ -46,7 +46,7 @@
       {
         // Ch 2 — the road to launch: their graph goes up while yours is a checklist.
         id: "flare_10k", char: "techcrunch", from: "TechCrunch",
-        text: "Flare crossed 10,000 users and closed a party round. your launch is still a checklist. alex keeps refreshing their app store page between commits — 'should we just add their top three features before we flip the switch?'",
+        text: "Flare crossed 10,000 users and raised another round from a crowd of investors. your launch is still a checklist. alex keeps refreshing their app store page between coding sessions — 'should we just add their top three features before we flip the switch?'",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
@@ -74,13 +74,13 @@
             key: "hold", label: "The evidence work comes first — their feature isn't our leak",
             journal: "Flare shipped video dates the week our graph flattened, and the pressure to match them was real. Held the line: our users aren't leaving for video dates, they're leaving after the match. The evidence work continues.",
             effects: { marketFit: 4, char: { alex: { morale: 3 } } },
-            fx: () => "You put the two emails next to Maya's quote and the cohort numbers. Nobody churned asking for video dates — they churned when nothing happened after the match. Their feature is not your leak. Back to the evidence.",
+            fx: () => "You put the two emails next to Maya's quote and the week-one numbers. Nobody churned asking for video dates — they churned when nothing happened after the match. Their feature is not your leak. Back to the evidence.",
           },
           {
             key: "copy", label: "Match them — build video dates now",
             journal: "Dropped the retention investigation to chase Flare's video dates. Weeks of build for a feature none of our churned users asked for. The real leak is still open.",
             effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -6, effort: -1.5 } } },
-            fx: () => "Alex went heads-down on WebRTC while the week-one cohort kept evaporating. Nobody who churned had asked for video dates. The real leak stayed open the whole time.",
+            fx: () => "Alex got buried in video-call code while the launch-week users kept leaving. Nobody who churned had asked for video dates. The real leak stayed open the whole time.",
           },
         ],
         timeout: { weeks: 3, effects: { char: { alex: { morale: -4 } } } },
@@ -188,7 +188,7 @@
       // ── THE CONSULTANTS (the correct answer is silence) ──────────────────────
       {
         id: "consultant_growth", char: "kevin", from: "Kevin (growth consultant)", ambient: true,
-        text: "saw your HN post. quick look at your acquisition funnel and i can see 3 places you're leaving signups on the table. week-long audit, $2,000 flat. guarantee 3× subscribers in 30 days.",
+        text: "saw your Hacker News post. quick look at your signup process and i can see 3 places you're leaving signups on the table. week-long audit, $2,000 flat. guarantee 3× subscribers in 30 days.",
         choices: [
           {
             key: "hire", label: "Hire Kevin for a week — $2,000",
@@ -204,7 +204,7 @@
       },
       {
         id: "consultant_brand", char: "brett", from: "Brett (brand strategist)", ambient: true,
-        text: "found you on crunchbase. you're using the same language as tinder and bumble — 'find your match.' i can't tell you apart in 10 seconds. one-day workshop to fix that, $1,500. i work directly with founders.",
+        text: "found you on a startup database. you're using the same language as tinder and bumble — 'find your match.' i can't tell you apart in 10 seconds. one-day workshop to fix that, $1,500. i work directly with founders.",
         choices: [
           {
             key: "hire", label: "Book the session — $1,500",

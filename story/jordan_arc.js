@@ -86,7 +86,7 @@
         choices: [
           {
             key: "resubmit", label: "Resubmit under our own account ($99)",
-            reply: "open an org account tonight and resubmit. $99. we eat the reviews.",
+            reply: "open a company account tonight and resubmit. $99. we eat the reviews.",
             payee: "Apple Developer",
             journal: "Jordan closed her developer account and PlusOne vanished from the App Store. Resubmitted under our own account: $99, a week in review, zero reviews, and every user had to reinstall.",
             effects: {
@@ -104,7 +104,7 @@
         timeout: {
           weeks: 1,
           effects: { cash: -99, char: { alex: { morale: -8 } } },
-          say: { char: "founders", speaker: "alex", text: "i resubmitted under an org account myself. $99. i'd have liked you to answer me about the app disappearing." },
+          say: { char: "founders", speaker: "alex", text: "i resubmitted under a company account myself. $99. i'd have liked you to answer me about the app disappearing." },
           fx(s, e) { e.schedule({ in: 1, fx(st) { st.app_delisted = false; st.appstore_on_jordan = false; } }); },
         },
       },
@@ -122,11 +122,11 @@
         text: (s, e) => s.jordan_prior_talk === "deal"
           ? "three weeks today. board's at the RSVP button.\n\nshe said if it wasn't live she'd leave on her own. she hasn't said anything, and i don't think she's going to."
           : e.took("pivot_alex_door:say")
-            ? "matching's done. repointed, tested, merged.\n\nboard's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
+            ? "matching's done. rebuilt, tested, done.\n\nboard's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
             : (e.done("pivot_alex_door")
               ? "the thing i wanted to say the other night. i'll just say it.\n\n"
               : "can i say something i've been sitting on?\n\n")
-              + "jordan's great. i mean that. she's also been a week behind on everything since demo night — the picker, the ios sprint, the review on my PR. every time there's a good reason. every time it's a week."
+              + "jordan's great. i mean that. she's also been a week behind on everything since demo night — the photo picker, the iphone app, checking my code. every time there's a good reason. every time it's a week."
               + (e.done("pivot_alex_door") ? " and the board's been at the RSVP button for two weeks." : "")
               + "\n\nand v2 doesn't have a week in it. …or maybe that's on me. i don't know if i'm being fair to her.",
         when: {
@@ -181,7 +181,7 @@
         // with the rebuild's own calls, and this beat is what fills the
         // quiet stretch before the board lands.)
         id: "founders_first_standup", char: "founders", speaker: "alex",
-        text: "two weeks of standups with two of us. still weird.\n\ni keep typing '@j' out of habit.",
+        text: "two weeks of morning calls with just the two of us. still weird.\n\ni keep typing jordan's name out of habit.",
         when: {
           if: (s) => !!s.jordan_resolved && s.jordan_fired_week != null && s.week >= s.jordan_fired_week + 2
             && !s.pivot_shipped,
@@ -190,13 +190,13 @@
           {
             key: "weird", label: "Weird for me too.",
             reply: "weird for me too. i almost texted her about the board this morning.",
-            journal: "Two weeks of standups with two of us. Alex keeps typing '@j' out of habit. So do I.",
+            journal: "Two weeks of morning calls with just the two of us. Alex keeps typing Jordan's name out of habit. So do I.",
             effects: { char: { alex: { morale: 4, trust: 2 } }, say: { char: "founders", speaker: "alex", text: "yeah. okay. board's at the RSVP flow. i'll have it by friday — and i mean friday." } },
           },
           {
             key: "go", label: "Two people, one board. Let's go.",
             reply: "two people, one board. let's go.",
-            journal: "Two weeks of standups with two of us. We didn't talk about Jordan. We talked about the board.",
+            journal: "Two weeks of morning calls with just the two of us. We didn't talk about Jordan. We talked about the board.",
             effects: { char: { alex: { morale: 2 } }, say: { char: "founders", speaker: "alex", text: "board's at the RSVP flow. friday." } },
           },
         ],

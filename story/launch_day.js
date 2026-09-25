@@ -83,7 +83,7 @@
           },
           {
             id: "launch_first_bounce", char: "jordan",
-            text: "first click from the blast just came in. someone opened it on their phone, hit the homepage, maybe 10 seconds — didn't scroll past the hero. no signup.",
+            text: "first click from the blast just came in. someone opened it on their phone, hit the homepage, maybe 10 seconds — didn't scroll past the top of the page. no signup.",
             when: { after: ["launch_email_pulse"] },
             choices: [
               {
@@ -102,8 +102,8 @@
                   e.say({
                     char: "jordan",
                     text: s.analytics_live
-                      ? "it's a uuid — no name until they sign up. they hit the /how-it-works page before leaving."
-                      : "just a hit in the access logs. no identity until they sign up.",
+                      ? "it's just an anonymous visitor — no name until they sign up. they looked at the 'how it works' page before leaving."
+                      : "just an anonymous visit. no name until they sign up.",
                   });
                   return null;
                 },
@@ -123,10 +123,10 @@
           },
           {
             id: "launch_staging_found", char: "alex",
-            text: "oh no. oh no oh no. we're on the staging database. the env var is pointing at staging. every signup since 8am has been going into the test environment — none of them can see each other. we have real users in a ghost app.",
+            text: "oh no. oh no oh no. we launched pointed at the test copy of the app, not the real one. one wrong setting. every signup since 8am has been going into the test version — none of them can see each other. we have real users in a ghost app.",
             choices: [
               { key: "options", label: "What are our options?", reply: "okay. what are our options?", journal: null,
-                effects: { say: { char: "alex", text: "hotfix — i swap the env var and redeploy. 5 minutes but if prod hiccups during deploy we could end up with a corrupted state. or maintenance page, fix it clean, back up in 30. or we wait — peak traffic is tonight, most people haven't opened the email yet." } } },
+                effects: { say: { char: "alex", text: "i can flip the setting live — 5 minutes, but if something goes wrong mid-switch we could scramble people's data. or we take the app down behind a 'back soon' page and fix it properly, back up in 30. or we wait — peak traffic is tonight, most people haven't opened the email yet." } } },
             ],
           },
           {
@@ -134,24 +134,24 @@
             text: "ready to move. what's the call?",
             choices: [
               {
-                key: "hotfix", label: "Push the hotfix — 5 minutes of risk",
-                reply: "push it. 5 minutes of risk is better than 30 minutes of downtime.", journal: null,
+                key: "hotfix", label: "Fix it live — 5 minutes of risk",
+                reply: "fix it live. 5 minutes of risk is better than 30 minutes of downtime.", journal: null,
                 effects: {
                   flags: { launch_time: "11AM" },
                   say: [
                     { char: "alex", text: "deploying." },
-                    { char: "alex", text: "done. pointed at prod. pipeline's running. first real matches should show up in the next few minutes." },
+                    { char: "alex", text: "done. we're on the real one now. matching's running. first real matches should show up in the next few minutes." },
                   ],
                 },
               },
               {
                 key: "takedown", label: "Take it down — fix it cleanly",
-                reply: "take it down. fix it right. i'd rather have 30 minutes of downtime than a corrupted state.", journal: null,
+                reply: "take it down. fix it right. i'd rather have 30 minutes of downtime than scrambled data.", journal: null,
                 effects: {
                   flags: { launch_time: "12PM", press_bounce: true },
                   say: [
-                    { char: "alex", text: "maintenance page up. fixing the env var. back up in 20-30 min." },
-                    { char: "alex", text: "back online. took 25 minutes. env is correct, pipeline is running. some early visitors hit the maintenance page." },
+                    { char: "alex", text: "'back soon' page is up. fixing the setting. back up in 20-30 min." },
+                    { char: "alex", text: "back online. took 25 minutes. setting's fixed, matching is running. some early visitors hit the 'back soon' page." },
                   ],
                 },
               },
@@ -234,7 +234,7 @@
           // ── afternoon: what the db knows (hotfix path only) ────────────────
           {
             id: "launch_test_profiles", char: "alex",
-            text: "hey — while i was swapping the env var i was looking at the db schema to make sure the migration ran clean. we still have test accounts in there.",
+            text: "hey — while i was fixing the setting i looked through the database to make sure nothing got lost. we still have test accounts in there.",
             when: { took: ["launch_staging_decide:hotfix"], after: ["launch_hustle"] },
             choices: [
               { key: "how_many", label: "How many?", reply: "how many test accounts?", journal: null,
@@ -243,10 +243,10 @@
           },
           {
             id: "launch_test_profiles_scope", char: "alex",
-            text: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with lorem ipsum filler from when we seeded the db.",
+            text: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with fake placeholder text we typed in while testing.",
             choices: [
               { key: "damage", label: "Have they figured out she's fake?", reply: "do the users know she's a test account?", journal: null,
-                effects: { say: { char: "alex", text: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets lorem ipsum back, it's going to be obvious. what do you want to do?" } } },
+                effects: { say: { char: "alex", text: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets placeholder gibberish back, it's going to be obvious. what do you want to do?" } } },
             ],
           },
           {
@@ -323,7 +323,7 @@
           },
           {
             id: "launch_stripe_research", char: "alex",
-            text: "okay so. i got someone on stripe's support chat. we need to submit: business type, EIN, bank account for payouts, and they run an identity check on whoever owns the account. i read through the full verification docs while i was waiting.",
+            text: "okay so. i got someone on stripe's support chat. we need to submit: business type, tax ID, bank account for payouts, and they run an identity check on whoever owns the account. i read through the full verification docs while i was waiting.",
             choices: [
               { key: "timeline", label: "How long does verification take?", reply: "how long does it take once we submit?", journal: null,
                 effects: { say: { char: "alex", text: "stripe says 1 to 3 business days. minimum. and that's after we submit everything, which i don't have ready right now. so realistically — not today. she's been sitting on a failed payment for 20 minutes." } } },
@@ -433,26 +433,26 @@
     nodes: [
       {
         id: "proto_to_product", char: "alex",
-        text: "before we point real strangers at this: honesty hour. password-reset emails land in spam. the match queue crashes on profiles with zero photos. and i'm about 80% sure you can see other people's photos by editing a url. one hardening week and i can sleep at night. or we ship as-is and firefight.",
+        text: "before we point real strangers at this: honesty hour. password-reset emails land in spam. the match queue crashes on profiles with zero photos. and i'm about 80% sure you can see other people's photos by editing a url. one week of fixing bugs and i can sleep at night. or we launch as-is and fix things as they break.",
         when: { cooldown: 4, if: (s) => s.has_demo && s.productPhase !== "product" },
         choices: [
           {
-            key: "commit", label: "Take the hardening week",
+            key: "commit", label: "Take a week to fix bugs first",
             reply: "take the week. fix the resets, the crash, and for god's sake the photo urls. then we point strangers at it.",
             effects: { waitlist: 5, marketFit: 8, flags: { productPhase: "product" }, char: { alex: { effort: 1.0 } } },
             fx(s) {
               s.tech_debt = Math.max(0, (s.tech_debt || 0) - 8);
-              return "One week of deeply unglamorous work: spam headers fixed, the zero-photo crash squashed, photo urls signed. Nothing to demo, everything to trust. Word's getting around — 5 people asked for early access.";
+              return "One week of deeply unglamorous work: reset emails out of spam, the zero-photo crash squashed, private photos locked down. Nothing to demo, everything to trust. Word's getting around — 5 people asked for early access.";
             },
           },
           {
-            key: "delay", label: "Ship as-is — we'll firefight",
-            reply: "no hardening week. we ship with the bugs and firefight — write them on the whiteboard so we at least know our own landmines.",
-            journal: "Skipped the hardening week — the bugs are on the whiteboard under the heading 'known landmines.' Alex didn't argue. He just circled the photo-url one twice.",
+            key: "delay", label: "Launch as-is — fix things as they break",
+            reply: "no bug-fixing week. we launch with the bugs and fix things as they break — write them on the whiteboard so we at least know our own landmines.",
+            journal: "Skipped the bug-fixing week — the bugs are on the whiteboard under the heading 'known landmines.' Alex didn't argue. He just circled the photo-url one twice.",
             effects: { flags: { productPhase: "product" }, char: { alex: { effort: 0.6, morale: -3 } } },
             fx(s) {
               s.tech_debt = (s.tech_debt || 0) + 5;
-              return "No hardening week. The known bugs went up on the whiteboard under 'landmines.' Alex didn't argue — he just circled the photo-url one twice.";
+              return "No bug-fixing week. The known bugs went up on the whiteboard under 'landmines.' Alex didn't argue — he just circled the photo-url one twice.";
             },
           },
         ],
@@ -523,7 +523,7 @@
       {
         id: "launch_stall", char: "alex", ambient: true,
         text: (s) => !s.ios_unblocked
-          ? "the web build is hardened and working. iOS never happened — it's been on the board since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
+          ? "the website version is solid and working. the iphone app never happened — it's been on the board since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
           : !allScopeBuilt(s)
             ? "nobody has written a line of product code in weeks — i'm on calls, jordan's on calls, and the list we said we'd finish before launch hasn't moved since. it isn't going to finish itself. put me back on the build."
             : "the product has been sitting on a server since week " + Math.max(1, s.week - 3)

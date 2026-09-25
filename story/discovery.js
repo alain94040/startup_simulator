@@ -137,7 +137,7 @@
       // ── POST-LAUNCH RESEARCH HABIT ───────────────────────────────────────────
       {
         id: "founder_user_depth", char: "founder", ambient: true,
-        text: "you've been shipping for weeks but making decisions from support tickets. you don't actually know how your users experience dating on plusone — are they going on dates? are they happy with their matches?",
+        text: "you've been shipping for weeks but making decisions from support emails. you don't actually know how your users experience dating on plusone — are they going on dates? are they happy with their matches?",
         when: {
           cooldown: 6,
           if: (s, e) => s.launched && (s.users >= 5 || s.customers >= 2) && e.timesResolved("founder_user_depth") < 2,
@@ -147,7 +147,7 @@
             key: "deep", label: "Five sessions — watch them use it",
             effects: { marketFit: 8, signal: 6 },
             fx: (s, e) => e.timesResolved("founder_user_depth") === 0
-              ? "Five sessions done. Two users showed you patterns you didn't expect — they message matches in bursts, then go silent for days. You found why 30% churn in week 2 and fixed it immediately."
+              ? "Five sessions done. Two users showed you patterns you didn't expect — they message matches in bursts, then go silent for days. You found why 30% quit in week 2 and fixed it immediately."
               : "Five sessions done. Same burst-then-silence pattern, but this time you found where drop-off happens later in the conversation — users who don't get a reply within 48 hours almost never come back. Adjusted the nudge timing.",
           },
           {
@@ -189,7 +189,7 @@
           {
             key: "rebuild", label: "Rewrite around the customer story",
             effects: { signal: 10, flags: { website_updated: true } },
-            fx: () => "Website rebuilt. Hero section is now the customer quote. Features moved to a second page. Conversion on the signup form jumped immediately.",
+            fx: () => "Website rebuilt. The top of the homepage is now the customer quote. Features moved to a second page. More visitors signed up right away.",
           },
         ],
       },
@@ -199,12 +199,12 @@
         id: "founder_codebuild", char: "founder", ambient: true,
         text: (s, e) => {
           const n = e.timesResolved("founder_codebuild");
-          if (n === 0) return "alex has been heads-down but the queue isn't shrinking. you can code — take this sprint and build alongside him.";
-          if (n < 3) return "same situation as last time — queue still isn't moving fast enough. you could jump in again.";
+          if (n === 0) return "alex has been working nonstop but the to-do list isn't shrinking. you can code — spend this week building alongside him.";
+          if (n < 3) return "same situation as last time — the to-do list still isn't moving fast enough. you could jump in again.";
           const extras = [
-            "the queue's never fully empty. at some point pairing stops being a one-off and becomes the default way you ship.",
-            "matching algorithm is getting slower as the user base grows. alex flagged it — not urgent yet, but a focused sprint together would close it.",
-            "photo upload pipeline is still flaky for some devices. alex has it on the list but it keeps sliding. worth a sprint.",
+            "the to-do list is never fully empty. at some point coding together stops being a one-off and becomes the default way you ship.",
+            "matching algorithm is getting slower as the user base grows. alex flagged it — not urgent yet, but a focused week together would close it.",
+            "photo upload pipeline is still flaky for some devices. alex has it on the list but it keeps sliding. worth a week.",
           ];
           return extras[(n - 3) % extras.length];
         },
@@ -217,7 +217,7 @@
         },
         choices: [
           {
-            key: "pair", label: "Pair up this sprint",
+            key: "pair", label: "Code with Alex this week",
             effects: { char: { alex: { morale: 8, effort: 0.5 } } },
             fx(s, e) {
               // Pairing on an owned matching engine sharpens the secret sauce —

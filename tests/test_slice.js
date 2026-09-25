@@ -108,7 +108,7 @@ console.log("decent driver (seed 42)");
     "dev plan landed impasse+2 — the grudging split cost a week (impasse wk "
     + g.weekOf("equity_impasse") + ", plan wk " + g.weekOf("dev_plan") + ")");
   ok(g.took("auth_choice:buy"), "bought auth day one");
-  ok(g.s.saas.some(x => x.label === "Auth provider"), "auth SaaS on the burn ($30/wk)");
+  ok(g.s.saas.some(x => x.label === "Login service"), "auth SaaS on the burn ($30/wk)");
   ok(!g.log.some(l => l.surfaced === "auth_forced"), "auth_forced never surfaced after buying");
 
   // Research-gated C-option.
@@ -142,8 +142,8 @@ console.log("decent driver (seed 42)");
   ok(g.weekOf("demo_first_message") === g.weekOf("demo_ready"),
     "demo night: all three beats in one sitting");
   ok(g.s.demo_question_seen === true, "'so what happens now?' banked as evidence");
-  ok(g.threads.jordan.some(m => (m.body || "").includes("put the demo build on testflight")),
-    "TestFlight circle message followed a week later");
+  ok(g.threads.jordan.some(m => (m.body || "").includes("put the demo in a test app")),
+    "test-group message followed a week later");
 
   // Post-demo trio.
   ok(g.took("analytics_choice:buy") && g.s.analytics_live, "bought analytics (sight)");
@@ -221,7 +221,7 @@ console.log("ignoreAuth driver (seed 42)");
   ok(surfacedForced && surfacedForced.week === g.weekOf("auth_choice") + 2,
     "auth_forced landed exactly 2 weeks after the @ignored (delay from dep)");
   ok(g.outcome("auth_forced") === "@ignored"
-    && g.s.saas.filter(x => x.label === "Auth provider").length === 1,
+    && g.s.saas.filter(x => x.label === "Login service").length === 1,
     "ignored again: he bought it himself — same $30/wk, two weeks lost");
   ok(g.outcome("first_screen") === "@ignored", "first-screen ask left on read");
   ok(g.threads.jordan.some(m => (m.body || "").includes("rebuilding the intake")),

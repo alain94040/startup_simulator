@@ -207,7 +207,7 @@
         parts([
           { faced: g.done("auth_choice"), weight: 1,
             got: g.took("auth_choice:buy") ? 1 : g.took("auth_forced:buy") ? 0.4 : 0,
-            note: g.took("auth_choice:buy") ? "Bought auth day one — commodity plumbing." : "Hand-rolled auth; bought it anyway two weeks later." },
+            note: g.took("auth_choice:buy") ? "Bought the login system on day one — plumbing, not product." : "Built our own logins; bought them anyway two weeks later." },
           { faced: g.done("matching_choice"), weight: 2,
             got: g.took("matching_choice:license") ? 0 : 1,
             note: g.took("matching_choice:license") ? "Licensed the core. The black box got ripped out at the pivot." : "Kept the matching engine — the one thing you can't rent." },
@@ -271,7 +271,7 @@
         : !s.game_over ? clamp(40 + g.runwayWeeks * 3, 40, 90)
           : s.deadline_passed ? 45 : s.cofounder_left ? 20 : 10;
       out.push({
-        key: "default-alive", label: "Stay default alive", ref: "📚 PG, \"Default Alive or Default Dead?\"",
+        key: "default-alive", label: "Don't run out of money", ref: "📚 PG, \"Default Alive or Default Dead?\"",
         score, verdict: s.game_won ? "You reached the other side with the lights on."
           : !s.game_over ? "Still alive — runway is the scoreboard."
             : s.deadline_passed ? "Alive at the deadline — but the grade didn't clear the bar."

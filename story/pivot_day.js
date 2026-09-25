@@ -355,7 +355,7 @@
             // He praises her, names the pattern, and doubts his own motives.
             // None of the chips says "fire".
             id: "pivot_alex_concern", char: "alex",
-            text: "she's great. i mean that. the intake screen is still the best thing we've made.\n\nshe's also been a week behind on everything since demo night. the picker. the ios sprint. the review on my PR. every time there's a good reason. every time it's a week.\n\nand v2 doesn't have a week in it.\n\n…or maybe that's on me. i wanted 40% in week two. i don't know if i'm being fair to her. that's why i'm telling you and not her.",
+            text: "she's great. i mean that. the intake screen is still the best thing we've made.\n\nshe's also been a week behind on everything since demo night. the photo picker. the iphone app. checking my code. every time there's a good reason. every time it's a week.\n\nand v2 doesn't have a week in it.\n\n…or maybe that's on me. i wanted 40% in week two. i don't know if i'm being fair to her. that's why i'm telling you and not her.",
             when: { took: ["pivot_alex_door:say"] },
             choices: [
               {
@@ -452,7 +452,7 @@
           {
             key: "cut", label: "One thing. Cut everything else",
             reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
-            journal: "Scope call for v2: one thing. Plans board, nothing else — no legacy matching mode limping alongside. The lean lesson, learned twice.",
+            journal: "Scope call for v2: one thing. Plans board, nothing else — no old matching mode limping alongside. The lean lesson, learned twice.",
             effects: { marketFit: 4 },
             fx(s, e) {
               s.board_extra = (s.board_extra || 0) - 0.5;
@@ -507,7 +507,7 @@
           },
           {
             key: "fresh", label: "Clean slate — save it for launch day",
-            reply: "save the reveal. i'd rather relaunch to fresh eyes than re-litigate v1 with the people it burned.",
+            reply: "save the reveal. i'd rather relaunch to fresh eyes than reopen old wounds with the people v1 burned.",
             journal: "Skipped the beta invite to the people who left — v2 relaunches to fresh eyes instead.",
             fx: () => "Clean slate it is. The quiet list stays quiet until launch day.",
           },
@@ -519,7 +519,7 @@
         // both halves of v2 are built: the matching (Alex) and the board
         // (whoever holds it — which is why keeping Jordan delays it).
         id: "pivot_relaunch", char: "founder",
-        text: (s) => "Alex's message is three words: 'staging is green.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the board is in. This is a different product wearing the same name — and how it meets the world is your call.",
+        text: (s) => "Alex's message is three words: 'v2 is ready.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the board is in. This is a different product wearing the same name — and how it meets the world is your call.",
         when: {
           cooldown: 2,
           // …and while the app has an App Store listing to relaunch on (the
@@ -532,7 +532,7 @@
           {
             key: "sarah_event", label: "Debut v2 at Sarah's event",
             if: (s) => !!s.sarah_onboard,
-            reply: "staging's green — we're ready. still want us for the event?", replyTo: "sarah",
+            reply: "v2's ready. still want us for the event?", replyTo: "sarah",
             journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a board of plans, not a grid of faces. People RSVP'd to real plans on the spot. PlusOne v2 walked out of that room with a heartbeat.",
             fx(s, e) {
               s.pivot_shipped = true;
@@ -565,7 +565,7 @@
               s.users += 4 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 6, 0, 100);
               s.market_fit = clamp(s.market_fit + 24, 0, 100);
-              return "Pushed to production, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
+              return "Went live, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
             },
           },
           {

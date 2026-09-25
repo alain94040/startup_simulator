@@ -90,7 +90,7 @@
         beats: [
           {
             id: "demo_ready", char: "alex",
-            text: "profiles and matching work end-to-end for the first time. create an account, get matched, send a message. that's the core hypothesis. want to put it in front of real people?",
+            text: "profiles and matching work end-to-end for the first time. create an account, get matched, send a message. that's the one core idea. want to put it in front of real people?",
             // The binding constraint is Alex's actual build output: part-time
             // Alex (0.4× passive, 0.6× grants) reaches 6 effort weeks later than
             // full-time — the commitment lesson, measured. Also waits for the
@@ -116,18 +116,18 @@
                 },
               },
               {
-                key: "polish", label: "One sprint to polish it first",
-                reply: "one sprint of polish first. if the first stranger hits a crash in minute one we learn nothing.",
+                key: "polish", label: "One more week of polish first",
+                reply: "one more week of polish first. if the first stranger hits a crash in minute one we learn nothing.",
                 effects: {
                   waitlist: 2, marketFit: 4, signal: 4,
                   flags: { has_demo: true },
                   scene: "demo",
-                  say: { char: "alex", text: "polish sprint done — worst edges are gone. and jordan lined up our first true stranger: her sister's friend, tonight at 8. i'm watching the session live. don't make plans." },
+                  say: { char: "alex", text: "polish week done — worst edges are gone. and jordan lined up our first true stranger: her sister's friend, tonight at 8. i'm watching the session live. don't make plans." },
                 },
                 fx(s) {
                   s.tech_debt = (s.tech_debt || 0) + 3;
                   demoItems(s, "solid");
-                  return "One sprint of cleanup, then out the door. Tonight the polished demo goes in front of a total stranger for the first time, live, while Alex watches the session logs.";
+                  return "One week of cleanup, then out the door. Tonight the polished demo goes in front of a total stranger for the first time, live, while Alex watches the session logs.";
                 },
               },
             ],
@@ -166,14 +166,14 @@
           },
           {
             id: "demo_bug", char: "alex",
-            text: "problem. she's trying to upload a photo from her camera roll and the uploader just spins. she's retried twice. it's the picker — HEIC, every iphone since 2017.\n\nthat's jordan's side of the app. i'm sitting here reading her swift like it's a foreign language.",
+            text: "problem. she's trying to upload a photo from her camera roll and the uploader just spins. she's retried twice. it's the photo picker — it chokes on the photo format every iphone has used since 2017.\n\nthat's jordan's part of the app, and i'm reading her code like it's a foreign language.",
             choices: [
               {
-                key: "hotfix", label: "Bodge it from your side",
+                key: "hotfix", label: "Patch it from your end for now",
                 reply: "do whatever you can from your side. first impressions don't get a second take.",
                 journal: null,
                 effects: {
-                  say: { char: "alex", text: "converted it on the server. her third retry worked — she thinks it was her wifi. it's tape, and it's still broken in the app. someone who knows that file has to do it properly." },
+                  say: { char: "alex", text: "converted her photo on our end. her third retry worked — she thinks it was her wifi. it's tape, and it's still broken in the app. someone who knows that file has to do it properly." },
                 },
                 fx(s) { s.tech_debt = (s.tech_debt || 0) + 4; return null; },
               },
@@ -183,7 +183,7 @@
                 // not narrated — and the unanswered message stays visible in
                 // her thread above everything that comes later.
                 key: "ping", label: "Text Jordan — it's her code",
-                reply: "you around? photo upload is spinning on HEIC. we have a real person in the app right now.",
+                reply: "you around? photo upload is stuck on iphone photos. we have a real person in the app right now.",
                 journal: "Texted Jordan mid-demo about her own uploader. No reply — she was still at work.",
                 effects: {
                   flags: { demo_pinged_jordan: true },
@@ -220,7 +220,7 @@
                   // circle — a dozen friends-of-friends, explicitly NOT a launch.
                   schedule: {
                     in: 1, char: "jordan",
-                    say: { char: "jordan", text: "put the demo build on testflight for my sister's friend group — a dozen people, all vouched for. not a launch, just eyes on it while we build." },
+                    say: { char: "jordan", text: "put the demo in a test app for my sister's friend group — a dozen people, all vouched for. not a launch, just eyes on it while we build." },
                   },
                 },
               },
@@ -233,13 +233,13 @@
             id: "demo_jordan_late", char: "jordan",
             text: (s) => (s.demo_pinged_jordan
               ? "sorry — just seeing your message. what happened?\n\n"
-              : "i am so sorry. release cut at work, i didn't get out until eleven.\n\n")
+              : "i am so sorry. big deadline at work, i didn't get out until eleven.\n\n")
               + "how did it go? did she finish the profile?",
             when: { after: ["demo_first_message"] },
             choices: [
               {
                 key: "tell", label: "Tell her how it went",
-                reply: "she finished. she matched. her first message was \"so what happens now?\" — alex is still staring at it. one thing: the photo upload spun forever. HEIC, it's in the picker.",
+                reply: "she finished. she matched. her first message was \"so what happens now?\" — alex is still staring at it. one thing: the photo upload spun forever on her iphone photos. it's in the picker.",
                 journal: "Demo night. A total stranger finished the flow, matched, and her first message was 'so what happens now?' Wrote it on a post-it and stuck it on the monitor. The product answered every question except the one that matters. Jordan texted at 12:41 to ask how it went.",
                 effects: {
                   flags: { demo_jordan_absent: true },
@@ -252,7 +252,7 @@
                   // negligent; stretched. That's the whole arc in one habit.
                   e.schedule({
                     in: 1, char: "alex",
-                    say: { char: "alex", text: "jordan's HEIC fix landed. couple of days later than she said, but it's clean — properly done in the picker, not taped on like mine." },
+                    say: { char: "alex", text: "jordan's photo fix landed. couple of days later than she said, but it's clean — properly done in the picker, not taped on like mine." },
                   });
                   return null;
                 },
