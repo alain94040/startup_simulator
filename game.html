@@ -733,7 +733,7 @@
      phone it becomes its own scrollable row under the nav title. */
   #hud { display: flex; align-items: center; gap: 18px; flex: 1; min-width: 0; }
   #stats { margin-left: auto; }
-  #mTitle, #tabbar, #railTriage { display: none; }
+  #mTitle, #tabbar { display: none; }
   #journalSurface { flex-direction: column; align-items: center; overflow: hidden auto; padding: 16px 0 30px; gap: 12px; background: var(--panel); border-radius: 14px; box-shadow: var(--card-shadow); }
   .j-wrap { width: min(620px, 92%); display: flex; flex-direction: column; gap: 14px; }
   .j-chapter { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); }
@@ -747,12 +747,11 @@
   /* ══ PHONE ═══════════════════════════════════════════════════════════════
      On a narrow viewport the app becomes what it always wanted to be: an iPhone
      messages client. One surface at a time, a contextual nav bar + a compact
-     HUD strip on top, and a four-tab bar at the bottom (Chat · Bank · News ·
-     Journal). The Chat tab is a strip of conversation circles over one
+     HUD strip on top, and a four-tab bar at the bottom (Chat · Moves · Bank ·
+     News · Journal). The Chat tab is a strip of conversation circles over one
      thread. The desktop's right column splits along the seam it already had:
-     the triage becomes a fold-down "Your move" bar under the strip (these
-     are your moves, and they belong with the people asking for them), and the
-     journal mirror becomes the Journal tab.
+     the triage becomes the Moves tab (your own decisions and the news waiting
+     on you), and the journal mirror becomes the Journal tab.
 
      The breakpoint is where the desktop's three columns stop fitting (rail 250
      + right column 312 + a readable thread ≈ 1010px), not a phone-width guess:
@@ -820,7 +819,7 @@
     }
     #rail::-webkit-scrollbar { display: none; }
     #railList { display: flex; gap: 4px; padding: 8px 8px 6px; width: max-content; min-width: 100%; }
-    #threadCol, #railTriage { flex: 1; min-height: 0; }
+    #threadCol { flex: 1; min-height: 0; }
     .av { width: 42px; height: 42px; font-size: 16px; }
     .tag.call { font-size: 9px; padding: 3px 7px; }
 
@@ -847,19 +846,8 @@
     .story.fresh { animation: storyIn .35s cubic-bezier(.3,.9,.4,1); }
     @keyframes storyIn { from { transform: translateX(-18px) scale(.85); opacity: .2; } }
 
-    /* your own moves: a fold-down bar between the strip and the thread */
-    #railTriage { display: block; flex: none; background: #fff8ee; border-bottom: 1px solid #f3dcb8; }
-    #railTriage:empty { display: none; }
-    #railTriage .tri-toggle {
-      width: 100%; border: 0; background: none; display: flex; align-items: center; gap: 8px;
-      padding: 9px 14px; font-size: 13.5px; font-weight: 700; color: var(--amber-ink); text-align: left;
-    }
-    #railTriage .tri-toggle .tri-n { min-width: 19px; height: 19px; padding: 0 6px; border-radius: 10px; background: var(--amber-ink); color: #fff; font-size: 11px; display: grid; place-items: center; }
-    #railTriage .tri-toggle .tri-chev { margin-left: auto; font-size: 12px; transition: transform .15s; }
-    #railTriage.open .tri-toggle .tri-chev { transform: rotate(180deg); }
-    #railTriage .tri-body { max-height: 52dvh; overflow-y: auto; padding: 0 12px 12px; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
-    #railTriage .tri-skip { padding: 6px 12px 8px; }
-    #railTriage .tri-skip .endpill { margin: 0; }
+    /* your own moves: a tab of their own */
+    #movesSurface { flex-direction: column; overflow: hidden auto; background: var(--bg); padding: 4px 12px 26px; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; }
     #railTriage .tier h5 { margin: 10px 0 6px; }
     #railTriage .h-card { padding: 9px 12px; }
     #railTriage .h-card b { font-size: 13px; }
@@ -976,7 +964,7 @@
   @media (max-width: 1023px) and (min-width: 620px) {
     /* the header bars stay edge-to-edge like proper nav chrome; only the
        content columns are reined in */
-    #railTriage .tri-toggle, #railTriage .tri-body, #railTriage .tri-skip, #thread, #reply, #scThread, #scReply, #scRail {
+    #railTriage, #thread, #reply, #scThread, #scReply, #scRail {
       width: 100%; max-width: 720px; margin-left: auto; margin-right: auto;
     }
     .m-in, .m-out { max-width: 68%; }
@@ -1030,14 +1018,14 @@
     <nav id="rail">
       <div id="railList"></div>
     </nav>
-    <!-- phone only: your own moves, a fold-down bar under the strip -->
-    <div id="railTriage"></div>
     <div id="threadCol">
       <div id="chatHead"></div>
       <div id="thread"></div>
       <div id="reply"></div>
     </div>
   </section>
+  <!-- phone only: the triage as a tab of its own (the desktop's right column) -->
+  <section class="surface" id="movesSurface"><div id="railTriage"></div></section>
   <section class="surface" id="feedSurface"></section>
   <section class="surface" id="bankSurface"></section>
   <section class="surface" id="journalSurface"></section>
@@ -1049,6 +1037,10 @@
   <button data-surface="msgs" class="cur" aria-label="Chat">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11.3c0 3.9-3.8 7.1-8.5 7.1-1 0-1.9-.1-2.8-.4l-5 1.8 1.4-3.4c-1.4-1.3-2.1-3.1-2.1-5.1 0-3.9 3.8-7.1 8.5-7.1s8.5 3.2 8.5 7.1Z"/></svg>
     <span>Chat</span><em class="tb-badge" id="tbMsgs" style="display:none"></em>
+  </button>
+  <button data-surface="moves" aria-label="Moves">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5l1.6 1.6L8.8 5M4 12.5l1.6 1.6 3.2-3.1M4 18.5l1.6 1.6 3.2-3.1M12 6.6h8M12 12.6h8M12 18.6h8"/></svg>
+    <span>Moves</span><em class="tb-badge" id="tbMoves" style="display:none"></em>
   </button>
   <button data-surface="bank" aria-label="Bank">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3.4 9.6 12 4.6l8.6 5M5.4 11.4v6.8m4.4-6.8v6.8m4.4-6.8v6.8m4.4-6.8v6.8M3 20h18"/></svg>
@@ -1155,7 +1147,9 @@ const moneyShort = n => {
    the selected thread is always the one in front of the player.            */
 const MOBILE_Q = matchMedia("(max-width: 1023px)");   // keep in step with the phone @media block
 let isMobile = MOBILE_Q.matches;
-const TAB_TITLE = { msgs: "Messages", feed: "News", bank: "Bank", journal: "Journal" };
+const TAB_TITLE = { msgs: "Messages", moves: "Your moves", feed: "News", bank: "Bank", journal: "Journal" };
+// Surfaces only the phone has: the desktop keeps both in its right column.
+const PHONE_ONLY = new Set(["moves", "journal"]);
 
 // Who renders where.
 const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
@@ -1336,7 +1330,6 @@ let revealTimer = null;         // in-thread typing-reveal pacing
 let jShown = 0;                 // journal-mirror entries already inked in
 let jArrive = false;            // glow the newest journal entry while revealing
 let replyExpanded = false;      // the in-thread "Respond ↓" pill state
-let triageOpen = false;         // phone: the "Your move" bar under the strip is folded down
 let weekNotes = [];             // this week's notifications (the bell reopens them)
 let notesSeen = true;
 let noteQueue = [], noteTimer = null;
@@ -1361,7 +1354,7 @@ function resetUiState() {
   scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   selected = "alex"; surface = "msgs"; threadRendered = {};
-  uiBusy = false; replyExpanded = false; triageOpen = false; weekNotes = []; notesSeen = true;
+  uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
   jShown = journalMirror().length; jArrive = false;
   for (const id of game.order) {
@@ -1481,11 +1474,12 @@ function renderHeader() {
   const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0);
   setBadge("bFeed", feedNew);
   // ── phone tab bar ──
-  // Chat also counts the "Your move" cards: they live at the top of the
-  // conversation list and nothing else would flag them. Journal counts the
-  // lines inked in since you last read it — the week's consequences.
+  // Moves counts your own open decisions — plus one for the End-week pill on
+  // an ambient-only week, since that pill lives on the Moves tab too. Journal
+  // counts the lines inked in since you last read it — the week's consequences.
   const moves = gameEnded() ? 0 : game.openActions().filter(a => !a.onHold && SELF.has(a.charId)).length;
-  setBadge("tbMsgs", unreadConvos + moves);
+  setBadge("tbMsgs", unreadConvos);
+  setBadge("tbMoves", moves || (canSkipWeek() ? 1 : 0));
   setBadge("tbFeed", feedNew);
   setBadge("tbJournal", Math.max(0, jShown - journalSeen));
   updateBell();
@@ -1797,41 +1791,30 @@ function renderSide() {
   };
 
   const canSkip = canSkipWeek();
-  // A phone shows the conversation strip right above this, so a card whose
-  // whole job is "↗ open chat" would say the same thing twice — that person's
-  // circle is already ringed. Only the homeless cards stay: your own moves (no
-  // thread) and the News Feed (a different tab).
+  // On a phone a card whose whole job is "↗ open chat" would say the same
+  // thing twice — that person's circle in the Chat strip is already ringed.
+  // Only the homeless cards stay: your own moves (no thread) and the News Feed
+  // (a different tab).
   const shownStory = isMobile ? story.filter(a => FEED.has(a.charId)) : story;
   const shownLater = isMobile ? later.filter(a => FEED.has(a.charId)) : later;
   const needBody = move.map(moveCard).join("") + shownStory.map(linkCard).join("");
   const laterBody = shownLater.map(linkCard).join("");
   let html = canSkip ? '<button class="endpill" id="endPill">End week →</button>' : "";
-  if (needBody || !isMobile) {
-    html += '<div class="tier"><h5>◉ Needs a call</h5>' +
-      (needBody || '<div class="empty-tier">' + (gameEnded() ? "the run's over — this is the record now." : "nothing urgent — rare. enjoy it.") + "</div>") + "</div>";
-  }
-  if (laterBody || !isMobile) {
-    html += '<div class="tier later"><h5>When you have a minute</h5>' +
-      (laterBody || '<div class="empty-tier">' + (gameEnded() ? "&nbsp;" : "quiet out there.") + "</div>") + "</div>";
-  }
+  // (On the phone "nothing urgent" would be wrong while someone in the Chat
+  // strip is waiting on you, so the empty line points there instead.)
+  const calmNote = isMobile ? "nothing of your own to decide — any calls this week are in Chat." : "nothing urgent — rare. enjoy it.";
+  html += '<div class="tier"><h5>◉ Needs a call</h5>' +
+    (needBody || '<div class="empty-tier">' + (gameEnded() ? "the run's over — this is the record now." : calmNote) + "</div>") + "</div>";
+  html += '<div class="tier later"><h5>When you have a minute</h5>' +
+    (laterBody || '<div class="empty-tier">' + (gameEnded() ? "&nbsp;" : "quiet out there.") + "</div>") + "</div>";
 
-  // Two hosts, one triage. On the phone it is a bar under the conversation
-  // strip — "◉ Your move · 2", folded so the thread keeps the screen until you
-  // open it (the End-week pill stays out in the open: it's the only thing on
-  // the bar when it shows) — and the journal goes to its own tab; on the
-  // desktop both stay in the right column exactly as before.
+  // Two hosts, one triage. On the phone it is the Moves tab and the journal
+  // goes to its own tab; on the desktop both stay in the right column exactly
+  // as before.
   if (isMobile) {
     $("sideCol").innerHTML = "";
-    const n = move.length + shownStory.length + shownLater.length;
-    if (!n) triageOpen = false;
     const tri = $("railTriage");
-    tri.classList.toggle("open", triageOpen);
-    tri.innerHTML = (n ? '<button class="tri-toggle">◉ ' + (move.length ? "Your move" : "News waiting") +
-        ' <span class="tri-n">' + n + '</span><span class="tri-chev">▾</span></button>' +
-        (triageOpen ? '<div class="tri-body">' + needBody + laterBody + "</div>" : "") : "") +
-      (canSkip ? '<div class="tri-skip"><button class="endpill" id="endPill">End week →</button></div>' : "");
-    const tg = tri.querySelector(".tri-toggle");
-    if (tg) tg.onclick = () => { triageOpen = !triageOpen; renderSide(); };
+    tri.innerHTML = html;
     wireTriage(tri);
     renderJournalSurface();
   } else {
@@ -2924,12 +2907,13 @@ function syncSurfaceTabs() {
   $("feedSurface").classList.toggle("cur", surface === "feed");
   $("bankSurface").classList.toggle("cur", surface === "bank");
   $("journalSurface").classList.toggle("cur", surface === "journal");
+  $("movesSurface").classList.toggle("cur", surface === "moves");
   // the runway gauge doubles as the Bank tab's entry point — light it when open
   $("gRunway").classList.toggle("cur", surface === "bank");
 }
 function setSurface(sf) {
   if (uiBusy) return;
-  if (sf === "journal" && !isMobile) sf = "msgs";   // the desktop keeps the journal in the right column
+  if (PHONE_ONLY.has(sf) && !isMobile) sf = "msgs";   // the desktop keeps both in the right column
   surface = sf; syncSurfaceTabs();
   if (sf === "msgs") openThread();   // reveal any unread on entry
   render();
@@ -2945,12 +2929,12 @@ for (const b of document.querySelectorAll("#tabbar button")) b.onclick = () => {
 $("gRunway").onclick = () => setSurface(surface === "bank" ? "msgs" : "bank");
 
 // Rotating a phone, or dragging a desktop window narrow, swaps the whole shape
-// mid-run. Land on something coherent: the desktop has no Journal tab, so fold
-// it back into Messages.
+// mid-run. Land on something coherent: the desktop has no Moves or Journal
+// tab, so fold both back into Messages.
 function onModeChange(e) {
   isMobile = e.matches;
   if (!isMobile) {
-    if (surface === "journal") surface = "msgs";
+    if (PHONE_ONLY.has(surface)) surface = "msgs";
     document.body.classList.remove("sc-solo");
   }
   $("todoPop").classList.remove("on");
