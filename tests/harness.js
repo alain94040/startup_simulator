@@ -171,7 +171,7 @@
     founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
     // research — the market: interviews, communities, the competitor, evidence
     interviews: "research", waitlist_calls: "research", waitlist_cold: "research",
-    hn_thread: "research", community_hn_1: "research", community_hn_2: "research",
+    hn_thread: "research", community_hn_2: "research",
     community_hn_3: "research", community_reddit_1: "research", community_reddit_2: "research",
     community_reddit_3: "research", community_ih_1: "research", community_ih_2: "research",
     community_ih_3: "research", founder_meetup: "research", mentor_competitor_bomb: "research",

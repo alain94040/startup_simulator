@@ -90,7 +90,9 @@
     },
     {
       id: "jamie", name: "Jamie", role: "College friend", type: "family",
-      unlock: (s) => s.week >= 3,
+      // Week 5, not 3: week 3 already brings Mom, and one new voice at a
+      // time is what keeps the first open week readable.
+      unlock: (s) => s.week >= 5,
     },
     {
       id: "david", name: "David", role: "Ex-manager", type: "family",

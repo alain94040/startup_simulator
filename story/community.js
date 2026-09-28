@@ -30,10 +30,14 @@
 
   const mod = {};
   mod.nodes = [
+    // The HN ladder's first rung. Week 4, not 3: week 3 is the first free
+    // week after the equity sitting, and it holds exactly one card per kind
+    // of call — the team (Alex), the market (the interviews), money (Mom).
+    // A fourth voice that week reads as the game blowing up, not opening up.
     {
       id: "hn_thread", char: "hacker_news", from: "Hacker News", ambient: true,
-      text: "'Why are dating apps still so bad in 2026?' — top thread on Hacker News right now, 300 comments. this is your market talking openly.",
-      when: { if: (s) => !s.launched && s.week >= 3 },
+      text: "'Why are dating apps still so bad in 2026?' — top thread on Hacker News right now, 300 comments. the top answer is a shared Google spreadsheet where people manually track matches across apps. this is your market talking openly.",
+      when: { if: (s) => !s.launched && s.week >= 4 },
       choices: [
         {
           key: "engage", label: "Engage the thread",
@@ -47,18 +51,9 @@
 
     // ── HN ladder ────────────────────────────────────────────────────────────
     rung({
-      id: "community_hn_1", from: "Hacker News",
-      text: "there's a Hacker News thread about what's broken with dating apps. 200 comments. the top answer is a shared Google spreadsheet where people manually track matches across apps. it has 50,000 views.",
-      when: { if: (s) => !s.launched && s.week >= 4 },
-      engageLabel: "Drop a comment",
-      engageJournal: "Commented on the Hacker News thread with a genuine take. 4 people DM'd asking when we're launching.",
-      engageEffects: { signal: 6, waitlist: 4, marketFit: 1 },
-      engageOutcome: "Commented with a genuine take. 4 people DM'd asking when you're launching.",
-    }),
-    rung({
       id: "community_hn_2", from: "Hacker News",
       text: "another Hacker News thread about dating apps, bigger this time. people are explicitly asking for something that actually helps — not another swipe interface.",
-      when: { after: ["community_hn_1"], delay: 3, if: (s) => !s.launched },
+      when: { after: ["hn_thread"], delay: 3, if: (s) => !s.launched },
       engageLabel: "Leave a detailed reply",
       engageJournal: "Left a detailed reply on the Hacker News thread. Two people asked to be notified at launch — one is a former PM at a big company.",
       engageEffects: { signal: 7, waitlist: 5 },

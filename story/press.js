@@ -223,7 +223,7 @@
       {
         id: "ff_friend", char: "jamie", from: "Jamie (college friend)", ambient: true,
         text: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear — a dating app, seriously?",
-        when: { if: (s) => s.week <= 10 },
+        when: { if: (s) => s.week >= 5 && s.week <= 10 },
         choices: [
           {
             key: "tell", label: "Tell him about it",
@@ -235,7 +235,7 @@
             },
           },
         ],
-        timeout: { weeks: 3 },
+        timeout: { weeks: 1 }, // "coffee this week?" — a week, then he stops asking
       },
       {
         id: "ff_friend_ask", char: "jamie", from: "Jamie (college friend)",

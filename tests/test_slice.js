@@ -550,14 +550,17 @@ console.log("week 2: the paperwork, then the split (seed 42)");
 // with nothing to answer, and the displaced card silently slid a week.
 console.log("a scene hands the week back (seed 7, attention-shuffled)");
 {
-  // This founder leaves the incorporation card on read for two weeks, so the
+  // This founder leaves the incorporation card on read for three weeks, so the
   // whole equity sitting lands mid-chapter on top of live cards of their own.
+  // (Three, not two: since week 3 was thinned to one card per kind of call,
+  // a two-week deferral files in week 4 and the sitting lands on a near-empty
+  // triage — no longer the crowded mid-chapter week this fixture is about.)
   // (The deferral is deliberate: it used to happen by accident, because the
   // retired founder_reflect filler sat in every early triage and occasionally
   // won the shuffled attention roll — a filler card outbidding the paperwork
   // was the bug, not the fixture.)
   const deferPaperwork = (a, g) =>
-    (a.nodeId === "incorporate" && g.s.week <= 2) ? null : decent(a, g);
+    (a.nodeId === "incorporate" && g.s.week <= 3) ? null : decent(a, g);
   let atExit = null;
   const g = run(7, deferPaperwork, 10, {
     priority: makeAttentionPriority(7),
