@@ -2146,9 +2146,9 @@ function focusFlow(preLens) {
 // chat and Jordan reacted, and there was no way to tell." The strip's circle
 // jumps to the front with a blue dot; on top of that, banner it the moment it
 // lands, reusing the same iOS-style notification the app already uses for
-// arrivals between turns, alongside the composer's persistent "X texted too"
-// line (see renderFocusThread). The desktop's rail already shows this via its
-// own always-visible pulsing dot, so this is phone-only.
+// arrivals between turns. The desktop's rail already shows this via its own
+// always-visible pulsing dot (plus the composer's "X texted too" line, see
+// renderFocusThread), so this is phone-only.
 function pingOtherSceneThreads(preLens) {
   if (!isMobile || !inScene || !game.scene) return;
   for (const id of sceneFullCast()) {
@@ -2380,8 +2380,10 @@ function renderFocusThread(opts) {
   // in lockstep with it rather than tracking its own notion of "new." Shown
   // regardless of whether your own thread ALSO has something to answer —
   // that "also" is exactly the gap this fixes: answering Alex used to hide
-  // any sign that Jordan had reacted in the meantime.
-  const otherId = sceneCast().find(id => id !== scSelected && sceneUnread(id));
+  // any sign that Jordan had reacted in the meantime. The phone doesn't need
+  // it: its strip of circles is always on screen, and the one who texted jumps
+  // to the front with a blue dot — a composer line saying so is noise there.
+  const otherId = isMobile ? null : sceneCast().find(id => id !== scSelected && sceneUnread(id));
   const otherName = otherId ? game.cast.get(otherId).def.name : null;
   const beat = sceneOpenBeat(scSelected);
   if (beat) {
@@ -2407,7 +2409,10 @@ function renderFocusThread(opts) {
     if (b) b.onclick = () => { if (!uiBusy) openSceneThread(b.dataset.goto); };
     return;
   }
-  rbox.innerHTML = '<div class="who-asks">the room is quiet…</div>';
+  // On the phone someone else may still be waiting (the strip shows who), so
+  // don't call the room quiet unless it is.
+  const waiting = isMobile && sceneCast().some(id => id !== scSelected && (sceneUnread(id) || sceneOpenBeat(id)));
+  rbox.innerHTML = '<div class="who-asks">' + (waiting ? "nothing to add here" : "the room is quiet…") + "</div>";
 }
 
 function exitScene() {
