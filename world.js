@@ -43,7 +43,7 @@
         char.buildEffort += base * mult;
       } else if (char.focus === "discover") {
         s.signal = clamp(s.signal + base * 1.5, 0, 100);
-        s.market_fit = clamp(s.market_fit + base, 0, 100);
+        game.addFit(base);
       }
     }
 
@@ -160,9 +160,13 @@
     // market gives liquidity; spreading thin means an empty app.
     const density = s.beachhead === "narrow" ? 1.25 : s.beachhead === "broad" ? 0.7 : 1.0;
 
-    // Free-to-paid conversion (users don't pay for a product that doesn't retain them).
+    // Free-to-paid conversion (users don't pay for a product that doesn't retain
+    // them). Continuous in fit, not stepped: the old tiers topped out at 70, so
+    // every point of fit past 70 was worth nothing. 5% of the gap-to-ideal, with
+    // a 0.5% floor — a good run's post-ship fit (~80) converts ~4%/week, what
+    // the top tier used to pay.
     if (s.launched && s.users > 0) {
-      const baseRate = trueFit < 30 ? 0.005 : trueFit < 50 ? 0.01 : trueFit < 70 ? 0.02 : 0.04;
+      const baseRate = Math.max(0.005, 0.05 * trueFit / 100);
       const raw = s.users * baseRate * density * (s.website_updated ? 1.3 : 1.0);
       const converted = Math.floor(raw) + (game.rng() < (raw % 1) ? 1 : 0);
       if (converted > 0) {

@@ -247,7 +247,7 @@
                   s.alex_converted = true;
                   s.evidence_chip = e.took("pivot_dig:maya_quote") ? "maya" : "dig";
                   s.cash = Math.max(0, s.cash - 2000);
-                  s.market_fit = clamp(s.market_fit + 15, 0, 100);
+                  e.addFit(15);
                   applyActivitiesPivot(s);
                   const jordan = e.cast.get("jordan");
                   if (jordan.active) jordan.morale = clamp(jordan.morale + 5, 0, 100);
@@ -539,7 +539,7 @@
               s.pivot_ship_week = s.week;
               s.users += 15 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 12, 0, 100);
-              s.market_fit = clamp(s.market_fit + 20, 0, 100);
+              e.addFit(20);
               e.say({ char: "sarah", text: "that went better than i pitched it to you. three of my regulars made plans on the spot. told you this crowd was your crowd." });
               return "V2 debuted live at Sarah's event. Real plans, made in the room, by strangers. The relaunch has a pulse — and a channel.";
             },
@@ -552,7 +552,7 @@
               s.pivot_ship_week = s.week;
               s.users += 8 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 15, 0, 100);
-              s.market_fit = clamp(s.market_fit + 20, 0, 100);
+              e.addFit(20);
               return "The piece ran: 'the dating app that killed its own product.' A pivot is a better story than a launch — it has a before and after. Signups followed the honesty.";
             },
           },
@@ -564,7 +564,7 @@
               s.pivot_ship_week = s.week;
               s.users += 4 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 6, 0, 100);
-              s.market_fit = clamp(s.market_fit + 24, 0, 100);
+              e.addFit(24);
               return "Went live, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
             },
           },
@@ -595,7 +595,7 @@
               s.activities_pivot = true;
               s.pivot_week = s.week;
               s.cash = Math.max(0, s.cash - 2000);
-              s.market_fit = clamp(s.market_fit + 8, 0, 100);
+              e.addFit(8);
               applyActivitiesPivot(s);
               const jordan = e.cast.get("jordan");
               if (jordan.active) jordan.morale = clamp(jordan.morale + 3, 0, 100);

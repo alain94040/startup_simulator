@@ -94,7 +94,9 @@
       {
         id: "pivot_insight_2", char: "alex",
         text: "second round of interviews done. consistent: they want depth on one thing, not breadth. scope's too wide — they're not seeing the core value.",
-        when: { after: ["pivot_insight_1"], if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 35 },
+        // Fit thresholds here are on engine.addFit's diminishing scale (30 ≈ the
+        // old flat 35, 42 ≈ the old 55).
+        when: { after: ["pivot_insight_1"], if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 30 },
         choices: [
           {
             key: "pivot", label: "Narrow scope — go deep",
@@ -122,7 +124,7 @@
         // dates from an app nobody outside the team had ever opened.
         when: {
           after: ["pivot_insight_2"],
-          if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 55 && s.launched,
+          if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 42 && s.launched,
         },
         choices: [
           {
@@ -224,7 +226,7 @@
               // far more if you know what to match on (research, GOALS.md).
               if (s.matching_owned && !s.launched) {
                 const researched = e.took("interviews:interview") || e.cast.get("alex").focus === "discover";
-                s.market_fit = clamp(s.market_fit + (researched ? 6 : 2), 0, 100);
+                e.addFit(researched ? 6 : 2);
                 if (s.items && s.items.matching_algo && s.items.matching_algo.status !== "obsolete" && researched) {
                   s.items.matching_algo.quality = "solid";
                 }

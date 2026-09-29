@@ -531,12 +531,25 @@
       if (t.say) this._say(t.say, charId);
     }
 
+    // ── market fit ─────────────────────────────────────────────────────────────
+    // The one way fit changes (effects.marketFit, world.js's passive research,
+    // and any content fx that moves it). Gains have diminishing returns — each
+    // one closes that share of the remaining gap to 100 — so fit approaches the
+    // ceiling but never pins to it: a good run ends in the 70s-80s, and every
+    // extra piece of research still moves it. A flat clamp let a decent run hit
+    // 100 by week ~18, after which no research choice changed anything.
+    // Losses are flat: a setback costs what it says.
+    addFit(delta) {
+      const s = this.s;
+      s.market_fit = clamp(delta > 0 ? s.market_fit + delta * (1 - s.market_fit / 100) : s.market_fit + delta, 0, 100);
+    }
+
     // ── effects vocabulary ─────────────────────────────────────────────────────
     _applyEffects(fx, char, node) {
       const s = this.s;
       if (fx.cash) s.cash = Math.max(0, s.cash + fx.cash);
       if (fx.signal) s.signal = clamp(s.signal + fx.signal, 0, 100);
-      if (fx.marketFit) s.market_fit = clamp(s.market_fit + fx.marketFit, 0, 100);
+      if (fx.marketFit) this.addFit(fx.marketFit);
       if (fx.waitlist) s.waitlist = Math.max(0, s.waitlist + fx.waitlist);
       if (fx.users) s.users = Math.max(0, s.users + fx.users);
       if (fx.customers) s.customers = Math.max(0, s.customers + fx.customers);

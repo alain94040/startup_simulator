@@ -94,7 +94,9 @@
         },
         when: {
           after: ["dev_plan"], delay: 1, cooldown: 4,
-          if: (s, e, char) => !s.launched && char.focus === "build" && s.market_fit < 80,
+          // 55 on engine.addFit's diminishing scale ≈ the old flat 80: "you
+          // already know your market", so Alex stops offering the week.
+          if: (s, e, char) => !s.launched && char.focus === "build" && s.market_fit < 55,
         },
         choices: [
           {
