@@ -278,9 +278,10 @@
       },
 
       // ── DIRECTION: TRUST & SAFETY (App Store review forces the safety call) ──
-      // The C-option is gated on community engagement (s.community_engaged_count,
-      // written by the hacker_news chains — ports in a later pass; until then the
-      // option simply never unlocks, which is correct).
+      // The C-option is gated on having actually READ what users say about the
+      // apps they use (s.heard_fake_profiles — set by reading an r/datingapps
+      // thread in story/community.js). Its reply quotes those threads, so it
+      // only exists for a founder who read them.
       {
         id: "trust_safety", char: "jordan",
         text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story — how we handle people posting nasty stuff — reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
@@ -303,9 +304,9 @@
           },
           {
             key: "verify_flagship", label: "Verification as THE feature — the threads called it",
-            if: (s) => (s.community_engaged_count || 0) >= 2,
-            reply: "look at every dating thread we've been in — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
-            journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we engaged had fake profiles as complaint #1 — now it's our headline.",
+            if: (s) => !!s.heard_fake_profiles,
+            reply: "look at the dating threads we read — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
+            journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we read had fake profiles as complaint #1 — now it's our headline.",
             effects: { marketFit: 6, waitlist: 3, char: { jordan: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Verified-only (from community)";

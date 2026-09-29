@@ -276,6 +276,8 @@
   .f-btn { border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 14px; padding: 5px 12px; font-size: 12px; }
   .f-done { padding: 0 14px 10px; font-size: 11.5px; color: var(--dim); font-style: italic; }
   .f-hn .f-src { background: #ff6600; color: #fff; }
+  .f-rd .f-src { background: #ff4500; color: #fff; }
+  .f-ih .f-src { background: #0e2439; color: #fff; }
   .f-tc .f-src { background: #0a9928; color: #fff; }
   .f-tw .f-src { color: #536471; border-bottom: 1px solid #eff3f4; }
   .f-expiry { margin-left: auto; font-size: 10px; color: #ffe9e9; font-weight: 600; }
@@ -1205,6 +1207,14 @@ const FEED_META = {
   techcrunch: { cls: "f-tc", src: "TC · TECHCRUNCH" },
   twitter: { cls: "f-tw", src: "𝕏 · TWITTER" },
 };
+// The communities thread (hacker_news) carries posts from three forums; a
+// post's `from` picks its masthead. Keep in step with transcript.js FEED_SRC.
+const FEED_FROM = {
+  "r/datingapps": { cls: "f-rd", src: "r/ · REDDIT · r/datingapps" },
+  "Indie Hackers": { cls: "f-ih", src: "IH · INDIE HACKERS" },
+};
+// What the founder did on a community post, said back on the card.
+const FEED_DONE = { promote: "✓ you posted in the thread.", read: "✓ you read it.", dm: "✓ you reached out." };
 // Each scene: a header (title/sub, shown in the room) + the bookend cinematics —
 // staged lines that fade in on enter, and a matching exit. `accent` tints the
 // title line. pivot's exit is a function of the decision made.
@@ -1897,7 +1907,7 @@ function renderFeed() {
   let lastWk = null, html = "";
   for (const m of items.slice(-24)) {
     if (m.week !== lastWk) { html += '<div class="f-wk">week ' + m.week + "</div>"; lastWk = m.week; }
-    const meta = FEED_META[m.charId];
+    const meta = FEED_FROM[m.from] || FEED_META[m.charId];
     const a = m.nodeId ? acts.find(x => x.nodeId === m.nodeId && !x.onHold) : null;
     const resolved = m.nodeId ? game.outcome(m.nodeId) : null;
     let foot = "";
@@ -1906,7 +1916,7 @@ function renderFeed() {
       foot = '<div class="f-act">' + a.options.map(o =>
         '<button class="f-btn" data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" + esc(o.label) + "</button>").join("") + "</div>";
     } else if (resolved === "@ignored") foot = '<div class="f-done">the moment passed — you never weighed in.</div>';
-    else if (resolved) foot = '<div class="f-done">✓ you engaged.</div>';
+    else if (resolved) foot = '<div class="f-done">' + (FEED_DONE[resolved] || "✓ you engaged.") + "</div>";
     html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + '">' +
       '<div class="f-src">' + meta.src + "</div>" +
       '<div class="f-body">' + esc(m.body) + "</div>" + foot + "</div>";

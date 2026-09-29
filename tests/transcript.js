@@ -61,6 +61,9 @@ const SELF = new Set(["founder", "growth", "analytics", "users"]);
 const FEED_SRC = {
   hacker_news: "Y · HACKER NEWS", techcrunch: "TC · TECHCRUNCH", twitter: "𝕏 · TWITTER",
 };
+// game.html's FEED_FROM: a community post's `from` picks its masthead.
+const FEED_FROM = { "r/datingapps": "r/ · REDDIT · r/datingapps", "Indie Hackers": "IH · INDIE HACKERS" };
+const feedSrc = (e) => FEED_FROM[e.from] || FEED_SRC[e.charId] || e.charId;
 
 // Returns the surface a player would have seen this entry on, or "hidden" when
 // the UI shows it nowhere at all (a real defect — see --audit).
@@ -335,7 +338,7 @@ function renderText(run, o) {
 
     if (e.t === "incoming") {
       // the UI never renders these as a chat bubble — say which surface it is
-      const who = e.ui === "feed" ? "📰 " + (FEED_SRC[e.charId] || e.charId)
+      const who = e.ui === "feed" ? "📰 " + feedSrc(e)
         : e.ui === "move" ? "▣ YOUR MOVE"
           : e.ui === "hidden" ? "⚠ SHOWN NOWHERE"
             : (e.from || nameOf[e.charId] || e.charId).toUpperCase();
@@ -460,7 +463,7 @@ function runHtml(run, idx) {
     if (e.t === "incoming") {
       // each surface renders as what game.html would actually show
       if (e.ui === "feed") {
-        parts.push(`<div class="feed ${cls}"${kindAttr}><div class="feed-src">${esc(FEED_SRC[e.charId] || e.charId)}${idTag}</div>` +
+        parts.push(`<div class="feed ${cls}"${kindAttr}><div class="feed-src">${esc(feedSrc(e))}${idTag}</div>` +
           `<div class="feed-body">${esc(e.body)}</div></div>`);
       } else if (e.ui === "move") {
         parts.push(`<div class="move ${cls}"${kindAttr}><div class="move-h">Your move${idTag}</div>` +

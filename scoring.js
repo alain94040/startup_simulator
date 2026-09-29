@@ -144,8 +144,33 @@
       const pivotGot = g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? 1 : 0.3)
         : g.took("pivot_fifty_verdict:pivot_now") ? (s.pivot_shipped ? 0.5 : 0.3)
           : (s.pivot_deferred || g.took("pivot_day_decide:growth")) ? 0.1 : 0;
+      // The communities feed (story/community.js): four threads, each either
+      // promoted into (a few signups, nothing learned), read (what the thread
+      // said, banked), or — earned by reading the first thread in the same
+      // community — followed up by DM. Points per thread: read / DM earn,
+      // promoting costs, leaving it on read is zero. Graded over the threads
+      // the run actually faced; the users' forum counts double the founders'.
+      const THREADS = [
+        { id: "community_datingapps", read: 2, dm: 2 },
+        { id: "community_hn", read: 1, dm: 1 },
+        { id: "community_flare_thread", read: 2, dm: 3 },
+        { id: "community_ih", read: 1, dm: 2 },
+      ].filter(t => g.done(t.id));
+      let listenPts = 0, listenMax = 0;
+      for (const t of THREADS) {
+        listenMax += t.dm;
+        listenPts += g.took(t.id + ":dm") ? t.dm : g.took(t.id + ":read") ? t.read : g.took(t.id + ":promote") ? -1 : 0;
+      }
+      const promoted = THREADS.filter(t => g.took(t.id + ":promote")).length;
+      const dms = THREADS.filter(t => g.took(t.id + ":dm")).length;
+      const reads = THREADS.filter(t => g.took(t.id + ":read") || g.took(t.id + ":dm")).length;
       add("build-something-people-want", "Build something people want", "📚 Steve Blank / PG, \"How to Get Startup Ideas\"",
         parts([
+          { faced: THREADS.length > 0, weight: 2, got: listenMax ? listenPts / listenMax : 0,
+            note: promoted && !reads ? "Posted the link in " + promoted + " thread" + (promoted > 1 ? "s" : "") + " and read none of them."
+              : dms ? "Read what the forums said — and DM'd the people behind the comments (" + dms + "×)."
+                : reads ? "Read " + reads + " of " + THREADS.length + " community threads" + (promoted ? ", promoted into " + promoted : "") + "."
+                  : "Scrolled past every thread where your market was talking." },
           { faced: g.done("interviews") || g.done("dev_plan"), weight: 1,
             got: g.took("interviews:interview") ? 1 : 0,
             note: g.took("interviews:interview") ? "Did the customer interviews before locking scope." : "Built without a single structured user conversation." },

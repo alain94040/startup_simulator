@@ -140,6 +140,10 @@
     flare_stumble: ["screenshot"], flare_epilogue: ["work"],
     public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
     consultant_growth: "SKIP", consultant_brand: "SKIP",
+    // the communities feed: a decent founder reads, and follows up by DM when
+    // that's been earned — never plugs the product into a live thread
+    community_datingapps: ["read"], community_hn: ["read"],
+    community_flare_thread: ["dm", "read"], community_ih: ["dm", "read"],
     ff_friend: ["tell"], ff_friend_ask: ["ask"], ff_mentor: ["lunch"], ff_mentor_pitch: ["pitch"],
     early_name: ["catchy"], early_customer_target: ["individuals"], early_funding_goal: ["profitable"],
     alex_side_project: ["pause"], alex_side_project_escalation: ["talk"], alex_quiet: ["checkin"],
@@ -171,10 +175,9 @@
     founder_codebuild: "build", alex_sync_build: "build", alex_decision: "build",
     // research — the market: interviews, communities, the competitor, evidence
     interviews: "research", waitlist_calls: "research", waitlist_cold: "research",
-    hn_thread: "research", community_hn_2: "research",
-    community_hn_3: "research", community_reddit_1: "research", community_reddit_2: "research",
-    community_reddit_3: "research", community_ih_1: "research", community_ih_2: "research",
-    community_ih_3: "research", founder_meetup: "research", mentor_competitor_bomb: "research",
+    community_datingapps: "research", community_hn: "research",
+    community_flare_thread: "research", community_ih: "research",
+    founder_meetup: "research", mentor_competitor_bomb: "research",
     flare_stealth: "research", flare_10k: "research", flare_feature: "research",
     flare_stumble: "research", flare_epilogue: "research",
     post_match_dropoff: "research", pivot_open: "research", slide_hangover: "research",

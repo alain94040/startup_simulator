@@ -219,6 +219,42 @@ check(`marketer.wins (${S.marketer.wins}%) < builder.wins (${S.builder.wins}%) �
 check(`builder launches (${S.builder.launched}%) >= 90%; marketer ships v2 (${S.marketer.v2}%) < builder (${S.builder.v2}%)`,
   S.builder.launched >= 90 && S.marketer.v2 < S.builder.v2);
 
+// M · the communities feed (story/community.js): the choice on a thread must
+// reach the report card. Same decent founder and the same shuffled attention
+// (so the feed actually gets actions, as it does for a real player); only
+// what they do on a community thread differs. Reading beats scrolling past,
+// and scrolling past beats plugging the link into threads you never read.
+// Win rate is deliberately not contracted here: under shuffled attention
+// every optional non-money card costs launch time (skipping the Flare press
+// beats buys exactly as much), which is the action economy, not this lesson.
+function newsTactic(pick) {
+  let build = 0, grade = 0, flagship = 0;
+  for (let i = 0; i < N; i++) {
+    const seed = 1000 + i;
+    const g = H.playGame(seed, (a, gg) => a.charId === "hacker_news" ? pick(a)
+      : a.nodeId === "trust_safety" ? ["verify_flagship", "report_now"] : H.decent(a, gg),
+    { priority: H.makeAttentionPriority(seed) });
+    build += Scoring.scoreGame(g).find(c => c.key === "build-something-people-want").score;
+    grade += g.gradeScore();
+    if (g.took("trust_safety:verify_flagship")) flagship++;
+  }
+  return { build: build / N, grade: grade / N, flagship: Math.round((flagship / N) * 100) };
+}
+const hasKey = (a, k) => a.options.some(o => o.key === k);
+const NEWS = {
+  reader: newsTactic((a) => hasKey(a, "dm") ? ["dm"] : ["read"]),
+  scroller: newsTactic(() => null),
+  promoter: newsTactic((a) => hasKey(a, "promote") ? ["promote"] : null),
+};
+console.log(`\n  news tactic   build-cat  grade  flagship`);
+for (const [k, r] of Object.entries(NEWS)) console.log(`  ${pad(k, 13)} ${padL(r1(r.build), 9)} ${padL(r1(r.grade), 6)} ${padL(r.flagship + "%", 9)}`);
+check(`news: reader build-cat (${r1(NEWS.reader.build)}) > scroller (${r1(NEWS.scroller.build)}) > promoter (${r1(NEWS.promoter.build)})`,
+  NEWS.reader.build > NEWS.scroller.build && NEWS.scroller.build > NEWS.promoter.build);
+check(`news: reader grade (${r1(NEWS.reader.grade)}) > promoter grade (${r1(NEWS.promoter.grade)})`,
+  NEWS.reader.grade > NEWS.promoter.grade);
+check(`news: only readers arm the verification flagship (reader ${NEWS.reader.flagship}%, promoter ${NEWS.promoter.flagship}%)`,
+  NEWS.reader.flagship > 50 && NEWS.promoter.flagship === 0);
+
 // L · hygiene
 const totalErrors = Object.values(S).reduce((n, r) => n + r.errors, 0);
 check(`no runtime errors across all strategies (total: ${totalErrors})`, totalErrors === 0);

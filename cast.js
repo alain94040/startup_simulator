@@ -106,7 +106,7 @@
     },
     {
       id: "brett", name: "Brett", role: "Brand consultant", type: "consultant",
-      unlock: (s, e) => s.incorporated && e.done("hn_thread") && s.week >= 4,
+      unlock: (s) => s.incorporated && s.week >= 5,
       intro: "found you on a startup database. i work with early-stage founders on positioning — dropping you a line.",
     },
     {

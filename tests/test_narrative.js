@@ -104,11 +104,9 @@ const ALLOW = new Set([
   // The Flare arc quotes the COMPETITOR's users/signups/funding — market talk,
   // not claims about plusone being live.
   "flare_stealth", "flare_10k", "flare_feature", "flare_stumble", "flare_epilogue",
-  // Community ladders: threads quote OTHER products' users/signups and waitlist
-  // asks — market talk, not claims about plusone being live.
-  "hn_thread", "community_hn_2", "community_hn_3",
-  "community_reddit_1", "community_reddit_2", "community_reddit_3",
-  "community_ih_1", "community_ih_2", "community_ih_3",
+  // Community threads quote OTHER products' users (Flare's, a dead app's) and
+  // waitlist asks — market talk, not claims about plusone being live.
+  "community_datingapps", "community_hn", "community_flare_thread", "community_ih",
 ]);
 
 // Sender-based exemptions for scheduled follow-ups with no node id. The

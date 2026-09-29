@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 const { Game } = require("../engine.js");
-const { ANSWER_ORDER, actPriority, PREF, decent, playGame, makeAttentionPriority } = require("./harness.js");
+const { ANSWER_ORDER, actPriority, PREF, decent, playGame, jumpTo, makeAttentionPriority } = require("./harness.js");
 
 let failures = 0, checks = 0;
 function ok(cond, label) {
@@ -371,7 +371,7 @@ console.log("bullseye driver (seed 42, channel-first, subsidized)");
   ok(g.s.users >= 25, "the committed channel compounded (" + g.s.users + " users)");
 }
 
-// ── pass 3: community engagement arms the trust-&-safety flagship ────────────
+// ── pass 3: reading the users' forum arms the trust-&-safety flagship ────────
 console.log("community-first driver (seed 42)");
 {
   const communityFirst = (a) => a.nodeId === "trust_safety" ? ["verify_flagship", "report_now"] : decent(a);
@@ -379,10 +379,39 @@ console.log("community-first driver (seed 42)");
   const g = run(42, communityFirst, 24, {
     priority: (a) => a.charId === "hacker_news" ? -1 : actPriority(a),
   });
-  ok((g.s.community_engaged_count || 0) >= 2, "engaged the community threads (" + g.s.community_engaged_count + "×)");
+  ok(g.took("community_datingapps:read"), "read the r/datingapps thread");
+  ok(!!g.s.heard_fake_profiles, "…and heard fake profiles named as the top complaint");
   ok((g.seenOptions.trust_safety || []).includes("verify_flagship"),
     "…which armed the trust-&-safety flagship option");
   ok(g.took("trust_safety:verify_flagship"), "verification became the brand");
+}
+
+// ── pass 3.1: a community thread — promote while live, read while it lasts ──
+console.log("community threads: promote is live-only, the DM is earned (seed 42)");
+{
+  const openCard = (g, id) => g.openActions().find(a => a.nodeId === id);
+  const keys = (a) => (a ? a.options.map(o => o.key) : []);
+  // A founder who never touches the feed, stopped the week the first thread lands.
+  const g = jumpTo("community_datingapps", { seed: 42, driver: (a, gg) => a.charId === "hacker_news" ? null : decent(a, gg) });
+  ok(keys(openCard(g, "community_datingapps")).join() === "promote,read",
+    "the week it's live: promote or read (" + keys(openCard(g, "community_datingapps")).join(", ") + ")");
+  g.nextWeek();
+  ok(keys(openCard(g, "community_datingapps")).join() === "read",
+    "a week later the thread is still readable, but the moment to promote has passed (" + keys(openCard(g, "community_datingapps")).join(", ") + ")");
+  g.nextWeek();
+  ok(g.outcome("community_datingapps") === "@ignored", "…and after two weeks it scrolls away unanswered");
+
+  // The DM on the Flare thread is earned by reading the first r/datingapps thread.
+  const first = (a) => a.nodeId === "community_datingapps" ? ["read"] : null;
+  const reader = jumpTo("community_flare_thread", { seed: 42, priority: (a) => a.charId === "hacker_news" ? -1 : actPriority(a),
+    driver: (a, gg) => a.charId === "hacker_news" ? first(a) : decent(a, gg) });
+  const skimmer = jumpTo("community_flare_thread", { seed: 42, priority: (a) => a.charId === "hacker_news" ? -1 : actPriority(a),
+    driver: (a, gg) => a.charId === "hacker_news" ? null : decent(a, gg) });
+  ok(keys(openCard(reader, "community_flare_thread")).includes("dm"), "read the first thread → the Flare thread offers the DM");
+  ok(!keys(openCard(skimmer, "community_flare_thread")).includes("dm"), "skipped it → no DM on offer");
+  const before = reader.s.board_extra || 0;
+  reader.act("community_flare_thread", "dm");
+  ok((reader.s.board_extra || 0) === before - 0.5, "the DM takes half a week off the v2 plans board");
 }
 
 // ── pass 3.5: the Jordan question, every way it can go ───────────────────────
