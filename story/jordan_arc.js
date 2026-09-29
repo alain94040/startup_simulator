@@ -219,7 +219,7 @@
             journal: (s) => s.jordan_handoff
               ? "Sent Jordan's email to everyone who left: 'you told us what was wrong. we rebuilt it. want to see?' Her idea, her words, sent after she'd gone."
               : "Wrote to everyone who left the old app before the relaunch: we rebuilt it — want to see?",
-            effects: { marketFit: 5, flags: { beta_invited: true } },
+            effects: { marketFit: 4, flags: { beta_invited: true } },
           },
           {
             key: "fresh", label: "Clean slate — relaunch to fresh eyes",

@@ -64,7 +64,7 @@
           {
             key: "narrow", label: "Own one city / campus first",
             journal: "Decided to launch one neighborhood at a time — pick a single campus, get it dense enough that people actually match, then expand. Smaller numbers, but enough people to actually match.",
-            effects: { signal: 4, marketFit: 4, flags: { beachhead: "narrow" } },
+            effects: { signal: 4, flags: { beachhead: "narrow" } },
             fx: () => "Picked one campus and its three closest neighborhoods. Everything points there. The market-size slide is smaller — but the people who join will actually find someone nearby.",
           },
           {
@@ -88,7 +88,7 @@
           {
             key: "quiet", label: "Soft-launch to the waitlist + friends",
             journal: "Launch plan: soft-launch to the waitlist and a few dozen friends. No fireworks — but every single one will be a real person who wants this to work, telling me exactly what's broken.",
-            effects: { marketFit: 5, signal: 4, flags: { launch_splash: "quiet" } },
+            effects: { marketFit: 2, signal: 4, flags: { launch_splash: "quiet" } },
             fx: () => "Plan set: the people who already raised their hands get it first. Small day one — but every signup high-intent and loud with feedback. The kind of start that compounds.",
           },
           {
@@ -100,7 +100,7 @@
           {
             key: "tiktok", label: "Pay 3 TikTok creators to post",
             journal: "Launch plan: three TikTok creators post on launch day — the same playbook Flare used. Spendy ($1,200), but it puts real daters in the door fast.",
-            effects: { cash: -1200, signal: 8, marketFit: 2, flags: { launch_splash: "tiktok" } },
+            effects: { cash: -1200, signal: 8, flags: { launch_splash: "tiktok" } },
             fx: () => "Plan set: three creator posts queued for launch morning. $1,200 committed — actual daters in the door within 48 hours of the switch.",
           },
           {
@@ -123,7 +123,7 @@
           {
             key: "firefight", label: "Drop everything — keep it up and triage live",
             journal: "Pulled an all-nighter with Alex keeping the launch alive — patched the queue, DM'd every stuck user personally. Exhausting. But nobody who showed up on day one walked away because we weren't there.",
-            effects: { marketFit: 4, signal: 4 },
+            effects: { signal: 4 },
             fx: () => "All hands, all night. Queue patched, stuck users personally unblocked. You lost a night of sleep and saved the launch.",
           },
           {
@@ -180,7 +180,7 @@
           {
             key: "concierge", label: "Hand-match the first users yourself",
             journal: "Spent the week as a one-person matching engine — read every new profile, made introductions by hand, texted people when someone good showed up. Doesn't scale even slightly. Two of them went on dates this weekend. Worth every hour.",
-            effects: { marketFit: 8, signal: 4 },
+            effects: { marketFit: 5, signal: 4 },
             fx(s) {
               // Hand-picking your happiest early user jump-starts the testimonial chain.
               if (s.customers === 0 && !s.reference_customer) s.reference_customer = true;
@@ -190,7 +190,7 @@
           {
             key: "mixer", label: "Host a singles night — make the first match in the room",
             journal: "Threw a small singles night for early users — manufactured the first real match in person. Doesn't scale, but I walked away with a story I can actually sell and a room full of believers.",
-            effects: { cash: -300, users: 5, signal: 8, marketFit: 4 },
+            effects: { cash: -300, users: 5, signal: 8, marketFit: 2 },
             fx: () => "Twelve early users in a room, two drinks in, one introduction that actually clicked. $300 on snacks and a story you can tell every investor for the next year. Five of them invited friends on the spot.",
           },
           {

@@ -70,7 +70,7 @@
             key: "test", label: "Test it with users",
             reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
             journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
-            effects: { signal: 14, marketFit: 8, char: { alex: { morale: 5, trust: 6 } } },
+            effects: { signal: 14, marketFit: 6, char: { alex: { morale: 5, trust: 6 } } },
             fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less.",
           },
         ],
@@ -94,9 +94,9 @@
         },
         when: {
           after: ["dev_plan"], delay: 1, cooldown: 4,
-          // 55 on engine.addFit's diminishing scale ≈ the old flat 80: "you
+          // 45 on the research-only fit scale: "you
           // already know your market", so Alex stops offering the week.
-          if: (s, e, char) => !s.launched && char.focus === "build" && s.market_fit < 55,
+          if: (s, e, char) => !s.launched && char.focus === "build" && s.market_fit < 45,
         },
         choices: [
           {
@@ -242,7 +242,7 @@
         choices: [
           { key: "catchy", label: "The romantic one", effects: { signal: 4 },
             fx: () => "Name locked. Memorable, a little warm in exactly the right way. People immediately know what it's for." },
-          { key: "descriptive", label: "The clean, abstract one", effects: { marketFit: 2 },
+          { key: "descriptive", label: "The clean, abstract one",
             fx: () => "Name locked. Distinctive, hard to confuse with anything else. Grows on people once they try it." },
         ],
         timeout: { weeks: 3 },
@@ -252,9 +252,9 @@
         text: "we keep switching who we're talking to — sometimes we pitch to young singles, sometimes to divorced 30-somethings. we should agree before it gets confusing.",
         when: { after: ["dev_plan"], if: (s) => s.week <= 9 },
         choices: [
-          { key: "individuals", label: "Young singles — bigger market, easier to reach", effects: { marketFit: 4 },
+          { key: "individuals", label: "Young singles — bigger market, easier to reach",
             fx: () => "Locked in: 25-35 year olds tired of swiping. Bigger pool, faster feedback." },
-          { key: "teams", label: "Relationship-seekers — that's where the revenue is", effects: { marketFit: 3 },
+          { key: "teams", label: "Relationship-seekers — that's where the revenue is",
             fx: () => "Going after people who are seriously looking. Higher willingness to pay, stronger retention story." },
           { key: "open", label: "Follow the early users",
             fx: () => "Staying flexible. Let the first signups tell you who they are." },
@@ -268,7 +268,7 @@
         choices: [
           { key: "vc", label: "Raise from investors, grow fast, then sell or go public", effects: { signal: 3 },
             fx: () => "Aligned on the VC path. Every conversation with investors gets sharper when you know what you're building toward." },
-          { key: "profitable", label: "Profitable first — build a real business, no VC needed", effects: { marketFit: 3 },
+          { key: "profitable", label: "Profitable first — build a real business, no VC needed",
             fx: () => "Profitable first. Every product decision gets cleaner when the bar is 'do people pay for this', not 'can we raise on this'." },
           { key: "open", label: "Stay flexible — let traction tell us",
             fx: () => "Staying flexible. Revisit when you have enough users to know what kind of company you actually are." },

@@ -177,7 +177,7 @@
               {
                 key: "intake", label: "Guided intake — five questions first",
                 reply: "intake. five questions before any faces. we're not another swipe app.",
-                effects: { marketFit: 3, char: { jordan: { effort: 1.0 } } },
+                effects: { char: { jordan: { effort: 1.0 } } },
                 fx(s) {
                   if (s.items && s.items.ios_ui) s.items.ios_ui.note = "Intake-first onboarding";
                   return "Intake-first. Riskier open — five questions before a single face — but nobody will mistake plusone for another swipe app.";
@@ -191,7 +191,7 @@
                 reply: "intake — and use the interview questions verbatim. open with 'how many matches went nowhere for you last month?' make them feel seen in ten seconds.",
                 journal: "Gave Jordan the first screen straight from the interviews: open with the question every user we talked to already answered — 'how many matches went nowhere last month?' She built it word for word.",
                 effects: {
-                  marketFit: 7, signal: 3, char: { jordan: { effort: 1.2 } },
+                  marketFit: 5, signal: 3, char: { jordan: { effort: 1.2 } },
                   schedule: {
                     in: 1, char: "jordan",
                     say: { char: "jordan", text: "intake flow is live in the test app. my sister answered question 3 and screenshotted it to her group chat. first organic share we've ever had." },
@@ -241,7 +241,7 @@
         choices: [
           {
             key: "call", label: "Call five of them",
-            effects: { signal: 6, marketFit: 4 },
+            effects: { signal: 6, marketFit: 5 },
             fx(s, e) {
               const rounds = [
                 "Five calls. One woman keeps a spreadsheet of her matches across four apps — the Hacker News thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
@@ -275,7 +275,7 @@
           {
             key: "interview", label: "Block off this week for 5 customer interviews",
             journal: "Blocked off the week for five customer interviews. Two insights I didn't expect, and one person said they'd pay right now if it existed. The picture's much clearer.",
-            effects: { signal: 15, marketFit: 12, waitlist: 1 },
+            effects: { signal: 15, marketFit: 9, waitlist: 1 },
             fx: () => "5 calls done. Two insights you didn't expect. One person said they'd pay right now if it existed. Signal much clearer.",
           },
         ],

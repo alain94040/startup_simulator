@@ -34,7 +34,7 @@
           {
             key: "go", label: "Go to the meetup",
             journal: "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on retention, and seemed genuinely curious about what we're building.",
-            effects: { signal: 4, marketFit: 3 },
+            effects: { signal: 4 },
             fx(s) {
               s.met_priya = true;
               s.met_priya_week = s.week;
@@ -56,7 +56,7 @@
           {
             key: "research", label: "Do a competitive deep-dive",
             journal: "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's our wedge. Priya's officially advising now.",
-            effects: { signal: 8, marketFit: 6, flags: { priya_advising: true } },
+            effects: { signal: 8, marketFit: 2, flags: { priya_advising: true } },
             fx: () => "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor.",
           },
         ],
@@ -78,7 +78,7 @@
           {
             key: "dig", label: "Dig into the drop-off",
             journal: "Pulled the test group's numbers apart. Matches that never become conversations, conversations that never become dates — twelve people is a small sample and an unambiguous one. The analytics paid for themselves before launch: I can see the pivot from here.",
-            effects: { marketFit: 8, signal: 4, flags: { analytics_dropoff_seen: true } },
+            effects: { marketFit: 6, signal: 4, flags: { analytics_dropoff_seen: true } },
             fx: () => "Pulled the test group's numbers apart. The story's unambiguous even at twelve people — matches that never become conversations, conversations that never become dates. You can see the pivot from here, with time to act on it before a single stranger signs up.",
           },
         ],
@@ -160,7 +160,7 @@
             reply: "you're not missing a feature, rachel — tell me what you were hoping would happen next?",
             journal: "Rachel K. emailed support: 'is something supposed to happen next?' I wrote back myself and asked what she'd hoped would happen. Her answer, word for word: 'I hoped the app would give one of us an excuse. A place to say yes to.' Kept it.",
             effects: {
-              signal: 3, marketFit: 3, flags: { rachel_answer: true },
+              signal: 3, marketFit: 2, flags: { rachel_answer: true },
               note: "Rachel wrote back within the hour: 'Honestly? I hoped the app would give one of us an excuse. A place to say yes to.' That one goes in the file.",
             },
           },
@@ -189,7 +189,7 @@
           {
             key: "dig", label: "Sit with the numbers",
             journal: "Friday. The week-one numbers came in and it's the test group's pattern, just bigger: matches happen, conversations don't, dates — zero. It's not that we don't know. It's that the number is now too big to un-know.",
-            effects: { marketFit: 4, signal: 2, flags: { cohort_seen: true } },
+            effects: { marketFit: 3, signal: 2, flags: { cohort_seen: true } },
             fx: () => "You sat with the numbers until the pattern stopped being deniable: people don't leave before the match. They leave right after it.",
           },
         ],
@@ -263,7 +263,7 @@
           {
             key: "call", label: "Call her",
             journal: "Called Maya. She was nice about it, which somehow made it worse. 'The matching was honestly good? I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven dead chat windows on Hinge. I deleted PlusOne because it made me feel worse, not better.'",
-            effects: { marketFit: 4, signal: 3, flags: { maya_quote: true } },
+            effects: { marketFit: 5, signal: 3, flags: { maya_quote: true } },
             fx: () => "Maya picked up. She was nice about it, which made it worse: 'The matching was honestly good. I matched with a guy who seemed great. We said hey. And then it was just… a chat window. I already have seven of those on Hinge. PlusOne made me feel worse, not better.' You wrote down every word.",
           },
           {
@@ -316,7 +316,7 @@
           {
             key: "no", label: "Nothing new ships until we know why they leave",
             journal: "Told Alex nothing new ships until we know why users leave. He grumbled, then admitted the streaks idea was a dice roll.",
-            effects: { marketFit: 4, char: { alex: { morale: -4 } } },
+            effects: { char: { alex: { morale: -4 } } },
             fx: () => "You held the line: no new features until you know why users leave. Alex grumbled, then admitted the streaks idea was a dice roll.",
           },
         ],
@@ -353,8 +353,7 @@
           {
             key: "skip", label: "Don't beg — fix the reason they left",
             journal: "Skipped the win-back email. If we don't know why they left, 'we miss you' is just asking them to leave twice. The sends can wait until there's something new to come back to.",
-            effects: { marketFit: 3 },
-            fx: () => "No blast. Whatever brings them back, it won't be an apology email for the same product.",
+                        fx: () => "No blast. Whatever brings them back, it won't be an apology email for the same product.",
           },
         ],
         timeout: { weeks: 2 },

@@ -161,12 +161,14 @@
         listenMax += t.dm;
         listenPts += g.took(t.id + ":dm") ? t.dm : g.took(t.id + ":read") ? t.read : g.took(t.id + ":promote") ? -1 : 0;
       }
-      // Where all that listening lands: the fit of the product actually shipped.
-      // Only once v2 is out — before the pivot, fit describes the wrong product
-      // (world.js discounts it the same way). addFit's diminishing returns keep
-      // it off the ceiling, so each piece of research still moves this part.
-      const FIT_FULL = 80; // a thoroughly researched run's shipped fit earns full marks
-      const fitGot = s.pivot_shipped ? clamp(s.market_fit / FIT_FULL, 0, 1) : 0;
+      // Where all that listening lands: the fit of the product actually shipped
+      // — the heaviest part of this lesson, since it is the lesson. Only once
+      // v2 is out (before the pivot, fit describes the wrong product; world.js
+      // discounts it the same way). Market fit is only earned by learning from
+      // users, so a ramp: nothing at 30 (built on guesses), full marks at 60 (a
+      // thoroughly researched run's shipped fit).
+      const FIT_ZERO = 30, FIT_FULL = 60;
+      const fitGot = s.pivot_shipped ? clamp((s.market_fit - FIT_ZERO) / (FIT_FULL - FIT_ZERO), 0, 1) : 0;
       const promoted = THREADS.filter(t => g.took(t.id + ":promote")).length;
       const dms = THREADS.filter(t => g.took(t.id + ":dm")).length;
       const reads = THREADS.filter(t => g.took(t.id + ":read") || g.took(t.id + ":dm")).length;
@@ -177,8 +179,9 @@
               : dms ? "Read what the forums said — and DM'd the people behind the comments (" + dms + "×)."
                 : reads ? "Read " + reads + " of " + THREADS.length + " community threads" + (promoted ? ", promoted into " + promoted : "") + "."
                   : "Scrolled past every thread where your market was talking." },
-          { faced: !!s.pivot_shipped, weight: 1, got: fitGot,
-            note: "Product-market fit of what shipped: " + Math.round(s.market_fit) + "/100." },
+          { faced: !!s.pivot_shipped, weight: 3, got: fitGot,
+            note: "Market fit of what shipped: " + Math.round(s.market_fit) + "/100"
+              + (fitGot >= 1 ? " — built on what users told you." : fitGot >= 0.5 ? " — partly listened, partly guessed." : " — mostly built on guesses.") },
           { faced: g.done("interviews") || g.done("dev_plan"), weight: 1,
             got: g.took("interviews:interview") ? 1 : 0,
             note: g.took("interviews:interview") ? "Did the customer interviews before locking scope." : "Built without a single structured user conversation." },

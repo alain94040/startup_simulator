@@ -46,7 +46,7 @@ function runStrategy(name, spec) {
       m.pivoted = !!s.activities_pivot;
       m.v2 = !!s.pivot_shipped;
       m.v2Wk = m.v2 ? g.weekOf("pivot_relaunch") : null;
-      m.qualified = !!(s.launched && s.pivot_shipped && s.customers >= 1);
+      m.qualified = !!(s.launched && s.pivot_shipped);
       m.alexLeft = !g.cast.get("alex").active;
       m.jordanFired = !!s.jordan_resolved;
       m.jordanFiredWk = s.jordan_fired_week != null ? s.jordan_fired_week : null;
@@ -139,7 +139,7 @@ check(`ignore_alex morale wk10 (${r1(S.ignore_alex.moraleWk10)}) crashed < 30`, 
 check(`decent morale wk10 (${r1(S.decent.moraleWk10)}) healthy > 50`, S.decent.moraleWk10 > 50);
 
 // E · the traction bar — decent play must clear it (launched, shipped the
-// pivot, at least one paying customer) well before the deadline grades it
+// pivot) well before the deadline grades it
 check(`decent.qualified (${S.decent.qualified}%) >= 90%`, S.decent.qualified >= 90);
 
 // F · the cap-table bill: the lesson lives on the report card, so skipping the

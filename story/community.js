@@ -73,7 +73,7 @@
       read: {
         label: "Read the comments, note the themes",
         journal: "Read all 400 comments of the r/datingapps thread with a notepad open. Three themes: fake profiles (by far the loudest), matches that never turn into dates, and swipe fatigue.",
-        effects: { marketFit: 4, flags: { read_dating_thread: true, heard_fake_profiles: true } },
+        effects: { marketFit: 3, flags: { read_dating_thread: true, heard_fake_profiles: true } },
         outcome: "An evening, 400 comments, one notepad. Fake profiles came up more than everything else combined.",
       },
     }),
@@ -114,7 +114,7 @@
       read: {
         label: "Read the whole thread",
         journal: "Read every comment about Flare. Their app is beautiful and they're everywhere. And their users are saying exactly what we're building for: forty matches, zero dates, too many bots.",
-        effects: { marketFit: 3, flags: { heard_fake_profiles: true, read_flare_thread: true } },
+        effects: { marketFit: 2, flags: { heard_fake_profiles: true, read_flare_thread: true } },
         outcome: "Their app is gorgeous, they're everywhere, and they have $3M. Their users are also describing, word for word, the problem you're solving.",
       },
       dm: {
@@ -123,7 +123,7 @@
         label: "DM the people who gave up on Flare",
         if: (s) => !!s.read_dating_thread,
         journal: "DM'd five people who'd given up on Flare. Three got on a call. Nobody wanted more matches — they wanted one that turns into an actual evening. All three joined the waitlist.",
-        effects: { marketFit: 6, waitlist: 3, flags: { heard_fake_profiles: true, read_flare_thread: true, dm_flare_users: true } },
+        effects: { marketFit: 5, waitlist: 3, flags: { heard_fake_profiles: true, read_flare_thread: true, dm_flare_users: true } },
         outcome: "Five DMs, three calls. Nobody who left Flare wanted more matches. They wanted one that turns into an evening. All three joined the waitlist.",
       },
     }),
@@ -150,7 +150,7 @@
         label: "DM the founder",
         if: (s) => !!s.read_founder_advice,
         journal: "DM'd the founder of the dating app that shut down. We talked the next day. 'We measured matches. We should have measured whether anyone actually met.'",
-        effects: { marketFit: 4, flags: { read_postmortem: true, dm_postmortem: true } },
+        effects: { marketFit: 3, flags: { read_postmortem: true, dm_postmortem: true } },
         outcome: "A call the next day. 'We measured matches. We should have measured whether anyone actually met.'",
       },
     }),

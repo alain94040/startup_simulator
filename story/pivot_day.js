@@ -38,6 +38,12 @@
   const JT = typeof require !== "undefined" ? require("./jordan_talk.js") : window.JORDAN_TALK;
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+  // What the pivot is worth in market fit: 3 for turning the ship at all, plus
+  // 3 per piece of evidence the run banked (Maya's quote, Rachel's answer, the
+  // demo question, the drop-off circle) — so the pivot pays the researcher,
+  // not everyone who reaches the meeting.
+  const pivotFit = (s) => 3 + 3 * [s.maya_quote, s.rachel_answer, s.demo_question_seen, s.analytics_dropoff_seen].filter(Boolean).length;
+
   const SCOPE_ITEMS = ["scope_social", "scope_verification", "scope_premium", "scope_socialgraph", "scope_video"];
   function applyActivitiesPivot(s) {
     if (!s.items) return;
@@ -247,7 +253,9 @@
                   s.alex_converted = true;
                   s.evidence_chip = e.took("pivot_dig:maya_quote") ? "maya" : "dig";
                   s.cash = Math.max(0, s.cash - 2000);
-                  e.addFit(15);
+                  // The pivot is worth what the room knew: a base for turning
+                  // the ship, plus each piece of evidence banked on the way.
+                  e.addFit(pivotFit(s));
                   applyActivitiesPivot(s);
                   const jordan = e.cast.get("jordan");
                   if (jordan.active) jordan.morale = clamp(jordan.morale + 5, 0, 100);
@@ -453,8 +461,7 @@
             key: "cut", label: "One thing. Cut everything else",
             reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
             journal: "Scope call for v2: one thing. Plans board, nothing else — no old matching mode limping alongside. The lean lesson, learned twice.",
-            effects: { marketFit: 4 },
-            fx(s, e) {
+                        fx(s, e) {
               s.board_extra = (s.board_extra || 0) - 0.5;
               e.say({ char: "alex", text: "cut it is. deleting code is the fastest i will ever ship. that buys us a few days." });
               return null;
@@ -497,7 +504,7 @@
             reply: "write it. they told us exactly what was wrong — they've earned the first look.",
             journal: "Jordan is writing to everyone who left, before the relaunch: 'you told us what was wrong. we rebuilt it. want to see?'",
             effects: {
-              marketFit: 5, flags: { beta_invited: true }, char: { jordan: { morale: 5 } },
+              marketFit: 4, flags: { beta_invited: true }, char: { jordan: { morale: 5 } },
               schedule: {
                 in: 1, char: "jordan", unless: (s) => s.pivot_shipped,
                 say: { char: "jordan", text: "beta invites are out. first replies already warmer than anything the old app ever got. one just says 'finally.'" },
@@ -539,7 +546,7 @@
               s.pivot_ship_week = s.week;
               s.users += 15 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 12, 0, 100);
-              e.addFit(20);
+              e.addFit(6); // a room of real users, making real plans
               e.say({ char: "sarah", text: "that went better than i pitched it to you. three of my regulars made plans on the spot. told you this crowd was your crowd." });
               return "V2 debuted live at Sarah's event. Real plans, made in the room, by strangers. The relaunch has a pulse — and a channel.";
             },
@@ -552,7 +559,7 @@
               s.pivot_ship_week = s.week;
               s.users += 8 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 15, 0, 100);
-              e.addFit(20);
+              e.addFit(2); // a headline, not a conversation
               return "The piece ran: 'the dating app that killed its own product.' A pivot is a better story than a launch — it has a before and after. Signups followed the honesty.";
             },
           },
@@ -564,7 +571,7 @@
               s.pivot_ship_week = s.week;
               s.users += 4 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 6, 0, 100);
-              e.addFit(24);
+              e.addFit(6); // the users who stayed, telling you what works
               return "Went live, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
             },
           },
@@ -595,7 +602,7 @@
               s.activities_pivot = true;
               s.pivot_week = s.week;
               s.cash = Math.max(0, s.cash - 2000);
-              e.addFit(8);
+              e.addFit(pivotFit(s) / 2); // late, and forced by a tally
               applyActivitiesPivot(s);
               const jordan = e.cast.get("jordan");
               if (jordan.active) jordan.morale = clamp(jordan.morale + 3, 0, 100);

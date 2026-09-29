@@ -439,7 +439,7 @@
           {
             key: "commit", label: "Take a week to fix bugs first",
             reply: "take the week. fix the resets, the crash, and for god's sake the photo urls. then we point strangers at it.",
-            effects: { waitlist: 5, marketFit: 8, flags: { productPhase: "product" }, char: { alex: { effort: 1.0 } } },
+            effects: { waitlist: 5, flags: { productPhase: "product" }, char: { alex: { effort: 1.0 } } },
             fx(s) {
               s.tech_debt = Math.max(0, (s.tech_debt || 0) - 8);
               return "One week of deeply unglamorous work: reset emails out of spam, the zero-photo crash squashed, private photos locked down. Nothing to demo, everything to trust. Word's getting around — 5 people asked for early access.";

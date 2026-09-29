@@ -179,11 +179,13 @@
     // The horizon: entering deadline week, every run ends and is graded on
     // the spot — no application to write, no wait for a verdict. Admission
     // needs both the grade (a B+, engine.gradeScore() >= YC_ADMISSION_GRADE)
-    // and the traction bar (launched && pivot_shipped && customers >= 1 —
-    // wise answers without a shipped company don't get funded).
+    // and the traction bar (launched && pivot_shipped — wise answers without a
+    // shipped company don't get funded). No paying-customer requirement: what
+    // matters is having built something people want, and that is graded —
+    // market fit included — under "Build something people want".
     if (!s.game_won && !s.game_over && s.week >= s.deadline_week) {
       const grade = game.gradeScore();
-      const qualified = s.launched && s.pivot_shipped && s.customers >= 1;
+      const qualified = s.launched && s.pivot_shipped;
       if (qualified && grade != null && grade >= YC_ADMISSION_GRADE) {
         s.ycAccepted = true;
         const cashBefore = s.cash;

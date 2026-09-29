@@ -85,7 +85,7 @@
           {
             key: "proximity", label: "Distance, age, availability — what every app does",
             reply: "keep it simple. distance, age range, shared availability — the stuff every app ranks on. it works.",
-            effects: { marketFit: 2, char: { alex: { effort: 1.2 } } },
+            effects: { char: { alex: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks distance + availability";
               return "Alex shipped the standard ranking in two days. It works. It's also exactly what every other app does.";
@@ -94,7 +94,7 @@
           {
             key: "interests", label: "Shared interests — climbers see climbers first",
             reply: "interest overlap. two people who both climb at 7am should see each other first.",
-            effects: { marketFit: 3, char: { alex: { effort: 1.2 } } },
+            effects: { char: { alex: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks interest overlap";
               return "Interest-overlap scoring went in over the weekend. Reasonable, defensible — and still a guess about what makes matches actually work.";
@@ -106,7 +106,7 @@
             reply: "neither. every conversation with users says the same thing — matches don't fail at the match, they die in the chat. rank on conversation odds: profile specificity, question-askers, people who actually reply. optimize the first message, not the first look.",
             journal: "Gave Alex the ranking thesis straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a thesis.' The engine ranks conversation odds now — nobody else's does.",
             effects: {
-              marketFit: 8, signal: 4,
+              marketFit: 6, signal: 4,
               char: { alex: { effort: 1.2, flags: { ranking_thesis: true } } },
               say: { char: "alex", text: "huh. that's… actually a thesis. i can fake it for now — favor people whose profiles actually say something, then switch to who really replies once we have data. writing it tonight." },
             },
@@ -139,7 +139,7 @@
           {
             key: "demo_polish", label: "Make it look great for the demo",
             reply: "polish what they'll see. the demo has to feel good in someone's hand — we get one first impression.",
-            effects: { signal: 4, marketFit: 2, char: { jordan: { effort: 1.0 } } },
+            effects: { signal: 4, char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items) {
                 if (s.items.ios_ui) { s.items.ios_ui.status = "done"; s.items.ios_ui.quality = "solid"; s.items.ios_ui.note = "Polished for the demo"; }
@@ -241,7 +241,7 @@
           {
             key: "local", label: "Launch here — hometown advantage",
             reply: "here. hometown advantage is real — we seed the first hundred by hand, host the mixer, fix things in person.",
-            effects: { marketFit: 3, flags: { beachhead: "narrow", seed_strategy: "local" }, char: { alex: { effort: 0.8 } } },
+            effects: { flags: { beachhead: "narrow", seed_strategy: "local" }, char: { alex: { effort: 0.8 } } },
             fx: () => "One city: ours. Invite waves by neighborhood, a launch mixer you can drive to, bugs fixed across a coffee table. Small top line, dense room.",
           },
           {
@@ -256,7 +256,7 @@
             reply: "austin. the waitlist already voted — demand beats home-field advantage. we run it remote, fly out for launch week, and every invite lands somewhere dense.",
             journal: "The waitlist data made the launch call for us: Austin, where our signups actually are — three times our home city. We're launching a dating app in a city none of us has set foot in, because that's where the demand lives.",
             effects: {
-              marketFit: 4, waitlist: 4,
+              marketFit: 2, waitlist: 4,
               flags: { beachhead: "narrow", seed_strategy: "austin", launch_city: "Austin" },
               char: { alex: { effort: 0.8 } },
               say: { char: "alex", text: "booked two flights to austin for launch week. jordan found a bar for the mixer on yelp. this is either very smart or very funny." },
@@ -290,7 +290,7 @@
           {
             key: "report_now", label: "Report button this week, verify later",
             reply: "report button this week. it answers apple honestly — verification can come after launch, we can't hold up the launch for a feature we haven't built.",
-            effects: { marketFit: 2, char: { jordan: { effort: 1.0 } } },
+            effects: { char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Report button pre-launch";
               return "Report + block shipped in three days. Not deep, but real — the app review form has an honest answer now, and so does the first person who'll ever need that button.";
@@ -299,7 +299,7 @@
           {
             key: "verify_first", label: "Full verification before launch",
             reply: "verification before launch. the day strangers show up is the day it has to already work — one bad first week and the women never come back.",
-            effects: { marketFit: 4, char: { jordan: { effort: 0.6 } } }, // real scope — it costs build time
+            effects: { marketFit: 2, char: { jordan: { effort: 0.6 } } }, // real scope — it costs build time
             fx: () => "Photo verification goes in before launch. It costs a chunk of Jordan's week — the launch-ready date slips — but the safety story is real before a single stranger is in the app.",
           },
           {
@@ -307,7 +307,7 @@
             if: (s) => !!s.heard_fake_profiles,
             reply: "look at the dating threads we read — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
             journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we read had fake profiles as complaint #1 — now it's our headline.",
-            effects: { marketFit: 6, waitlist: 3, char: { jordan: { effort: 1.2 } } },
+            effects: { marketFit: 5, waitlist: 3, char: { jordan: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Verified-only (from community)";
               return "Verification became the headline: photo-verified at signup, checkmark on every card, 'no fakes' on the landing page. Three waitlist signups came in the day the copy changed.";

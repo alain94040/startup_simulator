@@ -15,7 +15,7 @@
           {
             key: "reach", label: "Reach out now",
             journal: "Reached out to the waitlist. Good feedback — people are still excited, want to know when we're launching.",
-            effects: { signal: 8, marketFit: 5 },
+            effects: { signal: 8, marketFit: 4 },
             fx: () => "Reached out to waitlist. Good feedback — people are still excited, want to know when you're launching.",
           },
         ],
@@ -61,14 +61,14 @@
             reply: "hey — saw you went quiet. got a couple minutes to talk about what happened?",
             journal: "Called the churned subscriber. Nothing was wrong with the product — the plans near them dried up. They live 40 minutes out, and the calendar in their area went quiet. It's the density lesson wearing a new shirt: own one neighborhood before you promise the whole map.",
             effects: {
-              marketFit: 10, signal: 5,
+              marketFit: 8, signal: 5,
               say: { from: "Subscriber", text: "nothing was wrong with it, honestly — the plans near me just dried up. i'm like 40 minutes out and the calendar in my area went quiet." },
             },
           },
           {
             key: "email", label: "Send a quick email",
             journal: "Emailed the churned subscriber. One paragraph back. Less than a call, more than nothing.",
-            effects: { marketFit: 4 },
+            effects: { marketFit: 3 },
             fx: () => "They replied with one paragraph. Less than a call, more than nothing. You have a direction.",
           },
           {
@@ -97,14 +97,13 @@
           {
             key: "decline", label: "Decline — stay on roadmap",
             journal: "Declined the standing-plans request. They churned. The clarity on what NOT to build was worth it.",
-            effects: { customers: -1, marketFit: 6 },
+            effects: { customers: -1 },
             fx: () => "Declined politely. They churned. The clarity on what NOT to build was worth it.",
           },
           {
             key: "negotiate", label: "Build a lightweight version for everyone",
             journal: "Proposed a one-tap 'run it back' button — clone last week's plan, same people invited — instead of a full recurrence engine. Low friction, easy to build. Five other hosts used it the first week.",
-            effects: { marketFit: 4 },
-            fx: () => "Proposed 'run it back' — one tap clones last week's plan and re-invites the same people. They agreed. Five other hosts used it the first week.",
+                        fx: () => "Proposed 'run it back' — one tap clones last week's plan and re-invites the same people. They agreed. Five other hosts used it the first week.",
           },
         ],
         timeout: {
@@ -121,7 +120,7 @@
           {
             key: "build", label: "Build the feature",
             journal: "Built the attendee preview three users independently asked for. All 3 loved it. Two immediately referred a friend.",
-            effects: { signal: 10, marketFit: 4 },
+            effects: { signal: 10, marketFit: 2 },
             fx: () => "Built it — you see the group before you commit to the plan. All 3 users loved it. Two immediately referred a friend.",
           },
         ],

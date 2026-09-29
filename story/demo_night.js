@@ -104,7 +104,7 @@
                 key: "rough", label: "Show it rough — learn fast",
                 reply: "show it rough. tonight. i'd rather watch someone hit a wall than polish a guess.",
                 effects: {
-                  waitlist: 2, marketFit: 8,
+                  waitlist: 2, marketFit: 6,
                   flags: { has_demo: true },
                   scene: "demo",
                   say: { char: "alex", text: "ok. jordan found us a real first tester — her sister's friend. total stranger, never seen the app. she's on tonight at 8 and i'm watching the session live. don't make plans." },
@@ -119,7 +119,7 @@
                 key: "polish", label: "One more week of polish first",
                 reply: "one more week of polish first. if the first stranger hits a crash in minute one we learn nothing.",
                 effects: {
-                  waitlist: 2, marketFit: 4, signal: 4,
+                  waitlist: 2, marketFit: 3, signal: 4,
                   flags: { has_demo: true },
                   scene: "demo",
                   say: { char: "alex", text: "polish week done — worst edges are gone. and jordan lined up our first true stranger: her sister's friend, tonight at 8. i'm watching the session live. don't make plans." },
@@ -213,7 +213,7 @@
                 // beat.
                 journal: null,
                 effects: {
-                  marketFit: 6,
+                  marketFit: 5,
                   flags: { demo_question_seen: true },
                   say: { char: "alex", text: "post-it's on the monitor. good night. weird night. the app works and i can't stop thinking about her question." },
                   // Establishes the pre-launch fiction: a hand-recruited TestFlight

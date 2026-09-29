@@ -24,12 +24,12 @@
         choices: [
           {
             key: "pivot", label: "Pivot — focus on getting people to dates",
-            effects: { signal: 15, marketFit: 14 },
+            effects: { signal: 15, marketFit: 11 },
             fx: () => "Pivoted focus to conversation quality and date-booking. Three more interviews confirmed it. Some earlier work won't carry over.",
           },
           {
             key: "stay", label: "Stay the course",
-            effects: { signal: 5, marketFit: 3 },
+            effects: { signal: 5 },
             fx: () => "Filed it away. Not ready to pivot on one data point. Logged it for later.",
           },
         ],
@@ -46,7 +46,7 @@
         choices: [
           {
             key: "rewrite", label: "Rewrite the outreach",
-            effects: { signal: 10, marketFit: 6 },
+            effects: { signal: 10, marketFit: 5 },
             fx: () => "Rewrote the outreach. New version leads with the pain — 'you've matched with dozens of people and gone on zero dates' — not the product. First reply came in 4 hours.",
           },
         ],
@@ -63,7 +63,7 @@
         choices: [
           {
             key: "test", label: "Test the new framing",
-            effects: { signal: 12, marketFit: 8, char: { alex: { flags: { reframe_resolved: true } } } },
+            effects: { signal: 12, marketFit: 6, char: { alex: { flags: { reframe_resolved: true } } } },
             fx: () => "Ran the new framing by 3 more people. All 3 immediately got it. Updated the positioning.",
           },
         ],
@@ -75,14 +75,13 @@
         choices: [
           {
             key: "pivot", label: "Pivot — rethink the approach",
-            effects: { marketFit: 25, signal: 8 },
+            effects: { marketFit: 15, signal: 8 },
             fx: () => "Rethought the approach. The real problem is conversation quality, not match quantity. Signal improved immediately.",
           },
           {
             key: "stay", label: "Stay the course",
             journal: "Logged the feedback but staying the course for now. Alex isn't convinced either.",
-            effects: { marketFit: 5 },
-            fx: () => "Stayed the course. Alex logged the feedback but we're not changing direction yet.",
+                        fx: () => "Stayed the course. Alex logged the feedback but we're not changing direction yet.",
           },
         ],
         timeout: {
@@ -100,13 +99,12 @@
         choices: [
           {
             key: "pivot", label: "Narrow scope — go deep",
-            effects: { marketFit: 20, signal: 10 },
+            effects: { marketFit: 11, signal: 10 },
             fx: () => "Narrowed scope significantly. Less ambitious but far more right. Three users asked for exactly this.",
           },
           {
             key: "stay", label: "Ship the broader version",
-            effects: { marketFit: 8 },
-            fx: () => "Decided to ship the broader scope. Market fit isn't perfect but you're moving.",
+                        fx: () => "Decided to ship the broader scope. Market fit isn't perfect but you're moving.",
           },
         ],
         timeout: {
@@ -130,7 +128,7 @@
           {
             key: "lock", label: "Lock in the direction",
             journal: "Locked in. Three users said the same thing unprompted this week: 'I actually went on a date because of this.' This is the product. Now build it right.",
-            effects: { marketFit: 15, signal: 15 },
+            effects: { marketFit: 9, signal: 15 },
             fx: () => "Locked in. This is the product. Now build it right.",
           },
         ],
@@ -147,7 +145,7 @@
         choices: [
           {
             key: "deep", label: "Five sessions — watch them use it",
-            effects: { marketFit: 8, signal: 6 },
+            effects: { marketFit: 6, signal: 6 },
             fx: (s, e) => e.timesResolved("founder_user_depth") === 0
               ? "Five sessions done. Two users showed you patterns you didn't expect — they message matches in bursts, then go silent for days. You found why 30% quit in week 2 and fixed it immediately."
               : "Five sessions done. Same burst-then-silence pattern, but this time you found where drop-off happens later in the conversation — users who don't get a reply within 48 hours almost never come back. Adjusted the nudge timing.",
@@ -155,7 +153,7 @@
           {
             key: "survey", label: "Send a structured survey",
             journal: "Sent a structured survey. 60% response rate. Useful signal, but nothing I didn't already suspect.",
-            effects: { marketFit: 5, signal: 3 },
+            effects: { marketFit: 4, signal: 3 },
             fx: () => "Survey sent. 60% response rate. Useful signal, but nothing you didn't already suspect.",
           },
         ],
@@ -172,7 +170,7 @@
         choices: [
           {
             key: "call", label: "Schedule a call, get the full story",
-            effects: { marketFit: 3, signal: 6, flags: { testimonial: true } },
+            effects: { marketFit: 2, signal: 6, flags: { testimonial: true } },
             fx: () => "One hour call. They walked you through what actually leads to a date on plusone — two patterns you hadn't designed around. And a quote you can use anywhere.",
           },
           {
@@ -226,7 +224,7 @@
               // far more if you know what to match on (research, GOALS.md).
               if (s.matching_owned && !s.launched) {
                 const researched = e.took("interviews:interview") || e.cast.get("alex").focus === "discover";
-                e.addFit(researched ? 6 : 2);
+                if (researched) e.addFit(2); // without user signal, pairing is building, not learning
                 if (s.items && s.items.matching_algo && s.items.matching_algo.status !== "obsolete" && researched) {
                   s.items.matching_algo.quality = "solid";
                 }
