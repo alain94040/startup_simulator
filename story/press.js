@@ -15,6 +15,9 @@
 
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // A reaction to the news itself is only on offer the week the story breaks
+  // (the card's first week); studying it can wait.
+  const newsDay = (s, e) => !!(e.open.techcrunch && e.open.techcrunch.week === s.week);
 
   const mod = {
     nodes: [
@@ -26,22 +29,35 @@
         id: "flare_stealth", char: "techcrunch", from: "TechCrunch",
         text: "Flare just went public with $3M from investors — same space, serious relationships, same price point. 5,000 users from one TikTok campaign. alex sent the article at 1am with no comment. jordan replied with one word: 'oof.'",
         when: { if: (s) => s.items != null && !s.has_demo && s.week >= 5 },
+        // The first time you hear about a competitor. Two reactions belong to
+        // the morning the news breaks (steady the team, or panic-copy) and are
+        // only on offer that week; studying their product doesn't have to
+        // happen that day, so the deep dive stays open for both weeks. One
+        // action either way: reassure the team now, or go learn what they
+        // actually built (which steadies Alex too, a little, once he sees it).
         choices: [
           {
-            key: "steady", label: "Steady the team — their launch isn't our roadmap",
+            key: "steady", label: "Steady the team — their launch isn't our roadmap", branch: true, if: newsDay,
             journal: "Flare went public with $3M from investors and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
             effects: { char: { alex: { morale: 6 }, jordan: { morale: 4 } } },
             fx: () => "You called both of them that morning. A funded competitor is proof the problem is real — and everything in their screenshots is broad and shallow, the exact thing you're not building. Alex exhaled. Back to work.",
           },
           {
-            key: "copy", label: "Rework our plan around what they shipped",
+            key: "copy", label: "Rework our plan around what they shipped", branch: true, if: newsDay,
             journal: "Panicked at Flare's launch and reworked the plan around their feature list. We're building for their users now, not ours — and Alex knows it.",
             effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -10, effort: -1.0 } } },
             fx: () => "You spent the week rebuilding the roadmap around their screenshots. Alex shipped none of it happily. You're building their product a year late now, with $2.99M less.",
           },
+          {
+            key: "dive", label: "Download Flare and take it apart",
+            journal: "Spent two evenings inside Flare: signed up, swiped, read every App Store review. The app is gorgeous and the onboarding is better than ours. And the reviews all say the same thing — 'tons of matches, no dates.' Walked Alex through the gap. He stopped refreshing their press page.",
+            effects: { marketFit: 4, flags: { researched_flare: true }, char: { alex: { morale: 3 } } },
+            fx: () => "Two evenings inside Flare. Beautiful app, better onboarding than yours — and review after review says 'tons of matches, no dates.' You walked Alex through the gap. He stopped refreshing their press page.",
+          },
         ],
-        // On read: the company is fine — but nobody talked Alex down.
-        timeout: { weeks: 3, effects: { char: { alex: { morale: -6 } } } },
+        // On read: the company is fine — but nobody talked Alex down, and
+        // nobody looked at what Flare actually built.
+        timeout: { weeks: 2, effects: { char: { alex: { morale: -6 } } } },
       },
       {
         // Ch 2 — the road to launch: their graph goes up while yours is a checklist.

@@ -136,7 +136,7 @@
       firing_shares: ["transfer"], firing_notes: ["handoff"],
       firing_last: ["intake", "maya", "close"], firing_after: ["not_really"],
     }),
-    flare_stealth: ["steady"], flare_10k: ["course"], flare_feature: ["hold"],
+    flare_stealth: ["dive", "steady"], flare_10k: ["course"], flare_feature: ["hold"],
     flare_stumble: ["screenshot"], flare_epilogue: ["work"],
     public_complaint: ["respond"], reporter_deadline: ["reply"], power_user_quiet: ["call"],
     consultant_growth: "SKIP", consultant_brand: "SKIP",

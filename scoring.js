@@ -179,6 +179,14 @@
               : dms ? "Read what the forums said — and DM'd the people behind the comments (" + dms + "×)."
                 : reads ? "Read " + reads + " of " + THREADS.length + " community threads" + (promoted ? ", promoted into " + promoted : "") + "."
                   : "Scrolled past every thread where your market was talking." },
+          // Know your competitor: the first time Flare makes the news, did
+          // anyone actually open their app? Priya's general market survey is
+          // half credit — it maps the field, but not the one you're up against.
+          { faced: g.done("flare_stealth") || g.done("mentor_competitor_bomb"), weight: 1,
+            got: g.took("flare_stealth:dive") ? 1 : g.took("mentor_competitor_bomb:research") ? 0.5 : 0,
+            note: g.took("flare_stealth:dive") ? "Took Flare's app apart instead of just reading their press."
+              : g.took("mentor_competitor_bomb:research") ? "Mapped the market, but never opened Flare's app."
+                : "Never looked at what the competition actually built." },
           { faced: !!s.pivot_shipped, weight: 3, got: fitGot,
             note: "Market fit of what shipped: " + Math.round(s.market_fit) + "/100"
               + (fitGot >= 1 ? " — built on what users told you." : fitGot >= 0.5 ? " — partly listened, partly guessed." : " — mostly built on guesses.") },

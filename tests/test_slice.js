@@ -414,6 +414,21 @@ console.log("community threads: promote is live-only, the DM is earned (seed 42)
   ok((reader.s.board_extra || 0) === before - 0.5, "the DM takes half a week off the v2 plans board");
 }
 
+// ── pass 3.2: the first competitor news — react that day, study it later ────
+console.log("flare: steady/copy on the day, the deep dive for two weeks (seed 42)");
+{
+  const openCard = (g, id) => g.openActions().find(a => a.nodeId === id);
+  const keys = (a) => (a ? a.options.map(o => o.key) : []);
+  const g = jumpTo("flare_stealth", { seed: 42, driver: (a, gg) => a.nodeId === "flare_stealth" ? null : decent(a, gg) });
+  ok(keys(openCard(g, "flare_stealth")).join() === "steady,copy,dive",
+    "the week the news breaks: steady, copy, or take their app apart (" + keys(openCard(g, "flare_stealth")).join(", ") + ")");
+  g.nextWeek();
+  ok(keys(openCard(g, "flare_stealth")).join() === "dive",
+    "a week later only the deep dive is left (" + keys(openCard(g, "flare_stealth")).join(", ") + ")");
+  g.act("flare_stealth", "dive");
+  ok(!!g.s.researched_flare, "…and taking it banks the competitor research");
+}
+
 // ── pass 3.5: the Jordan question, every way it can go ───────────────────────
 console.log("jordan: kept (seed 42)");
 {
