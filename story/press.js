@@ -313,7 +313,7 @@
               const knowsFlare = e.took("flare_stealth:dive") || e.took("mentor_competitor_bomb:research");
               if (!knowsFlare) {
                 s.david_verdict = "flare";
-                e.say({ char: "david", text: "i'm going to pass. first thing i did after lunch was google 'dating app serious relationships' — Flare. $3M, same space, same price, six weeks ago. you didn't mention them once. if i found them in ten seconds, every investor after me will too." });
+                e.say({ char: "david", text: "i'm going to pass. first thing i did after lunch was google 'dating app serious relationships' — Flare. $3M, same space, same price, all over TechCrunch. you didn't mention them once. if i found them in ten seconds, every investor after me will too." });
                 return null;
               }
               if (s.market_fit < FIT_KNOWS_USERS) {

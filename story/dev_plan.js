@@ -244,7 +244,7 @@
             effects: { signal: 6, marketFit: 5 },
             fx(s, e) {
               const rounds = [
-                "Five calls. One woman keeps a spreadsheet of her matches across four apps — the Hacker News thread wasn't exaggerating. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
+                "Five calls. One woman keeps a spreadsheet of her matches across four apps, because no single app helps her keep track. Two others said nearly the same sentence, unprompted: 'I'm fine getting matches. Nothing ever happens after.' Logged.",
                 "Five more calls. A teacher who deleted every app twice. A guy who wrote three drafts of a first message and sent none. The pattern doesn't move: getting matches isn't the problem — what comes after is.",
                 "Another round of calls. Someone asked, dead serious, if plusone could just 'decide the first date for both of us.' Filed under: things users say that sound like jokes and aren't.",
               ];
