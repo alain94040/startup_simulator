@@ -50,7 +50,13 @@
         // game routinely pushes signal high before Priya unlocks — a signal
         // ceiling here would dead-lock the entire fundraising arc.
         id: "mentor_competitor_bomb", char: "priya",
-        text: "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why plusone.'",
+        // A fair warning before David's pitch (story/press.js): if the Flare
+        // news has broken (answered or still open in the feed) and nobody has
+        // opened their app, she names them. Her deep-dive covers Flare too.
+        text: (s, e) => "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why plusone.'"
+          + ((e.done("flare_stealth") || (e.open.techcrunch && e.open.techcrunch.nodeId === "flare_stealth")) && !e.took("flare_stealth:dive")
+            ? "\n\nand you do know about Flare, right? $3M, same space, same price. it's the first name any investor will say back to you."
+            : ""),
         when: { if: (s) => s.week <= 16 },
         choices: [
           {

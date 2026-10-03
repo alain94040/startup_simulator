@@ -429,6 +429,26 @@ console.log("flare: steady/copy on the day, the deep dive for two weeks (seed 42
   ok(!!g.s.researched_flare, "…and taking it banks the competitor research");
 }
 
+// ── pass 3.3: David invests in what you know, not in luck ───────────────────
+console.log("david's pitch: who else is doing this, and what makes people stay (seed 42)");
+{
+  // David first (and Flare's deep dive first, for the founders who take it),
+  // so his pitch surfaces; then the verdict depends only on what was banked.
+  const first = (ids) => (a) => ids.includes(a.nodeId) || a.charId === "david" ? -1 : actPriority(a);
+  const pitch = (dive, fit) => {
+    const g = jumpTo("ff_mentor_pitch", { seed: 42, priority: first(["flare_stealth"]),
+      driver: (a, gg) => a.nodeId === "flare_stealth" ? (dive ? ["dive"] : null) : decent(a, gg) });
+    g.s.market_fit = fit;
+    const cash = g.s.cash;
+    g.act("ff_mentor_pitch", "pitch");
+    return { verdict: g.s.david_verdict, paid: g.s.cash - cash };
+  };
+  const a = pitch(false, 40), b = pitch(true, 5), c = pitch(true, 40);
+  ok(a.verdict === "flare" && a.paid === 0, "never looked at Flare → he passes, and names them (" + a.verdict + ")");
+  ok(b.verdict === "users" && b.paid === 0, "knows Flare, but guessing about users → he passes for now (" + b.verdict + ")");
+  ok(c.verdict === "invest" && c.paid === 4000, "knows both → $4,000 (" + c.verdict + ", +$" + c.paid + ")");
+}
+
 // ── pass 3.5: the Jordan question, every way it can go ───────────────────────
 console.log("jordan: kept (seed 42)");
 {

@@ -15,6 +15,11 @@
 
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  // Market fit at which a founder can answer "what makes people stay?" from
+  // what users told them, not from the feature list. Around week 10 (David's
+  // pitch) a founder who did some research sits at 16-30; one who skipped it
+  // sits near 6.
+  const FIT_KNOWS_USERS = 15;
   // A reaction to the news itself is only on offer the week the story breaks
   // (the card's first week); studying it can wait.
   const newsDay = (s, e) => !!(e.open.techcrunch && e.open.techcrunch.week === s.week);
@@ -296,17 +301,36 @@
         when: { took: ["ff_mentor:lunch"], delay: 3, if: (s, e) => e.weeksSince("ff_mentor") <= 10 },
         choices: [
           {
+            // The first investor who isn't family, and he invests in what you
+            // know, not in luck: two questions any angel asks. Who else is
+            // doing this? (studied Flare — the deep dive, or Priya's competitive
+            // deep-dive.) What makes people stay? (market fit, which only
+            // learning from users earns — FIT_KNOWS_USERS). Jamie's check stays
+            // a coin flip on purpose: a friend invests in you, not your market.
             key: "pitch", label: "Show him the deck",
             reply: "let's do it — coffee, numbers, the whole pitch.",
             fx(s, e) {
-              if (e.rng() < 0.7) {
-                s.cash += 4000;
-                e.say({ char: "david", text: "just wired you $4,000 — pay me back by building the thing." });
-                return "David pulled out his checkbook. $4,000. 'Pay me back by building the thing.'";
+              const knowsFlare = e.took("flare_stealth:dive") || e.took("mentor_competitor_bomb:research");
+              if (!knowsFlare) {
+                s.david_verdict = "flare";
+                e.say({ char: "david", text: "i'm going to pass. first thing i did after lunch was google 'dating app serious relationships' — Flare. $3M, same space, same price, six weeks ago. you didn't mention them once. if i found them in ten seconds, every investor after me will too." });
+                return null;
               }
-              e.say({ char: "david", text: "gonna sit this one out — new baby on the way, being careful with money this year. i'm rooting for you though." });
-              return "Great coffee. David's being conservative with money this year — new baby coming. 'I'm rooting for you though.'";
+              if (s.market_fit < FIT_KNOWS_USERS) {
+                s.david_verdict = "users";
+                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes people stay and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for — then call me." });
+                return null;
+              }
+              s.david_verdict = "invest";
+              s.cash += 4000;
+              e.say({ char: "david", text: "you know who you're up against and you know your users. that's more than most decks i see. just wired you $4,000 — pay me back by building the thing." });
+              return null;
             },
+            journal: (s) => ({
+              flare: "Pitched David. He passed — he'd found Flare in ten seconds of googling, and I'd never mentioned them.",
+              users: "Pitched David. He passed for now: he asked what makes people stay, and I could only tell him what the app does.",
+              invest: "Pitched David. He wired $4,000 — he liked that we knew the competition and knew our users.",
+            })[s.david_verdict],
           },
         ],
         timeout: { weeks: 3 },
