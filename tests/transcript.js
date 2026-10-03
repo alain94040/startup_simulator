@@ -13,9 +13,8 @@
 //   node tests/transcript.js --compact              # one line per beat
 //   node tests/transcript.js --html run.html        # readable chat export
 //   node tests/transcript.js --sample --html book.html
-//                                                      # N typical stories, bucketed
-//   node tests/transcript.js --sample --board --html book.html
-//                                                      # + every week's cards, side by side
+//                                                      # N typical stories, bucketed,
+//                                                      # with every week's cards side by side
 //
 // See `--help` for the full flag list.
 //
@@ -647,6 +646,7 @@ function runHtml(run, idx) {
 
 function renderHtml(runs, title, opts) {
   opts = opts || {};
+  const board = opts.board !== false; // the page opens with the board on unless --no-board
   const picker = runs.length > 1
     ? `<div class="picker">${runs.map((r, i) =>
       `<button data-go="${i}" class="${i ? "" : "on"}">${esc(r.label || ("seed " + r.seed))} <em>${esc(r.ending)}</em></button>`).join("")}</div>`
@@ -765,7 +765,7 @@ function renderHtml(runs, title, opts) {
   .t-opts li.pick { color:#fff; background:var(--blue); border-radius:5px; padding:0 5px; margin-left:-5px; }
   .t-st { margin-top:5px; font-size:10.5px; color:var(--dim); }
   .tile.st-ignored .t-st { color:#c0392b; } .tile.st-carried .t-st { color:#b25000; }
-</style></head><body class="ids${opts.board ? " showboard" : ""}">
+</style></head><body class="ids${board ? " showboard" : ""}">
 <header>
   <h1>${esc(title)}</h1>
   ${picker}
@@ -773,7 +773,7 @@ function renderHtml(runs, title, opts) {
     <label><input type="checkbox" id="fIds" checked> node ids</label>
     <label><input type="checkbox" id="fJr" checked> journal lines</label>
     <label><input type="checkbox" id="fAmb" checked> ambient / filler</label>
-    <label><input type="checkbox" id="fBoard"${opts.board ? " checked" : ""}> weekly board</label>
+    <label><input type="checkbox" id="fBoard"${board ? " checked" : ""}> weekly board</label>
     <label><input type="checkbox" id="fWrap"> wrap the board</label>
   </div>
 </header>
@@ -970,6 +970,7 @@ function main(argv) {
     else if (a === "--out") o.out = argv[++i];
     else if (a === "--compact") o.compact = true;
     else if (a === "--board") o.board = true;
+    else if (a === "--no-board") o.board = false;
     else if (a === "--no-alts") o.noAlts = true;
     else if (a === "--no-ambient") o.hideAmbient = true;
     else if (a === "--src") o.src = true;
@@ -1044,8 +1045,9 @@ transcript.js — replay a headless run as a readable story.
 
   --board           show the weekly board: every card the player could answer
                     that week, side by side, with its options and its fate
-                    (in --html it starts switched on; the page has a toggle).
-                    In text, a card list under each week header.
+                    In text, a card list under each week header. In --html
+                    it is on by default (the page has a toggle).
+  --no-board        open the --html page with the board switched off
   --html FILE       write a readable chat-log page instead of text
   --out FILE        write the text transcript to a file
 
