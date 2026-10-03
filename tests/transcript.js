@@ -644,9 +644,7 @@ function runHtml(run, idx) {
 </section>`;
 }
 
-function renderHtml(runs, title, opts) {
-  opts = opts || {};
-  const board = opts.board !== false; // the page opens with the board on unless --no-board
+function renderHtml(runs, title) {
   const picker = runs.length > 1
     ? `<div class="picker">${runs.map((r, i) =>
       `<button data-go="${i}" class="${i ? "" : "on"}">${esc(r.label || ("seed " + r.seed))} <em>${esc(r.ending)}</em></button>`).join("")}</div>`
@@ -765,7 +763,7 @@ function renderHtml(runs, title, opts) {
   .t-opts li.pick { color:#fff; background:var(--blue); border-radius:5px; padding:0 5px; margin-left:-5px; }
   .t-st { margin-top:5px; font-size:10.5px; color:var(--dim); }
   .tile.st-ignored .t-st { color:#c0392b; } .tile.st-carried .t-st { color:#b25000; }
-</style></head><body class="ids${board ? " showboard" : ""}">
+</style></head><body class="ids showboard">
 <header>
   <h1>${esc(title)}</h1>
   ${picker}
@@ -773,7 +771,7 @@ function renderHtml(runs, title, opts) {
     <label><input type="checkbox" id="fIds" checked> node ids</label>
     <label><input type="checkbox" id="fJr" checked> journal lines</label>
     <label><input type="checkbox" id="fAmb" checked> ambient / filler</label>
-    <label><input type="checkbox" id="fBoard"${board ? " checked" : ""}> weekly board</label>
+    <label><input type="checkbox" id="fBoard" checked> weekly board</label>
     <label><input type="checkbox" id="fWrap"> wrap the board</label>
   </div>
 </header>
@@ -795,11 +793,25 @@ function renderHtml(runs, title, opts) {
   setHead();
   if (window.ResizeObserver) new ResizeObserver(setHead).observe(head);
   else window.addEventListener("resize", setHead);
-  fIds.onchange = () => document.body.classList.toggle("ids", fIds.checked);
-  fJr.onchange = () => document.body.classList.toggle("nojr", !fJr.checked);
-  fAmb.onchange = () => document.body.classList.toggle("noamb", !fAmb.checked);
-  fBoard.onchange = () => document.body.classList.toggle("showboard", fBoard.checked);
-  fWrap.onchange = () => document.body.classList.toggle("boardwrap", fWrap.checked);
+  // Every view option is a live toggle (no regenerating the page), and the
+  // page remembers them across reloads. Storage can be blocked on file://
+  // pages, so every access is guarded — the defaults still work without it.
+  const TOGGLES = [
+    [fIds, "ids", true], [fJr, "nojr", false], [fAmb, "noamb", false],
+    [fBoard, "showboard", true], [fWrap, "boardwrap", true],
+  ];
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem("transcript.view") || "{}"); } catch (e) {}
+  for (const [box, cls, onWhenChecked] of TOGGLES) {
+    if (typeof saved[box.id] === "boolean") box.checked = saved[box.id];
+    const apply = () => document.body.classList.toggle(cls, box.checked === onWhenChecked);
+    apply();
+    box.onchange = () => {
+      apply();
+      saved[box.id] = box.checked;
+      try { localStorage.setItem("transcript.view", JSON.stringify(saved)); } catch (e) {}
+    };
+  }
 </script></body></html>`;
 }
 
@@ -970,7 +982,6 @@ function main(argv) {
     else if (a === "--out") o.out = argv[++i];
     else if (a === "--compact") o.compact = true;
     else if (a === "--board") o.board = true;
-    else if (a === "--no-board") o.board = false;
     else if (a === "--no-alts") o.noAlts = true;
     else if (a === "--no-ambient") o.hideAmbient = true;
     else if (a === "--src") o.src = true;
@@ -1006,7 +1017,7 @@ function main(argv) {
     console.log(sampleTable(list));
     if (o.html) {
       const runs = list.map(b => ({ ...b.run, label: b.name }));
-      fs.writeFileSync(o.html, renderHtml(runs, `Typical stories — ${runs.length} player archetypes`, o));
+      fs.writeFileSync(o.html, renderHtml(runs, `Typical stories — ${runs.length} player archetypes`));
       console.log(`wrote ${o.html} (${runs.length} runs — use the buttons to switch founder)`);
     } else if (o.out) {
       fs.writeFileSync(o.out, list.map(b => renderText(b.run, o)).join("\n\n"));
@@ -1017,7 +1028,7 @@ function main(argv) {
 
   const run = record(o.seed, o.driver, { weeks: o.weeks });
   if (o.html) {
-    fs.writeFileSync(o.html, renderHtml([run], `Run — seed ${run.seed} · ${run.driver}`, o));
+    fs.writeFileSync(o.html, renderHtml([run], `Run — seed ${run.seed} · ${run.driver}`));
     console.log(`wrote ${o.html}`);
     return;
   }
@@ -1043,11 +1054,10 @@ transcript.js — replay a headless run as a readable story.
   --width N         wrap column (default 78)
   --color           force ANSI color (default: on when a TTY)
 
-  --board           show the weekly board: every card the player could answer
-                    that week, side by side, with its options and its fate
-                    In text, a card list under each week header. In --html
-                    it is on by default (the page has a toggle).
-  --no-board        open the --html page with the board switched off
+  --board           print the weekly board: every card the player could answer
+                    that week, with its options and its fate
+                    (text output; the --html page always has it, with a
+                    live toggle in its header)
   --html FILE       write a readable chat-log page instead of text
   --out FILE        write the text transcript to a file
 
