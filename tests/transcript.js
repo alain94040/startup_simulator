@@ -14,6 +14,8 @@
 //   node tests/transcript.js --html run.html        # readable chat export
 //   node tests/transcript.js --sample --html book.html
 //                                                      # N typical stories, bucketed
+//   node tests/transcript.js --sample --board --html book.html
+//                                                      # + every week's cards, side by side
 //
 // See `--help` for the full flag list.
 //
@@ -114,6 +116,9 @@ function record(seed, driverName, opts) {
   const sceneEvents = [];   // {seq, scene|null} — real engine enter/exit, not message tags
   const weekStats = new Map();
   const marks = [];         // {logLen, seq} checkpoints, to place timeouts
+  // the weekly board: every card the founder could have spent an action on,
+  // week by week — not just the one they did. week -> Map(nodeId -> card)
+  const board = new Map();
   let pendingSeq = 0, pendingChapter = 1, lastChapter = 1, pendingScene = null;
   let game = null;
 
@@ -125,6 +130,37 @@ function record(seed, driverName, opts) {
     chapter: g.chapter,
   });
 
+  // Snapshot what is answerable right now. Called at the week boundary and
+  // after every answer, because a card can land mid-week (effects.surface, a
+  // scene handing back the cards it displaced). Beats inside a room the
+  // founder is already sitting in are skipped: they are free, one sitting, and
+  // the dialogue already shows them — the board is about what competes for
+  // the week's two actions. Cards held by a scene are off the table until it
+  // ends, so they are skipped too.
+  const scanBoard = (g, midWeek) => {
+    const wk = g.s.week;
+    if (!board.has(wk)) board.set(wk, new Map());
+    const cards = board.get(wk);
+    for (const a of g.openActions()) {
+      if (a.onHold) continue;
+      if (g.scene && a.scene === g.scene.id) continue;
+      const node = g.nodes.get(a.nodeId);
+      const defs = new Map((node.choices || []).map(c => [c.key, c]));
+      const options = a.options.map(o => {
+        const d = defs.get(o.key);
+        return { key: o.key, label: o.label, earned: !!(d && d.if && !d.branch) };
+      });
+      const card = cards.get(a.nodeId);
+      if (card) { if (!card.chosen) card.options = options; continue; }
+      cards.set(a.nodeId, {
+        nodeId: a.nodeId, charId: a.charId, name: a.name, kind: a.kind,
+        ui: FEED.has(a.charId) ? "feed" : SELF.has(a.charId) ? "move" : "chat",
+        body: a.body, since: a.week, midWeek, opensScene: a.scene, options,
+        chosen: null, status: null,
+      });
+    }
+  };
+
   const chooser = (a, g) => {
     game = g; pendingSeq = g._seq; pendingChapter = g.chapter;
     pendingScene = g.scene ? g.scene.id : null;
@@ -135,7 +171,7 @@ function record(seed, driverName, opts) {
     weeks: opts.weeks != null ? opts.weeks : 60,
     subsidy: opts.subsidy,
     priority: resolved.priority,
-    onWeekStart(g, offered) {
+    onWeekStart(g) {
       game = g;
       if (!weekStats.has(g.s.week)) weekStats.set(g.s.week, snap(g));
       if (g.chapter !== lastChapter) {
@@ -143,13 +179,12 @@ function record(seed, driverName, opts) {
         lastChapter = g.chapter;
       }
       marks.push({ logLen: g.log.length, seq: g._seq });
-      // what the founder had on the table but did not (yet) touch this week
-      weekStats.get(g.s.week).offered = offered
-        .filter(a => !a.onHold)
-        .map(a => ({ nodeId: a.nodeId, name: a.name, kind: a.kind }));
+      scanBoard(g, false);
     },
     onAct(g, a, key) {
       const chosen = a.options.find(o => o.key === key);
+      const card = board.has(g.s.week) && board.get(g.s.week).get(a.nodeId);
+      if (card && !card.chosen) card.chosen = key;
       acts.push({
         seq: pendingSeq + 0.5, week: g.s.week, charId: a.charId, nodeId: a.nodeId,
         name: a.name, kind: a.kind, scene: a.scene,
@@ -164,6 +199,7 @@ function record(seed, driverName, opts) {
         lastChapter = g.chapter;
       }
       marks.push({ logLen: g.log.length, seq: g._seq });
+      if (!g.s.game_over && !g.s.game_won) scanBoard(g, true);
     },
   });
   game = game_;
@@ -215,6 +251,23 @@ function record(seed, driverName, opts) {
   });
 
   events.sort((a, b) => a.seq - b.seq);
+
+  // What became of each card that week: answered, still waiting next week,
+  // timed out ("@ignored"), or quietly withdrawn when its window closed.
+  const boardWeeks = [...board.keys()].sort((a, b) => a - b);
+  for (const wk of boardWeeks) {
+    const next = board.get(wk + 1);
+    for (const c of board.get(wk).values()) {
+      if (c.chosen) c.status = "answered";
+      else if (next && next.has(c.nodeId)) c.status = "carried";
+      else if (game.log.some(l => l.ignored === c.nodeId && (l.week === wk || l.week === wk + 1))) c.status = "ignored";
+      else if (!next) c.status = "open"; // the run ended with it on the table
+      else c.status = "withdrawn";
+    }
+  }
+  for (const st of weekStats.values()) {
+    st.board = board.has(st.week) ? [...board.get(st.week).values()] : [];
+  }
 
   const spine = {};
   for (const [id, key] of SPINE) { const o = game.outcome(id); if (o) spine[key] = o; }
@@ -313,6 +366,17 @@ function renderText(run, o) {
       L.push("");
       L.push(C.c("━━ WEEK " + week + " " + "━".repeat(Math.max(0, W - 10 - String(week).length))));
       if (st) L.push(C.d("   " + statLine(st)));
+      if (o.board && st && st.board.length) {
+        const n = st.board.length;
+        L.push(C.c(`   ┌ board · ${n} card${n === 1 ? "" : "s"} on the table`));
+        for (const c of st.board) {
+          const age = c.since < week ? `since wk ${c.since}` : c.midWeek ? "new, mid-week" : "new";
+          const pick = c.options.find(x => x.key === c.chosen);
+          const fate = pick ? C.g("✓ " + clip(pick.label, W - 50)) : C.d(BOARD_STATUS[c.status] || "");
+          L.push(`   │ ${C.b(clip(c.name, 14).padEnd(14))} ${C.d(clip(c.nodeId, 22).padEnd(22))} ${C.d(`(${c.options.length} opt, ${age})`)} ${fate}`);
+        }
+        L.push(C.c("   └"));
+      }
       lastSpeaker = null;
     }
 
@@ -417,6 +481,36 @@ function renderText(run, o) {
 const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// ── the weekly board: every answerable card, side by side ────────────────────
+// One tile per card the founder could have spent an action on that week, all
+// on one line — a crowded week is visibly wide. Each tile carries the opening
+// line, every option (⚑ = unlocked by research, the chosen one filled in) and
+// what became of the card. The tiles are the triage; the log below is the talk.
+const BOARD_STATUS = {
+  answered: "", carried: "→ still open next week", ignored: "⌛ left on read",
+  withdrawn: "✕ window closed", open: "run ended",
+};
+function boardHtml(st) {
+  const cards = st.board;
+  const answered = cards.filter(c => c.chosen).length;
+  const tiles = cards.map(c => {
+    const age = c.since < st.week ? `since wk ${c.since}` : c.midWeek ? "new · mid-week" : "new";
+    const where = c.ui === "feed" ? "feed" : c.ui === "move" ? "your move" : "";
+    const opts = c.options.map(o =>
+      `<li class="${o.key === c.chosen ? "pick" : ""}">${o.earned ? "⚑ " : ""}${esc(o.label)}</li>`).join("");
+    return `<div class="tile st-${c.status} ui-${c.ui}" data-kind="${esc(c.kind)}">` +
+      `<div class="t-h"><b>${esc(c.name)}</b><span class="age${c.since < st.week ? " old" : ""}">${age}</span></div>` +
+      `<div class="t-meta">${where ? `<span>${where}</span>` : ""}${c.kind !== "story" ? `<span>${esc(c.kind)}</span>` : ""}` +
+      `${c.opensScene ? `<span class="sc">◆ opens ${esc(c.opensScene)}</span>` : ""}<code>${esc(c.nodeId)}</code></div>` +
+      `<div class="t-body" title="${esc(c.body)}">${esc(c.body)}</div>` +
+      `<ol class="t-opts">${opts}</ol>` +
+      (BOARD_STATUS[c.status] ? `<div class="t-st">${BOARD_STATUS[c.status]}</div>` : "") +
+      `</div>`;
+  }).join("");
+  return `<div class="board"><div class="board-h">${cards.length} card${cards.length === 1 ? "" : "s"} on the table · ` +
+    `${answered} answered</div><div class="tiles">${tiles}</div></div>`;
+}
+
 function runHtml(run, idx) {
   const nameOf = {};
   for (const c of run.cast) nameOf[c.id] = c.name;
@@ -438,6 +532,7 @@ function runHtml(run, idx) {
       week = e.week;
       const st = statsByWeek.get(week);
       parts.push(`<div class="wk" id="r${idx}w${week}"><b>Week ${week}</b>${st ? `<span>${esc(statLine(st))}</span>` : ""}</div>`);
+      if (st && st.board.length) parts.push(boardHtml(st));
     }
     if (e.t === "chapter") {
       // hold a banner that lands mid-scene until the room empties — see the
@@ -529,7 +624,9 @@ function runHtml(run, idx) {
   const weeks = `<div class="idx-scroll">` + run.weekStats.map(s =>
     (chapByWeek.get(s.week) || []).sort((a, b) => a - b)
       .map(ch => `<a class="ch" href="#r${idx}c${ch}">ch ${ch}</a>`).join("") +
-    `<a href="#r${idx}w${s.week}">wk ${s.week}</a>` +
+    `<a href="#r${idx}w${s.week}">wk ${s.week}` +
+      (s.board && s.board.length ? `<i class="dens" title="${s.board.length} cards on the table">` +
+        `<i style="width:${Math.min(s.board.length, 10) * 5}px"></i>${s.board.length}</i>` : "") + `</a>` +
     (sceneByWeek.get(s.week) || [])
       .map(sc => `<a class="sc" href="#r${idx}s${sc.n}">◆ ${esc(sc.name)}</a>`).join("")).join("") + `</div>`;
   const spine = Object.entries(run.spine).map(([k, v]) => `<span class="chip">${esc(k)}: ${esc(v)}</span>`).join("");
@@ -548,7 +645,8 @@ function runHtml(run, idx) {
 </section>`;
 }
 
-function renderHtml(runs, title) {
+function renderHtml(runs, title, opts) {
+  opts = opts || {};
   const picker = runs.length > 1
     ? `<div class="picker">${runs.map((r, i) =>
       `<button data-go="${i}" class="${i ? "" : "on"}">${esc(r.label || ("seed " + r.seed))} <em>${esc(r.ending)}</em></button>`).join("")}</div>`
@@ -638,7 +736,36 @@ function renderHtml(runs, title) {
   .report li b { display:inline-block; min-width:34px; }
   .report li div { color:var(--dim); font-size:12.5px; margin-left:34px; }
   body.noamb [data-kind="ambient"], body.noamb [data-kind="filler"] { display:none; }
-</style></head><body class="ids">
+  .idx a { display:flex; align-items:center; gap:6px; }
+  .dens { display:inline-flex; align-items:center; gap:3px; font-style:normal; font-size:10px; color:#b0b0b6; }
+  .dens i { display:inline-block; height:5px; border-radius:3px; background:#c9d8f5; }
+  /* the board: one line, never wrapped — a crowded week makes the page wide on
+     purpose. "wrap the board" folds it back to the column for reading. */
+  .board { display:none; margin:0 0 12px; }
+  body.showboard .board { display:block; }
+  .board-h { font-size:11px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--dim); margin-bottom:6px; }
+  .tiles { display:flex; flex-wrap:nowrap; gap:8px; width:max-content; align-items:stretch; padding-bottom:4px; }
+  body.boardwrap .tiles { flex-wrap:wrap; width:auto; }
+  .tile { width:230px; flex:none; background:#fff; border:1px solid var(--line); border-top:3px solid #c7c7cc; border-radius:9px;
+    padding:7px 10px 8px; font-size:12px; box-shadow:0 1px 2px rgba(0,0,0,.04); display:flex; flex-direction:column; }
+  .tile.st-answered { border-top-color:var(--blue); }
+  .tile.st-carried { border-top-color:#e0a030; }
+  .tile.st-ignored { border-top-color:#c0392b; opacity:.8; }
+  .tile.st-withdrawn, .tile.st-open { border-top-color:#c7c7cc; opacity:.7; }
+  .tile.ui-move { background:#f7faff; } .tile.ui-feed { background:#f6f6f8; }
+  .t-h { display:flex; justify-content:space-between; gap:6px; align-items:baseline; }
+  .t-h b { font-size:12.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .age { font-size:10px; color:#1d8f3c; white-space:nowrap; } .age.old { color:#b25000; }
+  .t-meta { display:flex; flex-wrap:wrap; gap:4px; margin:2px 0 4px; font-size:10px; color:var(--dim); }
+  .t-meta span { background:#f0f0f3; border-radius:4px; padding:0 4px; } .t-meta .sc { background:#fff1e0; color:#b25000; }
+  .t-meta code { font-size:10px; display:none; } body.ids .t-meta code { display:inline; }
+  .t-body { color:#3a3a3c; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; margin-bottom:5px; }
+  .t-opts { margin:auto 0 0; padding-left:16px; color:#5a5a5e; }
+  .t-opts li { margin:1px 0; }
+  .t-opts li.pick { color:#fff; background:var(--blue); border-radius:5px; padding:0 5px; margin-left:-5px; }
+  .t-st { margin-top:5px; font-size:10.5px; color:var(--dim); }
+  .tile.st-ignored .t-st { color:#c0392b; } .tile.st-carried .t-st { color:#b25000; }
+</style></head><body class="ids${opts.board ? " showboard" : ""}">
 <header>
   <h1>${esc(title)}</h1>
   ${picker}
@@ -646,6 +773,8 @@ function renderHtml(runs, title) {
     <label><input type="checkbox" id="fIds" checked> node ids</label>
     <label><input type="checkbox" id="fJr" checked> journal lines</label>
     <label><input type="checkbox" id="fAmb" checked> ambient / filler</label>
+    <label><input type="checkbox" id="fBoard"${opts.board ? " checked" : ""}> weekly board</label>
+    <label><input type="checkbox" id="fWrap"> wrap the board</label>
   </div>
 </header>
 <main>${runs.map((r, i) => runHtml(r, i)).join("\n")}</main>
@@ -669,6 +798,8 @@ function renderHtml(runs, title) {
   fIds.onchange = () => document.body.classList.toggle("ids", fIds.checked);
   fJr.onchange = () => document.body.classList.toggle("nojr", !fJr.checked);
   fAmb.onchange = () => document.body.classList.toggle("noamb", !fAmb.checked);
+  fBoard.onchange = () => document.body.classList.toggle("showboard", fBoard.checked);
+  fWrap.onchange = () => document.body.classList.toggle("boardwrap", fWrap.checked);
 </script></body></html>`;
 }
 
@@ -838,6 +969,7 @@ function main(argv) {
     else if (a === "--html") o.html = argv[++i];
     else if (a === "--out") o.out = argv[++i];
     else if (a === "--compact") o.compact = true;
+    else if (a === "--board") o.board = true;
     else if (a === "--no-alts") o.noAlts = true;
     else if (a === "--no-ambient") o.hideAmbient = true;
     else if (a === "--src") o.src = true;
@@ -873,7 +1005,7 @@ function main(argv) {
     console.log(sampleTable(list));
     if (o.html) {
       const runs = list.map(b => ({ ...b.run, label: b.name }));
-      fs.writeFileSync(o.html, renderHtml(runs, `Typical stories — ${runs.length} player archetypes`));
+      fs.writeFileSync(o.html, renderHtml(runs, `Typical stories — ${runs.length} player archetypes`, o));
       console.log(`wrote ${o.html} (${runs.length} runs — use the buttons to switch founder)`);
     } else if (o.out) {
       fs.writeFileSync(o.out, list.map(b => renderText(b.run, o)).join("\n\n"));
@@ -884,7 +1016,7 @@ function main(argv) {
 
   const run = record(o.seed, o.driver, { weeks: o.weeks });
   if (o.html) {
-    fs.writeFileSync(o.html, renderHtml([run], `Run — seed ${run.seed} · ${run.driver}`));
+    fs.writeFileSync(o.html, renderHtml([run], `Run — seed ${run.seed} · ${run.driver}`, o));
     console.log(`wrote ${o.html}`);
     return;
   }
@@ -910,6 +1042,10 @@ transcript.js — replay a headless run as a readable story.
   --width N         wrap column (default 78)
   --color           force ANSI color (default: on when a TTY)
 
+  --board           show the weekly board: every card the player could answer
+                    that week, side by side, with its options and its fate
+                    (in --html it starts switched on; the page has a toggle).
+                    In text, a card list under each week header.
   --html FILE       write a readable chat-log page instead of text
   --out FILE        write the text transcript to a file
 
