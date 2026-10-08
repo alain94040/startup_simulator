@@ -212,7 +212,7 @@
     font-style: italic; color: var(--dim); margin: 6px 0 2px; }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
   @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
-  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, .stat.changed, #scRail .conv.unread .unread-dot, .story .st-dot, .story.fresh { animation: none !important; transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, #scRail .conv.unread .unread-dot, .story .st-dot, .story.fresh { animation: none !important; transition: none !important; } }
   .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
   /* Group chat: a thread where the bubbles aren't all from the same person, so
@@ -294,6 +294,15 @@
   .tx .amt.pos { color: var(--green); }
   .tx .amt.neg { color: var(--red); }
   .tx .n { color: var(--dim); font-size: 11px; margin-left: 6px; }
+  /* the statement's head: the balance you have right now, big */
+  .bal { width: min(560px, 92%); flex: none; text-align: center; padding: 18px 16px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+  .bal .b-lbl { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); }
+  .bal .b-amt { font-size: 40px; font-weight: 700; letter-spacing: -.02em; font-variant-numeric: tabular-nums; line-height: 1.15; margin: 4px 0 6px; }
+  .bal .b-amt.low { color: var(--red); }
+  .bal .b-sub { font-size: 12.5px; color: var(--dim); display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; }
+  .bal .b-sub b { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
+  .tx-head { width: min(560px, 92%); flex: none; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin: 6px 0 -4px; }
+  .stmt.pending { border-style: dashed; }
 
   /* ── to-do popover ──────────────────────────────────────────────────────── */
   #todoPop {
@@ -539,7 +548,7 @@
   .typing i:nth-child(3) { animation-delay: .4s; }
   @keyframes tblink { 40% { opacity: .25; } }
 
-  /* journal-leads glow + arriving entries + stat pulses */
+  /* journal-leads glow + arriving entries */
   #sideCol { transition: box-shadow .45s ease; }
   #sideCol.updating { box-shadow: inset 3px 0 0 rgba(255,179,64,.65), -8px 0 26px rgba(255,179,64,.28); }
   @keyframes jHighlight {
@@ -548,11 +557,6 @@
     100% { text-shadow: 0 0 0 rgba(255,176,46,0); }
   }
   .j-entry.arrive { animation: msgpop .5s ease both, jHighlight 2.1s ease .15s both; }
-  @keyframes statPulse { 0% { transform: scale(1); } 40% { transform: scale(1.13); box-shadow: 0 0 0 3px rgba(52,199,89,.3); } 100% { transform: scale(1); box-shadow: none; } }
-  .stat.changed { animation: statPulse .85s ease; }
-  .stats { display: flex; gap: 5px; font-size: 9.5px; letter-spacing: .04em; text-transform: uppercase; color: var(--dim); }
-  .stats .stat { display: flex; flex-direction: column; align-items: center; border: 1px solid var(--line); background: var(--panel); border-radius: 9px; padding: 3px 9px; min-width: 46px; line-height: 1.2; }
-  .stats .stat b { color: var(--ink); font-variant-numeric: tabular-nums; font-size: 13.5px; letter-spacing: 0; }
   .gauge.todo.call .g-lbl { color: var(--amber-ink); }
   .endpill { display: block; width: 100%; background: var(--blue); color: #fff; border: 0; border-radius: 10px; padding: 8px 0; font-weight: 600; margin-bottom: 8px; animation: msgpop .3s ease; }
   .cta-pill { display: block; margin: 4px auto 0; border: 0; background: var(--blue); color: #fff; border-radius: 999px; padding: 9px 28px; font-weight: 600; font-size: 13px; box-shadow: 0 4px 14px rgba(47,107,255,.30); cursor: pointer; transition: transform .1s, box-shadow .15s; }
@@ -730,11 +734,10 @@
   #debug input { width: 74px; background: #2c2c2e; border: 1px solid #444; color: #ddd; border-radius: 6px; padding: 3px 6px; font-size: 12px; }
 
   /* ── new containers: inert on the desktop, load-bearing on the phone ────── */
-  /* the HUD strip holds the three gauges + the traction stats. On the desktop
-     it is just the middle of the header (stats pushed right, as before); on the
-     phone it becomes its own scrollable row under the nav title. */
+  /* the HUD strip holds the three gauges. On the desktop it is just the
+     middle of the header; on the phone it becomes its own scrollable row
+     under the nav title. */
   #hud { display: flex; align-items: center; gap: 18px; flex: 1; min-width: 0; }
-  #stats { margin-left: auto; }
   #mTitle, #tabbar { display: none; }
   #journalSurface { flex-direction: column; align-items: center; overflow: hidden auto; padding: 16px 0 30px; gap: 12px; background: var(--panel); border-radius: 14px; box-shadow: var(--card-shadow); }
   .j-wrap { width: min(620px, 92%); display: flex; flex-direction: column; gap: 14px; }
@@ -783,7 +786,7 @@
       -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
     }
     #hud::-webkit-scrollbar { display: none; }
-    /* the strip scrolls — fade its right edge so a half-visible stat reads as
+    /* the strip scrolls — fade its right edge so a half-visible gauge reads as
        "there's more", not as a clipped layout */
     #hud { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); }
     #hud .gauge { min-width: 0; flex: none; background: var(--soft); border-radius: 10px; padding: 4px 9px 5px; gap: 0; }
@@ -792,9 +795,6 @@
     .gauge .g-lbl { font-size: 8.5px; }
     .gauge .g-val { font-size: 12px; }
     .gauge .g-bar { height: 3px; margin-top: 3px; }
-    #stats { margin-left: 0; flex: none; gap: 6px; }
-    .stats .stat { min-width: 0; padding: 3px 8px 4px; }
-    .stats .stat b { font-size: 13px; }
 
     /* ── the surface area ── */
     main { padding: 0; gap: 0; background: var(--bg); }
@@ -1005,7 +1005,6 @@
     <div class="gauge clickable" id="gRunway" title="open the bank"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
     <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
     <div class="gauge todo" id="gTodo"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
-    <div class="stats" id="stats"></div>
   </div>
   <div class="hdr-right">
     <div class="dots" id="dots"></div>
@@ -1335,7 +1334,6 @@ let scHeadSig = null;           // focus-arc: last-rendered header signature (sc
 let scStripFront = null;        // focus-arc, phone: who led the strip last render
 let scClockShown = null;        // launch: the time string currently on the clock face
 let scClockTimer = null;        // launch: the count-up ticker interval
-let pendingStatPulse = [];      // stat keys that changed this turn, to pulse once
 let uiBusy = false;             // input lock while a reveal sequence plays
 let revealTimer = null;         // in-thread typing-reveal pacing
 let jShown = 0;                 // journal-mirror entries already inked in
@@ -1457,15 +1455,6 @@ function renderHeader() {
   $("gTdB").style.width = (c.done / c.total) * 100 + "%";
   // pulse the ☑ label while a needs-your-call item is open
   $("gTodo").classList.toggle("call", game.openActions().some(a => !a.onHold && a.kind === "story"));
-  // compact traction stats, pulsing when they change
-  const sVals = { signal: st.signal, fit: st.marketFit, users: game.s.users, paying: game.s.customers };
-  $("stats").innerHTML = Object.entries({ signal: "signal", fit: "fit", users: "users", paying: "paying" })
-    .map(([k, lbl]) => '<div class="stat" data-stat="' + k + '"><b>' + sVals[k] + "</b>" + lbl + "</div>").join("");
-  for (const k of pendingStatPulse) {
-    const el = document.querySelector('.stat[data-stat="' + k + '"]');
-    if (el) { el.classList.add("changed"); }
-  }
-  pendingStatPulse = [];
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
   $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
@@ -1930,13 +1919,23 @@ function renderFeed() {
 
 // ── Bank ──────────────────────────────────────────────────────────────────────
 function renderBank() {
-  const rows = game.ledger.slice().reverse();
-  $("bankSurface").innerHTML = rows.map(w =>
-    '<div class="stmt"><h4>week ' + w.week + " <b>" + money(w.balanceAfter) + "</b></h4>" +
-    w.transactions.map(tx =>
-      '<div class="tx"><span>' + esc(tx.label) + (tx.note ? '<span class="n">' + esc(tx.note) + "</span>" : "") + "</span>" +
-      '<span class="amt ' + (tx.delta > 0 ? "pos" : "neg") + '">' + (tx.delta > 0 ? "+" : "") + money(tx.delta).replace("$-", "-$") + "</span></div>").join("") +
-    "</div>").join("") || '<div class="f-wk" style="margin-top:30px">the first statement arrives when the first week ends.</div>';
+  const st = game.stats();
+  const fmtTx = tx =>
+    '<div class="tx"><span>' + esc(tx.label) + (tx.note ? '<span class="n">' + esc(tx.note) + "</span>" : "") + "</span>" +
+    '<span class="amt ' + (tx.delta > 0 ? "pos" : "neg") + '">' + (tx.delta > 0 ? "+" : "") + money(tx.delta).replace("$-", "-$") + "</span></div>";
+  // head: the balance as of right now, then what it buys
+  const head = '<div class="bal"><div class="b-lbl">Current balance</div>' +
+    '<div class="b-amt' + (st.runway <= 4 ? " low" : "") + '">' + money(st.cash) + "</div>" +
+    '<div class="b-sub"><span>burn <b>' + money(game.burnPerWeek) + "</b>/wk</span><span>runway <b>" + st.runway + " wks</b></span></div></div>";
+  // this week's activity hasn't closed into a statement yet
+  const pending = game._weekTx.length
+    ? '<div class="stmt pending"><h4>week ' + st.week + " · pending <b>" + money(st.cash) + "</b></h4>" + game._weekTx.slice().reverse().map(fmtTx).join("") + "</div>"
+    : "";
+  const past = game.ledger.slice().reverse().map(w =>
+    '<div class="stmt"><h4>week ' + w.week + " · closing balance <b>" + money(w.balanceAfter) + "</b></h4>" +
+    w.transactions.map(fmtTx).join("") + "</div>").join("");
+  $("bankSurface").innerHTML = head + '<div class="tx-head">Transactions</div>' +
+    (pending + past || '<div class="f-wk" style="margin-top:12px">no transactions yet — the first statement arrives when the first week ends.</div>');
 }
 
 // ── to-do popover ─────────────────────────────────────────────────────────────
@@ -2467,7 +2466,7 @@ function scheduleTurn(delay) {
 // ── the week turn: the reveal, in the old order ──────────────────────────────
 // runway counts down → the journal beat LEADS (column glows, entries ink in) →
 // a beat later the phone buzzes, one notification every 750ms → the active
-// thread refreshes only after its own notification → changed stats pulse.
+// thread refreshes only after its own notification.
 function advanceWeek() {
   clearTimeout(noteTimer); noteTimer = null; noteQueue = [];
   const beforeTodo = todoSnapshot();
@@ -2475,15 +2474,8 @@ function advanceWeek() {
   for (const id of game.order) beforeLens[id] = game.threads[id].length;
   const jBefore = journalMirror().length;
   const cashBefore = game.stats().cash;
-  const sig = game.stats().signal, fit = game.stats().marketFit, us = game.s.users, pay = game.s.customers;
 
   game.nextWeek();
-
-  pendingStatPulse = [];
-  if (game.stats().signal !== sig) pendingStatPulse.push("signal");
-  if (game.stats().marketFit !== fit) pendingStatPulse.push("fit");
-  if (game.s.users !== us) pendingStatPulse.push("users");
-  if (game.s.customers !== pay) pendingStatPulse.push("paying");
 
   // gather this week's notifications (todo check-offs first, then arrivals)
   weekNotes = [];
