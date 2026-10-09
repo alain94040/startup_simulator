@@ -454,8 +454,8 @@
                 },
               },
               {
-                key: "cave_forty", label: "Cave — you're right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33", branch: true,
-                reply: "you're right. i went with the easy number instead of the real one. 40/40/20 — that's what full-time risk should actually get.",
+                key: "cave_forty", label: "Cave — Alex is right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33", branch: true,
+                reply: "i've been thinking about what alex said. i went with the easy number instead of the real one — he quit a job to do this full-time, and that's a different kind of risk. changing it: 40/40/20.",
                 journal: "The cap table's set: 40/40/20. I walked back my own first call once I heard Alex out again. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "40/40/20", equity_decided: true, jordan_equity: true }, scene: null,
@@ -478,8 +478,8 @@
                 },
               },
               {
-                key: "cave_thirds_from_forty", label: "Cave — let's do thirds", if: (s) => s.equity_proposal === "40/40/20", branch: true,
-                reply: "you turned down a real offer to be here. you just didn't make it a whole thing when you did. and you're right — seven points isn't going to change how alex or i sleep at night. thirds. equal.",
+                key: "cave_thirds_from_forty", label: "Cave — Jordan is right, thirds", if: (s) => s.equity_proposal === "40/40/20", branch: true,
+                reply: "i've been thinking about what jordan said. she turned down a real offer to be here, and she didn't make it a whole thing when she did. seven points isn't going to change how alex or i sleep at night — for her it's the difference between partner and allowance. changing it: equal thirds.",
                 journal: "The cap table's set: equal thirds. I walked back 40/40/20 once I actually weighed what Jordan gave up to be here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
