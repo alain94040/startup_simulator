@@ -2988,8 +2988,21 @@ function dbgReset() {
   $("endOv").classList.remove("on"); $("noteCenter").classList.remove("show");
   [...$("notifs").children].forEach(e => e.remove());
 }
+// The debug buttons drive the game through tests/harness.js (jumpTo, playGame).
+// It's loaded by a <script> tag above, but a deploy that leaves out the tests/
+// folder leaves `Harness` undefined and every button threw a bare
+// ReferenceError. Retry the load on first use, and if it still isn't there,
+// say which file is missing instead.
+function withHarness(fn) {
+  if (window.Harness) return fn();
+  const tag = document.createElement("script");
+  tag.src = "tests/harness.js";
+  tag.onload = () => window.Harness ? fn() : alert("tests/harness.js loaded but didn't define Harness.");
+  tag.onerror = () => alert("The debug tools need tests/harness.js, which this server didn't serve. Deploy the tests/ folder alongside game.html.");
+  document.head.appendChild(tag);
+}
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
-  btn.onclick = () => {
+  btn.onclick = () => withHarness(() => {
     seed = dbgSeed();
     game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
     resetUiState(); dbgReset();
@@ -2998,12 +3011,12 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     for (const id of game.order) threadRendered[id] = Math.max(0, game.threads[id].length - 2);
     threadRendered[selected] = game.threads[selected].length;
     render();
-  };
+  });
 }
 $("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
 // Auto-play decent runs from the seed box until one reaches the deadline
 // having been accepted into YC (grade decided it), then jump to its reveal.
-$("dbgYC").onclick = () => {
+$("dbgYC").onclick = () => withHarness(() => {
   const base = dbgSeed();
   let g = Harness.playGame(base, "decent"), used = base;
   for (let i = 1; i < 200 && !g.s.ycAccepted; i++) {
@@ -3013,7 +3026,7 @@ $("dbgYC").onclick = () => {
   seed = used; $("dbgSeed").value = used;
   game = g;
   resetUiState(); dbgReset(); render(); checkEndgame();
-};
+});
 $("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); resetUiState(); dbgReset(); render(); };
 
 syncSurfaceTabs();
