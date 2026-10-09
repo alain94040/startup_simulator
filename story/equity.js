@@ -161,7 +161,7 @@
                 reply: "ok — this isn't a group conversation. i'm going to talk to each of you on your own. tell me what you actually think, not what's polite.",
                 journal: null,
                 fx(s, e) {
-                  e.say(e.took("equity_open:open_up")
+                  e.say(e.took("equity_dance:open_up")
                     ? { char: "founders", speaker: "alex", text: "yeah. thanks." }
                     : { char: "founders", speaker: "jordan", text: "ok. that's probably fairer anyway." });
                   return null;
@@ -298,7 +298,7 @@
               },
               {
                 key: "forty", label: "40/40/20 — Alex's case",
-                reply: "alex — you're right that day-one risk isn't equal between the two of you. i'm going 40/40/20.",
+                reply: "i've heard both of you. full-time risk isn't the same as part-time risk, and the split should say so. i'm going 40/40/20.",
                 journal: null,
                 effects: { flags: { equity_proposal: "40/40/20" }, say: { char: "founders", speaker: "jordan", text: "wow. ok. forty-forty-twenty." } },
               },
@@ -443,7 +443,7 @@
             choices: [
               {
                 key: "hold_thirds", label: "Hold — thirds, final", if: (s) => s.equity_proposal === "33/33/33", branch: true,
-                reply: "equal thirds. final. i'd rather lose points than partners — that's not a cop-out, it's the actual reason.",
+                reply: "equal thirds. final. i've heard every case for something else, and i'd still rather lose points than partners.",
                 journal: "The cap table's set: equal thirds. Jordan got what she wanted from the start. Alex signed anyway. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
