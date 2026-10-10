@@ -238,6 +238,8 @@
   .h-card.link:hover { border-color: var(--blue); }
   .tier.later .h-card { border-left-color: #d7d7de; background: var(--panel); }
   .h-card.move { border-left-color: var(--journal); background: #fbf7f2; }
+  .h-card.flash { animation: cardFlash 1.4s ease; }
+  @keyframes cardFlash { 0%, 40% { box-shadow: 0 0 0 3px rgba(10,132,255,.45); } 100% { box-shadow: 0 0 0 3px rgba(10,132,255,0); } }
   .h-card b { font-size: 12px; display: flex; justify-content: space-between; gap: 6px; align-items: baseline; }
   .h-card b .go { color: var(--blue); font-weight: 500; font-size: 10.5px; white-space: nowrap; }
   .h-card b .left { color: #a02020; font-style: normal; font-size: 10px; font-weight: 600; white-space: nowrap; }
@@ -1806,7 +1808,7 @@ function renderSide() {
   };
   const moveCard = (a) => {
     const gk = gatedKeys(a.nodeId);
-    return '<div class="h-card move"><b>Your move</b>' +
+    return '<div class="h-card move" data-node="' + esc(a.nodeId) + '"><b>Your move</b>' +
       "<span>" + esc(a.body) + "</span>" +
       '<div class="mv-opts">' + a.options.map(o =>
         '<button data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ' class="' + (gk.has(o.key) ? "gated" : "") + '">' + (gk.has(o.key) ? "⚑ " : "") + esc(o.label) + "</button>").join("") + "</div></div>";
@@ -1981,6 +1983,16 @@ function renderTodo() {
 }
 // The ☑ gauge opens the checklist: a popover under the header on the desktop,
 // the Journal tab (which carries the same checklist) on a phone.
+// Take the player to one of their own decisions: the Moves tab on the phone,
+// the triage column on the desktop — and flash that card so it's found.
+function openMove(nodeId) {
+  if (isMobile && surface !== "moves") setSurface("moves");
+  const host = isMobile ? $("railTriage") : $("sideCol");
+  const card = host && [...host.querySelectorAll(".h-card.move")].find(c => c.dataset.node === nodeId);
+  if (!card) return;
+  card.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  card.classList.remove("flash"); void card.offsetWidth; card.classList.add("flash");
+}
 function openTodo() {
   if (isMobile) { setSurface("journal"); return; }
   renderTodo(); $("todoPop").classList.add("on");
@@ -2512,6 +2524,18 @@ function advanceWeek() {
   for (const id of game.order) {
     const fresh = game.threads[id].slice(beforeLens[id]).filter(m => m.type === "incoming");
     if (!fresh.length) continue;
+    // Your own threads (founder, Growth, Analytics, Users) have no chat: a
+    // decision there is a "Your move" card in the triage (the Moves tab on the
+    // phone), and a line with no card behind it is journal recap. Opening one
+    // as a chat showed the move as a bubble "from you".
+    if (SELF.has(id)) {
+      const move = fresh.filter(m => m.nodeId).pop();
+      weekNotes.push(move
+        ? { ico: "★", color: "#a0703c", title: "Your move", who: "Your move", move: true, text: String(move.body || ""), go: () => openMove(move.nodeId) }
+        : { ico: "✎", color: "#a0703c", title: "Journal", who: "Journal", text: String(fresh[fresh.length - 1].body || ""),
+            go: () => { if (isMobile) setSurface("journal"); } });
+      continue;
+    }
     const feed = FEED.has(id), def = game.cast.get(id).def, stl = styleFor(id);
     const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
     const dropped = fresh.some(m => m.dropped);
@@ -2635,7 +2659,7 @@ const bannerRank = n => n.feed ? 0 : n.charId ? 1 : 2;
 const BANNER_ROWS = 8;
 function showBanner(list) {
   const onScreen = inScene ? scSelected : surface === "msgs" ? selected : null;
-  list = list.filter(n => !(n.feed && surface === "feed") && !(n.charId && !n.feed && n.charId === onScreen));
+  list = list.filter(n => !(n.feed && surface === "feed") && !(n.move && surface === "moves") && !(n.charId && !n.feed && n.charId === onScreen));
   if (!list.length) return;
   list = list.map((n, i) => [n, i]).sort((a, b) => bannerRank(a[0]) - bannerRank(b[0]) || a[1] - b[1]).map(x => x[0]);
   dismissBanner(true);
