@@ -504,7 +504,9 @@
   @keyframes tipPop { from { transform: scale(.7); opacity: 0; } }
   #tipBubble b { display: block; font-size: 16px; font-weight: 800; margin-bottom: 5px; }
   #tipBubble p { font-size: 13.5px; line-height: 1.45; color: #3a3a42; }
-  #tipBubble .tip-ok { display: block; margin: 11px 0 0 auto; border: 2px solid #1a1a1f; background: #ffd60a; color: #1a1a1f; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 6px 16px; cursor: pointer; box-shadow: 2px 2px 0 #1a1a1f; }
+  #tipBubble .tip-btns { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 11px; }
+  #tipBubble .tip-go { border: 2px solid #1a1a1f; background: #fff; color: #1a1a1f; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  #tipBubble .tip-ok { display: block; border: 2px solid #1a1a1f; background: #ffd60a; color: #1a1a1f; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 6px 16px; cursor: pointer; box-shadow: 2px 2px 0 #1a1a1f; }
   #tipBubble .tip-ok:active { transform: translate(2px, 2px); box-shadow: none; }
   /* the tail: a bordered triangle, flipped to whichever side faces the target */
   .tip-tail { position: absolute; width: 18px; height: 18px; background: #fff; border: 2.5px solid #1a1a1f; transform: translate(-50%, -50%) rotate(45deg); }
@@ -2974,10 +2976,15 @@ const TIPS = [
     target: () => onScreen($("scRail")) || onScreen($("scThread")),
     title: "This one happens all at once.",
     body: () => "Some conversations are a sitting. While you're in the room, the rest of the world holds and only these people can reach you. Walking in cost one move; every answer in here is free." },
+  { id: "bank", when: () => !!firstChoiceTx(),
+    target: () => isMobile ? onScreen(tabBtn("bank")) : onScreen($("gRunway")),
+    title: () => { const t = firstChoiceTx(); return t.delta < 0 ? "That cost you " + money(-t.delta) + "." : "Money in: " + money(t.delta) + "."; },
+    body: () => "Every dollar in or out is on your bank statement, along with the " + money(game.burnPerWeek) + " a week it takes to keep the lights on. " + (isMobile ? "The Bank tab" : "Runway, up here,") + " shows how many weeks of cash you have left.",
+    go: { label: "Open the Bank", run: () => setSurface("bank") } },
   { id: "week", when: () => game.s.week >= 2,
     target: () => onScreen($("gRunway")),
     title: "A week went by.",
-    body: () => "Your two moves are back, and " + money(game.burnPerWeek) + " is gone: that's your weekly burn. Runway is how many weeks of cash you have left. " + (isMobile ? "Tap" : "Click") + " it to open the Bank." },
+    body: () => "Your two moves are back, and " + money(game.burnPerWeek) + " is gone: that's your weekly burn. Runway is how many weeks of cash you have left at that rate." },
   { id: "journal", when: () => jShown > 0,
     target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
     title: "Your journal.",
@@ -3007,6 +3014,11 @@ const TIPS = [
     title: "Nothing urgent left.",
     body: () => "Everything still open can wait. Spend your moves on it anyway, or end the week here." },
 ];
+// The first money a choice moved (not the weekly burn): the moment to meet the Bank.
+function firstChoiceTx() {
+  const all = game.ledger.flatMap(w => w.transactions).concat(game._weekTx);
+  return all.find(t => t.type === "expense" || t.type === "income") || null;
+}
 function tipBlocked() {
   if (uiBusy || gameEnded() || tipOpen) return true;
   for (const id of ["introOv", "endOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
@@ -3045,8 +3057,13 @@ function showTip(tip) {
   try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
   tipOpen = tip;
   const bub = $("tipBubble");
-  bub.innerHTML = '<b>' + esc(tip.title) + "</b><p>" + esc(tip.body()) + '</p><button class="tip-ok">Got it</button><i class="tip-tail"></i>';
+  const title = typeof tip.title === "function" ? tip.title() : tip.title;
+  bub.innerHTML = '<b>' + esc(title) + "</b><p>" + esc(tip.body()) + '</p><div class="tip-btns">' +
+    (tip.go ? '<button class="tip-go">' + esc(tip.go.label) + "</button>" : "") +
+    '<button class="tip-ok">Got it</button></div><i class="tip-tail"></i>';
   bub.querySelector(".tip-ok").onclick = closeTip;
+  const go = bub.querySelector(".tip-go");
+  if (go) go.onclick = () => { closeTip(); tip.go.run(); };
   $("tipLayer").classList.add("on");
   placeTip();
   // keep aiming while it's up: a room slides in, a strip reorders, a column
