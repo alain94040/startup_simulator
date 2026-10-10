@@ -212,7 +212,7 @@
     font-style: italic; color: var(--dim); margin: 6px 0 2px; }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
   @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
-  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .j-entry.arrive, #scRail .conv.unread .unread-dot, .story .st-dot, .story.fresh { animation: none !important; transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .lc-line, .lc-skip, .j-entry.arrive, #scRail .conv.unread .unread-dot, .story .st-dot, .story.fresh { animation: none !important; transition: none !important; } }
   .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
   /* Group chat: a thread where the bubbles aren't all from the same person, so
@@ -538,7 +538,10 @@
   .lc-line.vis { color: rgba(255,255,255,.88); }
   .lc-line.lc-title { font-weight: 700; letter-spacing: .06em; }
   .lc-line.lc-title.vis { color: var(--lc-accent, rgba(255,255,255,.95)); }
-  .lc-skip { position: absolute; bottom: 36px; right: 40px; color: rgba(255,255,255,.28); font-size: 11px; cursor: pointer; letter-spacing: .08em; }
+  #cine.show { cursor: pointer; }
+  .lc-skip { position: absolute; bottom: 36px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; transition: color .8s ease; pointer-events: none; }
+  .lc-skip.ready { color: rgba(255,255,255,.55); animation: lcPulse 2.4s ease-in-out .8s infinite; }
+  @keyframes lcPulse { 50% { color: rgba(255,255,255,.25); } }
   @keyframes fade { from { opacity: 0; } }
 
   /* typing indicator — a light incoming bubble, matching the chat */
@@ -962,7 +965,7 @@
     /* ── cinematics + lightbox ── */
     .lc-line { font-size: clamp(19px, 5.6vw, 26px); line-height: 1.9; }
     .lc-inner { padding: 0 24px; }
-    .lc-skip { bottom: calc(24px + env(safe-area-inset-bottom)); right: 0; left: 0; text-align: center; }
+    .lc-skip { bottom: calc(24px + env(safe-area-inset-bottom)); }
     .lb-stage { font-size: clamp(13px, 5.4vw, 18px); }
     .lb-close { top: calc(14px + env(safe-area-inset-top)); right: 14px; }
   }
@@ -1079,7 +1082,7 @@
 <div class="overlay" id="scSelfOv"><div class="modal" id="scSelfModal"></div></div>
 <div id="notifs"></div>
 <div id="noteCenter"></div>
-<div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">tap to skip</span></div>
+<div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">click to continue</span></div>
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
@@ -2022,23 +2025,37 @@ function doAct(nodeId, key, charId) {
   scheduleTurn(620);
 }
 
-// ── focus-arc cinematic: staged lines, per-arc accent, click-to-skip ──────────
+// ── focus-arc cinematic: staged lines, per-arc accent, click to continue ─────
+// The lines fade in on their own, then the stage waits for the player: nothing
+// dismisses it but a click / tap (or Enter / Space). A click while the lines are
+// still arriving reveals the rest at once rather than cutting them off.
 function showCine(lines, accent, done) {
-  const el = $("cine"), box = $("lcInner"), skip = $("lcSkip");
+  const el = $("cine"), box = $("lcInner"), cue = $("lcSkip");
   el.style.setProperty("--lc-accent", accent || "rgba(255,255,255,.95)");
   box.innerHTML = lines.map((t, i) => '<p class="lc-line' + (i === 0 ? " lc-title" : "") + '">' + esc(t) + "</p>").join("");
+  cue.textContent = (isMobile ? "tap" : "click") + " to continue";
+  cue.classList.remove("ready");
   el.classList.add("show");
   const nodes = box.querySelectorAll(".lc-line");
-  nodes.forEach((n, i) => setTimeout(() => n.classList.add("vis"), 500 + i * 1250));
-  let done2 = false, timer = null;
+  const timers = [];
+  let ready = false, finished = false;
+  const showAll = () => {
+    if (ready) return; ready = true;
+    timers.forEach(clearTimeout);
+    nodes.forEach(n => n.classList.add("vis"));
+    cue.classList.add("ready");
+  };
+  nodes.forEach((n, i) => timers.push(setTimeout(() => n.classList.add("vis"), 500 + i * 1250)));
+  timers.push(setTimeout(showAll, 500 + (nodes.length - 1) * 1250 + 1100));
   const finish = () => {
-    if (done2) return; done2 = true;
-    if (timer) clearTimeout(timer); el.classList.remove("show"); skip.onclick = null; el.onclick = null;
+    if (finished) return; finished = true;
+    el.classList.remove("show"); el.onclick = null; document.removeEventListener("keydown", onKey);
     setTimeout(done, 700);
   };
-  const total = 500 + (nodes.length - 1) * 1250 + 1500;
-  timer = setTimeout(finish, total);
-  skip.onclick = finish; el.onclick = finish;
+  const advance = () => { if (ready) finish(); else showAll(); };
+  const onKey = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); advance(); } };
+  el.onclick = advance;
+  document.addEventListener("keydown", onKey);
 }
 
 // ── focus arcs: the same iMessage chat, restricted to the people in the room ──
