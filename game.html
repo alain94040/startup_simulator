@@ -951,7 +951,23 @@
     .grade-row { font-size: 12.5px; }
 
     /* ── notifications: full-width banners, capped so they can't bury the app ── */
-    #notifs { top: calc(env(safe-area-inset-top) + 8px); left: 10px; right: 10px; width: auto; gap: 8px; }
+    /* One grouped banner at a time (see showBanner): it drops in from the top
+       like iOS, follows your finger, and a flick up puts it away. Extra
+       arrivals ride along as card edges peeking under it, not as more banners. */
+    #notifs { top: calc(env(safe-area-inset-top) + 8px); left: 10px; right: 10px; width: auto; gap: 0; }
+    .notif.banner { position: relative; animation: bannerIn .22s cubic-bezier(.2,.9,.3,1) both; touch-action: none; user-select: none; -webkit-user-select: none; transition: none; }
+    .notif.banner:hover { transform: none; }
+    .notif.banner.drag { animation: none; }
+    .notif.banner.snap { transition: transform .18s ease, opacity .18s ease; }
+    .notif.banner.hide { animation: none; transition: transform .16s ease-in, opacity .16s ease-in; transform: translateY(-120%); opacity: 0; }
+    .notif.banner.stack1 { margin-bottom: 7px; }
+    .notif.banner.stack2 { margin-bottom: 13px; }
+    .notif.banner::before, .notif.banner::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -7px; height: 12px; z-index: -1; border-radius: 0 0 14px 14px; background: rgba(246,246,248,.92); box-shadow: 0 6px 14px rgba(0,0,0,.14); display: none; }
+    .notif.banner::after { left: 20px; right: 20px; bottom: -13px; background: rgba(238,238,241,.88); }
+    .notif.banner.stack1::before, .notif.banner.stack2::before, .notif.banner.stack2::after { display: block; }
+    .notif.banner .n-more { margin-top: 3px; font-size: 11.5px; color: #6e6e76; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .notif.banner .n-more b { color: var(--blue); font-weight: 600; }
+    @keyframes bannerIn { from { opacity: 0; transform: translateY(-110%); } to { opacity: 1; transform: none; } }
     #noteCenter { top: calc(env(safe-area-inset-top) + 8px); left: 10px; right: 10px; width: auto; max-height: 56dvh; }
 
     /* ── cinematics + lightbox ── */
@@ -2162,18 +2178,21 @@ function focusFlow(preLens) {
 // renderFocusThread), so this is phone-only.
 function pingOtherSceneThreads(preLens) {
   if (!isMobile || !inScene || !game.scene) return;
+  const pings = [];
   for (const id of sceneFullCast()) {
     if (id === scSelected) continue;
     const before = preLens[id] || 0;
     const fresh = (game.threads[id] || []).slice(before).filter(m => m.type === "incoming" && m.scene === lastSceneId);
     if (!fresh.length) continue;
     const def = game.cast.get(id).def, stl = styleFor(id);
-    queueNotifications([{
+    pings.push({
       ico: stl.initials, color: stl.color, charId: id, title: def.name,
       text: String(fresh[fresh.length - 1].body || ""),
       go: () => { if (!uiBusy && inScene) openSceneThread(id); },
-    }]);
+    });
   }
+  // one call, so two people answering at once share one banner
+  if (pings.length) queueNotifications(pings);
 }
 
 // Reveal a thread's unread bubbles with typing dots, then hand off to render.
@@ -2492,7 +2511,7 @@ function advanceWeek() {
     const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
     const dropped = fresh.some(m => m.dropped);
     weekNotes.push({
-      ico: stl.initials, color: feed ? "#3a3a40" : stl.color, charId: id, feed,
+      ico: stl.initials, color: feed ? "#3a3a40" : stl.color, charId: id, feed, who: name,
       title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
       text: String(fresh[fresh.length - 1].body || ""),
       go: feed ? () => setSurface("feed") : () => gotoChat(id, true),
@@ -2515,7 +2534,8 @@ function advanceWeek() {
     // the active thread refreshes only after its own notification shows
     if (surface === "msgs" && threadRendered[selected] < game.threads[selected].length) {
       const idx = weekNotes.findIndex(n => n.charId === selected);
-      const delay = idx >= 0 ? idx * 750 + 650 : 380;
+      // (the phone shows the week as one banner, so there's nothing to wait for)
+      const delay = idx >= 0 && !isMobile ? idx * 750 + 650 : 380;
       setTimeout(() => { if (surface === "msgs") openThread(); }, delay);
     }
     // the run may have ended this week
@@ -2552,7 +2572,10 @@ function animateRunway(fromCash, toCash, done) {
 // ink the journal-mirror entries in one at a time (340ms; stamps 480ms), glowing
 function revealJournal(from, done) {
   const total = journalMirror().length;
-  if (from >= total) { jShown = total; renderSide(); done(); return; }
+  // On the phone the journal is its own tab: inking it in while you're on
+  // another one only holds the week's notifications back by a third of a
+  // second per entry, for an animation nobody sees.
+  if (from >= total || (isMobile && surface !== "journal")) { jShown = total; renderSide(); done(); return; }
   let i = from;
   const step = () => {
     if (i >= total) { jShown = total; jArrive = false; renderSide(); renderHeader(); done(); return; }
@@ -2565,25 +2588,105 @@ function revealJournal(from, done) {
 }
 
 // ── iPhone notifications, anchored under the bell ─────────────────────────────
-function queueNotifications(list) { noteQueue = noteQueue.concat(list); if (!noteTimer) pumpNotifications(); }
+// The desktop buzzes them one at a time into a corner it has room for. The
+// phone doesn't: a week can bring 5–8 arrivals, and trickled in at 750ms each,
+// lingering in a stack of three, they covered the header and the strip for
+// most of the week's opening seconds. There the week lands as one banner.
+function queueNotifications(list) {
+  if (isMobile) { showBanner(list); return; }
+  noteQueue = noteQueue.concat(list); if (!noteTimer) pumpNotifications();
+}
 function pumpNotifications() {
   if (!noteQueue.length) { noteTimer = null; return; }
   showNotif(noteQueue.shift());
   noteTimer = setTimeout(pumpNotifications, 750);
 }
+function notifInner(n, extra) {
+  return '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+    '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span><span class="n-time">now</span></div>' +
+    '<div class="n-text">' + esc(n.text) + "</div>" + (extra || "") + "</div>";
+}
 function showNotif(n) {
   const el = document.createElement("div");
   el.className = "notif";
-  el.innerHTML = '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
-    '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span><span class="n-time">now</span></div>' +
-    '<div class="n-text">' + esc(n.text) + "</div></div>";
+  el.innerHTML = notifInner(n);
   let gone = false;
   const dismiss = () => { if (gone) return; gone = true; el.classList.add("hide"); setTimeout(() => el.remove(), 300); };
   el.onclick = () => { dismiss(); if (!uiBusy && n.go) n.go(); };
-  const host = $("notifs");
-  if (isMobile) while (host.children.length >= 3) host.firstChild.remove();
-  host.appendChild(el);
-  setTimeout(dismiss, isMobile ? 4200 : 6500);
+  $("notifs").appendChild(el);
+  setTimeout(dismiss, 6500);
+}
+
+// The phone's banner: one at a time, the rest of the week folded under it as
+// "+N more" (iOS's grouped stack — card edges peek below). The one on top is
+// the one you'd otherwise miss: News first, because the feed is a tab you
+// aren't looking at while you're chatting, and the chat strip already dots
+// every thread that texted. What's already on screen isn't announced at all.
+// Tap opens it, tap "+N more" opens the bell's list, flick it up to put it away.
+let bannerEl = null, bannerTimer = null;
+const bannerRank = n => n.feed ? 0 : n.charId ? 1 : 2;
+function showBanner(list) {
+  const onScreen = inScene ? scSelected : surface === "msgs" ? selected : null;
+  list = list.filter(n => !(n.feed && surface === "feed") && !(n.charId && !n.feed && n.charId === onScreen));
+  if (!list.length) return;
+  const top = list.reduce((a, n) => bannerRank(n) < bannerRank(a) ? n : a);
+  const rest = list.filter(n => n !== top);
+  dismissBanner(true);
+  const el = bannerEl = document.createElement("div");
+  el.className = "notif banner" + (rest.length > 1 ? " stack2" : rest.length ? " stack1" : "");
+  el.innerHTML = notifInner(top, rest.length ? '<div class="n-more"><b>+' + rest.length + " more</b> · " +
+    esc(rest.map(n => n.who || n.title).join(", ")) + "</div>" : "");
+  // follow the finger: up dismisses, a small pull down rubber-bands back
+  let y0 = null, dy = 0, moved = false, onMore = false;
+  const back = () => { el.classList.remove("drag"); el.classList.add("snap"); el.style.transform = ""; armBanner(el, rest.length); };
+  el.addEventListener("pointerdown", (e) => {
+    // read the target now: once the pointer is captured, pointerup's target
+    // is the banner itself
+    onMore = !!(e.target.closest && e.target.closest(".n-more"));
+    y0 = e.clientY; dy = 0; moved = false; clearTimeout(bannerTimer);
+    el.classList.add("drag"); el.classList.remove("snap");
+    try { el.setPointerCapture(e.pointerId); } catch (_) { /* synthetic events */ }
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (y0 == null) return;
+    dy = e.clientY - y0; if (Math.abs(dy) > 6) moved = true;
+    el.style.transform = "translateY(" + (dy < 0 ? dy : dy * 0.25) + "px)";
+  });
+  el.addEventListener("pointerup", (e) => {
+    if (y0 == null) return;
+    y0 = null;
+    if (dy < -24) { dismissBanner(); return; }
+    if (moved) { back(); return; }
+    dismissBanner();
+    // the banner lands while the open thread is still typing its new bubbles
+    // in (uiBusy); a tap then is a real answer, so it waits its turn rather
+    // than being swallowed
+    whenIdle(onMore ? toggleNoteCenter : top.go);
+  });
+  el.addEventListener("pointercancel", () => { if (y0 != null) { y0 = null; back(); } });
+  // the click that follows the tap must not reach the document's
+  // close-the-notification-center handler
+  el.addEventListener("click", (e) => e.stopPropagation());
+  $("notifs").appendChild(el);
+  armBanner(el, rest.length);
+}
+function whenIdle(fn, tries = 30) {
+  if (!fn) return;
+  if (!uiBusy) fn(); else if (tries > 0) setTimeout(() => whenIdle(fn, tries - 1), 100);
+}
+function armBanner(el, more) {
+  clearTimeout(bannerTimer);
+  bannerTimer = setTimeout(() => { if (bannerEl === el) dismissBanner(); }, more ? 3800 : 3000);
+}
+function dismissBanner(instant) {
+  clearTimeout(bannerTimer);
+  const el = bannerEl;
+  if (!el) return;
+  bannerEl = null;
+  if (instant) { el.remove(); return; }
+  el.classList.remove("drag", "snap"); el.style.transform = "";
+  el.classList.add("hide");
+  setTimeout(() => el.remove(), 200);
 }
 // the bell reopens this week's notifications (the notification center)
 function updateBell() {
@@ -2987,6 +3090,7 @@ function dbgReset() {
   $("scene").classList.remove("on"); $("cine").classList.remove("show");
   document.body.classList.remove("sc-solo");
   $("endOv").classList.remove("on"); $("noteCenter").classList.remove("show");
+  dismissBanner(true);
   [...$("notifs").children].forEach(e => e.remove());
 }
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
