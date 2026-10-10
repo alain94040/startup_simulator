@@ -493,7 +493,9 @@
   .intro-next:active { transform: scale(.97); }
   /* first-time tips: a comic speech bubble pointing at the feature it explains,
      over a spotlight that dims everything but the target */
-  #tipLayer { position: fixed; inset: 0; z-index: 64; display: none; }
+  #tipLayer { position: fixed; inset: 0; z-index: 70; display: none; }
+  /* the week's banners would cover a header target on a phone; they're still in the bell */
+  body.tip-on #notifs { visibility: hidden; }
   #tipLayer.on { display: block; }
   #tipRing { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(12,12,18,.42); outline: 3px solid #ffd60a; outline-offset: 0; transition: all .25s ease; pointer-events: none; }
   #tipBubble {
@@ -1708,7 +1710,7 @@ function renderThread(opts) {
     rbox.innerHTML =
       '<button class="cta-pill"' + (can ? "" : " disabled") + ">" + (can ? "Respond ↓" : "No actions left this week") + "</button>";
     const btn = rbox.querySelector(".cta-pill");
-    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); };
+    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); queueTipCheck(); };
     return;
   }
   rbox.innerHTML = '<div class="hint"><button class="tc-close">×</button>pick a reply · ⚑ = unlocked by what you\'ve learned</div>' +
@@ -3065,6 +3067,7 @@ function showTip(tip) {
   const go = bub.querySelector(".tip-go");
   if (go) go.onclick = () => { closeTip(); tip.go.run(); };
   $("tipLayer").classList.add("on");
+  document.body.classList.add("tip-on");
   placeTip();
   // keep aiming while it's up: a room slides in, a strip reorders, a column
   // scrolls — the spotlight has to follow its target
@@ -3075,6 +3078,7 @@ function closeTip() {
   clearInterval(tipAim); tipAim = null;
   tipOpen = null;
   $("tipLayer").classList.remove("on");
+  document.body.classList.remove("tip-on");
   queueTipCheck();
 }
 // Aim the bubble: the spotlight hugs the target, and the bubble sits on the
