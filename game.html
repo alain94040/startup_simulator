@@ -491,13 +491,27 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
-  /* first-time tips: one small card the first time a feature shows up */
-  #tipOv { z-index: 64; background: rgba(12,12,18,.32); }
-  #tipModal { width: min(400px, 92%); padding: 0; overflow: hidden; }
-  #tipModal .intro-body { padding: 20px 24px 18px; }
-  #tipModal .intro-step b { font-size: 18px; margin-bottom: 8px; }
-  #tipModal .intro-foot { margin-top: 18px; justify-content: flex-end; }
-  .tip-show { border: 1px solid var(--line); background: none; color: var(--ink); font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 16px; cursor: pointer; }
+  /* first-time tips: a comic speech bubble pointing at the feature it explains,
+     over a spotlight that dims everything but the target */
+  #tipLayer { position: fixed; inset: 0; z-index: 64; display: none; }
+  #tipLayer.on { display: block; }
+  #tipRing { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(12,12,18,.42); outline: 3px solid #ffd60a; outline-offset: 0; transition: all .25s ease; pointer-events: none; }
+  #tipBubble {
+    position: fixed; width: min(300px, calc(100vw - 20px)); background: #fff; color: #1a1a1f;
+    border: 2.5px solid #1a1a1f; border-radius: 20px; padding: 14px 16px 12px;
+    box-shadow: 5px 5px 0 #1a1a1f; animation: tipPop .32s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes tipPop { from { transform: scale(.7); opacity: 0; } }
+  #tipBubble b { display: block; font-size: 16px; font-weight: 800; margin-bottom: 5px; }
+  #tipBubble p { font-size: 13.5px; line-height: 1.45; color: #3a3a42; }
+  #tipBubble .tip-ok { display: block; margin: 11px 0 0 auto; border: 2px solid #1a1a1f; background: #ffd60a; color: #1a1a1f; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 6px 16px; cursor: pointer; box-shadow: 2px 2px 0 #1a1a1f; }
+  #tipBubble .tip-ok:active { transform: translate(2px, 2px); box-shadow: none; }
+  /* the tail: a bordered triangle, flipped to whichever side faces the target */
+  .tip-tail { position: absolute; width: 18px; height: 18px; background: #fff; border: 2.5px solid #1a1a1f; transform: translate(-50%, -50%) rotate(45deg); }
+  #tipBubble[data-side="below"] .tip-tail { top: 0 !important; border-right: 0; border-bottom: 0; margin-top: -1px; }
+  #tipBubble[data-side="above"] .tip-tail { top: 100% !important; border-left: 0; border-top: 0; margin-top: 1px; }
+  #tipBubble[data-side="left"] .tip-tail { left: 100% !important; border-left: 0; border-bottom: 0; margin-left: 1px; }
+  #tipBubble[data-side="right"] .tip-tail { left: 0 !important; border-right: 0; border-top: 0; margin-left: -1px; }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
   /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
@@ -1090,7 +1104,7 @@
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
-<div class="overlay" id="tipOv"><div class="modal" id="tipModal"></div></div>
+<div id="tipLayer"><div id="tipRing"></div><div id="tipBubble"></div></div>
 
 <details id="debug">
   <summary>debug</summary>
@@ -2877,13 +2891,11 @@ function restartGame() {
 $("hRestart").onclick = restartGame;
 
 // ── intro ─────────────────────────────────────────────────────────────────────
-// Week 1 teaches only what week 1 uses: the chat and the two moves. Every
-// other surface (the News Feed, the journal, the bank, rooms, "Your move"
-// cards…) gets a TIPS card the first time it actually shows up.
+// The intro is only the premise and the bar to beat. How to play is taught in
+// place by TIPS, each the first time its feature shows up — starting with the
+// chat itself the moment the intro closes.
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping, and right now it exists mostly in your co-founders' heads. You have $10,000 and 25 weeks until the YC deadline. Build something worth the batch before the clock, or the cash, runs out."],
-  ["How it works", "Everything is a conversation.", "Your co-founders, and later advisors, users and family, text you. A blue dot means someone wrote. Open their thread, tap Respond, and pick what to say."],
-  ["Two moves a week", "Every answer costs a move.", "You get two moves a week: the two dots at the top. Each reply spends one, and when both are gone the week ends and the world moves on. You can't answer everyone, so choose who waits, and know that some messages won't wait forever. Everything else gets explained the first time it shows up."],
+  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping, and right now it exists mostly in your co-founders' heads. You have $10,000 and 25 weeks until the YC deadline. Build something worth the batch before the clock, or the cash, runs out. We'll show you around as things come up."],
 ];
 let introStep = 0;
 // A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
@@ -2926,12 +2938,14 @@ async function fillIntroBoard() {
 showIntro();
 
 // ── first-time tips ───────────────────────────────────────────────────────────
-// Onboarding happens when a feature is first needed, not up front: each tip
-// fires once, the first time its `when` holds, as a small card over whatever
-// you're doing. Seen tips persist per browser, so a second run doesn't re-teach
-// (`?tips=reset` brings them back). `scene: true` tips may fire inside a room;
-// the rest wait until you're back in the regular app. `go` is the "Show me"
-// button — where the feature lives on this shape.
+// Onboarding happens when a feature is first needed, not up front: each tip is
+// a comic speech bubble pointing straight at the thing it explains, shown the
+// first time its `when` holds and its `target` is on screen. The rest of the
+// screen dims around a spotlight on the target. Seen tips persist per browser,
+// so a second run doesn't re-teach (`?tips=reset` brings them back).
+// `scene: true` tips may fire inside a room; the rest wait until you're back in
+// the regular app. Week 1's tips (chat, Respond, the two moves) are the whole
+// tutorial; everything after waits for its own first appearance.
 const TIP_KEY = "plusone_tips_seen";
 let tipsSeen = new Set();
 try {
@@ -2939,82 +2953,146 @@ try {
   tipsSeen = new Set(JSON.parse(localStorage.getItem(TIP_KEY)) || []);
 } catch (e) { /* no storage: tips are per page load */ }
 const openNow = () => game.openActions().filter(a => !a.onHold);
+const tabBtn = sf => document.querySelector('#tabbar button[data-surface="' + sf + '"]');
+const onScreen = el => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? el : null; };
 const TIPS = [
+  // ── week 1: the chat and the two moves ──
+  { id: "chat", when: () => railChars().some(id => game.threads[id].some(m => m.type === "incoming")),
+    target: () => onScreen($("railList").querySelector(".unread")) || onScreen($("railList").firstElementChild),
+    title: "People text you.",
+    body: () => "Your co-founders, and later users, investors and family, all reach you here. A blue dot means a new message: " + (isMobile ? "tap a circle" : "click a conversation") + " to read it." },
+  { id: "respond", when: () => surface === "msgs",
+    target: () => onScreen(document.querySelector("#reply .cta-pill:not([disabled])")),
+    title: "Answer them.",
+    body: () => "When someone is waiting on you, tap Respond and pick what to say. What you say changes the story." },
+  { id: "moves", when: () => game.actionsLeft === 1,
+    target: () => onScreen($("dots")),
+    title: "That was one of your two moves.",
+    body: () => "Every answer spends a move, and you get two a week. Spend the second and the week ends, so you can't answer everyone: choose who waits. Some messages won't wait forever." },
+  // ── everything else, the first time it shows up ──
   { id: "room", scene: true, when: () => inScene && !!game.scene,
+    target: () => onScreen($("scRail")) || onScreen($("scThread")),
     title: "This one happens all at once.",
-    body: () => "Some conversations are a sitting, not a text. While you're in the room, the rest of the world holds and only the people in it can reach you. Walking in cost one move; every answer in here is free. A blue dot " + (isMobile ? "on a circle" : "in the list") + " means someone else in the room just wrote." },
-  { id: "journal", when: () => jShown > 0,
-    title: "Your journal.",
-    body: () => "Chats only hold what people actually said. What your calls led to (what they cost, how people took them, the milestones) gets written down in your journal, " + (isMobile ? "in the Journal tab." : "in the right column under your open calls."),
-    go: () => isMobile ? () => setSurface("journal") : null },
+    body: () => "Some conversations are a sitting. While you're in the room, the rest of the world holds and only these people can reach you. Walking in cost one move; every answer in here is free." },
   { id: "week", when: () => game.s.week >= 2,
-    title: "The week turned.",
-    body: () => "Your two moves are back. Keeping the lights on costs " + money(game.burnPerWeek) + " a week (your burn), and Runway in the header is how many weeks of cash you have left. Tap it to open the Bank and see where the money went.",
-    go: () => () => setSurface("bank") },
+    target: () => onScreen($("gRunway")),
+    title: "A week went by.",
+    body: () => "Your two moves are back, and " + money(game.burnPerWeek) + " is gone: that's your weekly burn. Runway is how many weeks of cash you have left. " + (isMobile ? "Tap" : "Click") + " it to open the Bank." },
+  { id: "journal", when: () => jShown > 0,
+    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
+    title: "Your journal.",
+    body: () => "Chats only hold what people said. What your calls led to, what they cost and the milestones you hit get written down here." },
   { id: "todo", when: () => stageCounts(currentStage()).done > 0,
-    title: "You checked something off.",
-    body: () => "The ☑ list in the header is your guide to the current chapter: what this stretch of the story needs from you, and what you've already done. " + (isMobile ? "Tap it to see the whole list." : "Click it to see the whole list."),
-    go: () => openTodo },
+    target: () => onScreen($("gTodo")),
+    title: "Checked off!",
+    body: () => "This is your to-do list for the current chapter: what this stretch of the story needs from you. " + (isMobile ? "Tap" : "Click") + " it to see the whole list." },
   { id: "move", when: () => openNow().some(a => SELF.has(a.charId)),
+    target: () => isMobile ? onScreen(tabBtn("moves")) : onScreen(document.querySelector("#sideCol .h-card.move")),
     title: "Your move.",
-    body: () => "Not everything starts with someone texting you. Calls that are yours alone show up as Your move cards, " + (isMobile ? "in the Moves tab." : "at the top of the right column.") + " Answering one costs a move, just like a reply.",
-    go: () => isMobile ? () => setSurface("moves") : null },
+    body: () => "Not everything starts with a text. Calls that are yours alone land " + (isMobile ? "in Moves." : "here.") + " Answering one costs a move, like a reply." },
   { id: "news", when: () => [...FEED].some(id => game.threads[id].some(m => m.type === "incoming")),
-    title: "The world is talking.",
-    body: () => "The News Feed is where the outside world shows up: press, Hacker News, Reddit, competitors. Some posts let you weigh in, which costs a move, and the moment passes if you don't.",
-    go: () => () => setSurface("feed") },
-  { id: "flag", scene: true, when: () => openNow().some(a => { const gk = gatedKeys(a.nodeId); return a.options.some(o => gk.has(o.key)); }),
+    target: () => isMobile ? onScreen(tabBtn("feed")) : onScreen(document.querySelector('nav.surfaces button[data-surface="feed"]')),
+    title: "You're in the news.",
+    body: () => "Press, Hacker News, Reddit and competitors post here. Some posts let you weigh in, which costs a move, and the moment passes if you don't." },
+  { id: "flag", scene: true, when: () => true,
+    target: () => onScreen(document.querySelector(inScene ? "#scReply .gated" : "#reply .gated, #sideCol .gated, #railTriage .gated")),
     title: "⚑ means you earned it.",
-    body: () => "An answer marked ⚑ is only there because of something you learned: talking to users, reading the market, studying a competitor. Research doesn't pay off right away; it pays off as better answers later." },
+    body: () => "This answer is only here because of something you learned: talking to users, reading the market, studying a competitor. Research pays off as better answers later." },
   { id: "ignored", when: () => [...game.resolved.values()].some(r => r.outcome === "@ignored"),
+    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
     title: "Some things didn't wait.",
-    body: () => "Leave a message unanswered long enough and the moment passes: the story moves on without your say. Sometimes that's the right call. It's still a call, and it has consequences." },
+    body: () => "You left a message unanswered long enough that the moment passed. That's a choice too, and the journal shows what it led to." },
   { id: "endweek", when: () => canSkipWeek(),
+    target: () => onScreen($("endPill")) || (isMobile ? onScreen(tabBtn("moves")) : null),
     title: "Nothing urgent left.",
-    body: () => "Everything still open this week can wait. Spend your moves on it anyway, or press End week → to move on.",
-  },
+    body: () => "Everything still open can wait. Spend your moves on it anyway, or end the week here." },
 ];
 function tipBlocked() {
-  if (uiBusy || gameEnded()) return true;
-  for (const id of ["introOv", "endOv", "tipOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
+  if (uiBusy || gameEnded() || tipOpen) return true;
+  for (const id of ["introOv", "endOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
   return $("cine").classList.contains("show") || $("lightbox").classList.contains("show");
 }
 var tipTimer = null;   // var: render() may run before this line does
+let tipOpen = null;
+// At most two tips per beat of play (a move spent, or a week turned), so a week
+// that unlocks several features doesn't open on a stack of bubbles; the rest
+// wait for the next beat. Room tips are exempt: a sitting is one long beat.
+let tipBeat = null, tipBeatCount = 0;
+const playBeat = () => game.s.week * 10 + game.actionsLeft;
 // Checked a beat after a render, never inside one: a render that's about to
 // hand off to the week turn (scheduleTurn) has set uiBusy by then, so a tip
-// never pops up over a week that is already flipping.
+// never pops up over a week that is already flipping. An open bubble is
+// re-aimed instead, since the render may have replaced its target.
 function queueTipCheck() {
   clearTimeout(tipTimer);
-  tipTimer = setTimeout(maybeShowTip, 350);
+  tipTimer = setTimeout(() => { if (tipOpen) placeTip(); else maybeShowTip(); }, 350);
 }
-// At most one tip per beat of play (a move spent, or a week turned), so a week
-// that unlocks several features doesn't open on a stack of cards; the rest
-// wait for the next beat. Room tips are exempt: a sitting is one long beat.
-let tipBeat = null;
-const playBeat = () => game.s.week * 10 + game.actionsLeft;
 function maybeShowTip() {
   if (tipBlocked()) return;
-  const tip = TIPS.find(t => !tipsSeen.has(t.id) && (t.scene || !inScene) && (inScene || tipBeat !== playBeat()) && t.when());
-  if (tip) showTip(tip);
+  const beat = playBeat();
+  if (!inScene && tipBeat === beat && tipBeatCount >= 2) return;
+  for (const t of TIPS) {
+    if (tipsSeen.has(t.id) || (inScene && !t.scene) || (!inScene && t.id === "room") || !t.when()) continue;
+    const el = t.target();
+    if (!el) continue;
+    if (!inScene) { if (tipBeat !== beat) { tipBeat = beat; tipBeatCount = 0; } tipBeatCount++; }
+    showTip(t);
+    return;
+  }
 }
 function showTip(tip) {
-  if (!inScene) tipBeat = playBeat();
   tipsSeen.add(tip.id);
   try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
-  const go = tip.go ? tip.go() : null;
-  $("tipModal").innerHTML =
-    '<div class="intro-stripe"></div><div class="intro-body">' +
-    '<div class="intro-eyebrow">New</div>' +
-    '<div class="intro-step"><b>' + esc(tip.title) + "</b>" + esc(tip.body()) + "</div>" +
-    '<div class="intro-foot"><div class="intro-actions">' +
-    (go ? '<button class="tip-show">Show me</button>' : "") +
-    '<button class="intro-next">Got it</button></div></div></div>';
-  const close = () => { $("tipOv").classList.remove("on"); queueTipCheck(); };
-  $("tipModal").querySelector(".intro-next").onclick = close;
-  const sm = $("tipModal").querySelector(".tip-show");
-  if (sm) sm.onclick = () => { close(); go(); };
-  $("tipOv").classList.add("on");
+  tipOpen = tip;
+  const bub = $("tipBubble");
+  bub.innerHTML = '<b>' + esc(tip.title) + "</b><p>" + esc(tip.body()) + '</p><button class="tip-ok">Got it</button><i class="tip-tail"></i>';
+  bub.querySelector(".tip-ok").onclick = closeTip;
+  $("tipLayer").classList.add("on");
+  placeTip();
+  // keep aiming while it's up: a room slides in, a strip reorders, a column
+  // scrolls — the spotlight has to follow its target
+  clearInterval(tipAim); tipAim = setInterval(placeTip, 250);
 }
+let tipAim = null;
+function closeTip() {
+  clearInterval(tipAim); tipAim = null;
+  tipOpen = null;
+  $("tipLayer").classList.remove("on");
+  queueTipCheck();
+}
+// Aim the bubble: the spotlight hugs the target, and the bubble sits on the
+// side with the most room (below, above, or beside a tall column), clamped to
+// the viewport, with its tail pointing at the target's middle.
+function placeTip() {
+  if (!tipOpen) return;
+  const el = tipOpen.target();
+  if (!el) { closeTip(); return; }
+  const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, pad = 6, gap = 16, m = 10;
+  const ring = $("tipRing");
+  ring.style.left = (r.left - pad) + "px"; ring.style.top = (r.top - pad) + "px";
+  ring.style.width = (r.width + pad * 2) + "px"; ring.style.height = (r.height + pad * 2) + "px";
+  const bub = $("tipBubble"), tail = bub.querySelector(".tip-tail");
+  bub.style.left = "0px"; bub.style.top = "0px";
+  const bw = bub.offsetWidth, bh = bub.offsetHeight;
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let side;
+  if (r.height > vh * 0.4) side = r.left > vw / 2 ? "left" : "right";
+  else side = (vh - r.bottom) >= bh + gap + m || r.top < bh + gap + m ? "below" : "above";
+  let x, y;
+  if (side === "below" || side === "above") {
+    x = Math.max(m, Math.min(vw - bw - m, cx - bw / 2));
+    y = side === "below" ? r.bottom + pad + gap : r.top - pad - gap - bh;
+    tail.style.left = Math.max(18, Math.min(bw - 18, cx - x)) + "px"; tail.style.top = "";
+  } else {
+    x = side === "left" ? r.left - pad - gap - bw : r.right + pad + gap;
+    x = Math.max(m, Math.min(vw - bw - m, x));
+    y = Math.max(m, Math.min(vh - bh - m, cy - bh / 2));
+    tail.style.top = Math.max(18, Math.min(bh - 18, cy - y)) + "px"; tail.style.left = "";
+  }
+  bub.dataset.side = side;
+  bub.style.left = x + "px"; bub.style.top = y + "px";
+}
+addEventListener("resize", () => { if (tipOpen) placeTip(); });
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
 function syncSurfaceTabs() {
