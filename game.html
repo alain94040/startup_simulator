@@ -491,6 +491,13 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
+  /* first-time tips: one small card the first time a feature shows up */
+  #tipOv { z-index: 64; background: rgba(12,12,18,.32); }
+  #tipModal { width: min(400px, 92%); padding: 0; overflow: hidden; }
+  #tipModal .intro-body { padding: 20px 24px 18px; }
+  #tipModal .intro-step b { font-size: 18px; margin-bottom: 8px; }
+  #tipModal .intro-foot { margin-top: 18px; justify-content: flex-end; }
+  .tip-show { border: 1px solid var(--line); background: none; color: var(--ink); font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 16px; cursor: pointer; }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
   /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
@@ -1083,6 +1090,7 @@
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
+<div class="overlay" id="tipOv"><div class="modal" id="tipModal"></div></div>
 
 <details id="debug">
   <summary>debug</summary>
@@ -2317,6 +2325,7 @@ function renderFocus(opts) {
 
   renderFocusThread(opts);
   renderSceneSelfDecision(opts);
+  queueTipCheck();
 }
 
 // The founder's own open beat in a scene — the impasse call, the signing — is a
@@ -2868,10 +2877,13 @@ function restartGame() {
 $("hRestart").onclick = restartGame;
 
 // ── intro ─────────────────────────────────────────────────────────────────────
+// Week 1 teaches only what week 1 uses: the chat and the two moves. Every
+// other surface (the News Feed, the journal, the bank, rooms, "Your move"
+// cards…) gets a TIPS card the first time it actually shows up.
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until the YC deadline. Build something worth the batch before the clock — or the cash — runs out."],
-  ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
-  ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
+  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping, and right now it exists mostly in your co-founders' heads. You have $10,000 and 25 weeks until the YC deadline. Build something worth the batch before the clock, or the cash, runs out."],
+  ["How it works", "Everything is a conversation.", "Your co-founders, and later advisors, users and family, text you. A blue dot means someone wrote. Open their thread, tap Respond, and pick what to say."],
+  ["Two moves a week", "Every answer costs a move.", "You get two moves a week: the two dots at the top. Each reply spends one, and when both are gone the week ends and the world moves on. You can't answer everyone, so choose who waits, and know that some messages won't wait forever. Everything else gets explained the first time it shows up."],
 ];
 let introStep = 0;
 // A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
@@ -2899,7 +2911,7 @@ function showIntro() {
       '<div class="intro-actions"><button class="intro-skip">skip</button>' +
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   }
-  const done = () => { $("introOv").classList.remove("on"); };
+  const done = () => { $("introOv").classList.remove("on"); queueTipCheck(); };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
   $("introOv").classList.add("on");
@@ -2912,6 +2924,97 @@ async function fillIntroBoard() {
   el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
 }
 showIntro();
+
+// ── first-time tips ───────────────────────────────────────────────────────────
+// Onboarding happens when a feature is first needed, not up front: each tip
+// fires once, the first time its `when` holds, as a small card over whatever
+// you're doing. Seen tips persist per browser, so a second run doesn't re-teach
+// (`?tips=reset` brings them back). `scene: true` tips may fire inside a room;
+// the rest wait until you're back in the regular app. `go` is the "Show me"
+// button — where the feature lives on this shape.
+const TIP_KEY = "plusone_tips_seen";
+let tipsSeen = new Set();
+try {
+  if (/[?&]tips=reset\b/.test(location.search)) localStorage.removeItem(TIP_KEY);
+  tipsSeen = new Set(JSON.parse(localStorage.getItem(TIP_KEY)) || []);
+} catch (e) { /* no storage: tips are per page load */ }
+const openNow = () => game.openActions().filter(a => !a.onHold);
+const TIPS = [
+  { id: "room", scene: true, when: () => inScene && !!game.scene,
+    title: "This one happens all at once.",
+    body: () => "Some conversations are a sitting, not a text. While you're in the room, the rest of the world holds and only the people in it can reach you. Walking in cost one move; every answer in here is free. A blue dot " + (isMobile ? "on a circle" : "in the list") + " means someone else in the room just wrote." },
+  { id: "journal", when: () => jShown > 0,
+    title: "Your journal.",
+    body: () => "Chats only hold what people actually said. What your calls led to (what they cost, how people took them, the milestones) gets written down in your journal, " + (isMobile ? "in the Journal tab." : "in the right column under your open calls."),
+    go: () => isMobile ? () => setSurface("journal") : null },
+  { id: "week", when: () => game.s.week >= 2,
+    title: "The week turned.",
+    body: () => "Your two moves are back. Keeping the lights on costs " + money(game.burnPerWeek) + " a week (your burn), and Runway in the header is how many weeks of cash you have left. Tap it to open the Bank and see where the money went.",
+    go: () => () => setSurface("bank") },
+  { id: "todo", when: () => stageCounts(currentStage()).done > 0,
+    title: "You checked something off.",
+    body: () => "The ☑ list in the header is your guide to the current chapter: what this stretch of the story needs from you, and what you've already done. " + (isMobile ? "Tap it to see the whole list." : "Click it to see the whole list."),
+    go: () => openTodo },
+  { id: "move", when: () => openNow().some(a => SELF.has(a.charId)),
+    title: "Your move.",
+    body: () => "Not everything starts with someone texting you. Calls that are yours alone show up as Your move cards, " + (isMobile ? "in the Moves tab." : "at the top of the right column.") + " Answering one costs a move, just like a reply.",
+    go: () => isMobile ? () => setSurface("moves") : null },
+  { id: "news", when: () => [...FEED].some(id => game.threads[id].some(m => m.type === "incoming")),
+    title: "The world is talking.",
+    body: () => "The News Feed is where the outside world shows up: press, Hacker News, Reddit, competitors. Some posts let you weigh in, which costs a move, and the moment passes if you don't.",
+    go: () => () => setSurface("feed") },
+  { id: "flag", scene: true, when: () => openNow().some(a => { const gk = gatedKeys(a.nodeId); return a.options.some(o => gk.has(o.key)); }),
+    title: "⚑ means you earned it.",
+    body: () => "An answer marked ⚑ is only there because of something you learned: talking to users, reading the market, studying a competitor. Research doesn't pay off right away; it pays off as better answers later." },
+  { id: "ignored", when: () => [...game.resolved.values()].some(r => r.outcome === "@ignored"),
+    title: "Some things didn't wait.",
+    body: () => "Leave a message unanswered long enough and the moment passes: the story moves on without your say. Sometimes that's the right call. It's still a call, and it has consequences." },
+  { id: "endweek", when: () => canSkipWeek(),
+    title: "Nothing urgent left.",
+    body: () => "Everything still open this week can wait. Spend your moves on it anyway, or press End week → to move on.",
+  },
+];
+function tipBlocked() {
+  if (uiBusy || gameEnded()) return true;
+  for (const id of ["introOv", "endOv", "tipOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
+  return $("cine").classList.contains("show") || $("lightbox").classList.contains("show");
+}
+var tipTimer = null;   // var: render() may run before this line does
+// Checked a beat after a render, never inside one: a render that's about to
+// hand off to the week turn (scheduleTurn) has set uiBusy by then, so a tip
+// never pops up over a week that is already flipping.
+function queueTipCheck() {
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(maybeShowTip, 350);
+}
+// At most one tip per beat of play (a move spent, or a week turned), so a week
+// that unlocks several features doesn't open on a stack of cards; the rest
+// wait for the next beat. Room tips are exempt: a sitting is one long beat.
+let tipBeat = null;
+const playBeat = () => game.s.week * 10 + game.actionsLeft;
+function maybeShowTip() {
+  if (tipBlocked()) return;
+  const tip = TIPS.find(t => !tipsSeen.has(t.id) && (t.scene || !inScene) && (inScene || tipBeat !== playBeat()) && t.when());
+  if (tip) showTip(tip);
+}
+function showTip(tip) {
+  if (!inScene) tipBeat = playBeat();
+  tipsSeen.add(tip.id);
+  try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
+  const go = tip.go ? tip.go() : null;
+  $("tipModal").innerHTML =
+    '<div class="intro-stripe"></div><div class="intro-body">' +
+    '<div class="intro-eyebrow">New</div>' +
+    '<div class="intro-step"><b>' + esc(tip.title) + "</b>" + esc(tip.body()) + "</div>" +
+    '<div class="intro-foot"><div class="intro-actions">' +
+    (go ? '<button class="tip-show">Show me</button>' : "") +
+    '<button class="intro-next">Got it</button></div></div></div>';
+  const close = () => { $("tipOv").classList.remove("on"); queueTipCheck(); };
+  $("tipModal").querySelector(".intro-next").onclick = close;
+  const sm = $("tipModal").querySelector(".tip-show");
+  if (sm) sm.onclick = () => { close(); go(); };
+  $("tipOv").classList.add("on");
+}
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
 function syncSurfaceTabs() {
@@ -2981,6 +3084,7 @@ function render() {
   if (surface === "bank") renderBank();
   renderSide();
   if (!isMobile && $("todoPop").classList.contains("on")) renderTodo();
+  queueTipCheck();
 }
 
 // ── debug ─────────────────────────────────────────────────────────────────────
