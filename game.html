@@ -526,6 +526,7 @@
   .intro-person { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0 2px; margin-top: 12px; border-top: 1px solid var(--line); }
   .intro-person .av { width: 76px; height: 76px; font-size: 28px; }
   .ip-role { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .ip-role .keep-case { text-transform: none; }  /* "IOS" reads wrong: the brand keeps its lowercase i */
   .ip-name { font-size: 18px; font-weight: 800; color: var(--ink); margin: 1px 0 4px; }
   .ip-blurb { font-size: 13.5px; line-height: 1.5; color: #55555c; }
   .intro-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
@@ -3140,7 +3141,7 @@ function showIntro() {
       '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
       (people || []).map(([id, role, blurb]) =>
         '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
-        '<div class="ip-role">' + esc(role) + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
+        '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
         '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
       '<div class="intro-actions"><button class="intro-skip">skip</button>' +
