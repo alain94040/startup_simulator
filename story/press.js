@@ -270,10 +270,10 @@
               if (e.rng() < 0.7) {
                 s.cash += 5000;
                 e.say({ char: "jamie", text: "just venmo'd you $5,000. least i could do — you'd have done the same for me. go build something great." });
-                return "Jamie sent $5,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'";
+                return "$5,000 from Jamie: no terms, no paperwork, no questions about the market. He's betting on me, not on the app.";
               }
               e.say({ char: "jamie", text: "hate to say it but my cash is tied up right now — car loan, wedding coming up. i'm rooting for you though." });
-              return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
+              return "Jamie's cash is tied up. Friends invest in you, but only with money they have.";
             },
           },
         ],

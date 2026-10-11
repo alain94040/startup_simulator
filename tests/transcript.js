@@ -53,7 +53,11 @@ function sourceOf(nodeId) {
 // player saw". These three constants are game.html's, kept in sync by name:
 //   FEED    → the News Feed surface (posts you engage inline)
 //   SELF    → "your own moves", acted on as a card in the right column
-//   journal → the founder thread, rendered by journalMirror() as recap prose
+//   journal → the founder thread, rendered by journalMirror() as recap prose —
+//             except a line about a conversation (its `sourceChar` is a chat
+//             or the feed), which game.html pins in that conversation instead:
+//             a ✎ jot under the exchange (jotHome / threadEntries), or under
+//             the post on the News Feed
 // A `type: "note"` entry (engine.js's `effects.note`) is its own surface too:
 // a parchment-tinted aside game.html renders inline in an ordinary thread —
 // unlike a bubble on purpose, so it never reads as a text someone sent.
@@ -68,10 +72,12 @@ const feedSrc = (e) => FEED_FROM[e.from] || FEED_SRC[e.charId] || e.charId;
 
 // Returns the surface a player would have seen this entry on, or "hidden" when
 // the UI shows it nowhere at all (a real defect — see --audit).
-function uiSurface(charId, type, nodeId) {
+function uiSurface(charId, type, nodeId, sourceChar) {
   // journalMirror(): stamps + outcomes (founder thread only — the engine only
   // ever records those there) + orphan drops (no nodeId) from the founder or
   // any other SELF character (a cast intro line, a scheduled data pulse).
+  // An outcome about a conversation is a jot in that conversation instead.
+  if (type === "outcome" && charId === "founder" && sourceChar && !SELF.has(sourceChar)) return FEED.has(sourceChar) ? "feed" : "jot";
   if (type === "outcome" || type === "stamp") return charId === "founder" ? "journal" : "hidden";
   if (SELF.has(charId)) {
     if (type === "reply" || type === "note") return "hidden"; // no thread renders these
@@ -214,7 +220,7 @@ function record(seed, driverName, opts) {
     for (const m of game.threads[charId]) {
       events.push({
         t: m.type === "outcome" ? "journal" : m.type, // incoming | reply | journal | stamp
-        ui: uiSurface(charId, m.type, m.nodeId),
+        ui: uiSurface(charId, m.type, m.nodeId, m.sourceChar),
         seq: m.seq, week: m.week, charId,
         // a journal line lives on the founder thread but belongs to whoever caused it
         owner: m.type === "outcome" ? (m.sourceChar || "founder") : charId,
@@ -447,7 +453,7 @@ function renderText(run, o) {
       lastSpeaker = null;
     } else if (e.t === "journal") {
       if (o.compact) continue;
-      L.push(C.y(wrap("📓 " + e.body, W - 6, "    ")));
+      L.push(C.y(wrap((e.ui === "jot" || e.ui === "feed" ? "✎ " : "📓 ") + e.body, W - 6, "    ")));
       lastSpeaker = null;
     } else if (e.t === "stamp") {
       L.push(C.m("    ★ " + (e.label || "").toUpperCase()));
@@ -593,7 +599,8 @@ function runHtml(run, idx) {
         (where ? `<span class="where">${where}</span>` : "") +
         (alts ? `<div class="alts">passed over: ${alts}</div>` : "") + `</div>`);
     } else if (e.t === "journal") {
-      parts.push(`<div class="jr ${cls}">${esc(e.body)}</div>`);
+      // a jot is pinned in its conversation (or under its feed post), not in the journal
+      parts.push(`<div class="jr ${cls}${e.ui === "jot" || e.ui === "feed" ? " jot" : ""}">${esc(e.body)}</div>`);
     } else if (e.t === "stamp") {
       parts.push(`<div class="stamp">${esc(e.label)}</div>`);
     } else if (e.t === "ignored") {
@@ -721,6 +728,8 @@ function renderHtml(runs, title) {
   .choice.off { margin-left:0; }
   .choice .where { color:var(--dim); margin-left:6px; font-size:11.5px; }
   .jr { background:#fffbe8; border:1px solid #f0e6b8; color:#5b5340; border-radius:10px; padding:8px 13px; margin:8px 0 8px 37px; font-size:13.5px; }
+  .jr.jot { background:none; border:0; border-left:2px solid #f0e6b8; border-radius:0; font-style:italic; padding:2px 10px; }
+  .jr.jot::before { content:"✎ "; }
   body.nojr .jr { display:none; }
   /* effects.note: same parchment tint as the journal mirror, but rendered
      inline in the thread — game.html's deliberate exception to "bubbles only" */

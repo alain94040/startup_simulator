@@ -130,9 +130,6 @@
   }
   .logo { font-weight: 700; font-size: 15px; }
   .logo small { color: var(--dim); font-weight: 500; margin-left: 6px; }
-  nav.surfaces { display: flex; gap: 4px; }
-  nav.surfaces button { border: 0; background: none; color: #6b6b74; border-radius: 8px; padding: 6px 12px; font-weight: 500; }
-  nav.surfaces button.cur { background: var(--blue-soft); color: var(--blue); font-weight: 600; }
   .n-badge { display: inline-block; min-width: 15px; text-align: center; background: #ff4d4d; color: #fff; border-radius: 8px; font-size: 10px; margin-left: 4px; padding: 0 3px; vertical-align: 1px; }
   .gauge { display: flex; flex-direction: column; gap: 2px; min-width: 118px; font-size: 12.5px; }
   .gauge .g-lbl { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
@@ -155,13 +152,39 @@
   .surface { flex: 1; display: none; min-width: 0; }
   .surface.cur { display: flex; gap: 10px; }
 
-  /* Messages: rail | thread — floating cards on the gutter */
+  /* Messages: rail | thread — floating cards on the gutter. On the desktop
+     the rail is two stacked lists: conversations (scrolling) over the news. */
+  @media (min-width: 1024px) {
+    #rail { display: flex; flex-direction: column; overflow: hidden; }
+    #railList { flex: 1; min-height: 0; overflow: hidden auto; }
+  }
+  #railNews { flex: none; max-height: 42%; overflow: hidden auto; border-top: 1px solid var(--line); background: #fafafc; padding: 8px 8px 10px; }
+  #railNews:empty { display: none; }
+  #railNews h5 { display: flex; justify-content: space-between; align-items: baseline; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #6b6b74; margin: 2px 6px 6px; }
+  #railNews h5 button { border: 0; background: none; color: var(--blue); font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 600; padding: 0; }
+  .nw { display: flex; gap: 6px; align-items: flex-start; padding: 6px 6px; border-radius: 8px; cursor: pointer; }
+  .nw:hover { background: #f0f0f4; }
+  .nw.cur { background: var(--blue-soft); }
+  .nw .unread-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; margin-top: 4px; background: transparent; }
+  .nw.unread .unread-dot { background: var(--blue); }
+  .nw .nw-src { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; color: #fff; border-radius: 4px; padding: 1px 5px; margin-bottom: 2px; }
+  .nw .nw-hl { font-size: 12px; line-height: 1.3; color: #3a3a40; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .nw.unread .nw-hl, .nw.due .nw-hl { color: #1c1c1e; font-weight: 600; }
+  .nw .nw-due { display: block; font-size: 10.5px; color: var(--amber-ink); font-weight: 600; margin-top: 1px; }
+  .empty-news { font-size: 11.5px; color: var(--dim); margin: 0 6px; }
+  /* the News view: the feed, opened in the thread column */
+  #thread.news { align-items: center; gap: 10px; }
+  .f-item.focus { box-shadow: 0 0 0 2px var(--blue); }
+  .bank-back { display: block; flex: none; width: min(560px, 92%); text-align: left; border: 0; background: none; color: var(--blue); font-weight: 600; font-size: 13px; padding: 0; }
   #rail { width: 250px; flex: none; background: var(--panel); overflow: hidden auto; border-radius: 14px; box-shadow: var(--card-shadow); }
   .conv { display: flex; gap: 8px; padding: 9px 12px 9px 8px; border-bottom: 1px solid var(--soft); align-items: center; cursor: pointer; }
   .conv:hover { background: #fafafc; }
   .conv.cur { background: var(--blue-soft); }
   /* iMessage-style unread dot: a blue dot on the left, blank gutter when read */
   .conv .unread-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: transparent; }
+  /* Someone is waiting on your answer: an amber ring, the same signal as the
+     phone strip's. The blue dot clears when you read; this clears when you reply. */
+  #railList .conv.call .av { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--amber); }
   .conv.unread .unread-dot { background: var(--blue); }
   /* In a scene, an unread thread is the only cue that someone else texted back
      while you were mid-conversation — pulse it so it can't be missed. */
@@ -203,6 +226,14 @@
      belongs to. Distinct from m-in/m-out on purpose — parchment tint and
      handwritten font borrow the journal's voice so it never reads as a
      bubble somebody sent. Opt-in only (effects.note) and rare by design. */
+  /* A journal line, pinned under the exchange it recaps: what your answer
+     led to, in the journal's handwriting. A margin note, never a bubble. */
+  .m-jot {
+    align-self: stretch; margin: 2px 22px 10px; padding: 1px 0 1px 10px; border-left: 2px solid var(--journal-line);
+    font: 14px/1.3 var(--hand); color: #7a6d4f;
+  }
+  .m-jot::before { content: "✎ "; opacity: .6; }
+  .f-jot { padding: 6px 14px 9px; border-top: 1px solid var(--soft); font: 13.5px/1.3 var(--hand); color: #7a6d4f; }
   .m-note {
     align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
     border-radius: 10px; padding: 7px 12px; font: 13px var(--hand); color: #6b6045;
@@ -819,7 +850,7 @@
       grid-template-areas: "title actions" "hud hud";
       align-items: center; gap: 0; padding: env(safe-area-inset-top) 0 0;
     }
-    .logo, nav.surfaces, #todoPop { display: none; }
+    .logo, #todoPop { display: none; }
     #mTitle { grid-area: title; display: flex; align-items: center; min-width: 0; padding: 9px 0 7px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
     #mTitle .m-back { border: 0; background: none; padding: 0; margin-left: -4px; color: var(--blue); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 2px; max-width: 100%; }
     #mTitle .m-back .chev { font-size: 22px; line-height: 1; font-weight: 400; position: relative; top: -1px; }
@@ -845,7 +876,7 @@
     /* ── the surface area ── */
     main { padding: 0; gap: 0; background: var(--bg); }
     .surface.cur { gap: 0; }
-    #sideCol, #debug { display: none; }
+    #sideCol, #debug, #railNews, .bank-back { display: none; }
     #feedSurface, #bankSurface, #journalSurface, #rail, #threadCol {
       border-radius: 0; box-shadow: none; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
     }
@@ -1051,10 +1082,6 @@
 <header>
   <div class="logo">PlusOne<small id="hWeek"></small></div>
   <div id="mTitle"></div>
-  <nav class="surfaces">
-    <button class="cur" data-surface="msgs">Messages<span class="n-badge" id="bMsgs" style="display:none"></span></button>
-    <button data-surface="feed">News Feed<span class="n-badge" id="bFeed" style="display:none"></span></button>
-  </nav>
   <div id="hud">
     <div class="gauge clickable" id="gRunway" title="open the bank"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
     <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
@@ -1073,6 +1100,7 @@
   <section class="surface cur" id="msgsSurface">
     <nav id="rail">
       <div id="railList"></div>
+      <div id="railNews"></div>
     </nav>
     <div id="threadCol">
       <div id="chatHead"></div>
@@ -1080,7 +1108,7 @@
       <div id="reply"></div>
     </div>
   </section>
-  <!-- phone only: the triage as a tab of its own (the desktop's right column) -->
+  <!-- phone only: your moves as a tab of their own (the desktop's right column) -->
   <section class="surface" id="movesSurface"><div id="railTriage"></div></section>
   <section class="surface" id="feedSurface"></section>
   <section class="surface" id="bankSurface"></section>
@@ -1404,26 +1432,45 @@ let weekNotes = [];             // this week's notifications (the bell reopens t
 let notesSeen = true;
 let noteQueue = [], noteTimer = null;
 let journalSeen = 0;            // journal entries the player has looked at (phone tab badge)
+let newsOpen = null;            // desktop: the thread column shows the News (seq of the post to focus), not a chat
 
-// The journal mirror source: outcomes + stamps (always the founder thread —
-// the engine only ever records those there) + orphan drops — incoming
-// messages with no nodeId. Those come from the founder's own thread, and
-// from any other SELF character (Growth, Analytics, Users): a cast intro
-// line or a scheduled data pulse ("weekly pulse: ...") that isn't an action
-// card, so with no thread to show it in it reads as journal recap instead.
+// The journal mirror: a diary, about one line a week. What always goes in is
+// what has no other home: the milestone stamps, the outcomes of your own moves
+// (founder-thread outcomes with no conversation), and the founder's own orphan
+// lines. A journal line about a conversation is pinned in that conversation
+// (a ✎ jot under the exchange it recaps — threadEntries), or under its post on
+// the News Feed — but a closed week with no line of its own borrows the most
+// important of those, so the early weeks, which happen almost all in chat,
+// aren't blank. The data pulses (Analytics, Users: orphan drops from a SELF
+// character with no thread) only fill a closed week that has nothing better —
+// they also buzz as notifications, so a busy week doesn't repeat them here.
+// A filler sorts at the end of its week, so it only ever lands at the tail of
+// the list (the turn-end reveal inks the tail in).
+const jotHome = m => (m.type === "outcome" && m.sourceChar && !SELF.has(m.sourceChar) && game.threads[m.sourceChar]) ? m.sourceChar : null;
 function journalMirror() {
-  const entries = game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+  const f = game.threads.founder;
+  const entries = f.filter(m => m.type === "stamp" || (m.type === "outcome" && !jotHome(m)) || (m.type === "incoming" && !m.nodeId));
+  const prose = new Set(entries.filter(m => m.type !== "stamp").map(m => m.week));
+  const closed = w => w < game.s.week || gameEnded();
+  const fill = (w, m) => { if (m && closed(w) && !prose.has(w)) { entries.push({ ...m, filler: true }); prose.add(w); } };
+  // the week's story beat over its ambient one; the last word over the first
+  const weight = m => { const n = m.nodeId && game.nodes.get(m.nodeId); return n && (n.ambient || n.filler) ? 0 : 1; };
+  const best = {};
+  for (const m of f) if (m.type === "outcome" && jotHome(m) && (!best[m.week] || weight(m) >= weight(best[m.week]))) best[m.week] = m;
+  for (const w in best) fill(+w, best[w]);
+  const pulse = {};
   for (const id of SELF) {
     if (id === "founder") continue;
-    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) entries.push(m);
+    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) pulse[m.week] = m;
   }
-  return entries.sort((a, b) => a.seq - b.seq);
+  for (const w in pulse) fill(+w, pulse[w]);
+  return entries.sort((a, b) => a.week - b.week || (a.filler ? 1 : 0) - (b.filler ? 1 : 0) || a.seq - b.seq);
 }
 function resetUiState() {
   feedSeenLen = {}; sceneStartSeq = null; inScene = false;
   scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
-  selected = "alex"; surface = "msgs"; threadRendered = {};
+  selected = "alex"; surface = "msgs"; threadRendered = {}; newsOpen = null;
   uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
   jShown = journalMirror().length; jArrive = false;
@@ -1519,22 +1566,17 @@ function renderHeader() {
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
   $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
-  // surface badges — the same count on every tab (no zeroing of the tab you're
-  // viewing), so switching tabs never changes the numbers.
-  // Messages: unread conversations, iMessage-style. Opening a thread reveals it
+  // ── phone tab bar ── the same count on every tab (no zeroing of the tab
+  // you're viewing), so switching tabs never changes the numbers.
+  // Chat: unread conversations, iMessage-style. Opening a thread reveals it
   // (threadRendered catches up to its length) and clears it — reading, not
-  // answering, is what counts. A pending reply still shows as "needs a call" in
-  // the rail and the side triage.
-  // the thread you're actively viewing counts as read, so it never shows a dot
-  // in the rail nor a tick on the tab badge (keeps the two in lockstep).
+  // answering, is what counts. A pending reply still shows as the amber ring.
+  // The thread you're actively viewing counts as read, so it never shows a dot
+  // nor a tick on the tab badge (keeps the two in lockstep).
   const unreadConvos = railChars().filter(id => hasUnread(id) && !(surface === "msgs" && id === selected)).length;
-  setBadge("bMsgs", unreadConvos);
-  // News Feed: posts you haven't seen yet. Opening the feed marks them seen (in
-  // render()), so it clears and stays cleared — a post you've glanced at but not
-  // acted on still lives in the feed and the side rail, just not here.
+  // News: posts you haven't seen yet. Opening the feed marks them seen (in
+  // render()), so it clears and stays cleared.
   const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0);
-  setBadge("bFeed", feedNew);
-  // ── phone tab bar ──
   // Moves counts your own open decisions — plus one for the End-week pill on
   // an ambient-only week, since that pill lives on the Moves tab too. Journal
   // counts the lines inked in since you last read it — the week's consequences.
@@ -1560,15 +1602,17 @@ function hasUnread(id) {
 }
 function renderRail() {
   if (isMobile) { renderStrip(); return; }
+  const owed = owedCalls();
   $("railList").innerHTML = railChars().map(id => {
     const c = game.cast.get(id).def;
     const t = game.threads[id];
     const last = t.length ? t[t.length - 1] : null;
-    const unread = hasUnread(id) && id !== selected;   // blue dot, iMessage-style
+    const cur = id === selected && newsOpen == null;
+    const unread = hasUnread(id) && !cur;   // blue dot, iMessage-style
     // In a group the preview needs to say WHO — "Jordan: ok, the atlas form…"
     const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";
     const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : c.role;
-    return '<div class="conv ' + (id === selected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
+    return '<div class="conv ' + (cur ? "cur" : "") + (unread ? " unread" : "") + (owed.has(id) ? " call" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
       convAvatarHtml(id) +
       '<div class="who"><b>' + esc(c.name) + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
@@ -1576,6 +1620,58 @@ function renderRail() {
   for (const el of $("railList").querySelectorAll(".conv")) {
     el.onclick = () => { if (uiBusy) return; gotoChat(el.dataset.id, false); };
   }
+  renderRailNews();
+}
+// Who owes you an answer: a story beat waiting in their thread. Amber ring on
+// the desktop rail and on the phone strip alike.
+function owedCalls() {
+  const owed = new Set();
+  if (!gameEnded()) for (const a of game.openActions()) if (!a.onHold && a.kind === "story") owed.add(a.charId);
+  return owed;
+}
+
+// ── desktop: the News, pinned under the conversations ─────────────────────────
+// A run gets a dozen posts, rarely more than one or two a week, so they don't
+// need a tab: the latest headlines sit under the chat list, and one click opens
+// the News in the thread column — the whole feed, scrolled to that post, where
+// you weigh in. (The phone keeps its News tab.)
+function feedPosts() {
+  const items = [];
+  for (const id of FEED) game.threads[id].forEach((m, i) => { if (m.type === "incoming") items.push({ ...m, charId: id, idx: i }); });
+  return items.sort((a, b) => (a.seq || 0) - (b.seq || 0));
+}
+const feedMeta = m => FEED_FROM[m.from] || FEED_META[m.charId];
+const NEWS_INK = { "f-hn": "#ff6600", "f-rd": "#ff4500", "f-ih": "#0e2439", "f-tc": "#0a9928", "f-tw": "#1da1f2" };
+function renderRailNews() {
+  const box = $("railNews");
+  const posts = feedPosts();
+  if (!posts.length) { box.innerHTML = ""; return; }
+  const acts = gameEnded() ? [] : game.openActions().filter(a => !a.onHold);
+  const due = m => !!(m.nodeId && acts.some(a => a.nodeId === m.nodeId));
+  // what's still waiting on you, then the last two weeks' news; newest first
+  const shown = posts.filter(m => due(m) || m.week >= game.s.week - 1).reverse().slice(0, 4);
+  const list = shown.length ? shown : posts.slice(-1);
+  box.innerHTML = '<h5>📰 News<button id="newsAll">all news →</button></h5>' + list.map(m => {
+    const meta = feedMeta(m);
+    const unread = m.idx >= (feedSeenLen[m.charId] || 0);
+    return '<div class="nw' + (unread ? " unread" : "") + (due(m) ? " due" : "") + (m.seq === newsOpen ? " cur" : "") + '" data-seq="' + m.seq + '">' +
+      '<span class="unread-dot"></span><div>' +
+      '<span class="nw-src" style="background:' + NEWS_INK[meta.cls] + '">' + esc(meta.src.split(" · ").pop()) + "</span>" +
+      '<div class="nw-hl">' + esc(m.body) + "</div>" +
+      (due(m) ? '<span class="nw-due">● waiting on you</span>' : "") + "</div></div>";
+  }).join("");
+  for (const el of box.querySelectorAll(".nw")) el.onclick = () => openNews(+el.dataset.seq);
+  $("newsAll").onclick = () => openNews(null);
+}
+// Open the News: the phone's tab, or the desktop's thread column.
+function openNews(seq) {
+  if (uiBusy) return;
+  if (isMobile) { setSurface("feed"); return; }
+  clearTimeout(revealTimer);
+  const posts = feedPosts();
+  newsOpen = seq != null ? seq : (posts.length ? posts[posts.length - 1].seq : -1);
+  replyExpanded = false; surface = "msgs";
+  syncSurfaceTabs(); render();
 }
 
 // ── the phone's conversation strip ────────────────────────────────────────────
@@ -1624,7 +1720,7 @@ function renderStrip() {
 }
 // Open a conversation.
 function gotoChat(id, markRead) {
-  selected = id; replyExpanded = false;
+  selected = id; replyExpanded = false; newsOpen = null;
   if (markRead) threadRendered[id] = game.threads[id].length;
   surface = "msgs";
   syncSurfaceTabs(); openThread(); render();
@@ -1681,21 +1777,37 @@ function threadEntryHtml(m, isNew, tail, prev, group) {
     if (m.mockups) out += mockupRowHtml(m.mockups);
   } else if (m.type === "note") {
     out = '<div class="m-note' + anim + '">' + esc(m.body) + "</div>";
+  } else if (m.type === "jot") {
+    out = '<div class="m-jot' + anim + '">' + esc(m.body) + "</div>";
   }
   return out;
+}
+// What a thread shows: its messages up to the read cursor, with each journal
+// line about this conversation (jotHome) pinned in after the exchange it
+// recaps. A jot waits for the read cursor like any message, so it never lands
+// ahead of the reply it's about.
+function threadEntries(id, shown) {
+  const t = game.threads[id];
+  const frontier = shown < t.length ? t[shown].seq : Infinity;
+  const jots = game.threads.founder
+    .filter(m => m.type === "outcome" && jotHome(m) === id && m.seq < frontier)
+    .map(m => ({ ...m, type: "jot" }));
+  return t.slice(0, shown).concat(jots).sort((a, b) => a.seq - b.seq);
 }
 // opts.typing → append a typing bubble at the reveal frontier.
 function renderThread(opts) {
   opts = opts || {};
+  if (newsOpen != null && !isMobile) { renderNewsView(); return; }
+  $("thread").classList.remove("news");
   const c = game.cast.get(selected);
   if (!c) return;
   const group = isGroupChat(selected);
   $("chatHead").innerHTML =
     "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + (c.active ? "" : " · gone") + "</span>";
-  const t = game.threads[selected];
-  const shown = threadRendered[selected] || 0;   // how far the read cursor has revealed
+  const t = threadEntries(selected, threadRendered[selected] || 0);
+  const shown = t.length;
   let lastWk = null, html = "";
-  t.slice(0, shown).forEach((m, i) => {
+  t.forEach((m, i) => {
     if (m.week !== lastWk) { html += '<div class="m-wk">week ' + m.week + "</div>"; lastWk = m.week; }
     const next = t[i + 1] && i + 1 < shown ? t[i + 1] : null;
     // In a group, a new speaker also ends the previous bubble's run (so the
@@ -1727,7 +1839,7 @@ function renderThread(opts) {
     return;
   }
   const a = gameEnded() ? null : game.openActions().find(x => x.charId === selected && !x.onHold);
-  const caughtUp = shown >= t.length;
+  const caughtUp = (threadRendered[selected] || 0) >= game.threads[selected].length;
   if (!a || !caughtUp) {
     rbox.innerHTML = a && !caughtUp ? '<div class="hint">…</div>'
       : '<div class="hint">' + (a && a.onHold ? "on hold — something bigger is happening" : "nothing needs an answer here right now") + "</div>";
@@ -1852,26 +1964,24 @@ function renderSide() {
   };
 
   const canSkip = canSkipWeek();
-  // On a phone a card whose whole job is "↗ open chat" would say the same
-  // thing twice — that person's circle in the Chat strip is already ringed.
-  // Only the homeless cards stay: your own moves (no thread) and the News Feed
-  // (a different tab).
-  const shownStory = isMobile ? story.filter(a => FEED.has(a.charId)) : story;
-  const shownLater = isMobile ? later.filter(a => FEED.has(a.charId)) : later;
+  // Your move holds only what has no other home. A card whose whole job is
+  // "↗ open chat" would say the same thing twice — that person is already
+  // ringed amber in the chat list. So: your own moves (no thread), and on the
+  // phone the News posts too (a different tab; on the desktop they sit under
+  // the chat list with their own "waiting on you").
+  const shownStory = isMobile ? story.filter(a => FEED.has(a.charId)) : [];
+  const shownLater = isMobile ? later.filter(a => FEED.has(a.charId)) : [];
   const needBody = move.map(moveCard).join("") + shownStory.map(linkCard).join("");
   const laterBody = shownLater.map(linkCard).join("");
   let html = canSkip ? '<button class="endpill" id="endPill">End week →</button>' : "";
-  // (On the phone "nothing urgent" would be wrong while someone in the Chat
-  // strip is waiting on you, so the empty line points there instead.)
-  const calmNote = isMobile ? "nothing of your own to decide — any calls this week are in Chat." : "nothing urgent — rare. enjoy it.";
-  html += '<div class="tier"><h5>◉ Needs a call</h5>' +
+  // (Never "nothing urgent": someone in the chats may well be waiting on you.)
+  const calmNote = "nothing of your own to decide right now — any calls this week are in the chats.";
+  html += '<div class="tier"><h5>◉ Your move</h5>' +
     (needBody || '<div class="empty-tier">' + (gameEnded() ? "the run's over — this is the record now." : calmNote) + "</div>") + "</div>";
-  html += '<div class="tier later"><h5>When you have a minute</h5>' +
-    (laterBody || '<div class="empty-tier">' + (gameEnded() ? "&nbsp;" : "quiet out there.") + "</div>") + "</div>";
+  if (laterBody) html += '<div class="tier later"><h5>When you have a minute</h5>' + laterBody + "</div>";
 
-  // Two hosts, one triage. On the phone it is the Moves tab and the journal
-  // goes to its own tab; on the desktop both stay in the right column exactly
-  // as before.
+  // Two hosts. On the phone, your moves are the Moves tab and the journal has
+  // its own tab; on the desktop both share the right column, moves on top.
   if (isMobile) {
     $("sideCol").innerHTML = "";
     const tri = $("railTriage");
@@ -1906,7 +2016,7 @@ function wireTriage(root) {
   for (const el of root.querySelectorAll(".h-card.link")) {
     el.onclick = () => {
       if (uiBusy) return;
-      if (el.dataset.feed === "1") setSurface("feed");
+      if (el.dataset.feed === "1") openNews(null);
       else gotoChat(el.dataset.char, false);
     };
   }
@@ -1945,19 +2055,17 @@ function renderJournalSurface() {
 }
 
 // ── News Feed ─────────────────────────────────────────────────────────────────
-function renderFeed() {
-  // merge feed chars' incoming entries by seq/week
-  const items = [];
-  for (const id of FEED) {
-    game.threads[id].forEach(m => { if (m.type === "incoming") items.push({ ...m, charId: id }); });
-    feedSeenLen[id] = game.threads[id].length;
-  }
-  items.sort((a, b) => (a.seq || 0) - (b.seq || 0));
+// The feed: every post, oldest first, each with its options while it's open
+// and, once you've weighed in, the journal line about it pinned underneath.
+function feedHtml(focusSeq) {
+  const items = feedPosts();
   const acts = gameEnded() ? [] : game.openActions();
+  const jots = {};
+  for (const m of game.threads.founder) if (m.type === "outcome" && FEED.has(m.sourceChar)) jots[m.nodeId] = m.body;
   let lastWk = null, html = "";
   for (const m of items.slice(-24)) {
     if (m.week !== lastWk) { html += '<div class="f-wk">week ' + m.week + "</div>"; lastWk = m.week; }
-    const meta = FEED_FROM[m.from] || FEED_META[m.charId];
+    const meta = feedMeta(m);
     const a = m.nodeId ? acts.find(x => x.nodeId === m.nodeId && !x.onHold) : null;
     const resolved = m.nodeId ? game.outcome(m.nodeId) : null;
     let foot = "";
@@ -1966,16 +2074,36 @@ function renderFeed() {
       foot = '<div class="f-act">' + a.options.map(o =>
         '<button class="f-btn" data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" + esc(o.label) + "</button>").join("") + "</div>";
     } else if (resolved === "@ignored") foot = '<div class="f-done">the moment passed — you never weighed in.</div>';
-    else if (resolved) foot = '<div class="f-done">' + (FEED_DONE[resolved] || "✓ you engaged.") + "</div>";
-    html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + '">' +
+    else if (resolved) foot = '<div class="f-done">' + (FEED_DONE[resolved] || "✓ you engaged.") + "</div>" +
+      (jots[m.nodeId] ? '<div class="f-jot">' + esc(jots[m.nodeId]) + "</div>" : "");
+    html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + (m.seq === focusSeq ? " focus" : "") + '">' +
       '<div class="f-src">' + meta.src + "</div>" +
       '<div class="f-body">' + esc(m.body) + "</div>" + foot + "</div>";
   }
-  $("feedSurface").innerHTML = html || '<div class="f-wk" style="margin-top:30px">nothing in the news yet — the world hasn\'t noticed you.</div>';
+  return html;
+}
+function wireFeed(el) {
+  for (const b of el.querySelectorAll(".f-btn")) b.onclick = () => doAct(b.dataset.n, b.dataset.k, null);
+}
+function renderFeed() {
+  for (const id of FEED) feedSeenLen[id] = game.threads[id].length;
+  $("feedSurface").innerHTML = feedHtml(null) || '<div class="f-wk" style="margin-top:30px">nothing in the news yet — the world hasn\'t noticed you.</div>';
   $("feedSurface").scrollTop = $("feedSurface").scrollHeight;
-  for (const el of $("feedSurface").querySelectorAll(".f-btn")) {
-    el.onclick = () => doAct(el.dataset.n, el.dataset.k, null);
-  }
+  wireFeed($("feedSurface"));
+}
+// Desktop: the News in the thread column, scrolled to the post you clicked.
+function renderNewsView() {
+  for (const id of FEED) feedSeenLen[id] = game.threads[id].length;
+  $("chatHead").innerHTML = "<b>News</b><span>press, forums and the competition</span>";
+  const el = $("thread");
+  el.classList.add("news");
+  el.innerHTML = feedHtml(newsOpen) || '<div class="m-wk">nothing in the news yet — the world hasn\'t noticed you.</div>';
+  wireFeed(el);
+  const focus = el.querySelector(".f-item.focus");
+  if (focus) el.scrollTop = Math.max(0, focus.offsetTop - el.offsetTop - 40);
+  else el.scrollTop = el.scrollHeight;
+  $("reply").innerHTML = '<div class="hint">' + (game.openActions().some(a => FEED.has(a.charId) && !a.onHold)
+    ? "weigh in on a post above — it costs a move, like a reply" : "nothing here needs you right now") + "</div>";
 }
 
 // ── Bank ──────────────────────────────────────────────────────────────────────
@@ -1995,8 +2123,10 @@ function renderBank() {
   const past = game.ledger.slice().reverse().map(w =>
     '<div class="stmt"><h4>week ' + w.week + " · closing balance <b>" + money(w.balanceAfter) + "</b></h4>" +
     w.transactions.map(fmtTx).join("") + "</div>").join("");
-  $("bankSurface").innerHTML = head + '<div class="tx-head">Transactions</div>' +
+  // (the desktop has no tabs: the runway gauge opens the Bank, this closes it)
+  $("bankSurface").innerHTML = '<button class="bank-back" id="bankBack">← Back to messages</button>' + head + '<div class="tx-head">Transactions</div>' +
     (pending + past || '<div class="f-wk" style="margin-top:12px">no transactions yet — the first statement arrives when the first week ends.</div>');
+  $("bankBack").onclick = () => setSurface("msgs");
 }
 
 // ── to-do popover ─────────────────────────────────────────────────────────────
@@ -2570,7 +2700,7 @@ function advanceWeek() {
       ico: stl.initials, photo: feed ? null : stl.photo, color: feed ? "#3a3a40" : stl.color, charId: id, feed,
       title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
       text: String(fresh[fresh.length - 1].body || ""),
-      go: feed ? () => setSurface("feed") : () => gotoChat(id, true),
+      go: feed ? () => openNews(fresh[fresh.length - 1].seq) : () => gotoChat(id, true),
     });
   }
   notesSeen = weekNotes.length === 0;
@@ -3016,7 +3146,7 @@ const TIPS = [
   { id: "chat", when: () => railChars().some(id => game.threads[id].some(m => m.type === "incoming")),
     target: () => onScreen($("railList").querySelector(".unread")) || onScreen($("railList").firstElementChild),
     title: "People text you.",
-    body: () => "Your co-founders, and later users, investors and family, all reach you here. A blue dot means a new message: " + (isMobile ? "tap a circle" : "click a conversation") + " to read it." },
+    body: () => "Your co-founders, and later users, investors and family, all reach you here. A blue dot means a new message; an amber ring means they're waiting on your answer. " + (isMobile ? "Tap a circle" : "Click a conversation") + " to read it." },
   { id: "respond", when: () => surface === "msgs",
     target: () => onScreen(document.querySelector("#reply .cta-pill:not([disabled])")),
     title: "Answer them.",
@@ -3039,10 +3169,14 @@ const TIPS = [
     target: () => onScreen($("gRunway")),
     title: "A week went by.",
     body: () => "Your two moves are back, and " + money(game.burnPerWeek) + " is gone: that's your weekly burn. Runway is how many weeks of cash you have left at that rate." },
+  { id: "jot", when: () => !inScene && surface === "msgs" && newsOpen == null && !!document.querySelector("#thread .m-jot"),
+    target: () => onScreen([...document.querySelectorAll("#thread .m-jot")].pop()),
+    title: "Your notes.",
+    body: () => "The handwriting isn't a text anyone sent: it's you, noting what that answer led to. Scroll back through a chat to see how you got here." },
   { id: "journal", when: () => jShown > 0,
     target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
     title: "Your journal.",
-    body: () => "Chats only hold what people said. What your calls led to, what they cost and the milestones you hit get written down here." },
+    body: () => "The milestones you hit, and what your own calls led to, get written down here. What happened in a chat stays noted in that chat." },
   { id: "todo", when: () => stageCounts(currentStage()).done > 0,
     target: () => onScreen($("gTodo")),
     title: "Checked off!",
@@ -3050,19 +3184,19 @@ const TIPS = [
   { id: "move", when: () => openNow().some(a => SELF.has(a.charId)),
     target: () => isMobile ? onScreen(tabBtn("moves")) : onScreen(document.querySelector("#sideCol .h-card.move")),
     title: "Your move.",
-    body: () => "Not everything starts with a text. Calls that are yours alone land " + (isMobile ? "in Moves." : "here.") + " Answering one costs a move, like a reply." },
+    body: () => "Not everything starts with a text. Calls that are yours alone land " + (isMobile ? "in Moves." : "here, under Your move.") + " Answering one costs a move, like a reply." },
   { id: "news", when: () => [...FEED].some(id => game.threads[id].some(m => m.type === "incoming")),
-    target: () => isMobile ? onScreen(tabBtn("feed")) : onScreen(document.querySelector('nav.surfaces button[data-surface="feed"]')),
+    target: () => isMobile ? onScreen(tabBtn("feed")) : onScreen($("railNews").querySelector(".nw")),
     title: "You're in the news.",
-    body: () => "Press, Hacker News, Reddit and competitors post here. Some posts let you weigh in, which costs a move, and the moment passes if you don't." },
+    body: () => "Press, Hacker News, Reddit and competitors post " + (isMobile ? "here" : "here, under your chats: click a headline to open it") + ". Some posts let you weigh in, which costs a move, and the moment passes if you don't." },
   { id: "flag", scene: true, when: () => true,
     target: () => onScreen(document.querySelector(inScene ? "#scReply .gated" : "#reply .gated, #sideCol .gated, #railTriage .gated")),
     title: "⚑ means you earned it.",
     body: () => "This answer is only here because of something you learned: talking to users, reading the market, studying a competitor. Research pays off as better answers later." },
   { id: "ignored", when: () => [...game.resolved.values()].some(r => r.outcome === "@ignored"),
-    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
+    target: () => isMobile ? onScreen(tabBtn("msgs")) : onScreen($("railList")),
     title: "Some things didn't wait.",
-    body: () => "You left a message unanswered long enough that the moment passed. That's a choice too, and the journal shows what it led to." },
+    body: () => "You left a message unanswered long enough that the moment passed. That's a choice too, and it has consequences of its own." },
   { id: "endweek", when: () => canSkipWeek(),
     target: () => onScreen($("endPill")) || (isMobile ? onScreen(tabBtn("moves")) : null),
     title: "Nothing urgent left.",
@@ -3216,7 +3350,6 @@ addEventListener("resize", () => { if (tipOpen) placeTip(); });
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
 function syncSurfaceTabs() {
-  for (const b of document.querySelectorAll("nav.surfaces button")) b.classList.toggle("cur", b.dataset.surface === surface);
   for (const b of document.querySelectorAll("#tabbar button")) b.classList.toggle("cur", b.dataset.surface === surface);
   $("msgsSurface").classList.toggle("cur", surface === "msgs");
   $("feedSurface").classList.toggle("cur", surface === "feed");
@@ -3229,11 +3362,12 @@ function syncSurfaceTabs() {
 function setSurface(sf) {
   if (uiBusy) return;
   if (PHONE_ONLY.has(sf) && !isMobile) sf = "msgs";   // the desktop keeps both in the right column
+  if (sf === "feed" && !isMobile) { openNews(null); return; }   // the desktop's News opens in the thread column
+  if (sf === "msgs") newsOpen = null;
   surface = sf; syncSurfaceTabs();
   if (sf === "msgs") openThread();   // reveal any unread on entry
   render();
 }
-for (const b of document.querySelectorAll("nav.surfaces button")) b.onclick = () => setSurface(b.dataset.surface);
 // The phone's tab bar. Tapping Chat while already on it scrolls the strip back
 // to its start — the iOS "tap the current tab to go to its top" gesture.
 for (const b of document.querySelectorAll("#tabbar button")) b.onclick = () => {
@@ -3250,6 +3384,9 @@ function onModeChange(e) {
   isMobile = e.matches;
   if (!isMobile) {
     if (PHONE_ONLY.has(surface)) surface = "msgs";
+    if (surface === "feed") { surface = "msgs"; newsOpen = -1; }
+  } else if (newsOpen != null) {
+    newsOpen = null; surface = "feed";
     document.body.classList.remove("sc-solo");
   }
   $("todoPop").classList.remove("on");
