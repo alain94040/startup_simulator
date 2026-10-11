@@ -78,8 +78,11 @@
   // never bubbles — only reachable by listening on the way down.
   window.addEventListener("error", function (e) {
     var tgt = e.target;
-    if (tgt && tgt !== window && (tgt.tagName === "SCRIPT" || tgt.tagName === "LINK")) {
-      report("Failed to load: " + (tgt.src || tgt.href || "(unknown url)"));
+    if (tgt && tgt !== window && tgt.tagName) {
+      // A missing <img> is not a boot failure (the intro's illustrations drop
+      // their slot when the file isn't there); only scripts and styles are.
+      if (tgt.tagName === "SCRIPT" || tgt.tagName === "LINK")
+        report("Failed to load: " + (tgt.src || tgt.href || "(unknown url)"));
       return;
     }
     var msg = "Error: " + (e.message || "unknown") +
@@ -512,6 +515,8 @@
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
+  .intro-art { aspect-ratio: 2 / 1; background: var(--soft); overflow: hidden; }
+  .intro-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .intro-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 9px; }
   .intro-step { font-size: 14px; line-height: 1.6; color: #55555c; }
   .intro-step b { display: block; font-size: 21px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; color: var(--ink); }
@@ -3086,13 +3091,19 @@ $("hRestart").onclick = restartGame;
 // The intro is only the premise and the bar to beat. How to play is taught in
 // place by TIPS, each the first time its feature shows up — starting with the
 // chat itself the moment the intro closes.
-// An optional fourth field introduces people: [castId, role, blurb], drawn
-// with their portrait so the player meets the faces before the texts start.
+// The first three cards tell how PlusOne started, so the player meets the
+// co-founders inside the story rather than on a roster. An optional fourth
+// field introduces people: [castId, role, blurb], drawn with their portrait so
+// the player meets the faces before the texts start. An optional fifth is the
+// card's illustration (img/intro/); a missing file just drops the slot.
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping. Right now it's an idea, $10,000, and two people who said yes. You have 25 weeks until the YC deadline.", [
-    ["alex", "Co-founder · CTO", "He quit a $140k engineering job to build this with you. He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
-    ["jordan", "Co-founder · iOS", "She'll build the iPhone app, and she has the best eye for product of the three of you. She's kept her day job, so she works on PlusOne nights and weekends."],
-  ]],
+  ["How it started", "It started with Alex, at 1 a.m.", "You two were trading dating-app horror stories (40 matches this month, zero dates) when one of you said it: what if an app was built to get you on a date, not to keep you swiping? By 2 a.m. it had a name, PlusOne. By morning Alex had written half a spec and offered to quit his $140k job.", [
+    ["alex", "Co-founder · CTO", "He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
+  ], "1_idea.jpg"],
+  ["The third founder", "Then you met Jordan.", "At a friend's party you couldn't stop pitching it, and one person couldn't stop asking questions. Jordan builds iPhone apps for a living and has the best eye for product you've ever met. The next morning she texted: she wanted in.", [
+    ["jordan", "Co-founder · iOS", "She'll build the iPhone app. She's kept her day job, so she works on PlusOne nights and weekends."],
+  ], "2_jordan.jpg"],
+  ["The goal", "You're the founder.", "PlusOne is an idea, $10,000 in the bank, and two people who said yes. You have 25 weeks to make it real enough for Y Combinator to say yes too.", null, "3_goal.jpg"],
 ];
 let introStep = 0;
 // A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
@@ -3111,9 +3122,11 @@ function showIntro() {
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
       '<div class="intro-actions"><button class="intro-next">' + nextLabel + "</button></div></div></div>";
   } else {
-    const [eyebrow, h, b, people] = INTRO[introStep];
+    const [eyebrow, h, b, people, art] = INTRO[introStep];
     $("introModal").innerHTML =
-      '<div class="intro-stripe"></div><div class="intro-body">' +
+      '<div class="intro-stripe"></div>' +
+      (art ? '<div class="intro-art"><img src="img/intro/' + art + '" alt="" onerror="this.parentNode.remove()"></div>' : "") +
+      '<div class="intro-body">' +
       '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" +
       '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
       (people || []).map(([id, role, blurb]) =>
