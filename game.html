@@ -529,7 +529,10 @@
   .ip-name { font-size: 18px; font-weight: 800; color: var(--ink); margin: 1px 0 4px; }
   .ip-blurb { font-size: 13.5px; line-height: 1.5; color: #55555c; }
   .intro-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
-  .intro-dots { display: flex; gap: 6px; align-items: center; }
+  .intro-dots { display: flex; align-items: center; margin-left: -4px; }
+  /* each dot is a button with a finger-sized hit area around the 6px mark */
+  .intro-dot { border: 0; background: none; padding: 10px 4px; cursor: pointer; display: flex; }
+  .intro-dot:hover i:not(.on) { background: var(--dim); }
   .intro-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: .2s; }
   .intro-dots i.on { background: var(--blue); transform: scale(1.3); }
   .intro-actions { display: flex; align-items: center; gap: 14px; }
@@ -3114,7 +3117,9 @@ let introStep = 0;
 // a new player sees the bar to beat before week 1.
 function showIntro() {
   const boardStep = introStep >= INTRO.length;
-  const dots = INTRO.concat([0]).map((_, i) => '<i class="' + (i === introStep ? "on" : "") + '"></i>').join("");
+  // The dots double as navigation: any card, the board included, is one click away.
+  const dots = INTRO.concat([0]).map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
+    '<i class="' + (i === introStep ? "on" : "") + '"></i></button>').join("");
   const nextLabel = boardStep ? "Week 1 →" : "Continue →";
   if (boardStep) {
     $("introModal").innerHTML =
@@ -3144,9 +3149,17 @@ function showIntro() {
   const done = () => { $("introOv").classList.remove("on"); queueTipCheck(); };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
+  $("introModal").querySelectorAll(".intro-dot").forEach(d => d.onclick = () => { introStep = +d.dataset.step; showIntro(); });
   $("introOv").classList.add("on");
   if (boardStep) fillIntroBoard();
 }
+// ← / → page through the cards too (never past the board: Continue starts the run).
+document.addEventListener("keydown", ev => {
+  if (!$("introOv").classList.contains("on")) return;
+  const to = introStep + (ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0);
+  if (to === introStep || to < 0 || to > INTRO.length) return;
+  introStep = to; showIntro();
+});
 async function fillIntroBoard() {
   const { board, online } = await LB.fetchBoard();
   const el = $("introLb");
