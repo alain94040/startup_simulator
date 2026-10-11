@@ -538,7 +538,7 @@
   /* the week's banners would cover a header target on a phone; they're still in the bell */
   body.tip-on #notifs { visibility: hidden; }
   #tipLayer.on { display: block; }
-  #tipRing { position: fixed; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(30,28,24,.34); transition: all .25s ease; pointer-events: none; }
+  #tipRing { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(30,28,24,.34); transition: all .25s ease; pointer-events: none; }
   #tipDeco { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
   #tipDeco .tip-ink { fill: none; stroke: #fffdf8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
   #tipTail { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; animation: tipTailIn .2s ease .18s backwards; }
@@ -558,6 +558,7 @@
   #tipBubble .tip-ok, #tipBubble .tip-go { font: 700 14px Kalam, var(--hand); background: none; border: 0; border-bottom: 2px solid #2d2a26; border-radius: 0; color: #2d2a26; padding: 2px 4px; cursor: pointer; }
   #tipBubble .tip-go { border-bottom-style: dashed; color: #6b6358; }
   #tipBubble .tip-ok:hover, #tipBubble .tip-go:hover { color: #000; }
+  #tipBubble { cursor: pointer; }
   /* Kalam runs small for its size: on a phone the card takes the width and the hand gets bigger. */
   @media (max-width: 1023px) {
     #tipBubble { width: min(340px, calc(100vw - 24px)); padding: 16px 18px 14px; }
@@ -3156,6 +3157,29 @@ try {
 const openNow = () => game.openActions().filter(a => !a.onHold);
 const tabBtn = sf => document.querySelector('#tabbar button[data-surface="' + sf + '"]');
 const onScreen = el => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? el : null; };
+// A list's items, not the list: a rail or strip is mostly empty space below or
+// beside its rows, and the spotlight should hug what's actually in it.
+const items = (root, sel) => { const els = root ? [...root.querySelectorAll(sel)].filter(onScreen) : []; return els.length ? els : null; };
+// The box a tip points at: its target, or the union of a list of targets.
+function tipBox(tip) {
+  const t = tip.target();
+  const els = (Array.isArray(t) ? t : [t]).filter(Boolean);
+  if (!els.length) return null;
+  const rs = els.map(e => e.getBoundingClientRect());
+  const left = Math.min(...rs.map(r => r.left)), top = Math.min(...rs.map(r => r.top));
+  const right = Math.max(...rs.map(r => r.right)), bottom = Math.max(...rs.map(r => r.bottom));
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+}
+// The conversation most recently left to time out, if it's one of the chats.
+function lastIgnoredChat() {
+  let best = null;
+  for (const [id, r] of game.resolved) {
+    if (r.outcome !== "@ignored") continue;
+    const n = game.nodes.get(id), c = n && n.char;
+    if (c && railChars().includes(c) && (!best || r.week >= best.week)) best = { char: c, week: r.week };
+  }
+  return best && best.char;
+}
 const TIPS = [
   // ── week 1: the chat and the two moves ──
   { id: "chat", when: () => railChars().some(id => game.threads[id].some(m => m.type === "incoming")),
@@ -3172,7 +3196,7 @@ const TIPS = [
     body: () => "Every answer spends a move, and you get two a week. Spend the second and the week ends, so you can't answer everyone: choose who waits. Some messages won't wait forever." },
   // ── everything else, the first time it shows up ──
   { id: "room", scene: true, when: () => inScene && !!game.scene,
-    target: () => onScreen($("scRail")) || onScreen($("scThread")),
+    target: () => items($("scRail"), isMobile ? ".story" : ".conv") || onScreen($("scThread")),
     title: "This one happens all at once.",
     body: () => "Some conversations are a sitting. While you're in the room, the rest of the world holds and only these people can reach you. Walking in cost one move; every answer in here is free." },
   { id: "bank", when: () => !!firstChoiceTx(),
@@ -3209,9 +3233,10 @@ const TIPS = [
     title: "⚑ means you earned it.",
     body: () => "This answer is only here because of something you learned: talking to users, reading the market, studying a competitor. Research pays off as better answers later." },
   { id: "ignored", when: () => [...game.resolved.values()].some(r => r.outcome === "@ignored"),
-    target: () => isMobile ? onScreen(tabBtn("msgs")) : onScreen($("railList")),
+    // the person you left waiting, when it's a chat on screen; else the chats
+    target: () => { const c = lastIgnoredChat(); return (c && onScreen($("railList").querySelector('[data-id="' + c + '"]'))) || (isMobile ? onScreen(tabBtn("msgs")) : items($("railList"), ".conv")); },
     title: "Some things didn't wait.",
-    body: () => "You left a message unanswered long enough that the moment passed. That's a choice too, and it has consequences of its own." },
+    body: () => { const c = lastIgnoredChat(); return (c ? "You didn't answer " + game.cast.get(c).def.name + " in time, and the moment passed." : "You left a message unanswered long enough that the moment passed.") + " That's a choice too, and it has consequences of its own."; } },
   { id: "endweek", when: () => canSkipWeek(),
     target: () => onScreen($("endPill")) || (isMobile ? onScreen(tabBtn("moves")) : null),
     title: "Nothing urgent left.",
@@ -3248,8 +3273,7 @@ function maybeShowTip() {
   if (!inScene && tipBeat === beat && tipBeatCount >= 2) return;
   for (const t of TIPS) {
     if (tipsSeen.has(t.id) || (inScene && !t.scene) || (!inScene && t.id === "room") || !t.when()) continue;
-    const el = t.target();
-    if (!el) continue;
+    if (!tipBox(t)) continue;
     if (!inScene) { if (tipBeat !== beat) { tipBeat = beat; tipBeatCount = 0; } tipBeatCount++; }
     showTip(t);
     return;
@@ -3264,9 +3288,10 @@ function showTip(tip) {
   bub.innerHTML = '<b>' + esc(title) + "</b><p>" + esc(tip.body()) + '</p><div class="tip-btns">' +
     (tip.go ? '<button class="tip-go">' + esc(tip.go.label) + "</button>" : "") +
     '<button class="tip-ok">Got it</button></div>';
-  bub.querySelector(".tip-ok").onclick = closeTip;
+  // anywhere on the card dismisses it; only the extra action does more
+  bub.onclick = closeTip;
   const go = bub.querySelector(".tip-go");
-  if (go) go.onclick = () => { closeTip(); tip.go.run(); };
+  if (go) go.onclick = e => { e.stopPropagation(); closeTip(); tip.go.run(); };
   $("tipLayer").classList.add("on");
   document.body.classList.add("tip-on");
   placeTip();
@@ -3287,14 +3312,15 @@ function closeTip() {
 // the viewport, far enough off for the bubble's tail to reach across.
 function placeTip() {
   if (!tipOpen) return;
-  const el = tipOpen.target();
-  if (!el) { closeTip(); return; }
-  const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, pad = 6, m = 12;
+  const r = tipBox(tipOpen);
+  if (!r) { closeTip(); return; }
+  const vw = innerWidth, vh = innerHeight, pad = 6, m = 12;
   // Room for the bubble's tail: a little longer where the screen allows.
   const gap = Math.min(vw, vh) > 600 ? 46 : 38;
   const ring = $("tipRing");
   ring.style.left = (r.left - pad) + "px"; ring.style.top = (r.top - pad) + "px";
   ring.style.width = (r.width + pad * 2) + "px"; ring.style.height = (r.height + pad * 2) + "px";
+  ring.style.borderRadius = Math.min(16, (r.height + pad * 2) / 2) + "px";
   const bub = $("tipBubble");
   bub.style.left = "0px"; bub.style.top = "0px";
   const bw = bub.offsetWidth, bh = bub.offsetHeight;
@@ -3316,10 +3342,9 @@ function placeTip() {
   bub.style.left = x + "px"; bub.style.top = y + "px";
   drawTipInk(r, { left: x, top: y, right: x + bw, bottom: y + bh }, side);
 }
-// The pencil work: two loose ellipses around the target and the bubble's tail
+// The pencil work: two loose loops around the target and the bubble's tail
 // from the card's near edge to it, all through the same rough filter as the card.
 function drawTipInk(r, b, side) {
-  const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2, erx = r.width / 2 + 9, ery = r.height / 2 + 9;
   // A comic speech-bubble tail: a wedge that grows out of the card's near edge
   // and narrows to a point just short of the target. The fill runs a little
   // inside the card to cover its border, so the tail and card read as one shape.
@@ -3349,9 +3374,16 @@ function drawTipInk(r, b, side) {
   $("tipTailInk").innerHTML =
     '<path class="tail-fill" d="M' + pt(I1) + " L" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2) + " L" + pt(I2) + ' Z"/>' +
     '<path class="tail-line" d="' + sides + '"/>';
-  $("tipInk").innerHTML =
-    '<ellipse class="tip-ink" cx="' + n(ecx) + '" cy="' + n(ecy) + '" rx="' + n(erx) + '" ry="' + n(ery) + '" transform="rotate(-2 ' + n(ecx) + " " + n(ecy) + ')"/>' +
-    '<ellipse class="tip-ink" cx="' + n(ecx + 2) + '" cy="' + n(ecy - 1) + '" rx="' + n(erx + 3) + '" ry="' + n(ery + 1) + '" opacity=".6"/>';
+  // Two loose pencil loops around the spotlight: rounded boxes, the second a
+  // little off the first, as if drawn twice by hand.
+  const loop = (g, dx, dy) => {
+    const x = r.left - g + dx, y = r.top - g + dy, w = r.width + g * 2, h = r.height + g * 2, k = Math.min(18, h / 2, w / 2);
+    return "M" + pt({ x: x + k, y }) + " H" + n(x + w - k) + " Q" + pt({ x: x + w, y }) + " " + pt({ x: x + w, y: y + k }) +
+      " V" + n(y + h - k) + " Q" + pt({ x: x + w, y: y + h }) + " " + pt({ x: x + w - k, y: y + h }) +
+      " H" + n(x + k) + " Q" + pt({ x, y: y + h }) + " " + pt({ x, y: y + h - k }) +
+      " V" + n(y + k) + " Q" + pt({ x, y }) + " " + pt({ x: x + k, y }) + " Z";
+  };
+  $("tipInk").innerHTML = '<path class="tip-ink" d="' + loop(8, 0, 0) + '"/>' + '<path class="tip-ink" opacity=".6" d="' + loop(10, 2, -1) + '"/>';
 }
 // The card's handwriting. FontFace rather than a <link>: offline, a failed
 // stylesheet would trip the boot-error panel; a failed FontFace just falls back.
