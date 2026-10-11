@@ -491,6 +491,41 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
+  /* first-time tips: a sketchbook card — a hand-drawn border, a speech-bubble tail
+     to the feature it explains, and a scribbled circle around it on a dimmed screen.
+     The circle (#tipDeco, under the card) and tail (#tipTail, over it) are drawn by placeTip(); "Kalam" is loaded
+     by FontFace in the tips code and falls back to the journal's hand. */
+  #tipLayer { position: fixed; inset: 0; z-index: 70; display: none; }
+  /* the week's banners would cover a header target on a phone; they're still in the bell */
+  body.tip-on #notifs { visibility: hidden; }
+  #tipLayer.on { display: block; }
+  #tipRing { position: fixed; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(30,28,24,.34); transition: all .25s ease; pointer-events: none; }
+  #tipDeco { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  #tipDeco .tip-ink { fill: none; stroke: #fffdf8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
+  #tipTail { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; animation: tipTailIn .2s ease .18s backwards; }
+  @keyframes tipTailIn { from { opacity: 0; } }
+  #tipTail .tail-fill { fill: #fffdf8; }
+  #tipTail .tail-line { fill: none; stroke: #2d2a26; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
+  #tipBubble {
+    position: fixed; width: min(300px, calc(100vw - 30px)); background: #fffdf8; color: #2d2a26;
+    border-radius: 4px; padding: 16px 20px 14px; box-shadow: 3px 4px 0 rgba(0,0,0,.08);
+    transform: rotate(-1.2deg); font-family: Kalam, var(--hand); animation: tipPop .3s cubic-bezier(.2,.9,.3,1.15);
+  }
+  #tipBubble::before { content: ""; position: absolute; inset: -3px; border: 2px solid #2d2a26; border-radius: 10px 4px 12px 5px; filter: url(#tipRough); pointer-events: none; }
+  @keyframes tipPop { from { transform: rotate(-1.2deg) scale(.85); opacity: 0; } }
+  #tipBubble b { display: block; font-size: 19px; font-weight: 700; line-height: 1.25; margin-bottom: 4px; }
+  #tipBubble p { font-size: 14.5px; line-height: 1.4; color: #4a453d; }
+  #tipBubble .tip-btns { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 10px; }
+  #tipBubble .tip-ok, #tipBubble .tip-go { font: 700 14px Kalam, var(--hand); background: none; border: 0; border-bottom: 2px solid #2d2a26; border-radius: 0; color: #2d2a26; padding: 2px 4px; cursor: pointer; }
+  #tipBubble .tip-go { border-bottom-style: dashed; color: #6b6358; }
+  #tipBubble .tip-ok:hover, #tipBubble .tip-go:hover { color: #000; }
+  /* Kalam runs small for its size: on a phone the card takes the width and the hand gets bigger. */
+  @media (max-width: 1023px) {
+    #tipBubble { width: min(340px, calc(100vw - 24px)); padding: 16px 18px 14px; }
+    #tipBubble b { font-size: 22px; }
+    #tipBubble p { font-size: 17.5px; line-height: 1.38; color: #3d3932; }
+    #tipBubble .tip-ok, #tipBubble .tip-go { font-size: 17px; padding: 6px 4px 2px; }
+  }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
   /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
@@ -1086,6 +1121,9 @@
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
+<div id="tipLayer"><div id="tipRing"></div>
+  <svg id="tipDeco"><defs><filter id="tipRough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter></defs><g id="tipInk"></g></svg>
+  <div id="tipBubble"></div><svg id="tipTail"><g id="tipTailInk"></g></svg></div>
 
 <details id="debug">
   <summary>debug</summary>
@@ -1687,7 +1725,7 @@ function renderThread(opts) {
     rbox.innerHTML =
       '<button class="cta-pill"' + (can ? "" : " disabled") + ">" + (can ? "Respond ↓" : "No actions left this week") + "</button>";
     const btn = rbox.querySelector(".cta-pill");
-    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); };
+    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); queueTipCheck(); };
     return;
   }
   rbox.innerHTML = '<div class="hint"><button class="tc-close">×</button>pick a reply · ⚑ = unlocked by what you\'ve learned</div>' +
@@ -2334,6 +2372,7 @@ function renderFocus(opts) {
 
   renderFocusThread(opts);
   renderSceneSelfDecision(opts);
+  queueTipCheck();
 }
 
 // The founder's own open beat in a scene — the impasse call, the signing — is a
@@ -2885,10 +2924,11 @@ function restartGame() {
 $("hRestart").onclick = restartGame;
 
 // ── intro ─────────────────────────────────────────────────────────────────────
+// The intro is only the premise and the bar to beat. How to play is taught in
+// place by TIPS, each the first time its feature shows up — starting with the
+// chat itself the moment the intro closes.
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until the YC deadline. Build something worth the batch before the clock — or the cash — runs out."],
-  ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
-  ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
+  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping, and right now it exists mostly in your co-founders' heads. You have $10,000 and 25 weeks until the YC deadline. Build something worth the batch before the clock, or the cash, runs out. We'll show you around as things come up."],
 ];
 let introStep = 0;
 // A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
@@ -2916,7 +2956,7 @@ function showIntro() {
       '<div class="intro-actions"><button class="intro-skip">skip</button>' +
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   }
-  const done = () => { $("introOv").classList.remove("on"); };
+  const done = () => { $("introOv").classList.remove("on"); queueTipCheck(); };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
   $("introOv").classList.add("on");
@@ -2929,6 +2969,227 @@ async function fillIntroBoard() {
   el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
 }
 showIntro();
+
+// ── first-time tips ───────────────────────────────────────────────────────────
+// Onboarding happens when a feature is first needed, not up front: each tip is
+// a comic speech bubble pointing straight at the thing it explains, shown the
+// first time its `when` holds and its `target` is on screen. The rest of the
+// screen dims around a spotlight on the target. Seen tips persist per browser,
+// so a second run doesn't re-teach (`?tips=reset` brings them back).
+// `scene: true` tips may fire inside a room; the rest wait until you're back in
+// the regular app. Week 1's tips (chat, Respond, the two moves) are the whole
+// tutorial; everything after waits for its own first appearance.
+const TIP_KEY = "plusone_tips_seen";
+let tipsSeen = new Set();
+try {
+  if (/[?&]tips=reset\b/.test(location.search)) localStorage.removeItem(TIP_KEY);
+  tipsSeen = new Set(JSON.parse(localStorage.getItem(TIP_KEY)) || []);
+} catch (e) { /* no storage: tips are per page load */ }
+const openNow = () => game.openActions().filter(a => !a.onHold);
+const tabBtn = sf => document.querySelector('#tabbar button[data-surface="' + sf + '"]');
+const onScreen = el => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? el : null; };
+const TIPS = [
+  // ── week 1: the chat and the two moves ──
+  { id: "chat", when: () => railChars().some(id => game.threads[id].some(m => m.type === "incoming")),
+    target: () => onScreen($("railList").querySelector(".unread")) || onScreen($("railList").firstElementChild),
+    title: "People text you.",
+    body: () => "Your co-founders, and later users, investors and family, all reach you here. A blue dot means a new message: " + (isMobile ? "tap a circle" : "click a conversation") + " to read it." },
+  { id: "respond", when: () => surface === "msgs",
+    target: () => onScreen(document.querySelector("#reply .cta-pill:not([disabled])")),
+    title: "Answer them.",
+    body: () => "When someone is waiting on you, tap Respond and pick what to say. What you say changes the story." },
+  { id: "moves", when: () => game.actionsLeft === 1,
+    target: () => onScreen($("dots")),
+    title: "That was one of your two moves.",
+    body: () => "Every answer spends a move, and you get two a week. Spend the second and the week ends, so you can't answer everyone: choose who waits. Some messages won't wait forever." },
+  // ── everything else, the first time it shows up ──
+  { id: "room", scene: true, when: () => inScene && !!game.scene,
+    target: () => onScreen($("scRail")) || onScreen($("scThread")),
+    title: "This one happens all at once.",
+    body: () => "Some conversations are a sitting. While you're in the room, the rest of the world holds and only these people can reach you. Walking in cost one move; every answer in here is free." },
+  { id: "bank", when: () => !!firstChoiceTx(),
+    target: () => isMobile ? onScreen(tabBtn("bank")) : onScreen($("gRunway")),
+    title: () => { const t = firstChoiceTx(); return t.delta < 0 ? "That cost you " + money(-t.delta) + "." : "Money in: " + money(t.delta) + "."; },
+    body: () => "Every dollar in or out is on your bank statement, along with the " + money(game.burnPerWeek) + " a week it takes to keep the lights on. " + (isMobile ? "The Bank tab" : "Runway, up here,") + " shows how many weeks of cash you have left.",
+    go: { label: "Open the Bank", run: () => setSurface("bank") } },
+  { id: "week", when: () => game.s.week >= 2,
+    target: () => onScreen($("gRunway")),
+    title: "A week went by.",
+    body: () => "Your two moves are back, and " + money(game.burnPerWeek) + " is gone: that's your weekly burn. Runway is how many weeks of cash you have left at that rate." },
+  { id: "journal", when: () => jShown > 0,
+    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
+    title: "Your journal.",
+    body: () => "Chats only hold what people said. What your calls led to, what they cost and the milestones you hit get written down here." },
+  { id: "todo", when: () => stageCounts(currentStage()).done > 0,
+    target: () => onScreen($("gTodo")),
+    title: "Checked off!",
+    body: () => "This is your to-do list for the current chapter: what this stretch of the story needs from you. " + (isMobile ? "Tap" : "Click") + " it to see the whole list." },
+  { id: "move", when: () => openNow().some(a => SELF.has(a.charId)),
+    target: () => isMobile ? onScreen(tabBtn("moves")) : onScreen(document.querySelector("#sideCol .h-card.move")),
+    title: "Your move.",
+    body: () => "Not everything starts with a text. Calls that are yours alone land " + (isMobile ? "in Moves." : "here.") + " Answering one costs a move, like a reply." },
+  { id: "news", when: () => [...FEED].some(id => game.threads[id].some(m => m.type === "incoming")),
+    target: () => isMobile ? onScreen(tabBtn("feed")) : onScreen(document.querySelector('nav.surfaces button[data-surface="feed"]')),
+    title: "You're in the news.",
+    body: () => "Press, Hacker News, Reddit and competitors post here. Some posts let you weigh in, which costs a move, and the moment passes if you don't." },
+  { id: "flag", scene: true, when: () => true,
+    target: () => onScreen(document.querySelector(inScene ? "#scReply .gated" : "#reply .gated, #sideCol .gated, #railTriage .gated")),
+    title: "⚑ means you earned it.",
+    body: () => "This answer is only here because of something you learned: talking to users, reading the market, studying a competitor. Research pays off as better answers later." },
+  { id: "ignored", when: () => [...game.resolved.values()].some(r => r.outcome === "@ignored"),
+    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
+    title: "Some things didn't wait.",
+    body: () => "You left a message unanswered long enough that the moment passed. That's a choice too, and the journal shows what it led to." },
+  { id: "endweek", when: () => canSkipWeek(),
+    target: () => onScreen($("endPill")) || (isMobile ? onScreen(tabBtn("moves")) : null),
+    title: "Nothing urgent left.",
+    body: () => "Everything still open can wait. Spend your moves on it anyway, or end the week here." },
+];
+// The first money a choice moved (not the weekly burn): the moment to meet the Bank.
+function firstChoiceTx() {
+  const all = game.ledger.flatMap(w => w.transactions).concat(game._weekTx);
+  return all.find(t => t.type === "expense" || t.type === "income") || null;
+}
+function tipBlocked() {
+  if (uiBusy || gameEnded() || tipOpen) return true;
+  for (const id of ["introOv", "endOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
+  return $("cine").classList.contains("show") || $("lightbox").classList.contains("show");
+}
+var tipTimer = null;   // var: render() may run before this line does
+let tipOpen = null;
+// At most two tips per beat of play (a move spent, or a week turned), so a week
+// that unlocks several features doesn't open on a stack of bubbles; the rest
+// wait for the next beat. Room tips are exempt: a sitting is one long beat.
+let tipBeat = null, tipBeatCount = 0;
+const playBeat = () => game.s.week * 10 + game.actionsLeft;
+// Checked a beat after a render, never inside one: a render that's about to
+// hand off to the week turn (scheduleTurn) has set uiBusy by then, so a tip
+// never pops up over a week that is already flipping. An open bubble is
+// re-aimed instead, since the render may have replaced its target.
+function queueTipCheck() {
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => { if (tipOpen) placeTip(); else maybeShowTip(); }, 350);
+}
+function maybeShowTip() {
+  if (tipBlocked()) return;
+  const beat = playBeat();
+  if (!inScene && tipBeat === beat && tipBeatCount >= 2) return;
+  for (const t of TIPS) {
+    if (tipsSeen.has(t.id) || (inScene && !t.scene) || (!inScene && t.id === "room") || !t.when()) continue;
+    const el = t.target();
+    if (!el) continue;
+    if (!inScene) { if (tipBeat !== beat) { tipBeat = beat; tipBeatCount = 0; } tipBeatCount++; }
+    showTip(t);
+    return;
+  }
+}
+function showTip(tip) {
+  tipsSeen.add(tip.id);
+  try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
+  tipOpen = tip;
+  const bub = $("tipBubble");
+  const title = typeof tip.title === "function" ? tip.title() : tip.title;
+  bub.innerHTML = '<b>' + esc(title) + "</b><p>" + esc(tip.body()) + '</p><div class="tip-btns">' +
+    (tip.go ? '<button class="tip-go">' + esc(tip.go.label) + "</button>" : "") +
+    '<button class="tip-ok">Got it</button></div>';
+  bub.querySelector(".tip-ok").onclick = closeTip;
+  const go = bub.querySelector(".tip-go");
+  if (go) go.onclick = () => { closeTip(); tip.go.run(); };
+  $("tipLayer").classList.add("on");
+  document.body.classList.add("tip-on");
+  placeTip();
+  // keep aiming while it's up: a room slides in, a strip reorders, a column
+  // scrolls — the spotlight has to follow its target
+  clearInterval(tipAim); tipAim = setInterval(placeTip, 250);
+}
+let tipAim = null;
+function closeTip() {
+  clearInterval(tipAim); tipAim = null;
+  tipOpen = null;
+  $("tipLayer").classList.remove("on");
+  document.body.classList.remove("tip-on");
+  queueTipCheck();
+}
+// Aim the bubble: a scribbled circle hugs the target, and the card sits on the
+// side with the most room (below, above, or beside a tall column), clamped to
+// the viewport, far enough off for the bubble's tail to reach across.
+function placeTip() {
+  if (!tipOpen) return;
+  const el = tipOpen.target();
+  if (!el) { closeTip(); return; }
+  const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, pad = 6, m = 12;
+  // Room for the bubble's tail: a little longer where the screen allows.
+  const gap = Math.min(vw, vh) > 600 ? 46 : 38;
+  const ring = $("tipRing");
+  ring.style.left = (r.left - pad) + "px"; ring.style.top = (r.top - pad) + "px";
+  ring.style.width = (r.width + pad * 2) + "px"; ring.style.height = (r.height + pad * 2) + "px";
+  const bub = $("tipBubble");
+  bub.style.left = "0px"; bub.style.top = "0px";
+  const bw = bub.offsetWidth, bh = bub.offsetHeight;
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let side;
+  if (r.height > vh * 0.4) side = r.left > vw / 2 ? "left" : "right";
+  else side = (vh - r.bottom) >= bh + gap + m || r.top < bh + gap + m ? "below" : "above";
+  let x, y;
+  if (side === "below" || side === "above") {
+    // Off-centre on purpose, toward the middle of the screen, so the tail leans in.
+    x = Math.max(m, Math.min(vw - bw - m, cx - bw / 2 + (cx < vw / 2 ? 44 : -44)));
+    y = side === "below" ? r.bottom + pad + gap : r.top - pad - gap - bh;
+  } else {
+    x = side === "left" ? r.left - pad - gap - bw : r.right + pad + gap;
+    x = Math.max(m, Math.min(vw - bw - m, x));
+    y = Math.max(m, Math.min(vh - bh - m, cy - bh / 2));
+  }
+  bub.dataset.side = side;
+  bub.style.left = x + "px"; bub.style.top = y + "px";
+  drawTipInk(r, { left: x, top: y, right: x + bw, bottom: y + bh }, side);
+}
+// The pencil work: two loose ellipses around the target and the bubble's tail
+// from the card's near edge to it, all through the same rough filter as the card.
+function drawTipInk(r, b, side) {
+  const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2, erx = r.width / 2 + 9, ery = r.height / 2 + 9;
+  // A comic speech-bubble tail: a wedge that grows out of the card's near edge
+  // and narrows to a point just short of the target. The fill runs a little
+  // inside the card to cover its border, so the tail and card read as one shape.
+  let S, T, dir;
+  if (side === "below" || side === "above") {
+    const up = side === "below";   // the target is above the card
+    const tx = Math.max(r.left + r.width * 0.3, Math.min(r.right - r.width * 0.3, (b.left + b.right) / 2));
+    S = { x: Math.max(b.left + 34, Math.min(b.right - 34, tx + (tx < (b.left + b.right) / 2 ? 22 : -22))), y: up ? b.top : b.bottom };
+    T = { x: tx, y: up ? r.bottom + 13 : r.top - 13 };
+    dir = { x: 0, y: up ? -1 : 1 };
+  } else {
+    const ty = Math.max(r.top + r.height * 0.3, Math.min(r.bottom - r.height * 0.3, (b.top + b.bottom) / 2));
+    S = { x: side === "left" ? b.right : b.left, y: Math.max(b.top + 30, Math.min(b.bottom - 30, ty + 14)) };
+    T = { x: side === "left" ? r.left - 13 : r.right + 13, y: ty };
+    dir = { x: side === "left" ? 1 : -1, y: 0 };
+  }
+  const half = 13, lip = 3, sink = 12;   // base half-width; border sits 3px outside the box; fill sinks 12px in
+  const px = -dir.y, py = dir.x;          // along the card edge
+  const at = (o, d) => ({ x: S.x + px * o + dir.x * d, y: S.y + py * o + dir.y * d });
+  const B1 = at(-half, lip), B2 = at(half, lip), I1 = at(-half - 2, -sink), I2 = at(half + 2, -sink);
+  // Both sides bow the same way, so the tail curls a little like an inked one.
+  const mid = (P, f) => ({ x: P.x + (T.x - P.x) * 0.5 + px * f, y: P.y + (T.y - P.y) * 0.5 + py * f });
+  const bend = (T.x - S.x) * px + (T.y - S.y) * py > 0 ? -7 : 7;
+  const Q1 = mid(B1, bend), Q2 = mid(B2, bend);
+  const n = v => Math.round(v * 10) / 10, pt = p => n(p.x) + "," + n(p.y);
+  const sides = "M" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2);
+  $("tipTailInk").innerHTML =
+    '<path class="tail-fill" d="M' + pt(I1) + " L" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2) + " L" + pt(I2) + ' Z"/>' +
+    '<path class="tail-line" d="' + sides + '"/>';
+  $("tipInk").innerHTML =
+    '<ellipse class="tip-ink" cx="' + n(ecx) + '" cy="' + n(ecy) + '" rx="' + n(erx) + '" ry="' + n(ery) + '" transform="rotate(-2 ' + n(ecx) + " " + n(ecy) + ')"/>' +
+    '<ellipse class="tip-ink" cx="' + n(ecx + 2) + '" cy="' + n(ecy - 1) + '" rx="' + n(erx + 3) + '" ry="' + n(ery + 1) + '" opacity=".6"/>';
+}
+// The card's handwriting. FontFace rather than a <link>: offline, a failed
+// stylesheet would trip the boot-error panel; a failed FontFace just falls back.
+try {
+  for (const [w, f] of [["400", "YA9dr0Wd4kDdMthROCc"], ["700", "YA9Qr0Wd4kDdMtDqHTLMkiQ"]]) {
+    const ff = new FontFace("Kalam", "url(https://fonts.gstatic.com/s/kalam/v18/" + f + ".woff2)", { weight: w });
+    ff.load().then(x => document.fonts.add(x)).catch(() => {});
+  }
+} catch (e) { /* no FontFace: the journal's hand it is */ }
+addEventListener("resize", () => { if (tipOpen) placeTip(); });
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
 function syncSurfaceTabs() {
@@ -2998,6 +3259,7 @@ function render() {
   if (surface === "bank") renderBank();
   renderSide();
   if (!isMobile && $("todoPop").classList.contains("on")) renderTodo();
+  queueTipCheck();
 }
 
 // ── debug ─────────────────────────────────────────────────────────────────────
