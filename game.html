@@ -1410,6 +1410,16 @@ const STAGES = [
 const urlSeed = new URLSearchParams(location.search).get("seed");
 let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
 let game = new Engine({ seed });
+// Progress telemetry: each week reached and the run's ending are logged to
+// Clicky as virtual pageviews (/play/week-07, /play/end-deadline), so the
+// Content report reads as a funnel of how far players get. A no-op when the
+// tracker is blocked or hasn't loaded; each path logs once per page load.
+const tracked = new Set();
+function track(path, title) {
+  if (tracked.has(path)) return;
+  tracked.add(path);
+  try { if (window.clicky && clicky.log) clicky.log("/play/" + path, title, "pageview"); } catch (e) {}
+}
 const gameEnded = () => game.s.game_over || game.s.game_won;   // run is over — browsing only, no more calls
 let selected = "alex";
 let surface = "msgs";
@@ -2682,6 +2692,7 @@ function advanceWeek() {
   const cashBefore = game.stats().cash;
 
   game.nextWeek();
+  if (!gameEnded()) track("week-" + String(game.s.week).padStart(2, "0"), "Week " + game.s.week + " · ch " + game.chapter);
 
   // gather this week's notifications (todo check-offs first, then arrivals)
   weekNotes = [];
@@ -2996,6 +3007,8 @@ function checkEndgame() {
   const [og, ocol] = GRADE(avg);
   egScore = avg; egWon = !!s.ycAccepted; egWeek = s.week; egLbMounted = false;
   egSubmitted = false; egSubmittedRank = null;
+  track("end-" + (s.ycAccepted ? "yc" : s.deadline_passed ? "deadline" : s.cofounder_left ? "alex-left" : "broke"),
+    "Run over at week " + s.week + " · grade " + og);
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
