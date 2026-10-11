@@ -1420,24 +1420,37 @@ let noteQueue = [], noteTimer = null;
 let journalSeen = 0;            // journal entries the player has looked at (phone tab badge)
 let newsOpen = null;            // desktop: the thread column shows the News (seq of the post to focus), not a chat
 
-// The journal mirror source: outcomes + stamps (always the founder thread —
-// the engine only ever records those there) + orphan drops — incoming
-// messages with no nodeId. Those come from the founder's own thread, and
-// from any other SELF character (Growth, Analytics, Users): a cast intro
-// line or a scheduled data pulse ("weekly pulse: ...") that isn't an action
-// card, so with no thread to show it in it reads as journal recap instead.
-// A journal line about a conversation is pinned in that conversation instead
-// (a ✎ jot under the exchange it recaps — threadEntries), or under the post
-// on the News Feed; the journal keeps only what has no other home: the
-// milestone stamps and the outcomes of your own moves.
+// The journal mirror: a diary, about one line a week. What always goes in is
+// what has no other home: the milestone stamps, the outcomes of your own moves
+// (founder-thread outcomes with no conversation), and the founder's own orphan
+// lines. A journal line about a conversation is pinned in that conversation
+// (a ✎ jot under the exchange it recaps — threadEntries), or under its post on
+// the News Feed — but a closed week with no line of its own borrows the most
+// important of those, so the early weeks, which happen almost all in chat,
+// aren't blank. The data pulses (Analytics, Users: orphan drops from a SELF
+// character with no thread) only fill a closed week that has nothing better —
+// they also buzz as notifications, so a busy week doesn't repeat them here.
+// A filler sorts at the end of its week, so it only ever lands at the tail of
+// the list (the turn-end reveal inks the tail in).
 const jotHome = m => (m.type === "outcome" && m.sourceChar && !SELF.has(m.sourceChar) && game.threads[m.sourceChar]) ? m.sourceChar : null;
 function journalMirror() {
-  const entries = game.threads.founder.filter(m => m.type === "stamp" || (m.type === "outcome" && !jotHome(m)) || (m.type === "incoming" && !m.nodeId));
+  const f = game.threads.founder;
+  const entries = f.filter(m => m.type === "stamp" || (m.type === "outcome" && !jotHome(m)) || (m.type === "incoming" && !m.nodeId));
+  const prose = new Set(entries.filter(m => m.type !== "stamp").map(m => m.week));
+  const closed = w => w < game.s.week || gameEnded();
+  const fill = (w, m) => { if (m && closed(w) && !prose.has(w)) { entries.push({ ...m, filler: true }); prose.add(w); } };
+  // the week's story beat over its ambient one; the last word over the first
+  const weight = m => { const n = m.nodeId && game.nodes.get(m.nodeId); return n && (n.ambient || n.filler) ? 0 : 1; };
+  const best = {};
+  for (const m of f) if (m.type === "outcome" && jotHome(m) && (!best[m.week] || weight(m) >= weight(best[m.week]))) best[m.week] = m;
+  for (const w in best) fill(+w, best[w]);
+  const pulse = {};
   for (const id of SELF) {
     if (id === "founder") continue;
-    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) entries.push(m);
+    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) pulse[m.week] = m;
   }
-  return entries.sort((a, b) => a.seq - b.seq);
+  for (const w in pulse) fill(+w, pulse[w]);
+  return entries.sort((a, b) => a.week - b.week || (a.filler ? 1 : 0) - (b.filler ? 1 : 0) || a.seq - b.seq);
 }
 function resetUiState() {
   feedSeenLen = {}; sceneStartSeq = null; inScene = false;
