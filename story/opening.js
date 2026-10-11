@@ -58,7 +58,7 @@
           {
             key: "standup", label: "Quick call every morning",
             reply: "let's do a quick 15-minute call every morning at 9. keeps us both honest while you're juggling the day job.",
-            journal: "Set up a quick 15-minute call with Jordan every morning at 9. Keeps us both honest while she's juggling her day job.",
+            journal: "Every morning at 9, fifteen minutes with Jordan. It's the only slice of her day the day job doesn't own.",
             effects: { char: { jordan: { morale: 5 } } },
             fx: () => "A quick call every morning at 9. Keeps both of you honest.",
           },

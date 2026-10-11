@@ -183,7 +183,7 @@
             effects: { signal: 3, flags: { ios_unblocked: true }, char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.ios_server) { s.items.ios_server.status = "done"; s.items.ios_server.quality = "solid"; }
-              return "The iPhone app is done — login, matching and messages all work, same as the website. Ready to open it up.";
+              return "Both apps run on the real engine now. Nothing stands between us and a stranger trying it.";
             },
           },
         ],
