@@ -491,31 +491,34 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
-  /* first-time tips: a comic speech bubble pointing at the feature it explains,
-     over a spotlight that dims everything but the target */
+  /* first-time tips: a sketchbook card — a hand-drawn border, a sketched arrow to
+     the feature it explains, and a scribbled circle around it on a dimmed screen.
+     The arrow and circle are drawn in #tipDeco by placeTip(); "Kalam" is loaded
+     by FontFace in the tips code and falls back to the journal's hand. */
   #tipLayer { position: fixed; inset: 0; z-index: 70; display: none; }
   /* the week's banners would cover a header target on a phone; they're still in the bell */
   body.tip-on #notifs { visibility: hidden; }
   #tipLayer.on { display: block; }
-  #tipRing { position: fixed; border-radius: 12px; box-shadow: 0 0 0 9999px rgba(12,12,18,.42); outline: 3px solid #ffd60a; outline-offset: 0; transition: all .25s ease; pointer-events: none; }
+  #tipRing { position: fixed; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(30,28,24,.34); transition: all .25s ease; pointer-events: none; }
+  #tipDeco { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  #tipDeco .tip-ink { fill: none; stroke: #fffdf8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
+  #tipDeco .tip-shaft { stroke-width: 3.4; }
+  #tipDeco .tip-head { fill: #fffdf8; stroke-width: 1.6; }
+  #tipDeco .tip-halo { fill: none; stroke: rgba(30,28,24,.45); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
+  #tipDeco .tip-halo.tip-head { fill: rgba(30,28,24,.45); stroke-width: 5; }
   #tipBubble {
-    position: fixed; width: min(300px, calc(100vw - 20px)); background: #fff; color: #1a1a1f;
-    border: 2.5px solid #1a1a1f; border-radius: 20px; padding: 14px 16px 12px;
-    box-shadow: 5px 5px 0 #1a1a1f; animation: tipPop .32s cubic-bezier(.2,1.4,.4,1);
+    position: fixed; width: min(300px, calc(100vw - 30px)); background: #fffdf8; color: #2d2a26;
+    border-radius: 4px; padding: 16px 20px 14px; box-shadow: 3px 4px 0 rgba(0,0,0,.08);
+    transform: rotate(-1.2deg); font-family: Kalam, var(--hand); animation: tipPop .3s cubic-bezier(.2,.9,.3,1.15);
   }
-  @keyframes tipPop { from { transform: scale(.7); opacity: 0; } }
-  #tipBubble b { display: block; font-size: 16px; font-weight: 800; margin-bottom: 5px; }
-  #tipBubble p { font-size: 13.5px; line-height: 1.45; color: #3a3a42; }
-  #tipBubble .tip-btns { display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 11px; }
-  #tipBubble .tip-go { border: 2px solid #1a1a1f; background: #fff; color: #1a1a1f; font-weight: 700; font-size: 13px; border-radius: 999px; padding: 6px 14px; cursor: pointer; }
-  #tipBubble .tip-ok { display: block; border: 2px solid #1a1a1f; background: #ffd60a; color: #1a1a1f; font-weight: 800; font-size: 13px; border-radius: 999px; padding: 6px 16px; cursor: pointer; box-shadow: 2px 2px 0 #1a1a1f; }
-  #tipBubble .tip-ok:active { transform: translate(2px, 2px); box-shadow: none; }
-  /* the tail: a bordered triangle, flipped to whichever side faces the target */
-  .tip-tail { position: absolute; width: 18px; height: 18px; background: #fff; border: 2.5px solid #1a1a1f; transform: translate(-50%, -50%) rotate(45deg); }
-  #tipBubble[data-side="below"] .tip-tail { top: 0 !important; border-right: 0; border-bottom: 0; margin-top: -1px; }
-  #tipBubble[data-side="above"] .tip-tail { top: 100% !important; border-left: 0; border-top: 0; margin-top: 1px; }
-  #tipBubble[data-side="left"] .tip-tail { left: 100% !important; border-left: 0; border-bottom: 0; margin-left: 1px; }
-  #tipBubble[data-side="right"] .tip-tail { left: 0 !important; border-right: 0; border-top: 0; margin-left: -1px; }
+  #tipBubble::before { content: ""; position: absolute; inset: -3px; border: 2px solid #2d2a26; border-radius: 10px 4px 12px 5px; filter: url(#tipRough); pointer-events: none; }
+  @keyframes tipPop { from { transform: rotate(-1.2deg) scale(.85); opacity: 0; } }
+  #tipBubble b { display: block; font-size: 19px; font-weight: 700; line-height: 1.25; margin-bottom: 4px; }
+  #tipBubble p { font-size: 14.5px; line-height: 1.4; color: #4a453d; }
+  #tipBubble .tip-btns { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 10px; }
+  #tipBubble .tip-ok, #tipBubble .tip-go { font: 700 14px Kalam, var(--hand); background: none; border: 0; border-bottom: 2px solid #2d2a26; border-radius: 0; color: #2d2a26; padding: 2px 4px; cursor: pointer; }
+  #tipBubble .tip-go { border-bottom-style: dashed; color: #6b6358; }
+  #tipBubble .tip-ok:hover, #tipBubble .tip-go:hover { color: #000; }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
   /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
@@ -1108,7 +1111,9 @@
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
-<div id="tipLayer"><div id="tipRing"></div><div id="tipBubble"></div></div>
+<div id="tipLayer"><div id="tipRing"></div>
+  <svg id="tipDeco"><defs><filter id="tipRough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter></defs><g id="tipInk"></g></svg>
+  <div id="tipBubble"></div></div>
 
 <details id="debug">
   <summary>debug</summary>
@@ -3062,7 +3067,7 @@ function showTip(tip) {
   const title = typeof tip.title === "function" ? tip.title() : tip.title;
   bub.innerHTML = '<b>' + esc(title) + "</b><p>" + esc(tip.body()) + '</p><div class="tip-btns">' +
     (tip.go ? '<button class="tip-go">' + esc(tip.go.label) + "</button>" : "") +
-    '<button class="tip-ok">Got it</button></div><i class="tip-tail"></i>';
+    '<button class="tip-ok">Got it</button></div>';
   bub.querySelector(".tip-ok").onclick = closeTip;
   const go = bub.querySelector(".tip-go");
   if (go) go.onclick = () => { closeTip(); tip.go.run(); };
@@ -3081,18 +3086,20 @@ function closeTip() {
   document.body.classList.remove("tip-on");
   queueTipCheck();
 }
-// Aim the bubble: the spotlight hugs the target, and the bubble sits on the
+// Aim the bubble: a scribbled circle hugs the target, and the card sits on the
 // side with the most room (below, above, or beside a tall column), clamped to
-// the viewport, with its tail pointing at the target's middle.
+// the viewport, far enough off that a sketched arrow can reach across.
 function placeTip() {
   if (!tipOpen) return;
   const el = tipOpen.target();
   if (!el) { closeTip(); return; }
-  const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, pad = 6, gap = 16, m = 10;
+  const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, pad = 6, m = 12;
+  // Room for the arrow to swoop: a long reach where the screen allows, a short one on a phone.
+  const gap = Math.min(vw, vh) > 600 ? 74 : 52;
   const ring = $("tipRing");
   ring.style.left = (r.left - pad) + "px"; ring.style.top = (r.top - pad) + "px";
   ring.style.width = (r.width + pad * 2) + "px"; ring.style.height = (r.height + pad * 2) + "px";
-  const bub = $("tipBubble"), tail = bub.querySelector(".tip-tail");
+  const bub = $("tipBubble");
   bub.style.left = "0px"; bub.style.top = "0px";
   const bw = bub.offsetWidth, bh = bub.offsetHeight;
   const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
@@ -3101,18 +3108,62 @@ function placeTip() {
   else side = (vh - r.bottom) >= bh + gap + m || r.top < bh + gap + m ? "below" : "above";
   let x, y;
   if (side === "below" || side === "above") {
-    x = Math.max(m, Math.min(vw - bw - m, cx - bw / 2));
+    // Off-centre on purpose, toward the middle of the screen, so the arrow comes in on a slant.
+    x = Math.max(m, Math.min(vw - bw - m, cx - bw / 2 + (cx < vw / 2 ? 44 : -44)));
     y = side === "below" ? r.bottom + pad + gap : r.top - pad - gap - bh;
-    tail.style.left = Math.max(18, Math.min(bw - 18, cx - x)) + "px"; tail.style.top = "";
   } else {
     x = side === "left" ? r.left - pad - gap - bw : r.right + pad + gap;
     x = Math.max(m, Math.min(vw - bw - m, x));
     y = Math.max(m, Math.min(vh - bh - m, cy - bh / 2));
-    tail.style.top = Math.max(18, Math.min(bh - 18, cy - y)) + "px"; tail.style.left = "";
   }
   bub.dataset.side = side;
   bub.style.left = x + "px"; bub.style.top = y + "px";
+  drawTipInk(r, { left: x, top: y, right: x + bw, bottom: y + bh }, side);
 }
+// The pencil work: two loose ellipses around the target and a curved arrow from
+// the card's near edge to it, all through the same rough filter as the card.
+function drawTipInk(r, b, side) {
+  const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2, erx = r.width / 2 + 9, ery = r.height / 2 + 9;
+  let S, T;
+  if (side === "below" || side === "above") {
+    const up = side === "below";   // the target is above the card
+    const tx = Math.max(r.left + 10, Math.min(r.right - 10, (b.left + b.right) / 2));
+    S = { x: Math.max(b.left + 30, Math.min(b.right - 30, tx + (tx < (b.left + b.right) / 2 ? 46 : -46))), y: up ? b.top - 6 : b.bottom + 6 };
+    T = { x: tx, y: up ? r.bottom + 17 : r.top - 17 };
+  } else {
+    const ty = Math.max(r.top + 14, Math.min(r.bottom - 14, (b.top + b.bottom) / 2));
+    S = { x: side === "left" ? b.right + 6 : b.left - 6, y: Math.max(b.top + 24, Math.min(b.bottom - 24, ty + 30)) };
+    T = { x: side === "left" ? r.left - 17 : r.right + 17, y: ty };
+  }
+  // A swoop, not a straight jab: a cubic that leaves the card sideways and
+  // comes down onto the target, bowed away from the straight line.
+  const dx = T.x - S.x, dy = T.y - S.y, len = Math.hypot(dx, dy) || 1;
+  const nx = -dy / len, ny = dx / len, bow = Math.min(40, len * 0.45) * (S.x < T.x ? -1 : 1);
+  const C1 = { x: S.x + dx * 0.25 + nx * bow, y: S.y + dy * 0.25 + ny * bow };
+  const C2 = { x: S.x + dx * 0.8 + nx * bow * 0.6, y: S.y + dy * 0.8 + ny * bow * 0.6 };
+  // The head follows the curve's last tangent; a filled, slightly barbed dart.
+  const ang = Math.atan2(T.y - C2.y, T.x - C2.x), hl = 15, hw = 0.42;
+  const P = (a, l) => ({ x: T.x - l * Math.cos(ang + a), y: T.y - l * Math.sin(ang + a) });
+  const h1 = P(-hw, hl), h2 = P(hw, hl), notch = P(0, hl * 0.62);
+  const n = v => Math.round(v * 10) / 10, pt = p => n(p.x) + "," + n(p.y);
+  // Stop the shaft inside the head so its round cap doesn't poke through the tip.
+  const E = P(0, hl * 0.55);
+  const shaft = "M" + pt(S) + " C" + pt(C1) + " " + pt(C2) + " " + pt(E);
+  const head = "M" + pt(T) + " L" + pt(h1) + " Q" + pt(notch) + " " + pt(h2) + " Z";
+  $("tipInk").innerHTML =
+    '<ellipse class="tip-ink" cx="' + n(ecx) + '" cy="' + n(ecy) + '" rx="' + n(erx) + '" ry="' + n(ery) + '" transform="rotate(-2 ' + n(ecx) + " " + n(ecy) + ')"/>' +
+    '<ellipse class="tip-ink" cx="' + n(ecx + 2) + '" cy="' + n(ecy - 1) + '" rx="' + n(erx + 3) + '" ry="' + n(ery + 1) + '" opacity=".6"/>' +
+    '<path class="tip-halo" d="' + shaft + '"/><path class="tip-halo tip-head" d="' + head + '"/>' +
+    '<path class="tip-ink tip-shaft" d="' + shaft + '"/><path class="tip-ink tip-head" d="' + head + '"/>';
+}
+// The card's handwriting. FontFace rather than a <link>: offline, a failed
+// stylesheet would trip the boot-error panel; a failed FontFace just falls back.
+try {
+  for (const [w, f] of [["400", "YA9dr0Wd4kDdMthROCc"], ["700", "YA9Qr0Wd4kDdMtDqHTLMkiQ"]]) {
+    const ff = new FontFace("Kalam", "url(https://fonts.gstatic.com/s/kalam/v18/" + f + ".woff2)", { weight: w });
+    ff.load().then(x => document.fonts.add(x)).catch(() => {});
+  }
+} catch (e) { /* no FontFace: the journal's hand it is */ }
 addEventListener("resize", () => { if (tipOpen) placeTip(); });
 
 // ── surfaces + orchestration ──────────────────────────────────────────────────
