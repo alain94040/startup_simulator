@@ -167,7 +167,10 @@
      while you were mid-conversation — pulse it so it can't be missed. */
   @keyframes dotPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(47,107,255,.5); } 50% { transform: scale(1.35); box-shadow: 0 0 0 4px rgba(47,107,255,0); } }
   #scRail .conv.unread .unread-dot { animation: dotPulse 1.1s ease-in-out infinite; }
-  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
+  /* A portrait fills whatever circle (or rounded square) it sits in. */
+  .av img, .av-group span img, .m-from i img, .n-ico img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+  .m-from i, .n-ico { overflow: hidden; }
   .conv .who { min-width: 0; flex: 1; }
   .conv .who b { font-size: 13px; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .conv.unread .who b { font-weight: 700; }
@@ -222,7 +225,7 @@
   /* Two members' colours split across one circle, so a group reads as a group
      at a glance in the rail and the chat header. */
   .av-group { overflow: hidden; display: flex; flex-direction: row; }
-  .av-group span { flex: 1 1 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; height: 100%; }
+  .av-group span { flex: 1 1 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; height: 100%; overflow: hidden; }
   #reply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
   #reply .hint { font-size: 11px; color: var(--dim); margin-bottom: 4px; }
   .chip { display: block; width: 100%; text-align: left; border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 18px; padding: 8px 14px; font-size: 13px; margin-top: 6px; }
@@ -481,6 +484,11 @@
   .intro-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 9px; }
   .intro-step { font-size: 14px; line-height: 1.6; color: #55555c; }
   .intro-step b { display: block; font-size: 21px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; color: var(--ink); }
+  .intro-person { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0 2px; margin-top: 12px; border-top: 1px solid var(--line); }
+  .intro-person .av { width: 76px; height: 76px; font-size: 28px; }
+  .ip-role { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .ip-name { font-size: 18px; font-weight: 800; color: var(--ink); margin: 1px 0 4px; }
+  .ip-blurb { font-size: 13.5px; line-height: 1.5; color: #55555c; }
   .intro-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
   .intro-dots { display: flex; gap: 6px; align-items: center; }
   .intro-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: .2s; }
@@ -989,6 +997,8 @@
     #introModal { padding: 0; overflow-y: auto; }
     .intro-body, .intro-board { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
     .intro-step b { font-size: 19px; }
+    .intro-person { gap: 12px; }
+    .intro-person .av { width: 60px; height: 60px; }
     .intro-next { padding: 12px 20px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
@@ -1206,35 +1216,39 @@ const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
 // Users are dashboard readouts / aggregate reports (no choice on either ever
 // uses `reply` — nothing texts back), not a contact you converse with.
 const SELF = new Set(["founder", "growth", "analytics", "users"]);
-// iOS palette + initials, ported from the old UI's STYLE map.
+// iOS palette + initials, ported from the old UI's STYLE map. `photo` is a
+// portrait in img/cast/ (backdrop in the same colour, so the colour coding
+// survives); anyone without one keeps their initials.
 const STYLE = {
-  alex: { color: "#0b84ff", initials: "A" }, jordan: { color: "#34c759", initials: "J" },
-  priya: { color: "#af52de", initials: "P" },
-  sarah: { color: "#ff2d55", initials: "S" }, brett: { color: "#8e8e93", initials: "B" },
-  kevin: { color: "#8e8e93", initials: "K" }, mom: { color: "#ffcc02", initials: "👩" },
-  jamie: { color: "#64d2ff", initials: "Ja" }, david: { color: "#30b0c7", initials: "D" },
+  alex: { color: "#0b84ff", initials: "A", photo: "alex.jpg" }, jordan: { color: "#34c759", initials: "J", photo: "jordan.jpg" },
+  priya: { color: "#af52de", initials: "P", photo: "priya.jpg" },
+  sarah: { color: "#ff2d55", initials: "S", photo: "sarah.jpg" }, brett: { color: "#8e8e93", initials: "B" },
+  kevin: { color: "#8e8e93", initials: "K" }, mom: { color: "#ffcc02", initials: "👩", photo: "mom.jpg" },
+  jamie: { color: "#64d2ff", initials: "Ja", photo: "jamie.jpg" }, david: { color: "#30b0c7", initials: "D", photo: "david.jpg" },
   hacker_news: { color: "#ff6600", initials: "📰" },
-  lena: { color: "#bf5af2", initials: "L" }, techcrunch: { color: "#00c853", initials: "📊" },
+  lena: { color: "#bf5af2", initials: "L", photo: "lena.jpg" }, techcrunch: { color: "#00c853", initials: "📊" },
   users: { color: "#007aff", initials: "👥" }, analytics: { color: "#5856d6", initials: "📈" },
   twitter: { color: "#1da1f2", initials: "𝕏" }, tom: { color: "#34c759", initials: "T" },
   growth: { color: "#30d158", initials: "🚀" }, founder: { color: "#8e8e93", initials: "Me" },
 };
 const styleFor = id => STYLE[id] || { color: "#8e8e93", initials: "?" };
+// What goes inside an avatar circle: the portrait if there is one, else the initials.
+const faceHtml = stl => stl.photo ? '<img src="img/cast/' + stl.photo + '" alt="">' : esc(stl.initials);
 // A group chat is a thread that's a room, not a person (cast.js `type: "group"`).
 const isGroupChat = (id) => { const c = game.cast.get(id); return !!(c && c.def.type === "group"); };
 const groupMembers = (id) => { const c = game.cast.get(id); return (c && c.def.members) || []; };
-// One avatar for a conversation: a person's initials, or a group's members'
-// colours split across the same circle.
+// One avatar for a conversation: a person's portrait (or initials), or a
+// group's members split across the same circle.
 function convAvatarHtml(id, cls) {
   const extra = cls ? " " + cls : "";
   if (isGroupChat(id)) {
     return '<div class="av av-group' + extra + '">' + groupMembers(id).slice(0, 2).map(m => {
       const s = styleFor(m);
-      return '<span style="background:' + s.color + '">' + esc(s.initials) + "</span>";
+      return '<span style="background:' + s.color + '">' + faceHtml(s) + "</span>";
     }).join("") + "</div>";
   }
   const stl = styleFor(id);
-  return '<div class="av' + extra + '" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>";
+  return '<div class="av' + extra + '" style="background:' + stl.color + '">' + faceHtml(stl) + "</div>";
 }
 // In a group, a run of bubbles from one person gets a name label above it.
 // `prev` is the message rendered immediately before (null at the top). Only
@@ -1245,7 +1259,7 @@ function senderLabelHtml(m, prev, group) {
   if (prev && prev.type === "incoming" && prev.from === m.from) return "";
   const stl = m.fromId ? styleFor(m.fromId) : null;
   return '<div class="m-from">' +
-    (stl ? '<i style="background:' + stl.color + '">' + esc(stl.initials) + "</i>" : "") +
+    (stl ? '<i style="background:' + stl.color + '">' + faceHtml(stl) + "</i>" : "") +
     esc(m.from) + "</div>";
 }
 const FEED_META = {
@@ -2229,7 +2243,7 @@ function pingOtherSceneThreads(preLens) {
     if (!fresh.length) continue;
     const def = game.cast.get(id).def, stl = styleFor(id);
     queueNotifications([{
-      ico: stl.initials, color: stl.color, charId: id, title: def.name,
+      ico: stl.initials, photo: stl.photo, color: stl.color, charId: id, title: def.name,
       text: String(fresh[fresh.length - 1].body || ""),
       go: () => { if (!uiBusy && inScene) openSceneThread(id); },
     }]);
@@ -2553,7 +2567,7 @@ function advanceWeek() {
     const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
     const dropped = fresh.some(m => m.dropped);
     weekNotes.push({
-      ico: stl.initials, color: feed ? "#3a3a40" : stl.color, charId: id, feed,
+      ico: stl.initials, photo: feed ? null : stl.photo, color: feed ? "#3a3a40" : stl.color, charId: id, feed,
       title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
       text: String(fresh[fresh.length - 1].body || ""),
       go: feed ? () => setSurface("feed") : () => gotoChat(id, true),
@@ -2635,7 +2649,7 @@ function pumpNotifications() {
 function showNotif(n) {
   const el = document.createElement("div");
   el.className = "notif";
-  el.innerHTML = '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+  el.innerHTML = '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
     '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span><span class="n-time">now</span></div>' +
     '<div class="n-text">' + esc(n.text) + "</div></div>";
   let gone = false;
@@ -2657,7 +2671,7 @@ function toggleNoteCenter() {
   if (c.classList.contains("show")) { c.classList.remove("show"); return; }
   if (!weekNotes.length) { c.innerHTML = '<h4>This week</h4><div class="nc-empty">No notifications this week.</div>'; }
   else c.innerHTML = '<h4>This week · ' + weekNotes.length + " notification" + (weekNotes.length === 1 ? "" : "s") + "</h4>" +
-    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="width:34px;height:34px;border-radius:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="width:34px;height:34px;border-radius:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
       '<div class="n-b"><div class="n-title">' + esc(n.title) + '</div><div class="n-text" style="font-size:12px;color:#3a3a40">' + esc(n.text) + "</div></div></div>").join("");
   c.classList.add("show");
   notesSeen = true; updateBell();
@@ -2927,8 +2941,13 @@ $("hRestart").onclick = restartGame;
 // The intro is only the premise and the bar to beat. How to play is taught in
 // place by TIPS, each the first time its feature shows up — starting with the
 // chat itself the moment the intro closes.
+// An optional fourth field introduces people: [castId, role, blurb], drawn
+// with their portrait so the player meets the faces before the texts start.
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping, and right now it exists mostly in your co-founders' heads. You have $10,000 and 25 weeks until the YC deadline. Build something worth the batch before the clock, or the cash, runs out. We'll show you around as things come up."],
+  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping. Right now it's an idea, $10,000, and two people who said yes. You have 25 weeks until the YC deadline.", [
+    ["alex", "Co-founder · CTO", "He quit a $140k engineering job to build this with you. He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
+    ["jordan", "Co-founder · iOS", "She'll build the iPhone app, and she has the best eye for product of the three of you. She's kept her day job, so she works on PlusOne nights and weekends."],
+  ]],
 ];
 let introStep = 0;
 // A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
@@ -2947,11 +2966,15 @@ function showIntro() {
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
       '<div class="intro-actions"><button class="intro-next">' + nextLabel + "</button></div></div></div>";
   } else {
-    const [eyebrow, h, b] = INTRO[introStep];
+    const [eyebrow, h, b, people] = INTRO[introStep];
     $("introModal").innerHTML =
       '<div class="intro-stripe"></div><div class="intro-body">' +
       '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" +
       '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
+      (people || []).map(([id, role, blurb]) =>
+        '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
+        '<div class="ip-role">' + esc(role) + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
+        '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
       '<div class="intro-actions"><button class="intro-skip">skip</button>' +
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
