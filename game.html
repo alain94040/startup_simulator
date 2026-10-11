@@ -3127,20 +3127,21 @@ function drawTipInk(r, b, side) {
   let S, T;
   if (side === "below" || side === "above") {
     const up = side === "below";   // the target is above the card
-    const tx = Math.max(r.left + 10, Math.min(r.right - 10, (b.left + b.right) / 2));
+    const tx = Math.max(r.left + r.width * 0.3, Math.min(r.right - r.width * 0.3, (b.left + b.right) / 2));   // near the middle of the target, not its rim
     S = { x: Math.max(b.left + 30, Math.min(b.right - 30, tx + (tx < (b.left + b.right) / 2 ? 46 : -46))), y: up ? b.top - 6 : b.bottom + 6 };
     T = { x: tx, y: up ? r.bottom + 17 : r.top - 17 };
   } else {
-    const ty = Math.max(r.top + 14, Math.min(r.bottom - 14, (b.top + b.bottom) / 2));
+    const ty = Math.max(r.top + r.height * 0.3, Math.min(r.bottom - r.height * 0.3, (b.top + b.bottom) / 2));
     S = { x: side === "left" ? b.right + 6 : b.left - 6, y: Math.max(b.top + 24, Math.min(b.bottom - 24, ty + 30)) };
     T = { x: side === "left" ? r.left - 17 : r.right + 17, y: ty };
   }
-  // A swoop, not a straight jab: a cubic that leaves the card sideways and
-  // comes down onto the target, bowed away from the straight line.
-  const dx = T.x - S.x, dy = T.y - S.y, len = Math.hypot(dx, dy) || 1;
-  const nx = -dy / len, ny = dx / len, bow = Math.min(40, len * 0.45) * (S.x < T.x ? -1 : 1);
-  const C1 = { x: S.x + dx * 0.25 + nx * bow, y: S.y + dy * 0.25 + ny * bow };
-  const C2 = { x: S.x + dx * 0.8 + nx * bow * 0.6, y: S.y + dy * 0.8 + ny * bow * 0.6 };
+  // A swoop that lands square: it leaves the card heading toward the target,
+  // bends on the way, and its last stretch runs straight at the target, so the
+  // head points at the thing and not past it.
+  const dir = side === "below" ? { x: 0, y: -1 } : side === "above" ? { x: 0, y: 1 } : side === "left" ? { x: 1, y: 0 } : { x: -1, y: 0 };
+  const len = Math.hypot(T.x - S.x, T.y - S.y) || 1, k = Math.min(40, len * 0.5);
+  const C1 = { x: S.x + dir.x * k, y: S.y + dir.y * k };
+  const C2 = { x: T.x - dir.x * k, y: T.y - dir.y * k };
   // The head follows the curve's last tangent; a filled, slightly barbed dart.
   const ang = Math.atan2(T.y - C2.y, T.x - C2.x), hl = 15, hw = 0.42;
   const P = (a, l) => ({ x: T.x - l * Math.cos(ang + a), y: T.y - l * Math.sin(ang + a) });
