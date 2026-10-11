@@ -491,9 +491,9 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
-  /* first-time tips: a sketchbook card — a hand-drawn border, a sketched arrow to
-     the feature it explains, and a scribbled circle around it on a dimmed screen.
-     The arrow and circle are drawn in #tipDeco by placeTip(); "Kalam" is loaded
+  /* first-time tips: a sketchbook card — a hand-drawn border, a speech-bubble tail
+     to the feature it explains, and a scribbled circle around it on a dimmed screen.
+     The circle (#tipDeco, under the card) and tail (#tipTail, over it) are drawn by placeTip(); "Kalam" is loaded
      by FontFace in the tips code and falls back to the journal's hand. */
   #tipLayer { position: fixed; inset: 0; z-index: 70; display: none; }
   /* the week's banners would cover a header target on a phone; they're still in the bell */
@@ -502,10 +502,10 @@
   #tipRing { position: fixed; border-radius: 50%; box-shadow: 0 0 0 9999px rgba(30,28,24,.34); transition: all .25s ease; pointer-events: none; }
   #tipDeco { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
   #tipDeco .tip-ink { fill: none; stroke: #fffdf8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
-  #tipDeco .tip-shaft { stroke-width: 3.4; }
-  #tipDeco .tip-head { fill: #fffdf8; stroke-width: 1.6; }
-  #tipDeco .tip-halo { fill: none; stroke: rgba(30,28,24,.45); stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
-  #tipDeco .tip-halo.tip-head { fill: rgba(30,28,24,.45); stroke-width: 5; }
+  #tipTail { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; animation: tipTailIn .2s ease .18s backwards; }
+  @keyframes tipTailIn { from { opacity: 0; } }
+  #tipTail .tail-fill { fill: #fffdf8; }
+  #tipTail .tail-line { fill: none; stroke: #2d2a26; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
   #tipBubble {
     position: fixed; width: min(300px, calc(100vw - 30px)); background: #fffdf8; color: #2d2a26;
     border-radius: 4px; padding: 16px 20px 14px; box-shadow: 3px 4px 0 rgba(0,0,0,.08);
@@ -1113,7 +1113,7 @@
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
 <div id="tipLayer"><div id="tipRing"></div>
   <svg id="tipDeco"><defs><filter id="tipRough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter></defs><g id="tipInk"></g></svg>
-  <div id="tipBubble"></div></div>
+  <div id="tipBubble"></div><svg id="tipTail"><g id="tipTailInk"></g></svg></div>
 
 <details id="debug">
   <summary>debug</summary>
@@ -3088,14 +3088,14 @@ function closeTip() {
 }
 // Aim the bubble: a scribbled circle hugs the target, and the card sits on the
 // side with the most room (below, above, or beside a tall column), clamped to
-// the viewport, far enough off that a sketched arrow can reach across.
+// the viewport, far enough off for the bubble's tail to reach across.
 function placeTip() {
   if (!tipOpen) return;
   const el = tipOpen.target();
   if (!el) { closeTip(); return; }
   const r = el.getBoundingClientRect(), vw = innerWidth, vh = innerHeight, pad = 6, m = 12;
-  // Room for the arrow to swoop: a long reach where the screen allows, a short one on a phone.
-  const gap = Math.min(vw, vh) > 600 ? 74 : 52;
+  // Room for the bubble's tail: a little longer where the screen allows.
+  const gap = Math.min(vw, vh) > 600 ? 46 : 38;
   const ring = $("tipRing");
   ring.style.left = (r.left - pad) + "px"; ring.style.top = (r.top - pad) + "px";
   ring.style.width = (r.width + pad * 2) + "px"; ring.style.height = (r.height + pad * 2) + "px";
@@ -3108,7 +3108,7 @@ function placeTip() {
   else side = (vh - r.bottom) >= bh + gap + m || r.top < bh + gap + m ? "below" : "above";
   let x, y;
   if (side === "below" || side === "above") {
-    // Off-centre on purpose, toward the middle of the screen, so the arrow comes in on a slant.
+    // Off-centre on purpose, toward the middle of the screen, so the tail leans in.
     x = Math.max(m, Math.min(vw - bw - m, cx - bw / 2 + (cx < vw / 2 ? 44 : -44)));
     y = side === "below" ? r.bottom + pad + gap : r.top - pad - gap - bh;
   } else {
@@ -3120,42 +3120,42 @@ function placeTip() {
   bub.style.left = x + "px"; bub.style.top = y + "px";
   drawTipInk(r, { left: x, top: y, right: x + bw, bottom: y + bh }, side);
 }
-// The pencil work: two loose ellipses around the target and a curved arrow from
-// the card's near edge to it, all through the same rough filter as the card.
+// The pencil work: two loose ellipses around the target and the bubble's tail
+// from the card's near edge to it, all through the same rough filter as the card.
 function drawTipInk(r, b, side) {
   const ecx = r.left + r.width / 2, ecy = r.top + r.height / 2, erx = r.width / 2 + 9, ery = r.height / 2 + 9;
-  let S, T;
+  // A comic speech-bubble tail: a wedge that grows out of the card's near edge
+  // and narrows to a point just short of the target. The fill runs a little
+  // inside the card to cover its border, so the tail and card read as one shape.
+  let S, T, dir;
   if (side === "below" || side === "above") {
     const up = side === "below";   // the target is above the card
-    const tx = Math.max(r.left + r.width * 0.3, Math.min(r.right - r.width * 0.3, (b.left + b.right) / 2));   // near the middle of the target, not its rim
-    S = { x: Math.max(b.left + 30, Math.min(b.right - 30, tx + (tx < (b.left + b.right) / 2 ? 46 : -46))), y: up ? b.top - 6 : b.bottom + 6 };
-    T = { x: tx, y: up ? r.bottom + 17 : r.top - 17 };
+    const tx = Math.max(r.left + r.width * 0.3, Math.min(r.right - r.width * 0.3, (b.left + b.right) / 2));
+    S = { x: Math.max(b.left + 34, Math.min(b.right - 34, tx + (tx < (b.left + b.right) / 2 ? 22 : -22))), y: up ? b.top : b.bottom };
+    T = { x: tx, y: up ? r.bottom + 13 : r.top - 13 };
+    dir = { x: 0, y: up ? -1 : 1 };
   } else {
     const ty = Math.max(r.top + r.height * 0.3, Math.min(r.bottom - r.height * 0.3, (b.top + b.bottom) / 2));
-    S = { x: side === "left" ? b.right + 6 : b.left - 6, y: Math.max(b.top + 24, Math.min(b.bottom - 24, ty + 30)) };
-    T = { x: side === "left" ? r.left - 17 : r.right + 17, y: ty };
+    S = { x: side === "left" ? b.right : b.left, y: Math.max(b.top + 30, Math.min(b.bottom - 30, ty + 14)) };
+    T = { x: side === "left" ? r.left - 13 : r.right + 13, y: ty };
+    dir = { x: side === "left" ? 1 : -1, y: 0 };
   }
-  // A swoop that lands square: it leaves the card heading toward the target,
-  // bends on the way, and its last stretch runs straight at the target, so the
-  // head points at the thing and not past it.
-  const dir = side === "below" ? { x: 0, y: -1 } : side === "above" ? { x: 0, y: 1 } : side === "left" ? { x: 1, y: 0 } : { x: -1, y: 0 };
-  const len = Math.hypot(T.x - S.x, T.y - S.y) || 1, k = Math.min(40, len * 0.5);
-  const C1 = { x: S.x + dir.x * k, y: S.y + dir.y * k };
-  const C2 = { x: T.x - dir.x * k, y: T.y - dir.y * k };
-  // The head follows the curve's last tangent; a filled, slightly barbed dart.
-  const ang = Math.atan2(T.y - C2.y, T.x - C2.x), hl = 15, hw = 0.42;
-  const P = (a, l) => ({ x: T.x - l * Math.cos(ang + a), y: T.y - l * Math.sin(ang + a) });
-  const h1 = P(-hw, hl), h2 = P(hw, hl), notch = P(0, hl * 0.62);
+  const half = 13, lip = 3, sink = 12;   // base half-width; border sits 3px outside the box; fill sinks 12px in
+  const px = -dir.y, py = dir.x;          // along the card edge
+  const at = (o, d) => ({ x: S.x + px * o + dir.x * d, y: S.y + py * o + dir.y * d });
+  const B1 = at(-half, lip), B2 = at(half, lip), I1 = at(-half - 2, -sink), I2 = at(half + 2, -sink);
+  // Both sides bow the same way, so the tail curls a little like an inked one.
+  const mid = (P, f) => ({ x: P.x + (T.x - P.x) * 0.5 + px * f, y: P.y + (T.y - P.y) * 0.5 + py * f });
+  const bend = (T.x - S.x) * px + (T.y - S.y) * py > 0 ? -7 : 7;
+  const Q1 = mid(B1, bend), Q2 = mid(B2, bend);
   const n = v => Math.round(v * 10) / 10, pt = p => n(p.x) + "," + n(p.y);
-  // Stop the shaft inside the head so its round cap doesn't poke through the tip.
-  const E = P(0, hl * 0.55);
-  const shaft = "M" + pt(S) + " C" + pt(C1) + " " + pt(C2) + " " + pt(E);
-  const head = "M" + pt(T) + " L" + pt(h1) + " Q" + pt(notch) + " " + pt(h2) + " Z";
+  const sides = "M" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2);
+  $("tipTailInk").innerHTML =
+    '<path class="tail-fill" d="M' + pt(I1) + " L" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2) + " L" + pt(I2) + ' Z"/>' +
+    '<path class="tail-line" d="' + sides + '"/>';
   $("tipInk").innerHTML =
     '<ellipse class="tip-ink" cx="' + n(ecx) + '" cy="' + n(ecy) + '" rx="' + n(erx) + '" ry="' + n(ery) + '" transform="rotate(-2 ' + n(ecx) + " " + n(ecy) + ')"/>' +
-    '<ellipse class="tip-ink" cx="' + n(ecx + 2) + '" cy="' + n(ecy - 1) + '" rx="' + n(erx + 3) + '" ry="' + n(ery + 1) + '" opacity=".6"/>' +
-    '<path class="tip-halo" d="' + shaft + '"/><path class="tip-halo tip-head" d="' + head + '"/>' +
-    '<path class="tip-ink tip-shaft" d="' + shaft + '"/><path class="tip-ink tip-head" d="' + head + '"/>';
+    '<ellipse class="tip-ink" cx="' + n(ecx + 2) + '" cy="' + n(ecy - 1) + '" rx="' + n(erx + 3) + '" ry="' + n(ery + 1) + '" opacity=".6"/>';
 }
 // The card's handwriting. FontFace rather than a <link>: offline, a failed
 // stylesheet would trip the boot-error panel; a failed FontFace just falls back.
