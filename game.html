@@ -519,6 +519,13 @@
   #tipBubble .tip-ok, #tipBubble .tip-go { font: 700 14px Kalam, var(--hand); background: none; border: 0; border-bottom: 2px solid #2d2a26; border-radius: 0; color: #2d2a26; padding: 2px 4px; cursor: pointer; }
   #tipBubble .tip-go { border-bottom-style: dashed; color: #6b6358; }
   #tipBubble .tip-ok:hover, #tipBubble .tip-go:hover { color: #000; }
+  /* Kalam runs small for its size: on a phone the card takes the width and the hand gets bigger. */
+  @media (max-width: 1023px) {
+    #tipBubble { width: min(340px, calc(100vw - 24px)); padding: 16px 18px 14px; }
+    #tipBubble b { font-size: 22px; }
+    #tipBubble p { font-size: 17.5px; line-height: 1.38; color: #3d3932; }
+    #tipBubble .tip-ok, #tipBubble .tip-go { font-size: 17px; padding: 6px 4px 2px; }
+  }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
   /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
