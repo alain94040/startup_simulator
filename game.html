@@ -515,8 +515,11 @@
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
-  .intro-art { aspect-ratio: 2 / 1; background: var(--soft); overflow: hidden; }
-  .intro-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* The picture gives up height before the card would have to scroll: full 2:1
+     when the window is tall enough, a wider crop of it when it isn't (the card's
+     text runs about 430px; the modal tops out at 84vh). */
+  .intro-art { height: clamp(110px, calc(84vh - 430px), 260px); background: var(--soft); overflow: hidden; }
+  .intro-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; display: block; }
   .intro-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 9px; }
   .intro-step { font-size: 14px; line-height: 1.6; color: #55555c; }
   .intro-step b { display: block; font-size: 21px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; color: var(--ink); }
@@ -1035,6 +1038,7 @@
     .intro-step b { font-size: 19px; }
     .intro-person { gap: 12px; }
     .intro-person .av { width: 60px; height: 60px; }
+    .intro-art { height: clamp(100px, calc(92dvh - 450px), 50vw); }  /* sheet tops out at 92dvh */
     .intro-next { padding: 12px 20px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
