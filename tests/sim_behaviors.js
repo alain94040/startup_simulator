@@ -199,8 +199,11 @@ check(`no_meetup.wins (${S.no_meetup.wins}%) within 15pts of decent.wins (${S.de
 
 // J · the scope lesson: the over-scope tax — plan A must cost calendar time
 // and wins
-check(`full_plan launches later: wk ${r1(S.full_plan.meanLaunchWk)} > decent wk ${r1(S.decent.meanLaunchWk)}`,
-  (S.full_plan.meanLaunchWk || Infinity) > S.decent.meanLaunchWk);
+// It must actually launch (an average over zero launches is null, and a null
+// must fail, not sneak past the comparison), and launch later than decent.
+check(`full_plan launches later: wk ${r1(S.full_plan.meanLaunchWk)} (${S.full_plan.launched}% launched) > decent wk ${r1(S.decent.meanLaunchWk)}`,
+  S.full_plan.meanLaunchWk != null && S.full_plan.launched > 0 &&
+  S.full_plan.meanLaunchWk > S.decent.meanLaunchWk);
 check(`full_plan.wins (${S.full_plan.wins}%) < decent.wins (${S.decent.wins}%)`,
   S.full_plan.wins < S.decent.wins);
 
