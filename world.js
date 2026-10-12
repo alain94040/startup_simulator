@@ -12,7 +12,8 @@
 
   // Cumulative team build-effort needed to silently finish one over-scope
   // ("auto") roadmap item — the full/A plan's tax (see story/dev_plan.js).
-  const AUTO_BUILD_INCREMENT = 11;
+  // Tuned so plan A launches ~4 weeks after B/C (week 17 vs 13), not never.
+  const AUTO_BUILD_INCREMENT = 5.8;
 
   // The pivot rebuild clock (see tick): weeks for Alex to repoint matching,
   // weeks for a full-time owner to build the board, and the rate a part-time

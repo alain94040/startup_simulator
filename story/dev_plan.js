@@ -10,7 +10,7 @@
 
 (function () {
   // The over-scoped (full/A) plan's tax: inert auto items the engine's build
-  // burn-down completes passively, doubling time-to-product-ready.
+  // burn-down completes passively, adding about four weeks to time-to-launch (world.js AUTO_BUILD_INCREMENT).
   const SCOPE_ITEMS = ["scope_social", "scope_verification", "scope_premium", "scope_socialgraph", "scope_video"];
   function expandItems(s, plan) {
     if (!s.items || plan !== "full") return;
