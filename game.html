@@ -468,7 +468,8 @@
   #tipBubble::before { content: ""; position: absolute; inset: -3px; border: 2px solid #2d2a26; border-radius: 10px 4px 12px 5px; filter: url(#tipRough); pointer-events: none; }
   @keyframes tipPop { from { transform: rotate(-1.2deg) scale(.85); opacity: 0; } }
   #tipBubble b { display: block; font-size: 19px; font-weight: 700; line-height: 1.25; margin-bottom: 4px; }
-  #tipBubble p { font-size: 14.5px; line-height: 1.4; color: #4a453d; }
+  /* the explanation reads in the game's own sans; only the title and buttons are handwritten */
+  #tipBubble p { font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; color: #4a453d; }
   #tipBubble .tip-btns { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 10px; }
   #tipBubble .tip-ok, #tipBubble .tip-go { font: 700 14px Kalam, var(--hand); background: none; border: 0; border-bottom: 2px solid #2d2a26; border-radius: 0; color: #2d2a26; padding: 2px 4px; cursor: pointer; }
   #tipBubble .tip-go { border-bottom-style: dashed; color: #6b6358; }
@@ -478,7 +479,7 @@
   @media (max-width: 1023px) {
     #tipBubble { width: min(340px, calc(100vw - 24px)); padding: 16px 18px 14px; }
     #tipBubble b { font-size: 22px; }
-    #tipBubble p { font-size: 17.5px; line-height: 1.38; color: #3d3932; }
+    #tipBubble p { color: #3d3932; }
     #tipBubble .tip-ok, #tipBubble .tip-go { font-size: 17px; padding: 6px 4px 2px; }
   }
 
