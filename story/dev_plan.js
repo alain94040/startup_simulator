@@ -231,7 +231,7 @@
       // `weeksSince` — and a later "skip" outcome overwrites "call", going stale.
       {
         id: "waitlist_calls", char: "founder",
-        text: (s) => "there are " + Math.max(5, (s.waitlist || 0) + 5) + " people between the waitlist and your early-access DMs, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.",
+        text: (s) => "there are " + Math.max(5, (s.waitlist || 0) + 5) + " people on your waitlist, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.",
         when: {
           after: ["dev_plan"], delay: 2, cooldown: 4,
           if: (s, e) => !s.launched

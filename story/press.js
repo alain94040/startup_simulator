@@ -99,7 +99,7 @@
           },
           {
             key: "copy", label: "Match them — build video dates now",
-            journal: "Dropped the retention investigation to chase Flare's video dates. Weeks of build for a feature none of our churned users asked for. The real leak is still open.",
+            journal: "Dropped the investigation into why users leave to chase Flare's video dates. Weeks of build for a feature none of the users who left asked for. The real leak is still open.",
             effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -6, effort: -1.5 } } },
             fx: () => "Alex got buried in video-call code while the launch-week users kept leaving. Nobody who churned had asked for video dates. The real leak stayed open the whole time.",
           },
@@ -114,9 +114,9 @@
         choices: [
           {
             key: "screenshot", label: "Save the receipt — then back to the rebuild",
-            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their stumble is our thesis, written by their users.",
+            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their users just wrote our argument for us.",
             effects: { signal: 4, char: { alex: { morale: 6 }, jordan: { morale: 3 } } },
-            fx: () => "Screenshot saved — a competitor's users writing your pivot thesis for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
+            fx: () => "Screenshot saved — a competitor's users writing your argument for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
           },
           {
             key: "gloat", label: "Write the told-you-so thread",
@@ -143,7 +143,7 @@
             key: "panic", label: "They'll crush us — rush everything out now",
             journal: "Panicked at Flare copying our pivot and rushed half-finished work out the door. Quality dipped exactly when the application needed proof of the opposite.",
             effects: { signal: -4, marketFit: -4, char: { alex: { morale: -8 } } },
-            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked for your retention numbers. Panic is a strategy the way falling is flying.",
+            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked how many users come back. Panic is a strategy the way falling is flying.",
           },
         ],
         timeout: { weeks: 3 },
@@ -196,7 +196,7 @@
           {
             key: "call", label: "Call Tom",
             reply: "hey — noticed you went quiet. everything ok?",
-            journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
+            journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best reason to lose a customer I've ever had.",
             effects: {
               customers: -1, signal: 16, marketFit: 8,
               say: { char: "tom", text: "ha, sorry — i actually met someone on here 5 weeks ago. we've been on 7 dates. totally forgot to cancel. leaving a review before i go — this thing worked." },
@@ -287,9 +287,9 @@
           {
             key: "lunch", label: "Have lunch with David",
             reply: "would love to. lunch this week — it's been too long, and i've actually got a lot to tell you.",
-            journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes people stay.",
+            journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes users keep using the app.",
             effects: {
-              note: "David, over lunch: 'send me something concrete this week — what makes people actually stay?'",
+              note: "David, over lunch: 'send me something concrete this week — what makes users keep using the app?'",
             },
           },
         ],
@@ -318,7 +318,7 @@
               }
               if (s.market_fit < FIT_KNOWS_USERS) {
                 s.david_verdict = "users";
-                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes people stay and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for — then call me." });
+                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes users keep using the app and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for — then call me." });
                 return null;
               }
               s.david_verdict = "invest";

@@ -37,9 +37,9 @@
           {
             key: "test", label: "Test it with users",
             reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
-            journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
+            journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and stick around longer.",
             effects: { signal: 14, marketFit: 6, char: { alex: { morale: 5, trust: 6 } } },
-            fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less.",
+            fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and stick around longer.",
           },
         ],
         timeout: {
@@ -229,7 +229,7 @@
           { key: "individuals", label: "Young singles — bigger market, easier to reach",
             fx: () => "Locked in: 25-35 year olds tired of swiping. Bigger pool, faster feedback." },
           { key: "teams", label: "Relationship-seekers — that's where the revenue is",
-            fx: () => "Going after people who are seriously looking. Higher willingness to pay, stronger retention story." },
+            fx: () => "Going after people who are seriously looking. Higher willingness to pay, users who stay longer." },
           { key: "open", label: "Follow the early users",
             fx: () => "Staying flexible. Let the first signups tell you who they are." },
         ],
