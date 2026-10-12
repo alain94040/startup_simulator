@@ -261,7 +261,7 @@
 
       {
         id: "interviews", char: "founder",
-        text: "you've been building without a single structured conversation with someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
+        text: "you've been building without ever sitting down to talk to someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
         when: {
           // From week 3 (the paperwork week on the golden path) to the close
           // of the pre-launch window. Deliberately NOT gated on `s.incorporated`

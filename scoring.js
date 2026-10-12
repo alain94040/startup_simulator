@@ -192,7 +192,7 @@
               + (fitGot >= 1 ? " — built on what users told you." : fitGot >= 0.5 ? " — partly listened, partly guessed." : " — mostly built on guesses.") },
           { faced: g.done("interviews") || g.done("dev_plan"), weight: 1,
             got: g.took("interviews:interview") ? 1 : 0,
-            note: g.took("interviews:interview") ? "Did the customer interviews before locking scope." : "Built without a single structured user conversation." },
+            note: g.took("interviews:interview") ? "Did the customer interviews before locking scope." : "Built without ever interviewing a user." },
           { faced: g.done("dev_plan"), weight: 1, got: s.dev_plan === "lean" ? 1 : 0,
             note: s.dev_plan === "lean" ? "Kept the scope lean." : s.dev_plan === "full" ? "Over-scoped the build — the extra work cost weeks." : null },
           { faced: g.done("first_screen") || g.done("ranking"), weight: 1,
