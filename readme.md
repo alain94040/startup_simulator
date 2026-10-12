@@ -1,15 +1,38 @@
-# Startup Simulator — PlusOne
+# Startup Simulator
 
-A browser-based educational game about the first 25 weeks of a startup, from idea to the YC
-application. It plays as an **iMessage-style chat sim**: your co-founders, early users,
-advisors, family, and the press text you, and you answer by picking reply chips. What each
-choice cost you is recorded in a founder's journal.
+**A browser game that teaches what the first months of a startup are actually like.**
+You are a first-time founder building *PlusOne*, a dating app for people sick of swiping.
+You have **$10,000**, **two moves a week**, and **25 weeks** to build, launch, and prove
+enough to get into Y Combinator.
 
-You are building **PlusOne**, a dating app for people sick of swiping. You have **$10,000**,
-**two moves a week**, and **25 weeks** until YC applications close.
+It plays like a group chat. Your co-founders, early users, advisors, family, and the press
+text you; you answer by picking a reply. Every answer, and every message you leave unanswered,
+changes the story. At week 25 a report card grades the run on the lessons below.
 
-A full run is 25 weeks at two moves each — about fifty decisions in one sitting.
-**Win:** get into YC. **Lose:** get rejected, never apply, or run out of cash first.
+**Win:** a good report card *and* a shipped, pivoted company, and you get into YC.
+**Lose:** miss that bar at week 25, run out of cash, or lose your technical co-founder.
+A full run is about fifty decisions in one sitting.
+
+## What it teaches
+
+There is no tutorial text about startups. The lessons come from trade-offs the game forces:
+
+- **Talk to users before you build.** Building and market research compete for the same two
+  moves each week. Learning from real users is the only way to earn market fit.
+- **Features won't save you.** The first product is the wrong one. You will have to pivot,
+  and the quick fixes you try first fail visibly.
+- **Hard conversations.** There is no equity split where everyone is happy, and keeping a
+  co-founder who can't keep up costs the whole company.
+- **Cash is a clock.** Raise early or go bankrupt before you launch, and be wary of
+  consultants who want your money without adding value.
+- **Keep the cap table clean.** Sign the paperwork, and buy back the stake of anyone who leaves.
+
+The full list is in [`GOALS.md`](GOALS.md).
+
+## Where it came from
+
+The thinking behind the project is written up in
+[The making of a startup simulator](https://foundrs.com/the-making-of-a-startup-simulator.html).
 
 ---
 
@@ -57,9 +80,9 @@ A run is one five-chapter story, bounded by what you actually do — not by a sc
 |----|------|--------|
 | 1 · Ship the demo | Become a real company: paperwork, the equity split, something a stranger can touch | Demo night |
 | 2 · Get to launch | Launch before the waitlist and the runway go cold | Launch day |
-| 3 · The trough of sorrow | The graph only goes down. Try the quick fixes, watch them fail, bank the evidence | Pivot summit |
+| 3 · The trough of sorrow | The graph only goes down. Try the quick fixes, watch them fail, bank the evidence | The pivot night |
 | 4 · Rebuild as v2 | Ship the pivot — and decide who is on the team for it | The relaunch / the firing |
-| 5 · Ace the application | Prove it before week 25: revenue, a channel, a clean cap table | The application → the verdict |
+| 5 · Make the case | Prove it before week 25: revenue, a channel, a clean cap table | The deadline → the verdict, graded on the spot |
 
 Admission needs **both** a good report card and real traction — wise answers without a shipped
 company don't get funded. The lessons the game is built to teach are in `GOALS.md`.
