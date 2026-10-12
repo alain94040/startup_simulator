@@ -59,7 +59,7 @@
         "equity_dm_jordan", "equity_dm_jordan_ask", "equity_offer",
         "equity_pushback_alex", "equity_pushback_jordan",
         "equity_pushback_alex_50", "equity_pushback_jordan_50",
-        "equity_impasse", "alex_commitment",
+        "equity_impasse",
       ]);
       add("hard-conversations", "Have the hard conversations", "📚 Wasserman, The Founder's Dilemmas",
         talkRatio == null ? null : parts([

@@ -117,13 +117,13 @@ check(`random.launched (${S.random.launched}%) < decent.launched (${S.decent.lau
 check(`ignore_alex.wins = ${S.ignore_alex.wins}% (expected 0)`, S.ignore_alex.wins === 0);
 check(`outside_only.wins = ${S.outside_only.wins}% (expected 0 — all market, no product)`, S.outside_only.wins === 0);
 
-// C · the commitment lesson: part-time Alex must never out-build full-time Alex.
-check(`fulltime demo (wk ${r1(S.fulltime.meanDemoWk)}) no later than part-time (wk ${r1(S.decent.meanDemoWk)})`,
-  S.fulltime.meanDemoWk <= S.decent.meanDemoWk + 0.101);
-check(`fulltime launch (wk ${r1(S.fulltime.meanLaunchWk)}) no later than part-time (wk ${r1(S.decent.meanLaunchWk)})`,
-  S.fulltime.meanLaunchWk <= S.decent.meanLaunchWk + 0.101);
-check(`fulltime.wins (${S.fulltime.wins}%) >= decent.wins (${S.decent.wins}%) - 3`,
-  S.fulltime.wins >= S.decent.wins - 3);
+// C · the commitment lesson: letting Alex's side project slide must never beat asking him to focus.
+check(`slide_alex demo (wk ${r1(S.slide_alex.meanDemoWk)}) no earlier than focused (wk ${r1(S.decent.meanDemoWk)})`,
+  S.slide_alex.meanDemoWk >= S.decent.meanDemoWk - 0.101);
+check(`slide_alex launch (wk ${r1(S.slide_alex.meanLaunchWk)}) no earlier than focused (wk ${r1(S.decent.meanLaunchWk)})`,
+  S.slide_alex.meanLaunchWk >= S.decent.meanLaunchWk - 0.101);
+check(`slide_alex.wins (${S.slide_alex.wins}%) <= decent.wins (${S.decent.wins}%) + 3`,
+  S.slide_alex.wins <= S.decent.wins + 3);
 
 // D · neglect has a face: departure rates, morale trajectory, roadmap counts
 check(`ignore_alex.alexLeft (${S.ignore_alex.alexLeft}%) >= 90%`, S.ignore_alex.alexLeft >= 90);

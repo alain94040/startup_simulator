@@ -28,8 +28,8 @@ function run(seed, chooser, weeks, opts) {
 }
 
 
-// same play, but pushes Alex full-time at the commitment talk.
-const decentFT = (a) => a.nodeId === "alex_commitment" ? ["push"] : decent(a);
+// same play, but lets Alex's side project slide instead of asking him to focus.
+const decentSlide = (a) => a.nodeId === "alex_side_project" ? ["slide"] : decent(a);
 const ignore = () => null;
 const ignoreAuth = (a) =>
   (a.nodeId === "auth_choice" || a.nodeId === "auth_forced" || a.nodeId === "first_screen")
@@ -126,9 +126,8 @@ console.log("decent driver (seed 42)");
   ok(!g.done("ff_family_2"), "no nag chain when the first text was answered");
 
   // Team spine.
-  ok(g.took("alex_commitment:accept"), "had the commitment talk (part-time accepted)");
-  ok(!g.threads.alex.some(m => (m.body || "").includes("really good offer")),
-    "no competing offer when the talk was had");
+  ok(!g.cast.get("alex").flags.committed_fulltime && !g.threads.alex.some(m => (m.body || "").includes("really good offer")),
+    "Alex is full-time from week 1: no commitment talk, no competing offer");
   ok(g.took("vision_mismatch:test"), "settled the vision fight with user calls");
 
   // Direction spine.
@@ -498,28 +497,23 @@ console.log("scoring on the ignore run (seed 42)");
   ok(cats.every(c => c.score === null || (c.score >= 0 && c.score <= 100)), "all categories well-formed");
 }
 
-// ── the commitment lesson: full-time Alex demos measurably earlier ───────────
-console.log("part-time vs full-time (seed 42)");
+// ── the commitment lesson: a side project slows Alex down ────────────────────
+console.log("focused vs side project (seed 42)");
 {
-  // Alex's own cards get first call so the commitment decision lands the same
-  // week in both runs — the comparison isolates the effort multipliers.
+  // Alex's own cards get first call so the side-project decision lands the
+  // same week in both runs.
   const alexFirst = { priority: (a) => a.charId === "alex" ? -1 : actPriority(a) };
   // 17 weeks: measured before the pivot night, where letting Jordan go
   // lifts Alex's trust in both runs and would mask the difference.
-  const pt = run(42, decent, 17, alexFirst), ft = run(42, decentFT, 17, alexFirst);
-  ok(ft.took("alex_commitment:push") && ft.cast.get("alex").flags.committed_fulltime,
-    "full-time run: Alex committed");
-  ok(ft.done("demo_ready") && pt.done("demo_ready"), "both runs reached the demo");
-  // Balance note: with every direction-card effort grant ported, the demo-week
-  // gap has compressed to ~0-1 weeks (grants dominate the passive multiplier).
-  // Re-balance target: raise the demo effort gate or shrink grants so the
-  // commitment lesson is felt in calendar time again, not just in output.
-  ok(ft.weekOf("demo_ready") <= pt.weekOf("demo_ready"),
-    "full-time demo (wk " + ft.weekOf("demo_ready") + ") no later than part-time (wk " + pt.weekOf("demo_ready") + ")");
-  ok(ft.cast.get("alex").buildEffort > pt.cast.get("alex").buildEffort,
-    "full-time Alex out-built part-time (" + ft.cast.get("alex").buildEffort.toFixed(1) + " vs " + pt.cast.get("alex").buildEffort.toFixed(1) + " effort)");
-  ok(ft.cast.get("alex").trust < pt.cast.get("alex").trust,
-    "…paid for in trust (" + Math.round(ft.cast.get("alex").trust) + " vs " + Math.round(pt.cast.get("alex").trust) + ")");
+  const fo = run(42, decent, 17, alexFirst), sl = run(42, decentSlide, 17, alexFirst);
+  ok(fo.took("alex_side_project:pause") && !fo.cast.get("alex").flags.side_project_active,
+    "focused run: Alex dropped the side project");
+  ok(sl.took("alex_side_project:slide"), "slide run: the side project was let slide");
+  ok(fo.done("demo_ready") && sl.done("demo_ready"), "both runs reached the demo");
+  ok(fo.weekOf("demo_ready") <= sl.weekOf("demo_ready"),
+    "focused demo (wk " + fo.weekOf("demo_ready") + ") no later than slide (wk " + sl.weekOf("demo_ready") + ")");
+  ok(fo.cast.get("alex").buildEffort > sl.cast.get("alex").buildEffort,
+    "focused Alex out-built the side-project Alex (" + fo.cast.get("alex").buildEffort.toFixed(1) + " vs " + sl.cast.get("alex").buildEffort.toFixed(1) + " effort)");
 }
 
 // ── the cost of a grudging split ─────────────────────────────────────────────

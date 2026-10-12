@@ -34,7 +34,7 @@
     nodes: [
       {
         id: "start_prototype", char: "alex",
-        text: "three of us in the same room for the first time since we decided to do this for real. time to stop talking. i'll build the engine behind the app — accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app itself. one word from you and this becomes real.",
+        text: "that's it, i quit! now we can really get started on plusone. we have 25 weeks. i'll build the engine behind the app: accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app, on top of her day job. are we starting?",
         choices: [
           {
             key: "build", label: "Game on — everyone start building",

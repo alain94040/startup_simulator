@@ -26,11 +26,11 @@
       id: "alex", name: "Alex", role: "Co-founder · CTO", type: "cofounder",
       start: { morale: 80, trust: 90, focus: "build" },
       skills: { build: 1.2, discover: 0.7, pitch: 0.5 },
-      // Alex is part-time until he commits — his effort grants and passive
-      // accrual shrink so the commitment lesson survives (see alex_commitment
-      // in the full game; the flag is set by that arc when ported).
-      effortMult: (s, char) => (char.flags.committed_fulltime ? 1.0 : 0.6),
-      passiveMult: (s, char) => (char.flags.committed_fulltime ? 1.0 : 0.4),
+      // Pacing constants, not story: the demo/launch/pivot weeks are tuned
+      // against these (tests/phase_map.js). Alex is full-time; his output is
+      // just not 1.0 per hour.
+      effortMult: () => 0.6,
+      passiveMult: () => 0.4,
     },
     {
       id: "jordan", name: "Jordan", role: "Co-founder · iOS", type: "cofounder",
