@@ -590,9 +590,15 @@
             ? Object.keys(s.items).filter(k => s.items[k].auto
                 && s.items[k].status !== "done" && s.items[k].status !== "deferred").length
             : 0;
-          return "status: still " + left + " thing" + (left === 1 ? "" : "s")
-            + " left on the pre-launch list. heads-down on it. i know how this sounds in week "
-            + s.week + " — it's the plan we picked and it's the plan we're finishing.";
+          const n = left + " thing" + (left === 1 ? "" : "s");
+          // Varied by week so two weeks running never read the same.
+          const lines = [
+            "status: " + n + " left on the pre-launch list. still heads-down. i know how this sounds in week " + s.week + ", but it's the plan we picked and we're finishing it.",
+            "quick update. " + n + " left on the list. nothing new to report except that it's slow. we scoped big, so this is what big costs.",
+            left + " to go. i'm not going to pretend it's going faster than it is. week " + s.week + " and i'd rather ship all of it than half of it.",
+            "list update: " + n + " left. getting there. i keep telling myself this is the last stretch.",
+          ];
+          return lines[s.week % lines.length];
         },
         when: {
           cooldown: 1,
