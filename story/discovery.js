@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // story/discovery.js — the discovery-mode payoff chain (what Alex finds when
 // you give him sprints for user calls), the post-launch research habit, the
-// reference-customer chain, the pairing card, and solo mode (the game after
+// reference-customer chain, the Jordan pairing card, and solo mode (the game after
 // Alex walks).
 //
 // The pivot_insight ladder is gated on Alex actually being in discover focus
@@ -12,6 +12,30 @@
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const discovering = (s, e, char) => char.focus === "discover" && e.weeksSince("alex_sync_discover") >= 2;
+
+  // The Jordan pairing card (founder_codebuild, below).
+  const JORDAN_PACE = 0.4; // world.js's JORDAN_PACE: her share of a full week on the v2 board
+  const CODEBUILD_MAX = 2, CODEBUILD_GAP = 6, CODEBUILD_WINDOW = 2;
+  const jordanOnBoard = (s, e) => {
+    const b = s.items && s.items.plans_ui;
+    return !!(s.activities_pivot && s.launched && b && b.status === "todo" && b.assignee === "jordan");
+  };
+  // Before the pivot she always has a column (the iPhone app, then its fixes);
+  // after it, only while the v2 board she claimed is still hers to finish.
+  const jordanOwnsWork = (s, e) =>
+    jordanOnBoard(s, e) || (!s.activities_pivot && e.done("dev_plan"));
+  const nothingElseOpen = (e) => e.order.every(id => id === "founder"
+    || !e.open[id] || !e.options(e.open[id].nodeId).length);
+  // The week each offer opened. Re-shows within one offer's window (a story
+  // beat took the founder's slot, then handed it back) are the same offer.
+  const codebuildOffers = (e) => {
+    const starts = [];
+    for (const l of e.log) {
+      if (l.surfaced !== "founder_codebuild") continue;
+      if (!starts.length || l.week - starts[starts.length - 1] >= CODEBUILD_WINDOW) starts.push(l.week);
+    }
+    return starts;
+  };
 
   const mod = {
     nodes: [
@@ -194,45 +218,46 @@
         ],
       },
 
-      // ── PAIRING WITH ALEX (the recurring build-together card) ────────────────
+      // ── PAIRING WITH JORDAN (her part-time pace, felt) ───────────────────────
+      // Alex is full-time; Jordan builds at night around her day job. This
+      // card is one of the few places the player feels that before the pivot
+      // night names it: her part of the build sits still, and the founder can
+      // spend a week covering for her. Pairing helps, so it isn't a trap — it
+      // just costs an action, and it never fixes the pace. Shown only while
+      // she owns open work (her column before the pivot, or the v2 board she
+      // claimed), at most twice a run, 6+ weeks apart, and withdrawn after 2
+      // weeks unanswered. A standing offer (no timeout) so it
+      // still yields the founder's slot to story beats.
       {
         id: "founder_codebuild", char: "founder", ambient: true,
-        text: (s, e) => {
-          const n = e.timesResolved("founder_codebuild");
-          if (n === 0) return "alex has been working nonstop but the to-do list isn't shrinking. you can code — spend this week building alongside him.";
-          if (n < 3) return "same situation as last time — the to-do list still isn't moving fast enough. you could jump in again.";
-          const extras = [
-            "the to-do list is never fully empty. at some point coding together stops being a one-off and becomes the default way you ship.",
-            "matching algorithm is getting slower as the user base grows. alex flagged it — not urgent yet, but a focused week together would close it.",
-            "photo upload pipeline is still flaky for some devices. alex has it on the list but it keeps sliding. worth a week.",
-          ];
-          return extras[(n - 3) % extras.length];
-        },
+        text: (s, e) => (codebuildOffers(e).length < 2
+          ? "jordan's part of the board hasn't moved since last week. she only gets to it at night, after work. you can code — spend this week building alongside her."
+          : "her column is still the one that's open. you could jump in again."),
         when: {
-          cooldown: 4,
+          cooldown: CODEBUILD_GAP,
           if: (s, e) => {
-            const alex = e.cast.get("alex");
-            return alex.active && alex.focus === "build" && e.done("dev_plan");
+            if (!e.cast.get("jordan").active || !jordanOwnsWork(s, e)) return false;
+            // A stalled run can reach a week where nobody else has anything to
+            // ask (the founder's thread is polled last). This card has always
+            // been what fills it, so the cap doesn't apply there — the
+            // no-dead-air invariant (test_narrative Layer C) outranks rarity.
+            if (nothingElseOpen(e)) return true;
+            const offers = codebuildOffers(e);
+            if (!offers.length) return true;
+            const since = s.week - offers[offers.length - 1];
+            if (since < CODEBUILD_WINDOW) return true;  // this offer is still on the table
+            return since >= CODEBUILD_GAP && offers.length < CODEBUILD_MAX;
           },
         },
         choices: [
           {
-            key: "pair", label: "Code with Alex this week",
-            effects: { char: { alex: { morale: 8, effort: 0.5 } } },
+            key: "pair", label: "Code with Jordan this week",
+            effects: { char: { jordan: { morale: 5 } } },
             fx(s, e) {
-              // Pairing on an owned matching engine sharpens the secret sauce —
-              // far more if you know what to match on (research, GOALS.md).
-              if (s.matching_owned && !s.launched) {
-                const researched = e.took("interviews:interview") || e.cast.get("alex").focus === "discover";
-                if (researched) e.addFit(2); // without user signal, pairing is building, not learning
-                if (s.items && s.items.matching_algo && s.items.matching_algo.status !== "obsolete" && researched) {
-                  s.items.matching_algo.quality = "solid";
-                }
-                return researched
-                  ? "Paired with Alex on the matching engine — the core of PlusOne. Everything from the user interviews went straight into the ranking. Slow going, but it's ours and it's getting smarter."
-                  : "Paired with Alex on the matching engine — the core of PlusOne. It's ours and improving, but without real user signal you're both half-guessing at what 'a good match' even means.";
-              }
-              return "Paired up. You worked on the profiles UI, Alex handled the matching algorithm. Your contribution was modest but Alex shipped faster with you there.";
+              const board = jordanOnBoard(s, e);
+              if (board) s.board_progress = (s.board_progress || 0) + (1 - JORDAN_PACE); // a full week, this once
+              else e.cast.get("jordan").buildEffort += 1.0;
+              return "Two nights on the " + (board ? "board" : "app") + " with Jordan, 9pm to 1am. She's fast and careful. She also fell asleep on Thursday's call.";
             },
           },
           {
@@ -240,7 +265,7 @@
             effects: { signal: 4 },
             fx(s) {
               if (!s.launched) s.waitlist += 3; else s.users += 3;
-              return "Ran 3 demos instead. 3 people signed up for early access. Alex kept building solo.";
+              return "Ran 3 demos. 3 people signed up. Jordan's column stayed where it was.";
             },
           },
         ],
