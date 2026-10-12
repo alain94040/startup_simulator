@@ -533,7 +533,7 @@
   .intro-dots { display: flex; align-items: center; margin-left: -4px; }
   /* each dot is a button with a finger-sized hit area around the 6px mark */
   .intro-dot { border: 0; background: none; padding: 10px 4px; cursor: pointer; display: flex; }
-  .intro-dot:hover i:not(.on) { background: var(--dim); }
+  @media (hover: hover) { .intro-dot:hover i:not(.on) { background: var(--dim); } }
   .intro-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: .2s; }
   .intro-dots i.on { background: var(--blue); transform: scale(1.3); }
   .intro-actions { display: flex; align-items: center; gap: 14px; }
@@ -1045,6 +1045,11 @@
     .intro-person .av { width: 60px; height: 60px; }
     .intro-art { height: clamp(100px, calc(92dvh - 450px), 50vw); }  /* sheet tops out at 92dvh */
     .intro-next { padding: 12px 20px; }
+    /* a fingertip, not a cursor: the desktop's 14×26 hit areas are too small to
+       land on the dot you meant, so each gets a 44px-tall, 26px-wide target */
+    .intro-dots { margin-left: -10px; }
+    .intro-dot { padding: 18px 9px; }
+    .intro-dots i { width: 8px; height: 8px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
 
