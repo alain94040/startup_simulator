@@ -368,8 +368,8 @@
             choices: [
               {
                 // Labels carry the founder's intent; the bubble is what a person
-                // would actually type (the same split as ff_family's "Go home and
-                // ask them to invest" → "can I come over for dinner").
+                // would actually type (the same split as ff_family's "Pitch Mom and
+                // Dad over dinner" → "can I come over for dinner").
                 key: "talk", label: "I'll talk to her about her pace.",
                 reply: "i'll talk to her. tonight, if she's up.",
                 journal: null,
