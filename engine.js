@@ -170,6 +170,7 @@
       this.scene = null;              // active scene arc | null
       this._displaced = new Map();    // charId -> nodeId a scene pushed out of the triage
       this._surfaceNow = [];          // nodeIds an answer pulled into THIS week (effects.surface)
+      this._posted = new Map();       // nodeId -> its resolution count when its message was last sent
       this.scheduled = [];            // { week, charId, ev }
       this.actionsLeft = 2;
       this.log = [];                  // flat event log (tests / debugging)
@@ -387,6 +388,15 @@
       // needs the id, not just the name, to draw the right avatar per bubble.
       // Like `text`, it may be a (s,e,char) function — which beat closes a
       // group conversation can depend on how the conversation went.
+      // A node can leave the triage unanswered (a scene displaced it, a higher
+      // class bumped it, its window closed) and come back later. Its message
+      // was already sent and is still sitting in the thread, so the card just
+      // becomes answerable again — re-sending it would show the same text twice.
+      // A recurring node that was answered (or timed out) in between is a new
+      // message and does post again.
+      const count = this.resolved.has(node.id) ? this.resolved.get(node.id).count : 0;
+      if (this._posted.get(node.id) === count) { this.log.push({ week: this.s.week, charId, surfaced: node.id }); return; }
+      this._posted.set(node.id, count);
       const spkId = node.speaker ? this._text(node.speaker, char) : null;
       const spk = spkId ? this.cast.get(spkId) : null;
       this._push(charId, {

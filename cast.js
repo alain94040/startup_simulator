@@ -96,18 +96,20 @@
     },
     {
       id: "david", name: "David", role: "Ex-manager", type: "family",
-      unlock: (s) => s.week >= 7 && s.items != null,
-      intro: "keeping an eye on what you're doing. would love to grab lunch — been a while.",
+      // No `intro`: his first message is the lunch invite (ff_mentor), and the
+      // unlock matches its window so the thread never opens empty.
+      unlock: (s) => s.week >= 7 && s.week <= 12 && s.items != null,
     },
     {
       id: "kevin", name: "Kevin", role: "Growth consultant", type: "consultant",
+      // No `intro`: the pitch (consultant_growth) is his opener.
       unlock: (s) => s.launched && s.customers >= 3,
-      intro: "saw your Hacker News post. i do growth audits for consumer startups — think i can help.",
     },
     {
       id: "brett", name: "Brett", role: "Brand consultant", type: "consultant",
-      unlock: (s) => s.incorporated && s.week >= 5,
-      intro: "found you on a startup database. i work with early-stage founders on positioning — dropping you a line.",
+      // No `intro`: the pitch (consultant_brand) is his opener, and the unlock
+      // matches its window so the thread never opens empty.
+      unlock: (s) => s.incorporated && s.week >= 5 && s.week <= 10,
     },
     {
       id: "hacker_news", name: "HN / Reddit", role: "Communities", type: "platform",
