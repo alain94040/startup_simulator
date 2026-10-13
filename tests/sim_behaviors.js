@@ -99,9 +99,11 @@ for (const [name, spec] of Object.entries(STRATEGIES)) S[name] = runStrategy(nam
 S.no_meetup.priyaSeen = priyaShare(STRATEGIES.no_meetup);
 
 // ── the strategy table ────────────────────────────────────────────────────────
-console.log(`  ${pad("strategy", 13)} ${padL("win", 5)} ${padL("launch", 7)} ${padL("pivot", 6)} ${padL("v2", 4)} ${padL("qual", 6)} ${padL("alexLeft", 9)} ${padL("fired", 6)} ${padL("items", 6)} ${padL("grade", 6)}`);
+// The outcome is the report card, so the first column is the average score
+// (a win rate that reads 100% for every decent variant says nothing).
+console.log(`  ${pad("strategy", 13)} ${padL("score", 6)} ${padL("launch", 7)} ${padL("pivot", 6)} ${padL("v2", 4)} ${padL("qual", 6)} ${padL("alexLeft", 9)} ${padL("fired", 6)} ${padL("items", 6)}`);
 for (const r of Object.values(S)) {
-  console.log(`  ${pad(r.name, 13)} ${padL(r.wins + "%", 5)} ${padL(r.launched + "%", 7)} ${padL(r.pivoted + "%", 6)} ${padL(r.v2 + "%", 4)} ${padL(r.qualified + "%", 6)} ${padL(r.alexLeft + "%", 9)} ${padL(r.jordanFired + "%", 6)} ${padL(r1(r.itemsDone), 6)} ${padL(r.grade == null ? "—" : Math.round(r.grade), 6)}`);
+  console.log(`  ${pad(r.name, 13)} ${padL(r1(r.grade), 6)} ${padL(r.launched + "%", 7)} ${padL(r.pivoted + "%", 6)} ${padL(r.v2 + "%", 4)} ${padL(r.qualified + "%", 6)} ${padL(r.alexLeft + "%", 9)} ${padL(r.jordanFired + "%", 6)} ${padL(r1(r.itemsDone), 6)}`);
 }
 
 // ── the contracts ─────────────────────────────────────────────────────────────
