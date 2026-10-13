@@ -501,11 +501,15 @@
   .notif.hide { animation: noteOut .13s ease forwards; }
   @keyframes noteIn { from { opacity: 0; transform: translateX(34px) scale(.96); } to { opacity: 1; transform: none; } }
   @keyframes noteOut { to { opacity: 0; transform: translateX(34px); } }
-  .notif .n-ico { width: 34px; height: 34px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
-  .notif .n-b { flex: 1; min-width: 0; }
-  .notif .n-title { font-size: 12.5px; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
-  .notif .n-time { color: #8b8b92; font-weight: 400; font-size: 10.5px; white-space: nowrap; }
-  .notif .n-text { font-size: 12px; color: #3a3a40; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  /* A real notification is a fixed size whatever the message: one line of
+     sender, two of text, then an ellipsis. Same rules for the banners and for
+     the bell's list (.nc-item), so a long text never stretches either. */
+  :is(.notif, .nc-item) .n-ico { width: 34px; height: 34px; border-radius: 9px; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+  :is(.notif, .nc-item) .n-b { flex: 1; min-width: 0; }
+  :is(.notif, .nc-item) .n-title { font-size: 12.5px; font-weight: 700; display: flex; justify-content: space-between; gap: 8px; }
+  :is(.notif, .nc-item) .n-title > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :is(.notif, .nc-item) .n-time { color: #8b8b92; font-weight: 400; font-size: 10.5px; white-space: nowrap; }
+  :is(.notif, .nc-item) .n-text { font-size: 12px; color: #3a3a40; line-height: 1.35; max-height: 2.7em; overflow: hidden; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
   .bell { position: relative; border: 1px solid var(--line); background: var(--soft); width: 34px; height: 34px; border-radius: 10px; cursor: pointer; font-size: 15px; display: grid; place-items: center; transition: .13s; }
   .bell:hover { background: #e8eaef; transform: translateY(-1px); }
   .hdr-btn { border: 1px solid var(--line); background: var(--soft); border-radius: 10px; height: 34px; padding: 0 12px; font-size: 12.5px; font-weight: 600; color: var(--ink); display: inline-flex; align-items: center; gap: 6px; transition: .13s; white-space: nowrap; }
@@ -2889,8 +2893,8 @@ function toggleNoteCenter() {
   if (c.classList.contains("show")) { c.classList.remove("show"); return; }
   if (!weekNotes.length) { c.innerHTML = '<h4>This week</h4><div class="nc-empty">No notifications this week.</div>'; }
   else c.innerHTML = '<h4>This week · ' + weekNotes.length + " notification" + (weekNotes.length === 1 ? "" : "s") + "</h4>" +
-    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="width:34px;height:34px;border-radius:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
-      '<div class="n-b"><div class="n-title">' + esc(n.title) + '</div><div class="n-text" style="font-size:12px;color:#3a3a40">' + esc(n.text) + "</div></div></div>").join("");
+    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
+      '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span></div><div class="n-text">' + esc(n.text) + "</div></div></div>").join("");
   c.classList.add("show");
   notesSeen = true; updateBell();
   for (const el of c.querySelectorAll(".nc-item")) el.onclick = () => {
