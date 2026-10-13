@@ -2646,7 +2646,7 @@ function scheduleTurn(delay) {
 
 // ── the week turn: the reveal, in the old order ──────────────────────────────
 // runway counts down → the journal beat LEADS (column glows, entries ink in) →
-// a beat later the phone buzzes, one notification every 750ms → the active
+// a beat later the phone buzzes, one notification every 450ms → the active
 // thread refreshes only after its own notification.
 function advanceWeek() {
   clearTimeout(noteTimer); noteTimer = null; noteQueue = [];
@@ -2709,7 +2709,7 @@ function advanceWeek() {
     if (surface === "msgs" && threadRendered[selected] < game.threads[selected].length) {
       const idx = weekNotes.findIndex(n => n.charId === selected);
       // (the phone shows the week as one banner, so there's nothing to wait for)
-      const delay = idx >= 0 && !isMobile ? idx * 750 + 650 : 380;
+      const delay = idx >= 0 && !isMobile ? idx * 450 + 650 : 380;
       setTimeout(() => { if (surface === "msgs") openThread(); }, delay);
     }
     // the run may have ended this week
@@ -2770,10 +2770,11 @@ function queueNotifications(list) {
   if (isMobile) { showBanner(list); return; }
   noteQueue = noteQueue.concat(list); if (!noteTimer) pumpNotifications();
 }
+const NOTIF_MS = 4000;
 function pumpNotifications() {
   if (!noteQueue.length) { noteTimer = null; return; }
   showNotif(noteQueue.shift());
-  noteTimer = setTimeout(pumpNotifications, 750);
+  noteTimer = setTimeout(pumpNotifications, 450);
 }
 function notifInner(n, extra) {
   return '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
@@ -2787,8 +2788,12 @@ function showNotif(n) {
   let gone = false;
   const dismiss = () => { if (gone) return; gone = true; el.classList.add("hide"); setTimeout(() => el.remove(), 300); };
   el.onclick = () => { dismiss(); if (!uiBusy && n.go) n.go(); };
+  // like a desktop OS banner: up for about 4s, held while the pointer rests
+  // on it, then gone a moment after the pointer leaves
+  let timer = setTimeout(dismiss, NOTIF_MS);
+  el.onmouseenter = () => clearTimeout(timer);
+  el.onmouseleave = () => { clearTimeout(timer); timer = setTimeout(dismiss, 1500); };
   $("notifs").appendChild(el);
-  setTimeout(dismiss, 6500);
 }
 
 // The phone's banner: the whole week at once, not a queue. One arrival is a
@@ -2870,7 +2875,7 @@ function whenIdle(fn, tries = 30) {
 function armBanner(el, count) {
   clearTimeout(bannerTimer);
   // long enough to read the names: 3s, plus a beat per extra row
-  bannerTimer = setTimeout(() => { if (bannerEl === el) dismissBanner(); }, Math.min(6000, 3000 + (count - 1) * 500));
+  bannerTimer = setTimeout(() => { if (bannerEl === el) dismissBanner(); }, Math.min(4500, 3000 + (count - 1) * 400));
 }
 function dismissBanner(instant) {
   clearTimeout(bannerTimer);
