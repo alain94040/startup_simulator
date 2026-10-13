@@ -3155,7 +3155,9 @@ const TIPS = [
   { id: "journal", when: () => jShown > 0,
     target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
     title: "Your journal.",
-    body: () => "The milestones you hit, and what your own calls led to, get written down here. What happened in a chat stays noted in that chat." },
+    body: () => "The milestones you hit and your big calls get written down here. What only matters to one conversation stays noted in that chat.",
+    // the phone's journal is a tab away: let the tip open it on the entry it's about
+    get go() { return isMobile ? { label: "Open the Journal", run: () => setSurface("journal") } : null; } },
   { id: "todo", when: () => stageCounts(currentStage()).done > 0,
     target: () => onScreen($("gTodo")),
     title: "Checked off!",
