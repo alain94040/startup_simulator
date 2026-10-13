@@ -37,6 +37,8 @@
           ? "honest question. i've been on user calls and roadmap docs since week " + Math.max(1, s.week - 4)
             + " because that's what you asked for. it's week " + s.week
             + " and there is still nothing a stranger can open. put me back on the build and leave me there and i can get profiles + matching working end to end."
+          : e.done("demo_stall")
+          ? "week " + s.week + ". still nothing a stranger can open. i'm asking again: let the build be the only thing i do."
           : "it's week " + s.week + ". we have a plan, a company, and no product. i'm getting maybe a day a week on this between everything else you send me. i need a stretch where the build is the only thing i'm doing.",
         // demo_ready's own predicate, negated: it fires once Alex has banked 6
         // effort weeks on a settled matching call, so this fires while either

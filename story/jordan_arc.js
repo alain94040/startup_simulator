@@ -259,7 +259,10 @@
         // The vesting bill. Until the lawyer cleans it up, Marcus's diligence
         // bounces the round (see seed_pitch in story/fundraising.js).
         id: "jordan_cap_table", char: "alex",
-        text: (s) => s.jordan_cold_exit
+        // Asked again after a "can't afford it": Alex doesn't repeat the speech.
+        text: (s, e) => e.timesResolved("jordan_cap_table") > 0
+          ? "jordan's " + pctOf(s) + " is still sitting there. it won't fix itself, and it's the first thing an investor will ask about. can we do the lawyer now?"
+          : s.jordan_cold_exit
           ? "jordan's " + pctOf(s) + " is still on the cap table — fully vested, no cliff — and she's not answering either of us. any investor who looks at this will ask questions we can't answer. we need a lawyer to talk to her lawyer."
           : "jordan's " + pctOf(s) + " is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.",
         // Recurs until cleaned up — a one-shot card would let a single defer

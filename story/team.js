@@ -56,6 +56,8 @@
           if (!e.done("alex_sync_discover"))
             return "offer: i can spend this week on user calls instead of code. the build slips a week — that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
           const weeksAgo = e.weeksSince("alex_sync_discover");
+          if (weeksAgo < 12 && e.timesResolved("alex_sync_discover") >= 2)
+            return "offering again: one more week of user calls? the build slips, but we'd know more than we do now.";
           return weeksAgo >= 12
             ? "it's been " + weeksAgo + " weeks since we last did discovery. things shift — worth a week to check if we're still solving the right problem?"
             : "we're back in build mode. it's only been a few weeks since we last talked to customers, but the queue keeps growing. do another round or keep building?";
@@ -76,7 +78,9 @@
       },
       {
         id: "alex_sync_build", char: "alex", ambient: true,
-        text: "i think we have enough customer feedback to act on for now. ready to get back to building?",
+        text: (s, e) => e.done("alex_sync_build")
+          ? "still on calls. i've got plenty to work with now. want me back on the code?"
+          : "i think we have enough customer feedback to act on for now. ready to get back to building?",
         when: {
           cooldown: 2,
           if: (s, e, char) => char.focus === "discover" && e.weeksSince("alex_sync_discover") >= 2,
