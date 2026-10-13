@@ -24,7 +24,7 @@
 
   const momChoices = (journalAsk) => ([
     {
-      key: "ask", label: "Go home and ask them to invest",
+      key: "ask", label: "Pitch Mom and Dad over dinner",
       reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
       journal: journalAsk,
       fx: (s, e) => askFamily(s, e),
@@ -59,7 +59,7 @@
         when: { took: ["ff_family_2:@ignored"], if: (s) => s.week <= 12 },
         choices: [
           {
-            key: "ask", label: "Go home and take Dad up on it",
+            key: "ask", label: "Sit down with Dad about investing",
             reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
             journal: "Went home and did it properly: walked Dad through what could go wrong before taking a cent. He's sorting it out. Family money hits different.",
             fx: (s, e) => askFamily(s, e),

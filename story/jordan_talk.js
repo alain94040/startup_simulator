@@ -142,7 +142,7 @@
         choices: [
           {
             // Labels are the founder's intent, bubbles are the words (see
-            // ff_family: "Go home and ask them to invest" → "can I come over for
+            // ff_family: "Pitch Mom and Dad over dinner" → "can I come over for
             // dinner").
             // The warm exits are labelled as what they are — choosing not to
             // say it — so they don't read as merely polite replies.
