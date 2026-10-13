@@ -27,7 +27,6 @@
       key: "ask", label: "Go home and ask them to invest",
       reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
       journal: journalAsk,
-      effects: { note: "Mom: 'of course — let us talk it over and we'll get back to you.'" },
       fx: (s, e) => askFamily(s, e),
     },
     {
