@@ -247,9 +247,9 @@
         when: { if: (s) => s.week >= 5 && s.week <= 10 },
         choices: [
           {
-            key: "tell", label: "Tell him about it",
+            key: "tell", label: "Pitch Jamie properly",
             reply: "ha — yes, seriously, a dating app. coffee this week and i'll tell you the whole thing.",
-            journal: "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the waitlist.",
+            journal: "Gave Jamie the real pitch over coffee: the demo, the plan, the whole afternoon. He's on the waitlist, and I think he's wondering how else he can help.",
             effects: {
               waitlist: 1,
               note: "Jamie, over coffee: 'a dating app that actually works? I need to try this.' Put him on the waitlist.",
@@ -264,8 +264,8 @@
         when: { took: ["ff_friend:tell"], delay: 4, if: (s, e) => e.weeksSince("ff_friend") <= 12 },
         choices: [
           {
-            key: "ask", label: "Ask him to invest",
-            reply: "sure thing.",
+            key: "ask", label: "Ask Jamie to invest",
+            reply: "yes. drinks on me this time. fair warning: i'm going to ask you for something big.",
             fx(s, e) {
               if (e.rng() < 0.7) {
                 s.cash += 5000;
@@ -285,9 +285,9 @@
         when: { if: (s) => s.week <= 12 },
         choices: [
           {
-            key: "lunch", label: "Have lunch with David",
+            key: "lunch", label: "Prep for lunch with David",
             reply: "would love to. lunch this week — it's been too long, and i've actually got a lot to tell you.",
-            journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes users keep using the app.",
+            journal: "Spent a morning getting my story straight, then two hours of David's questions over lunch. He used to grill me in reviews and he still does. He wants something concrete: what makes users keep using the app.",
             effects: {
               note: "David, over lunch: 'send me something concrete this week — what makes users keep using the app?'",
             },
@@ -297,7 +297,7 @@
       },
       {
         id: "ff_mentor_pitch", char: "david", from: "David (ex-manager)",
-        text: "been chewing on what you told me at lunch. want to grab coffee and go through the numbers?",
+        text: "been chewing on what you told me at lunch. want to do this properly? bring a deck and your numbers, and i'll treat it like any pitch i'd write a check for.",
         when: { took: ["ff_mentor:lunch"], delay: 3, if: (s, e) => e.weeksSince("ff_mentor") <= 10 },
         choices: [
           {
@@ -307,8 +307,8 @@
             // deep-dive.) What makes people stay? (market fit, which only
             // learning from users earns — FIT_KNOWS_USERS). Jamie's check stays
             // a coin flip on purpose: a friend invests in you, not your market.
-            key: "pitch", label: "Show him the deck",
-            reply: "let's do it — coffee, numbers, the whole pitch.",
+            key: "pitch", label: "Build a deck and pitch David",
+            reply: "deal. give me a few days to pull the deck together, then coffee and the whole pitch.",
             fx(s, e) {
               const knowsFlare = e.took("flare_stealth:dive") || e.took("mentor_competitor_bomb:research");
               if (!knowsFlare) {
@@ -327,9 +327,9 @@
               return null;
             },
             journal: (s) => ({
-              flare: "Pitched David. He passed — he'd found Flare in ten seconds of googling, and I'd never mentioned them.",
-              users: "Pitched David. He passed for now: he asked what makes people stay, and I could only tell him what the app does.",
-              invest: "Pitched David. He wired $4,000 — he liked that we knew the competition and knew our users.",
+              flare: "Spent the week building a deck for David. He passed: he found Flare in ten seconds of googling, and I'd never mentioned them.",
+              users: "Spent the week building a deck for David. He passed for now: he asked what makes people stay, and I could only tell him what the app does.",
+              invest: "Spent the week building a deck for David, and it paid off: he wired $4,000 because we knew the competition and knew our users.",
             })[s.david_verdict],
           },
         ],
