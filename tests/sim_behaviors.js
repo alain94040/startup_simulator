@@ -276,13 +276,20 @@ const moneyPriority = (a) => {
   const i = MONEY_FIRST.indexOf(a.nodeId);
   return i >= 0 ? 0.5 + i * 0.01 : H.actPriority(a);
 };
+// The unrounded weighted grade: a skipped source can cost less than the one
+// point gradeScore() rounds to, and the contract must still see it.
+const exactGrade = (g) => {
+  const cats = Scoring.scoreGame(g).filter(c => c.score != null);
+  const w = c => c.weight || 1;
+  return cats.reduce((n, c) => n + c.score * w(c), 0) / cats.reduce((n, c) => n + w(c), 0);
+};
 function moneyTactic(skipIds) {
   const skip = new Set(skipIds);
   let grade = 0, minBal = 0, gigs = 0;
   for (let i = 0; i < N; i++) {
     const g = H.playGame(1000 + i, (a, gg) => skip.has(a.nodeId) ? null : H.decent(a, gg),
       { priority: moneyPriority });
-    grade += g.gradeScore();
+    grade += exactGrade(g);
     let low = g.s.cash;
     for (const wk of g.ledger) low = Math.min(low, wk.balanceAfter);
     minBal += low;

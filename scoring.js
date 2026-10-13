@@ -14,6 +14,7 @@
 
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const BUILD_WEIGHT = 3; // "Build something people want" in the final grade
 
   // Ratio of answered-vs-ignored among the given nodes (only counting resolved
   // ones). Returns null if none of them ever resolved.
@@ -43,13 +44,16 @@
   function scoreGame(g) {
     const s = g.s;
     const out = [];
-    const add = (key, label, ref, result, verdicts) => {
+    // `weight` is how much the category counts in the final grade
+    // (engine.gradeScore is the weighted average); 1 unless given.
+    const add = (key, label, ref, result, verdicts, weight) => {
+      weight = weight || 1;
       if (!result) {
-        out.push({ key, label, ref, score: null, verdict: "never faced", notes: [] });
+        out.push({ key, label, ref, weight, score: null, verdict: "never faced", notes: [] });
         return;
       }
       const v = result.score >= 70 ? verdicts[0] : result.score >= 40 ? verdicts[1] : verdicts[2];
-      out.push({ key, label, ref, score: result.score, verdict: v, notes: result.notes });
+      out.push({ key, label, ref, weight, score: result.score, verdict: v, notes: result.notes });
     };
 
     // ── 1. Have the hard conversations ───────────────────────────────────────
@@ -231,7 +235,11 @@
           ? "You listened first and built lean — then kept the old product when the evidence said to change it."
           : "You listened first, built second, and turned the ship while you still could.",
           "Some signal reached the roadmap; a lot of it didn't.",
-          "The product was built on guesses and defended against evidence."]);
+          "The product was built on guesses and defended against evidence."],
+        // The game's central lesson counts triple in the final grade: a run
+        // that never shipped something users wanted can't average its way
+        // back up on clean paperwork and good build-vs-buy calls.
+        BUILD_WEIGHT);
     }
 
     // ── 4. Features won't save you ───────────────────────────────────────────
