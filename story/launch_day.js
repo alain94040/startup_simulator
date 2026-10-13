@@ -460,7 +460,16 @@
       },
       {
         id: "good_enough_launch", char: "alex",
-        text: "the product is solid. we could keep polishing or we could ship it and learn from real users. nothing's on fire — let's launch.",
+        // Asked every week until it's answered, and each re-ask is a status,
+        // not a complaint (Alex says things once). The count is how many weeks
+        // the question has already gone by — answered "wait" or left on read.
+        text: (s, e) => {
+          const n = e.timesResolved("good_enough_launch");
+          if (n === 0) return "the product is solid. we could keep polishing or we could ship it and learn from real users. nothing's on fire — let's launch.";
+          if (n === 1) return "still ready to launch. nothing's changed since last week except the runway. are we shipping?";
+          if (n === 2) return "three weeks of a finished product nobody outside this chat has used. every week we wait is a week of runway spent learning nothing. launch?";
+          return "week " + (n + 1) + " of asking. i'll keep asking every week, because it's the only question that matters right now. do we launch?";
+        },
         when: {
           // Every week, not every four. Once the product is hardened and the
           // scope is clear, "are we shipping?" is the only thing on Alex's mind
@@ -468,7 +477,10 @@
           // vacuum. runway is ticking"). At 4 a founder who answered "two more
           // weeks" got silence instead — including whole weeks with nothing to
           // answer at all, on the one question the chapter is about.
-          cooldown: 1,
+          // 0, not 1: a timed-out ask must be back the same boundary it
+          // expires on. At 1 a player who left it on read got a week with no
+          // launch card at all, on the way to a launch too late to ship v2.
+          cooldown: 0,
           if: (s, e, char) => s.productPhase === "product" && allScopeBuilt(s)
             && s.ios_unblocked && !s.launched && char.focus === "build",
         },
@@ -492,11 +504,25 @@
             fx: () => "Polished a few more things. Alex thinks you're stalling — and he might be right.",
           },
         ],
-        // Stalling by silence costs real money and morale — and he re-raises it.
+        // Stalling by silence costs money and morale every week, and he asks
+        // again the same boundary. It used to wait 3 weeks, then go quiet for
+        // one: a careless founder could answer other people for three weeks,
+        // launch in week 17 instead of 13, and lose the run to a v2 that
+        // couldn't ship in time, with only an amber ring as warning. Now each
+        // missed week shows up in the Bank, and Jordan raises it in the
+        // founders' chat, so the question is in two threads at once.
         timeout: {
-          weeks: 3,
-          effects: { cash: -800, char: { alex: { morale: -10 } } },
-          say: { char: "alex", text: "another week building in a vacuum. runway is ticking and real users are waiting." },
+          weeks: 1,
+          effects: { char: { alex: { morale: -2 } } },
+          fx(s, e) {
+            const misses = e.timesResolved("good_enough_launch");
+            const said = misses === 1
+              ? "alex says the app is ready for real people. are we launching? i told my sister she can be one of the first 🙂"
+              : misses === 3
+                ? "people on the waitlist keep asking me when it's live. what do i tell them?"
+                : null;
+            if (said) e.say({ char: "founders", speaker: "jordan", text: said });
+          },
         },
       },
 

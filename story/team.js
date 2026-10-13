@@ -288,9 +288,13 @@
           if: (s, e, char) => {
             if (!char.active || char.flags.departure_resolved) return false;
             if (s.alex_departure_risk || char.trust < 15 || char.morale < 10) return true;
-            const recentIgnores = e.log.filter(
-              l => l.charId === "alex" && l.ignored && l.week >= s.week - 10).length;
-            return recentIgnores >= 3;
+            // The launch question re-asks every week it goes unanswered
+            // (launch_day.js); it counts at the rate it did when it waited 3
+            // weeks per ask, so asking more often doesn't make Alex quit sooner.
+            const recent = e.log.filter(
+              l => l.charId === "alex" && l.ignored && l.week >= s.week - 10);
+            const launchAsks = recent.filter(l => l.ignored === "good_enough_launch").length;
+            return recent.length - launchAsks + Math.floor(launchAsks / 3) >= 3;
           },
         },
         choices: [
