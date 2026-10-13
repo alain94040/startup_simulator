@@ -34,11 +34,14 @@
     nodes: [
       {
         id: "start_prototype", char: "alex",
-        text: "three of us in the same room for the first time since we decided to do this for real. time to stop talking. i'll build the engine behind the app — accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app itself. one word from you and this becomes real.",
+        text: "that's it, i quit! now we can really get started on plusone. we have 25 weeks. i'll build the engine behind the app: accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app, on top of her day job. are we starting?",
         choices: [
           {
             key: "build", label: "Game on — everyone start building",
             reply: "let's do this. you take the engine, jordan takes the iPhone app. i'll handle everything else. game on.",
+            // The whole team's plan, not just Alex's: the journal's first line,
+            // not a jot in his chat (and the line the journal tip points at).
+            inJournal: true,
             journal: "Told the team to start building today. Alex took profiles and matching, Jordan's on the iPhone app, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.",
             fx(s) {
               kickoff(s);
@@ -58,7 +61,7 @@
           {
             key: "standup", label: "Quick call every morning",
             reply: "let's do a quick 15-minute call every morning at 9. keeps us both honest while you're juggling the day job.",
-            journal: "Set up a quick 15-minute call with Jordan every morning at 9. Keeps us both honest while she's juggling her day job.",
+            journal: "Every morning at 9, fifteen minutes with Jordan. It's the only slice of her day the day job doesn't own.",
             effects: { char: { jordan: { morale: 5 } } },
             fx: () => "A quick call every morning at 9. Keeps both of you honest.",
           },

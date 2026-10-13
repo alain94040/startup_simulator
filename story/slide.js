@@ -33,12 +33,12 @@
         choices: [
           {
             key: "go", label: "Go to the meetup",
-            journal: "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on retention, and seemed genuinely curious about what we're building.",
+            journal: "Went to the founder meetup. Good crowd. Long talk with Priya — she launched a consumer app years ago, has strong opinions on keeping users coming back, and seemed genuinely curious about what we're building.",
             effects: { signal: 4 },
             fx(s) {
               s.met_priya = true;
               s.met_priya_week = s.week;
-              return "Good crowd. You talked to a few people building in adjacent spaces. Had a long conversation with Priya — she launched a consumer app a few years ago, has strong opinions on retention, and seemed genuinely interested in what you're working on.";
+              return "Good crowd. You talked to a few people building in adjacent spaces. Had a long conversation with Priya — she launched a consumer app a few years ago, has strong opinions on keeping users coming back, and seemed genuinely interested in what you're working on.";
             },
           },
         ],
@@ -62,9 +62,9 @@
         choices: [
           {
             key: "research", label: "Do a competitive deep-dive",
-            journal: "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's our wedge. Priya's officially advising now.",
+            journal: "Spent the weekend doing a full competitive analysis. Eight serious dating apps, two well-funded, one YC-backed. None of them solve it the way we do — that's what sets us apart. Priya's officially advising now.",
             effects: { signal: 8, marketFit: 2, flags: { priya_advising: true } },
-            fx: () => "Did a full competitive analysis. None of them solve it for your niche. That's your wedge. Priya is now a real advisor.",
+            fx: () => "Did a full competitive analysis. None of them solve it for your niche. That's what sets you apart. Priya is now a real advisor.",
           },
         ],
         timeout: {
@@ -84,9 +84,9 @@
         choices: [
           {
             key: "dig", label: "Dig into the drop-off",
-            journal: "Pulled the test group's numbers apart. Matches that never become conversations, conversations that never become dates — twelve people is a small sample and an unambiguous one. The analytics paid for themselves before launch: I can see the pivot from here.",
+            journal: "Pulled the test group's numbers apart. Matches that never become conversations, conversations that never become dates — twelve people is a small sample and an unambiguous one. The analytics paid off before launch: I know where people drop out, and I found out before a single stranger signed up.",
             effects: { marketFit: 6, signal: 4, flags: { analytics_dropoff_seen: true } },
-            fx: () => "Pulled the test group's numbers apart. The story's unambiguous even at twelve people — matches that never become conversations, conversations that never become dates. You can see the pivot from here, with time to act on it before a single stranger signs up.",
+            fx: () => "Pulled the test group's numbers apart. The story's unambiguous even at twelve people — matches that never become conversations, conversations that never become dates. You know where people drop out, and you found out before a single stranger signs up.",
           },
         ],
         // Even unread, the number exists — the chip is banked either way (old behavior).
@@ -122,9 +122,9 @@
         when: { took: ["good_enough_launch:ship"], delay: 2, if: (s) => !s.activities_pivot },
         choices: [
           {
-            key: "retention", label: "Watch retention, not signups",
+            key: "retention", label: "Track who comes back, not signups",
             reply: "agreed — forget new signups for now. friday, i want to know who came back.",
-            journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday — retention, not signups.",
+            journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday, not how many sign up.",
             effects: {
               signal: 2, say: { char: "alex", text: "that's the correct question. most founders ask the other one." },
               schedule: [
@@ -247,14 +247,14 @@
           {
             key: "real_numbers", label: "Give her the real numbers",
             reply: "honestly? day one was great and it's been gravity ever since. matches happen, then nothing.",
-            journal: "Priya asked about week two — retention, not signups. I gave her the real answer: matches happen, then nothing. She said 'then nothing' is the whole ballgame, and offered to clear a Saturday.",
+            journal: "Priya asked about week two: who comes back, not signups. I gave her the real answer: matches happen, then nothing. She said 'then nothing' is the whole ballgame, and offered to clear a Saturday.",
             effects: { say: { char: "priya", text: "'then nothing' is the whole ballgame. when you're ready to take that seriously, i'll clear a saturday." } },
             fx: () => "'Then nothing' is the whole ballgame, she said. She's ready to clear a Saturday.",
           },
           {
             key: "deflect", label: "Still reading the data",
             reply: "still reading the data. early days.",
-            journal: "Priya asked about week-two retention and I deflected — 'still reading the data.' Her reply landed anyway: data doesn't read itself. The offer stands.",
+            journal: "Priya asked about whether users come back in week two and I deflected — 'still reading the data.' Her reply landed anyway: data doesn't read itself. The offer stands.",
             effects: { say: { char: "priya", text: "sure. data doesn't read itself though. offer stands." } },
             fx: () => "She didn't push. 'Data doesn't read itself though. Offer stands.'",
           },

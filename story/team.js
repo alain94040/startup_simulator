@@ -1,54 +1,22 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // story/team.js — the co-founder relationship spine riding the dev clock:
-// Alex's part-time confession, the vision alignment fight, and the standing
-// build-vs-discover trade.
+// the vision alignment fight, the standing build-vs-discover trade, and
+// Alex's side project.
 //
-// The commitment card is the effortMult lesson (see cast.js): accepting
-// part-time keeps Alex's grants at 0.6× and passive accrual at 0.4×, which is
-// what actually delays the demo. Pushing him full-time buys speed at a morale
-// and trust cost. Ignoring it entirely gets him a competing offer.
+// Alex quit his job for this (the intro and the equity talk say so), so he is
+// full-time from week 1. The commitment lesson is the side project: left
+// alone it drags his build rate (world.js's sideProjectMult), and the player
+// has to tell him to focus.
 // ─────────────────────────────────────────────────────────────────────────────
 
 (function () {
   const mod = {
     nodes: [
       {
-        id: "alex_commitment", char: "alex",
-        text: "i can't quit my job until we have real traction. evenings and weekends for now. should be enough to get to launch, right?",
-        // The quit-my-job talk lands right as the sprint cadence starts making
-        // his evenings-and-weekends pace visible.
-        when: { after: ["dev_plan"], if: (s, e) => e.weeksSince("dev_plan") <= 3 },
-        choices: [
-          {
-            key: "accept", label: "Agree — part-time for now",
-            reply: "that's fair. evenings and weekends works for now. let's set a milestone to revisit — once we hit traction, we talk again.",
-            journal: "Agreed Alex stays part-time for now — evenings and weekends. Slower, but he won't resent it. We set a milestone to revisit once we have traction.",
-            effects: { signal: -5 },
-            fx: () => "Alex stays part-time for now. Slower, but stable. Set a clear milestone to revisit.",
-          },
-          {
-            key: "push", label: "Push for full-time",
-            reply: "i hear you but i need you all in. evenings and weekends won't cut it — we'll get outrun. can you make the jump now?",
-            journal: "Pushed Alex to go full-time. He said yes, but I could tell he wasn't ready. I'll need to watch how he's doing.",
-            effects: { char: { alex: { morale: -10, trust: -10, flags: { committed_fulltime: true } } } },
-            fx: () => "Alex agreed to go full-time. He said yes, but you could tell he wasn't ready. Watch his mood.",
-          },
-        ],
-        // Left hanging, he takes a recruiter's call.
-        timeout: {
-          weeks: 3,
-          unless: (s, e, char) => !!char.flags.committed_fulltime,
-          effects: { char: { alex: { morale: -14, flags: { offer_msg_sent: true } } } },
-          say: { char: "alex", text: "got a really good offer from a startup. i need to decide by friday. can we talk about where this is actually going?" },
-        },
-      },
-      {
         id: "vision_mismatch", char: "alex",
         text: "i keep pitching this as 'casual dating done right.' you've been calling it 'serious relationships.' those are different products with different users. which are we actually building?",
-        // Only exists once the commitment talk was actually had — a decision
-        // you dodged doesn't spawn follow-up alignment fights (old behavior).
         when: {
-          took: ["alex_commitment:accept|push"],
+          after: ["dev_plan"],
           if: (s, e) => !s.has_demo && e.weeksSince("dev_plan") >= 2 && e.weeksSince("dev_plan") <= 8,
         },
         choices: [
@@ -69,9 +37,9 @@
           {
             key: "test", label: "Test it with users",
             reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
-            journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and churn less.",
+            journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and stick around longer.",
             effects: { signal: 14, marketFit: 6, char: { alex: { morale: 5, trust: 6 } } },
-            fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and churn less.",
+            fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and stick around longer.",
           },
         ],
         timeout: {
@@ -125,14 +93,20 @@
       // ── RELATIONSHIP TEXTURE ─────────────────────────────────────────────────
       {
         id: "alex_side_project", char: "alex",
-        text: "full disclosure — i've been putting 3 hours a day into a side project. didn't mention it earlier and i should have. i wanted you to hear it from me before it became a problem.",
-        when: { if: (s, e, char) => s.week >= 3 && s.week <= 14 && char.morale > 50 && !char.flags.committed_fulltime },
+        text: "i need to tell you something. i've started a side project. about 3 hours a day. i quit my job for plusone and some nights i miss building something just for me. i wanted you to hear it from me.",
+        when: { if: (s, e, char) => s.week >= 3 && s.week <= 14 && char.morale > 50 },
         choices: [
           {
-            key: "pause", label: "Ask him to pause it",
-            reply: "appreciate you telling me. can you pause it until we hit our first real milestone? i need to know you're fully here for this stretch.",
+            key: "pause", label: "Ask him to focus on PlusOne",
+            reply: "thanks for telling me. you quit your job for this, so i need you all in on plusone. can you drop it until after launch?",
             effects: { char: { alex: { morale: 5, trust: 5 } } },
-            fx: () => "Honest conversation. Alex drops the side project until you hit a milestone. Relationship stronger for it.",
+            fx: () => "Honest conversation. Alex drops the side project until after launch. Relationship stronger for it.",
+          },
+          {
+            key: "slide", label: "Let it slide",
+            reply: "ok. just don't let it eat into plusone.",
+            effects: { char: { alex: { morale: 3, flags: { side_project_active: true } } } },
+            fx: () => "You let it slide. Alex keeps the side project going, and the build slows a little.",
           },
         ],
         // Ignored: he keeps going, quietly — the passive build rate takes the hit.
@@ -255,7 +229,7 @@
           { key: "individuals", label: "Young singles — bigger market, easier to reach",
             fx: () => "Locked in: 25-35 year olds tired of swiping. Bigger pool, faster feedback." },
           { key: "teams", label: "Relationship-seekers — that's where the revenue is",
-            fx: () => "Going after people who are seriously looking. Higher willingness to pay, stronger retention story." },
+            fx: () => "Going after people who are seriously looking. Higher willingness to pay, users who stay longer." },
           { key: "open", label: "Follow the early users",
             fx: () => "Staying flexible. Let the first signups tell you who they are." },
         ],
@@ -314,9 +288,13 @@
           if: (s, e, char) => {
             if (!char.active || char.flags.departure_resolved) return false;
             if (s.alex_departure_risk || char.trust < 15 || char.morale < 10) return true;
-            const recentIgnores = e.log.filter(
-              l => l.charId === "alex" && l.ignored && l.week >= s.week - 10).length;
-            return recentIgnores >= 3;
+            // The launch question re-asks every week it goes unanswered
+            // (launch_day.js); it counts at the rate it did when it waited 3
+            // weeks per ask, so asking more often doesn't make Alex quit sooner.
+            const recent = e.log.filter(
+              l => l.charId === "alex" && l.ignored && l.week >= s.week - 10);
+            const launchAsks = recent.filter(l => l.ignored === "good_enough_launch").length;
+            return recent.length - launchAsks + Math.floor(launchAsks / 3) >= 3;
           },
         },
         choices: [

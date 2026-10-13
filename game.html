@@ -2,100 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<script>
-/* ── on-page error reporter ─────────────────────────────────────────────────
-   Loaded first, before every other script tag, so it catches a failure
-   anywhere: a syntax error or thrown exception in this file's own inline
-   script, a thrown exception in cast.js/engine.js/story/*.js, or one of
-   those <script src> tags failing to load at all (a 404, a case-sensitivity
-   mismatch, a network hiccup) — the last of those doesn't bubble as an
-   ordinary error event, only a capturing listener on window sees it.
-   A boot-time crash otherwise looks like a blank or half-drawn page with
-   nothing in the browser's own console to point at, and on a phone there
-   usually is no console to check. This renders whatever threw, in place,
-   so a report of "the chat is empty" comes with the actual error attached.
-   TEMPORARY: meant to come back out once real device failures are diagnosed. */
-(function () {
-  "use strict";
-  var MAX = 20;
-  var shown = 0, pending = [], mounted = false, panel = null, body = null;
-
-  function mount() {
-    if (mounted || !document.body) return;
-    mounted = true;
-    panel = document.createElement("div");
-    panel.id = "bootErrPanel";
-    panel.style.cssText = "position:fixed;inset:0;z-index:2147483647;background:#1b0000;color:#ffd7d7;" +
-      "font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow:auto;padding:14px;" +
-      "white-space:pre-wrap;word-break:break-word;display:none;";
-    var head = document.createElement("div");
-    head.style.cssText = "display:flex;justify-content:space-between;align-items:center;" +
-      "gap:12px;margin-bottom:10px;position:sticky;top:0;background:#1b0000;padding-bottom:6px;";
-    var title = document.createElement("b");
-    title.style.cssText = "color:#ff8080;font-size:14px;font-family:-apple-system,sans-serif;";
-    title.textContent = "⚠ a script error happened";
-    var closeBtn = document.createElement("button");
-    closeBtn.textContent = "hide";
-    closeBtn.style.cssText = "background:#3a0000;color:#ffd7d7;border:1px solid #ff8080;" +
-      "border-radius:6px;padding:6px 14px;font:13px -apple-system,sans-serif;";
-    closeBtn.onclick = function () { panel.style.display = "none"; };
-    head.appendChild(title);
-    head.appendChild(closeBtn);
-    panel.appendChild(head);
-    body = document.createElement("div");
-    panel.appendChild(body);
-    document.documentElement.appendChild(panel);
-    for (var i = 0; i < pending.length; i++) render(pending[i]);
-    pending = [];
-  }
-
-  function render(text) {
-    panel.style.display = "block";
-    if (shown >= MAX) return;
-    shown++;
-    var entry = document.createElement("div");
-    entry.style.cssText = "border-top:1px solid #4a0000;padding-top:10px;margin-top:10px;";
-    entry.textContent = text;
-    body.appendChild(entry);
-    if (shown === MAX) {
-      var note = document.createElement("div");
-      note.style.cssText = "color:#ff8080;margin-top:10px;font-style:italic;";
-      note.textContent = "(further errors suppressed)";
-      body.appendChild(note);
-    }
-  }
-
-  function report(text) {
-    if (document.body) { mount(); render(text); }
-    else {
-      pending.push(text);
-      document.addEventListener("DOMContentLoaded", mount, { once: true });
-    }
-  }
-
-  // capture: true so this also sees a failed <script src>/<link> load, which
-  // fires a plain "error" event on the element itself, not on window, and
-  // never bubbles — only reachable by listening on the way down.
-  window.addEventListener("error", function (e) {
-    var tgt = e.target;
-    if (tgt && tgt !== window && (tgt.tagName === "SCRIPT" || tgt.tagName === "LINK")) {
-      report("Failed to load: " + (tgt.src || tgt.href || "(unknown url)"));
-      return;
-    }
-    var msg = "Error: " + (e.message || "unknown") +
-      "\n" + (e.filename || "") + ":" + (e.lineno || "?") + ":" + (e.colno || "?");
-    if (e.error && e.error.stack) msg += "\n\n" + e.error.stack;
-    report(msg);
-  }, true);
-
-  window.addEventListener("unhandledrejection", function (e) {
-    var reason = e.reason;
-    var msg = "Unhandled promise rejection: " + (reason && reason.message ? reason.message : String(reason));
-    if (reason && reason.stack) msg += "\n\n" + reason.stack;
-    report(msg);
-  });
-})();
-</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#ffffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -130,9 +36,6 @@
   }
   .logo { font-weight: 700; font-size: 15px; }
   .logo small { color: var(--dim); font-weight: 500; margin-left: 6px; }
-  nav.surfaces { display: flex; gap: 4px; }
-  nav.surfaces button { border: 0; background: none; color: #6b6b74; border-radius: 8px; padding: 6px 12px; font-weight: 500; }
-  nav.surfaces button.cur { background: var(--blue-soft); color: var(--blue); font-weight: 600; }
   .n-badge { display: inline-block; min-width: 15px; text-align: center; background: #ff4d4d; color: #fff; border-radius: 8px; font-size: 10px; margin-left: 4px; padding: 0 3px; vertical-align: 1px; }
   .gauge { display: flex; flex-direction: column; gap: 2px; min-width: 118px; font-size: 12.5px; }
   .gauge .g-lbl { font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); white-space: nowrap; }
@@ -155,19 +58,48 @@
   .surface { flex: 1; display: none; min-width: 0; }
   .surface.cur { display: flex; gap: 10px; }
 
-  /* Messages: rail | thread — floating cards on the gutter */
+  /* Messages: rail | thread — floating cards on the gutter. On the desktop
+     the rail is two stacked lists: conversations (scrolling) over the news. */
+  @media (min-width: 1024px) {
+    #rail { display: flex; flex-direction: column; overflow: hidden; }
+    #railList { flex: 1; min-height: 0; overflow: hidden auto; }
+  }
+  #railNews { flex: none; max-height: 42%; overflow: hidden auto; border-top: 1px solid var(--line); background: #fafafc; padding: 8px 8px 10px; }
+  #railNews:empty { display: none; }
+  #railNews h5 { display: flex; justify-content: space-between; align-items: baseline; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: #6b6b74; margin: 2px 6px 6px; }
+  #railNews h5 button { border: 0; background: none; color: var(--blue); font-size: 11px; letter-spacing: 0; text-transform: none; font-weight: 600; padding: 0; }
+  .nw { display: flex; gap: 6px; align-items: flex-start; padding: 6px 6px; border-radius: 8px; cursor: pointer; }
+  .nw:hover { background: #f0f0f4; }
+  .nw.cur { background: var(--blue-soft); }
+  .nw .unread-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; margin-top: 4px; background: transparent; }
+  .nw.unread .unread-dot { background: var(--blue); }
+  .nw .nw-src { display: inline-block; font-size: 9.5px; font-weight: 700; letter-spacing: .04em; color: #fff; border-radius: 4px; padding: 1px 5px; margin-bottom: 2px; }
+  .nw .nw-hl { font-size: 12px; line-height: 1.3; color: #3a3a40; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .nw.unread .nw-hl, .nw.due .nw-hl { color: #1c1c1e; font-weight: 600; }
+  .nw .nw-due { display: block; font-size: 10.5px; color: var(--amber-ink); font-weight: 600; margin-top: 1px; }
+  .empty-news { font-size: 11.5px; color: var(--dim); margin: 0 6px; }
+  /* the News view: the feed, opened in the thread column */
+  #thread.news { align-items: center; gap: 10px; }
+  .f-item.focus { box-shadow: 0 0 0 2px var(--blue); }
+  .bank-back { display: block; flex: none; width: min(560px, 92%); text-align: left; border: 0; background: none; color: var(--blue); font-weight: 600; font-size: 13px; padding: 0; }
   #rail { width: 250px; flex: none; background: var(--panel); overflow: hidden auto; border-radius: 14px; box-shadow: var(--card-shadow); }
   .conv { display: flex; gap: 8px; padding: 9px 12px 9px 8px; border-bottom: 1px solid var(--soft); align-items: center; cursor: pointer; }
   .conv:hover { background: #fafafc; }
   .conv.cur { background: var(--blue-soft); }
   /* iMessage-style unread dot: a blue dot on the left, blank gutter when read */
   .conv .unread-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: transparent; }
+  /* Someone is waiting on your answer: an amber ring, the same signal as the
+     phone strip's. The blue dot clears when you read; this clears when you reply. */
+  #railList .conv.call .av { box-shadow: 0 0 0 2px var(--panel), 0 0 0 4px var(--amber); }
   .conv.unread .unread-dot { background: var(--blue); }
   /* In a scene, an unread thread is the only cue that someone else texted back
      while you were mid-conversation — pulse it so it can't be missed. */
   @keyframes dotPulse { 0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(47,107,255,.5); } 50% { transform: scale(1.35); box-shadow: 0 0 0 4px rgba(47,107,255,0); } }
   #scRail .conv.unread .unread-dot { animation: dotPulse 1.1s ease-in-out infinite; }
-  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; }
+  .av { width: 34px; height: 34px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 14px; display: flex; align-items: center; justify-content: center; flex: none; overflow: hidden; }
+  /* A portrait fills whatever circle (or rounded square) it sits in. */
+  .av img, .av-group span img, .m-from i img, .n-ico img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: inherit; }
+  .m-from i, .n-ico { overflow: hidden; }
   .conv .who { min-width: 0; flex: 1; }
   .conv .who b { font-size: 13px; font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .conv.unread .who b { font-weight: 700; }
@@ -200,6 +132,14 @@
      belongs to. Distinct from m-in/m-out on purpose — parchment tint and
      handwritten font borrow the journal's voice so it never reads as a
      bubble somebody sent. Opt-in only (effects.note) and rare by design. */
+  /* A journal line, pinned under the exchange it recaps: what your answer
+     led to, in the journal's handwriting. A margin note, never a bubble. */
+  .m-jot {
+    align-self: stretch; margin: 2px 22px 10px; padding: 1px 0 1px 10px; border-left: 2px solid var(--journal-line);
+    font: 14px/1.3 var(--hand); color: #7a6d4f;
+  }
+  .m-jot::before { content: "✎ "; opacity: .6; }
+  .f-jot { padding: 6px 14px 9px; border-top: 1px solid var(--soft); font: 13.5px/1.3 var(--hand); color: #7a6d4f; }
   .m-note {
     align-self: center; max-width: 78%; background: var(--journal-bg); border: 1px solid var(--journal-line);
     border-radius: 10px; padding: 7px 12px; font: 13px var(--hand); color: #6b6045;
@@ -212,7 +152,7 @@
     font-style: italic; color: var(--dim); margin: 6px 0 2px; }
   .msg-new { animation: msgpop .32s cubic-bezier(.2,.9,.35,1.15); }
   @keyframes msgpop { from { opacity: 0; transform: translateY(9px) scale(.96); } }
-  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .nb-row, .lc-line, .j-entry.arrive, #scRail .conv.unread .unread-dot, .story .st-dot, .story.fresh { animation: none !important; transition: none !important; } }
+  @media (prefers-reduced-motion: reduce) { .msg-new, .notif, .nb-row, .lc-line, .lc-skip, .j-entry.arrive, #scRail .conv.unread .unread-dot, .story .st-dot, .story.fresh { animation: none !important; transition: none !important; } }
   .m-wk { text-align: center; font-size: 10.5px; color: #9a9aa2; margin: 8px 0 2px; }
   .m-sub { font-size: 11px; color: var(--dim); margin: -3px 0 0 6px; align-self: flex-start; }
   /* Group chat: a thread where the bubbles aren't all from the same person, so
@@ -222,7 +162,7 @@
   /* Two members' colours split across one circle, so a group reads as a group
      at a glance in the rail and the chat header. */
   .av-group { overflow: hidden; display: flex; flex-direction: row; }
-  .av-group span { flex: 1 1 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; height: 100%; }
+  .av-group span { flex: 1 1 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; height: 100%; overflow: hidden; }
   #reply { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 10px 22px 12px; }
   #reply .hint { font-size: 11px; color: var(--dim); margin-bottom: 4px; }
   .chip { display: block; width: 100%; text-align: left; border: 1.5px solid var(--blue); color: var(--blue); background: var(--panel); border-radius: 18px; padding: 8px 14px; font-size: 13px; margin-top: 6px; }
@@ -480,11 +420,25 @@
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
+  /* The picture gives up height before the card would have to scroll: full 2:1
+     when the window is tall enough, a wider crop of it when it isn't (the card's
+     text runs about 430px; the modal tops out at 84vh). */
+  .intro-art { height: clamp(110px, calc(84vh - 430px), 260px); background: var(--soft); overflow: hidden; }
+  .intro-art img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 45%; display: block; }
   .intro-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 9px; }
   .intro-step { font-size: 14px; line-height: 1.6; color: #55555c; }
   .intro-step b { display: block; font-size: 21px; font-weight: 800; line-height: 1.2; margin-bottom: 10px; color: var(--ink); }
+  .intro-person { display: flex; gap: 16px; align-items: flex-start; padding: 14px 0 2px; margin-top: 12px; border-top: 1px solid var(--line); }
+  .intro-person .av { width: 76px; height: 76px; font-size: 28px; }
+  .ip-role { font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+  .ip-role .keep-case { text-transform: none; }  /* "IOS" reads wrong: the brand keeps its lowercase i */
+  .ip-name { font-size: 18px; font-weight: 800; color: var(--ink); margin: 1px 0 4px; }
+  .ip-blurb { font-size: 13.5px; line-height: 1.5; color: #55555c; }
   .intro-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 22px; }
-  .intro-dots { display: flex; gap: 6px; align-items: center; }
+  .intro-dots { display: flex; align-items: center; margin-left: -4px; }
+  /* each dot is a button with a finger-sized hit area around the 6px mark */
+  .intro-dot { border: 0; background: none; padding: 10px 4px; cursor: pointer; display: flex; }
+  @media (hover: hover) { .intro-dot:hover i:not(.on) { background: var(--dim); } }
   .intro-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--line); transition: .2s; }
   .intro-dots i.on { background: var(--blue); transform: scale(1.3); }
   .intro-actions { display: flex; align-items: center; gap: 14px; }
@@ -493,6 +447,43 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
+  /* first-time tips: a sketchbook card — a hand-drawn border, a speech-bubble tail
+     to the feature it explains, and a scribbled circle around it on a dimmed screen.
+     The circle (#tipDeco, under the card) and tail (#tipTail, over it) are drawn by placeTip(); "Kalam" is loaded
+     by FontFace in the tips code and falls back to the journal's hand. */
+  #tipLayer { position: fixed; inset: 0; z-index: 70; display: none; }
+  /* the week's banners would cover a header target on a phone; they're still in the bell */
+  body.tip-on #notifs { visibility: hidden; }
+  #tipLayer.on { display: block; }
+  #tipRing { position: fixed; border-radius: 14px; box-shadow: 0 0 0 9999px rgba(30,28,24,.34); transition: all .25s ease; pointer-events: none; }
+  #tipDeco { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  #tipDeco .tip-ink { fill: none; stroke: #fffdf8; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
+  #tipTail { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; animation: tipTailIn .2s ease .18s backwards; }
+  @keyframes tipTailIn { from { opacity: 0; } }
+  #tipTail .tail-fill { fill: #fffdf8; }
+  #tipTail .tail-line { fill: none; stroke: #2d2a26; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; filter: url(#tipRough); }
+  #tipBubble {
+    position: fixed; width: min(300px, calc(100vw - 30px)); background: #fffdf8; color: #2d2a26;
+    border-radius: 4px; padding: 16px 20px 14px; box-shadow: 3px 4px 0 rgba(0,0,0,.08);
+    transform: rotate(-1.2deg); font-family: Kalam, var(--hand); animation: tipPop .3s cubic-bezier(.2,.9,.3,1.15);
+  }
+  #tipBubble::before { content: ""; position: absolute; inset: -3px; border: 2px solid #2d2a26; border-radius: 10px 4px 12px 5px; filter: url(#tipRough); pointer-events: none; }
+  @keyframes tipPop { from { transform: rotate(-1.2deg) scale(.85); opacity: 0; } }
+  #tipBubble b { display: block; font-size: 19px; font-weight: 700; line-height: 1.25; margin-bottom: 4px; }
+  /* the explanation reads in the game's own sans; only the title and buttons are handwritten */
+  #tipBubble p { font: 14px/1.5 -apple-system, "Segoe UI", system-ui, sans-serif; color: #4a453d; }
+  #tipBubble .tip-btns { display: flex; justify-content: flex-end; align-items: center; gap: 14px; margin-top: 10px; }
+  #tipBubble .tip-ok, #tipBubble .tip-go { font: 700 14px Kalam, var(--hand); background: none; border: 0; border-bottom: 2px solid #2d2a26; border-radius: 0; color: #2d2a26; padding: 2px 4px; cursor: pointer; }
+  #tipBubble .tip-go { border-bottom-style: dashed; color: #6b6358; }
+  #tipBubble .tip-ok:hover, #tipBubble .tip-go:hover { color: #000; }
+  #tipBubble { cursor: pointer; }
+  /* Kalam runs small for its size: on a phone the card takes the width and the hand gets bigger. */
+  @media (max-width: 1023px) {
+    #tipBubble { width: min(340px, calc(100vw - 24px)); padding: 16px 18px 14px; }
+    #tipBubble b { font-size: 22px; }
+    #tipBubble p { color: #3d3932; }
+    #tipBubble .tip-ok, #tipBubble .tip-go { font-size: 17px; padding: 6px 4px 2px; }
+  }
 
   /* ── iPhone-style notifications, anchored under the bell ────────────────── */
   /* above the scene overlay (50) and its modals (60/62) — a scene needs to be
@@ -540,7 +531,10 @@
   .lc-line.vis { color: rgba(255,255,255,.88); }
   .lc-line.lc-title { font-weight: 700; letter-spacing: .06em; }
   .lc-line.lc-title.vis { color: var(--lc-accent, rgba(255,255,255,.95)); }
-  .lc-skip { position: absolute; bottom: 36px; right: 40px; color: rgba(255,255,255,.28); font-size: 11px; cursor: pointer; letter-spacing: .08em; }
+  #cine.show { cursor: pointer; }
+  .lc-skip { position: absolute; bottom: 36px; left: 0; right: 0; text-align: center; color: rgba(255,255,255,0); font-size: 13px; letter-spacing: .12em; text-transform: uppercase; transition: color .8s ease; pointer-events: none; }
+  .lc-skip.ready { color: rgba(255,255,255,.55); animation: lcPulse 2.4s ease-in-out .8s infinite; }
+  @keyframes lcPulse { 50% { color: rgba(255,255,255,.25); } }
   @keyframes fade { from { opacity: 0; } }
 
   /* typing indicator — a light incoming bubble, matching the chat */
@@ -775,7 +769,7 @@
       grid-template-areas: "title actions" "hud hud";
       align-items: center; gap: 0; padding: env(safe-area-inset-top) 0 0;
     }
-    .logo, nav.surfaces, #todoPop { display: none; }
+    .logo, #todoPop { display: none; }
     #mTitle { grid-area: title; display: flex; align-items: center; min-width: 0; padding: 9px 0 7px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
     #mTitle .m-back { border: 0; background: none; padding: 0; margin-left: -4px; color: var(--blue); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 2px; max-width: 100%; }
     #mTitle .m-back .chev { font-size: 22px; line-height: 1; font-weight: 400; position: relative; top: -1px; }
@@ -801,7 +795,7 @@
     /* ── the surface area ── */
     main { padding: 0; gap: 0; background: var(--bg); }
     .surface.cur { gap: 0; }
-    #sideCol, #debug { display: none; }
+    #sideCol, #debug, #railNews, .bank-back { display: none; }
     #feedSurface, #bankSurface, #journalSurface, #rail, #threadCol {
       border-radius: 0; box-shadow: none; -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain;
     }
@@ -866,8 +860,13 @@
     #chatHead span { margin-left: 6px; font-size: 11px; }
     #thread { padding: 10px 12px 8px; gap: 6px; }
     .m-in, .m-out { max-width: 80%; font-size: 16px; padding: 8px 13px 9px; }
-    .m-note { max-width: 92%; font-size: 15px; }
-    .j-entry { font-size: 14.5px; }
+    /* the handwritten face (Bradley Hand on iOS) runs small for its size,
+       so the founder's own voice gets a bigger step than the bubbles */
+    .m-note { max-width: 92%; font-size: 16.5px; }
+    .j-entry { font-size: 16.5px; }
+    .j-entry .j-wk { font-size: 12px; }
+    .m-sys { font-size: 13px; }   /* the centered cue lines ("you've heard both of them now…") */
+    .empty-tier { font-size: 14px; }   /* the blank-journal and quiet-triage lines */
     #reply { padding: 9px 12px 10px; }
     #reply .chips-scroll { max-height: 44dvh; overflow-y: auto; overscroll-behavior: contain; }
     .chip { padding: 11px 16px; font-size: 14.5px; border-radius: 20px; margin-top: 7px; }
@@ -948,7 +947,15 @@
     #introModal { padding: 0; overflow-y: auto; }
     .intro-body, .intro-board { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
     .intro-step b { font-size: 19px; }
+    .intro-person { gap: 12px; }
+    .intro-person .av { width: 60px; height: 60px; }
+    .intro-art { height: clamp(100px, calc(92dvh - 450px), 50vw); }  /* sheet tops out at 92dvh */
     .intro-next { padding: 12px 20px; }
+    /* a fingertip, not a cursor: the desktop's 14×26 hit areas are too small to
+       land on the dot you meant, so each gets a 44px-tall, 26px-wide target */
+    .intro-dots { margin-left: -10px; }
+    .intro-dot { padding: 18px 9px; }
+    .intro-dots i { width: 8px; height: 8px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
 
@@ -980,7 +987,7 @@
     /* ── cinematics + lightbox ── */
     .lc-line { font-size: clamp(19px, 5.6vw, 26px); line-height: 1.9; }
     .lc-inner { padding: 0 24px; }
-    .lc-skip { bottom: calc(24px + env(safe-area-inset-bottom)); right: 0; left: 0; text-align: center; }
+    .lc-skip { bottom: calc(24px + env(safe-area-inset-bottom)); }
     .lb-stage { font-size: clamp(13px, 5.4vw, 18px); }
     .lb-close { top: calc(14px + env(safe-area-inset-top)); right: 14px; }
   }
@@ -1021,10 +1028,6 @@
 <header>
   <div class="logo">PlusOne<small id="hWeek"></small></div>
   <div id="mTitle"></div>
-  <nav class="surfaces">
-    <button class="cur" data-surface="msgs">Messages<span class="n-badge" id="bMsgs" style="display:none"></span></button>
-    <button data-surface="feed">News Feed<span class="n-badge" id="bFeed" style="display:none"></span></button>
-  </nav>
   <div id="hud">
     <div class="gauge clickable" id="gRunway" title="open the bank"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
     <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
@@ -1043,6 +1046,7 @@
   <section class="surface cur" id="msgsSurface">
     <nav id="rail">
       <div id="railList"></div>
+      <div id="railNews"></div>
     </nav>
     <div id="threadCol">
       <div id="chatHead"></div>
@@ -1050,7 +1054,7 @@
       <div id="reply"></div>
     </div>
   </section>
-  <!-- phone only: the triage as a tab of its own (the desktop's right column) -->
+  <!-- phone only: your moves as a tab of their own (the desktop's right column) -->
   <section class="surface" id="movesSurface"><div id="railTriage"></div></section>
   <section class="surface" id="feedSurface"></section>
   <section class="surface" id="bankSurface"></section>
@@ -1097,10 +1101,13 @@
 <div class="overlay" id="scSelfOv"><div class="modal" id="scSelfModal"></div></div>
 <div id="notifs"></div>
 <div id="noteCenter"></div>
-<div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">tap to skip</span></div>
+<div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">click to continue</span></div>
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
+<div id="tipLayer"><div id="tipRing"></div>
+  <svg id="tipDeco"><defs><filter id="tipRough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter></defs><g id="tipInk"></g></svg>
+  <div id="tipBubble"></div><svg id="tipTail"><g id="tipTailInk"></g></svg></div>
 
 <details id="debug">
   <summary>debug</summary>
@@ -1183,35 +1190,39 @@ const FEED = new Set(["hacker_news", "techcrunch", "twitter"]);
 // Users are dashboard readouts / aggregate reports (no choice on either ever
 // uses `reply` — nothing texts back), not a contact you converse with.
 const SELF = new Set(["founder", "growth", "analytics", "users"]);
-// iOS palette + initials, ported from the old UI's STYLE map.
+// iOS palette + initials, ported from the old UI's STYLE map. `photo` is a comic-style
+// portrait in img/cast/ (backdrop in the same colour, so the colour coding
+// survives); anyone without one keeps their initials.
 const STYLE = {
-  alex: { color: "#0b84ff", initials: "A" }, jordan: { color: "#34c759", initials: "J" },
-  priya: { color: "#af52de", initials: "P" },
-  sarah: { color: "#ff2d55", initials: "S" }, brett: { color: "#8e8e93", initials: "B" },
-  kevin: { color: "#8e8e93", initials: "K" }, mom: { color: "#ffcc02", initials: "👩" },
-  jamie: { color: "#64d2ff", initials: "Ja" }, david: { color: "#30b0c7", initials: "D" },
+  alex: { color: "#0b84ff", initials: "A", photo: "alex.jpg" }, jordan: { color: "#34c759", initials: "J", photo: "jordan.jpg" },
+  priya: { color: "#af52de", initials: "P", photo: "priya.jpg" },
+  sarah: { color: "#ff2d55", initials: "S", photo: "sarah.jpg" }, brett: { color: "#8e8e93", initials: "B", photo: "brett.jpg" },
+  kevin: { color: "#ff9500", initials: "K", photo: "kevin.jpg" }, mom: { color: "#ffcc02", initials: "👩", photo: "mom.jpg" },
+  jamie: { color: "#64d2ff", initials: "Ja", photo: "jamie.jpg" }, david: { color: "#30b0c7", initials: "D", photo: "david.jpg" },
   hacker_news: { color: "#ff6600", initials: "📰" },
-  lena: { color: "#bf5af2", initials: "L" }, techcrunch: { color: "#00c853", initials: "📊" },
+  lena: { color: "#bf5af2", initials: "L", photo: "lena.jpg" }, techcrunch: { color: "#00c853", initials: "📊" },
   users: { color: "#007aff", initials: "👥" }, analytics: { color: "#5856d6", initials: "📈" },
-  twitter: { color: "#1da1f2", initials: "𝕏" }, tom: { color: "#34c759", initials: "T" },
+  twitter: { color: "#1da1f2", initials: "𝕏" }, tom: { color: "#a2845e", initials: "T", photo: "tom.jpg" },
   growth: { color: "#30d158", initials: "🚀" }, founder: { color: "#8e8e93", initials: "Me" },
 };
 const styleFor = id => STYLE[id] || { color: "#8e8e93", initials: "?" };
+// What goes inside an avatar circle: the portrait if there is one, else the initials.
+const faceHtml = stl => stl.photo ? '<img src="img/cast/' + stl.photo + '" alt="">' : esc(stl.initials);
 // A group chat is a thread that's a room, not a person (cast.js `type: "group"`).
 const isGroupChat = (id) => { const c = game.cast.get(id); return !!(c && c.def.type === "group"); };
 const groupMembers = (id) => { const c = game.cast.get(id); return (c && c.def.members) || []; };
-// One avatar for a conversation: a person's initials, or a group's members'
-// colours split across the same circle.
+// One avatar for a conversation: a person's portrait (or initials), or a
+// group's members split across the same circle.
 function convAvatarHtml(id, cls) {
   const extra = cls ? " " + cls : "";
   if (isGroupChat(id)) {
     return '<div class="av av-group' + extra + '">' + groupMembers(id).slice(0, 2).map(m => {
       const s = styleFor(m);
-      return '<span style="background:' + s.color + '">' + esc(s.initials) + "</span>";
+      return '<span style="background:' + s.color + '">' + faceHtml(s) + "</span>";
     }).join("") + "</div>";
   }
   const stl = styleFor(id);
-  return '<div class="av' + extra + '" style="background:' + stl.color + '">' + esc(stl.initials) + "</div>";
+  return '<div class="av' + extra + '" style="background:' + stl.color + '">' + faceHtml(stl) + "</div>";
 }
 // In a group, a run of bubbles from one person gets a name label above it.
 // `prev` is the message rendered immediately before (null at the top). Only
@@ -1222,7 +1233,7 @@ function senderLabelHtml(m, prev, group) {
   if (prev && prev.type === "incoming" && prev.from === m.from) return "";
   const stl = m.fromId ? styleFor(m.fromId) : null;
   return '<div class="m-from">' +
-    (stl ? '<i style="background:' + stl.color + '">' + esc(stl.initials) + "</i>" : "") +
+    (stl ? '<i style="background:' + stl.color + '">' + faceHtml(stl) + "</i>" : "") +
     esc(m.from) + "</div>";
 }
 const FEED_META = {
@@ -1345,6 +1356,17 @@ const STAGES = [
 const urlSeed = new URLSearchParams(location.search).get("seed");
 let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
 let game = new Engine({ seed });
+// Progress telemetry: each week reached, each scene entered and how the run
+// ended are sent to Clicky as dynamic goals ("Week 07", "Scene: launch",
+// "End: deadline", "Grade: B"), so the Goals report reads as a funnel of how
+// far players get. A no-op when the tracker is blocked or hasn't loaded; each
+// goal fires once per page load.
+const tracked = new Set();
+function track(goal) {
+  if (tracked.has(goal)) return;
+  tracked.add(goal);
+  try { if (window.clicky && clicky.goal) clicky.goal(goal); } catch (e) {}
+}
 const gameEnded = () => game.s.game_over || game.s.game_won;   // run is over — browsing only, no more calls
 let selected = "alex";
 let surface = "msgs";
@@ -1367,26 +1389,45 @@ let weekNotes = [];             // this week's notifications (the bell reopens t
 let notesSeen = true;
 let noteQueue = [], noteTimer = null;
 let journalSeen = 0;            // journal entries the player has looked at (phone tab badge)
+let newsOpen = null;            // desktop: the thread column shows the News (seq of the post to focus), not a chat
 
-// The journal mirror source: outcomes + stamps (always the founder thread —
-// the engine only ever records those there) + orphan drops — incoming
-// messages with no nodeId. Those come from the founder's own thread, and
-// from any other SELF character (Growth, Analytics, Users): a cast intro
-// line or a scheduled data pulse ("weekly pulse: ...") that isn't an action
-// card, so with no thread to show it in it reads as journal recap instead.
+// The journal mirror: a diary, about one line a week. What always goes in is
+// what has no other home: the milestone stamps, the outcomes of your own moves
+// (founder-thread outcomes with no conversation), and the founder's own orphan
+// lines. A journal line about a conversation is pinned in that conversation
+// (a ✎ jot under the exchange it recaps — threadEntries), or under its post on
+// the News Feed — but a closed week with no line of its own borrows the most
+// important of those, so the early weeks, which happen almost all in chat,
+// aren't blank. The data pulses (Analytics, Users: orphan drops from a SELF
+// character with no thread) only fill a closed week that has nothing better —
+// they also buzz as notifications, so a busy week doesn't repeat them here.
+// A filler sorts at the end of its week, so it only ever lands at the tail of
+// the list (the turn-end reveal inks the tail in).
+const jotHome = m => (m.type === "outcome" && m.sourceChar && !SELF.has(m.sourceChar) && game.threads[m.sourceChar]) ? m.sourceChar : null;
 function journalMirror() {
-  const entries = game.threads.founder.filter(m => m.type === "stamp" || m.type === "outcome" || (m.type === "incoming" && !m.nodeId));
+  const f = game.threads.founder;
+  const entries = f.filter(m => m.type === "stamp" || (m.type === "outcome" && !jotHome(m)) || (m.type === "incoming" && !m.nodeId));
+  const prose = new Set(entries.filter(m => m.type !== "stamp").map(m => m.week));
+  const closed = w => w < game.s.week || gameEnded();
+  const fill = (w, m) => { if (m && closed(w) && !prose.has(w)) { entries.push({ ...m, filler: true }); prose.add(w); } };
+  // the week's story beat over its ambient one; the last word over the first
+  const weight = m => { const n = m.nodeId && game.nodes.get(m.nodeId); return n && (n.ambient || n.filler) ? 0 : 1; };
+  const best = {};
+  for (const m of f) if (m.type === "outcome" && jotHome(m) && (!best[m.week] || weight(m) >= weight(best[m.week]))) best[m.week] = m;
+  for (const w in best) fill(+w, best[w]);
+  const pulse = {};
   for (const id of SELF) {
     if (id === "founder") continue;
-    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) entries.push(m);
+    for (const m of game.threads[id]) if (m.type === "incoming" && !m.nodeId) pulse[m.week] = m;
   }
-  return entries.sort((a, b) => a.seq - b.seq);
+  for (const w in pulse) fill(+w, pulse[w]);
+  return entries.sort((a, b) => a.week - b.week || (a.filler ? 1 : 0) - (b.filler ? 1 : 0) || a.seq - b.seq);
 }
 function resetUiState() {
   feedSeenLen = {}; sceneStartSeq = null; inScene = false;
   scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
-  selected = "alex"; surface = "msgs"; threadRendered = {};
+  selected = "alex"; surface = "msgs"; threadRendered = {}; newsOpen = null;
   uiBusy = false; replyExpanded = false; weekNotes = []; notesSeen = true;
   noteQueue = []; clearTimeout(noteTimer); noteTimer = null; clearTimeout(revealTimer);
   jShown = journalMirror().length; jArrive = false;
@@ -1482,22 +1523,17 @@ function renderHeader() {
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
   $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
-  // surface badges — the same count on every tab (no zeroing of the tab you're
-  // viewing), so switching tabs never changes the numbers.
-  // Messages: unread conversations, iMessage-style. Opening a thread reveals it
+  // ── phone tab bar ── the same count on every tab (no zeroing of the tab
+  // you're viewing), so switching tabs never changes the numbers.
+  // Chat: unread conversations, iMessage-style. Opening a thread reveals it
   // (threadRendered catches up to its length) and clears it — reading, not
-  // answering, is what counts. A pending reply still shows as "needs a call" in
-  // the rail and the side triage.
-  // the thread you're actively viewing counts as read, so it never shows a dot
-  // in the rail nor a tick on the tab badge (keeps the two in lockstep).
+  // answering, is what counts. A pending reply still shows as the amber ring.
+  // The thread you're actively viewing counts as read, so it never shows a dot
+  // nor a tick on the tab badge (keeps the two in lockstep).
   const unreadConvos = railChars().filter(id => hasUnread(id) && !(surface === "msgs" && id === selected)).length;
-  setBadge("bMsgs", unreadConvos);
-  // News Feed: posts you haven't seen yet. Opening the feed marks them seen (in
-  // render()), so it clears and stays cleared — a post you've glanced at but not
-  // acted on still lives in the feed and the side rail, just not here.
+  // News: posts you haven't seen yet. Opening the feed marks them seen (in
+  // render()), so it clears and stays cleared.
   const feedNew = [...FEED].reduce((n, id) => n + Math.max(0, game.threads[id].length - (feedSeenLen[id] || 0)), 0);
-  setBadge("bFeed", feedNew);
-  // ── phone tab bar ──
   // Moves counts your own open decisions — plus one for the End-week pill on
   // an ambient-only week, since that pill lives on the Moves tab too. Journal
   // counts the lines inked in since you last read it — the week's consequences.
@@ -1523,15 +1559,17 @@ function hasUnread(id) {
 }
 function renderRail() {
   if (isMobile) { renderStrip(); return; }
+  const owed = owedCalls();
   $("railList").innerHTML = railChars().map(id => {
     const c = game.cast.get(id).def;
     const t = game.threads[id];
     const last = t.length ? t[t.length - 1] : null;
-    const unread = hasUnread(id) && id !== selected;   // blue dot, iMessage-style
+    const cur = id === selected && newsOpen == null;
+    const unread = hasUnread(id) && !cur;   // blue dot, iMessage-style
     // In a group the preview needs to say WHO — "Jordan: ok, the atlas form…"
     const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";
     const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : c.role;
-    return '<div class="conv ' + (id === selected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
+    return '<div class="conv ' + (cur ? "cur" : "") + (unread ? " unread" : "") + (owed.has(id) ? " call" : "") + '" data-id="' + id + '">' +
       '<span class="unread-dot"></span>' +
       convAvatarHtml(id) +
       '<div class="who"><b>' + esc(c.name) + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
@@ -1539,6 +1577,58 @@ function renderRail() {
   for (const el of $("railList").querySelectorAll(".conv")) {
     el.onclick = () => { if (uiBusy) return; gotoChat(el.dataset.id, false); };
   }
+  renderRailNews();
+}
+// Who owes you an answer: a story beat waiting in their thread. Amber ring on
+// the desktop rail and on the phone strip alike.
+function owedCalls() {
+  const owed = new Set();
+  if (!gameEnded()) for (const a of game.openActions()) if (!a.onHold && a.kind === "story") owed.add(a.charId);
+  return owed;
+}
+
+// ── desktop: the News, pinned under the conversations ─────────────────────────
+// A run gets a dozen posts, rarely more than one or two a week, so they don't
+// need a tab: the latest headlines sit under the chat list, and one click opens
+// the News in the thread column — the whole feed, scrolled to that post, where
+// you weigh in. (The phone keeps its News tab.)
+function feedPosts() {
+  const items = [];
+  for (const id of FEED) game.threads[id].forEach((m, i) => { if (m.type === "incoming") items.push({ ...m, charId: id, idx: i }); });
+  return items.sort((a, b) => (a.seq || 0) - (b.seq || 0));
+}
+const feedMeta = m => FEED_FROM[m.from] || FEED_META[m.charId];
+const NEWS_INK = { "f-hn": "#ff6600", "f-rd": "#ff4500", "f-ih": "#0e2439", "f-tc": "#0a9928", "f-tw": "#1da1f2" };
+function renderRailNews() {
+  const box = $("railNews");
+  const posts = feedPosts();
+  if (!posts.length) { box.innerHTML = ""; return; }
+  const acts = gameEnded() ? [] : game.openActions().filter(a => !a.onHold);
+  const due = m => !!(m.nodeId && acts.some(a => a.nodeId === m.nodeId));
+  // what's still waiting on you, then the last two weeks' news; newest first
+  const shown = posts.filter(m => due(m) || m.week >= game.s.week - 1).reverse().slice(0, 4);
+  const list = shown.length ? shown : posts.slice(-1);
+  box.innerHTML = '<h5>📰 News<button id="newsAll">all news →</button></h5>' + list.map(m => {
+    const meta = feedMeta(m);
+    const unread = m.idx >= (feedSeenLen[m.charId] || 0);
+    return '<div class="nw' + (unread ? " unread" : "") + (due(m) ? " due" : "") + (m.seq === newsOpen ? " cur" : "") + '" data-seq="' + m.seq + '">' +
+      '<span class="unread-dot"></span><div>' +
+      '<span class="nw-src" style="background:' + NEWS_INK[meta.cls] + '">' + esc(meta.src.split(" · ").pop()) + "</span>" +
+      '<div class="nw-hl">' + esc(m.body) + "</div>" +
+      (due(m) ? '<span class="nw-due">● waiting on you</span>' : "") + "</div></div>";
+  }).join("");
+  for (const el of box.querySelectorAll(".nw")) el.onclick = () => openNews(+el.dataset.seq);
+  $("newsAll").onclick = () => openNews(null);
+}
+// Open the News: the phone's tab, or the desktop's thread column.
+function openNews(seq) {
+  if (uiBusy) return;
+  if (isMobile) { setSurface("feed"); return; }
+  clearTimeout(revealTimer);
+  const posts = feedPosts();
+  newsOpen = seq != null ? seq : (posts.length ? posts[posts.length - 1].seq : -1);
+  replyExpanded = false; surface = "msgs";
+  syncSurfaceTabs(); render();
 }
 
 // ── the phone's conversation strip ────────────────────────────────────────────
@@ -1587,7 +1677,7 @@ function renderStrip() {
 }
 // Open a conversation.
 function gotoChat(id, markRead) {
-  selected = id; replyExpanded = false;
+  selected = id; replyExpanded = false; newsOpen = null;
   if (markRead) threadRendered[id] = game.threads[id].length;
   surface = "msgs";
   syncSurfaceTabs(); openThread(); render();
@@ -1644,21 +1734,37 @@ function threadEntryHtml(m, isNew, tail, prev, group) {
     if (m.mockups) out += mockupRowHtml(m.mockups);
   } else if (m.type === "note") {
     out = '<div class="m-note' + anim + '">' + esc(m.body) + "</div>";
+  } else if (m.type === "jot") {
+    out = '<div class="m-jot' + anim + '">' + esc(m.body) + "</div>";
   }
   return out;
+}
+// What a thread shows: its messages up to the read cursor, with each journal
+// line about this conversation (jotHome) pinned in after the exchange it
+// recaps. A jot waits for the read cursor like any message, so it never lands
+// ahead of the reply it's about.
+function threadEntries(id, shown) {
+  const t = game.threads[id];
+  const frontier = shown < t.length ? t[shown].seq : Infinity;
+  const jots = game.threads.founder
+    .filter(m => m.type === "outcome" && jotHome(m) === id && m.seq < frontier)
+    .map(m => ({ ...m, type: "jot" }));
+  return t.slice(0, shown).concat(jots).sort((a, b) => a.seq - b.seq);
 }
 // opts.typing → append a typing bubble at the reveal frontier.
 function renderThread(opts) {
   opts = opts || {};
+  if (newsOpen != null && !isMobile) { renderNewsView(); return; }
+  $("thread").classList.remove("news");
   const c = game.cast.get(selected);
   if (!c) return;
   const group = isGroupChat(selected);
   $("chatHead").innerHTML =
     "<b>" + esc(c.def.name) + "</b><span>" + esc(c.def.role || "") + (c.active ? "" : " · gone") + "</span>";
-  const t = game.threads[selected];
-  const shown = threadRendered[selected] || 0;   // how far the read cursor has revealed
+  const t = threadEntries(selected, threadRendered[selected] || 0);
+  const shown = t.length;
   let lastWk = null, html = "";
-  t.slice(0, shown).forEach((m, i) => {
+  t.forEach((m, i) => {
     if (m.week !== lastWk) { html += '<div class="m-wk">week ' + m.week + "</div>"; lastWk = m.week; }
     const next = t[i + 1] && i + 1 < shown ? t[i + 1] : null;
     // In a group, a new speaker also ends the previous bubble's run (so the
@@ -1690,7 +1796,7 @@ function renderThread(opts) {
     return;
   }
   const a = gameEnded() ? null : game.openActions().find(x => x.charId === selected && !x.onHold);
-  const caughtUp = shown >= t.length;
+  const caughtUp = (threadRendered[selected] || 0) >= game.threads[selected].length;
   if (!a || !caughtUp) {
     rbox.innerHTML = a && !caughtUp ? '<div class="hint">…</div>'
       : '<div class="hint">' + (a && a.onHold ? "on hold — something bigger is happening" : "nothing needs an answer here right now") + "</div>";
@@ -1702,7 +1808,7 @@ function renderThread(opts) {
     rbox.innerHTML =
       '<button class="cta-pill"' + (can ? "" : " disabled") + ">" + (can ? "Respond ↓" : "No actions left this week") + "</button>";
     const btn = rbox.querySelector(".cta-pill");
-    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); };
+    if (btn && can) btn.onclick = () => { if (uiBusy) return; replyExpanded = true; renderThread(); queueTipCheck(); };
     return;
   }
   rbox.innerHTML = '<div class="hint"><button class="tc-close">×</button>pick a reply · ⚑ = unlocked by what you\'ve learned</div>' +
@@ -1815,26 +1921,24 @@ function renderSide() {
   };
 
   const canSkip = canSkipWeek();
-  // On a phone a card whose whole job is "↗ open chat" would say the same
-  // thing twice — that person's circle in the Chat strip is already ringed.
-  // Only the homeless cards stay: your own moves (no thread) and the News Feed
-  // (a different tab).
-  const shownStory = isMobile ? story.filter(a => FEED.has(a.charId)) : story;
-  const shownLater = isMobile ? later.filter(a => FEED.has(a.charId)) : later;
+  // Your move holds only what has no other home. A card whose whole job is
+  // "↗ open chat" would say the same thing twice — that person is already
+  // ringed amber in the chat list. So: your own moves (no thread), and on the
+  // phone the News posts too (a different tab; on the desktop they sit under
+  // the chat list with their own "waiting on you").
+  const shownStory = isMobile ? story.filter(a => FEED.has(a.charId)) : [];
+  const shownLater = isMobile ? later.filter(a => FEED.has(a.charId)) : [];
   const needBody = move.map(moveCard).join("") + shownStory.map(linkCard).join("");
   const laterBody = shownLater.map(linkCard).join("");
   let html = canSkip ? '<button class="endpill" id="endPill">End week →</button>' : "";
-  // (On the phone "nothing urgent" would be wrong while someone in the Chat
-  // strip is waiting on you, so the empty line points there instead.)
-  const calmNote = isMobile ? "nothing of your own to decide — any calls this week are in Chat." : "nothing urgent — rare. enjoy it.";
-  html += '<div class="tier"><h5>◉ Needs a call</h5>' +
+  // (Never "nothing urgent": someone in the chats may well be waiting on you.)
+  const calmNote = "nothing of your own to decide right now — any calls this week are in the chats.";
+  html += '<div class="tier"><h5>◉ Your move</h5>' +
     (needBody || '<div class="empty-tier">' + (gameEnded() ? "the run's over — this is the record now." : calmNote) + "</div>") + "</div>";
-  html += '<div class="tier later"><h5>When you have a minute</h5>' +
-    (laterBody || '<div class="empty-tier">' + (gameEnded() ? "&nbsp;" : "quiet out there.") + "</div>") + "</div>";
+  if (laterBody) html += '<div class="tier later"><h5>When you have a minute</h5>' + laterBody + "</div>";
 
-  // Two hosts, one triage. On the phone it is the Moves tab and the journal
-  // goes to its own tab; on the desktop both stay in the right column exactly
-  // as before.
+  // Two hosts. On the phone, your moves are the Moves tab and the journal has
+  // its own tab; on the desktop both share the right column, moves on top.
   if (isMobile) {
     $("sideCol").innerHTML = "";
     const tri = $("railTriage");
@@ -1869,7 +1973,7 @@ function wireTriage(root) {
   for (const el of root.querySelectorAll(".h-card.link")) {
     el.onclick = () => {
       if (uiBusy) return;
-      if (el.dataset.feed === "1") setSurface("feed");
+      if (el.dataset.feed === "1") openNews(null);
       else gotoChat(el.dataset.char, false);
     };
   }
@@ -1908,19 +2012,17 @@ function renderJournalSurface() {
 }
 
 // ── News Feed ─────────────────────────────────────────────────────────────────
-function renderFeed() {
-  // merge feed chars' incoming entries by seq/week
-  const items = [];
-  for (const id of FEED) {
-    game.threads[id].forEach(m => { if (m.type === "incoming") items.push({ ...m, charId: id }); });
-    feedSeenLen[id] = game.threads[id].length;
-  }
-  items.sort((a, b) => (a.seq || 0) - (b.seq || 0));
+// The feed: every post, oldest first, each with its options while it's open
+// and, once you've weighed in, the journal line about it pinned underneath.
+function feedHtml(focusSeq) {
+  const items = feedPosts();
   const acts = gameEnded() ? [] : game.openActions();
+  const jots = {};
+  for (const m of game.threads.founder) if (m.type === "outcome" && FEED.has(m.sourceChar)) jots[m.nodeId] = m.body;
   let lastWk = null, html = "";
   for (const m of items.slice(-24)) {
     if (m.week !== lastWk) { html += '<div class="f-wk">week ' + m.week + "</div>"; lastWk = m.week; }
-    const meta = FEED_FROM[m.from] || FEED_META[m.charId];
+    const meta = feedMeta(m);
     const a = m.nodeId ? acts.find(x => x.nodeId === m.nodeId && !x.onHold) : null;
     const resolved = m.nodeId ? game.outcome(m.nodeId) : null;
     let foot = "";
@@ -1929,16 +2031,36 @@ function renderFeed() {
       foot = '<div class="f-act">' + a.options.map(o =>
         '<button class="f-btn" data-n="' + esc(a.nodeId) + '" data-k="' + esc(o.key) + '"' + (can ? "" : " disabled") + ">" + esc(o.label) + "</button>").join("") + "</div>";
     } else if (resolved === "@ignored") foot = '<div class="f-done">the moment passed — you never weighed in.</div>';
-    else if (resolved) foot = '<div class="f-done">' + (FEED_DONE[resolved] || "✓ you engaged.") + "</div>";
-    html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + '">' +
+    else if (resolved) foot = '<div class="f-done">' + (FEED_DONE[resolved] || "✓ you engaged.") + "</div>" +
+      (jots[m.nodeId] ? '<div class="f-jot">' + esc(jots[m.nodeId]) + "</div>" : "");
+    html += '<div class="f-item ' + meta.cls + (resolved === "@ignored" ? " expired" : "") + (m.seq === focusSeq ? " focus" : "") + '">' +
       '<div class="f-src">' + meta.src + "</div>" +
       '<div class="f-body">' + esc(m.body) + "</div>" + foot + "</div>";
   }
-  $("feedSurface").innerHTML = html || '<div class="f-wk" style="margin-top:30px">nothing in the news yet — the world hasn\'t noticed you.</div>';
+  return html;
+}
+function wireFeed(el) {
+  for (const b of el.querySelectorAll(".f-btn")) b.onclick = () => doAct(b.dataset.n, b.dataset.k, null);
+}
+function renderFeed() {
+  for (const id of FEED) feedSeenLen[id] = game.threads[id].length;
+  $("feedSurface").innerHTML = feedHtml(null) || '<div class="f-wk" style="margin-top:30px">nothing in the news yet — the world hasn\'t noticed you.</div>';
   $("feedSurface").scrollTop = $("feedSurface").scrollHeight;
-  for (const el of $("feedSurface").querySelectorAll(".f-btn")) {
-    el.onclick = () => doAct(el.dataset.n, el.dataset.k, null);
-  }
+  wireFeed($("feedSurface"));
+}
+// Desktop: the News in the thread column, scrolled to the post you clicked.
+function renderNewsView() {
+  for (const id of FEED) feedSeenLen[id] = game.threads[id].length;
+  $("chatHead").innerHTML = "<b>News</b><span>press, forums and the competition</span>";
+  const el = $("thread");
+  el.classList.add("news");
+  el.innerHTML = feedHtml(newsOpen) || '<div class="m-wk">nothing in the news yet — the world hasn\'t noticed you.</div>';
+  wireFeed(el);
+  const focus = el.querySelector(".f-item.focus");
+  if (focus) el.scrollTop = Math.max(0, focus.offsetTop - el.offsetTop - 40);
+  else el.scrollTop = el.scrollHeight;
+  $("reply").innerHTML = '<div class="hint">' + (game.openActions().some(a => FEED.has(a.charId) && !a.onHold)
+    ? "weigh in on a post above — it costs a move, like a reply" : "nothing here needs you right now") + "</div>";
 }
 
 // ── Bank ──────────────────────────────────────────────────────────────────────
@@ -1958,8 +2080,10 @@ function renderBank() {
   const past = game.ledger.slice().reverse().map(w =>
     '<div class="stmt"><h4>week ' + w.week + " · closing balance <b>" + money(w.balanceAfter) + "</b></h4>" +
     w.transactions.map(fmtTx).join("") + "</div>").join("");
-  $("bankSurface").innerHTML = head + '<div class="tx-head">Transactions</div>' +
+  // (the desktop has no tabs: the runway gauge opens the Bank, this closes it)
+  $("bankSurface").innerHTML = '<button class="bank-back" id="bankBack">← Back to messages</button>' + head + '<div class="tx-head">Transactions</div>' +
     (pending + past || '<div class="f-wk" style="margin-top:12px">no transactions yet — the first statement arrives when the first week ends.</div>');
+  $("bankBack").onclick = () => setSurface("msgs");
 }
 
 // ── to-do popover ─────────────────────────────────────────────────────────────
@@ -2050,23 +2174,37 @@ function doAct(nodeId, key, charId) {
   scheduleTurn(620);
 }
 
-// ── focus-arc cinematic: staged lines, per-arc accent, click-to-skip ──────────
+// ── focus-arc cinematic: staged lines, per-arc accent, click to continue ─────
+// The lines fade in on their own, then the stage waits for the player: nothing
+// dismisses it but a click / tap (or Enter / Space). A click while the lines are
+// still arriving reveals the rest at once rather than cutting them off.
 function showCine(lines, accent, done) {
-  const el = $("cine"), box = $("lcInner"), skip = $("lcSkip");
+  const el = $("cine"), box = $("lcInner"), cue = $("lcSkip");
   el.style.setProperty("--lc-accent", accent || "rgba(255,255,255,.95)");
   box.innerHTML = lines.map((t, i) => '<p class="lc-line' + (i === 0 ? " lc-title" : "") + '">' + esc(t) + "</p>").join("");
+  cue.textContent = (isMobile ? "tap" : "click") + " to continue";
+  cue.classList.remove("ready");
   el.classList.add("show");
   const nodes = box.querySelectorAll(".lc-line");
-  nodes.forEach((n, i) => setTimeout(() => n.classList.add("vis"), 500 + i * 1250));
-  let done2 = false, timer = null;
+  const timers = [];
+  let ready = false, finished = false;
+  const showAll = () => {
+    if (ready) return; ready = true;
+    timers.forEach(clearTimeout);
+    nodes.forEach(n => n.classList.add("vis"));
+    cue.classList.add("ready");
+  };
+  nodes.forEach((n, i) => timers.push(setTimeout(() => n.classList.add("vis"), 500 + i * 1250)));
+  timers.push(setTimeout(showAll, 500 + (nodes.length - 1) * 1250 + 1100));
   const finish = () => {
-    if (done2) return; done2 = true;
-    if (timer) clearTimeout(timer); el.classList.remove("show"); skip.onclick = null; el.onclick = null;
+    if (finished) return; finished = true;
+    el.classList.remove("show"); el.onclick = null; document.removeEventListener("keydown", onKey);
     setTimeout(done, 700);
   };
-  const total = 500 + (nodes.length - 1) * 1250 + 1500;
-  timer = setTimeout(finish, total);
-  skip.onclick = finish; el.onclick = finish;
+  const advance = () => { if (ready) finish(); else showAll(); };
+  const onKey = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); advance(); } };
+  el.onclick = advance;
+  document.addEventListener("keydown", onKey);
 }
 
 // ── focus arcs: the same iMessage chat, restricted to the people in the room ──
@@ -2144,6 +2282,7 @@ function repliedThrough(charId, preSeq) {
 function enterScene(startSeq, charId) {
   inScene = true;
   lastSceneId = game.scene.id;
+  track("Scene: " + lastSceneId);
   scRendered = {}; scHeadSig = null; scClockShown = null; scStripFront = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   const start = computeSceneStart(lastSceneId);
@@ -2203,7 +2342,7 @@ function pingOtherSceneThreads(preLens) {
     if (!fresh.length) continue;
     const def = game.cast.get(id).def, stl = styleFor(id);
     pings.push({
-      ico: stl.initials, color: stl.color, charId: id, title: def.name,
+      ico: stl.initials, photo: stl.photo, color: stl.color, charId: id, title: def.name,
       text: String(fresh[fresh.length - 1].body || ""),
       go: () => { if (!uiBusy && inScene) openSceneThread(id); },
     });
@@ -2348,6 +2487,7 @@ function renderFocus(opts) {
 
   renderFocusThread(opts);
   renderSceneSelfDecision(opts);
+  queueTipCheck();
 }
 
 // The founder's own open beat in a scene — the impasse call, the signing — is a
@@ -2513,6 +2653,7 @@ function advanceWeek() {
   const cashBefore = game.stats().cash;
 
   game.nextWeek();
+  if (!gameEnded()) track("Week " + String(game.s.week).padStart(2, "0"));
 
   // gather this week's notifications (todo check-offs first, then arrivals)
   weekNotes = [];
@@ -2540,10 +2681,10 @@ function advanceWeek() {
     const name = feed ? FEED_META[id].src.split("·").pop().trim() : def.name;
     const dropped = fresh.some(m => m.dropped);
     weekNotes.push({
-      ico: stl.initials, color: feed ? "#3a3a40" : stl.color, charId: id, feed, who: name,
+      ico: stl.initials, photo: feed ? null : stl.photo, color: feed ? "#3a3a40" : stl.color, charId: id, feed, who: name,
       title: name + (dropped ? " · you left them on read" : fresh.length > 1 ? " (" + fresh.length + ")" : ""),
       text: String(fresh[fresh.length - 1].body || ""),
-      go: feed ? () => setSurface("feed") : () => gotoChat(id, true),
+      go: feed ? () => openNews(fresh[fresh.length - 1].seq) : () => gotoChat(id, true),
     });
   }
   notesSeen = weekNotes.length === 0;
@@ -2631,7 +2772,7 @@ function pumpNotifications() {
   noteTimer = setTimeout(pumpNotifications, 750);
 }
 function notifInner(n, extra) {
-  return '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+  return '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
     '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span><span class="n-time">now</span></div>' +
     '<div class="n-text">' + esc(n.text) + "</div>" + (extra || "") + "</div>";
 }
@@ -2675,7 +2816,7 @@ function showBanner(list) {
     el.className = "notif banner multi";
     el.innerHTML = shown.map((n, i) =>
       '<div class="nb-row' + (n.feed ? " feed" : "") + '" data-i="' + i + '" style="animation-delay:' + (i * 40) + 'ms">' +
-      '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+      '<div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
       '<div class="n-b"><span class="n-who">' + esc(n.feed ? "News" : n.who || n.title) + '</span><span class="n-text">' + esc(n.text) + "</span></div></div>").join("") +
       (extra ? '<div class="nb-row" data-i="bell" style="animation-delay:' + (shown.length * 40) + 'ms"><div class="n-b"><span class="n-text" style="color:var(--blue)">' +
         extra + " more this week — open the list</span></div></div>" : "") +
@@ -2748,7 +2889,7 @@ function toggleNoteCenter() {
   if (c.classList.contains("show")) { c.classList.remove("show"); return; }
   if (!weekNotes.length) { c.innerHTML = '<h4>This week</h4><div class="nc-empty">No notifications this week.</div>'; }
   else c.innerHTML = '<h4>This week · ' + weekNotes.length + " notification" + (weekNotes.length === 1 ? "" : "s") + "</h4>" +
-    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="width:34px;height:34px;border-radius:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;background:' + (n.color || "#8a8a92") + '">' + esc(n.ico) + "</div>" +
+    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="width:34px;height:34px;border-radius:9px;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none;background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
       '<div class="n-b"><div class="n-title">' + esc(n.title) + '</div><div class="n-text" style="font-size:12px;color:#3a3a40">' + esc(n.text) + "</div></div></div>").join("");
   c.classList.add("show");
   notesSeen = true; updateBell();
@@ -2943,6 +3084,8 @@ function checkEndgame() {
   const [og, ocol] = GRADE(avg);
   egScore = avg; egWon = !!s.ycAccepted; egWeek = s.week; egLbMounted = false;
   egSubmitted = false; egSubmittedRank = null;
+  track("End: " + (s.ycAccepted ? "YC" : s.deadline_passed ? "deadline" : s.cofounder_left ? "Alex left" : "out of cash"));
+  track("Grade: " + og);
 
   // Outcome copy — built now but held back until the very last reveal step.
   const madeYC = s.ycAccepted;
@@ -3015,17 +3158,31 @@ function restartGame() {
 $("hRestart").onclick = restartGame;
 
 // ── intro ─────────────────────────────────────────────────────────────────────
+// The intro is only the premise and the bar to beat. How to play is taught in
+// place by TIPS, each the first time its feature shows up — starting with the
+// chat itself the moment the intro closes.
+// The first three cards tell how PlusOne started, so the player meets the
+// co-founders inside the story rather than on a roster. An optional fourth
+// field introduces people: [castId, role, blurb], drawn with their portrait so
+// the player meets the faces before the texts start. An optional fifth is the
+// card's illustration (img/intro/); a missing file just drops the slot.
 const INTRO = [
-  ["The team", "You're the founder.", "PlusOne is a dating app for people sick of swiping — and it exists mostly in your co-founders' heads. You have $10,000, two moves a week, and 25 weeks until the YC deadline. Build something worth the batch before the clock — or the cash — runs out."],
-  ["How it works", "Everything is a conversation.", "People text you — answer them in their thread. Your own moves show up under “This week”, and the outside world talks in the News Feed. Some messages won't wait forever."],
-  ["The throttle", "Decisions move the build.", "Answering your co-founders' questions is what moves the ☑ list in the header. Ignore them and the build crawls, trust leaks, and the story goes on without you. End the week when your two moves are spent."],
+  [null, "It started with Alex, at 1 a.m.", "You two were trading dating-app horror stories (40 matches this month, zero dates) when one of you said it: what if an app was built to get you on a date, not to keep you swiping? By 2 a.m. it had a name, PlusOne. By morning Alex had written half a spec and offered to quit his $140k job.", [
+    ["alex", "Co-founder · CTO", "He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
+  ], "1_idea.jpg"],
+  [null, "Then you met Jordan.", "At a friend's party you couldn't stop pitching it, and one person couldn't stop asking questions. Jordan builds iPhone apps for a living and has the best eye for product you've ever met. The next morning she texted: she wanted in.", [
+    ["jordan", "Co-founder · iOS", "She'll build the iPhone app. She's kept her day job, so she works on PlusOne nights and weekends."],
+  ], "2_jordan.jpg"],
+  ["The goal", "You're the founder.", "PlusOne is an idea, $10,000 in the bank, and two people who said yes. Y Combinator is the startup program that backed Airbnb, Stripe, Dropbox and DoorDash, when each was just a few people with an idea. You have 25 weeks to make PlusOne real enough to get in.", null, "3_goal.jpg"],
 ];
 let introStep = 0;
 // A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
 // a new player sees the bar to beat before week 1.
 function showIntro() {
   const boardStep = introStep >= INTRO.length;
-  const dots = INTRO.concat([0]).map((_, i) => '<i class="' + (i === introStep ? "on" : "") + '"></i>').join("");
+  // The dots double as navigation: any card, the board included, is one click away.
+  const dots = INTRO.concat([0]).map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
+    '<i class="' + (i === introStep ? "on" : "") + '"></i></button>').join("");
   const nextLabel = boardStep ? "Week 1 →" : "Continue →";
   if (boardStep) {
     $("introModal").innerHTML =
@@ -3037,21 +3194,35 @@ function showIntro() {
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
       '<div class="intro-actions"><button class="intro-next">' + nextLabel + "</button></div></div></div>";
   } else {
-    const [eyebrow, h, b] = INTRO[introStep];
+    const [eyebrow, h, b, people, art] = INTRO[introStep];
     $("introModal").innerHTML =
-      '<div class="intro-stripe"></div><div class="intro-body">' +
-      '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" +
+      '<div class="intro-stripe"></div>' +
+      (art ? '<div class="intro-art"><img src="img/intro/' + art + '" alt="" onerror="this.parentNode.remove()"></div>' : "") +
+      '<div class="intro-body">' +
+      (eyebrow ? '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" : "") +
       '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
+      (people || []).map(([id, role, blurb]) =>
+        '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
+        '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
+        '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
       '<div class="intro-actions"><button class="intro-skip">skip</button>' +
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   }
-  const done = () => { $("introOv").classList.remove("on"); };
+  const done = () => { $("introOv").classList.remove("on"); queueTipCheck(); };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
+  $("introModal").querySelectorAll(".intro-dot").forEach(d => d.onclick = () => { introStep = +d.dataset.step; showIntro(); });
   $("introOv").classList.add("on");
   if (boardStep) fillIntroBoard();
 }
+// ← / → page through the cards too (never past the board: Continue starts the run).
+document.addEventListener("keydown", ev => {
+  if (!$("introOv").classList.contains("on")) return;
+  const to = introStep + (ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0);
+  if (to === introStep || to < 0 || to > INTRO.length) return;
+  introStep = to; showIntro();
+});
 async function fillIntroBoard() {
   const { board, online } = await LB.fetchBoard();
   const el = $("introLb");
@@ -3060,9 +3231,266 @@ async function fillIntroBoard() {
 }
 showIntro();
 
+// ── first-time tips ───────────────────────────────────────────────────────────
+// Onboarding happens when a feature is first needed, not up front: each tip is
+// a comic speech bubble pointing straight at the thing it explains, shown the
+// first time its `when` holds and its `target` is on screen. The rest of the
+// screen dims around a spotlight on the target. Seen tips persist per browser,
+// so a second run doesn't re-teach (`?tips=reset` brings them back).
+// `scene: true` tips may fire inside a room; the rest wait until you're back in
+// the regular app. Week 1's tips (chat, Respond, the two moves) are the whole
+// tutorial; everything after waits for its own first appearance.
+const TIP_KEY = "plusone_tips_seen";
+let tipsSeen = new Set();
+try {
+  if (/[?&]tips=reset\b/.test(location.search)) localStorage.removeItem(TIP_KEY);
+  tipsSeen = new Set(JSON.parse(localStorage.getItem(TIP_KEY)) || []);
+} catch (e) { /* no storage: tips are per page load */ }
+const openNow = () => game.openActions().filter(a => !a.onHold);
+const tabBtn = sf => document.querySelector('#tabbar button[data-surface="' + sf + '"]');
+const onScreen = el => { if (!el) return null; const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 ? el : null; };
+// A list's items, not the list: a rail or strip is mostly empty space below or
+// beside its rows, and the spotlight should hug what's actually in it.
+const items = (root, sel) => { const els = root ? [...root.querySelectorAll(sel)].filter(onScreen) : []; return els.length ? els : null; };
+// The box a tip points at: its target, or the union of a list of targets.
+function tipBox(tip) {
+  const t = tip.target();
+  const els = (Array.isArray(t) ? t : [t]).filter(Boolean);
+  if (!els.length) return null;
+  const rs = els.map(e => e.getBoundingClientRect());
+  const left = Math.min(...rs.map(r => r.left)), top = Math.min(...rs.map(r => r.top));
+  const right = Math.max(...rs.map(r => r.right)), bottom = Math.max(...rs.map(r => r.bottom));
+  return { left, top, right, bottom, width: right - left, height: bottom - top };
+}
+// The conversation most recently left to time out, if it's one of the chats.
+function lastIgnoredChat() {
+  let best = null;
+  for (const [id, r] of game.resolved) {
+    if (r.outcome !== "@ignored") continue;
+    const n = game.nodes.get(id), c = n && n.char;
+    if (c && railChars().includes(c) && (!best || r.week >= best.week)) best = { char: c, week: r.week };
+  }
+  return best && best.char;
+}
+const TIPS = [
+  // ── week 1: the chat and the two moves ──
+  { id: "chat", when: () => railChars().some(id => game.threads[id].some(m => m.type === "incoming")),
+    target: () => onScreen($("railList").querySelector(".unread")) || onScreen($("railList").firstElementChild),
+    title: "People text you.",
+    body: () => "Your co-founders, and later users, investors and family, all reach you here. A blue dot means a new message; an amber ring means they're waiting on your answer. " + (isMobile ? "Tap a circle" : "Click a conversation") + " to read it." },
+  { id: "respond", when: () => surface === "msgs",
+    target: () => onScreen(document.querySelector("#reply .cta-pill:not([disabled])")),
+    title: "Answer them.",
+    body: () => "When someone is waiting on you, tap Respond and pick what to say. What you say changes the story." },
+  { id: "moves", when: () => game.actionsLeft === 1,
+    target: () => onScreen($("dots")),
+    title: "That was one of your two moves.",
+    body: () => "Every answer spends a move, and you get two a week. Spend the second and the week ends, so you can't answer everyone: choose who waits. Some messages won't wait forever." },
+  // ── everything else, the first time it shows up ──
+  { id: "room", scene: true, when: () => inScene && !!game.scene,
+    target: () => items($("scRail"), isMobile ? ".story" : ".conv") || onScreen($("scThread")),
+    title: "This one happens all at once.",
+    body: () => "Some conversations are a sitting. While you're in the room, the rest of the world holds and only these people can reach you. Walking in cost one move; every answer in here is free." },
+  { id: "bank", when: () => !!firstChoiceTx(),
+    target: () => isMobile ? onScreen(tabBtn("bank")) : onScreen($("gRunway")),
+    title: () => { const t = firstChoiceTx(); return t.delta < 0 ? "That cost you " + money(-t.delta) + "." : "Money in: " + money(t.delta) + "."; },
+    body: () => "Every dollar in or out is on your bank statement, along with the " + money(game.burnPerWeek) + " a week it takes to keep the lights on. " + (isMobile ? "The Bank tab" : "Runway, up here,") + " shows how many weeks of cash you have left.",
+    go: { label: "Open the Bank", run: () => setSurface("bank") } },
+  { id: "week", when: () => game.s.week >= 2,
+    target: () => onScreen($("gRunway")),
+    title: "A week went by.",
+    body: () => "Your two moves are back, and " + money(game.burnPerWeek) + " is gone: that's your weekly burn. Runway is how many weeks of cash you have left at that rate." },
+  { id: "jot", when: () => !inScene && surface === "msgs" && newsOpen == null && !!document.querySelector("#thread .m-jot"),
+    target: () => onScreen([...document.querySelectorAll("#thread .m-jot")].pop()),
+    title: "Your notes.",
+    body: () => "The handwriting isn't a text anyone sent: it's you, noting what that answer led to. Scroll back through a chat to see how you got here." },
+  { id: "journal", when: () => jShown > 0,
+    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen(document.querySelector("#sideCol .jsec")),
+    title: "Your journal.",
+    body: () => "The milestones you hit and your big calls get written down here. What only matters to one conversation stays noted in that chat.",
+    // the phone's journal is a tab away: let the tip open it on the entry it's about
+    get go() { return isMobile ? { label: "Open the Journal", run: () => setSurface("journal") } : null; } },
+  { id: "todo", when: () => stageCounts(currentStage()).done > 0,
+    target: () => onScreen($("gTodo")),
+    title: "Checked off!",
+    body: () => "This is your to-do list for the current chapter: what this stretch of the story needs from you. " + (isMobile ? "Tap" : "Click") + " it to see the whole list." },
+  { id: "move", when: () => openNow().some(a => SELF.has(a.charId)),
+    target: () => isMobile ? onScreen(tabBtn("moves")) : onScreen(document.querySelector("#sideCol .h-card.move")),
+    title: "Your move.",
+    body: () => "Not everything starts with a text. Calls that are yours alone land " + (isMobile ? "in Moves." : "here, under Your move.") + " Answering one costs a move, like a reply." },
+  { id: "news", when: () => [...FEED].some(id => game.threads[id].some(m => m.type === "incoming")),
+    target: () => isMobile ? onScreen(tabBtn("feed")) : onScreen($("railNews").querySelector(".nw")),
+    title: "You're in the news.",
+    body: () => "Press, Hacker News, Reddit and competitors post " + (isMobile ? "here" : "here, under your chats: click a headline to open it") + ". Some posts let you weigh in, which costs a move, and the moment passes if you don't." },
+  { id: "flag", scene: true, when: () => true,
+    target: () => onScreen(document.querySelector(inScene ? "#scReply .gated" : "#reply .gated, #sideCol .gated, #railTriage .gated")),
+    title: "⚑ means you earned it.",
+    body: () => "This answer is only here because of something you learned: talking to users, reading the market, studying a competitor. Research pays off as better answers later." },
+  { id: "ignored", when: () => [...game.resolved.values()].some(r => r.outcome === "@ignored"),
+    // the person you left waiting, when it's a chat on screen; else the chats
+    target: () => { const c = lastIgnoredChat(); return (c && onScreen($("railList").querySelector('[data-id="' + c + '"]'))) || (isMobile ? onScreen(tabBtn("msgs")) : items($("railList"), ".conv")); },
+    title: "Some things didn't wait.",
+    body: () => { const c = lastIgnoredChat(); return (c ? "You didn't answer " + game.cast.get(c).def.name + " in time, and the moment passed." : "You left a message unanswered long enough that the moment passed.") + " That's a choice too, and it has consequences of its own."; } },
+  { id: "endweek", when: () => canSkipWeek(),
+    target: () => onScreen($("endPill")) || (isMobile ? onScreen(tabBtn("moves")) : null),
+    title: "Nothing urgent left.",
+    body: () => "Everything still open can wait. Spend your moves on it anyway, or end the week here." },
+];
+// The first money a choice moved (not the weekly burn): the moment to meet the Bank.
+function firstChoiceTx() {
+  const all = game.ledger.flatMap(w => w.transactions).concat(game._weekTx);
+  return all.find(t => t.type === "expense" || t.type === "income") || null;
+}
+function tipBlocked() {
+  if (uiBusy || gameEnded() || tipOpen) return true;
+  for (const id of ["introOv", "endOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
+  return $("cine").classList.contains("show") || $("lightbox").classList.contains("show");
+}
+var tipTimer = null;   // var: render() may run before this line does
+let tipOpen = null;
+// At most two tips per beat of play (a move spent, or a week turned), so a week
+// that unlocks several features doesn't open on a stack of bubbles; the rest
+// wait for the next beat. Room tips are exempt: a sitting is one long beat.
+let tipBeat = null, tipBeatCount = 0;
+const playBeat = () => game.s.week * 10 + game.actionsLeft;
+// Checked a beat after a render, never inside one: a render that's about to
+// hand off to the week turn (scheduleTurn) has set uiBusy by then, so a tip
+// never pops up over a week that is already flipping. An open bubble is
+// re-aimed instead, since the render may have replaced its target.
+function queueTipCheck() {
+  clearTimeout(tipTimer);
+  tipTimer = setTimeout(() => { if (tipOpen) placeTip(); else maybeShowTip(); }, 350);
+}
+function maybeShowTip() {
+  if (tipBlocked()) return;
+  const beat = playBeat();
+  if (!inScene && tipBeat === beat && tipBeatCount >= 2) return;
+  for (const t of TIPS) {
+    if (tipsSeen.has(t.id) || (inScene && !t.scene) || (!inScene && t.id === "room") || !t.when()) continue;
+    if (!tipBox(t)) continue;
+    if (!inScene) { if (tipBeat !== beat) { tipBeat = beat; tipBeatCount = 0; } tipBeatCount++; }
+    showTip(t);
+    return;
+  }
+}
+function showTip(tip) {
+  tipsSeen.add(tip.id);
+  try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
+  tipOpen = tip;
+  const bub = $("tipBubble");
+  const title = typeof tip.title === "function" ? tip.title() : tip.title;
+  bub.innerHTML = '<b>' + esc(title) + "</b><p>" + esc(tip.body()) + '</p><div class="tip-btns">' +
+    (tip.go ? '<button class="tip-go">' + esc(tip.go.label) + "</button>" : "") +
+    '<button class="tip-ok">Got it</button></div>';
+  // anywhere on the card dismisses it; only the extra action does more
+  bub.onclick = closeTip;
+  const go = bub.querySelector(".tip-go");
+  if (go) go.onclick = e => { e.stopPropagation(); closeTip(); tip.go.run(); };
+  $("tipLayer").classList.add("on");
+  document.body.classList.add("tip-on");
+  placeTip();
+  // keep aiming while it's up: a room slides in, a strip reorders, a column
+  // scrolls — the spotlight has to follow its target
+  clearInterval(tipAim); tipAim = setInterval(placeTip, 250);
+}
+let tipAim = null;
+function closeTip() {
+  clearInterval(tipAim); tipAim = null;
+  tipOpen = null;
+  $("tipLayer").classList.remove("on");
+  document.body.classList.remove("tip-on");
+  queueTipCheck();
+}
+// Aim the bubble: a scribbled circle hugs the target, and the card sits on the
+// side with the most room (below, above, or beside a tall column), clamped to
+// the viewport, far enough off for the bubble's tail to reach across.
+function placeTip() {
+  if (!tipOpen) return;
+  const r = tipBox(tipOpen);
+  if (!r) { closeTip(); return; }
+  const vw = innerWidth, vh = innerHeight, pad = 6, m = 12;
+  // Room for the bubble's tail: a little longer where the screen allows.
+  const gap = Math.min(vw, vh) > 600 ? 46 : 38;
+  const ring = $("tipRing");
+  ring.style.left = (r.left - pad) + "px"; ring.style.top = (r.top - pad) + "px";
+  ring.style.width = (r.width + pad * 2) + "px"; ring.style.height = (r.height + pad * 2) + "px";
+  ring.style.borderRadius = Math.min(16, (r.height + pad * 2) / 2) + "px";
+  const bub = $("tipBubble");
+  bub.style.left = "0px"; bub.style.top = "0px";
+  const bw = bub.offsetWidth, bh = bub.offsetHeight;
+  const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+  let side;
+  if (r.height > vh * 0.4) side = r.left > vw / 2 ? "left" : "right";
+  else side = (vh - r.bottom) >= bh + gap + m || r.top < bh + gap + m ? "below" : "above";
+  let x, y;
+  if (side === "below" || side === "above") {
+    // Off-centre on purpose, toward the middle of the screen, so the tail leans in.
+    x = Math.max(m, Math.min(vw - bw - m, cx - bw / 2 + (cx < vw / 2 ? 44 : -44)));
+    y = side === "below" ? r.bottom + pad + gap : r.top - pad - gap - bh;
+  } else {
+    x = side === "left" ? r.left - pad - gap - bw : r.right + pad + gap;
+    x = Math.max(m, Math.min(vw - bw - m, x));
+    y = Math.max(m, Math.min(vh - bh - m, cy - bh / 2));
+  }
+  bub.dataset.side = side;
+  bub.style.left = x + "px"; bub.style.top = y + "px";
+  drawTipInk(r, { left: x, top: y, right: x + bw, bottom: y + bh }, side);
+}
+// The pencil work: two loose loops around the target and the bubble's tail
+// from the card's near edge to it, all through the same rough filter as the card.
+function drawTipInk(r, b, side) {
+  // A comic speech-bubble tail: a wedge that grows out of the card's near edge
+  // and narrows to a point just short of the target. The fill runs a little
+  // inside the card to cover its border, so the tail and card read as one shape.
+  let S, T, dir;
+  if (side === "below" || side === "above") {
+    const up = side === "below";   // the target is above the card
+    const tx = Math.max(r.left + r.width * 0.3, Math.min(r.right - r.width * 0.3, (b.left + b.right) / 2));
+    S = { x: Math.max(b.left + 34, Math.min(b.right - 34, tx + (tx < (b.left + b.right) / 2 ? 22 : -22))), y: up ? b.top : b.bottom };
+    T = { x: tx, y: up ? r.bottom + 13 : r.top - 13 };
+    dir = { x: 0, y: up ? -1 : 1 };
+  } else {
+    const ty = Math.max(r.top + r.height * 0.3, Math.min(r.bottom - r.height * 0.3, (b.top + b.bottom) / 2));
+    S = { x: side === "left" ? b.right : b.left, y: Math.max(b.top + 30, Math.min(b.bottom - 30, ty + 14)) };
+    T = { x: side === "left" ? r.left - 13 : r.right + 13, y: ty };
+    dir = { x: side === "left" ? 1 : -1, y: 0 };
+  }
+  const half = 13, lip = 3, sink = 12;   // base half-width; border sits 3px outside the box; fill sinks 12px in
+  const px = -dir.y, py = dir.x;          // along the card edge
+  const at = (o, d) => ({ x: S.x + px * o + dir.x * d, y: S.y + py * o + dir.y * d });
+  const B1 = at(-half, lip), B2 = at(half, lip), I1 = at(-half - 2, -sink), I2 = at(half + 2, -sink);
+  // Both sides bow the same way, so the tail curls a little like an inked one.
+  const mid = (P, f) => ({ x: P.x + (T.x - P.x) * 0.5 + px * f, y: P.y + (T.y - P.y) * 0.5 + py * f });
+  const bend = (T.x - S.x) * px + (T.y - S.y) * py > 0 ? -7 : 7;
+  const Q1 = mid(B1, bend), Q2 = mid(B2, bend);
+  const n = v => Math.round(v * 10) / 10, pt = p => n(p.x) + "," + n(p.y);
+  const sides = "M" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2);
+  $("tipTailInk").innerHTML =
+    '<path class="tail-fill" d="M' + pt(I1) + " L" + pt(B1) + " Q" + pt(Q1) + " " + pt(T) + " Q" + pt(Q2) + " " + pt(B2) + " L" + pt(I2) + ' Z"/>' +
+    '<path class="tail-line" d="' + sides + '"/>';
+  // Two loose pencil loops around the spotlight: rounded boxes, the second a
+  // little off the first, as if drawn twice by hand.
+  const loop = (g, dx, dy) => {
+    const x = r.left - g + dx, y = r.top - g + dy, w = r.width + g * 2, h = r.height + g * 2, k = Math.min(18, h / 2, w / 2);
+    return "M" + pt({ x: x + k, y }) + " H" + n(x + w - k) + " Q" + pt({ x: x + w, y }) + " " + pt({ x: x + w, y: y + k }) +
+      " V" + n(y + h - k) + " Q" + pt({ x: x + w, y: y + h }) + " " + pt({ x: x + w - k, y: y + h }) +
+      " H" + n(x + k) + " Q" + pt({ x, y: y + h }) + " " + pt({ x, y: y + h - k }) +
+      " V" + n(y + k) + " Q" + pt({ x, y }) + " " + pt({ x: x + k, y }) + " Z";
+  };
+  $("tipInk").innerHTML = '<path class="tip-ink" d="' + loop(8, 0, 0) + '"/>' + '<path class="tip-ink" opacity=".6" d="' + loop(10, 2, -1) + '"/>';
+}
+// The card's handwriting. FontFace rather than a <link>: offline, a failed
+// stylesheet would trip the boot-error panel; a failed FontFace just falls back.
+try {
+  for (const [w, f] of [["400", "YA9dr0Wd4kDdMthROCc"], ["700", "YA9Qr0Wd4kDdMtDqHTLMkiQ"]]) {
+    const ff = new FontFace("Kalam", "url(https://fonts.gstatic.com/s/kalam/v18/" + f + ".woff2)", { weight: w });
+    ff.load().then(x => document.fonts.add(x)).catch(() => {});
+  }
+} catch (e) { /* no FontFace: the journal's hand it is */ }
+addEventListener("resize", () => { if (tipOpen) placeTip(); });
+
 // ── surfaces + orchestration ──────────────────────────────────────────────────
 function syncSurfaceTabs() {
-  for (const b of document.querySelectorAll("nav.surfaces button")) b.classList.toggle("cur", b.dataset.surface === surface);
   for (const b of document.querySelectorAll("#tabbar button")) b.classList.toggle("cur", b.dataset.surface === surface);
   $("msgsSurface").classList.toggle("cur", surface === "msgs");
   $("feedSurface").classList.toggle("cur", surface === "feed");
@@ -3075,11 +3503,12 @@ function syncSurfaceTabs() {
 function setSurface(sf) {
   if (uiBusy) return;
   if (PHONE_ONLY.has(sf) && !isMobile) sf = "msgs";   // the desktop keeps both in the right column
+  if (sf === "feed" && !isMobile) { openNews(null); return; }   // the desktop's News opens in the thread column
+  if (sf === "msgs") newsOpen = null;
   surface = sf; syncSurfaceTabs();
   if (sf === "msgs") openThread();   // reveal any unread on entry
   render();
 }
-for (const b of document.querySelectorAll("nav.surfaces button")) b.onclick = () => setSurface(b.dataset.surface);
 // The phone's tab bar. Tapping Chat while already on it scrolls the strip back
 // to its start — the iOS "tap the current tab to go to its top" gesture.
 for (const b of document.querySelectorAll("#tabbar button")) b.onclick = () => {
@@ -3096,6 +3525,9 @@ function onModeChange(e) {
   isMobile = e.matches;
   if (!isMobile) {
     if (PHONE_ONLY.has(surface)) surface = "msgs";
+    if (surface === "feed") { surface = "msgs"; newsOpen = -1; }
+  } else if (newsOpen != null) {
+    newsOpen = null; surface = "feed";
     document.body.classList.remove("sc-solo");
   }
   $("todoPop").classList.remove("on");
@@ -3128,6 +3560,7 @@ function render() {
   if (surface === "bank") renderBank();
   renderSide();
   if (!isMobile && $("todoPop").classList.contains("on")) renderTodo();
+  queueTipCheck();
 }
 
 // ── debug ─────────────────────────────────────────────────────────────────────

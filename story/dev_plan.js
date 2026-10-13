@@ -10,7 +10,7 @@
 
 (function () {
   // The over-scoped (full/A) plan's tax: inert auto items the engine's build
-  // burn-down completes passively, doubling time-to-product-ready.
+  // burn-down completes passively, adding about four weeks to time-to-launch (world.js AUTO_BUILD_INCREMENT).
   const SCOPE_ITEMS = ["scope_social", "scope_verification", "scope_premium", "scope_socialgraph", "scope_video"];
   function expandItems(s, plan) {
     if (!s.items || plan !== "full") return;
@@ -231,7 +231,7 @@
       // `weeksSince` — and a later "skip" outcome overwrites "call", going stale.
       {
         id: "waitlist_calls", char: "founder",
-        text: (s) => "there are " + Math.max(5, (s.waitlist || 0) + 5) + " people between the waitlist and your early-access DMs, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.",
+        text: (s) => "there are " + Math.max(5, (s.waitlist || 0) + 5) + " people on your waitlist, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.",
         when: {
           after: ["dev_plan"], delay: 2, cooldown: 4,
           if: (s, e) => !s.launched
@@ -261,7 +261,7 @@
 
       {
         id: "interviews", char: "founder",
-        text: "you've been building without a single structured conversation with someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
+        text: "you've been building without ever sitting down to talk to someone who's used dating apps and given up. everything you think you know about what they want is a guess.",
         when: {
           // From week 3 (the paperwork week on the golden path) to the close
           // of the pre-launch window. Deliberately NOT gated on `s.incorporated`

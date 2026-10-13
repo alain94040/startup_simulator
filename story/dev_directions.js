@@ -47,7 +47,7 @@
           {
             key: "license", label: "Good find — license it and ship faster",
             reply: "nice find. plug in MatchKit — if we can ship matching in days, let's not waste weeks on it.",
-            journal: "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a black box everyone else can rent too, and Alex went quiet. Outsourcing the core might be a decision I regret.",
+            journal: "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a ready-made engine anyone can rent, and Alex went quiet. Outsourcing the core might be a decision I regret.",
             effects: {
               flags: { matching_licensed: true },
               saas: { label: "MatchKit license", cost: 100 },
@@ -59,7 +59,7 @@
                 s.items.matching_algo.status = "done"; s.items.matching_algo.quality = "generic";
                 s.items.matching_algo.assignee = null; s.items.matching_algo.note = "Licensed: MatchKit · $100/wk";
               }
-              return "Licensed MatchKit. Matching working in days — but it's a black box everyone else can rent too. $100/wk, and Alex went quiet.";
+              return "Licensed MatchKit. Matching working in days — but it's a ready-made engine anyone can rent. $100/wk, and Alex went quiet.";
             },
           },
         ],
@@ -104,11 +104,11 @@
             key: "conversation", label: "Rank on conversation odds — the research answered this",
             if: freshResearch,
             reply: "neither. every conversation with users says the same thing — matches don't fail at the match, they die in the chat. rank on conversation odds: profile specificity, question-askers, people who actually reply. optimize the first message, not the first look.",
-            journal: "Gave Alex the ranking thesis straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a thesis.' The engine ranks conversation odds now — nobody else's does.",
+            journal: "Gave Alex the ranking idea straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a real idea.' The engine ranks conversation odds now — nobody else's does.",
             effects: {
               marketFit: 6, signal: 4,
               char: { alex: { effort: 1.2, flags: { ranking_thesis: true } } },
-              say: { char: "alex", text: "huh. that's… actually a thesis. i can fake it for now — favor people whose profiles actually say something, then switch to who really replies once we have data. writing it tonight." },
+              say: { char: "alex", text: "huh. that's… actually a real idea. i can fake it for now — favor people whose profiles actually say something, then switch to who really replies once we have data. writing it tonight." },
             },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks conversation odds (from research)";
@@ -183,7 +183,7 @@
             effects: { signal: 3, flags: { ios_unblocked: true }, char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.ios_server) { s.items.ios_server.status = "done"; s.items.ios_server.quality = "solid"; }
-              return "The iPhone app is done — login, matching and messages all work, same as the website. Ready to open it up.";
+              return "Both apps run on the real engine now. Nothing stands between us and a stranger trying it.";
             },
           },
         ],
@@ -303,7 +303,7 @@
             fx: () => "Photo verification goes in before launch. It costs a chunk of Jordan's week — the launch-ready date slips — but the safety story is real before a single stranger is in the app.",
           },
           {
-            key: "verify_flagship", label: "Verification as THE feature — the threads called it",
+            key: "verify_flagship", label: "Make photo verification our main feature",
             if: (s) => !!s.heard_fake_profiles,
             reply: "look at the dating threads we read — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
             journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we read had fake profiles as complaint #1 — now it's our headline.",

@@ -99,7 +99,7 @@
           },
           {
             key: "copy", label: "Match them — build video dates now",
-            journal: "Dropped the retention investigation to chase Flare's video dates. Weeks of build for a feature none of our churned users asked for. The real leak is still open.",
+            journal: "Dropped the investigation into why users leave to chase Flare's video dates. Weeks of build for a feature none of the users who left asked for. The real leak is still open.",
             effects: { marketFit: -6, flags: { copied_competitor: true }, char: { alex: { morale: -6, effort: -1.5 } } },
             fx: () => "Alex got buried in video-call code while the launch-week users kept leaving. Nobody who churned had asked for video dates. The real leak stayed open the whole time.",
           },
@@ -114,9 +114,9 @@
         choices: [
           {
             key: "screenshot", label: "Save the receipt — then back to the rebuild",
-            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their stumble is our thesis, written by their users.",
+            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their users just wrote our argument for us.",
             effects: { signal: 4, char: { alex: { morale: 6 }, jordan: { morale: 3 } } },
-            fx: () => "Screenshot saved — a competitor's users writing your pivot thesis for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
+            fx: () => "Screenshot saved — a competitor's users writing your argument for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
           },
           {
             key: "gloat", label: "Write the told-you-so thread",
@@ -143,7 +143,7 @@
             key: "panic", label: "They'll crush us — rush everything out now",
             journal: "Panicked at Flare copying our pivot and rushed half-finished work out the door. Quality dipped exactly when the application needed proof of the opposite.",
             effects: { signal: -4, marketFit: -4, char: { alex: { morale: -8 } } },
-            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked for your retention numbers. Panic is a strategy the way falling is flying.",
+            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked how many users come back. Panic is a strategy the way falling is flying.",
           },
         ],
         timeout: { weeks: 3 },
@@ -196,7 +196,7 @@
           {
             key: "call", label: "Call Tom",
             reply: "hey — noticed you went quiet. everything ok?",
-            journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best churn I've ever had.",
+            journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best reason to lose a customer I've ever had.",
             effects: {
               customers: -1, signal: 16, marketFit: 8,
               say: { char: "tom", text: "ha, sorry — i actually met someone on here 5 weeks ago. we've been on 7 dates. totally forgot to cancel. leaving a review before i go — this thing worked." },
@@ -247,9 +247,9 @@
         when: { if: (s) => s.week >= 5 && s.week <= 10 },
         choices: [
           {
-            key: "tell", label: "Tell him about it",
+            key: "tell", label: "Pitch Jamie properly",
             reply: "ha — yes, seriously, a dating app. coffee this week and i'll tell you the whole thing.",
-            journal: "Caught up with Jamie over coffee. Told him everything. He was into it — put him on the waitlist.",
+            journal: "Gave Jamie the real pitch over coffee: the demo, the plan, the whole afternoon. He's on the waitlist, and I think he's wondering how else he can help.",
             effects: {
               waitlist: 1,
               note: "Jamie, over coffee: 'a dating app that actually works? I need to try this.' Put him on the waitlist.",
@@ -264,16 +264,16 @@
         when: { took: ["ff_friend:tell"], delay: 4, if: (s, e) => e.weeksSince("ff_friend") <= 12 },
         choices: [
           {
-            key: "ask", label: "Ask him to invest",
-            reply: "sure thing.",
+            key: "ask", label: "Ask Jamie to invest",
+            reply: "yes. drinks on me this time. fair warning: i'm going to ask you for something big.",
             fx(s, e) {
               if (e.rng() < 0.7) {
                 s.cash += 5000;
                 e.say({ char: "jamie", text: "just venmo'd you $5,000. least i could do — you'd have done the same for me. go build something great." });
-                return "Jamie sent $5,000 via Venmo. 'Least I could do — you'd have done the same for me. go build something great.'";
+                return "$5,000 from Jamie: no terms, no paperwork, no questions about the market. He's betting on me, not on the app.";
               }
               e.say({ char: "jamie", text: "hate to say it but my cash is tied up right now — car loan, wedding coming up. i'm rooting for you though." });
-              return "Jamie's cash is tied up right now — car loan and a wedding coming up. 'I'm rooting for you though.'";
+              return "Jamie's cash is tied up. Friends invest in you, but only with money they have.";
             },
           },
         ],
@@ -285,11 +285,11 @@
         when: { if: (s) => s.week <= 12 },
         choices: [
           {
-            key: "lunch", label: "Have lunch with David",
+            key: "lunch", label: "Prep for lunch with David",
             reply: "would love to. lunch this week — it's been too long, and i've actually got a lot to tell you.",
-            journal: "Good lunch with David. Sharp questions about the dating app space. He wants something concrete — what makes people stay.",
+            journal: "Spent a morning getting my story straight, then two hours of David's questions over lunch. He used to grill me in reviews and he still does. He wants something concrete: what makes users keep using the app.",
             effects: {
-              note: "David, over lunch: 'send me something concrete this week — what makes people actually stay?'",
+              note: "David, over lunch: 'send me something concrete this week — what makes users keep using the app?'",
             },
           },
         ],
@@ -297,7 +297,7 @@
       },
       {
         id: "ff_mentor_pitch", char: "david", from: "David (ex-manager)",
-        text: "been chewing on what you told me at lunch. want to grab coffee and go through the numbers?",
+        text: "been chewing on what you told me at lunch. want to do this properly? bring a deck and your numbers, and i'll treat it like any pitch i'd write a check for.",
         when: { took: ["ff_mentor:lunch"], delay: 3, if: (s, e) => e.weeksSince("ff_mentor") <= 10 },
         choices: [
           {
@@ -307,8 +307,8 @@
             // deep-dive.) What makes people stay? (market fit, which only
             // learning from users earns — FIT_KNOWS_USERS). Jamie's check stays
             // a coin flip on purpose: a friend invests in you, not your market.
-            key: "pitch", label: "Show him the deck",
-            reply: "let's do it — coffee, numbers, the whole pitch.",
+            key: "pitch", label: "Build a deck and pitch David",
+            reply: "deal. give me a few days to pull the deck together, then coffee and the whole pitch.",
             fx(s, e) {
               const knowsFlare = e.took("flare_stealth:dive") || e.took("mentor_competitor_bomb:research");
               if (!knowsFlare) {
@@ -318,7 +318,7 @@
               }
               if (s.market_fit < FIT_KNOWS_USERS) {
                 s.david_verdict = "users";
-                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes people stay and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for — then call me." });
+                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes users keep using the app and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for — then call me." });
                 return null;
               }
               s.david_verdict = "invest";
@@ -327,9 +327,9 @@
               return null;
             },
             journal: (s) => ({
-              flare: "Pitched David. He passed — he'd found Flare in ten seconds of googling, and I'd never mentioned them.",
-              users: "Pitched David. He passed for now: he asked what makes people stay, and I could only tell him what the app does.",
-              invest: "Pitched David. He wired $4,000 — he liked that we knew the competition and knew our users.",
+              flare: "Spent the week building a deck for David. He passed: he found Flare in ten seconds of googling, and I'd never mentioned them.",
+              users: "Spent the week building a deck for David. He passed for now: he asked what makes people stay, and I could only tell him what the app does.",
+              invest: "Spent the week building a deck for David, and it paid off: he wired $4,000 because we knew the competition and knew our users.",
             })[s.david_verdict],
           },
         ],

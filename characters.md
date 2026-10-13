@@ -109,8 +109,8 @@ rule below corrects a mistake a draft actually made.
 
 ### Labels and bubbles
 - **The chip label is the founder's intent; the bubble is the words sent.**
-  Precedent: the mom card, where "Let them invest" sends "can I come over
-  for dinner this weekend?". For Jordan, "Ask if she can keep up" sends "it
+  Precedent: the mom card, where "Pitch Mom and Dad over dinner" sends
+  "can I come over for dinner this weekend?". For Jordan, "Ask if she can keep up" sends "it
   sounds great. can i ask you something real?". The player must always know
   what they're stepping into, even when the message itself can't say it.
 - **No pronouns without a referent in labels.** "Raise it with her" fails

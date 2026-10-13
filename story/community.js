@@ -141,7 +141,7 @@
       },
       read: {
         label: "Read why it died",
-        journal: "Read the dating-app post-mortem twice. Signups were never the problem. They died of retention: people matched, chatted for a day, and never met.",
+        journal: "Read the dating-app post-mortem twice. Signups were never the problem. They died because nobody came back: people matched, chatted for a day, and never met.",
         effects: { marketFit: 2, flags: { read_postmortem: true } },
         outcome: "Signups were never their problem. People matched, chatted for a day, and never met. Month 8, lights out.",
       },

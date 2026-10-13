@@ -471,12 +471,15 @@
 
       // `journal` may be a string, a (s,e,char) function (like `text`), or null
       // to say "this beat leaves no journal line"; omitted falls back to the fx
-      // return, which is how most content writes its recap.
+      // return, which is how most content writes its recap. The line is a ✎ jot
+      // in the conversation it came from (its `sourceChar`) unless the choice
+      // says `inJournal: true`: a call bigger than the one thread it was made in
+      // goes in the founder's journal itself.
       const journalBody = choice.journal !== undefined ? this._text(choice.journal, char) : outcome;
       if (journalBody) {
         this._push("founder", {
           type: "outcome", nodeId,
-          from: char.def.name, sourceChar: charId === "founder" ? null : charId,
+          from: char.def.name, sourceChar: charId === "founder" || choice.inJournal ? null : charId,
           body: journalBody,
           mockup: node.mockups && node.mockups[choice.key] || null,
         });
