@@ -3170,12 +3170,14 @@ $("hRestart").onclick = restartGame;
 // The intro is only the premise and the bar to beat. How to play is taught in
 // place by TIPS, each the first time its feature shows up — starting with the
 // chat itself the moment the intro closes.
-// The first three cards tell how PlusOne started, so the player meets the
+// The first card says what the player is in for: a simulation, before any
+// story. The next two tell how PlusOne started, so the player meets the
 // co-founders inside the story rather than on a roster. An optional fourth
 // field introduces people: [castId, role, blurb], drawn with their portrait so
 // the player meets the faces before the texts start. An optional fifth is the
 // card's illustration (img/intro/); a missing file just drops the slot.
 const INTRO = [
+  ["A startup simulation", "What it's really like to start a company.", "You play the founder of a made-up startup and live through its first months. The people are fictional, but the decisions are the real ones founders face: what to build, who to listen to, how to spend the money, when to have the hard conversation. Whether the startup makes it is up to you."],
   [null, "It started with Alex, at 1 a.m.", "You two were trading dating-app horror stories (40 matches this month, zero dates) when one of you said it: what if an app was built to get you on a date, not to keep you swiping? By 2 a.m. it had a name, PlusOne. By morning Alex had written half a spec and offered to quit his $140k job.", [
     ["alex", "Co-founder · CTO", "He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
   ], "1_idea.jpg"],
