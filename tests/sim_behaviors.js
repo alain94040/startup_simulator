@@ -122,8 +122,10 @@ check(`slide_alex demo (wk ${r1(S.slide_alex.meanDemoWk)}) no earlier than focus
   S.slide_alex.meanDemoWk >= S.decent.meanDemoWk - 0.101);
 check(`slide_alex launch (wk ${r1(S.slide_alex.meanLaunchWk)}) no earlier than focused (wk ${r1(S.decent.meanLaunchWk)})`,
   S.slide_alex.meanLaunchWk >= S.decent.meanLaunchWk - 0.101);
-check(`slide_alex.wins (${S.slide_alex.wins}%) <= decent.wins (${S.decent.wins}%) + 3`,
-  S.slide_alex.wins <= S.decent.wins + 3);
+// The report card is the outcome now, so the lesson must cost grade, not just
+// calendar time.
+check(`slide_alex.grade (${r1(S.slide_alex.grade)}) < decent.grade (${r1(S.decent.grade)}) — the slide costs score`,
+  S.slide_alex.grade < S.decent.grade);
 
 // D · neglect has a face: departure rates, morale trajectory, roadmap counts
 check(`ignore_alex.alexLeft (${S.ignore_alex.alexLeft}%) >= 90%`, S.ignore_alex.alexLeft >= 90);
@@ -257,6 +259,76 @@ check(`news: reader grade (${r1(NEWS.reader.grade)}) > promoter grade (${r1(NEWS
   NEWS.reader.grade > NEWS.promoter.grade);
 check(`news: only readers arm the verification flagship (reader ${NEWS.reader.flagship}%, promoter ${NEWS.promoter.flagship}%)`,
   NEWS.reader.flagship > 50 && NEWS.promoter.flagship === 0);
+
+// N · friends-and-family money (GOALS.md, "Asking for money"): skipping any
+// one source of money must end worse than taking it. The baseline is a
+// fundraiser: the decent founder, but the money cards get the first actions
+// and the Flare deep dive comes before David's pitch, so every source actually
+// pays (the decent priority lets Jamie's one-week coffee lapse, and David
+// passes on a founder who never studied Flare). Each variant skips one source
+// and is otherwise the same founder; the cost shows up as a thinner bank,
+// rent gigs that eat weeks, and a lawyer the cap table can't afford.
+const MONEY_FIRST = ["ff_family", "ff_family_2", "ff_family_3", "ff_friend", "ff_friend_ask",
+  "flare_stealth", "ff_mentor", "ff_mentor_pitch"];
+const moneyPriority = (a) => {
+  const i = MONEY_FIRST.indexOf(a.nodeId);
+  return i >= 0 ? 0.5 + i * 0.01 : H.actPriority(a);
+};
+function moneyTactic(skipIds) {
+  const skip = new Set(skipIds);
+  let grade = 0, minBal = 0, gigs = 0;
+  for (let i = 0; i < N; i++) {
+    const g = H.playGame(1000 + i, (a, gg) => skip.has(a.nodeId) ? null : H.decent(a, gg),
+      { priority: moneyPriority });
+    grade += g.gradeScore();
+    let low = g.s.cash;
+    for (const wk of g.ledger) low = Math.min(low, wk.balanceAfter);
+    minBal += low;
+    if (g.took("founder_consulting:take")) gigs++;
+  }
+  return { grade: grade / N, minBal: minBal / N, gigs: Math.round((gigs / N) * 100) };
+}
+const MOM = ["ff_family", "ff_family_2", "ff_family_3"], JAMIE = ["ff_friend", "ff_friend_ask"],
+  DAVID = ["ff_mentor", "ff_mentor_pitch"];
+const MONEY = {
+  fundraiser: moneyTactic([]),
+  skip_mom: moneyTactic(MOM),
+  skip_jamie: moneyTactic(JAMIE),
+  skip_david: moneyTactic(DAVID),
+  no_raise: moneyTactic([...MOM, ...JAMIE, ...DAVID]),
+};
+console.log(`\n  money tactic   grade  min bank  rent gigs`);
+for (const [k, r] of Object.entries(MONEY)) console.log(`  ${pad(k, 13)} ${padL(r1(r.grade), 6)} ${padL("$" + Math.round(r.minBal), 9)} ${padL(r.gigs + "%", 10)}`);
+for (const k of ["skip_mom", "skip_jamie", "skip_david", "no_raise"]) {
+  check(`money: ${k} grade (${r1(MONEY[k].grade)}) < fundraiser (${r1(MONEY.fundraiser.grade)}) — leaving the money costs score`,
+    MONEY[k].grade < MONEY.fundraiser.grade);
+}
+check(`money: no_raise grade (${r1(MONEY.no_raise.grade)}) is the worst of the money tactics`,
+  ["skip_mom", "skip_jamie", "skip_david"].every(k => MONEY.no_raise.grade <= MONEY[k].grade));
+
+// O · the consultants (story/press.js): Kevin and Brett sell nothing an early
+// company needs. Saying yes must end worse than letting them lapse — on the
+// report card (a few points off "Don't run out of money") and in the bank.
+function consultantTactic(hire) {
+  let grade = 0, minBal = 0, hired = 0;
+  for (let i = 0; i < N; i++) {
+    const g = H.playGame(1000 + i, (a, gg) =>
+      hire && (a.nodeId === "consultant_growth" || a.nodeId === "consultant_brand") ? ["hire"] : H.decent(a, gg));
+    grade += g.gradeScore();
+    let low = g.s.cash;
+    for (const wk of g.ledger) low = Math.min(low, wk.balanceAfter);
+    minBal += low;
+    if (g.took("consultant_growth:hire") || g.took("consultant_brand:hire")) hired++;
+  }
+  return { grade: grade / N, minBal: minBal / N, hired: Math.round((hired / N) * 100) };
+}
+const CONSULT = { decline: consultantTactic(false), hire: consultantTactic(true) };
+console.log(`\n  consultants    grade  min bank  hired`);
+for (const [k, r] of Object.entries(CONSULT)) console.log(`  ${pad(k, 13)} ${padL(r1(r.grade), 6)} ${padL("$" + Math.round(r.minBal), 9)} ${padL(r.hired + "%", 6)}`);
+check(`consultants: hiring grade (${r1(CONSULT.hire.grade)}) < declining (${r1(CONSULT.decline.grade)}), hired in ${CONSULT.hire.hired}% of runs`,
+  CONSULT.hire.hired > 50 && CONSULT.hire.grade < CONSULT.decline.grade);
+check(`consultants: hiring leaves less in the bank (min $${Math.round(CONSULT.hire.minBal)} < $${Math.round(CONSULT.decline.minBal)})`,
+  CONSULT.hire.minBal < CONSULT.decline.minBal);
 
 // L · hygiene
 const totalErrors = Object.values(S).reduce((n, r) => n + r.errors, 0);

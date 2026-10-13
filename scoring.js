@@ -311,9 +311,14 @@
       // A run can end three ways short of the win: the calendar, the team, or
       // the bank. Money in the bank is no consolation for the second one —
       // the company stopped existing while it was still solvent.
-      const score = s.game_won ? 100
+      const base = s.game_won ? 100
         : !s.game_over ? clamp(40 + g.runwayWeeks * 3, 40, 90)
           : s.deadline_passed ? 45 : s.cofounder_left ? 20 : 10;
+      // The consultants who cold-pitch an early company (Kevin, Brett) sell
+      // nothing it needs. Paying one is a few points off this lesson even on a
+      // run that survived it: the money was runway.
+      const sharks = ["consultant_growth", "consultant_brand"].filter(id => g.took(id + ":hire"));
+      const score = Math.max(0, base - 10 * sharks.length);
       out.push({
         key: "default-alive", label: "Don't run out of money", ref: "📚 PG, \"Default Alive or Default Dead?\"",
         score, verdict: s.game_won ? "You reached the other side with the lights on."
@@ -321,7 +326,9 @@
             : s.deadline_passed ? "Alive at the deadline — but the grade didn't clear the bar."
               : s.cofounder_left ? "Money in the bank and nobody left to build. Runway was never the binding constraint."
                 : "Cash hit zero. Everything else became irrelevant.",
-        notes: ["Lowest bank balance: $" + Math.max(0, Math.round(minBalance)).toLocaleString() + "."],
+        notes: ["Lowest bank balance: $" + Math.max(0, Math.round(minBalance)).toLocaleString() + "."]
+          .concat(sharks.length ? ["Paid " + (sharks.length === 2 ? "two consultants" : "a consultant") +
+            " who cold-pitched you. Be careful of sharks: an early company draws people selling services it doesn't need, and every dollar was runway."] : []),
       });
     }
 
