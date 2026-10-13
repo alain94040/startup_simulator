@@ -187,9 +187,19 @@
             note: g.took("flare_stealth:dive") ? "Took Flare's app apart instead of just reading their press."
               : g.took("mentor_competitor_bomb:research") ? "Mapped the market, but never opened Flare's app."
                 : "Never looked at what the competition actually built." },
-          { faced: !!s.pivot_shipped, weight: 3, got: fitGot,
-            note: "Market fit of what shipped: " + Math.round(s.market_fit) + "/100"
-              + (fitGot >= 1 ? " — built on what users told you." : fitGot >= 0.5 ? " — partly listened, partly guessed." : " — mostly built on guesses.") },
+          // Like the launch and pivot parts below, this one stops being
+          // optional at the deadline: a run that never shipped v2 has nothing
+          // users wanted to show for it, and grades zero on the heaviest part
+          // of the lesson instead of dropping it from the average. The note
+          // names what the player did reach, so the zero reads as a
+          // consequence rather than a penalty for a card they never saw.
+          { faced: !!s.pivot_shipped || ended, weight: 3, got: fitGot,
+            note: s.pivot_shipped
+              ? "Market fit of what shipped: " + Math.round(s.market_fit) + "/100"
+                + (fitGot >= 1 ? " — built on what users told you." : fitGot >= 0.5 ? " — partly listened, partly guessed." : " — mostly built on guesses.")
+              : s.activities_pivot ? null // the v2-speed part below already says it never reached users
+                : s.launched ? "Users left v1 and the product never changed, so nobody got something they wanted."
+                  : "Nothing ever shipped, so no user got to want it." },
           { faced: g.done("interviews") || g.done("dev_plan"), weight: 1,
             got: g.took("interviews:interview") ? 1 : 0,
             note: g.took("interviews:interview") ? "Did the customer interviews before locking scope." : "Built without ever interviewing a user." },
