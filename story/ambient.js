@@ -24,7 +24,7 @@
 
   const momChoices = (journalAsk) => ([
     {
-      key: "ask", label: "Ask if they'd put money in",
+      key: "ask", label: "Go home and ask them to invest",
       reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
       journal: journalAsk,
       effects: { note: "Mom: 'of course — let us talk it over and we'll get back to you.'" },
@@ -43,7 +43,7 @@
         id: "ff_family", char: "mom", ambient: true,
         text: "just checking in! dad and i were talking about you last night. so proud. how's it going? let us know if there's anything we can do.",
         when: { if: (s) => s.week >= 3 && s.week <= 12 },
-        choices: momChoices("Asked Mom and Dad if they'd put money in. They're going to talk it over and get back to me."),
+        choices: momChoices("Drove home for dinner and asked Mom and Dad to invest. Hardest pitch I've given: no deck, just their savings across the table. They're going to talk it over."),
         timeout: { weeks: 3 },
       },
       {
@@ -51,7 +51,7 @@
         id: "ff_family_2", char: "mom", ambient: true,
         text: "hey, still haven't heard back. dad keeps asking how things are going. if there's anything we can do to help, we really want to.",
         when: { took: ["ff_family:@ignored"], if: (s) => s.week <= 9 },
-        choices: momChoices("Asked the parents again about chipping in. They said they'd discuss it. Family money — complicated feelings."),
+        choices: momChoices("Finally went home and asked Mom and Dad to invest. Spent the whole drive rehearsing it. They're going to talk it over. Family money comes with complicated feelings."),
         timeout: { weeks: 3 },
       },
       {
@@ -60,9 +60,9 @@
         when: { took: ["ff_family_2:@ignored"], if: (s) => s.week <= 12 },
         choices: [
           {
-            key: "ask", label: "Let them invest",
+            key: "ask", label: "Go home and take Dad up on it",
             reply: "about that. can I come over for dinner this weekend? there's something I want to talk to you about.",
-            journal: "Told Dad he could invest. He's going to sort it out. Family money hits different.",
+            journal: "Went home and did it properly: walked Dad through what could go wrong before taking a cent. He's sorting it out. Family money hits different.",
             fx: (s, e) => askFamily(s, e),
           },
           {
