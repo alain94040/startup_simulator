@@ -722,17 +722,13 @@
     get burnPerWeek() { return 500 + (this.s.extra_burn || 0); }
     get runwayWeeks() { return Math.floor(this.s.cash / this.burnPerWeek); }
 
-    // Overall report-card grade (0-100) of the run so far — the average of the
-    // scoring categories actually faced, weighted by each category's `weight`
-    // (scoring.js), matching the endgame rollup. Returns
-    // null if nothing has been graded yet (or scoring isn't loaded). Used by the
-    // YC verdict to admit on merit instead of a dice roll.
+    // Overall report-card grade (0-100) of the run so far: the sum of every
+    // moment's points (scoring.js), matching the endgame rollup. Returns null
+    // if scoring isn't loaded. Used by the YC verdict to admit on merit
+    // instead of a dice roll.
     gradeScore() {
       if (!DEPS.scoring) return null;
-      const scored = DEPS.scoring.scoreGame(this).filter(c => c.score != null);
-      if (!scored.length) return null;
-      const w = c => c.weight || 1;
-      return Math.round(scored.reduce((n, c) => n + c.score * w(c), 0) / scored.reduce((n, c) => n + w(c), 0));
+      return DEPS.scoring.finalGrade(this);
     }
 
     // ── milestones (founder journal rubber-stamps) ─────────────────────────────

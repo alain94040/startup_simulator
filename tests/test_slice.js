@@ -348,11 +348,12 @@ console.log("the deadline (seed 4, decent, subsidized)");
   // Scoring smoke on a full run.
   const Scoring = require("../scoring.js");
   const cats = Scoring.scoreGame(g);
-  ok(cats.length === 7 && cats.every(c => c.score === null || (c.score >= 0 && c.score <= 100 && c.verdict)),
-    "scorecard: 7 well-formed categories");
-  const by = {}; for (const c of cats) by[c.key] = c;
-  ok(by["edge-vs-commodity"].score === 100, "edge-vs-commodity scored 100 (buy/build/buy)");
-  ok(by["clean-cap-table"].score != null, "the cap-table lesson graded (" + by["clean-cap-table"].score + ")");
+  ok(cats.length === 3 && cats.every(c => c.score >= 0 && c.score <= 100 && c.verdict && c.points <= c.max),
+    "scorecard: 3 well-formed lessons");
+  ok(cats.reduce((n, c) => n + c.max, 0) === 100, "the lessons' budgets add up to 100");
+  const edge = Scoring.moment(g, "edge");
+  ok(edge.got === edge.max, "edge scored full marks (buy/build/buy)");
+  ok(Scoring.moment(g, "buyback").reached, "the buyback moment graded (" + Scoring.moment(g, "buyback").got + ")");
 }
 
 // ── pass 3: the Bullseye loop, played to completion ──────────────────────────
@@ -457,9 +458,10 @@ console.log("jordan: kept (seed 42)");
   ok(g.done("jordan_slip"), "watched the promise slip");
   ok(!g.s.pivot_shipped, "the board never got built in time — v2 never reached users");
   ok(!g.s.ycAccepted, "…and YC passed");
-  const by = {}; for (const c of require("../scoring.js").scoreGame(g)) by[c.key] = c;
-  ok(by["hard-conversations"].score < 60, "hard-conversations graded it (" + by["hard-conversations"].score + ")");
-  ok(by["build-something-people-want"].score < 70, "build-something-people-want graded it (" + by["build-something-people-want"].score + ")");
+  const Scoring = require("../scoring.js");
+  ok(Scoring.moment(g, "jordan-talk").got === 0, "the Jordan conversation graded zero");
+  ok(Scoring.moment(g, "v2-fit").got === 0 && /Never reached/.test(Scoring.moment(g, "v2-fit").note),
+    "shipping v2 graded zero, and the card says why (" + Scoring.moment(g, "v2-fit").note + ")");
 }
 console.log("jordan: fired two weeks late (seed 42)");
 {
@@ -488,13 +490,12 @@ console.log("jordan: the fold (seed 42)");
 console.log("scoring on the ignore run (seed 42)");
 {
   const g = run(42, ignore, 18);
-  const cats = require("../scoring.js").scoreGame(g);
-  const by = {}; for (const c of cats) by[c.key] = c;
-  ok(by["hard-conversations"].score !== null && by["hard-conversations"].score < 40,
-    "hard-conversations scored low — everything resolved by silence (" + by["hard-conversations"].score + ")");
-  ok(by["edge-vs-commodity"].score === null && by["edge-vs-commodity"].verdict === "never faced",
-    "edge-vs-commodity: never faced (dev plan never answered)");
-  ok(cats.every(c => c.score === null || (c.score >= 0 && c.score <= 100)), "all categories well-formed");
+  const Scoring = require("../scoring.js");
+  const cats = Scoring.scoreGame(g);
+  const team = cats.find(c => c.key === "team");
+  ok(team.score < 40, "the team lesson scored low — everything resolved by silence (" + team.score + ")");
+  ok(Scoring.moment(g, "edge").got === 0, "edge: nothing earned (dev plan never answered)");
+  ok(cats.every(c => c.score >= 0 && c.score <= 100), "all lessons well-formed");
 }
 
 // ── the commitment lesson: a side project slows Alex down ────────────────────

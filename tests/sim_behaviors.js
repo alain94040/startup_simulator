@@ -51,12 +51,15 @@ function runStrategy(name, spec) {
       m.jordanFired = !!s.jordan_resolved;
       m.jordanFiredWk = s.jordan_fired_week != null ? s.jordan_fired_week : null;
       m.jordanCold = !!s.jordan_cold_exit;
-      const hard = Scoring.scoreGame(g).find(c => c.key === "hard-conversations");
-      m.hardScore = hard ? hard.score : null;
+      const card = Scoring.scoreGame(g);
+      m.hardScore = card.find(c => c.key === "team").score;
       m.itemsDone = Object.values(s.items || {}).filter(it => it && it.status === "done").length;
       m.grade = g.gradeScore();
-      const cap = Scoring.scoreGame(g).find(c => c.key === "clean-cap-table");
-      m.capScore = cap ? cap.score : null;
+      // The cap table: the paperwork, the buyback and the App Store listing,
+      // as a share of their points.
+      const capMoments = card.find(c => c.key === "money").moments
+        .filter(x => ["paperwork", "buyback", "app-store"].includes(x.key));
+      m.capScore = 100 * capMoments.reduce((n, x) => n + x.got, 0) / capMoments.reduce((n, x) => n + x.max, 0);
       games.push(m);
     } catch (err) {
       errors++;
@@ -148,7 +151,7 @@ check(`decent.qualified (${S.decent.qualified}%) >= 90%`, S.decent.qualified >= 
 
 // F · the cap-table bill: the lesson lives on the report card, so skipping the
 // lawyer must show up as a visibly worse card, category and rollup both)
-check(`skip_captable cap-table category (${r1(S.skip_captable.capScore)}) < 70`,
+check(`skip_captable cap-table moments (${r1(S.skip_captable.capScore)}%) < 70%`,
   S.skip_captable.capScore != null && S.skip_captable.capScore < 70);
 check(`skip_captable.grade (${r1(S.skip_captable.grade)}) < decent.grade (${r1(S.decent.grade)})`,
   S.skip_captable.grade < S.decent.grade);
@@ -165,7 +168,7 @@ check(`keep_jordan v2 ships later: wk ${r1(S.keep_jordan.meanV2Wk)} > decent wk 
   (S.keep_jordan.meanV2Wk || Infinity) > S.decent.meanV2Wk);
 check(`keep_jordan.wins (${S.keep_jordan.wins}%) <= half of decent.wins (${S.decent.wins}%)`,
   S.keep_jordan.wins <= S.decent.wins / 2);
-check(`keep_jordan hard-conversations (${r1(S.keep_jordan.hardScore)}) < 60 — the dodged talk is on the card`,
+check(`keep_jordan team lesson (${r1(S.keep_jordan.hardScore)}) < 60 — the dodged talk is on the card`,
   S.keep_jordan.hardScore != null && S.keep_jordan.hardScore < 60);
 
 // G2 · the fold: reaching "are you asking me to leave?" and saying no is still
@@ -241,7 +244,7 @@ function newsTactic(pick) {
     const g = H.playGame(seed, (a, gg) => a.charId === "hacker_news" ? pick(a)
       : a.nodeId === "trust_safety" ? ["verify_flagship", "report_now"] : H.decent(a, gg),
     { priority: H.makeAttentionPriority(seed) });
-    build += Scoring.scoreGame(g).find(c => c.key === "build-something-people-want").score;
+    build += Scoring.scoreGame(g).find(c => c.key === "build").score;
     grade += g.gradeScore();
     if (g.took("trust_safety:verify_flagship")) flagship++;
   }
@@ -276,12 +279,12 @@ const moneyPriority = (a) => {
   const i = MONEY_FIRST.indexOf(a.nodeId);
   return i >= 0 ? 0.5 + i * 0.01 : H.actPriority(a);
 };
-// The unrounded weighted grade: a skipped source can cost less than the one
-// point gradeScore() rounds to, and the contract must still see it.
+// The unrounded grade: a skipped source can cost less than the one point
+// gradeScore() rounds to, and the contract must still see it.
 const exactGrade = (g) => {
-  const cats = Scoring.scoreGame(g).filter(c => c.score != null);
-  const w = c => c.weight || 1;
-  return cats.reduce((n, c) => n + c.score * w(c), 0) / cats.reduce((n, c) => n + w(c), 0);
+  const sum = Scoring.scoreGame(g).reduce((n, c) => n + c.points, 0);
+  const cap = Scoring.gradeCap(g);
+  return cap ? Math.min(sum, cap.cap) : sum;
 };
 function moneyTactic(skipIds) {
   const skip = new Set(skipIds);

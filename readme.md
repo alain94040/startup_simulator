@@ -52,7 +52,7 @@ Lessons (full list in [`GOALS.md`](GOALS.md)):
 | 4 · Rebuild as v2 | Ship the pivot, and decide who builds it | The relaunch |
 | 5 · Make the case | Prove it before week 25: revenue, a channel, a clean cap table | The deadline and the verdict |
 
-**Win:** a B+ or better on the report card *and* a shipped, pivoted company.
+**Win:** 75 or better out of 100 on the report card *and* a shipped, pivoted company.
 **Lose:** miss that bar at week 25, run out of cash, or lose your technical co-founder.
 
 ---
@@ -77,7 +77,7 @@ Plain JavaScript, loaded by `<script>` tags in the browser and by `require` in N
 engine.js     Story-graph engine: facts ledger, scheduler, effects, scenes. No DOM, no content.
 cast.js       The character registry.
 world.js      The weekly economy: burn, co-founder effort, conversion, growth, win/lose.
-scoring.js    The report card: 7 lessons graded off the facts ledger.
+scoring.js    The report card: 100 points of moments across 3 lessons, off the facts ledger.
 story/        All narrative content, one file per storyline.
 game.html     The game UI (iMessage-style chat, desktop and phone layouts).
 play.html     Plain debug UI.
