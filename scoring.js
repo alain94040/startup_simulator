@@ -16,6 +16,7 @@
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const BUILD_WEIGHT = 3; // "Build something people want" in the final grade
   const CONTRACT_PENALTY = 15; // per contract week, off "Don't run out of money"
+  const BANKRUPT_WEIGHT = 6; // "Don't run out of money" in the final grade when cash hit zero
 
   // Ratio of answered-vs-ignored among the given nodes (only counting resolved
   // ones). Returns null if none of them ever resolved.
@@ -224,7 +225,7 @@
               : s.pivot_ship_week - s.pivot_week <= 4 ? "v2 reached users " + (s.pivot_ship_week - s.pivot_week) + " weeks after the pivot call."
                 : "v2 took " + (s.pivot_ship_week - s.pivot_week) + " weeks after the pivot call — the board was the slow half." },
           { faced: g.done("pivot_day_decide") || s.pivot_deferred || ended, weight: 2, got: pivotGot,
-            note: g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? "Pivoted on evidence, with cash left to survive it." : "Called the pivot — but v2 never shipped.")
+            note: g.took("pivot_day_decide:pivot") ? (s.pivot_shipped ? (s.cash > 0 ? "Pivoted on evidence, with cash left to survive it." : "Pivoted on evidence and shipped it — then the money ran out.") : "Called the pivot — but v2 never shipped.")
               : g.took("pivot_fifty_verdict:pivot_now") ? "Pivoted late — right call, weeks and a growth push dearer."
                 : s.pivot_deferred ? "The default direction won by inertia."
                   : ended ? "The run ended without the product ever being questioned." : null },
@@ -341,9 +342,14 @@
       // red flag for any investor: the founder isn't full-time. Not a hard
       // rule, a cost on the card, like keeping a part-time co-founder.
       const contract = s.contract_weeks || 0;
+      const bankrupt = !!s.game_over && !s.game_won && !s.deadline_passed && !s.cofounder_left;
       const score = Math.max(0, base - 10 * sharks.length - CONTRACT_PENALTY * contract);
       out.push({
         key: "default-alive", label: "Don't run out of money", ref: "📚 PG, \"Default Alive or Default Dead?\"",
+        // Bankruptcy is this lesson's terminal case, and it ended the company:
+        // like Alex leaving in "Keep your co-founders close", it has to
+        // outweigh everything the run did right before the money ran out.
+        weight: bankrupt ? BANKRUPT_WEIGHT : 1,
         score, verdict: s.game_won ? "You reached the other side with the lights on."
           : !s.game_over ? "Still alive — runway is the scoreboard."
             : s.deadline_passed ? "Alive at the deadline — but the grade didn't clear the bar."
