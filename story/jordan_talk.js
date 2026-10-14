@@ -135,7 +135,7 @@
         id: id("jordan_ladder_open"), char: "jordan",
         text: () => second
           ? "almost done with the RSVP flow 🙃\n\nthis weekend for sure. you're going to love it."
-          : "couldn't sleep. i've got the whole board in my head. thursday, climbing gym, 6 going, 2 spots, one big 'i'm in' button.\n\nno profiles on the front screen. no chat until you've said yes to something.\n\nfirst version by sunday. monday latest. you're going to love it.",
+          : "couldn't sleep. i've got the whole plans screen in my head. thursday, climbing gym, 6 going, 2 spots, one big 'i'm in' button.\n\nno profiles on the front screen. no chat until you've said yes to something.\n\nfirst version by sunday. monday latest. you're going to love it.",
         // After the bargain, the second room opens on the deal coming due
         // (jordan_deal_due) instead of climbing the ladder a second time.
         when: { took: entry, if: (s) => !s.jordan_bargained },
@@ -150,7 +150,7 @@
             reply: "sounds great. go to bed.",
             journal: (s) => second
               ? "Jordan texted at 2am: the RSVP flow is almost done, this weekend for sure. I told her it sounded great." + (prior(s) ? " Again." : "")
-              : "Jordan texted at midnight with the whole board in her head, first version by Sunday. I told her it sounded great. I didn't ask.",
+              : "Jordan texted at midnight with the whole plans screen in her head, first version by Sunday. I told her it sounded great. I didn't ask.",
             effects: { scene: null, say: { char: "jordan", text: "💜 night" } },
             fx(s) { keepHer(s, final, "bed"); return null; },
           },
@@ -190,7 +190,7 @@
           {
             key: "back", label: "Back off",
             reply: "…never mind. it's late. get some sleep.",
-            journal: "Started to ask Jordan whether she could really build the board around her job. Then I told her to get some sleep.",
+            journal: "Started to ask Jordan whether she could really build the plans screen around her job. Then I told her to get some sleep.",
             effects: { scene: null, say: { char: "jordan", text: "okay?? you're being weird. night 💜" } },
             fx(s) { s.jordan_doubted = true; keepHer(s, final, "backed"); return null; },
           },
@@ -210,7 +210,7 @@
           {
             key: "nothing", label: "Back off",
             reply: "no, nothing. forget it. let's do it.",
-            journal: "Asked Jordan if she could really build the board around her job. She said yes, and asked if Alex had said something. I said no.",
+            journal: "Asked Jordan if she could really build the plans screen around her job. She said yes, and asked if Alex had said something. I said no.",
             effects: { scene: null, say: { char: "jordan", text: "thank you. you won't regret it." } },
             fx(s) { s.jordan_doubted = true; keepHer(s, final, "backed"); return null; },
           },
@@ -273,7 +273,7 @@
           + (prior(s) === "folded" ? "two weeks ago i asked you straight out, and you said no.\n\n"
             : prior(s) === "backed" ? "you could have said this two weeks ago. i'd have taken it better.\n\n" : "")
           + (second ? "over text? at 2am?" : "you're doing this over text? at midnight? the night we finally figured out what we're building?")
-          + "\n\n" + (e.done("pivot_board_claim") ? "the board is my idea. " : "")
+          + "\n\n" + (e.done("pivot_board_claim") ? "the plans screen is my idea. " : "")
           + (e.took("first_screen:intake_interviews|intake") ? "the intake screen was my idea. " : "the first screen anyone ever saw was mine. ")
           + "i turned down a real job for this, you KNOW that.",
         when: { took: [[id("jordan_ladder_names") + ":yes", id("jordan_ladder_names_again") + ":yes"]] },
@@ -291,7 +291,7 @@
         // deadline attached — the most reasonable-sounding way to keep her.
         id: id("firing_bargain"), char: "jordan",
         text: () => (second ? "then give me two more weeks." : "then give me the three weeks.")
-          + "\n\nif the board isn't live by then, i'll leave on my own. you won't even have to say it.\n\nthat's fair. you know that's fair.",
+          + "\n\nif the plans screen isn't live by then, i'll leave on my own. you won't even have to say it.\n\nthat's fair. you know that's fair.",
         when: { after: [id("firing_protest")] },
         choices: [
           {
@@ -302,7 +302,7 @@
           {
             key: "deal", label: () => second ? "…Okay. Two weeks." : "…Okay. Three weeks.",
             reply: () => second ? "…okay. two weeks." : "…okay. three weeks.",
-            journal: "Told Jordan it wasn't working out, then took her deal: more time on the board, and if it isn't live she leaves on her own.",
+            journal: "Told Jordan it wasn't working out, then took her deal: more time on the plans screen, and if it isn't live she leaves on her own.",
             effects: { scene: null, say: { char: "jordan", text: "thank you. you'll see." } },
             fx(s) { s.jordan_bargained = true; keepHer(s, final, "deal"); return null; },
           },
@@ -326,7 +326,7 @@
           {
             key: "extend", label: "Give her one more weekend",
             reply: "okay. one more weekend.",
-            journal: "Jordan's three weeks ran out with the board still not live. She asked for one more weekend, and I gave it to her.",
+            journal: "Jordan's three weeks ran out with the plans screen still not live. She asked for one more weekend, and I gave it to her.",
             effects: { scene: null, say: { char: "jordan", text: "thank you. you'll see 💜" } },
             fx(s) { keepHer(s, final); return null; },
           },
@@ -392,7 +392,7 @@
       },
       {
         id: id("firing_notes"), char: "jordan",
-        text: "the board. it's mostly in my head. do you want me to write it down for alex?",
+        text: "the plans screen. it's mostly in my head. do you want me to write it down for alex?",
         when: { after: [id("firing_shares")] },
         choices: [
           {
@@ -419,7 +419,7 @@
             if: (s, e) => e.took("first_screen:intake_interviews|intake"),
             reply: "one more thing. the intake screen — your sister's group chat — is still the only thing anyone ever shared on their own. that was you. tonight doesn't erase it.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
-              + " gets put in writing this week; Alex has the board from Monday. I told her the intake screen was hers, and that tonight doesn't erase it.",
+              + " gets put in writing this week; Alex has the plans screen from Monday. I told her the intake screen was hers, and that tonight doesn't erase it.",
             fx(s, e) {
               e.say({ char: "jordan", text: "…thanks. that lands better than you'd think." });
               jordanLeaves(s, e, "warm");
@@ -431,7 +431,7 @@
             if: (s, e) => e.took("launch_first_signup:watch"),
             reply: () => "you saw maya before any of us did" + (second ? ", on launch day" : ". launch day, and again tonight") + ". we're building v2 on something you noticed.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
-              + " gets put in writing this week; Alex has the board from Monday. I told her v2 is built on something she noticed first.",
+              + " gets put in writing this week; Alex has the plans screen from Monday. I told her v2 is built on something she noticed first.",
             fx(s, e) {
               e.say({ char: "jordan", text: "…i did, didn't i." });
               jordanLeaves(s, e, "warm");
@@ -442,7 +442,7 @@
             key: "close", label: "That's everything. I'm sorry.",
             reply: "that's everything. i'm sorry.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
-              + " gets put in writing this week; Alex has the board from Monday.",
+              + " gets put in writing this week; Alex has the plans screen from Monday.",
             fx(s, e) {
               e.say({ char: "jordan", text: "okay. goodnight." });
               jordanLeaves(s, e, "warm");
@@ -468,10 +468,10 @@
               {
                 char: "founders", speaker: "alex",
                 text: (s) => s.jordan_cold_exit
-                  ? "board's mine now. i'll start from the screens, since nobody wrote anything down. we start monday."
+                  ? "plans screen's mine now. i'll start from the screens, since nobody wrote anything down. we start monday."
                   : s.jordan_handoff
-                    ? "when her notes come in, they go in the doc. board's mine now. we start monday."
-                    : "board's mine now. we start monday.",
+                    ? "when her notes come in, they go in the doc. plans screen's mine now. we start monday."
+                    : "plans screen's mine now. we start monday.",
               },
             ],
           },

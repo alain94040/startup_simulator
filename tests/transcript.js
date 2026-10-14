@@ -474,10 +474,11 @@ function renderText(run, o) {
   L.push(C.d(`  ${run.counts.answered} beats answered · ${run.counts.ignored} left on read · ${run.counts.surfaced} distinct beats surfaced`));
   L.push("");
   for (const cat of run.report) {
-    const sc = cat.score == null ? " — " : String(cat.score).padStart(3);
-    L.push(`  ${sc}  ${cat.label}`);
-    L.push(C.d(wrap(cat.verdict, W - 8, "       ")));
+    L.push(`  ${String(cat.points).padStart(4)}/${cat.max}  ${cat.label}`);
+    L.push(C.d(wrap(cat.verdict, W - 10, "          ")));
+    for (const m of cat.moments) if (m.note) L.push(C.d(wrap(`${m.got}/${m.max} ${m.note}`, W - 12, "            ")));
   }
+  if (run.grade != null) L.push(`  ${String(run.grade).padStart(4)}/100  Final grade`);
   L.push("═".repeat(W));
   return L.join("\n");
 }
@@ -611,7 +612,8 @@ function runHtml(run, idx) {
   if (heldChapter != null) drawChapter(heldChapter);
 
   const report = run.report.map(c =>
-    `<li><b>${c.score == null ? "—" : c.score}</b> ${esc(c.label)}<div>${esc(c.verdict)}</div></li>`).join("");
+    `<li><b>${c.points}/${c.max}</b> ${esc(c.label)}<div>${esc(c.verdict)}</div>`
+    + c.moments.filter(m => m.note).map(m => `<div>${m.got}/${m.max} · ${esc(m.note)}</div>`).join("") + `</li>`).join("");
   // the index: every week, with the chapter it opened folded in above it.
   // `chapAt` was filled by drawChapter above, so the rail agrees with the page.
   // a fast rebuild can open two chapters in one week — the rail lists both
@@ -740,8 +742,8 @@ function renderHtml(runs, title) {
   .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 18px; margin-top:16px; }
   .report { list-style:none; margin-top:8px; }
   .report li { border-top:1px solid var(--line); padding:8px 0; font-size:13.5px; }
-  .report li b { display:inline-block; min-width:34px; }
-  .report li div { color:var(--dim); font-size:12.5px; margin-left:34px; }
+  .report li b { display:inline-block; min-width:52px; }
+  .report li div { color:var(--dim); font-size:12.5px; margin-left:52px; }
   body.noamb [data-kind="ambient"], body.noamb [data-kind="filler"] { display:none; }
   .idx a { display:flex; align-items:center; gap:6px; }
   .dens { display:inline-flex; align-items:center; gap:3px; font-style:normal; font-size:10px; color:#b0b0b6; }

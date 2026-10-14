@@ -16,11 +16,11 @@ Money is critical to extending the runway of the startup. The game should be str
 
 A cap-table lesson goes with it: sign the equity split on paper, and when a co-founder leaves, buy back their un-vested stake. A departed co-founder's stake left on the cap table costs you on the final report card — anyone doing diligence stops there.
 
-Another financial lesson: most consultants who reach out to you in your early days are trying to get money from you but they don't provide value.
+Another financial lesson: most consultants who reach out to you in your early days are trying to get money from you but they don't provide value. Hiring one costs a few points on the report card, with a note to beware of sharks.
 
 # Lean plan, Market Fit and Pivot
 
-The only way to win is to choose a lean development plan. If you are too ambitious, the development should take too long and the player should run out of money.
+The only way to win is to choose a lean development plan. If you are too ambitious, development takes too long: the launch slips by about a month, and the pivot can't ship before the deadline.
 
 When getting into the details of what to build, it's important that the player has done some market research, actually talking to real potential users. If they do, better build options should be proposed.
 

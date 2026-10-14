@@ -22,11 +22,11 @@
   const BOARD_WEEKS = 3;
   const JORDAN_PACE = 0.4;
 
-  // Minimum report-card grade (0-100 rollup, per Scoring) for YC admission,
-  // graded automatically at the deadline below — no application to write.
-  // 80 is a B+ on the endgame scale (A ≥ 85, B ≥ 70), so YC takes the top of
-  // the B band and better.
-  const YC_ADMISSION_GRADE = 80;
+  // Minimum report-card grade (0-100, the sum of the moments in Scoring) for
+  // YC admission, graded automatically at the deadline below — no application
+  // to write. 75 is a solid B on the endgame scale (A ≥ 85, B ≥ 70): it takes
+  // a run that pivoted, shipped and had the Jordan conversation, even late.
+  const YC_ADMISSION_GRADE = 75;
 
   function tick(game) {
     const s = game.s;
@@ -179,7 +179,7 @@
 
     // The horizon: entering deadline week, every run ends and is graded on
     // the spot — no application to write, no wait for a verdict. Admission
-    // needs both the grade (a B+, engine.gradeScore() >= YC_ADMISSION_GRADE)
+    // needs both the grade (engine.gradeScore() >= YC_ADMISSION_GRADE)
     // and the traction bar (launched && pivot_shipped — wise answers without a
     // shipped company don't get funded). No paying-customer requirement: what
     // matters is having built something people want, and that is graded —
@@ -206,7 +206,7 @@
     if (s.cash <= 0 && !game.debugKeepAlive) s.game_over = true;
   }
 
-  const api = { tick, AUTO_BUILD_INCREMENT, MATCHING_WEEKS, BOARD_WEEKS, JORDAN_PACE };
+  const api = { tick, AUTO_BUILD_INCREMENT, MATCHING_WEEKS, BOARD_WEEKS, JORDAN_PACE, YC_ADMISSION_GRADE };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.WORLD = api;
 })();

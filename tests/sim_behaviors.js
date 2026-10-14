@@ -51,12 +51,15 @@ function runStrategy(name, spec) {
       m.jordanFired = !!s.jordan_resolved;
       m.jordanFiredWk = s.jordan_fired_week != null ? s.jordan_fired_week : null;
       m.jordanCold = !!s.jordan_cold_exit;
-      const hard = Scoring.scoreGame(g).find(c => c.key === "hard-conversations");
-      m.hardScore = hard ? hard.score : null;
+      const card = Scoring.scoreGame(g);
+      m.hardScore = card.find(c => c.key === "team").score;
       m.itemsDone = Object.values(s.items || {}).filter(it => it && it.status === "done").length;
       m.grade = g.gradeScore();
-      const cap = Scoring.scoreGame(g).find(c => c.key === "clean-cap-table");
-      m.capScore = cap ? cap.score : null;
+      // The cap table: the paperwork, the buyback and the App Store listing,
+      // as a share of their points.
+      const capMoments = card.find(c => c.key === "money").moments
+        .filter(x => ["paperwork", "buyback", "app-store"].includes(x.key));
+      m.capScore = 100 * capMoments.reduce((n, x) => n + x.got, 0) / capMoments.reduce((n, x) => n + x.max, 0);
       games.push(m);
     } catch (err) {
       errors++;
@@ -99,9 +102,11 @@ for (const [name, spec] of Object.entries(STRATEGIES)) S[name] = runStrategy(nam
 S.no_meetup.priyaSeen = priyaShare(STRATEGIES.no_meetup);
 
 // ── the strategy table ────────────────────────────────────────────────────────
-console.log(`  ${pad("strategy", 13)} ${padL("win", 5)} ${padL("launch", 7)} ${padL("pivot", 6)} ${padL("v2", 4)} ${padL("qual", 6)} ${padL("alexLeft", 9)} ${padL("fired", 6)} ${padL("items", 6)} ${padL("grade", 6)}`);
+// The outcome is the report card, so the first column is the average score
+// (a win rate that reads 100% for every decent variant says nothing).
+console.log(`  ${pad("strategy", 13)} ${padL("score", 6)} ${padL("launch", 7)} ${padL("pivot", 6)} ${padL("v2", 4)} ${padL("qual", 6)} ${padL("alexLeft", 9)} ${padL("fired", 6)} ${padL("items", 6)}`);
 for (const r of Object.values(S)) {
-  console.log(`  ${pad(r.name, 13)} ${padL(r.wins + "%", 5)} ${padL(r.launched + "%", 7)} ${padL(r.pivoted + "%", 6)} ${padL(r.v2 + "%", 4)} ${padL(r.qualified + "%", 6)} ${padL(r.alexLeft + "%", 9)} ${padL(r.jordanFired + "%", 6)} ${padL(r1(r.itemsDone), 6)} ${padL(r.grade == null ? "—" : Math.round(r.grade), 6)}`);
+  console.log(`  ${pad(r.name, 13)} ${padL(r1(r.grade), 6)} ${padL(r.launched + "%", 7)} ${padL(r.pivoted + "%", 6)} ${padL(r.v2 + "%", 4)} ${padL(r.qualified + "%", 6)} ${padL(r.alexLeft + "%", 9)} ${padL(r.jordanFired + "%", 6)} ${padL(r1(r.itemsDone), 6)}`);
 }
 
 // ── the contracts ─────────────────────────────────────────────────────────────
@@ -122,8 +127,10 @@ check(`slide_alex demo (wk ${r1(S.slide_alex.meanDemoWk)}) no earlier than focus
   S.slide_alex.meanDemoWk >= S.decent.meanDemoWk - 0.101);
 check(`slide_alex launch (wk ${r1(S.slide_alex.meanLaunchWk)}) no earlier than focused (wk ${r1(S.decent.meanLaunchWk)})`,
   S.slide_alex.meanLaunchWk >= S.decent.meanLaunchWk - 0.101);
-check(`slide_alex.wins (${S.slide_alex.wins}%) <= decent.wins (${S.decent.wins}%) + 3`,
-  S.slide_alex.wins <= S.decent.wins + 3);
+// The report card is the outcome now, so the lesson must cost grade, not just
+// calendar time.
+check(`slide_alex.grade (${r1(S.slide_alex.grade)}) < decent.grade (${r1(S.decent.grade)}) — the slide costs score`,
+  S.slide_alex.grade < S.decent.grade);
 
 // D · neglect has a face: departure rates, morale trajectory, roadmap counts
 check(`ignore_alex.alexLeft (${S.ignore_alex.alexLeft}%) >= 90%`, S.ignore_alex.alexLeft >= 90);
@@ -144,7 +151,7 @@ check(`decent.qualified (${S.decent.qualified}%) >= 90%`, S.decent.qualified >= 
 
 // F · the cap-table bill: the lesson lives on the report card, so skipping the
 // lawyer must show up as a visibly worse card, category and rollup both)
-check(`skip_captable cap-table category (${r1(S.skip_captable.capScore)}) < 70`,
+check(`skip_captable cap-table moments (${r1(S.skip_captable.capScore)}%) < 70%`,
   S.skip_captable.capScore != null && S.skip_captable.capScore < 70);
 check(`skip_captable.grade (${r1(S.skip_captable.grade)}) < decent.grade (${r1(S.decent.grade)})`,
   S.skip_captable.grade < S.decent.grade);
@@ -161,7 +168,7 @@ check(`keep_jordan v2 ships later: wk ${r1(S.keep_jordan.meanV2Wk)} > decent wk 
   (S.keep_jordan.meanV2Wk || Infinity) > S.decent.meanV2Wk);
 check(`keep_jordan.wins (${S.keep_jordan.wins}%) <= half of decent.wins (${S.decent.wins}%)`,
   S.keep_jordan.wins <= S.decent.wins / 2);
-check(`keep_jordan hard-conversations (${r1(S.keep_jordan.hardScore)}) < 60 — the dodged talk is on the card`,
+check(`keep_jordan team lesson (${r1(S.keep_jordan.hardScore)}) < 60 — the dodged talk is on the card`,
   S.keep_jordan.hardScore != null && S.keep_jordan.hardScore < 60);
 
 // G2 · the fold: reaching "are you asking me to leave?" and saying no is still
@@ -237,7 +244,7 @@ function newsTactic(pick) {
     const g = H.playGame(seed, (a, gg) => a.charId === "hacker_news" ? pick(a)
       : a.nodeId === "trust_safety" ? ["verify_flagship", "report_now"] : H.decent(a, gg),
     { priority: H.makeAttentionPriority(seed) });
-    build += Scoring.scoreGame(g).find(c => c.key === "build-something-people-want").score;
+    build += Scoring.scoreGame(g).find(c => c.key === "build").score;
     grade += g.gradeScore();
     if (g.took("trust_safety:verify_flagship")) flagship++;
   }
@@ -257,6 +264,89 @@ check(`news: reader grade (${r1(NEWS.reader.grade)}) > promoter grade (${r1(NEWS
   NEWS.reader.grade > NEWS.promoter.grade);
 check(`news: only readers arm the verification flagship (reader ${NEWS.reader.flagship}%, promoter ${NEWS.promoter.flagship}%)`,
   NEWS.reader.flagship > 50 && NEWS.promoter.flagship === 0);
+
+// N · friends-and-family money (GOALS.md, "Asking for money"): skipping any
+// one source of money must end worse than taking it. The baseline is a
+// fundraiser: the decent founder, but the money cards get the first actions
+// and the Flare deep dive comes before David's pitch, so every source actually
+// pays (the decent priority lets Jamie's one-week coffee lapse, and David
+// passes on a founder who never studied Flare). Each variant skips one source
+// and is otherwise the same founder; the cost shows up as a thinner bank,
+// rent gigs that eat weeks, and a lawyer the cap table can't afford.
+const MONEY_FIRST = ["ff_family", "ff_family_2", "ff_family_3", "ff_friend", "ff_friend_ask",
+  "flare_stealth", "ff_mentor", "ff_mentor_pitch"];
+const moneyPriority = (a) => {
+  const i = MONEY_FIRST.indexOf(a.nodeId);
+  return i >= 0 ? 0.5 + i * 0.01 : H.actPriority(a);
+};
+// The unrounded grade: a skipped source can cost less than the one point
+// gradeScore() rounds to, and the contract must still see it.
+const exactGrade = (g) => {
+  const sum = Scoring.scoreGame(g).reduce((n, c) => n + c.points, 0);
+  const cap = Scoring.gradeCap(g);
+  return cap ? Math.min(sum, cap.cap) : sum;
+};
+function moneyTactic(skipIds) {
+  const skip = new Set(skipIds);
+  let grade = 0, minBal = 0, gigs = 0, broke = 0;
+  for (let i = 0; i < N; i++) {
+    const g = H.playGame(1000 + i, (a, gg) => skip.has(a.nodeId) ? null : H.decent(a, gg),
+      { priority: moneyPriority });
+    grade += exactGrade(g);
+    let low = g.s.cash;
+    for (const wk of g.ledger) low = Math.min(low, wk.balanceAfter);
+    minBal += low;
+    if (g.took("founder_consulting:take")) gigs++;
+    if (g.s.game_over && !g.s.deadline_passed && !g.s.cofounder_left && !g.s.ycAccepted) broke++;
+  }
+  return { grade: grade / N, minBal: minBal / N, gigs: Math.round((gigs / N) * 100),
+    broke: Math.round((broke / N) * 100) };
+}
+const MOM = ["ff_family", "ff_family_2", "ff_family_3"], JAMIE = ["ff_friend", "ff_friend_ask"],
+  DAVID = ["ff_mentor", "ff_mentor_pitch"];
+const MONEY = {
+  fundraiser: moneyTactic([]),
+  skip_mom: moneyTactic(MOM),
+  skip_jamie: moneyTactic(JAMIE),
+  skip_david: moneyTactic(DAVID),
+  no_raise: moneyTactic([...MOM, ...JAMIE, ...DAVID]),
+};
+console.log(`\n  money tactic   grade  min bank  rent gigs  bankrupt`);
+for (const [k, r] of Object.entries(MONEY)) console.log(`  ${pad(k, 13)} ${padL(r1(r.grade), 6)} ${padL("$" + Math.round(r.minBal), 9)} ${padL(r.gigs + "%", 10)} ${padL(r.broke + "%", 9)}`);
+for (const k of ["skip_mom", "skip_jamie", "skip_david", "no_raise"]) {
+  check(`money: ${k} grade (${r1(MONEY[k].grade)}) < fundraiser (${r1(MONEY.fundraiser.grade)}) — leaving the money costs score`,
+    MONEY[k].grade < MONEY.fundraiser.grade);
+}
+// GOALS.md: raise nothing and you go bankrupt before the deadline. The rent
+// gigs bridge a thin raise (two weeks at most), they don't replace one.
+check(`money: no_raise goes bankrupt (${MONEY.no_raise.broke}%) >= 90%; the fundraiser never does (${MONEY.fundraiser.broke}%)`,
+  MONEY.no_raise.broke >= 90 && MONEY.fundraiser.broke === 0);
+check(`money: no_raise grade (${r1(MONEY.no_raise.grade)}) is the worst of the money tactics`,
+  ["skip_mom", "skip_jamie", "skip_david"].every(k => MONEY.no_raise.grade <= MONEY[k].grade));
+
+// O · the consultants (story/press.js): Kevin and Brett sell nothing an early
+// company needs. Saying yes must end worse than letting them lapse — on the
+// report card (a few points off "Don't run out of money") and in the bank.
+function consultantTactic(hire) {
+  let grade = 0, minBal = 0, hired = 0;
+  for (let i = 0; i < N; i++) {
+    const g = H.playGame(1000 + i, (a, gg) =>
+      hire && (a.nodeId === "consultant_growth" || a.nodeId === "consultant_brand") ? ["hire"] : H.decent(a, gg));
+    grade += g.gradeScore();
+    let low = g.s.cash;
+    for (const wk of g.ledger) low = Math.min(low, wk.balanceAfter);
+    minBal += low;
+    if (g.took("consultant_growth:hire") || g.took("consultant_brand:hire")) hired++;
+  }
+  return { grade: grade / N, minBal: minBal / N, hired: Math.round((hired / N) * 100) };
+}
+const CONSULT = { decline: consultantTactic(false), hire: consultantTactic(true) };
+console.log(`\n  consultants    grade  min bank  hired`);
+for (const [k, r] of Object.entries(CONSULT)) console.log(`  ${pad(k, 13)} ${padL(r1(r.grade), 6)} ${padL("$" + Math.round(r.minBal), 9)} ${padL(r.hired + "%", 6)}`);
+check(`consultants: hiring grade (${r1(CONSULT.hire.grade)}) < declining (${r1(CONSULT.decline.grade)}), hired in ${CONSULT.hire.hired}% of runs`,
+  CONSULT.hire.hired > 50 && CONSULT.hire.grade < CONSULT.decline.grade);
+check(`consultants: hiring leaves less in the bank (min $${Math.round(CONSULT.hire.minBal)} < $${Math.round(CONSULT.decline.minBal)})`,
+  CONSULT.hire.minBal < CONSULT.decline.minBal);
 
 // L · hygiene
 const totalErrors = Object.values(S).reduce((n, r) => n + r.errors, 0);

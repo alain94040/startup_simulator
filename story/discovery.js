@@ -14,7 +14,7 @@
   const discovering = (s, e, char) => char.focus === "discover" && e.weeksSince("alex_sync_discover") >= 2;
 
   // The Jordan pairing card (founder_codebuild, below).
-  const JORDAN_PACE = 0.4; // world.js's JORDAN_PACE: her share of a full week on the v2 board
+  const JORDAN_PACE = 0.4; // world.js's JORDAN_PACE: her share of a full week on the v2 plans screen
   const CODEBUILD_MAX = 2, CODEBUILD_GAP = 6, CODEBUILD_WINDOW = 2;
   const jordanOnBoard = (s, e) => {
     const b = s.items && s.items.plans_ui;
@@ -231,7 +231,7 @@
       {
         id: "founder_codebuild", char: "founder", ambient: true,
         text: (s, e) => (codebuildOffers(e).length < 2
-          ? "jordan's part of the board hasn't moved since last week. she only gets to it at night, after work. you can code — spend this week building alongside her."
+          ? "jordan's part of the plans screen hasn't moved since last week. she only gets to it at night, after work. you can code — spend this week building alongside her."
           : "her column is still the one that's open. you could jump in again."),
         when: {
           cooldown: CODEBUILD_GAP,
@@ -257,7 +257,7 @@
               const board = jordanOnBoard(s, e);
               if (board) s.board_progress = (s.board_progress || 0) + (1 - JORDAN_PACE); // a full week, this once
               else e.cast.get("jordan").buildEffort += 1.0;
-              return "Two nights on the " + (board ? "board" : "app") + " with Jordan, 9pm to 1am. She's fast and careful. She also fell asleep on Thursday's call.";
+              return "Two nights on the " + (board ? "plans screen" : "app") + " with Jordan, 9pm to 1am. She's fast and careful. She also fell asleep on Thursday's call.";
             },
           },
           {

@@ -259,7 +259,7 @@
                   applyActivitiesPivot(s);
                   const jordan = e.cast.get("jordan");
                   if (jordan.active) jordan.morale = clamp(jordan.morale + 5, 0, 100);
-                  e.say({ char: "summit", speaker: "alex", text: "ok. if we're doing this: three weeks, no slack, no second try.\n\ni'll repoint the matching. who wants the board — the screen people actually see?" });
+                  e.say({ char: "summit", speaker: "alex", text: "ok. if we're doing this: three weeks, no slack, no second try.\n\ni'll repoint the matching. who wants the plans screen? it's the one people actually see." });
                   return null;
                 },
               },
@@ -294,7 +294,7 @@
             // A promise, not a delivery — and she has no idea anything is wrong.
             id: "pivot_board_claim", char: "summit", speaker: "jordan",
             when: { took: ["pivot_day_decide:pivot"] },
-            text: "board's mine. it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.\n\ni'll have a first version by sunday. this is the fun part.",
+            text: "plans screen's mine. it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.\n\ni'll have a first version by sunday. this is the fun part.",
             // The founder's moment: after months of a graph that only went
             // down, this is the first night the company knows what it is.
             // Said out loud to the whole room before Priya gets the last word.
@@ -377,8 +377,8 @@
               },
               {
                 key: "week", label: "Let's see how her first week goes.",
-                reply: "let's see how her first week on the board goes. then we talk.",
-                journal: "Alex told me Jordan's been a week behind on everything since demo night. I said let's see how her first week on the board goes. He's counting now.",
+                reply: "let's see how her first week on the plans screen goes. then we talk.",
+                journal: "Alex told me Jordan's been a week behind on everything since demo night. I said let's see how her first week on the plans screen goes. He's counting now.",
                 effects: { scene: null, say: { char: "alex", text: "okay. one week." } },
                 fx(s) { s.jordan_kept = true; s.jordan_kept_week = s.week; return null; },
               },
@@ -450,7 +450,7 @@
       {
         // The scope call — Ch 1's lean-plan lesson, echoed under pressure.
         id: "pivot_scope_call", char: "alex",
-        text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans board — for the users who liked it — or do we cut to the bone and ship one thing?",
+        text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans screen — for the users who liked it — or do we cut to the bone and ship one thing?",
         when: {
           if: (s, e) => e.chapter === 4 && s.pivot_week != null
             && s.week >= s.pivot_week + 1
@@ -460,7 +460,7 @@
           {
             key: "cut", label: "One thing. Cut everything else",
             reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
-            journal: "Scope call for v2: one thing. Plans board, nothing else — no old matching mode limping alongside. The lean lesson, learned twice.",
+            journal: "Scope call for v2: one thing. The plans screen, nothing else — no old matching mode limping alongside. The lean lesson, learned twice.",
                         fx(s, e) {
               s.board_extra = (s.board_extra || 0) - 0.5;
               e.say({ char: "alex", text: "cut it is. deleting code is the fastest i will ever ship. that buys us a few days." });
@@ -469,8 +469,8 @@
           },
           {
             key: "keep", label: "Keep classic matching alive too",
-            reply: "keep the old mode alive next to the board. some people liked it — i don't want to strand them.",
-            journal: "Told Alex to keep classic matching alive next to the plans board. Two products in one app — he didn't argue, but the build got slower and the pitch got fuzzier the moment I said it.",
+            reply: "keep the old mode alive next to the plans screen. some people liked it — i don't want to strand them.",
+            journal: "Told Alex to keep classic matching alive next to the plans screen. Two products in one app — he didn't argue, but the build got slower and the pitch got fuzzier the moment I said it.",
             effects: { marketFit: -4 },
             fx(s, e) {
               s.board_extra = (s.board_extra || 0) + 1;
@@ -526,7 +526,7 @@
         // both halves of v2 are built: the matching (Alex) and the board
         // (whoever holds it — which is why keeping Jordan delays it).
         id: "pivot_relaunch", char: "founder",
-        text: (s) => "Alex's message is three words: 'v2 is ready.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the board is in. This is a different product wearing the same name — and how it meets the world is your call.",
+        text: (s) => "Alex's message is three words: 'v2 is ready.' The matching is rebuilt around plans" + (s.pivot_kept_legacy ? ", the classic mode limps alongside it," : "") + " and the plans screen is in. This is a different product wearing the same name — and how it meets the world is your call.",
         when: {
           cooldown: 2,
           // …and while the app has an App Store listing to relaunch on (the
@@ -540,7 +540,7 @@
             key: "sarah_event", label: "Debut v2 at Sarah's event",
             if: (s) => !!s.sarah_onboard,
             reply: "v2's ready. still want us for the event?", replyTo: "sarah",
-            journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a board of plans, not a grid of faces. People RSVP'd to real plans on the spot. PlusOne v2 walked out of that room with a heartbeat.",
+            journal: "Relaunched at Sarah's event — 200 singles in a room and the app on the projector was a wall of plans, not a grid of faces. People RSVP'd to real plans on the spot. PlusOne v2 walked out of that room with a heartbeat.",
             fx(s, e) {
               s.pivot_shipped = true;
               s.pivot_ship_week = s.week;

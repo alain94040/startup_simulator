@@ -76,20 +76,25 @@
       // Story class on purpose: when the runway is this short it IS the story.
       // Converts a pure dice-death (thin friends-and-family rolls) into a
       // choice — you can consult your way out of a cash hole, but each gig
-      // burns a week of focus against the deadline.
+      // burns a week of focus against the deadline. Two weeks at most: the
+      // valve bridges a thin raise, it doesn't replace one (GOALS.md: a
+      // founder who raises nothing goes bankrupt before the deadline).
       {
         id: "founder_consulting", char: "founder",
-        text: (s) => "the bank balance says $" + Math.max(0, Math.round(s.cash)).toLocaleString() + ". your old firm keeps a freelance list — one week of contract work is $2,500, no questions asked. it's rent money. it's also a week not spent on plusone.",
+        text: (s) => "the bank balance says $" + Math.max(0, Math.round(s.cash)).toLocaleString() + ". "
+          + (s.contract_weeks
+            ? "your old firm has one more contract week, $2,500, and says it's the last one they can give you. after this, the money has to come from somewhere else."
+            : "your old firm keeps a freelance list — one week of contract work is $2,500, no questions asked. it's rent money. it's also a week not spent on plusone."),
         when: {
           cooldown: 3,
-          if: (s) => s.week >= 4 && s.cash < 2500 && !s.game_over,
+          if: (s) => s.week >= 4 && s.cash < 2500 && !s.game_over && (s.contract_weeks || 0) < 2,
         },
         choices: [
           {
             key: "take", label: "Take the contract week — $2,500",
             journal: "Took a week of contract work to keep the lights on. $2,500 in, one week of plusone momentum out. Nobody puts this part in the founding story.",
             effects: { cash: 2500, signal: -2 },
-            fx: () => "Invoice sent, $2,500 in. A week of someone else's roadmap. The runway breathes; the deadline doesn't.",
+            fx: (s) => { s.contract_weeks = (s.contract_weeks || 0) + 1; return "Invoice sent, $2,500 in. A week of someone else's roadmap. The runway breathes; the deadline doesn't."; },
           },
           {
             key: "decline", label: "No — every week belongs to plusone",

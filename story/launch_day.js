@@ -549,7 +549,7 @@
       {
         id: "launch_stall", char: "alex", ambient: true,
         text: (s) => !s.ios_unblocked
-          ? "the website version is solid and working. the iphone app never happened — it's been on the board since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
+          ? "the website version is solid and working. the iphone app never happened — it's been on the roadmap since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
           : !allScopeBuilt(s)
             ? "nobody has written a line of product code in weeks — i'm on calls, jordan's on calls, and the list we said we'd finish before launch hasn't moved since. it isn't going to finish itself. put me back on the build."
             : "the product has been sitting on a server since week " + Math.max(1, s.week - 3)

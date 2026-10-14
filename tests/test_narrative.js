@@ -26,7 +26,7 @@ const Scoring = require("../scoring.js");
 
 const WEEK_CAP = 120;
 const DEFAULT_GAMES = 300;
-const CATEGORY_COUNT = 7;
+const CATEGORY_COUNT = 3;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LAYER A — state invariants. Must hold on game.s at every week boundary.
@@ -221,6 +221,12 @@ function playGame(seed, driver, trace) {
       const ok = cat.key && cat.label && cat.ref && cat.verdict !== undefined &&
         (cat.score === null || (typeof cat.score === "number" && cat.score >= 0 && cat.score <= 100));
       if (!ok) scoringFailures.push({ seed, driver, why: `malformed category ${cat.key || "?"} (score=${cat.score})` });
+      // Every moment within its budget, and a zero the run never reached
+      // says why, so the card never blames the player for an unseen card.
+      for (const m of cat.moments || []) {
+        if (!(m.got >= 0 && m.got <= m.max)) scoringFailures.push({ seed, driver, why: `moment ${m.key} out of budget (${m.got}/${m.max})` });
+        if (!m.reached && !m.optional && !m.voided && !m.note) scoringFailures.push({ seed, driver, why: `moment ${m.key} never reached, with no reason on the card` });
+      }
     }
   } catch (err) {
     scoringFailures.push({ seed, driver, why: `scoreGame threw: ${err.message}` });

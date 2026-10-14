@@ -29,7 +29,7 @@
         // A week after she kept the board: the promise slips. Harmless to
         // answer either way — the point is that the player watches it happen.
         id: "jordan_slip", char: "jordan",
-        text: "ugh, weekend got eaten by a release at work 😩\n\nboard's half there. i'll have it this week, promise.",
+        text: "ugh, weekend got eaten by a release at work 😩\n\nplans screen's half there. i'll have it this week, promise.",
         when: {
           if: (s, e) => !!s.jordan_kept && !s.jordan_resolved && e.cast.get("jordan").active
             && s.week >= (s.jordan_kept_week || 0) + 1 && boardTodo(s),
@@ -55,7 +55,7 @@
           s.jordan_bargained
             ? "i know we said it'd be live by now. it's SO close. join screen this weekend 🙌"
             : "RSVP flow is done-ish! join screen next. this weekend for real 🙌",
-          "sorry, launch week at work 😩 board by friday. promise.",
+          "sorry, launch week at work 😩 plans screen by friday. promise.",
           "almost there. i know i keep saying that. this is the last week, i swear.",
         ][Math.min(2, e.timesResolved("jordan_board_promise"))],
         when: {
@@ -120,14 +120,14 @@
         // After the bargain he waits out her three weeks, and says so.
         id: "jordan_door_again", char: "alex",
         text: (s, e) => s.jordan_prior_talk === "deal"
-          ? "three weeks today. board's at the RSVP button.\n\nshe said if it wasn't live she'd leave on her own. she hasn't said anything, and i don't think she's going to."
+          ? "three weeks today. plans screen's at the RSVP button.\n\nshe said if it wasn't live she'd leave on her own. she hasn't said anything, and i don't think she's going to."
           : e.took("pivot_alex_door:say")
-            ? "matching's done. rebuilt, tested, done.\n\nboard's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
+            ? "matching's done. rebuilt, tested, done.\n\nplans screen's at the RSVP button. same as last week.\n\ni'm not asking you to do anything. i'm telling you i've stopped waiting for it."
             : (e.done("pivot_alex_door")
               ? "the thing i wanted to say the other night. i'll just say it.\n\n"
               : "can i say something i've been sitting on?\n\n")
               + "jordan's great. i mean that. she's also been a week behind on everything since demo night — the photo picker, the iphone app, checking my code. every time there's a good reason. every time it's a week."
-              + (e.done("pivot_alex_door") ? " and the board's been at the RSVP button for two weeks." : "")
+              + (e.done("pivot_alex_door") ? " and the plans screen's been at the RSVP button for two weeks." : "")
               + "\n\nand v2 doesn't have a week in it. …or maybe that's on me. i don't know if i'm being fair to her.",
         when: {
           if: (s, e) => s.activities_pivot && s.pivot_week != null
@@ -154,7 +154,7 @@
           {
             key: "almost", label: "She's almost there.",
             reply: "she's almost there.",
-            journal: "Alex told me the board hasn't moved. I told him she's almost there. He said 'sure', and I don't think he'll bring it up again.",
+            journal: "Alex told me the plans screen hasn't moved. I told him she's almost there. He said 'sure', and I don't think he'll bring it up again.",
             effects: { say: { char: "alex", text: "sure." } },
             fx(s) {
               if (!s.jordan_kept) { s.jordan_kept = true; s.jordan_kept_week = s.week; }
@@ -189,15 +189,15 @@
         choices: [
           {
             key: "weird", label: "Weird for me too.",
-            reply: "weird for me too. i almost texted her about the board this morning.",
+            reply: "weird for me too. i almost texted her about the plans screen this morning.",
             journal: "Two weeks of morning calls with just the two of us. Alex keeps typing Jordan's name out of habit. So do I.",
-            effects: { char: { alex: { morale: 4, trust: 2 } }, say: { char: "founders", speaker: "alex", text: "yeah. okay. board's at the RSVP flow. i'll have it by friday — and i mean friday." } },
+            effects: { char: { alex: { morale: 4, trust: 2 } }, say: { char: "founders", speaker: "alex", text: "yeah. okay. plans screen's at the RSVP flow. i'll have it by friday — and i mean friday." } },
           },
           {
-            key: "go", label: "Two people, one board. Let's go.",
-            reply: "two people, one board. let's go.",
-            journal: "Two weeks of morning calls with just the two of us. We didn't talk about Jordan. We talked about the board.",
-            effects: { char: { alex: { morale: 2 } }, say: { char: "founders", speaker: "alex", text: "board's at the RSVP flow. friday." } },
+            key: "go", label: "Two people, one screen. Let's go.",
+            reply: "two people, one screen. let's go.",
+            journal: "Two weeks of morning calls with just the two of us. We didn't talk about Jordan. We talked about the plans screen.",
+            effects: { char: { alex: { morale: 2 } }, say: { char: "founders", speaker: "alex", text: "plans screen's at the RSVP flow. friday." } },
           },
         ],
         timeout: { weeks: 2 },
@@ -207,7 +207,7 @@
         // if she wrote them, and on the founder's own list if she didn't.
         id: "beta_list_after", char: "founder",
         text: (s) => s.jordan_handoff
-          ? "Jordan's notes came in. Most of it is the board — and on the last page, a list: everyone who left the old app, and a two-line email she'd drafted. 'You told us what was wrong. We rebuilt it. Want to see?' Send it before the relaunch?"
+          ? "Jordan's notes came in. Most of it is the plans screen — and on the last page, a list: everyone who left the old app, and a two-line email she'd drafted. 'You told us what was wrong. We rebuilt it. Want to see?' Send it before the relaunch?"
           : "The people who left the old app are still on a list somewhere. They're the only ones who already know why v1 failed. Write to them before the relaunch — or relaunch to fresh eyes?",
         when: {
           if: (s, e) => e.chapter === 4 && !!s.jordan_resolved && !s.beta_invited && !e.done("pivot_beta_invite")
@@ -242,7 +242,7 @@
         choices: [
           {
             key: "honest", label: "Honestly? Not great.",
-            reply: (s) => "honestly? not great. " + (s.pivot_shipped ? "v2 shipped faster than anything we've ever built." : "the board's moving faster than it ever did.") + " i still feel like i did something wrong.",
+            reply: (s) => "honestly? not great. " + (s.pivot_shipped ? "v2 shipped faster than anything we've ever built." : "the plans screen's moving faster than it ever did.") + " i still feel like i did something wrong.",
             journal: "Priya asked how I was doing after Jordan. I told her the truth: the work is moving, and I still feel like I did something wrong. She told me about the co-founder she kept a year too long.",
             effects: { say: { char: "priya", text: "that's the right feeling to have about the right call.\n\ni kept a co-founder a year too long once. lovely guy, always one week behind, always a good reason. by the time i said it, he'd heard it from everyone but me. you said it yourself, and early. that's the part that counts." } },
           },
