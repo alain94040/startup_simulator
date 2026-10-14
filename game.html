@@ -386,6 +386,8 @@
   .eg-final .eg-roll-copy b { color: var(--ink); font-size: 13px; }
   .eg-outcome { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--soft); }
   .eg-batch { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(90deg, var(--blue), #8b5cf6); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .02em; }
+  #endModal .intro-foot { margin-top: 16px; }
+  #egPage2 .eg-outcome { margin-top: 4px; padding-top: 0; border-top: 0; }
   .eg-skiphint { text-align: center; font-size: 11px; color: var(--dim); margin-top: 12px; transition: opacity .3s; }
   /* ── leaderboard (endgame + intro) ──────────────────────────────────────── */
   .lb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--soft); }
@@ -410,6 +412,8 @@
   .lb-entry b { display: block; font-size: 15px; color: var(--ink); margin-bottom: 3px; }
   .lb-entry .lb-entry-sub { font-size: 12px; color: #55555c; margin-bottom: 12px; }
   .lb-entry-form { display: flex; gap: 8px; }
+  .lb-entry-form input { min-width: 0; flex: 1; }
+  .lb-entry-form button { flex: none; }
   .lb-entry input { flex: 1; border: 1px solid var(--line); border-radius: 9px; padding: 9px 12px; font: inherit; font-size: 14px; background: #fff; color: var(--ink); }
   .lb-entry input:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
   .lb-entry button { flex: none; background: var(--blue); color: #fff; border: 0; border-radius: 9px; padding: 0 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
@@ -2987,8 +2991,8 @@ function lbHeadHtml(online, title) {
 const GRADE = s => s == null ? ["—", "#c9c9d0"] : s >= 85 ? ["A", "#1d8f3c"] : s >= 70 ? ["B", "#4a9a4a"] : s >= 55 ? ["C", "#c9922a"] : s >= 40 ? ["D", "#c96a2a"] : ["F", "#c0392b"];
 
 // The report card plays as a slow reveal: line items ink in one at a time, each
-// grade badge "grading…" then popping to its letter, then the final grade, and
-// only at the very end whether the run made the batch. egTimers holds the
+// grade badge "grading…" then popping to its letter, then the final grade. The
+// verdict (whether the run made the batch) is the second card, one tap on. egTimers holds the
 // pending steps so a tap can fast-forward to the full card (egFinish).
 let egTimers = [];
 let egDone = true;
@@ -3007,7 +3011,6 @@ function egFinish() {
   document.querySelectorAll("#endModal .grade.pending").forEach(egRevealBadge);
   const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
   egDone = true;
-  mountEndgameLeaderboard();
 }
 function egRunReveal() {
   if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { egFinish(); return; }
@@ -3017,25 +3020,36 @@ function egRunReveal() {
   const STEP = 640, BADGE = 360;
   let t = 350;
   for (const row of rows) {
-    egTimers.push(setTimeout(() => { row.classList.add("in"); row.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, t));
+    egTimers.push(setTimeout(() => row.classList.add("in"), t));
     egTimers.push(setTimeout(() => egRevealBadge(row.querySelector(".grade")), t + BADGE));
     t += STEP;
   }
   t += 300;
   egTimers.push(setTimeout(() => {
     const roll = $("egRollup");
-    if (roll) { roll.classList.add("in"); roll.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (roll) { roll.classList.add("in");
       egTimers.push(setTimeout(() => egRevealBadge(roll.querySelector(".grade")), 360)); }
   }, t));
-  t += 1050;
+  t += 700;
   egTimers.push(setTimeout(() => {
-    const out = $("egOutcome");
-    if (out) { out.classList.add("in"); out.scrollIntoView({ behavior: "smooth", block: "center" }); }
-    const btn = $("egBtn"); if (btn) btn.classList.add("in");
+    const next = $("egNext"); if (next) next.classList.add("in");
     const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
     egDone = true;
-    mountEndgameLeaderboard();
   }, t));
+}
+// Turn between the two cards. The verdict card mounts the leaderboard the
+// first time it opens.
+function egPage(n) {
+  const p1 = $("egPage1"), p2 = $("egPage2");
+  if (!p1 || !p2) return;
+  if (n === 2 && !egDone) egFinish();
+  p1.style.display = n === 1 ? "" : "none";
+  p2.style.display = n === 2 ? "" : "none";
+  $("endModal").scrollTop = 0;
+  if (n === 2) {
+    const out = $("egOutcome"); if (out) requestAnimationFrame(() => out.classList.add("in"));
+    mountEndgameLeaderboard();
+  }
 }
 // Fetch the board once the reveal lands, then either offer name-entry (top 50)
 // or just show the ladder with where this run placed. Idempotent — the reveal
@@ -3132,19 +3146,31 @@ function checkEndgame() {
   }).join("");
   const cap = Scoring.gradeCap(game);
 
+  // Two cards, like the intro: the grades first, then the verdict (in or out
+  // of the batch) with the leaderboard. Each fits without scrolling, so the
+  // grade never slides out of view while the verdict lands.
+  const egDots = (on) => '<div class="intro-dots">' + [1, 2].map(n =>
+    '<button class="intro-dot" data-eg-page="' + n + '" aria-label="Card ' + n + '"><i class="' + (n === on ? "on" : "") + '"></i></button>').join("") + "</div>";
   $("endModal").innerHTML =
-    '<div class="eg-cardhead"><div class="eg-eyebrow">Founder Report Card</div>'
+    '<div id="egPage1">'
+    + '<div class="eg-cardhead"><div class="eg-eyebrow">Founder Report Card</div>'
       + '<div class="eg-headline">Week ' + s.week + " — grading the calls you made.</div></div>"
     + '<div id="egRows">' + rowsHtml + "</div>"
     + '<div id="egRollup" class="eg-rollup eg-final eg-reveal">'
       + '<div class="grade eg-biggrade pending" data-col="' + ocol + '"><span class="gl">' + og + "</span></div>"
       + '<div class="eg-roll-copy"><b>Final grade</b><br>' + avg + ' out of 100.' + (cap ? " " + esc(cap.note) : "") + '</div></div>'
+    + '<div id="egNext" class="intro-foot eg-reveal">' + egDots(1)
+      + '<button class="intro-next eg-go" data-eg-page="2">' + (madeYC || s.deadline_passed ? "The verdict →" : "Continue →") + "</button></div>"
+    + '<div id="egSkipHint" class="eg-skiphint">tap anywhere to reveal faster</div>'
+    + "</div>"
+    + '<div id="egPage2" style="display:none">'
     + '<div id="egOutcome" class="eg-outcome eg-reveal"><div class="eg-emoji">' + emoji + "</div>"
       + '<h2 class="eg-title">' + esc(title) + "</h2>"
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
-    + '<button id="egBtn" class="ok eg-reveal" onclick="closeReportCard()">OK</button>'
-    + '<div id="egSkipHint" class="eg-skiphint">tap anywhere to reveal faster</div>';
+    + '<div class="intro-foot">' + egDots(2)
+      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div>'
+    + "</div>";
 
   egCardHtml = $("endModal").innerHTML;
   $("endOv").classList.add("on");
@@ -3152,7 +3178,9 @@ function checkEndgame() {
 }
 // Tap the card (anywhere but the button) to fast-forward the reveal.
 $("endModal").addEventListener("click", (e) => {
-  if (e.target.closest(".ok")) return;
+  const turn = e.target.closest("[data-eg-page]");
+  if (turn) { egPage(+turn.dataset.egPage); return; }
+  if (e.target.closest(".eg-go, input, button")) return;
   if (!egDone) egFinish();
 });
 // Dismissing the report card doesn't end the session — it drops the player
@@ -3170,6 +3198,7 @@ function openReportCard() {
   $("endOv").classList.add("on");
   egLbMounted = false;   // re-fetch the leaderboard fresh on reopen
   egFinish();
+  egPage(1);
 }
 $("hScore").onclick = openReportCard;
 function restartGame() {
