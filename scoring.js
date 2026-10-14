@@ -217,10 +217,10 @@
         note: s.jordan_resolved
           ? (s.jordan_kept
             ? "Let the Jordan question slide on the pivot night, then had the conversation two weeks later. Late, and it counted."
-            : "Had the conversation with Jordan the night Alex raised it, before the board could slip.")
-          : s.jordan_folded ? "Jordan asked if you were asking her to leave. You said no, and the board kept slipping."
-            : s.jordan_bargained ? "Told Jordan it wasn't working, then took her deal for more time. The board kept slipping."
-              : "Alex raised Jordan. You never had the conversation, and the board moved at her pace.",
+            : "Had the conversation with Jordan the night Alex raised it, before v2 could slip.")
+          : s.jordan_folded ? "Jordan asked if you were asking her to leave. You said no, and v2 kept slipping at her part-time pace."
+            : s.jordan_bargained ? "Told Jordan it wasn't working, then took her deal for more time. v2 kept slipping at her part-time pace."
+              : "Alex raised Jordan. You never had the conversation, and v2 moved at her part-time pace.",
       }),
       // Asking what was going on changes nothing about the decision and
       // everything about what it cost.
