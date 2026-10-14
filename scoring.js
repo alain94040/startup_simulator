@@ -333,8 +333,15 @@
     const cat = (key, label, ref, moments, verdicts) => {
       const points = round1(moments.reduce((n, m) => n + m.got, 0));
       const max = moments.reduce((n, m) => n + m.max, 0);
-      const score = Math.round(100 * points / max);
-      const verdict = score >= 70 ? verdicts[0] : score >= 40 ? verdicts[1] : verdicts[2];
+      // A lesson with a moment the founder flinched on (under three quarters
+      // of a sizeable moment's points) can't read as mastered: its letter
+      // stops at a B and its verdict at the middle line, so the card never
+      // praises the lesson while its takeaway says "gave in". The points,
+      // and so the final grade, are untouched.
+      const flinched = moments.some(m => m.reached && !m.optional && m.max >= 3 && m.got < 0.75 * m.max);
+      const raw = Math.round(100 * points / max);
+      const score = flinched ? Math.min(raw, 84) : raw;
+      const verdict = score >= 70 && !flinched ? verdicts[0] : score >= 40 ? verdicts[1] : verdicts[2];
       return { key, label, ref, points, max, score, verdict, moments,
         notes: moments.filter(m => m.note).map(m => m.note) };
     };
@@ -342,15 +349,15 @@
       cat("build", "Build something people want", "📚 Steve Blank / PG, \"How to Get Startup Ideas\"", build,
         [pivoted || !s.launched ? "You listened first, built second, and turned the ship while you still could."
           : "You listened first and built lean, then kept the old product when the evidence said to change it.",
-        "Some signal reached the roadmap; a lot of it didn't.",
+        "Some of what users said reached the roadmap; some of it didn't.",
         "The product was built on guesses and defended against evidence."]),
       cat("team", "Have the hard conversations", "📚 Wasserman, The Founder's Dilemmas", team,
         ["You had the talks nobody wants to have, early, and yourself.",
-          "Some hard conversations happened; the hardest one didn't, or came late.",
+          "You had most of the hard talks, but flinched on at least one.",
           "The hardest conversations settled themselves by default. That bill comes due."]),
       cat("money", "Don't run out of money", "📚 PG, \"Default Alive or Default Dead?\"", money,
         [bankrupt ? "Cash hit zero." : "Raised what you needed, spent it on the product, kept the paper clean.",
-          bankrupt ? "Cash hit zero." : "The money held, but it cost you somewhere: a check unasked, a shark, a messy cap table.",
+          bankrupt ? "Cash hit zero." : "The money held, but it cost you somewhere.",
           bankrupt ? "Cash hit zero. Everything else became irrelevant." : "The money and the paperwork were an afterthought, and it shows."]),
     ];
   }
