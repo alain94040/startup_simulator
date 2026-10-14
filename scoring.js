@@ -15,6 +15,7 @@
 (function () {
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const BUILD_WEIGHT = 3; // "Build something people want" in the final grade
+  const CONTRACT_PENALTY = 15; // per contract week, off "Don't run out of money"
 
   // Ratio of answered-vs-ignored among the given nodes (only counting resolved
   // ones). Returns null if none of them ever resolved.
@@ -336,7 +337,11 @@
       // nothing it needs. Paying one is a few points off this lesson even on a
       // run that survived it: the money was runway.
       const sharks = ["consultant_growth", "consultant_brand"].filter(id => g.took(id + ":hire"));
-      const score = Math.max(0, base - 10 * sharks.length);
+      // Contract weeks (story/ambient.js) keep the lights on, but they are a
+      // red flag for any investor: the founder isn't full-time. Not a hard
+      // rule, a cost on the card, like keeping a part-time co-founder.
+      const contract = s.contract_weeks || 0;
+      const score = Math.max(0, base - 10 * sharks.length - CONTRACT_PENALTY * contract);
       out.push({
         key: "default-alive", label: "Don't run out of money", ref: "📚 PG, \"Default Alive or Default Dead?\"",
         score, verdict: s.game_won ? "You reached the other side with the lights on."
@@ -346,7 +351,8 @@
                 : "Cash hit zero. Everything else became irrelevant.",
         notes: ["Lowest bank balance: $" + Math.max(0, Math.round(minBalance)).toLocaleString() + "."]
           .concat(sharks.length ? ["Paid " + (sharks.length === 2 ? "two consultants" : "a consultant") +
-            " who cold-pitched you. Be careful of sharks: an early company draws people selling services it doesn't need, and every dollar was runway."] : []),
+            " who cold-pitched you. Be careful of sharks: an early company draws people selling services it doesn't need, and every dollar was runway."] : [])
+          .concat(contract ? ["Took " + (contract === 2 ? "two weeks" : "a week") + " of contract work to make rent. Investors ask whether the founders are full-time, and this answer is a red flag: raise the money so you don't have to."] : []),
       });
     }
 
