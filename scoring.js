@@ -181,16 +181,36 @@
     let answered = 0, ignored = 0;
     for (const id of coNodes) if (d(id)) g.outcome(id) === "@ignored" ? ignored++ : answered++;
     const jordanAsked = d("pivot_alex_door") || d("jordan_door_again");
-    const signed = !!s.jordan_equity && !s.equity_tabled && !s.equity_skipped;
+    const signed = !!s.jordan_equity && !s.equity_tabled;
+    // Sitting down when Jordan asks and then opening it up is the full 2;
+    // leaving her invitation on read first halves it.
+    const eqOpened = t("equity_dance:open_up") ? (t("equity_open:open") ? 2 : 1) : 0;
+    const eqRuling = g.outcome("equity_impasse");
+    const eqDodge = t("equity_dance:shortcut") ? "Opened with 'equal thirds and move on'" : "Said nothing when the room opened";
+    const eqHeld = eqRuling && /^hold_/.test(eqRuling) ? (s.equity_skipped ? 1 : 3) : eqRuling && /^cave_/.test(eqRuling) ? 1 : 0;
     const team = [
+      // The equity talk (GOALS.md: it can't end with everyone happy). Three
+      // parts: opening the real conversation instead of the "equal thirds and
+      // move on" shortcut (2), holding a position through the pushback
+      // instead of caving to whoever pushed last or tabling it (3), and a
+      // split on paper (2). An offer left on read lets silence make it, so
+      // holding that default later is worth only what a cave is. Tabling
+      // it zeroes the whole moment.
       moment("equity-split", "Negotiated the equity split", 7, {
         reached: d("equity_open") || !!s.equity_proposal,
         why: "the run ended before the split came up.",
-        got: signed ? 7 : s.jordan_equity && s.equity_skipped ? 3 : 0,
-        note: signed ? "Equity split negotiated and signed while everyone was still friends."
-          : s.equity_tabled ? "Got the whole room through it twice, then tabled the split 'until after launch'. The default thirds went into the paperwork unexamined."
-            : s.equity_skipped ? "The split defaulted to even thirds: signed, but never actually discussed."
-              : "The split was never signed. Every later conversation got harder.",
+        // Tabling is worse than never assembling the room: both cases were
+        // made and the founder still blinked, so it earns nothing at all.
+        got: s.equity_tabled ? 0 : eqOpened + eqHeld + (signed ? 2 : 0),
+        note: s.equity_tabled ? "Got the whole room through it twice, then tabled the split 'until after launch'. The default thirds went into the paperwork unexamined."
+          : !s.jordan_equity ? "The split was never signed. Every later conversation got harder."
+            : s.equity_skipped ? "Never made your own offer, so silence did: the split defaulted to even thirds."
+              : eqRuling === "@ignored" ? "Made an offer, heard the pushback, then never answered. Your number stuck, and everyone saw you go quiet."
+                : eqOpened === 1 && eqHeld === 3 ? "Left Jordan's invitation to talk on read, then heard everyone out and held your call once it came to you."
+                : !eqOpened && eqHeld < 3 ? eqDodge + ", then gave in to whoever pushed last. Nobody got a real answer."
+                  : !eqOpened ? eqDodge + ", but held your number once the real asks came out. Someone left unhappy, and that was the job."
+                    : eqHeld < 3 ? "Heard everyone out, then gave in to whoever pushed last. The split was signed, but the hard part was skipped."
+                      : "Heard everyone out, made the call and held it. Someone left unhappy, and the split was signed while everyone was still friends.",
       }),
       // A run where Alex never brought it up has nothing to grade.
       moment("side-project", "Asked Alex to focus", 3, {
