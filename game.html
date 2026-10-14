@@ -370,12 +370,6 @@
   .grade-row .g-body { flex: 1; }
   .grade-row .g-verdict { color: #55555c; font-size: 12px; }
   .grade-row .g-ref { color: var(--dim); font-size: 10.5px; }
-  .grade-row .g-pts { float: right; color: var(--dim); font-weight: 600; font-size: 12px; }
-  .grade-row .g-moments { list-style: none; margin: 4px 0 3px; padding: 0; font-size: 11.5px; color: #55555c; }
-  .grade-row .g-moments li { display: flex; gap: 6px; padding: 1px 0; }
-  .grade-row .g-moments .gm-mark { flex: 0 0 14px; text-align: center; }
-  .grade-row .g-moments .gm-text { flex: 1; }
-  .grade-row .g-moments .gm-got { flex: 0 0 auto; color: var(--dim); font-variant-numeric: tabular-nums; }
   /* cinematic report-card reveal */
   .eg-cardhead { text-align: center; margin-bottom: 14px; }
   .eg-eyebrow { font-size: 10px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
@@ -3117,21 +3111,23 @@ function checkEndgame() {
     ? '<div class="eg-batch">YC Summer 2027 · $500k for 7%</div>'
     : s.deadline_passed ? '<div class="eg-batch" style="background:var(--soft);color:#55555c">Missed the bar · needs ' + WORLD.YC_ADMISSION_GRADE + ' and a shipped v2</div>' : "";
 
-  // One row per lesson: its letter, points out of its budget, and a line per
-  // moment (✓ full, ◐ partial, ✗ nothing) with what earned or cost it.
-  const fmt = n => String(Math.round(n * 10) / 10);
+  // One row per lesson: its letter, its verdict, and what to take away. The
+  // point table behind the grade stays off the card (tests/transcript.js
+  // prints it): the player gets the lesson, not a checklist to game. The
+  // takeaway is the note of the moment that cost the most, or of the one
+  // that earned the most when nothing cost much.
+  // "Never reached: x" is the scorer's phrasing; the player reads just x.
+  const takeaway = n => n.replace(/^Never reached: (.)/, (_, ch) => ch.toUpperCase());
   const rowsHtml = cats.map(c => {
     const [g, col] = GRADE(c.score);
-    const moments = c.moments.filter(m => m.note).map(m => {
-      const mark = m.got >= m.max ? "✓" : m.got > 0 ? "◐" : "✗";
-      return "<li><span class=\"gm-mark\">" + mark + '</span><span class="gm-text">' + esc(m.note) + "</span>"
-        + '<span class="gm-got">' + fmt(m.got) + "/" + m.max + "</span></li>";
-    }).join("");
+    const noted = c.moments.filter(m => m.note);
+    const missed = noted.filter(m => m.max - m.got >= 1).sort((x, y) => (y.max - y.got) - (x.max - x.got));
+    const best = noted.filter(m => m.got >= m.max).sort((x, y) => y.max - x.max);
+    const take = missed[0] || best[0];
     return '<div class="grade-row eg-reveal">'
       + '<div class="grade pending" data-col="' + col + '"><span class="gl">' + g + "</span></div>"
-      + '<div class="g-body"><span class="g-pts">' + fmt(c.points) + " / " + c.max + "</span><b>" + esc(c.label) + "</b>"
-      + '<div class="g-verdict">' + esc(c.verdict) + "</div>"
-      + (moments ? '<ul class="g-moments">' + moments + "</ul>" : "")
+      + '<div class="g-body"><b>' + esc(c.label) + "</b>"
+      + '<div class="g-verdict">' + esc(c.verdict) + (take ? " " + esc(takeaway(take.note)) : "") + "</div>"
       + '<div class="g-ref">' + esc(c.ref) + "</div></div></div>";
   }).join("");
   const cap = Scoring.gradeCap(game);
@@ -3142,7 +3138,7 @@ function checkEndgame() {
     + '<div id="egRows">' + rowsHtml + "</div>"
     + '<div id="egRollup" class="eg-rollup eg-final eg-reveal">'
       + '<div class="grade eg-biggrade pending" data-col="' + ocol + '"><span class="gl">' + og + "</span></div>"
-      + '<div class="eg-roll-copy"><b>Final grade</b><br>' + avg + ' out of 100: every moment\'s points, added up.' + (cap ? " " + esc(cap.note) : "") + '</div></div>'
+      + '<div class="eg-roll-copy"><b>Final grade</b><br>' + avg + ' out of 100.' + (cap ? " " + esc(cap.note) : "") + '</div></div>'
     + '<div id="egOutcome" class="eg-outcome eg-reveal"><div class="eg-emoji">' + emoji + "</div>"
       + '<h2 class="eg-title">' + esc(title) + "</h2>"
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
