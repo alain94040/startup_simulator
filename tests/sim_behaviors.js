@@ -285,7 +285,7 @@ const exactGrade = (g) => {
 };
 function moneyTactic(skipIds) {
   const skip = new Set(skipIds);
-  let grade = 0, minBal = 0, gigs = 0;
+  let grade = 0, minBal = 0, gigs = 0, broke = 0;
   for (let i = 0; i < N; i++) {
     const g = H.playGame(1000 + i, (a, gg) => skip.has(a.nodeId) ? null : H.decent(a, gg),
       { priority: moneyPriority });
@@ -294,8 +294,10 @@ function moneyTactic(skipIds) {
     for (const wk of g.ledger) low = Math.min(low, wk.balanceAfter);
     minBal += low;
     if (g.took("founder_consulting:take")) gigs++;
+    if (g.s.game_over && !g.s.deadline_passed && !g.s.cofounder_left && !g.s.ycAccepted) broke++;
   }
-  return { grade: grade / N, minBal: minBal / N, gigs: Math.round((gigs / N) * 100) };
+  return { grade: grade / N, minBal: minBal / N, gigs: Math.round((gigs / N) * 100),
+    broke: Math.round((broke / N) * 100) };
 }
 const MOM = ["ff_family", "ff_family_2", "ff_family_3"], JAMIE = ["ff_friend", "ff_friend_ask"],
   DAVID = ["ff_mentor", "ff_mentor_pitch"];
@@ -306,12 +308,16 @@ const MONEY = {
   skip_david: moneyTactic(DAVID),
   no_raise: moneyTactic([...MOM, ...JAMIE, ...DAVID]),
 };
-console.log(`\n  money tactic   grade  min bank  rent gigs`);
-for (const [k, r] of Object.entries(MONEY)) console.log(`  ${pad(k, 13)} ${padL(r1(r.grade), 6)} ${padL("$" + Math.round(r.minBal), 9)} ${padL(r.gigs + "%", 10)}`);
+console.log(`\n  money tactic   grade  min bank  rent gigs  bankrupt`);
+for (const [k, r] of Object.entries(MONEY)) console.log(`  ${pad(k, 13)} ${padL(r1(r.grade), 6)} ${padL("$" + Math.round(r.minBal), 9)} ${padL(r.gigs + "%", 10)} ${padL(r.broke + "%", 9)}`);
 for (const k of ["skip_mom", "skip_jamie", "skip_david", "no_raise"]) {
   check(`money: ${k} grade (${r1(MONEY[k].grade)}) < fundraiser (${r1(MONEY.fundraiser.grade)}) — leaving the money costs score`,
     MONEY[k].grade < MONEY.fundraiser.grade);
 }
+// GOALS.md: raise nothing and you go bankrupt before the deadline. The rent
+// gigs bridge a thin raise (two weeks at most), they don't replace one.
+check(`money: no_raise goes bankrupt (${MONEY.no_raise.broke}%) >= 90%; the fundraiser never does (${MONEY.fundraiser.broke}%)`,
+  MONEY.no_raise.broke >= 90 && MONEY.fundraiser.broke === 0);
 check(`money: no_raise grade (${r1(MONEY.no_raise.grade)}) is the worst of the money tactics`,
   ["skip_mom", "skip_jamie", "skip_david"].every(k => MONEY.no_raise.grade <= MONEY[k].grade));
 
