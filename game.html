@@ -1283,7 +1283,7 @@ const SCENE_META = {
     title: "What are we building Monday", sub: "one group thread, one question — and you're running the meeting.",
     accent: "rgba(255,140,140,1)",
     enter: ["Tonight.", "One thread. One question.", "Nobody logs off until it's decided."],
-    exit: (s) => s.jordan_resolved ? (s.jordan_cold_exit ? ["It's done.", "She won't answer anymore. Alex has the board from Monday."] : ["It's done.", "Two founders now. Monday, the rebuild."])
+    exit: (s) => s.jordan_resolved ? (s.jordan_cold_exit ? ["It's done.", "She won't answer anymore. Alex has the plans screen from Monday."] : ["It's done.", "Two founders now. Monday, the rebuild."])
       : s.pivot_choice === "pivot" ? ["The decision is made.", "Monday morning, the rebuild begins."]
         : ["The decision is made.", "The next fifty matches will tell you if it was right."],
   },
@@ -1291,8 +1291,8 @@ const SCENE_META = {
     title: "The conversation", sub: "just you and Jordan. everything else can wait until morning.",
     accent: "rgba(150,165,190,1)",
     enter: ["Late.", "Jordan is still up, still promising.", "Nobody can help you with this one."],
-    exit: (s) => s.jordan_resolved ? (s.jordan_cold_exit ? ["It's done.", "She won't answer anymore."] : ["It's done.", "Alex has the board from Monday."])
-      : ["Nothing changed.", "The board is where it was."],
+    exit: (s) => s.jordan_resolved ? (s.jordan_cold_exit ? ["It's done.", "She won't answer anymore."] : ["It's done.", "Alex has the plans screen from Monday."])
+      : ["Nothing changed.", "The plans screen is where it was."],
   },
 };
 // Launch day walks the clock through the hours; the sky (background) shifts with
@@ -1345,8 +1345,8 @@ const STAGES = [
     { t: "Call the pivot", done: s => !!s.activities_pivot, note: () => "plans, not profiles" },
     { t: "Make the scope call", done: (s, g) => g.done("pivot_scope_call"), note: s => s.pivot_kept_legacy ? "kept classic mode — slower" : null },
     { t: "Repoint the matching engine", done: s => !!(s.items && s.items.plans_matching && s.items.plans_matching.status === "done") },
-    { t: "Build the board", done: s => !!(s.items && s.items.plans_ui && s.items.plans_ui.status === "done"), note: s => s.items && s.items.plans_ui && s.items.plans_ui.status !== "done" ? (s.items.plans_ui.assignee === "jordan" && !s.jordan_resolved ? "Jordan's — first version by sunday" : "Alex's now") : null },
-    { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? (s.jordan_cold_exit ? "she's off the team — and not speaking to you" : "she's off the team") : s.jordan_kept ? "she kept the board" : null },
+    { t: "Build the plans screen", done: s => !!(s.items && s.items.plans_ui && s.items.plans_ui.status === "done"), note: s => s.items && s.items.plans_ui && s.items.plans_ui.status !== "done" ? (s.items.plans_ui.assignee === "jordan" && !s.jordan_resolved ? "Jordan's — first version by sunday" : "Alex's now") : null },
+    { t: "Answer the Jordan question", done: s => !!s.jordan_resolved, note: s => s.jordan_resolved ? (s.jordan_cold_exit ? "she's off the team — and not speaking to you" : "she's off the team") : s.jordan_kept ? "she kept the plans screen" : null },
     { t: "Relaunch to your users", done: s => !!s.pivot_shipped, note: (s, g) => g && g.took && g.took("pivot_relaunch:sarah_event") ? "debuted at Sarah's event" : g && g.took && g.took("pivot_relaunch:press") ? "the pivot story ran" : null },
   ]},
   { id: "apply", label: "Ch 5 · Get into YC",

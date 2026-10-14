@@ -75,7 +75,7 @@
                 journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
-                  return "Ninety minutes. Five items on the board. Alex seemed relieved.";
+                  return "Ninety minutes. Five items on the whiteboard. Alex seemed relieved.";
                 },
               },
               {
@@ -86,7 +86,7 @@
                 journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
-                  return "Ninety minutes. Five items on the board. Alex seemed relieved.";
+                  return "Ninety minutes. Five items on the whiteboard. Alex seemed relieved.";
                 },
               },
             ],
