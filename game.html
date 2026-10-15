@@ -3656,6 +3656,9 @@ function render() {
 }
 
 // ── debug ─────────────────────────────────────────────────────────────────────
+// The debug bar is for development: it only shows with ?debug in the URL, so
+// players never see a button that jumps straight to a YC win.
+if (!/[?&]debug\b/.test(location.search)) $("debug").hidden = true;
 $("dbgSeed").value = seed;
 const dbgSeed = () => { const v = parseInt($("dbgSeed").value, 10); return Number.isFinite(v) ? v : seed; };
 function dbgReset() {
