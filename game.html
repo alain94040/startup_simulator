@@ -8,6 +8,20 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="A Silicon Valley startup game">
 <title>A Silicon Valley startup game</title>
+<!-- Link previews (iMessage, WhatsApp, Slack, Discord, LinkedIn…) read these tags.
+     No script, no tracking: they're plain metadata. Crawlers want an absolute
+     og:image URL; a relative one works in most previews but not all. -->
+<meta name="description" content="You're the founder of a made-up dating app, texting your co-founders, users and investors through the first 25 weeks. Every call you make is graded. Free, in your browser.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="A Silicon Valley startup game">
+<meta property="og:description" content="You're the founder of a made-up dating app, texting your co-founders, users and investors through the first 25 weeks. Every call you make is graded.">
+<meta property="og:image" content="img/intro/1_idea.jpg">
+<meta property="og:image:width" content="1040">
+<meta property="og:image:height" content="520">
+<meta property="og:image:alt" content="Two founders at a kitchen table at night, sketching an app over pizza.">
+<link rel="icon" href="img/icon.svg" type="image/svg+xml">
+<link rel="icon" href="img/icon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="img/icon-180.png">
 <style>
   /* ── tokens ─────────────────────────────────────────────────────────────── */
   :root {
@@ -387,6 +401,9 @@
   .eg-outcome { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--soft); }
   .eg-batch { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(90deg, var(--blue), #8b5cf6); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .02em; }
   #endModal .intro-foot { margin-top: 16px; }
+  .eg-actions { display: flex; align-items: center; gap: 8px; }
+  .eg-share { border: 1.5px solid var(--line); background: var(--panel); color: var(--ink); font-weight: 600; font-size: 13px; border-radius: 10px; padding: 9px 14px; cursor: pointer; }
+  .eg-share:hover { background: var(--soft); }
   #egPage2 .eg-outcome { margin-top: 4px; padding-top: 0; border-top: 0; }
   .eg-skiphint { text-align: center; font-size: 11px; color: var(--dim); margin-top: 12px; transition: opacity .3s; }
   /* ── leaderboard (endgame + intro) ──────────────────────────────────────── */
@@ -3169,8 +3186,18 @@ function checkEndgame() {
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
     + '<div class="intro-foot">' + egDots(2)
-      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div>'
+      + '<div class="eg-actions"><button id="egShare" class="eg-share eg-go" onclick="shareResult()">Share my result</button>'
+      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div></div>'
     + "</div>";
+
+  // The result as plain text the player can send anywhere: the grade, one
+  // line per lesson, and a link to the same run (same seed) so a friend can
+  // try to beat it. Wordle-style — the player chooses where it goes.
+  const outcome = madeYC ? "got into YC" : s.deadline_passed ? "didn't get into YC"
+    : s.cofounder_left ? "lost my co-founder in week " + s.week : "ran out of money in week " + s.week;
+  egShareText = document.title + ": " + og + " (" + avg + "/100), " + outcome + ".\n"
+    + cats.map(c => c.label + ": " + GRADE(c.score)[0]).join("\n");
+  egShareUrl = location.origin + location.pathname + "?seed=" + seed;
 
   egCardHtml = $("endModal").innerHTML;
   $("endOv").classList.add("on");
@@ -3187,6 +3214,19 @@ $("endModal").addEventListener("click", (e) => {
 // back into the chat history of the run they just played (read-only: doAct,
 // renderSide and renderThread all gate on gameEnded()). The score itself
 // stays one tap away via the header's Report card button.
+let egShareText = "", egShareUrl = "";
+// Phones get their own share sheet (the player picks the app); desktops copy
+// the text, link included, to paste wherever they like.
+async function shareResult() {
+  const btn = $("egShare");
+  const text = egShareText + "\nPlay the same run: " + egShareUrl;
+  if (isMobile && navigator.share) {
+    try { await navigator.share({ text: egShareText + "\nPlay the same run:", url: egShareUrl }); } catch (e) {}
+    return;
+  }
+  try { await navigator.clipboard.writeText(text); if (btn) btn.textContent = "Copied ✓"; }
+  catch (e) { window.prompt("Copy your result:", text); }
+}
 function closeReportCard() {
   egClearTimers();
   $("endOv").classList.remove("on");
