@@ -20,7 +20,7 @@ Run from the repo root:
 
 | Action | Command |
 |--------|---------|
-| Play | `open game.html` (add `?seed=42` for a reproducible run) |
+| Play | `open game.html` (add `?seed=42` for a reproducible run, `?debug` for the debug bar) |
 | Plain debug harness | `open play.html` |
 | Deterministic slice checks | `node tests/test_slice.js` |
 | Narrative checks / **primary regression suite** | `node tests/test_narrative.js` |
