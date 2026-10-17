@@ -81,7 +81,7 @@ console.log("decent driver (seed 42)");
     "Alex — the split's loser — got the last word, in the group");
   ok(grp.some(m => m.from === "Jordan" && (m.body || "").includes("didn't think i'd have to say it three times")),
     "…and Jordan's relief landed in the same room, not a private thread");
-  ok(grp.some(m => m.type === "reply" && (m.body || "").includes("thirds. equal.")),
+  ok(grp.some(m => m.type === "reply" && (m.body || "").includes("changing it: equal thirds.")),
     "the founder's ruling itself was posted to the group (not lost on the founder's own thread)");
   // The DMs are DMs: the private cases stay off the group thread.
   ok(g.threads.jordan.some(m => (m.body || "").includes("not in the group, but")),
