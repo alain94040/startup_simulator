@@ -1519,7 +1519,7 @@ function renderHeader() {
   $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
   const dIn = game.s.deadline_week - st.week;
   $("gYcL").textContent = isMobile ? "YC in" : "YC deadline";
-  if (dIn > 0) { $("gYcV").textContent = dIn + (isMobile ? "w left" : " wks left"); $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
+  if (dIn > 0) { $("gYcV").textContent = dIn + (isMobile ? "w" : " wks left"); $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
   else { $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
   renderNavTitle();
   const stg = currentStage(), c = stageCounts(stg);
@@ -3258,7 +3258,7 @@ function showIntro() {
         '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
         '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
       '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
-      '<div class="intro-actions"><button class="intro-skip">skip</button>' +
+      '<div class="intro-actions"><button class="intro-skip">Skip</button>' +
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   }
   const done = () => { $("introOv").classList.remove("on"); queueTipCheck(); };
@@ -3333,7 +3333,7 @@ const TIPS = [
   { id: "respond", when: () => surface === "msgs",
     target: () => onScreen(document.querySelector("#reply .cta-pill:not([disabled])")),
     title: "Answer them.",
-    body: () => "When someone is waiting on you, tap Respond and pick what to say. What you say changes the story." },
+    body: () => "When someone is waiting on you, " + (isMobile ? "tap" : "click") + " Respond and pick what to say. What you say changes the story." },
   { id: "moves", when: () => game.actionsLeft === 1,
     target: () => onScreen($("dots")),
     title: "That was one of your two moves.",
