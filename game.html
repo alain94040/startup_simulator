@@ -3235,7 +3235,7 @@ function showIntro() {
   // The dots double as navigation: any card, the board included, is one click away.
   const dots = INTRO.concat([0]).map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
     '<i class="' + (i === introStep ? "on" : "") + '"></i></button>').join("");
-  const nextLabel = boardStep ? "Week 1 →" : "Continue →";
+  const nextLabel = boardStep ? "Start the game →" : "Continue →";
   if (boardStep) {
     $("introModal").innerHTML =
       '<div class="intro-stripe"></div><div class="intro-board">' +
