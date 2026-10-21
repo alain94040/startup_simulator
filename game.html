@@ -1037,9 +1037,9 @@
   <div class="logo">PlusOne<small id="hWeek"></small></div>
   <div id="mTitle"></div>
   <div id="hud">
-    <div class="gauge clickable" id="gRunway" title="open the bank"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
+    <div class="gauge clickable" id="gRunway" title="open the bank" role="button" tabindex="0"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
     <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
-    <div class="gauge todo" id="gTodo"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
+    <div class="gauge todo" id="gTodo" role="button" tabindex="0" aria-haspopup="true"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
   </div>
   <div class="hdr-right">
     <div class="dots" id="dots"></div>
@@ -1216,6 +1216,11 @@ const STYLE = {
 const styleFor = id => STYLE[id] || { color: "#8e8e93", initials: "?" };
 // What goes inside an avatar circle: the portrait if there is one, else the initials.
 const faceHtml = stl => stl.photo ? '<img src="img/cast/' + stl.photo + '" alt="">' : esc(stl.initials);
+// Most of what you click (a conversation, a circle in the strip, a headline, a
+// gauge) is a styled <div>, not a <button>. This makes one reachable by Tab and
+// pressable with Enter or Space, without restyling it (the keydown handler
+// below does the pressing).
+const RB = ' role="button" tabindex="0"';
 // A group chat is a thread that's a room, not a person (cast.js `type: "group"`).
 const isGroupChat = (id) => { const c = game.cast.get(id); return !!(c && c.def.type === "group"); };
 const groupMembers = (id) => { const c = game.cast.get(id); return (c && c.def.members) || []; };
@@ -1577,7 +1582,7 @@ function renderRail() {
     // In a group the preview needs to say WHO — "Jordan: ok, the atlas form…"
     const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";
     const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : c.role;
-    return '<div class="conv ' + (cur ? "cur" : "") + (unread ? " unread" : "") + (owed.has(id) ? " call" : "") + '" data-id="' + id + '">' +
+    return '<div class="conv ' + (cur ? "cur" : "") + (unread ? " unread" : "") + (owed.has(id) ? " call" : "") + '" data-id="' + id + '"' + RB + '>' +
       '<span class="unread-dot"></span>' +
       convAvatarHtml(id) +
       '<div class="who"><b>' + esc(c.name) + "</b><span>" + esc(prev.slice(0, 52)) + "</span></div></div>";
@@ -1619,7 +1624,7 @@ function renderRailNews() {
   box.innerHTML = '<h5>📰 News<button id="newsAll">all news →</button></h5>' + list.map(m => {
     const meta = feedMeta(m);
     const unread = m.idx >= (feedSeenLen[m.charId] || 0);
-    return '<div class="nw' + (unread ? " unread" : "") + (due(m) ? " due" : "") + (m.seq === newsOpen ? " cur" : "") + '" data-seq="' + m.seq + '">' +
+    return '<div class="nw' + (unread ? " unread" : "") + (due(m) ? " due" : "") + (m.seq === newsOpen ? " cur" : "") + '" data-seq="' + m.seq + '"' + RB + '>' +
       '<span class="unread-dot"></span><div>' +
       '<span class="nw-src" style="background:' + NEWS_INK[meta.cls] + '">' + esc(meta.src.split(" · ").pop()) + "</span>" +
       '<div class="nw-hl">' + esc(m.body) + "</div>" +
@@ -1648,7 +1653,7 @@ function openNews(seq) {
 // "needs a call" flag the desktop keeps in the right column.
 let stripOrder = [];            // last-rendered strip order, to animate a newcomer at the front
 const storyHtml = (id, cls, av, name, extra) =>
-  '<div class="story' + cls + '" data-id="' + id + '"><div class="st-ring">' + av + "</div>" +
+  '<div class="story' + cls + '" data-id="' + id + '"' + RB + '><div class="st-ring">' + av + "</div>" +
   (extra || "") + "<b>" + esc(name) + "</b></div>";
 // Keep the thread you're reading in view, or — when someone new has jumped to
 // the front — bring the start of the row back so the arrival is seen.
@@ -1875,7 +1880,7 @@ function mockupPhoneHtml(m) {
 function mockupRowHtml(mockups) {
   const keys = Object.keys(mockups);
   return '<div class="mk-row">' + keys.map(k =>
-    '<div class="mk-thumb" data-mk="' + esc(k) + '">' + mockupPhoneHtml(mockups[k]) +
+    '<div class="mk-thumb" data-mk="' + esc(k) + '"' + RB + ' aria-label="' + esc("Open mockup" + (mockups[k].tag ? ": " + mockups[k].tag : "")) + '">' + mockupPhoneHtml(mockups[k]) +
     (mockups[k].tag ? '<span class="mk-badge">' + esc(mockups[k].tag) + "</span>" : "") + "</div>").join("") + "</div>";
 }
 function openMockupLightbox(mockups, startKey) {
@@ -1915,7 +1920,7 @@ function renderSide() {
 
   const linkCard = (a) => {
     const goFeed = FEED.has(a.charId);
-    return '<div class="h-card link" data-char="' + a.charId + '" data-feed="' + (goFeed ? 1 : 0) + '">' +
+    return '<div class="h-card link" data-char="' + a.charId + '" data-feed="' + (goFeed ? 1 : 0) + '"' + RB + '>' +
       "<b>" + esc(a.name) +
       ' <span class="go">↗ ' + (goFeed ? "News Feed" : "open chat") + "</span></b>" +
       "<span>" + esc(String(a.body).slice(0, 90)) + "…</span></div>";
@@ -2485,7 +2490,7 @@ function renderFocus(opts) {
       const unread = sceneUnread(id) && id !== scSelected;
       const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";
       const prev = last ? (last.type === "reply" ? "You: " : who) + String(last.body || "").replace(/\s+/g, " ") : (def.role || "");
-      return '<div class="conv ' + (id === scSelected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '">' +
+      return '<div class="conv ' + (id === scSelected ? "cur" : "") + (unread ? " unread" : "") + '" data-id="' + id + '"' + RB + '>' +
         '<span class="unread-dot"></span>' +
         convAvatarHtml(id) +
         '<div class="who"><b>' + esc(def.name) + '</b><span>' + esc(prev.slice(0, 52)) + "</span></div></div>";
@@ -2902,7 +2907,7 @@ function toggleNoteCenter() {
   if (c.classList.contains("show")) { c.classList.remove("show"); return; }
   if (!weekNotes.length) { c.innerHTML = '<h4>This week</h4><div class="nc-empty">No notifications this week.</div>'; }
   else c.innerHTML = '<h4>This week · ' + weekNotes.length + " notification" + (weekNotes.length === 1 ? "" : "s") + "</h4>" +
-    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"><div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
+    weekNotes.map((n, i) => '<div class="nc-item" data-i="' + i + '"' + RB + '><div class="n-ico" style="background:' + (n.color || "#8a8a92") + '">' + (n.photo ? faceHtml(n) : esc(n.ico)) + "</div>" +
       '<div class="n-b"><div class="n-title"><span>' + esc(n.title) + '</span></div><div class="n-text">' + esc(n.text) + "</div></div></div>").join("");
   c.classList.add("show");
   notesSeen = true; updateBell();
@@ -3569,6 +3574,36 @@ for (const b of document.querySelectorAll("#tabbar button")) b.onclick = () => {
   setSurface(b.dataset.surface);
 };
 $("gRunway").onclick = () => setSurface(surface === "bank" ? "msgs" : "bank");
+
+// ── keyboard ──────────────────────────────────────────────────────────────────
+// Enter or Space presses a div that plays a button (RB above), as it would a
+// real one. Escape closes whatever is on top: the tip, the lightbox, the bell's
+// list, the to-do popover, then the Bank.
+document.addEventListener("keydown", (e) => {
+  // the cinematic between rooms takes Enter and Space for itself (showCine)
+  if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || $("cine").classList.contains("show")) return;
+  const el = e.target;
+  if ((e.key === "Enter" || e.key === " ") && el.getAttribute && el.getAttribute("role") === "button" && el.tagName !== "BUTTON") {
+    e.preventDefault();
+    if (e.key === "Enter" || !e.repeat) el.click();
+    return;
+  }
+  if (e.key !== "Escape") return;
+  if (tipOpen) closeTip();
+  else if ($("lightbox").classList.contains("show")) $("lightbox").classList.remove("show");
+  else if ($("noteCenter").classList.contains("show")) { $("noteCenter").classList.remove("show"); $("bell").focus(); }
+  else if ($("todoPop").classList.contains("on")) { $("todoPop").classList.remove("on"); $("gTodo").focus(); }
+  else if (surface === "bank" && !inScene && !uiBusy) setSurface("msgs");
+  else return;
+  e.preventDefault();
+});
+// A room covers the whole world, but only for the mouse: Tab still walked into
+// the rail and the header behind it, and Enter there opened chats the room had
+// blocked out. Take the world out of the tab order while a room is up.
+new MutationObserver(() => {
+  const on = $("scene").classList.contains("on");
+  for (const sel of ["header", "main", "#tabbar"]) document.querySelector(sel).inert = on;
+}).observe($("scene"), { attributes: true, attributeFilter: ["class"] });
 
 // Rotating a phone, or dragging a desktop window narrow, swaps the whole shape
 // mid-run. Land on something coherent: the desktop has no Moves or Journal
