@@ -1221,6 +1221,9 @@ const faceHtml = stl => stl.photo ? '<img src="img/cast/' + stl.photo + '" alt="
 // pressable with Enter or Space, without restyling it (the keydown handler
 // below does the pressing).
 const RB = ' role="button" tabindex="0"';
+// Is the player on the keyboard right now? (Set by the keydown/pointerdown
+// listeners under "keyboard" below.) Focus is only moved for them.
+let kbdNav = false, lastFocus = null;
 // A group chat is a thread that's a room, not a person (cast.js `type: "group"`).
 const isGroupChat = (id) => { const c = game.cast.get(id); return !!(c && c.def.type === "group"); };
 const groupMembers = (id) => { const c = game.cast.get(id); return (c && c.def.members) || []; };
@@ -3266,7 +3269,11 @@ function showIntro() {
       '<div class="intro-actions"><button class="intro-skip">Skip</button>' +
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   }
-  const done = () => { $("introOv").classList.remove("on"); queueTipCheck(); };
+  const done = () => {
+    $("introOv").classList.remove("on"); queueTipCheck();
+    // the keyboard lands where the game starts: Alex's Respond
+    if (kbdNav) focusNextUp();
+  };
   $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
   const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
   $("introModal").querySelectorAll(".intro-dot").forEach(d => d.onclick = () => { introStep = +d.dataset.step; showIntro(); });
@@ -3446,16 +3453,25 @@ function showTip(tip) {
   $("tipLayer").classList.add("on");
   document.body.classList.add("tip-on");
   placeTip();
+  // on the keyboard, the tip takes focus (Enter or Escape dismisses it) and
+  // hands it back afterwards
+  tipReturn = kbdNav ? document.activeElement : null;
+  if (kbdNav) bub.querySelector(".tip-ok").focus({ preventScroll: true });
   // keep aiming while it's up: a room slides in, a strip reorders, a column
   // scrolls — the spotlight has to follow its target
   clearInterval(tipAim); tipAim = setInterval(placeTip, 250);
 }
-let tipAim = null;
+let tipAim = null, tipReturn = null;
 function closeTip() {
   clearInterval(tipAim); tipAim = null;
   tipOpen = null;
   $("tipLayer").classList.remove("on");
   document.body.classList.remove("tip-on");
+  if (kbdNav) {
+    if (tipReturn && tipReturn !== document.body && tipReturn.isConnected && !tipReturn.closest("[inert]")) tipReturn.focus({ preventScroll: true });
+    else focusNextUp();
+  }
+  tipReturn = null;
   queueTipCheck();
 }
 // Aim the bubble: a scribbled circle hugs the target, and the card sits on the
@@ -3597,13 +3613,56 @@ document.addEventListener("keydown", (e) => {
   else return;
   e.preventDefault();
 });
-// A room covers the whole world, but only for the mouse: Tab still walked into
-// the rail and the header behind it, and Enter there opened chats the room had
-// blocked out. Take the world out of the tab order while a room is up.
-new MutationObserver(() => {
-  const on = $("scene").classList.contains("on");
-  for (const sel of ["header", "main", "#tabbar"]) document.querySelector(sel).inert = on;
-}).observe($("scene"), { attributes: true, attributeFilter: ["class"] });
+// A room or a card covers the world, but only for the mouse: Tab still walked
+// into the rail and the header behind it, and Enter there acted on what the
+// overlay had blocked out. Take everything under the top layer out of the tab
+// order while it is up: a room hides the world, the intro and the report card
+// hide the world and any room, and the founder's "Your call" card hides its room.
+const syncInert = () => {
+  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on");
+  const room = $("scene").classList.contains("on");
+  for (const sel of ["header", "main", "#tabbar"]) document.querySelector(sel).inert = card || room;
+  $("scene").inert = card || $("scSelfOv").classList.contains("on");
+};
+for (const id of ["scene", "introOv", "endOv", "scSelfOv"]) new MutationObserver(syncInert).observe($(id), { attributes: true, attributeFilter: ["class"] });
+syncInert();
+// Most renders rebuild their box with innerHTML, which throws away the button
+// the keyboard was on: Continue on the intro, Respond, a reply chip. Focus fell
+// back to the page and the next Tab started over from the header. When that
+// happens to someone using the keyboard, put focus back on the same control in
+// the rebuilt box (matched by its data-* key, then its class), or else on the
+// box's next thing to press. A mouse click never moves focus this way.
+document.addEventListener("keydown", () => { kbdNav = true; }, true);
+document.addEventListener("pointerdown", () => { kbdNav = false; }, true);
+const FOCUS_BOXES = ["#introModal", "#endModal", "#reply", "#scReply", "#scSelfModal", "#railList", "#scRail", "#sideCol", "#railTriage"];
+document.addEventListener("focusin", (e) => {
+  const box = e.target.closest && e.target.closest(FOCUS_BOXES.join(","));
+  const key = Object.keys(e.target.dataset || {})[0];
+  lastFocus = box ? { box, cls: e.target.classList[0], key, val: key && e.target.dataset[key] } : null;
+});
+// in this order of preference, whatever comes first on the page within each
+const NEXT_UP = [".intro-next", ".chip:not(:disabled)", ".cta-pill:not(:disabled)", "button:not(:disabled)", "[tabindex='0']"];
+// a reply box with nothing left to press hands focus to the conversation it
+// belongs to, so the next Tab carries on from there rather than the header
+const FOCUS_HOME = { reply: "#railList .cur", scReply: "#scRail .cur" };
+// Where the keyboard goes when what it was on is gone for good (the intro, a
+// tip): the reply you owe, else the conversation you're in.
+function focusNextUp() {
+  const box = $("scene").classList.contains("on") ? $("scReply") : $("reply");
+  const el = NEXT_UP.map(q => box.querySelector(q)).find(Boolean) || document.querySelector(FOCUS_HOME[box.id]);
+  if (el && !el.closest("[inert]")) el.focus({ preventScroll: true });
+}
+for (const sel of FOCUS_BOXES) {
+  const box = document.querySelector(sel);
+  new MutationObserver(() => {
+    const f = lastFocus;
+    if (!kbdNav || !f || f.box !== box || (document.activeElement && document.activeElement !== document.body)) return;
+    const attr = f.key && "[data-" + f.key.replace(/[A-Z]/g, c => "-" + c.toLowerCase()) + '="' + CSS.escape(f.val) + '"]';
+    const el = (attr && box.querySelector(attr)) || (f.cls && box.querySelector("." + CSS.escape(f.cls) + ":not(:disabled)")) ||
+      NEXT_UP.map(q => box.querySelector(q)).find(Boolean) || (FOCUS_HOME[box.id] && document.querySelector(FOCUS_HOME[box.id]));
+    if (el && !el.closest("[inert]")) el.focus();
+  }).observe(box, { childList: true, subtree: true });
+}
 
 // Rotating a phone, or dragging a desktop window narrow, swaps the whole shape
 // mid-run. Land on something coherent: the desktop has no Moves or Journal
