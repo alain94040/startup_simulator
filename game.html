@@ -3595,6 +3595,31 @@ $("gRunway").onclick = () => setSurface(surface === "bank" ? "msgs" : "bank");
 // Enter or Space presses a div that plays a button (RB above), as it would a
 // real one. Escape closes whatever is on top: the tip, the lightbox, the bell's
 // list, the to-do popover, then the Bank.
+// The arrow keys walk a row of like things — the conversations, the reply
+// chips, a Your-move card's options, the phone's tabs — as Tab does, but
+// without leaving the row; Home and End jump to its ends. Enter still picks.
+const ARROW_ROWS = [
+  ["#railList, #scRail", "[tabindex='0']"],
+  ["#reply .chips-scroll, #scReply", ".chip"],
+  [".mv-opts", "button"],
+  ["#railNews", ".nw"],
+  ["#tabbar", "button"],
+];
+const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: "first", End: "last" };
+function arrowMove(el, step) {
+  for (const [rowSel, itemSel] of ARROW_ROWS) {
+    const row = el.closest(rowSel);
+    if (!row || !el.matches(itemSel)) continue;
+    const items = [...row.querySelectorAll(itemSel)].filter(x => !x.disabled && x.getClientRects().length);
+    const i = items.indexOf(el);
+    if (i < 0) return false;
+    const to = step === "first" ? 0 : step === "last" ? items.length - 1 : Math.min(items.length - 1, Math.max(0, i + step));
+    items[to].focus();
+    items[to].scrollIntoView({ block: "nearest", inline: "nearest" });
+    return true;
+  }
+  return false;
+}
 document.addEventListener("keydown", (e) => {
   // the cinematic between rooms takes Enter and Space for itself (showCine)
   if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || $("cine").classList.contains("show")) return;
@@ -3604,6 +3629,7 @@ document.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || !e.repeat) el.click();
     return;
   }
+  if (ARROWS[e.key] && el.closest && arrowMove(el, ARROWS[e.key])) { e.preventDefault(); return; }
   if (e.key !== "Escape") return;
   if (tipOpen) closeTip();
   else if ($("lightbox").classList.contains("show")) $("lightbox").classList.remove("show");
