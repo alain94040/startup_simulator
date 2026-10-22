@@ -3626,6 +3626,14 @@ const syncInert = () => {
 };
 for (const id of ["scene", "introOv", "endOv", "scSelfOv"]) new MutationObserver(syncInert).observe($(id), { attributes: true, attributeFilter: ["class"] });
 syncInert();
+// Safari, and Firefox on a Mac, leave <button>s out of the Tab order unless
+// the player has turned on "Press Tab to highlight each item" (Option-Tab
+// otherwise): there, Tab reached the conversations (they carry tabindex) but
+// never Respond, a reply chip or Start the game. A button with an explicit
+// tabindex is in the Tab order everywhere, so every button gets one.
+const tabAll = (root) => { for (const b of root.querySelectorAll("button:not([tabindex])")) b.tabIndex = 0; };
+tabAll(document);
+new MutationObserver(() => tabAll(document)).observe(document.body, { childList: true, subtree: true });
 // Most renders rebuild their box with innerHTML, which throws away the button
 // the keyboard was on: Continue on the intro, Respond, a reply chip. Focus fell
 // back to the page and the next Tab started over from the header. When that
