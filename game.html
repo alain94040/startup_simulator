@@ -47,7 +47,14 @@
   .gauge.clickable { cursor: pointer; border-radius: 8px; padding: 2px 6px; margin: -2px -6px; }
   .gauge.clickable:hover, .gauge.clickable.cur { background: var(--blue-soft); }
   .hdr-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
-  .dots { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); }
+  .dots { position: relative; display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--dim); border-radius: 8px; padding: 6px; margin: -6px; cursor: default; }
+  .dots:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+  /* what the dots mean, on hover and on keyboard focus (a native title shows on
+     neither a focus nor a tap). Tapping the dots on a phone focuses them, so the
+     same rule covers touch. */
+  .dots .dots-tip { position: absolute; top: calc(100% + 8px); right: -4px; z-index: 30; width: max-content; max-width: 240px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 500; line-height: 1.35; padding: 6px 10px; border-radius: 8px; box-shadow: 0 4px 14px rgba(20,20,40,.18); opacity: 0; visibility: hidden; transform: translateY(-3px); transition: opacity .15s, transform .15s, visibility .15s; pointer-events: none; }
+  .dots .dots-tip::before { content: ""; position: absolute; bottom: 100%; right: 14px; border: 5px solid transparent; border-bottom-color: var(--ink); }
+  .dots:hover .dots-tip, .dots:focus .dots-tip { opacity: 1; visibility: visible; transform: none; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--blue); transition: background .3s; }
   .dot.spent { background: #d7d7de; }
   .free-note { font-size: 11px; color: var(--amber-ink); font-weight: 600; }
@@ -1042,7 +1049,7 @@
     <div class="gauge todo" id="gTodo" role="button" tabindex="0" aria-haspopup="true"><div class="g-lbl" id="gTdL">☑ To-do ▾</div><div class="g-val" id="gTdV"></div><div class="g-bar"><i id="gTdB" style="background:#7c5cff"></i></div></div>
   </div>
   <div class="hdr-right">
-    <div class="dots" id="dots"></div>
+    <div class="dots" id="dots" tabindex="0" role="img" aria-describedby="dotsTip"></div>
     <button class="hdr-btn" id="hScore" title="see your founder report card again" style="display:none">🎓 Report card</button>
     <button class="hdr-btn icon" id="hRestart" title="start a new run">↻</button>
     <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
@@ -1512,7 +1519,8 @@ function gatedKeys(nodeId) {
 // The gauges read the same on both shapes, just shorter on a phone chip:
 // "12 wks · $6,400" becomes "12w · $6.4k", and the chapter label drops to its
 // "Ch 3" half (the full title has a whole tab to itself over in Journal).
-const runwayText = (runway, cash) => isMobile ? runway + "w · " + moneyShort(cash) : runway + " wks · " + money(cash);
+const wks = n => n + (n === 1 ? " wk" : " wks");
+const runwayText = (runway, cash) => isMobile ? runway + "w · " + moneyShort(cash) : wks(runway) + " · " + money(cash);
 const shortStage = lbl => isMobile ? String(lbl).split(" · ")[0] : lbl;
 // The phone's nav bar: the surface you're on.
 function renderNavTitle() {
@@ -1527,7 +1535,7 @@ function renderHeader() {
   $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
   const dIn = game.s.deadline_week - st.week;
   $("gYcL").textContent = isMobile ? "YC in" : "YC deadline";
-  if (dIn > 0) { $("gYcV").textContent = dIn + (isMobile ? "w" : " wks left"); $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
+  if (dIn > 0) { $("gYcV").textContent = (isMobile ? dIn + "w" : wks(dIn) + " left"); $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
   else { $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
   renderNavTitle();
   const stg = currentStage(), c = stageCounts(stg);
@@ -1538,7 +1546,13 @@ function renderHeader() {
   $("gTodo").classList.toggle("call", game.openActions().some(a => !a.onHold && a.kind === "story"));
   const dots = [];
   for (let i = 0; i < 2; i++) dots.push('<div class="dot ' + (i < st.actionsLeft ? "" : "spent") + '"></div>');
-  $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("");
+  const left = st.actionsLeft;
+  const tip = game.scene ? "Time is paused while you're in the room: every answer in here is free."
+    : left > 0 ? "You have " + left + (left === 1 ? " move" : " moves") + " left this week."
+    : "No moves left this week.";
+  $("dots").setAttribute("aria-label", left + " of 2 moves left");
+  $("dots").innerHTML = (game.scene ? '<span class="free-note">time paused · moves free</span>' : "") + dots.join("")
+    + '<span class="dots-tip" id="dotsTip" role="tooltip">' + tip + "</span>";
   // ── phone tab bar ── the same count on every tab (no zeroing of the tab
   // you're viewing), so switching tabs never changes the numbers.
   // Chat: unread conversations, iMessage-style. Opening a thread reveals it
