@@ -30,10 +30,10 @@
     fx: () => "Company registered. Tax number assigned, bank account open. $500 gone — you're officially a company.",
   };
 
-  const KICKOFF_JOURNAL = "Alex took profiles and matching, Jordan's on the iPhone app, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.";
+  const KICKOFF_JOURNAL = "Alex took profiles and matching, Jordan's on the iPhone app, I'll cover everything else.";
   function kickoffFx(s) {
     kickoff(s);
-    return "Alex is on profiles and matching. Jordan's on the iPhone app. Activity planning goes on the someday list — that's a second product. You're building the core first.";
+    return "Alex is on profiles and matching. Jordan's on the iPhone app.";
   }
 
   const mod = {
