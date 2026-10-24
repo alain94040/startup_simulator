@@ -30,11 +30,20 @@
     fx: () => "Company registered. Tax number assigned, bank account open. $500 gone — you're officially a company.",
   };
 
+  const KICKOFF_JOURNAL = "Alex took profiles and matching, Jordan's on the iPhone app, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.";
+  function kickoffFx(s) {
+    kickoff(s);
+    return "Alex is on profiles and matching. Jordan's on the iPhone app. Activity planning goes on the someday list — that's a second product. You're building the core first.";
+  }
+
   const mod = {
     nodes: [
       {
         id: "start_prototype", char: "alex",
         text: "that's it, i quit! now we can really get started on plusone. we have 25 weeks. i'll build the engine behind the app: accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app, on top of her day job. are we starting?",
+        // Two replies that differ only in tone, so the very first message
+        // shows how the game works (pick one of the options) without asking
+        // the player to make a real call yet. Both start the build the same way.
         choices: [
           {
             key: "build", label: "Yes, let's start building",
@@ -42,11 +51,15 @@
             // The whole team's plan, not just Alex's: the journal's first line,
             // not a jot in his chat (and the line the journal tip points at).
             inJournal: true,
-            journal: "Told the team to start building today. Alex took profiles and matching, Jordan's on the iPhone app, I'll cover everything else. We're shelving the activity-planning idea — it's really a second product. Core first.",
-            fx(s) {
-              kickoff(s);
-              return "Alex is on profiles and matching. Jordan's on the iPhone app. Activity planning goes on the someday list — that's a second product. You're building the core first.";
-            },
+            journal: "Told the team to start building today. " + KICKOFF_JOURNAL,
+            fx: kickoffFx,
+          },
+          {
+            key: "celebrate", label: "Yes, but celebrate first",
+            reply: "yes!! drinks tonight to celebrate, and tomorrow we start. you take the engine, jordan takes the iPhone app, and i'll handle everything else.",
+            inJournal: true,
+            journal: "Drinks with the team to celebrate, then straight to work. " + KICKOFF_JOURNAL,
+            fx: kickoffFx,
           },
         ],
         // Ignored: they start anyway — you just weren't the one who said go.
