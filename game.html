@@ -3401,8 +3401,11 @@ const TIPS = [
     body: () => "Everything still open can wait. Spend your moves on it anyway, or end the week here." },
 ];
 // The first money a choice moved (not the weekly burn): the moment to meet the Bank.
+// Week 1 is skipped: its only money is the optional $75 for celebration drinks,
+// and the tip waits for the first real cost (usually the $500 incorporation).
 function firstChoiceTx() {
-  const all = game.ledger.flatMap(w => w.transactions).concat(game._weekTx);
+  const all = game.ledger.filter(w => w.week > 1).flatMap(w => w.transactions)
+    .concat(game.s.week > 1 ? game._weekTx : []);
   return all.find(t => t.type === "expense" || t.type === "income") || null;
 }
 function tipBlocked() {

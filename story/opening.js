@@ -43,7 +43,8 @@
         text: "that's it, i quit! now we can really get started on plusone. we have 25 weeks. i'll build the engine behind the app: accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app, on top of her day job. are we starting?",
         // Two replies that differ only in tone, so the very first message
         // shows how the game works (pick one of the options) without asking
-        // the player to make a real call yet. Both start the build the same way.
+        // the player to make a real call yet. Both start the build the same
+        // way; celebrating costs $75 of drinks, too little to matter.
         choices: [
           {
             key: "build", label: "Yes, let's start building",
@@ -58,7 +59,9 @@
             key: "celebrate", label: "Yes, but celebrate first",
             reply: "yes!! drinks tonight to celebrate, and tomorrow we start. you take the engine, jordan takes the iPhone app, and i'll handle everything else.",
             inJournal: true,
-            journal: "Drinks with the team to celebrate, then straight to work. " + KICKOFF_JOURNAL,
+            journal: "Drinks with the team to celebrate ($75), then straight to work. " + KICKOFF_JOURNAL,
+            payee: "Drinks to celebrate",
+            effects: { cash: -75 },
             fx: kickoffFx,
           },
         ],
