@@ -3462,6 +3462,14 @@ function showTip(tip) {
   clearInterval(tipAim); tipAim = setInterval(placeTip, 250);
 }
 let tipAim = null, tipReturn = null;
+// A click on the dimmed screen closes the tip and goes through to whatever is
+// under it, so "click Respond" works the first time the player tries it.
+$("tipLayer").addEventListener("click", ev => {
+  if (!tipOpen || ev.target.closest("#tipBubble")) return;
+  closeTip();
+  const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  if (el) el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: ev.clientX, clientY: ev.clientY }));
+});
 function closeTip() {
   clearInterval(tipAim); tipAim = null;
   tipOpen = null;

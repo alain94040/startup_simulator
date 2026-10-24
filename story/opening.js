@@ -37,8 +37,8 @@
         text: "that's it, i quit! now we can really get started on plusone. we have 25 weeks. i'll build the engine behind the app: accounts, matching, the stuff nobody sees. jordan's offered to build the iPhone app, on top of her day job. are we starting?",
         choices: [
           {
-            key: "build", label: "Game on — everyone start building",
-            reply: "let's do this. you take the engine, jordan takes the iPhone app. i'll handle everything else. game on.",
+            key: "build", label: "Yes, let's start building",
+            reply: "yes! let's do this. you take the engine, jordan takes the iPhone app, and i'll handle everything else.",
             // The whole team's plan, not just Alex's: the journal's first line,
             // not a jot in his chat (and the line the journal tip points at).
             inJournal: true,
