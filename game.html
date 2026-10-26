@@ -451,6 +451,18 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
+  /* About sheet (the header's ⓘ): the making-of link and the legal line */
+  #aboutModal { padding: 0; overflow: hidden; }
+  .about-body { padding: 22px 26px 20px; }
+  .about-body h2 { font-size: 20px; font-weight: 800; margin: 0 0 8px; }
+  .about-body p { font-size: 13.5px; line-height: 1.6; color: #55555c; margin: 0 0 12px; }
+  .about-link { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: var(--ink); margin: 6px 0 14px; transition: .13s; }
+  .about-link:hover { background: var(--soft); }
+  .about-link b { display: block; font-size: 14px; }
+  .about-link span { font-size: 12px; color: var(--dim); }
+  .about-link .ar { margin-left: auto; color: var(--blue); font-weight: 800; font-size: 15px; }
+  .about-legal { font-size: 11px; line-height: 1.5; color: var(--dim); border-top: 1px solid var(--soft); padding-top: 12px; }
+  .about-close { width: 100%; margin-top: 16px; }
   /* first-time tips: a sketchbook card — a hand-drawn border, a speech-bubble tail
      to the feature it explains, and a scribbled circle around it on a dimmed screen.
      The circle (#tipDeco, under the card) and tail (#tipTail, over it) are drawn by placeTip(); "Kalam" is loaded
@@ -959,6 +971,8 @@
     .intro-person .av { width: 60px; height: 60px; }
     .intro-art { height: clamp(100px, calc(92dvh - 450px), 50vw); }  /* sheet tops out at 92dvh */
     .intro-next { padding: 12px 20px; }
+    #aboutModal { padding: 0; }
+    .about-body { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
     /* a fingertip, not a cursor: the desktop's 14×26 hit areas are too small to
        land on the dot you meant, so each gets a 44px-tall, 26px-wide target */
     .intro-dots { margin-left: -10px; }
@@ -1044,6 +1058,7 @@
   <div class="hdr-right">
     <div class="dots" id="dots"></div>
     <button class="hdr-btn" id="hScore" title="see your founder report card again" style="display:none">🎓 Report card</button>
+    <button class="hdr-btn icon" id="hAbout" title="about this game" aria-label="About this game" aria-haspopup="dialog">ⓘ</button>
     <button class="hdr-btn icon" id="hRestart" title="start a new run">↻</button>
     <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
   </div>
@@ -1113,6 +1128,17 @@
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
+<div class="overlay" id="aboutOv"><div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="intro-stripe"></div>
+  <div class="about-body">
+    <div class="intro-eyebrow">About</div>
+    <h2 id="aboutTitle">PlusOne</h2>
+    <p>A game about the first 25 weeks of a startup: what to build, who to listen to, how to spend the money, when to have the hard conversation.</p>
+    <a class="about-link" id="aboutMakingOf" target="_blank" rel="noopener"><div><b>The making of PlusOne</b><span>How the game was designed and built</span></div><span class="ar">→</span></a>
+    <div class="about-legal">PlusOne is a work of fiction. Not affiliated with or endorsed by Y Combinator or any company or person named in the game. Y Combinator is a trademark of Y Combinator Management, LLC, used here only to describe the program.</div>
+    <button class="intro-next about-close" id="aboutClose">Back to the game</button>
+  </div>
+</div></div>
 <div id="tipLayer"><div id="tipRing"></div>
   <svg id="tipDeco"><defs><filter id="tipRough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter></defs><g id="tipInk"></g></svg>
   <div id="tipBubble"></div><svg id="tipTail"><g id="tipTailInk"></g></svg></div>
@@ -3227,6 +3253,17 @@ function restartGame() {
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
 $("hRestart").onclick = restartGame;
+// ── about ─────────────────────────────────────────────────────────────────────
+// The header's ⓘ: the making-of post and the legal line, reachable any time
+// without crowding the game's own screens.
+const MAKING_OF_URL = "https://foundrs.com/the-making-of-a-startup-simulator.html";
+$("aboutMakingOf").href = MAKING_OF_URL;
+$("aboutMakingOf").onclick = () => track("About: making-of");
+function openAbout() { track("About"); $("aboutOv").classList.add("on"); $("aboutClose").focus(); }
+function closeAbout() { $("aboutOv").classList.remove("on"); syncInert(); $("hAbout").focus(); }
+$("hAbout").onclick = openAbout;
+$("aboutClose").onclick = closeAbout;
+$("aboutOv").onclick = (e) => { if (e.target === $("aboutOv")) closeAbout(); };
 
 // ── intro ─────────────────────────────────────────────────────────────────────
 // The intro is only the premise and the bar to beat. How to play is taught in
@@ -3425,7 +3462,7 @@ function firstChoiceTx() {
 }
 function tipBlocked() {
   if (uiBusy || gameEnded() || tipOpen) return true;
-  for (const id of ["introOv", "endOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
+  for (const id of ["introOv", "endOv", "scSelfOv", "aboutOv"]) if ($(id).classList.contains("on")) return true;
   return $("cine").classList.contains("show") || $("lightbox").classList.contains("show");
 }
 var tipTimer = null;   // var: render() may run before this line does
@@ -3659,6 +3696,7 @@ document.addEventListener("keydown", (e) => {
   if (ARROWS[e.key] && el.closest && arrowMove(el, ARROWS[e.key])) { e.preventDefault(); return; }
   if (e.key !== "Escape") return;
   if (tipOpen) closeTip();
+  else if ($("aboutOv").classList.contains("on")) closeAbout();
   else if ($("lightbox").classList.contains("show")) $("lightbox").classList.remove("show");
   else if ($("noteCenter").classList.contains("show")) { $("noteCenter").classList.remove("show"); $("bell").focus(); }
   else if ($("todoPop").classList.contains("on")) { $("todoPop").classList.remove("on"); $("gTodo").focus(); }
@@ -3672,12 +3710,12 @@ document.addEventListener("keydown", (e) => {
 // order while it is up: a room hides the world, the intro and the report card
 // hide the world and any room, and the founder's "Your call" card hides its room.
 const syncInert = () => {
-  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on");
+  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on") || $("aboutOv").classList.contains("on");
   const room = $("scene").classList.contains("on");
   for (const sel of ["header", "main", "#tabbar"]) document.querySelector(sel).inert = card || room;
   $("scene").inert = card || $("scSelfOv").classList.contains("on");
 };
-for (const id of ["scene", "introOv", "endOv", "scSelfOv"]) new MutationObserver(syncInert).observe($(id), { attributes: true, attributeFilter: ["class"] });
+for (const id of ["scene", "introOv", "endOv", "scSelfOv", "aboutOv"]) new MutationObserver(syncInert).observe($(id), { attributes: true, attributeFilter: ["class"] });
 syncInert();
 // Safari, and Firefox on a Mac, leave <button>s out of the Tab order unless
 // the player has turned on "Press Tab to highlight each item" (Option-Tab
