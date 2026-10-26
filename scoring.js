@@ -23,7 +23,8 @@
 //   max, verdict, notes, moments: [{ key, label, got, max, note, reached,
 //   optional?, voided? }] }]. `voided`: zeroed by a terminal ending.
 // finalGrade(g) → the sum of points, 0-100 (capped by gradeCap(g) when the
-// company died). moment(g, key) → one moment.
+// company died). moment(g, key) → one moment. scoreSoFar(g) → the same
+// lessons graded on the moments reached so far (the mid-run Score card).
 // Pure logic, no DOM; dual export (module.exports / window.Scoring).
 // Safe to call in any game state.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -379,12 +380,40 @@
     return cap ? Math.min(sum, cap.cap) : sum;
   }
 
+  // The score so far, for a run still in progress (or one the player ended
+  // early): each lesson graded only on the moments the run has reached, so a
+  // week-9 card isn't an F for everything still ahead. Optional moments never
+  // met are left out rather than given away. `score` is null when nothing in
+  // that lesson has been reached yet; `ahead` counts the moments still to come.
+  // Same flinch cap as the final card, so the letter can't praise a lesson
+  // whose takeaway says "gave in".
+  const STANDING = new Set(["full-time", "runway", "answered"]);
+  function scoreSoFar(g) {
+    let got = 0, max = 0, made = 0, ahead = 0;
+    const lessons = scoreGame(g).map(c => {
+      // Standing moments (never took contract work, never ran low, answered
+      // Alex) are "reached" from week 1, before the player has decided
+      // anything; on their own they'd hand a fresh run an A. They count only
+      // once the lesson has a real call in it.
+      const calls = c.moments.filter(m => m.reached && !m.optional && !STANDING.has(m.key));
+      const reached = calls.length ? c.moments.filter(m => m.reached && !m.optional) : [];
+      const left = c.moments.filter(m => !m.reached && !m.optional).length;
+      const p = reached.reduce((n, m) => n + m.got, 0), mx = reached.reduce((n, m) => n + m.max, 0);
+      got += p; max += mx; made += reached.length; ahead += left;
+      const flinched = reached.some(m => m.max >= 3 && m.got < 0.75 * m.max);
+      const raw = mx ? Math.round(100 * p / mx) : null;
+      const score = raw == null ? null : flinched ? Math.min(raw, 84) : raw;
+      return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, moments: reached };
+    });
+    return { lessons, score: max ? Math.round(100 * got / max) : null, made, ahead };
+  }
+
   function moment(g, key) {
     for (const c of scoreGame(g)) for (const m of c.moments) if (m.key === key) return m;
     return null;
   }
 
-  const api = { scoreGame, finalGrade, gradeCap, moment, DEAD_CAP };
+  const api = { scoreGame, scoreSoFar, finalGrade, gradeCap, moment, DEAD_CAP };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.Scoring = api;
 })();
