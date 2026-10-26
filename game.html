@@ -1372,16 +1372,29 @@ const STAGES = [
 const urlSeed = new URLSearchParams(location.search).get("seed");
 let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
 let game = new Engine({ seed });
-// Progress telemetry: each week reached, each scene entered and how the run
-// ended are sent to Clicky as dynamic goals ("Week 07", "Scene: launch",
-// "End: deadline", "Grade: B"), so the Goals report reads as a funnel of how
-// far players get. A no-op when the tracker is blocked or hasn't loaded; each
-// goal fires once per page load.
+// Progress telemetry: each intro card seen ("Intro 2 of 5", then "Intro done"),
+// each first-time tip shown ("Tip 03 moves"), each week reached, each scene
+// entered and how the run ended are sent to Clicky as dynamic goals ("Week 07",
+// "Scene: launch", "End: deadline", "Grade: B"), so the Goals report reads as a
+// funnel of how far players get. Goals fired before the async tracker has
+// loaded (the first intro card fires on page load) wait for it for up to 30s;
+// a no-op when the tracker is blocked. Each goal fires once per page load.
 const tracked = new Set();
+let trackQueue = [], trackWait = null;
 function track(goal) {
   if (tracked.has(goal)) return;
   tracked.add(goal);
-  try { if (window.clicky && clicky.goal) clicky.goal(goal); } catch (e) {}
+  trackQueue.push(goal);
+  flushTrack();
+}
+function flushTrack() {
+  if (window.clicky && clicky.goal) {
+    clearInterval(trackWait); trackWait = null;
+    for (const g of trackQueue.splice(0)) { try { clicky.goal(g); } catch (e) {} }
+  } else if (!trackWait) {
+    let tries = 0;
+    trackWait = setInterval(() => { if (++tries > 60) { clearInterval(trackWait); trackWait = null; trackQueue = []; } else flushTrack(); }, 500);
+  }
 }
 const gameEnded = () => game.s.game_over || game.s.game_won;   // run is over — browsing only, no more calls
 let selected = "alex";
@@ -3240,6 +3253,7 @@ let introStep = 0;
 // a new player sees the bar to beat before week 1.
 function showIntro() {
   const boardStep = introStep >= INTRO.length;
+  track("Intro " + (introStep + 1) + " of " + (INTRO.length + 1));
   // The dots double as navigation: any card, the board included, is one click away.
   const dots = INTRO.concat([0]).map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
     '<i class="' + (i === introStep ? "on" : "") + '"></i></button>').join("");
@@ -3270,6 +3284,7 @@ function showIntro() {
       '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   }
   const done = () => {
+    track("Intro done");
     $("introOv").classList.remove("on"); queueTipCheck();
     // the keyboard lands where the game starts: Alex's Respond
     if (kbdNav) focusNextUp();
@@ -3441,6 +3456,7 @@ function maybeShowTip() {
   }
 }
 function showTip(tip) {
+  track("Tip " + String(TIPS.indexOf(tip) + 1).padStart(2, "0") + " " + tip.id);
   tipsSeen.add(tip.id);
   try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
   tipOpen = tip;
