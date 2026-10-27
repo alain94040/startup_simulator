@@ -395,6 +395,16 @@
   .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+  /* ── going back to a week (openRewind, offerResume): a grid of week starts ── */
+  .rw-list { max-height: min(44vh, 330px); overflow-y: auto; margin-top: 4px; padding-right: 2px; }
+  .rw-ch { margin-top: 12px; }
+  .rw-chname { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+  .rw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
+  .rw-wk { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 10px; padding: 5px 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; font: inherit; }
+  .rw-wk b { font-size: 13px; }
+  .rw-wk span { font-size: 11px; color: var(--dim); }
+  .rw-wk:hover, .rw-wk:focus-visible { border-color: var(--blue); background: var(--blue-soft); }
+  .rw-wk.cur { border-color: var(--blue); }
   .sf-fine { font-size: 11px; color: var(--dim); text-align: right; margin-top: 8px; }
   .sf-live { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 12px; }
   .sf-live.pop { animation: gradePop .44s cubic-bezier(.2,.9,.3,1.35); }
@@ -2214,7 +2224,9 @@ function doAct(nodeId, key, charId) {
   // that lands in someone ELSE's thread (not the one just answered) needs to
   // be caught the moment it happens — see pingOtherSceneThreads.
   const preSceneLens = inScene ? sceneThreadLens() : null;
+  const acted = game.log.length;
   game.act(nodeId, key);
+  if (game.log.length > acted) recordCall([nodeId, key]);   // act() returns the fx's recap, not success: a taken call is a new log line
   const entering = !preScene && game.scene;
   if (charId) threadRendered[charId] = entering ? repliedThrough(charId, preSeq) : game.threads[charId].length;
   // your own mid-week choices ink into the journal mirror at once (ungLowed);
@@ -2720,6 +2732,7 @@ function advanceWeek() {
   const cashBefore = game.stats().cash;
 
   game.nextWeek();
+  recordCall(0);
   if (!gameEnded()) track("Week " + String(game.s.week).padStart(2, "0"));
 
   // gather this week's notifications (todo check-offs first, then arrivals)
@@ -3228,7 +3241,7 @@ function checkEndgame() {
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
     + '<div class="intro-foot">' + egDots(2)
-      + '<div class="sf-foot" style="margin-top:0"><button class="sf-alt" onclick="restartGame()">Play again</button>'
+      + '<div class="sf-foot" style="margin-top:0"><button class="sf-alt" onclick="openRewind(\'report\')">Play again</button>'
       + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div></div>'
     + "</div>";
 
@@ -3319,7 +3332,7 @@ function openScoreSoFar() {
     + '<div class="sf-foot"><button class="sf-alt" id="sfAgain">Restart the game</button>'
     + '<button class="intro-next" id="sfClose">Keep playing</button></div>';
   $("sfClose").onclick = closeReportCard;
-  $("sfAgain").onclick = () => restartGame("Restarted: week " + s.week);
+  $("sfAgain").onclick = () => openRewind("score");
   $("endOv").classList.add("on");
   track("Score opened");
 }
@@ -3349,10 +3362,159 @@ $("endOv").addEventListener("click", (e) => {
   if (e.target === $("endOv") && !gameEnded()) closeReportCard();
 });
 function restartGame(goal) {
-  if (!confirm("Start a new run? " + (gameEnded() ? "This run's chat history won't be reachable afterward." : "Your current progress will be lost."))) return;
+  if (!confirm("Start a new run from week 1? The weeks saved from this one will be gone.")) return;
   if (typeof goal === "string") track(goal);
+  clearSave();
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
+
+// ── saved runs: go back to any week ──────────────────────────────────────────
+// A run is saved in localStorage as its seed plus every call made in it (each
+// answer, each week turn). The engine owns all the randomness, so replaying
+// that log on a fresh Engine rebuilds the run exactly, and stopping the replay
+// at a week turn gives the start of that week. So a player who went broke at
+// week 14 can go back to week 10 instead of starting over: from the Score
+// card's Restart, the report card's Play again, or the welcome-back card a
+// reload opens with. Only the latest run is kept.
+// A save from an older build is dropped, not half-replayed: SAVE_VERSION is
+// the manual stamp (bump it when a change would replay old saves wrongly),
+// and the replay itself is the automatic one: a call the engine no longer
+// offers, or a week that no longer starts with the cash it was saved with,
+// means the story changed under the save.
+const SAVE_KEY = "plusone_run";
+const SAVE_VERSION = 1;
+let runLog = null;   // { seed, log, weeks } of the run on screen; null for a debug jump (not saved)
+function chapterName(st) { return String(stageLabel(st, false)).split(" · ").pop(); }
+// The start of the week on screen: where the log stood, and enough to label
+// it in the picker and to check a replay against.
+function checkpoint() {
+  const st = currentStage();
+  return { w: game.s.week, i: runLog.log.length, cash: Math.round(game.s.cash), ch: STAGES.indexOf(st) + 1, name: chapterName(st), over: gameEnded() };
+}
+function startRun() {
+  runLog = { seed, log: [], weeks: [] };
+  runLog.weeks.push(checkpoint());
+}
+// Nothing is written until the first call: a fresh page (or a rewind) must
+// not overwrite the save before the player has played anything new.
+function recordCall(entry) {
+  if (!runLog) return;
+  runLog.log.push(entry);
+  if (entry === 0) runLog.weeks.push(checkpoint());
+  try {
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, seed: runLog.seed, log: runLog.log, weeks: runLog.weeks, at: Date.now() }));
+  } catch (e) { /* no storage: the run just isn't saved */ }
+}
+function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+// Replay a save's log up to `upto` calls; null if it no longer replays.
+function replaySave(save, upto) {
+  const g = new Engine({ seed: save.seed });
+  const at = new Map(save.weeks.map(c => [c.i, c]));
+  for (let i = 0; i <= upto; i++) {
+    const cp = at.get(i);
+    // every week start on the way must match what was saved, and is never
+    // inside a room (the UI can't turn a week mid-sitting)
+    if (cp && (g.s.week !== cp.w || Math.round(g.s.cash) !== cp.cash || (g.scene && !cp.over))) return null;
+    if (i === upto) break;
+    const e = save.log[i];
+    if (e === 0) g.nextWeek();
+    else {
+      const n = g.log.length;
+      if (!Array.isArray(e)) return null;
+      g.act(e[0], e[1]);
+      if (g.log.length === n) return null;   // the engine no longer offers that call
+    }
+  }
+  return g;
+}
+function loadSave() {
+  let save;
+  try { save = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { return null; }
+  if (!save || save.v !== SAVE_VERSION || !Array.isArray(save.log) || !Array.isArray(save.weeks) || !save.weeks.length) return null;
+  try { if (!replaySave(save, save.log.length)) { clearSave(); return null; } }
+  catch (e) { clearSave(); return null; }
+  return save;
+}
+// The weeks a save can go back to: every week start that wasn't already the
+// end of the run (going broke at the week turn into week 14 leaves 1–13).
+const rewindWeeks = save => save.weeks.filter(c => !c.over);
+
+// Swap the run on screen for the save, replayed to the start of week `w`.
+// The save itself keeps the weeks after it until the player makes a move, so
+// a slip (or a reload) still finds them.
+function rewindTo(save, w, goal) {
+  const cp = save.weeks.find(c => c.w === w && !c.over);
+  const g = cp && replaySave(save, cp.i);
+  if (!g) { alert("That week can't be restored any more (the game has changed since it was saved)."); return; }
+  game = g; seed = save.seed; $("dbgSeed").value = seed;
+  runLog = { seed, log: save.log.slice(0, cp.i), weeks: save.weeks.filter(c => c.i <= cp.i && !c.over) };
+  resetUiState(); dbgReset();
+  // everything up to this week was already read the first time through
+  for (const id of game.order) { threadRendered[id] = game.threads[id].length; feedSeenLen[id] = game.threads[id].length; }
+  $("introOv").classList.remove("on");
+  track(goal + ": week " + String(w).padStart(2, "0"));
+  render(); queueTipCheck();
+  if (kbdNav) focusNextUp();
+}
+
+// The week picker: every week start in the save, grouped by chapter, with
+// the cash it opened on.
+function rewindGridHtml(weeks, current) {
+  const groups = [];
+  for (const c of weeks) {
+    if (!groups.length || groups[groups.length - 1].ch !== c.ch) groups.push({ ch: c.ch, name: c.name, weeks: [] });
+    groups[groups.length - 1].weeks.push(c);
+  }
+  const money = n => (n < 0 ? "-$" : "$") + (Math.abs(n) >= 1000 ? (Math.abs(n) / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.abs(n));
+  return '<div class="rw-list">' + groups.map(gr => '<div class="rw-ch"><div class="rw-chname">Chapter ' + gr.ch + ": " + esc(gr.name) + "</div>"
+    + '<div class="rw-grid">' + gr.weeks.map(c => '<button class="rw-wk' + (c.w === current ? " cur" : "") + '" data-rw="' + c.w + '">'
+      + "<b>Week " + c.w + "</b><span>" + (c.w === current ? "now" : money(c.cash)) + "</span></button>").join("") + "</div></div>").join("") + "</div>";
+}
+// A long run scrolls: open on its latest weeks, the ones most players want.
+const rewindScrollEnd = root => { const l = root.querySelector(".rw-list"); if (l) l.scrollTop = l.scrollHeight; };
+// From the Score card ("score") or the report card ("report"): go back to any
+// week of this run, or start a new one.
+function openRewind(from) {
+  const save = runLog && { seed: runLog.seed, log: runLog.log, weeks: runLog.weeks };
+  const weeks = save ? rewindWeeks(save) : [];
+  const live = !gameEnded();
+  $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Restart</div>'
+    + '<div class="eg-headline">' + (weeks.length > 1 || (weeks.length && !live) ? "Go back to the start of any week." : "Start over.") + "</div>"
+    + '<div class="sf-chapter">' + (weeks.length ? "Same story, same luck: from there, play it differently. Everything after that week is replaced by what you play next." : "") + "</div></div>"
+    + rewindGridHtml(weeks, live ? game.s.week : null)
+    + '<div class="sf-foot"><button class="sf-alt" id="rwBack">Back</button>'
+    + '<button class="intro-next" id="rwNew">New run from week 1</button></div>';
+  $("rwBack").onclick = () => from === "report" ? (openReportCard(), egPage(2)) : openScoreSoFar();
+  $("rwNew").onclick = () => restartGame("Restarted: week " + game.s.week);
+  $("endModal").querySelectorAll("[data-rw]").forEach(b => b.onclick = () => rewindTo(save, +b.dataset.rw, "Rewound"));
+  $("endOv").classList.add("on");
+  rewindScrollEnd($("endModal"));
+  track("Restart opened");
+}
+// A reload with a saved run opens on this instead of the intro: pick up where
+// you were, go back further, or start fresh.
+function offerResume() {
+  const save = loadSave();
+  const weeks = save ? rewindWeeks(save) : [];
+  if (!weeks.length) return false;
+  const last = save.weeks[save.weeks.length - 1], pick = weeks[weeks.length - 1];
+  const ended = last.over || weeks.length < save.weeks.length;
+  $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
+    + '<div class="intro-eyebrow">Welcome back</div>'
+    + '<div class="intro-step"><b>' + (ended ? "Your last run ended at week " + last.w + "." : "Your last run is at week " + last.w + ".")
+    + "</b>" + (ended ? "Go back to the start of any week you played, and take it from there." : "Pick it up where you left off, or go back to the start of an earlier week.") + "</div>"
+    + rewindGridHtml(weeks, null)
+    + '<div class="intro-foot"><div></div><div class="intro-actions"><button class="intro-skip" id="rsNew">Start a new run</button>'
+    + '<button class="intro-next" id="rsGo">' + (ended ? "Back to week " : "Continue at week ") + pick.w + " →</button></div></div></div>";
+  $("rsGo").onclick = () => rewindTo(save, pick.w, "Resumed");
+  $("rsNew").onclick = () => { if (!confirm("Start a new run from week 1? The weeks saved from your last one will be gone.")) return; clearSave(); track("Resume declined"); showIntro(); };
+  $("introModal").querySelectorAll("[data-rw]").forEach(b => b.onclick = () => rewindTo(save, +b.dataset.rw, "Resumed"));
+  $("introOv").classList.add("on");
+  rewindScrollEnd($("introModal"));
+  track("Resume offered");
+  return true;
+}
+startRun();
 // ── about ─────────────────────────────────────────────────────────────────────
 // The header's ⓘ: the making-of post and the legal line, reachable any time
 // without crowding the game's own screens.
@@ -3445,7 +3607,7 @@ async function fillIntroBoard() {
   if (!el) return;   // intro already dismissed
   el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
 }
-showIntro();
+if (!offerResume()) showIntro();
 
 // ── first-time tips ───────────────────────────────────────────────────────────
 // Onboarding happens when a feature is first needed, not up front: each tip is
@@ -3766,6 +3928,7 @@ const ARROW_ROWS = [
   ["#railList, #scRail", "[tabindex='0']"],
   ["#reply .chips-scroll, #scReply", ".chip"],
   [".mv-opts", "button"],
+  [".rw-grid", "button"],
   ["#railNews", ".nw"],
   ["#tabbar", "button"],
 ];
@@ -3927,7 +4090,7 @@ function dbgReset() {
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   btn.onclick = () => {
     seed = dbgSeed();
-    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
+    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true }); runLog = null;
     resetUiState(); dbgReset();
     // leave fresh arrivals unread so the state reads naturally, but the thread
     // you land on is read (like opening the app on your current chat)
@@ -3936,7 +4099,7 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     render();
   };
 }
-$("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
+$("dbgSkip").onclick = () => { if (uiBusy) return; runLog = null; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
 // Auto-play decent runs from the seed box until one reaches the deadline
 // having been accepted into YC (grade decided it), then jump to its reveal.
 $("dbgYC").onclick = () => {
@@ -3947,10 +4110,10 @@ $("dbgYC").onclick = () => {
     g = Harness.playGame(used, "decent");
   }
   seed = used; $("dbgSeed").value = used;
-  game = g;
+  game = g; runLog = null;
   resetUiState(); dbgReset(); render(); checkEndgame();
 };
-$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); resetUiState(); dbgReset(); render(); };
+$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); startRun(); resetUiState(); dbgReset(); render(); };
 
 syncSurfaceTabs();
 render();
