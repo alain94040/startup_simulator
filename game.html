@@ -990,6 +990,7 @@
     .intro-dots i { width: 8px; height: 8px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
+    .sf-cap { display: none; }   /* the header is tight on a phone: "Score", no cap */
 
     /* ── notifications: full-width banners, capped so they can't bury the app ── */
     /* One grouped banner at a time (see showBanner): it drops in from the top
@@ -1067,9 +1068,8 @@
   </div>
   <div class="hdr-right">
     <div class="dots" id="dots"></div>
-    <button class="hdr-btn" id="hScore" title="your score so far">🎓 Score</button>
+    <button class="hdr-btn" id="hScore" title="your score so far"><span class="sf-cap">🎓 </span>Score</button>
     <button class="hdr-btn icon" id="hAbout" title="about this game" aria-label="About this game" aria-haspopup="dialog">ⓘ</button>
-    <button class="hdr-btn icon" id="hRestart" title="start a new run">↻</button>
     <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
   </div>
   <div id="todoPop"></div>
@@ -3230,7 +3230,8 @@ function checkEndgame() {
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
     + '<div class="intro-foot">' + egDots(2)
-      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div>'
+      + '<div class="sf-foot" style="margin-top:0"><button class="sf-alt" onclick="restartGame()">Play again</button>'
+      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div></div>'
     + "</div>";
 
   egCardHtml = $("endModal").innerHTML;
@@ -3341,7 +3342,7 @@ function renderScoreButton() {
   btn.setAttribute("aria-label", score == null ? "Score: not graded yet" : (gameEnded() ? "Score: " : "Score so far: ") + g);
   const shown = score == null ? null : g;
   const changed = liveGrade !== undefined && shown !== null && shown !== liveGrade;
-  btn.innerHTML = "🎓 Score" + (score == null ? "" : ' <span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>");
+  btn.innerHTML = '<span class="sf-cap">🎓 </span>Score' + (score == null ? "" : ' <span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>");
   liveGrade = shown;
 }
 // A tap outside the Score card closes it, like the About sheet. Only the
@@ -3362,7 +3363,6 @@ function restartGame() {
   if (!confirm("Start a new run? " + (gameEnded() ? "This run's chat history won't be reachable afterward." : "Your current progress will be lost."))) return;
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
-$("hRestart").onclick = restartGame;
 // ── about ─────────────────────────────────────────────────────────────────────
 // The header's ⓘ: the making-of post and the legal line, reachable any time
 // without crowding the game's own screens.
