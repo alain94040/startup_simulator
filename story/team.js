@@ -108,7 +108,7 @@
           },
           {
             key: "slide", label: "Tell him you want him happy",
-            reply: "thanks for telling me. honestly, i want you happy doing this. we didn't quit our jobs to turn into zombies. keep building your thing.",
+            reply: "honestly? good. i don't want you burning out on this. keep the thing that makes you happy.",
             effects: { char: { alex: { morale: 3, flags: { side_project_active: true } } } },
             fx: () => "Told Alex to keep his side project. He sounded relieved. The build slows a little.",
           },
