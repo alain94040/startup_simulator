@@ -107,10 +107,10 @@
             fx: () => "Honest conversation. Alex drops the side project until after launch. Relationship stronger for it.",
           },
           {
-            key: "slide", label: "Let it slide",
-            reply: "ok. just don't let it eat into plusone.",
+            key: "slide", label: "Tell him you want him happy",
+            reply: "thanks for telling me. honestly, i want you happy doing this. we didn't quit our jobs to turn into zombies. keep building your thing.",
             effects: { char: { alex: { morale: 3, flags: { side_project_active: true } } } },
-            fx: () => "You let it slide. Alex keeps the side project going, and the build slows a little.",
+            fx: () => "Told Alex to keep his side project. He sounded relieved. The build slows a little.",
           },
         ],
         // Ignored: he keeps going, quietly — the passive build rate takes the hit.
