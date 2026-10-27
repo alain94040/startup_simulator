@@ -3344,6 +3344,12 @@ function renderScoreButton() {
   btn.innerHTML = "🎓 Score" + (score == null ? "" : ' <span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>");
   liveGrade = shown;
 }
+// A tap outside the Score card closes it, like the About sheet. Only the
+// Score card: the end-of-run report card has a reveal and a leaderboard to get
+// through, and keeps its buttons as the only way out.
+$("endOv").addEventListener("click", (e) => {
+  if (e.target === $("endOv") && (!gameEnded() || game.s.ended_early)) closeReportCard();
+});
 function endRunEarly() {
   if (!confirm("End this run at week " + game.s.week + "? Your score locks, and you can't pick it back up.")) return;
   game.s.ended_early = true;
