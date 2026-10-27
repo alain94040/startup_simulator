@@ -389,7 +389,6 @@
   #endModal .intro-foot { margin-top: 16px; }
   #egPage2 .eg-outcome { margin-top: 4px; padding-top: 0; border-top: 0; }
   /* ── the Score card mid-run (openScoreSoFar): the same rows, graded so far ── */
-  .sf-ahead { color: var(--dim); font-size: 11px; margin-top: 2px; }
   .sf-chapter { color: var(--dim); font-size: 12px; margin-top: 6px; line-height: 1.4; }
   .grade.sf-none { background: var(--line) !important; color: #8a8a93; }
   .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
@@ -3277,8 +3276,8 @@ $("hScore").onclick = () => gameEnded() ? openReportCard() : openScoreSoFar();
 // ── the score so far ─────────────────────────────────────────────────────────
 // Few first runs reach week 25, so the header's Score opens a card at any
 // time: each lesson graded only on the calls made so far (Scoring.scoreSoFar),
-// and how many major calls are still ahead, without naming them. A lesson
-// with no call yet shows a dash; overall, the run starts at an A. Its two ways
+// with one vague line on how it's going: no counts, nothing ahead named. A
+// lesson with no call yet shows a dash; overall, the run starts at an A. Its two ways
 // out are the only two that matter: keep playing, or start over and take a
 // different path (the header has no restart button of its own).
 // The score moves only at week boundaries: it's taken once per week, before
@@ -3292,20 +3291,14 @@ function scoreThisWeek() {
 }
 function openScoreSoFar() {
   const s = game.s, sf = scoreThisWeek();
-  const takeaway = n => n.replace(/^Never reached: (.)/, (_, ch) => ch.toUpperCase());
   const rows = sf.lessons.map(c => {
     const [g, col] = GRADE(c.score);
-    const noted = c.moments.filter(m => m.note);
-    const missed = noted.filter(m => m.max - m.got >= 1).sort((x, y) => (y.max - y.got) - (x.max - x.got));
-    const best = noted.filter(m => m.got >= m.max).sort((x, y) => y.max - x.max);
-    const take = missed[0] || best[0];
-    const line = c.score == null ? "Nothing to grade yet." : take ? takeaway(take.note) : "";
-    // A teaser, not a count: "3 calls ahead" undersold a run of a hundred-odd
-    // decisions. The chapter line under the headline carries the scale.
-    const ahead = c.next ? "Still ahead: " + c.next + "." : "All the major calls made.";
+    // A vague read on the habit (Scoring's `hint`), not the final card's
+    // note: mid-run, "Read 1 of 4 community threads" says how many are left,
+    // and naming the next moment spoils it. The chapter line carries the scale.
+    const line = c.score == null ? "Nothing to grade yet." : c.hint || "";
     return '<div class="grade-row"><div class="grade' + (c.score == null ? " sf-none" : "") + '" style="background:' + col + '"><span class="gl">' + g + "</span></div>"
-      + '<div class="g-body"><b>' + esc(c.label) + '</b><div class="g-verdict">' + esc(line) + "</div>"
-      + '<div class="sf-ahead">' + ahead + "</div></div></div>";
+      + '<div class="g-body"><b>' + esc(c.label) + '</b><div class="g-verdict">' + esc(line) + "</div></div></div>";
   }).join("");
   // Every run starts at an A: until a lesson has a call, there's no bad call
   // to count against the player. The letter itself is the reward for

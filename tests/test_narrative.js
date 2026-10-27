@@ -244,6 +244,8 @@ function playGame(seed, driver, trace) {
 //   - No provisional zeros: a moment counted at nothing one week and at full
 //     marks the next was graded before its call was made (the buyback scored
 //     0 the week before its card, the equity split mid-sitting).
+//   - Every graded lesson has a hint, and no hint has a number in it: a count
+//     ("1 of 4 threads") tells the player how much is still out there.
 // Moments the story really does offer twice: Mom asks three times, so turning
 // her down and saying yes on her next offer is a real 0 then a real 3.
 const SECOND_CHANCES = new Set(["ff-asks"]);
@@ -254,6 +256,10 @@ function checkScoreSoFar(g, prev, ctx) {
   if (g.s.week === 2 && (sf.score !== 100 || sf.lessons.some(l => l.score != null)))
     fail(`week 2 opens at ${sf.score}, not an ungraded A`);
   if (!(sf.score >= 0 && sf.score <= 100) || sf.made < 0 || sf.ahead < 0) fail(`malformed (score=${sf.score}, made=${sf.made}, ahead=${sf.ahead})`);
+  for (const l of sf.lessons) {
+    if (l.score != null && typeof l.hint !== "string") fail(`${l.key} is graded but has no hint`);
+    if (/\d/.test(l.hint || "")) fail(`${l.key} hint has a count in it: "${l.hint}"`);
+  }
   const ratio = {};
   for (const l of sf.lessons) for (const m of l.moments) {
     const worth = m.soFarMax != null ? Math.min(m.max, m.soFarMax) : m.max;
@@ -364,7 +370,7 @@ function report(games, drivers, verbose) {
   if (scoringFailures.length > 5) console.log(`  … and ${scoringFailures.length - 5} more`);
 
   console.log("\n── Live score (scoreSoFar at every week boundary) ───────");
-  if (!scoreSoFarFailures.length) console.log("  ok   opens at an ungraded A in week 2, well-formed, no provisional zeros");
+  if (!scoreSoFarFailures.length) console.log("  ok   opens at an ungraded A in week 2, well-formed, no provisional zeros, count-free hints");
   for (const f of scoreSoFarFailures.slice(0, 5)) console.log(`  FAIL seed ${f.seed} · ${f.driver} wk${f.week} — ${f.why}`);
   if (scoreSoFarFailures.length > 5) console.log(`  … and ${scoreSoFarFailures.length - 5} more`);
 
