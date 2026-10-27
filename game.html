@@ -1433,9 +1433,7 @@ function flushTrack() {
     trackWait = setInterval(() => { if (++tries > 60) { clearInterval(trackWait); trackWait = null; trackQueue = []; } else flushTrack(); }, 500);
   }
 }
-// run is over — browsing only, no more calls. `ended_early`: the player ended
-// the run from the Score card (endRunEarly), which the engine knows nothing about.
-const gameEnded = () => game.s.game_over || game.s.game_won || !!game.s.ended_early;
+const gameEnded = () => game.s.game_over || game.s.game_won;   // run is over — browsing only, no more calls
 let selected = "alex";
 let surface = "msgs";
 let feedSeenLen = {};           // feed charId -> entries seen
@@ -3161,7 +3159,6 @@ function renderEndgameEntry(slot, board, online) {
 function checkEndgame() {
   const s = game.s;
   if (!s.game_over && !s.game_won) return;
-  if (s.ended_early) return;   // ended from the Score card, which is its own ending
   if ($("endOv").classList.contains("on")) return;   // reveal already running/shown
   const cats = Scoring.scoreGame(game);
   const avg = game.gradeScore();
@@ -3262,15 +3259,15 @@ function openReportCard() {
   egFinish();
   egPage(1);
 }
-$("hScore").onclick = () => game.s.ended_early ? openScoreSoFar(true) : gameEnded() ? openReportCard() : openScoreSoFar(false);
+$("hScore").onclick = () => gameEnded() ? openReportCard() : openScoreSoFar();
 
 // ── the score so far ─────────────────────────────────────────────────────────
 // Few first runs reach week 25, so the header's Score opens a card at any
 // time: each lesson graded only on the calls made so far (Scoring.scoreSoFar),
 // and how many major calls are still ahead, without naming them. A lesson
-// with no call yet shows a dash; overall, the run starts at an A.
-// "End my run here" makes it final: the run goes read-only like any ending,
-// with no leaderboard entry (a week-9 grade isn't comparable to a full run).
+// with no call yet shows a dash; overall, the run starts at an A. Its two ways
+// out are the only two that matter: keep playing, or start over and take a
+// different path (the header has no restart button of its own).
 // The score moves only at week boundaries: it's taken once per week, before
 // the first move, and held until the next week. A call in progress mid-week
 // (the equity talk is one long sitting) can't flicker the letter.
@@ -3280,7 +3277,7 @@ function scoreThisWeek() {
     weekScore = { game, week: game.s.week, sf: Scoring.scoreSoFar(game) };
   return weekScore.sf;
 }
-function openScoreSoFar(final) {
+function openScoreSoFar() {
   const s = game.s, sf = scoreThisWeek();
   const takeaway = n => n.replace(/^Never reached: (.)/, (_, ch) => ch.toUpperCase());
   const calls = n => n + " major call" + (n === 1 ? "" : "s");
@@ -3290,60 +3287,48 @@ function openScoreSoFar(final) {
     const missed = noted.filter(m => m.max - m.got >= 1).sort((x, y) => (y.max - y.got) - (x.max - x.got));
     const best = noted.filter(m => m.got >= m.max).sort((x, y) => y.max - x.max);
     const take = missed[0] || best[0];
-    const line = c.score == null ? (final ? "No call made here." : "Nothing to grade yet.") : take ? takeaway(take.note) : "";
-    const ahead = !c.ahead ? "All the major calls made."
-      : final ? calls(c.ahead) + " never reached." : calls(c.ahead) + " still ahead.";
+    const line = c.score == null ? "Nothing to grade yet." : take ? takeaway(take.note) : "";
+    const ahead = c.ahead ? calls(c.ahead) + " still ahead." : "All the major calls made.";
     return '<div class="grade-row"><div class="grade' + (c.score == null ? " sf-none" : "") + '" style="background:' + col + '"><span class="gl">' + g + "</span></div>"
       + '<div class="g-body"><b>' + esc(c.label) + '</b><div class="g-verdict">' + esc(line) + "</div>"
       + '<div class="sf-ahead">' + ahead + "</div></div></div>";
   }).join("");
   // Every run starts at an A: until a lesson has a call, there's no bad call
-  // to count against the player.
-  // The letter itself is the reward for finishing week 1: until then, a dash.
+  // to count against the player. The letter itself is the reward for
+  // finishing week 1: until then, a dash.
   const firstWeek = s.week <= 1;
   const [og, ocol] = GRADE(firstWeek ? null : sf.score);
   const rollCopy = firstWeek ? "<b>No score yet</b><br>Finish your first week to get one."
-    : !sf.made && final ? "<b>Final score</b><br>No bad calls, and no calls graded yet: the run ended before the first one."
     : !sf.made ? '<b>Score so far</b><span class="sf-tag">provisional</span><br>No bad calls yet: every run starts at an A. '
       + calls(sf.ahead) + " ahead."
-    : final ? "<b>Final score</b><br>Graded on the " + calls(sf.made) + " you made. " + calls(sf.ahead) + " were still ahead."
-        : '<b>Score so far</b><span class="sf-tag">provisional</span><br>Based on the ' + calls(sf.made) + " you've made. "
-          + calls(sf.ahead) + " still ahead, and they can move it either way.";
-  // With no restart button in the header, this card is the way out of a run
-  // at any point: "End my run here" once there's a letter to lock in, and in
-  // week 1, with nothing to lock in, a plain "Start over".
-  const foot = final
-    ? '<div class="sf-foot"><button class="sf-alt" id="sfClose">Back to the chat</button><button class="intro-next" id="sfAgain">Play again</button></div>'
-    : '<div class="sf-foot">' + (firstWeek ? '<button class="sf-alt" id="sfAgain">Start over</button>' : '<button class="sf-alt" id="sfEnd">End my run here</button>')
-      + '<button class="intro-next" id="sfClose">Keep playing</button></div>'
-      + (firstWeek ? "" : '<div class="sf-fine">Ending now locks this score. The rest of the story stays unplayed.</div>');
-  $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">' + (final ? "Final score" : "Score so far") + "</div>"
-    + '<div class="eg-headline">' + (final ? "You ended the run in week " + s.week + "." : !sf.made ? "Week " + s.week + ": nothing to grade yet." : "Week " + s.week + ": grading the calls you've made.") + "</div></div>"
+    : '<b>Score so far</b><span class="sf-tag">provisional</span><br>Based on the ' + calls(sf.made) + " you've made. "
+      + calls(sf.ahead) + " still ahead, and they can move it either way.";
+  $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Score so far</div>'
+    + '<div class="eg-headline">Week ' + s.week + (sf.made ? ": grading the calls you've made." : ": nothing to grade yet.") + "</div></div>"
     + rows
     + '<div class="eg-rollup eg-final"><div class="grade eg-biggrade' + (firstWeek ? " sf-none" : "") + '" style="background:' + ocol + '"><span class="gl">' + og + "</span></div>"
     + '<div class="eg-roll-copy">' + rollCopy + "</div></div>"
-    + foot;
+    + '<div class="sf-foot"><button class="sf-alt" id="sfAgain">Restart the game</button>'
+    + '<button class="intro-next" id="sfClose">Keep playing</button></div>';
   $("sfClose").onclick = closeReportCard;
-  if ($("sfEnd")) $("sfEnd").onclick = endRunEarly;
-  if ($("sfAgain")) $("sfAgain").onclick = restartGame;
+  $("sfAgain").onclick = () => restartGame("Restarted: week " + s.week);
   $("endOv").classList.add("on");
-  if (!final) track("Score opened");
+  track("Score opened");
 }
 // The header button carries the live letter, so the player sees how the run
 // is going without opening the card (and a slipping grade is a nudge to try
-// another path next run). Blank through week 1, then an A (a small reward
-// for finishing the first week) until the first call is graded (the equity
+// another path). Blank through week 1, then an A (a small reward for
+// finishing the first week) until the first call is graded (the equity
 // talk); the final grade once the run is over. It pops when it appears or
 // changes, but not on the first render of a run.
 var liveGrade;
 function renderScoreButton() {
   const btn = $("hScore");
-  const done = gameEnded() && !game.s.ended_early;
-  const sf = done ? null : scoreThisWeek();
-  const score = done ? game.gradeScore() : game.s.week <= 1 ? null : sf.score;
+  const done = gameEnded();
+  const score = done ? game.gradeScore() : game.s.week <= 1 ? null : scoreThisWeek().score;
   const [g, col] = GRADE(score);
-  btn.title = gameEnded() ? "see your score again" : "your score so far";
-  btn.setAttribute("aria-label", score == null ? "Score: not graded yet" : (gameEnded() ? "Score: " : "Score so far: ") + g);
+  btn.title = done ? "see your score again" : "your score so far";
+  btn.setAttribute("aria-label", score == null ? "Score: not graded yet" : (done ? "Score: " : "Score so far: ") + g);
   const shown = score == null ? null : g;
   const changed = liveGrade !== undefined && shown !== null && shown !== liveGrade;
   btn.innerHTML = '<span class="sf-cap">🎓 </span>Score' + (score == null ? "" : ' <span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>");
@@ -3353,18 +3338,11 @@ function renderScoreButton() {
 // Score card: the end-of-run report card has a reveal and a leaderboard to get
 // through, and keeps its buttons as the only way out.
 $("endOv").addEventListener("click", (e) => {
-  if (e.target === $("endOv") && (!gameEnded() || game.s.ended_early)) closeReportCard();
+  if (e.target === $("endOv") && !gameEnded()) closeReportCard();
 });
-function endRunEarly() {
-  if (!confirm("End this run at week " + game.s.week + "? Your score locks, and you can't pick it back up.")) return;
-  game.s.ended_early = true;
-  track("End: ended early");
-  track("Ended early: week " + game.s.week);
-  render();
-  openScoreSoFar(true);
-}
-function restartGame() {
+function restartGame(goal) {
   if (!confirm("Start a new run? " + (gameEnded() ? "This run's chat history won't be reachable afterward." : "Your current progress will be lost."))) return;
+  if (typeof goal === "string") track(goal);
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
 // ── about ─────────────────────────────────────────────────────────────────────
