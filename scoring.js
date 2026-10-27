@@ -384,7 +384,8 @@
   // early): each lesson graded only on the moments the run has reached, so a
   // week-9 card isn't an F for everything still ahead. Optional moments never
   // met are left out rather than given away. `score` is null when nothing in
-  // that lesson has been reached yet; `ahead` counts the moments still to come.
+  // that lesson has been reached yet (the overall `score` is 100 until any
+// lesson is); `ahead` counts the moments still to come.
   // Same flinch cap as the final card, so the letter can't praise a lesson
   // whose takeaway says "gave in".
   const STANDING = new Set(["full-time", "runway", "answered"]);
@@ -405,7 +406,10 @@
       const score = raw == null ? null : flinched ? Math.min(raw, 84) : raw;
       return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, moments: reached };
     });
-    return { lessons, score: max ? Math.round(100 * got / max) : null, made, ahead };
+    // Overall: every run starts at an A (no bad call made yet) and moves
+    // with each lesson as soon as it has a call, so the first real grade lands
+    // right after the equity talk instead of weeks later.
+    return { lessons, score: max ? Math.round(100 * got / max) : 100, made, ahead };
   }
 
   function moment(g, key) {
