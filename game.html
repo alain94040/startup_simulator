@@ -3270,8 +3270,17 @@ $("hScore").onclick = () => game.s.ended_early ? openScoreSoFar(true) : gameEnde
 // with no call yet shows a dash; overall, the run starts at an A.
 // "End my run here" makes it final: the run goes read-only like any ending,
 // with no leaderboard entry (a week-9 grade isn't comparable to a full run).
+// The score moves only at week boundaries: it's taken once per week, before
+// the first move, and held until the next week. A call in progress mid-week
+// (the equity talk is one long sitting) can't flicker the letter.
+var weekScore = null;
+function scoreThisWeek() {
+  if (!weekScore || weekScore.game !== game || weekScore.week !== game.s.week)
+    weekScore = { game, week: game.s.week, sf: Scoring.scoreSoFar(game) };
+  return weekScore.sf;
+}
 function openScoreSoFar(final) {
-  const s = game.s, sf = Scoring.scoreSoFar(game);
+  const s = game.s, sf = scoreThisWeek();
   const takeaway = n => n.replace(/^Never reached: (.)/, (_, ch) => ch.toUpperCase());
   const calls = n => n + " major call" + (n === 1 ? "" : "s");
   const rows = sf.lessons.map(c => {
@@ -3325,7 +3334,7 @@ var liveGrade;
 function renderScoreButton() {
   const btn = $("hScore");
   const done = gameEnded() && !game.s.ended_early;
-  const sf = done ? null : Scoring.scoreSoFar(game);
+  const sf = done ? null : scoreThisWeek();
   const score = done ? game.gradeScore() : game.s.week <= 1 ? null : sf.score;
   const [g, col] = GRADE(score);
   btn.title = gameEnded() ? "see your score again" : "your score so far";
@@ -3338,7 +3347,6 @@ function renderScoreButton() {
 function endRunEarly() {
   if (!confirm("End this run at week " + game.s.week + "? Your score locks, and you can't pick it back up.")) return;
   game.s.ended_early = true;
-  const sf = Scoring.scoreSoFar(game);
   track("End: ended early");
   track("Ended early: week " + game.s.week);
   render();

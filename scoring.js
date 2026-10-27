@@ -69,8 +69,16 @@
         const note = ended ? "Never reached: " + (stop || m.why) : null;
         return { key, label, max, got: 0, reached: false, note };
       }
-      return { key, label, max, got: round1(clamp(m.got, 0, max)), reached: true, note: m.note || null };
+      const r = { key, label, max, got: round1(clamp(m.got, 0, max)), reached: true, note: m.note || null };
+      // Mid-run hints for scoreSoFar (the final card ignores them): `open`, the
+      // call is still in front of the player; `soFarMax`, the points the
+      // decided parts of a many-part moment are worth so far.
+      if (m.open) r.open = true;
+      if (m.soFarMax != null) r.soFarMax = m.soFarMax;
+      return r;
     };
+    // A card the player has in front of them right now, not yet answered.
+    const isOpen = id => Object.values(g.open).some(o => o && o.nodeId === id);
 
     // ── Build something people want: 45 ──────────────────────────────────────
     const chips = [s.maya_quote, s.rachel_answer, s.demo_question_seen, s.analytics_dropoff_seen].filter(Boolean).length;
@@ -90,6 +98,8 @@
         reached: d("interviews") || d("waitlist_calls") || d("dev_plan"),
         why: "the run ended before the scope was set.",
         got: (t("interviews:interview") ? 4 : 0) + (t("waitlist_calls:call") ? 2 : 0),
+        // Until the scope is set, only the calls already offered count.
+        soFarMax: d("dev_plan") ? 6 : (d("interviews") ? 4 : 0) + (d("waitlist_calls") ? 2 : 0),
         note: t("interviews:interview")
           ? (t("waitlist_calls:call") ? "Interviewed users and called the waitlist before locking scope." : "Did the customer interviews before locking scope, but never called the waitlist.")
           : t("waitlist_calls:call") ? "Called the waitlist, but never sat down for real interviews." : "Built without ever interviewing a user.",
@@ -98,6 +108,7 @@
         reached: faced.length > 0,
         why: "the run ended before the communities started talking.",
         got: 4 * listen / THREAD_MAX,
+        soFarMax: 4 * faced.reduce((n, th) => n + th.dm, 0) / THREAD_MAX,
         note: promoted && !reads ? "Posted the link in " + promoted + " thread" + (promoted > 1 ? "s" : "") + " and read none of them."
           : dms ? "Read what the forums said, and DM'd the people behind the comments (" + dms + "×)."
             : reads ? "Read " + reads + " of " + THREADS.length + " community threads" + (promoted ? ", promoted into " + promoted : "") + "."
@@ -125,6 +136,7 @@
         got: (t("auth_choice:buy") ? 1 : t("auth_forced:buy") ? 0.4 : 0)
           + (d("matching_choice") && !t("matching_choice:license") ? 1 : 0)
           + (t("analytics_choice:buy") ? 1 : 0),
+        soFarMax: ["auth_choice", "matching_choice", "analytics_choice"].filter(d).length,
         note: [
           t("auth_choice:buy") ? "bought the logins" : t("auth_forced:buy") ? "built logins, then bought them anyway" : d("auth_choice") ? "built our own logins" : null,
           t("matching_choice:license") ? "licensed the matching engine, the one thing you can't rent" : d("matching_choice") ? "kept the matching engine" : null,
@@ -153,6 +165,7 @@
         reached: !!s.launched,
         why: notLaunched,
         got: chips,
+        open: !(d("pivot_day_decide") || s.pivot_deferred || d("pivot_fifty_verdict")),
         note: chips === 4 ? "Banked all four pieces of evidence before the pivot night."
           : "Banked " + chips + " of the four pieces of evidence before the pivot night.",
       }),
@@ -188,6 +201,8 @@
     const eqOpened = t("equity_dance:open_up") ? (t("equity_open:open") ? 2 : 1) : 0;
     const eqRuling = g.outcome("equity_impasse");
     const eqDodge = t("equity_dance:shortcut") ? "Opened with 'equal thirds and move on'" : "Said nothing when the room opened";
+    const equityPending = !s.jordan_equity && !s.equity_tabled
+      && [...g.nodes.keys()].some(id => /^equity_|^incorporate/.test(id) && isOpen(id));
     const eqHeld = eqRuling && /^hold_/.test(eqRuling) ? (s.equity_skipped ? 1 : 3) : eqRuling && /^cave_/.test(eqRuling) ? 1 : 0;
     const team = [
       // The equity talk (GOALS.md: it can't end with everyone happy). Three
@@ -203,6 +218,7 @@
         // Tabling is worse than never assembling the room: both cases were
         // made and the founder still blinked, so it earns nothing at all.
         got: s.equity_tabled ? 0 : eqOpened + eqHeld + (signed ? 2 : 0),
+        open: equityPending,
         note: s.equity_tabled ? "Got the whole room through it twice, then tabled the split 'until after launch'. The default thirds went into the paperwork unexamined."
           : !s.jordan_equity ? "The split was never signed. Every later conversation got harder."
             : s.equity_skipped ? "Never made your own offer, so silence did: the split defaulted to even thirds."
@@ -271,6 +287,12 @@
         reached: d("ff_family") || d("ff_family_2") || d("ff_family_3") || d("ff_friend") || d("ff_mentor"),
         why: "the run ended before anyone offered.",
         got: 3 * asks.length,
+        // Jamie and David each offer first (coffee, lunch) and only come to
+        // the money weeks later; their check counts once that ask is answered,
+        // or once the first offer was left on read and no ask will come.
+        soFarMax: 3 * [d("ff_family") || d("ff_family_2") || d("ff_family_3"),
+          d("ff_friend_ask") || (d("ff_friend") && !t("ff_friend:tell")),
+          d("ff_mentor_pitch") || (d("ff_mentor") && !t("ff_mentor:lunch"))].filter(Boolean).length,
         note: asks.length === 3 ? "Asked Mom and Dad, Jamie and David. The money bought the weeks the product needed."
           : asks.length ? "Asked " + asks.join(asks[0].includes(" and ") && asks.length > 1 ? ", and " : " and ") + ". " + (3 - asks.length === 1 ? "One other check" : "Two other checks") + " went unasked for."
             : "Never asked anyone for money.",
@@ -299,6 +321,7 @@
         reached: d("incorporate") || d("incorporate_again") || d("equity_open"),
         why: "the run ended before the paperwork came up.",
         got: (s.incorporated ? 1.5 : 0) + (s.jordan_equity && !s.equity_tabled ? 1.5 : 0),
+        open: equityPending,
         note: !s.incorporated ? "Never formed a legal entity, so there is no cap table to keep clean."
           : s.jordan_equity && !s.equity_tabled ? "Incorporated and put the split on paper before the work belonged to nobody."
             : "Incorporated, but the split never made it onto paper.",
@@ -307,6 +330,9 @@
         reached: !!s.jordan_resolved,
         why: "the conversation with Jordan never happened.",
         got: s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 3,
+        // The buyback is its own card after the firing (Alex flags the cap
+        // table); until it's answered, the stake isn't a call yet.
+        open: !!s.jordan_cleanup_needed && !s.jordan_equity_gifted && !d("jordan_cap_table"),
         note: s.jordan_equity_gifted ? "Gave a departed co-founder her full stake rather than have the buyback conversation."
           : s.jordan_cleanup_needed ? "A departed co-founder still owns her stake, fully vested, no cliff. Anyone doing diligence will stop there."
             : "Bought back the departed co-founder's stake, and the cap table survived the exit.",
@@ -396,12 +422,17 @@
       // Alex) are "reached" from week 1, before the player has decided
       // anything; on their own they'd hand a fresh run an A. They count only
       // once the lesson has a real call in it.
-      const calls = c.moments.filter(m => m.reached && !m.optional && !STANDING.has(m.key));
-      const reached = calls.length ? c.moments.filter(m => m.reached && !m.optional) : [];
-      const left = c.moments.filter(m => !m.reached && !m.optional).length;
-      const p = reached.reduce((n, m) => n + m.got, 0), mx = reached.reduce((n, m) => n + m.max, 0);
+      // A call still in front of the player isn't graded yet (`open`), and a
+      // many-part moment is graded on its decided parts (`soFarMax`), so the
+      // score never drops for a decision nobody has been asked to make.
+      const counted = m => m.reached && !m.optional && !m.open && m.soFarMax !== 0;
+      const calls = c.moments.filter(m => counted(m) && !STANDING.has(m.key));
+      const reached = calls.length ? c.moments.filter(counted) : [];
+      const left = c.moments.filter(m => !m.optional && (!m.reached || m.open)).length;
+      const worth = m => m.soFarMax != null ? Math.min(m.max, m.soFarMax) : m.max;
+      const p = reached.reduce((n, m) => n + Math.min(m.got, worth(m)), 0), mx = reached.reduce((n, m) => n + worth(m), 0);
       got += p; max += mx; made += reached.length; ahead += left;
-      const flinched = reached.some(m => m.max >= 3 && m.got < 0.75 * m.max);
+      const flinched = reached.some(m => worth(m) >= 3 && m.got < 0.75 * worth(m));
       const raw = mx ? Math.round(100 * p / mx) : null;
       const score = raw == null ? null : flinched ? Math.min(raw, 84) : raw;
       return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, moments: reached };
