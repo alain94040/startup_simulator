@@ -3290,7 +3290,7 @@ function openScoreSoFar(final) {
     const missed = noted.filter(m => m.max - m.got >= 1).sort((x, y) => (y.max - y.got) - (x.max - x.got));
     const best = noted.filter(m => m.got >= m.max).sort((x, y) => y.max - x.max);
     const take = missed[0] || best[0];
-    const line = c.score == null ? "Nothing to grade yet." : take ? takeaway(take.note) : "";
+    const line = c.score == null ? (final ? "No call made here." : "Nothing to grade yet.") : take ? takeaway(take.note) : "";
     const ahead = !c.ahead ? "All the major calls made."
       : final ? calls(c.ahead) + " never reached." : calls(c.ahead) + " still ahead.";
     return '<div class="grade-row"><div class="grade' + (c.score == null ? " sf-none" : "") + '" style="background:' + col + '"><span class="gl">' + g + "</span></div>"
@@ -3303,16 +3303,20 @@ function openScoreSoFar(final) {
   const firstWeek = s.week <= 1;
   const [og, ocol] = GRADE(firstWeek ? null : sf.score);
   const rollCopy = firstWeek ? "<b>No score yet</b><br>Finish your first week to get one."
+    : !sf.made && final ? "<b>Final score</b><br>No bad calls, and no calls graded yet: the run ended before the first one."
     : !sf.made ? '<b>Score so far</b><span class="sf-tag">provisional</span><br>No bad calls yet: every run starts at an A. '
       + calls(sf.ahead) + " ahead."
     : final ? "<b>Final score</b><br>Graded on the " + calls(sf.made) + " you made. " + calls(sf.ahead) + " were still ahead."
         : '<b>Score so far</b><span class="sf-tag">provisional</span><br>Based on the ' + calls(sf.made) + " you've made. "
           + calls(sf.ahead) + " still ahead, and they can move it either way.";
+  // With no restart button in the header, this card is the way out of a run
+  // at any point: "End my run here" once there's a letter to lock in, and in
+  // week 1, with nothing to lock in, a plain "Start over".
   const foot = final
     ? '<div class="sf-foot"><button class="sf-alt" id="sfClose">Back to the chat</button><button class="intro-next" id="sfAgain">Play again</button></div>'
-    : '<div class="sf-foot">' + (sf.made ? '<button class="sf-alt" id="sfEnd">End my run here</button>' : "")
+    : '<div class="sf-foot">' + (firstWeek ? '<button class="sf-alt" id="sfAgain">Start over</button>' : '<button class="sf-alt" id="sfEnd">End my run here</button>')
       + '<button class="intro-next" id="sfClose">Keep playing</button></div>'
-      + (sf.made ? '<div class="sf-fine">Ending now locks this score. The rest of the story stays unplayed.</div>' : "");
+      + (firstWeek ? "" : '<div class="sf-fine">Ending now locks this score. The rest of the story stays unplayed.</div>');
   $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">' + (final ? "Final score" : "Score so far") + "</div>"
     + '<div class="eg-headline">' + (final ? "You ended the run in week " + s.week + "." : !sf.made ? "Week " + s.week + ": nothing to grade yet." : "Week " + s.week + ": grading the calls you've made.") + "</div></div>"
     + rows
