@@ -3014,7 +3014,7 @@ const LB = (function () {
   }
   async function fetchBoard() {
     try {
-      const r = await fetch(ENDPOINT, { cache: "no-store" });
+      const r = await fetch(ENDPOINT);   // the server says how long (a CDN copy may be up to 30s old)
       if (!r.ok) throw 0;
       const data = await r.json();
       if (!Array.isArray(data)) throw 0;
