@@ -63,11 +63,13 @@
     // One moment. `reached` says whether the run got to it; an unreached
     // moment earns 0 and, once the run is over, says why (`why`, unless the
     // run ended early). An optional moment never met earns full points.
+    // `tease`: a spoiler-free line for the mid-run Score card, naming what's
+    // still ahead in this lesson without saying what the right call is.
     const moment = (key, label, max, m) => {
       if (!m.reached) {
         if (m.optional) return { key, label, max, got: max, reached: false, optional: true, note: null };
         const note = ended ? "Never reached: " + (stop || m.why) : null;
-        return { key, label, max, got: 0, reached: false, note };
+        return { key, label, max, got: 0, reached: false, note, tease: m.tease || null };
       }
       const r = { key, label, max, got: round1(clamp(m.got, 0, max)), reached: true, note: m.note || null };
       // Mid-run hints for scoreSoFar (the final card ignores them): `open`, the
@@ -75,6 +77,7 @@
       // decided parts of a many-part moment are worth so far.
       if (m.open) r.open = true;
       if (m.soFarMax != null) r.soFarMax = m.soFarMax;
+      if (m.tease) r.tease = m.tease;
       return r;
     };
     // A card the player has in front of them right now, not yet answered.
@@ -95,6 +98,7 @@
     const notPivoted = s.launched ? "the product was never questioned, so there was no v2 to ship." : notLaunched;
     const build = [
       moment("users", "Talked to users before scoping", 6, {
+        tease: "Deciding what to build, and who to ask first",
         reached: d("interviews") || d("waitlist_calls") || d("dev_plan"),
         why: "the run ended before the scope was set.",
         got: (t("interviews:interview") ? 4 : 0) + (t("waitlist_calls:call") ? 2 : 0),
@@ -105,6 +109,7 @@
           : t("waitlist_calls:call") ? "Called the waitlist, but never sat down for real interviews." : "Built without ever interviewing a user.",
       }),
       moment("community", "Listened in the communities", 4, {
+        tease: "Strangers online, talking about your market",
         reached: faced.length > 0,
         why: "the run ended before the communities started talking.",
         got: 4 * listen / THREAD_MAX,
@@ -117,6 +122,7 @@
       // Priya's general market survey is half credit: it maps the field, but
       // not the one you're up against.
       moment("competitor", "Studied the competitor", 3, {
+        tease: "Someone else chasing the same idea",
         reached: d("flare_stealth") || d("mentor_competitor_bomb"),
         why: "the run ended before Flare made the news.",
         got: t("flare_stealth:dive") ? 3 : t("mentor_competitor_bomb:research") ? 1.5 : 0,
@@ -125,12 +131,14 @@
             : "Never looked at what the competition actually built.",
       }),
       moment("lean-plan", "Kept the plan lean", 5, {
+        tease: "How much to build before anyone sees it",
         reached: d("dev_plan"),
         why: "the run ended before the plan was chosen.",
         got: s.dev_plan === "lean" ? 5 : 0,
         note: s.dev_plan === "lean" ? "Kept the scope lean." : "Over-scoped the build, and the extra work cost weeks.",
       }),
       moment("edge", "Built the edge, bought the rest", 3, {
+        tease: "What to build yourself, and what to buy",
         reached: d("auth_choice") || d("matching_choice") || d("analytics_choice"),
         why: "the run ended before the build calls came up.",
         got: (t("auth_choice:buy") ? 1 : t("auth_forced:buy") ? 0.4 : 0)
@@ -145,6 +153,7 @@
       }),
       // Full marks for launching by week 14, sliding to nothing by week 18.
       moment("launch", "Launched on time", 4, {
+        tease: "Launch day",
         reached: !!s.launched,
         why: "the product never launched.",
         got: 4 * clamp((18 - s.launch_week) / 4, 0, 1),
@@ -153,6 +162,7 @@
       // Feature spree (shipped, or left on read so Alex shipped it anyway)
       // and copying Flare, 2 points each.
       moment("features", "Didn't chase features", 4, {
+        tease: "The weeks after launch, when the graph has opinions",
         reached: !!s.launched,
         why: notLaunched,
         got: (s.feature_spree ? 0 : 2) + (s.copied_competitor ? 0 : 2),
@@ -162,6 +172,7 @@
               : "Held the roadmap until you knew why users leave.",
       }),
       moment("evidence", "Banked the evidence", 4, {
+        tease: "Finding out why users leave",
         reached: !!s.launched,
         why: notLaunched,
         got: chips,
@@ -170,6 +181,7 @@
           : "Banked " + chips + " of the four pieces of evidence before the pivot night.",
       }),
       moment("pivot", "Pivoted on evidence", 6, {
+        tease: "The night you decide what the company really is",
         reached: d("pivot_day_decide") || !!s.pivot_deferred || d("pivot_fifty_verdict"),
         why: notLaunched,
         got: t("pivot_day_decide:pivot") ? 6 : t("pivot_fifty_verdict:pivot_now") ? 3 : 0,
@@ -180,6 +192,7 @@
       // Where all the listening lands: the fit of what shipped. Nothing at 30
       // (built on guesses), full marks at 60 (a thoroughly researched run).
       moment("v2-fit", "Shipped something people want", 6, {
+        tease: "Putting what you learned in front of real people",
         reached: !!s.pivot_shipped,
         why: pivoted ? "v2 never reached users before the deadline." : notPivoted,
         got: 6 * fitGot,
@@ -213,6 +226,7 @@
       // holding that default later is worth only what a cave is. Tabling
       // it zeroes the whole moment.
       moment("equity-split", "Negotiated the equity split", 7, {
+        tease: "Who owns how much of the company",
         reached: d("equity_open") || !!s.equity_proposal,
         why: "the run ended before the split came up.",
         // Tabling is worse than never assembling the room: both cases were
@@ -247,6 +261,7 @@
       // raises it after a late pivot). What's graded is whether the founder
       // finished the sentence, and when.
       moment("jordan-talk", "Had the conversation with Jordan", 12, {
+        tease: "The conversation every founder dreads",
         reached: jordanAsked && !alexLeft,
         why: pivoted ? "the pivot came too late for Alex to raise Jordan."
           : s.launched ? "the product was never questioned, so the Jordan question never came up." : notLaunched,
@@ -262,6 +277,7 @@
       // Asking what was going on changes nothing about the decision and
       // everything about what it cost.
       moment("jordan-ending", "Ended it well with Jordan", 4, {
+        tease: "How that conversation ends",
         reached: !!s.jordan_resolved,
         why: "the conversation with Jordan never happened.",
         got: s.jordan_cold_exit ? 1 : 4,
@@ -284,6 +300,7 @@
     const contract = s.contract_weeks || 0;
     const money = [
       moment("ff-asks", "Raised from friends and family", 9, {
+        tease: "People who might write you a first check",
         reached: d("ff_family") || d("ff_family_2") || d("ff_family_3") || d("ff_friend") || d("ff_mentor"),
         why: "the run ended before anyone offered.",
         got: 3 * asks.length,
@@ -318,6 +335,7 @@
         note: "Lowest bank balance: $" + Math.max(0, Math.round(low)).toLocaleString() + ".",
       }),
       moment("paperwork", "Incorporated and signed", 3, {
+        tease: "Making the company real, on paper",
         reached: d("incorporate") || d("incorporate_again") || d("equity_open"),
         why: "the run ended before the paperwork came up.",
         got: (s.incorporated ? 1.5 : 0) + (s.jordan_equity && !s.equity_tabled ? 1.5 : 0),
@@ -327,6 +345,7 @@
             : "Incorporated, but the split never made it onto paper.",
       }),
       moment("buyback", "Bought back Jordan's stake", 3, {
+        tease: "Keeping the cap table clean",
         reached: !!s.jordan_resolved,
         why: "the conversation with Jordan never happened.",
         got: s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 3,
@@ -338,6 +357,7 @@
             : "Bought back the departed co-founder's stake, and the cap table survived the exit.",
       }),
       moment("app-store", "Moved the App Store listing", 2, {
+        tease: "The fine print nobody reads until it matters",
         reached: d("firing_shares") || d("firing_shares_2") || !!s.jordan_cold_exit,
         why: "the conversation with Jordan never happened.",
         got: s.appstore_on_jordan || s.app_was_delisted ? 0 : 2,
@@ -411,7 +431,8 @@
   // week-9 card isn't an F for everything still ahead. Optional moments never
   // met are left out rather than given away. `score` is null when nothing in
   // that lesson has been reached yet (the overall `score` is 100 until any
-// lesson is); `ahead` counts the moments still to come.
+// lesson is); `ahead` counts the moments still to come, and `next` is a
+// spoiler-free teaser for the first of them.
   // Same flinch cap as the final card, so the letter can't praise a lesson
   // whose takeaway says "gave in".
   const STANDING = new Set(["full-time", "runway", "answered"]);
@@ -435,7 +456,10 @@
       const flinched = reached.some(m => worth(m) >= 3 && m.got < 0.75 * worth(m));
       const raw = mx ? Math.round(100 * p / mx) : null;
       const score = raw == null ? null : flinched ? Math.min(raw, 84) : raw;
-      return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, moments: reached };
+      // What's next in this lesson, as a teaser: the first call not yet made
+      // (moments are listed in story order).
+      const next = c.moments.find(m => !m.optional && (!m.reached || m.open) && m.tease);
+      return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, next: next ? next.tease : null, moments: reached };
     });
     // Overall: every run starts at an A (no bad call made yet) and moves
     // with each lesson as soon as it has a call, so the first real grade lands

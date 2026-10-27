@@ -390,6 +390,7 @@
   #egPage2 .eg-outcome { margin-top: 4px; padding-top: 0; border-top: 0; }
   /* ── the Score card mid-run (openScoreSoFar): the same rows, graded so far ── */
   .sf-ahead { color: var(--dim); font-size: 11px; margin-top: 2px; }
+  .sf-chapter { color: var(--dim); font-size: 12px; margin-top: 6px; line-height: 1.4; }
   .grade.sf-none { background: var(--line) !important; color: #8a8a93; }
   .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
@@ -3280,7 +3281,6 @@ function scoreThisWeek() {
 function openScoreSoFar() {
   const s = game.s, sf = scoreThisWeek();
   const takeaway = n => n.replace(/^Never reached: (.)/, (_, ch) => ch.toUpperCase());
-  const calls = n => n + " major call" + (n === 1 ? "" : "s");
   const rows = sf.lessons.map(c => {
     const [g, col] = GRADE(c.score);
     const noted = c.moments.filter(m => m.note);
@@ -3288,7 +3288,9 @@ function openScoreSoFar() {
     const best = noted.filter(m => m.got >= m.max).sort((x, y) => y.max - x.max);
     const take = missed[0] || best[0];
     const line = c.score == null ? "Nothing to grade yet." : take ? takeaway(take.note) : "";
-    const ahead = c.ahead ? calls(c.ahead) + " still ahead." : "All the major calls made.";
+    // A teaser, not a count: "3 calls ahead" undersold a run of a hundred-odd
+    // decisions. The chapter line under the headline carries the scale.
+    const ahead = c.next ? "Still ahead: " + c.next + "." : "All the major calls made.";
     return '<div class="grade-row"><div class="grade' + (c.score == null ? " sf-none" : "") + '" style="background:' + col + '"><span class="gl">' + g + "</span></div>"
       + '<div class="g-body"><b>' + esc(c.label) + '</b><div class="g-verdict">' + esc(line) + "</div>"
       + '<div class="sf-ahead">' + ahead + "</div></div></div>";
@@ -3299,12 +3301,18 @@ function openScoreSoFar() {
   const firstWeek = s.week <= 1;
   const [og, ocol] = GRADE(firstWeek ? null : sf.score);
   const rollCopy = firstWeek ? "<b>No score yet</b><br>Finish your first week to get one."
-    : !sf.made ? '<b>Score so far</b><span class="sf-tag">provisional</span><br>No bad calls yet: every run starts at an A. '
-      + calls(sf.ahead) + " ahead."
-    : '<b>Score so far</b><span class="sf-tag">provisional</span><br>Based on the ' + calls(sf.made) + " you've made. "
-      + calls(sf.ahead) + " still ahead, and they can move it either way.";
+    : !sf.made ? '<b>Score so far</b><span class="sf-tag">provisional</span><br>No bad calls yet: every run starts at an A.'
+    : '<b>Score so far</b><span class="sf-tag">provisional</span><br>Based on the calls you\'ve made. What\'s ahead can move it either way.';
+  // Where the run is, in the chapters the ☑ gauge already uses. Later chapters
+  // go by their spoiler-free names ("Grow the business", not the trough).
+  const cur = currentStage(), at = STAGES.indexOf(cur);
+  const chName = st => String(stageLabel(st, false)).split(" · ").pop();
+  const later = STAGES.slice(at + 1).map(chName);
+  const chapterLine = "Chapter " + (at + 1) + " of " + STAGES.length + ": " + chName(cur) + "."
+    + (later.length ? " Still ahead: " + later.join(", ") + "." : "");
   $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Score so far</div>'
-    + '<div class="eg-headline">Week ' + s.week + (sf.made ? ": grading the calls you've made." : ": nothing to grade yet.") + "</div></div>"
+    + '<div class="eg-headline">Week ' + s.week + (sf.made ? ": grading the calls you've made." : ": nothing to grade yet.") + "</div>"
+    + '<div class="sf-chapter">' + esc(chapterLine) + "</div></div>"
     + rows
     + '<div class="eg-rollup eg-final"><div class="grade eg-biggrade' + (firstWeek ? " sf-none" : "") + '" style="background:' + ocol + '"><span class="gl">' + og + "</span></div>"
     + '<div class="eg-roll-copy">' + rollCopy + "</div></div>"
