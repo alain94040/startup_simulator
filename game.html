@@ -394,7 +394,8 @@
   .grade.sf-none { background: var(--line) !important; color: #8a8a93; }
   .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
-  .sf-foot button { white-space: nowrap; }
+  .sf-foot button, .intro-actions button { white-space: nowrap; }
+  .sf-alt:disabled { color: #b4b4bb; border-color: var(--soft); background: var(--soft); cursor: not-allowed; }
   .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
   /* ── going back to a week (openRewind, offerResume): one dropdown ── */
   .rw-pick { display: block; margin-top: 14px; }
@@ -3526,28 +3527,41 @@ function openRewind(from) {
   $("endOv").classList.add("on");
   track("Restart opened");
 }
-// A reload with saved runs opens on this instead of the intro: pick up where
-// you were, go back further (in that run or an older one), or start fresh.
+// Like a game's title screen: after the intro (finished or skipped), the
+// player picks Resume (where they left off, or any earlier week of any saved
+// game) or New game. With nothing saved yet, Resume is there but greyed out,
+// so a first-time player learns a game can be picked up later. Skipped right
+// after the player chose New game from inside a game.
 function offerResume() {
   try { if (sessionStorage.getItem("plusone_new")) { sessionStorage.removeItem("plusone_new"); return false; } } catch (e) {}
   const runs = savedRuns();
-  if (!runs.length) return false;
-  const latest = runs[0], last = latest.weeks[latest.weeks.length - 1];
-  const ended = runEnded(latest);
+  const latest = runs[0], last = latest && latest.weeks[latest.weeks.length - 1];
+  const ended = latest && runEnded(latest);
+  const body = !latest ? "Your game saves itself as you play, week by week. Come back any time to resume it, or to go back to a week and play it differently."
+    : ended ? "Your last game ended at week " + last.w + ". Pick any week you played and take it from there."
+    : "Your last game is at week " + last.w + ". Pick up where you left off, or go back to an earlier week.";
   $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
-    + '<div class="intro-eyebrow">Welcome back</div>'
-    + '<div class="intro-step"><b>' + (ended ? "Your last game ended at week " + last.w + "." : "Your last game is at week " + last.w + ".")
-    + "</b>" + (ended ? "Go back to the start of any week you played, and take it from there." : "Pick it up where you left off, or go back to an earlier week.") + "</div>"
-    + rewindSelectHtml(runs)
-    + '<div class="intro-foot"><div></div><div class="intro-actions"><button class="intro-skip" id="rsNew">New game</button>'
-    + '<button class="intro-next" id="rsGo"></button></div></div></div>';
-  const sel = $("rwSel"), go = $("rsGo");
-  const label = () => { const p = pickedWeek(runs, sel.value); go.textContent = (p.k === 0 && !ended && p.w === last.w ? "Continue at week " : "Go to week ") + p.w + " →"; };
-  sel.onchange = label; label();
-  go.onclick = () => { const p = pickedWeek(runs, sel.value); rewindTo(p.run, p.w, "Resumed"); };
-  $("rsNew").onclick = () => { track("Resume declined"); showIntro(); };
+    + '<div class="intro-eyebrow">' + (latest ? "Saved games" : "Ready?") + "</div>"
+    + '<div class="intro-step"><b>' + (latest ? "Resume a saved game, or start a new one?" : "Start a new game.") + "</b>" + body + "</div>"
+    + (latest ? rewindSelectHtml(runs) : "")
+    + '<div class="intro-foot"><div></div><div class="intro-actions">'
+    + (latest ? '<button class="sf-alt" id="rsNew">New game</button><button class="intro-next" id="rsGo"></button>'
+      : '<button class="sf-alt" id="rsGo" disabled title="Nothing saved yet">Resume</button><button class="intro-next" id="rsNew">New game →</button>')
+    + "</div></div></div>";
+  if (latest) {
+    const sel = $("rwSel"), go = $("rsGo");
+    const label = () => { const p = pickedWeek(runs, sel.value); go.textContent = "Resume at week " + p.w + " →"; };
+    sel.onchange = label; label();
+    go.onclick = () => { const p = pickedWeek(runs, sel.value); rewindTo(p.run, p.w, "Resumed"); };
+  }
+  $("rsNew").onclick = () => {
+    track(latest ? "Resume declined" : "New game");
+    $("introOv").classList.remove("on"); queueTipCheck();
+    if (kbdNav) focusNextUp();
+  };
   $("introOv").classList.add("on");
-  track("Resume offered");
+  track(latest ? "Resume offered" : "Title: nothing saved");
+  if (kbdNav) (latest ? $("rsGo") : $("rsNew")).focus();
   return true;
 }
 startRun();
@@ -3620,6 +3634,7 @@ function showIntro() {
   }
   const done = () => {
     track("Intro done");
+    if (offerResume()) return;   // saved games: Resume or New game comes next, like any game's title screen
     $("introOv").classList.remove("on"); queueTipCheck();
     // the keyboard lands where the game starts: Alex's Respond
     if (kbdNav) focusNextUp();
@@ -3643,7 +3658,7 @@ async function fillIntroBoard() {
   if (!el) return;   // intro already dismissed
   el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
 }
-if (!offerResume()) showIntro();
+showIntro();
 
 // ── first-time tips ───────────────────────────────────────────────────────────
 // Onboarding happens when a feature is first needed, not up front: each tip is
