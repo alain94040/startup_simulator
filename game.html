@@ -395,16 +395,11 @@
   .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
-  /* ── going back to a week (openRewind, offerResume): a grid of week starts ── */
-  .rw-list { max-height: min(44vh, 330px); overflow-y: auto; margin-top: 4px; padding-right: 2px; }
-  .rw-ch { margin-top: 12px; }
-  .rw-chname { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
-  .rw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 6px; }
-  .rw-wk { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 10px; padding: 5px 4px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 1px; font: inherit; }
-  .rw-wk b { font-size: 13px; }
-  .rw-wk span { font-size: 11px; color: var(--dim); }
-  .rw-wk:hover, .rw-wk:focus-visible { border-color: var(--blue); background: var(--blue-soft); }
-  .rw-wk.cur { border-color: var(--blue); }
+  /* ── going back to a week (openRewind, offerResume): one dropdown ── */
+  .rw-pick { display: block; margin-top: 14px; }
+  .rw-pick span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+  .rw-pick select { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+  .rw-pick select:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
   .sf-fine { font-size: 11px; color: var(--dim); text-align: right; margin-top: 8px; }
   .sf-live { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 12px; }
   .sf-live.pop { animation: gradePop .44s cubic-bezier(.2,.9,.3,1.35); }
@@ -3389,7 +3384,7 @@ function chapterName(st) { return String(stageLabel(st, false)).split(" · ").po
 // it in the picker and to check a replay against.
 function checkpoint() {
   const st = currentStage();
-  return { w: game.s.week, i: runLog.log.length, cash: Math.round(game.s.cash), ch: STAGES.indexOf(st) + 1, name: chapterName(st), over: gameEnded() };
+  return { w: game.s.week, i: runLog.log.length, cash: Math.round(game.s.cash), ch: STAGES.indexOf(st) + 1, name: chapterName(st), over: gameEnded(), at: Date.now() };
 }
 function startRun() {
   runLog = { seed, log: [], weeks: [] };
@@ -3457,21 +3452,31 @@ function rewindTo(save, w, goal) {
   if (kbdNav) focusNextUp();
 }
 
-// The week picker: every week start in the save, grouped by chapter, with
-// the cash it opened on.
-function rewindGridHtml(weeks, current) {
+// The week picker: a dropdown of every week start in the save, grouped by
+// chapter, each with when the player got there (their local date and time:
+// "the week I played last night" is how people remember a run).
+function playedAt(t) {
+  if (!t) return "";
+  const d = new Date(t), now = new Date();
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (day === 0) return "today, " + time;
+  if (day === 864e5) return "yesterday, " + time;
+  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + ", " + time;
+}
+function rewindSelectHtml(weeks, current) {
   const groups = [];
   for (const c of weeks) {
     if (!groups.length || groups[groups.length - 1].ch !== c.ch) groups.push({ ch: c.ch, name: c.name, weeks: [] });
     groups[groups.length - 1].weeks.push(c);
   }
-  const money = n => (n < 0 ? "-$" : "$") + (Math.abs(n) >= 1000 ? (Math.abs(n) / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.abs(n));
-  return '<div class="rw-list">' + groups.map(gr => '<div class="rw-ch"><div class="rw-chname">Chapter ' + gr.ch + ": " + esc(gr.name) + "</div>"
-    + '<div class="rw-grid">' + gr.weeks.map(c => '<button class="rw-wk' + (c.w === current ? " cur" : "") + '" data-rw="' + c.w + '">'
-      + "<b>Week " + c.w + "</b><span>" + (c.w === current ? "now" : money(c.cash)) + "</span></button>").join("") + "</div></div>").join("") + "</div>";
+  const last = weeks.length ? weeks[weeks.length - 1].w : null;
+  return '<label class="rw-pick"><span>Pick a week</span><select id="rwSel">'
+    + groups.map(gr => '<optgroup label="Chapter ' + gr.ch + ": " + esc(gr.name) + '">'
+      + gr.weeks.map(c => '<option value="' + c.w + '"' + (c.w === last ? " selected" : "") + ">Week " + c.w
+        + (c.w === current ? " (this week)" : c.at ? " · played " + esc(playedAt(c.at)) : "") + "</option>").join("") + "</optgroup>").join("")
+    + "</select></label>";
 }
-// A long run scrolls: open on its latest weeks, the ones most players want.
-const rewindScrollEnd = root => { const l = root.querySelector(".rw-list"); if (l) l.scrollTop = l.scrollHeight; };
 // From the Score card ("score") or the report card ("report"): go back to any
 // week of this run, or start a new one.
 function openRewind(from) {
@@ -3479,16 +3484,21 @@ function openRewind(from) {
   const weeks = save ? rewindWeeks(save) : [];
   const live = !gameEnded();
   $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Restart</div>'
-    + '<div class="eg-headline">' + (weeks.length > 1 || (weeks.length && !live) ? "Go back to the start of any week." : "Start over.") + "</div>"
+    + '<div class="eg-headline">' + (weeks.length ? "Go back to an earlier week." : "Start over.") + "</div>"
     + '<div class="sf-chapter">' + (weeks.length ? "Same story, same luck: from there, play it differently. Everything after that week is replaced by what you play next." : "") + "</div></div>"
-    + rewindGridHtml(weeks, live ? game.s.week : null)
+    + (weeks.length ? rewindSelectHtml(weeks, live ? game.s.week : null) : "")
     + '<div class="sf-foot"><button class="sf-alt" id="rwBack">Back</button>'
-    + '<button class="intro-next" id="rwNew">New run from week 1</button></div>';
+    + '<button class="sf-alt" id="rwNew">New run</button>'
+    + (weeks.length ? '<button class="intro-next" id="rwGo"></button>' : "") + "</div>";
   $("rwBack").onclick = () => from === "report" ? (openReportCard(), egPage(2)) : openScoreSoFar();
   $("rwNew").onclick = () => restartGame("Restarted: week " + game.s.week);
-  $("endModal").querySelectorAll("[data-rw]").forEach(b => b.onclick = () => rewindTo(save, +b.dataset.rw, "Rewound"));
+  if (weeks.length) {
+    const sel = $("rwSel"), go = $("rwGo");
+    const label = () => { go.textContent = "Go to week " + sel.value; };
+    sel.onchange = label; label();
+    go.onclick = () => rewindTo(save, +sel.value, "Rewound");
+  }
   $("endOv").classList.add("on");
-  rewindScrollEnd($("endModal"));
   track("Restart opened");
 }
 // A reload with a saved run opens on this instead of the intro: pick up where
@@ -3497,20 +3507,21 @@ function offerResume() {
   const save = loadSave();
   const weeks = save ? rewindWeeks(save) : [];
   if (!weeks.length) return false;
-  const last = save.weeks[save.weeks.length - 1], pick = weeks[weeks.length - 1];
+  const last = save.weeks[save.weeks.length - 1];
   const ended = last.over || weeks.length < save.weeks.length;
   $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
     + '<div class="intro-eyebrow">Welcome back</div>'
     + '<div class="intro-step"><b>' + (ended ? "Your last run ended at week " + last.w + "." : "Your last run is at week " + last.w + ".")
-    + "</b>" + (ended ? "Go back to the start of any week you played, and take it from there." : "Pick it up where you left off, or go back to the start of an earlier week.") + "</div>"
-    + rewindGridHtml(weeks, null)
+    + "</b>" + (ended ? "Go back to the start of any week you played, and take it from there." : "Pick it up where you left off, or go back to an earlier week.") + "</div>"
+    + rewindSelectHtml(weeks, null)
     + '<div class="intro-foot"><div></div><div class="intro-actions"><button class="intro-skip" id="rsNew">Start a new run</button>'
-    + '<button class="intro-next" id="rsGo">' + (ended ? "Back to week " : "Continue at week ") + pick.w + " →</button></div></div></div>";
-  $("rsGo").onclick = () => rewindTo(save, pick.w, "Resumed");
+    + '<button class="intro-next" id="rsGo"></button></div></div></div>';
+  const sel = $("rwSel"), go = $("rsGo");
+  const label = () => { go.textContent = (!ended && +sel.value === last.w ? "Continue at week " : "Go to week ") + sel.value + " →"; };
+  sel.onchange = label; label();
+  go.onclick = () => rewindTo(save, +sel.value, "Resumed");
   $("rsNew").onclick = () => { if (!confirm("Start a new run from week 1? The weeks saved from your last one will be gone.")) return; clearSave(); track("Resume declined"); showIntro(); };
-  $("introModal").querySelectorAll("[data-rw]").forEach(b => b.onclick = () => rewindTo(save, +b.dataset.rw, "Resumed"));
   $("introOv").classList.add("on");
-  rewindScrollEnd($("introModal"));
   track("Resume offered");
   return true;
 }
@@ -3928,7 +3939,6 @@ const ARROW_ROWS = [
   ["#railList, #scRail", "[tabindex='0']"],
   ["#reply .chips-scroll, #scReply", ".chip"],
   [".mv-opts", "button"],
-  [".rw-grid", "button"],
   ["#railNews", ".nw"],
   ["#tabbar", "button"],
 ];
