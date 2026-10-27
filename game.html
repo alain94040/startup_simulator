@@ -3240,7 +3240,7 @@ function checkEndgame() {
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
     + '<div class="intro-foot">' + egDots(2)
-      + '<div class="sf-foot" style="margin-top:0">' + (savedRuns().length ? '<button class="sf-alt" onclick="openRewind(\'report\')">Saved games</button>' : "") + '<button class="sf-alt" onclick="restartGame(\'Play again\')">Play again</button>'
+      + '<div class="sf-foot" style="margin-top:0">' + (savedWeeks().length ? '<button class="sf-alt" onclick="openRewind(\'report\')">Saved games</button>' : "") + '<button class="sf-alt" onclick="restartGame(\'Play again\')">Play again</button>'
       + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div></div>'
     + "</div>";
 
@@ -3328,7 +3328,7 @@ function openScoreSoFar() {
     + rows
     + '<div class="eg-rollup eg-final"><div class="grade eg-biggrade' + (firstWeek ? " sf-none" : "") + '" style="background:' + ocol + '"><span class="gl">' + og + "</span></div>"
     + '<div class="eg-roll-copy">' + rollCopy + "</div></div>"
-    + '<div class="sf-foot">' + (savedRuns().length ? '<button class="sf-alt" id="sfSaved">Saved games</button>' : "")
+    + '<div class="sf-foot">' + (savedWeeks().length ? '<button class="sf-alt" id="sfSaved">Saved games</button>' : "")
     + '<button class="sf-alt" id="sfAgain">New game</button>'
     + '<button class="intro-next" id="sfClose">Keep playing</button></div>';
   $("sfClose").onclick = closeReportCard;
@@ -3371,24 +3371,29 @@ function restartGame(goal) {
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
 
-// ── saved runs: go back to any week ──────────────────────────────────────────
-// A run is saved in localStorage as its seed plus every call made in it (each
+// ── saved games: go back to any week ─────────────────────────────────────────
+// A game is saved in localStorage as its seed plus every call made in it (each
 // answer, each week turn). The engine owns all the randomness, so replaying
-// that log on a fresh Engine rebuilds the run exactly, and stopping the replay
-// at a week turn gives the start of that week. So a player who went broke at
-// week 14 can go back to week 10 instead of starting over: from the Score
-// card's and the report card's Saved games, or the welcome-back card a
-// reload opens with. The last MAX_RUNS runs are kept, newest first; going
-// back into one and playing on replaces its weeks after that point.
-// A save from an older build is dropped, not half-replayed: SAVE_VERSION is
-// the manual stamp (bump it when a change would replay old saves wrongly),
-// and the replay itself is the automatic one: a call the engine no longer
-// offers, or a week that no longer starts with the cash it was saved with,
-// means the story changed under the save.
+// that log on a fresh Engine rebuilds the game exactly, and stopping the
+// replay at a week turn gives the start of that week. So a player who went
+// broke at week 14 can go back to week 10 instead of starting over: from the
+// title card after the intro, or Saved games on the Score and report cards.
+// Saved weeks only ever add up. Every week start of every game stays in the
+// list, newest first, whatever game it came from: going back to week 2 and
+// playing it differently starts a new line of play (a branch that shares the
+// old one's log up to week 2), and the old weeks 3, 4… stay where they were.
+// A save the current build can't replay is hidden, not deleted, up to the
+// first week that no longer matches (a call the engine no longer offers, or a
+// week that no longer starts with the cash it was saved with): the weeks
+// before it still load. SAVE_VERSION is the manual stamp: bump it when a
+// change would replay old saves wrongly, and they're all ignored.
 const SAVE_KEY = "plusone_runs";
 const SAVE_VERSION = 1;
-const MAX_RUNS = 5;
-let runLog = null;   // { id, seed, log, weeks } of the run on screen; null for a debug jump (not saved)
+// runLog: the line of play on screen, { id, seed, log, weeks }; null for a
+// debug jump (not saved). After going back to a week it also carries `from`:
+// the saved run and week it came from, settled by the first new call.
+let runLog = null;
+let hereKey = null;   // "runId:i" of the week start on screen, so the picker can say "this week"
 function chapterName(st) { return String(stageLabel(st, false)).split(" · ").pop(); }
 // The start of the week on screen: where the log stood, and enough to label
 // it in the picker and to check a replay against.
@@ -3396,9 +3401,11 @@ function checkpoint() {
   const st = currentStage();
   return { w: game.s.week, i: runLog.log.length, cash: Math.round(game.s.cash), ch: STAGES.indexOf(st) + 1, name: chapterName(st), over: gameEnded(), at: Date.now() };
 }
+const newRunId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 function startRun() {
-  runLog = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), seed, log: [], weeks: [] };
+  runLog = { id: newRunId(), seed, log: [], weeks: [] };
   runLog.weeks.push(checkpoint());
+  hereKey = runLog.id + ":0";
 }
 function readRuns() {
   try {
@@ -3406,80 +3413,105 @@ function readRuns() {
     return box && box.v === SAVE_VERSION && Array.isArray(box.runs) ? box.runs : [];
   } catch (e) { return []; }
 }
+// Only a full storage ever drops anything: the game least recently played
+// goes first, so the newest weeks always get saved.
 function writeRuns(runs) {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, runs: runs.slice(0, MAX_RUNS) })); }
-  catch (e) { /* no storage: runs just aren't saved */ }
+  runs = runs.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
+  for (;;) {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, runs })); return; }
+    catch (e) { if (runs.length <= 1) return; runs.pop(); }
+  }
 }
-// Nothing is written until the first call: a fresh page (or a rewind) must
-// not overwrite a save before the player has played anything new. The run
-// being played moves to the top of the list.
+// Nothing is written until the first call: a fresh page (or going back to a
+// week) must not touch the saves before the player has played anything new.
 function recordCall(entry) {
   if (!runLog) return;
+  if (runLog.from) {
+    // The first move after going back to a week. If the saved game has weeks
+    // after it, this is a new line of play: a new run, so those weeks stay.
+    // If not (it was that game's latest week), just carry on in it.
+    const { run, cp } = runLog.from;
+    if (run.weeks.some(c => c.i > cp.i)) { runLog.id = newRunId(); runLog.weeks = []; }
+    else runLog.weeks = run.weeks.filter(c => c.i <= cp.i);
+    delete runLog.from;
+  }
   runLog.log.push(entry);
-  if (entry === 0) runLog.weeks.push(checkpoint());
+  if (entry === 0) { const cp = checkpoint(); runLog.weeks.push(cp); hereKey = runLog.id + ":" + cp.i; }
   const run = { id: runLog.id, seed: runLog.seed, log: runLog.log, weeks: runLog.weeks, at: Date.now() };
   writeRuns([run].concat(readRuns().filter(r => r.id !== run.id)));
+  savedCache = null;
 }
-// Replay a run's log up to `upto` calls; null if it no longer replays.
+// Replay a run's log up to `upto` calls, checking every week start on the way;
+// returns the game and the week starts that matched. Stops at the first call
+// or week that no longer replays (ok: false).
 function replaySave(save, upto) {
   const g = new Engine({ seed: save.seed });
   const at = new Map(save.weeks.map(c => [c.i, c]));
+  const good = [];
   for (let i = 0; i <= upto; i++) {
     const cp = at.get(i);
-    // every week start on the way must match what was saved, and is never
-    // inside a room (the UI can't turn a week mid-sitting)
-    if (cp && (g.s.week !== cp.w || Math.round(g.s.cash) !== cp.cash || (g.scene && !cp.over))) return null;
+    // a week start must match what was saved, and is never inside a room
+    // (the UI can't turn a week mid-sitting)
+    if (cp) {
+      if (g.s.week !== cp.w || Math.round(g.s.cash) !== cp.cash || (g.scene && !cp.over)) return { g, good, ok: false };
+      good.push(cp);
+    }
     if (i === upto) break;
     const e = save.log[i];
     if (e === 0) g.nextWeek();
     else {
       const n = g.log.length;
-      if (!Array.isArray(e)) return null;
+      if (!Array.isArray(e)) return { g, good, ok: false };
       g.act(e[0], e[1]);
-      if (g.log.length === n) return null;   // the engine no longer offers that call
+      if (g.log.length === n) return { g, good, ok: false };   // the engine no longer offers that call
     }
   }
-  return g;
+  return { g, good, ok: true };
 }
-// The saved runs that still replay, newest first; the rest are dropped.
-let runsChecked = false;
-function loadRuns() {
-  const runs = readRuns();
-  if (runsChecked) return runs;
-  const ok = runs.filter(r => {
-    if (!r || !Array.isArray(r.log) || !Array.isArray(r.weeks) || !r.weeks.length) return false;
-    try { return !!replaySave(r, r.log.length); } catch (e) { return false; }
-  });
-  if (ok.length !== runs.length) writeRuns(ok);
-  runsChecked = true;
-  return ok;
+// Every saved week a player can go back to, across all games, newest first:
+// each a { run, cp } whose replay still matches, and not the end of a game
+// (going broke at the week turn into week 14 leaves 1–13).
+// A run is replayed once per page and length (only the one being played grows).
+let savedCache = null;
+const replayed = new Map();
+function savedWeeks() {
+  if (savedCache) return savedCache;
+  const out = [];
+  for (const run of readRuns()) {
+    if (!run || !Array.isArray(run.log) || !Array.isArray(run.weeks)) continue;
+    const key = run.id + ":" + run.log.length + ":" + run.weeks.length;
+    if (!replayed.has(key)) {
+      let good = [];
+      try { good = replaySave(run, run.log.length).good; } catch (e) { /* hidden, not deleted */ }
+      replayed.set(key, good.map(c => c.i));
+    }
+    const ok = new Set(replayed.get(key));
+    for (const cp of run.weeks) if (ok.has(cp.i) && !cp.over) out.push({ run, cp });
+  }
+  out.sort((a, b) => (b.cp.at || 0) - (a.cp.at || 0) || b.cp.w - a.cp.w);
+  return (savedCache = out);
 }
-// The weeks a run can go back to: every week start that wasn't already the
-// end of the run (going broke at the week turn into week 14 leaves 1–13).
-const rewindWeeks = run => run.weeks.filter(c => !c.over);
-const runEnded = run => run.weeks[run.weeks.length - 1].over;
 
-// Swap the run on screen for a saved one, replayed to the start of week `w`.
-// The save itself keeps the weeks after it until the player makes a move, so
-// a slip (or a reload) still finds them.
-function rewindTo(run, w, goal) {
-  const cp = run.weeks.find(c => c.w === w && !c.over);
-  const g = cp && replaySave(run, cp.i);
-  if (!g) { alert("That week can't be restored any more (the game has changed since it was saved)."); return; }
-  game = g; seed = run.seed; $("dbgSeed").value = seed;
-  runLog = { id: run.id, seed, log: run.log.slice(0, cp.i), weeks: run.weeks.filter(c => c.i <= cp.i && !c.over) };
+// Swap the game on screen for a saved week, replayed to its start.
+function rewindTo(pick, goal) {
+  const { run, cp } = pick;
+  const r = replaySave(run, cp.i);
+  if (!r.ok) { alert("That week can't be restored any more (the game has changed since it was saved)."); return; }
+  game = r.g; seed = run.seed; $("dbgSeed").value = seed;
+  runLog = { id: run.id, seed, log: run.log.slice(0, cp.i), weeks: [], from: { run, cp } };
+  hereKey = run.id + ":" + cp.i;
   resetUiState(); dbgReset();
   // everything up to this week was already read the first time through
   for (const id of game.order) { threadRendered[id] = game.threads[id].length; feedSeenLen[id] = game.threads[id].length; }
   $("introOv").classList.remove("on");
-  track(goal + ": week " + String(w).padStart(2, "0"));
+  track(goal + ": week " + String(cp.w).padStart(2, "0"));
   render(); queueTipCheck();
   if (kbdNav) focusNextUp();
 }
 
-// The week picker: one dropdown, a group per saved run (newest first), an
-// option per week start, each with when the player got there (their local
-// date and time: "the week I played last night" is how people remember a run).
+// The week picker: one dropdown of every saved week, newest first, each with
+// when the player got there (their local date and time: "the week I played
+// last night" is how people remember a game).
 function playedAt(t) {
   if (!t) return "";
   const d = new Date(t), now = new Date();
@@ -3489,70 +3521,57 @@ function playedAt(t) {
   if (day === 864e5) return "yesterday, " + time;
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + ", " + time;
 }
-function rewindSelectHtml(runs) {
-  const here = runLog && runLog.id, live = !gameEnded();
+function rewindSelectHtml(weeks) {
+  const live = !gameEnded();
   return '<label class="rw-pick"><span>Pick a week</span><select id="rwSel">'
-    + runs.map((r, k) => {
-      const mine = r.id === here;
-      const last = r.weeks[r.weeks.length - 1];
-      const head = (mine ? "This game" : "Game started " + playedAt(r.weeks[0].at || r.at))
-        + (runEnded(r) ? " · ended week " + last.w : " · up to week " + last.w);
-      const weeks = rewindWeeks(r);
-      return '<optgroup label="' + esc(head) + '">' + weeks.map(c => '<option value="' + k + ":" + c.w + '"'
-        + (k === 0 && c === weeks[weeks.length - 1] ? " selected" : "") + ">Week " + c.w + " · Ch " + c.ch
-        + (mine && live && c.w === game.s.week ? " · this week" : c.at ? " · played " + esc(playedAt(c.at)) : "") + "</option>").join("") + "</optgroup>";
-    }).join("")
+    + weeks.map(({ run, cp }, k) => '<option value="' + k + '"' + (k === 0 ? " selected" : "") + ">Week " + cp.w + " · Ch " + cp.ch
+      + (live && run.id + ":" + cp.i === hereKey ? " · this week" : cp.at ? " · played " + esc(playedAt(cp.at)) : "") + "</option>").join("")
     + "</select></label>";
 }
-const pickedWeek = (runs, v) => { const [k, w] = v.split(":").map(Number); return { run: runs[k], k, w }; };
-// The saved runs a picker can offer (a run shows once its first call is made).
-const savedRuns = () => loadRuns().filter(r => rewindWeeks(r).length);
 // "Saved games", from the Score card ("score") or the report card ("report"):
-// go back to any week of any saved run.
+// go back to any saved week.
 function openRewind(from) {
-  const runs = savedRuns();
+  const weeks = savedWeeks();
   $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Saved games</div>'
-    + '<div class="eg-headline">' + (runs.length ? "Go back to a week you played." : "No saved games yet.") + "</div>"
-    + '<div class="sf-chapter">' + (runs.length ? "Same story, same luck: from there, play it differently." : "") + "</div></div>"
-    + (runs.length ? rewindSelectHtml(runs) : "")
+    + '<div class="eg-headline">' + (weeks.length ? "Go back to a week you played." : "No saved games yet.") + "</div>"
+    + '<div class="sf-chapter">' + (weeks.length ? "Same story, same luck: from there, play it differently. Every week you play stays saved." : "") + "</div></div>"
+    + (weeks.length ? rewindSelectHtml(weeks) : "")
     + '<div class="sf-foot"><button class="sf-alt" id="rwBack">Back</button>'
-    + (runs.length ? '<button class="intro-next" id="rwGo"></button>' : "") + "</div>";
+    + (weeks.length ? '<button class="intro-next" id="rwGo"></button>' : "") + "</div>";
   $("rwBack").onclick = () => from === "report" ? (openReportCard(), egPage(2)) : openScoreSoFar();
-  if (runs.length) {
+  if (weeks.length) {
     const sel = $("rwSel"), go = $("rwGo");
-    const label = () => { go.textContent = "Go to week " + pickedWeek(runs, sel.value).w; };
+    const label = () => { go.textContent = "Go to week " + weeks[+sel.value].cp.w; };
     sel.onchange = label; label();
-    go.onclick = () => { const p = pickedWeek(runs, sel.value); rewindTo(p.run, p.w, "Rewound"); };
+    go.onclick = () => rewindTo(weeks[+sel.value], "Rewound");
   }
   $("endOv").classList.add("on");
   track("Restart opened");
 }
 // Like a game's title screen: after the intro (finished or skipped), the
-// player picks Resume (where they left off, or any earlier week of any saved
-// game) or New game. With nothing saved yet, Resume is there but greyed out,
-// so a first-time player learns a game can be picked up later. Skipped right
-// after the player chose New game from inside a game.
+// player picks Resume (the latest saved week, or any other) or New game. With
+// nothing saved yet, Resume is there but greyed out, so a first-time player
+// learns a game can be picked up later. Skipped right after the player chose
+// New game from inside a game.
 function offerResume() {
   try { if (sessionStorage.getItem("plusone_new")) { sessionStorage.removeItem("plusone_new"); return false; } } catch (e) {}
-  const runs = savedRuns();
-  const latest = runs[0], last = latest && latest.weeks[latest.weeks.length - 1];
-  const ended = latest && runEnded(latest);
-  const body = !latest ? "Your game saves itself as you play, week by week. Come back any time to resume it, or to go back to a week and play it differently."
-    : ended ? "Your last game ended at week " + last.w + ". Pick any week you played and take it from there."
-    : "Your last game is at week " + last.w + ". Pick up where you left off, or go back to an earlier week.";
+  const weeks = savedWeeks();
+  const latest = weeks[0];
+  const body = latest ? "Pick up at your latest week, or go back to any week you've played. Every week you play stays saved."
+    : "Your game saves itself as you play, week by week. Come back any time to resume it, or to go back to a week and play it differently.";
   $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
     + '<div class="intro-eyebrow">' + (latest ? "Saved games" : "Ready?") + "</div>"
     + '<div class="intro-step"><b>' + (latest ? "Resume a saved game, or start a new one?" : "Start a new game.") + "</b>" + body + "</div>"
-    + (latest ? rewindSelectHtml(runs) : "")
+    + (latest ? rewindSelectHtml(weeks) : "")
     + '<div class="intro-foot"><div></div><div class="intro-actions">'
     + (latest ? '<button class="sf-alt" id="rsNew">New game</button><button class="intro-next" id="rsGo"></button>'
       : '<button class="sf-alt" id="rsGo" disabled title="Nothing saved yet">Resume</button><button class="intro-next" id="rsNew">New game →</button>')
     + "</div></div></div>";
   if (latest) {
     const sel = $("rwSel"), go = $("rsGo");
-    const label = () => { const p = pickedWeek(runs, sel.value); go.textContent = "Resume at week " + p.w + " →"; };
+    const label = () => { go.textContent = "Resume at week " + weeks[+sel.value].cp.w + " →"; };
     sel.onchange = label; label();
-    go.onclick = () => { const p = pickedWeek(runs, sel.value); rewindTo(p.run, p.w, "Resumed"); };
+    go.onclick = () => rewindTo(weeks[+sel.value], "Resumed");
   }
   $("rsNew").onclick = () => {
     track(latest ? "Resume declined" : "New game");
