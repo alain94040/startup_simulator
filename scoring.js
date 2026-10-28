@@ -450,8 +450,12 @@
   // stage (most of it, about half, the last few calls, none). Never names a
   // moment or counts them.
   const OUTLOOK = {
-    build: ["But you haven't launched yet. Most of this lesson is still ahead.",
-      "But the real test of what you built is still ahead.",
+    // Build reads off the launch, not the stage: until you ship, you can't
+    // know whether you built something people want.
+    build: [launched => launched ? "You've launched, but whether people want it is still an open question."
+      : "But until you ship, you won't know if you built something people want.",
+      launched => launched ? "You've launched, but whether people want it is still an open question."
+        : "But until you ship, you won't know if you built something people want.",
       "A few calls here are still ahead.",
       null],
     team: ["But you haven't faced the real challenges yet.",
@@ -498,6 +502,7 @@
       const share = total ? done / total : 1;
       const stage = share < 1 / 3 ? 0 : share < 2 / 3 ? 1 : share < 0.99 ? 2 : 3;
       let outlook = score == null ? null : OUTLOOK[c.key][stage];
+      if (typeof outlook === "function") outlook = outlook(!!g.s.launched);
       // "…, but you gave ground. But you haven't…" reads twice: one "but" is enough.
       if (outlook && /\bbut\b/i.test(hint || "")) outlook = outlook.replace(/^But (.)/, (_, ch) => ch.toUpperCase());
       return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, hint, outlook, moments: reached };
