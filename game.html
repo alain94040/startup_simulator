@@ -401,6 +401,7 @@
   .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   .sf-foot button, .intro-actions button { white-space: nowrap; }
+  .sf-about { display: none; margin: 12px auto 0; border: 0; background: none; color: var(--blue); font-size: 13px; font-weight: 600; padding: 6px 10px; }
   .sf-alt:disabled { color: #b4b4bb; border-color: var(--soft); background: var(--soft); cursor: not-allowed; }
   .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
   /* ── going back to a week (openRewind, openResume): one dropdown ── */
@@ -782,7 +783,7 @@
      middle of the header; on the phone it becomes its own scrollable row
      under the nav title. */
   #hud { display: flex; align-items: center; gap: 18px; flex: 1; min-width: 0; }
-  #mTitle, #tabbar { display: none; }
+  #tabbar { display: none; }
   #journalSurface { flex-direction: column; align-items: center; overflow: hidden auto; padding: 16px 0 30px; gap: 12px; background: var(--panel); border-radius: 14px; box-shadow: var(--card-shadow); }
   .j-wrap { width: min(620px, 92%); display: flex; flex-direction: column; gap: 14px; }
   .j-chapter { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; background: var(--panel); }
@@ -811,34 +812,35 @@
     body { font-size: 15px; -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
     button, .conv, .h-card.link, .f-item { touch-action: manipulation; -webkit-touch-callout: none; }
 
-    /* ── nav bar (title + actions) and HUD strip, on two rows ── */
-    header {
-      display: grid; grid-template-columns: minmax(0,1fr) auto;
-      grid-template-areas: "title actions" "hud hud";
-      align-items: center; gap: 0; padding: env(safe-area-inset-top) 0 0;
-    }
-    .logo, #todoPop { display: none; }
-    #mTitle { grid-area: title; display: flex; align-items: center; min-width: 0; padding: 9px 0 7px 14px; font-size: 17px; font-weight: 700; letter-spacing: -.01em; }
-    #mTitle .m-back { border: 0; background: none; padding: 0; margin-left: -4px; color: var(--blue); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 2px; max-width: 100%; }
-    #mTitle .m-back .chev { font-size: 22px; line-height: 1; font-weight: 400; position: relative; top: -1px; }
-    .hdr-right { grid-area: actions; gap: 8px; padding: 4px 12px 2px 6px; }
-    .hdr-btn, .bell { height: 32px; }
-    .hdr-btn.icon, .bell { width: 32px; font-size: 14px; }
+    /* ── one row: the runway and the deadline on the left, the score and the
+       bell on the right. No page title (the tab bar already says where you
+       are), no move dots, no ⓘ (About is on the Score card), and no ☑ gauge:
+       the chapter checklist has the Journal tab to itself. ── */
+    header { gap: 0; padding: env(safe-area-inset-top) 0 0; }
+    .logo, #todoPop, #dots, #hAbout, #gTodo { display: none; }
+    .hdr-right { flex: none; gap: 6px; padding: 7px 12px 7px 4px; }
+    .hdr-btn, .bell { height: 36px; }
+    .hdr-btn.icon, .bell { width: 36px; font-size: 14px; }
+    /* the Score button reads like a gauge: a small label over the letter */
+    #hScore { min-width: 46px; padding: 0 7px; flex-direction: column; justify-content: center; gap: 1px; }
+    #hScore .sf-lbl { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); font-weight: 500; line-height: 1; }
+    #hScore .sf-live { height: auto; font-size: 11px; padding: 1px 6px; line-height: 1.3; }
     #hud {
-      grid-area: hud; gap: 7px; overflow-x: auto; overflow-y: hidden; flex: none;
-      padding: 0 12px 7px; scrollbar-width: none; -ms-overflow-style: none;
+      gap: 6px; overflow-x: auto; overflow-y: hidden;
+      padding: 7px 4px 7px 12px; scrollbar-width: none; -ms-overflow-style: none;
       -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain;
     }
     #hud::-webkit-scrollbar { display: none; }
     /* the strip scrolls — fade its right edge so a half-visible gauge reads as
        "there's more", not as a clipped layout */
     #hud { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 22px), transparent); }
-    #hud .gauge { min-width: 0; flex: none; background: var(--soft); border-radius: 10px; padding: 4px 9px 5px; gap: 0; }
+    #hud .gauge { min-width: 0; flex: none; height: 36px; justify-content: center; background: var(--soft); border-radius: 10px; padding: 0 10px; gap: 0; }
     #hud .gauge.clickable, #hud .gauge.todo { margin: 0; }
     #hud .gauge.clickable.cur { background: var(--blue-soft); }
-    .gauge .g-lbl { font-size: 8.5px; }
-    .gauge .g-val { font-size: 12px; }
-    .gauge .g-bar { height: 3px; margin-top: 3px; }
+    .gauge .g-lbl { font-size: 9px; line-height: 1.2; }
+    .gauge .g-val { font-size: 12.5px; line-height: 1.25; }
+    .gauge .g-bar { display: none; }   /* the words say it; low runway turns the value red instead */
+    .gauge .g-val.low { color: var(--red); }
 
     /* ── the surface area ── */
     main { padding: 0; gap: 0; background: var(--bg); }
@@ -1003,6 +1005,7 @@
     .intro-art { height: clamp(100px, calc(92dvh - 450px), 50vw); }  /* sheet tops out at 92dvh */
     .intro-next { padding: 12px 20px; }
     .sf-foot { gap: 8px; }
+    .sf-about { display: block; }   /* the phone's header has no ⓘ */
     .sf-foot button { padding: 12px 12px; }
     #aboutModal { padding: 0; }
     .about-body { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
@@ -1013,7 +1016,6 @@
     .intro-dots i { width: 8px; height: 8px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
-    .sf-cap { display: none; }   /* the header is tight on a phone: "Score", no cap */
 
     /* ── notifications: full-width banners, capped so they can't bury the app ── */
     /* One grouped banner at a time (see showBanner): it drops in from the top
@@ -1065,7 +1067,6 @@
   @media (max-width: 360px) {
     #tabbar button { font-size: 9.5px; }
     #tabbar button svg { width: 22px; height: 22px; }
-    #mTitle { font-size: 16px; }
     .m-in, .m-out { max-width: 84%; }
   }
 
@@ -1083,7 +1084,6 @@
 
 <header>
   <div class="logo">PlusOne<small id="hWeek"></small></div>
-  <div id="mTitle"></div>
   <div id="hud">
     <div class="gauge clickable" id="gRunway" title="open the bank" role="button" tabindex="0"><div class="g-lbl">Runway ▾</div><div class="g-val" id="gRunV"></div><div class="g-bar"><i id="gRunB" style="background:var(--amber)"></i></div></div>
     <div class="gauge"><div class="g-lbl" id="gYcL">YC window</div><div class="g-val" id="gYcV"></div><div class="g-bar"><i id="gYcB" style="background:var(--blue)"></i></div></div>
@@ -1091,7 +1091,7 @@
   </div>
   <div class="hdr-right">
     <div class="dots" id="dots" tabindex="0" role="img" aria-describedby="dotsTip"></div>
-    <button class="hdr-btn" id="hScore" title="your score so far"><span class="sf-cap">🎓 </span>Score</button>
+    <button class="hdr-btn" id="hScore" title="your score so far">🎓 Score</button>
     <button class="hdr-btn icon" id="hAbout" title="about this game" aria-label="About this game" aria-haspopup="dialog">ⓘ</button>
     <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
   </div>
@@ -1235,11 +1235,6 @@
 const $ = id => document.getElementById(id);
 const esc = t => String(t == null ? "" : t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const money = n => "$" + Math.round(n).toLocaleString();
-// tight enough for the phone's HUD chip: $6.4k, $10k, $500k
-const moneyShort = n => {
-  const a = Math.round(n);
-  return Math.abs(a) >= 1000 ? "$" + (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : "$" + a.toLocaleString();
-};
 
 /* ── phone vs. desktop ───────────────────────────────────────────────────────
    Same game, same engine, same renderers — the phone just gets a different
@@ -1248,7 +1243,6 @@ const moneyShort = n => {
    the selected thread is always the one in front of the player.            */
 const MOBILE_Q = matchMedia("(max-width: 1023px)");   // keep in step with the phone @media block
 let isMobile = MOBILE_Q.matches;
-const TAB_TITLE = { msgs: "Messages", moves: "Your moves", feed: "News", bank: "Bank", journal: "Journal" };
 // Surfaces only the phone has: the desktop keeps both in its right column.
 const PHONE_ONLY = new Set(["moves", "journal"]);
 
@@ -1586,26 +1580,22 @@ function gatedKeys(nodeId) {
 // "12 wks · $6,400" becomes "12w · $6.4k", and the chapter label drops to its
 // "Ch 3" half (the full title has a whole tab to itself over in Journal).
 const wks = n => n + (n === 1 ? " wk" : " wks");
-const runwayText = (runway, cash) => isMobile ? runway + "w · " + moneyShort(cash) : wks(runway) + " · " + money(cash);
-const shortStage = lbl => isMobile ? String(lbl).split(" · ")[0] : lbl;
-// The phone's nav bar: the surface you're on.
-function renderNavTitle() {
-  const mt = $("mTitle");
-  mt.textContent = isMobile ? (TAB_TITLE[surface] || "Messages") : "";
-}
+const runwayText = (runway, cash) => isMobile ? money(cash) + " · " + wks(runway) : wks(runway) + " · " + money(cash);
 function renderHeader() {
   const st = game.stats();
   $("hWeek").textContent = "Week " + st.week;
   $("gRunV").textContent = runwayText(st.runway, st.cash);
+  $("gRunV").classList.toggle("low", st.runway <= 4);
   $("gRunB").style.width = Math.min(100, (st.runway / 20) * 100) + "%";
   $("gRunB").style.background = st.runway <= 4 ? "var(--red)" : st.runway <= 8 ? "var(--amber)" : "var(--green)";
   const dIn = game.s.deadline_week - st.week;
-  $("gYcL").textContent = isMobile ? "YC in" : "YC deadline";
-  if (dIn > 0) { $("gYcV").textContent = (isMobile ? dIn + "w" : wks(dIn) + " left"); $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
+  // the phone has no logo to carry "Week n", so its deadline gauge counts up to it
+  $("gYcL").textContent = "YC deadline";
+  if (isMobile) $("gYcV").textContent = "Week " + Math.min(st.week, game.s.deadline_week) + " of " + game.s.deadline_week;
+  else if (dIn > 0) { $("gYcV").textContent = wks(dIn) + " left"; $("gYcB").style.width = Math.max(4, 100 - (dIn / game.s.deadline_week) * 100) + "%"; }
   else { $("gYcV").textContent = "now"; $("gYcB").style.width = "100%"; }
-  renderNavTitle();
   const stg = currentStage(), c = stageCounts(stg);
-  $("gTdL").textContent = "☑ " + shortStage(stageLabel(stg, c.done === c.total)) + " ▾";
+  $("gTdL").textContent = "☑ " + stageLabel(stg, c.done === c.total) + " ▾";
   $("gTdV").textContent = c.done + " of " + c.total;
   $("gTdB").style.width = (c.done / c.total) * 100 + "%";
   // pulse the ☑ label while a needs-your-call item is open
@@ -3344,7 +3334,9 @@ function openScoreSoFar() {
     + '<div class="eg-roll-copy">' + rollCopy + "</div></div>"
     + '<div class="sf-foot">' + (savedWeeks().length ? '<button class="sf-alt" id="sfSaved">Saved games</button>' : "")
     + '<button class="sf-alt" id="sfAgain">New game</button>'
-    + '<button class="intro-next" id="sfClose">Keep playing</button></div>';
+    + '<button class="intro-next" id="sfClose">Keep playing</button></div>'
+    + '<button class="sf-about" id="sfAbout">About this game</button>';
+  $("sfAbout").onclick = () => { closeReportCard(); openAbout(); };
   $("sfClose").onclick = closeReportCard;
   $("sfAgain").onclick = () => { if (confirm("Start a new game from week 1? This one stays in your saved games.")) restartGame("Restarted: week " + s.week); };
   if ($("sfSaved")) $("sfSaved").onclick = () => openRewind("score");
@@ -3367,7 +3359,9 @@ function renderScoreButton() {
   btn.setAttribute("aria-label", score == null ? "Score: not graded yet" : (done ? "Score: " : "Score so far: ") + g);
   const shown = score == null ? null : g;
   const changed = liveGrade !== undefined && shown !== null && shown !== liveGrade;
-  btn.innerHTML = '<span class="sf-cap">🎓 </span>Score' + (score == null ? "" : ' <span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>");
+  const chip = score == null ? "" : '<span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>";
+  // the phone stacks a small label over the letter, like its gauges
+  btn.innerHTML = isMobile ? '<span class="sf-lbl">Score</span>' + (chip || "🎓") : '🎓 Score' + (chip ? " " + chip : "");
   liveGrade = shown;
 }
 // A tap outside the Score card closes it, like the About sheet. Only the
@@ -3589,7 +3583,7 @@ const MAKING_OF_URL = "https://foundrs.com/the-making-of-a-startup-simulator.htm
 $("aboutMakingOf").href = MAKING_OF_URL;
 $("aboutMakingOf").onclick = () => track("About: making-of");
 function openAbout() { track("About"); $("aboutOv").classList.add("on"); $("aboutClose").focus(); }
-function closeAbout() { $("aboutOv").classList.remove("on"); syncInert(); $("hAbout").focus(); }
+function closeAbout() { $("aboutOv").classList.remove("on"); syncInert(); (onScreen($("hAbout")) || $("hScore")).focus(); }
 $("hAbout").onclick = openAbout;
 $("aboutClose").onclick = closeAbout;
 $("aboutOv").onclick = (e) => { if (e.target === $("aboutOv")) closeAbout(); };
@@ -3757,7 +3751,7 @@ const TIPS = [
     title: "Answer them.",
     body: () => "When someone is waiting on you, " + (isMobile ? "tap" : "click") + " Respond and pick what to say. What you say changes the story." },
   { id: "moves", when: () => game.actionsLeft === 1,
-    target: () => onScreen($("dots")),
+    target: () => onScreen($("dots")) || onScreen($("gYcV").parentNode),
     title: "That was one of your two moves.",
     body: () => "Every answer spends a move, and you get two a week. Spend the second and the week ends, so you can't answer everyone: choose who waits. Some messages won't wait forever." },
   // ── everything else, the first time it shows up ──
@@ -3785,9 +3779,10 @@ const TIPS = [
     // the phone's journal is a tab away: let the tip open it on the entry it's about
     get go() { return isMobile ? { label: "Open the Journal", run: () => setSurface("journal") } : null; } },
   { id: "todo", when: () => stageCounts(currentStage()).done > 0,
-    target: () => onScreen($("gTodo")),
+    target: () => isMobile ? onScreen(tabBtn("journal")) : onScreen($("gTodo")),
     title: "Checked off!",
-    body: () => "This is your to-do list for the current chapter: what this stretch of the story needs from you. " + (isMobile ? "Tap" : "Click") + " it to see the whole list." },
+    body: () => isMobile ? "Each chapter has a to-do list: what this stretch of the story needs from you. It's at the top of the Journal tab."
+      : "This is your to-do list for the current chapter: what this stretch of the story needs from you. Click it to see the whole list." },
   { id: "move", when: () => openNow().some(a => SELF.has(a.charId)),
     target: () => isMobile ? onScreen(tabBtn("moves")) : onScreen(document.querySelector("#sideCol .h-card.move")),
     title: "Your move.",
