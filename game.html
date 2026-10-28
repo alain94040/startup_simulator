@@ -2338,7 +2338,7 @@ function celebrateFirstMoney(before, done) {
   if (before || !firstMoneyIn() || gameEnded()) { done(); return; }
   const fc = game.s.first_check || {};
   const ov = $("fwOv"), cue = $("fwSkip");
-  $("fwSub").textContent = (fc.from || "Someone") + " just put " + money(fc.amount || 0) + " behind you. Now it's someone else's money on the line, and that weighs more than your own.";
+  $("fwSub").textContent = (fc.from || "Someone") + " just put " + money(fc.amount || 0) + " behind you. It's someone else's money now.";
   cue.textContent = (isMobile ? "tap" : "click") + " to continue";
   cue.classList.remove("ready");
   const prevFocus = document.activeElement;
