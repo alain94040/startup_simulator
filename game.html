@@ -1181,7 +1181,7 @@
 <div id="notifs"></div>
 <div id="noteCenter"></div>
 <div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">click to continue</span></div>
-<div id="fwOv" role="dialog" aria-modal="true" aria-labelledby="fwTitle" tabindex="-1"><canvas id="fwCanvas"></canvas><div id="fwCard"><span class="fw-emoji" aria-hidden="true">💸</span><div class="fw-label">FIRST MONEY IN</div><div class="fw-title" id="fwTitle">It's getting real.</div><div class="fw-sub" id="fwSub"></div></div><span class="lc-skip" id="fwSkip">click to continue</span></div>
+<div id="fwOv" role="dialog" aria-modal="true" aria-labelledby="fwTitle" tabindex="-1"><canvas id="fwCanvas"></canvas><div id="fwCard"><span class="fw-emoji" aria-hidden="true">💸</span><div class="fw-label">IT'S GETTING REAL</div><div class="fw-title" id="fwTitle">First money in.</div><div class="fw-sub" id="fwSub"></div></div><span class="lc-skip" id="fwSkip">click to continue</span></div>
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
@@ -2338,7 +2338,7 @@ function celebrateFirstMoney(before, done) {
   if (before || !firstMoneyIn() || gameEnded()) { done(); return; }
   const fc = game.s.first_check || {};
   const ov = $("fwOv"), cue = $("fwSkip");
-  $("fwSub").textContent = (fc.from || "Someone") + " just put " + money(fc.amount || 0) + " behind you. It's someone else's money now.";
+  $("fwSub").textContent = (fc.from || "Someone") + " just put " + money(fc.amount || 0) + " behind you. When other people's money is on the line, it doesn't feel like a game anymore.";
   cue.textContent = (isMobile ? "tap" : "click") + " to continue";
   cue.classList.remove("ready");
   const prevFocus = document.activeElement;
