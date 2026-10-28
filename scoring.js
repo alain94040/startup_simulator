@@ -112,7 +112,7 @@
           : t("waitlist_calls:call") ? "Called the waitlist, but never sat down for real interviews." : "Built without ever interviewing a user.",
       }),
       moment("community", "Listened in the communities", 4, {
-        hints: ["You've been listening to your market.", "You've listened to your market some of the time.", "Your market has been talking, and you haven't been listening."],
+        hints: ["You've been listening to your market.", "You've listened in on some of the forums where your users talk.", "You skipped the forums where your users were talking."],
         reached: faced.length > 0,
         why: "the run ended before the communities started talking.",
         got: 4 * listen / THREAD_MAX,
@@ -125,7 +125,7 @@
       // Priya's general market survey is half credit: it maps the field, but
       // not the one you're up against.
       moment("competitor", "Studied the competitor", 3, {
-        hints: ["You studied the competition closely.", "You looked at the competition, but not closely.", "You haven't looked hard at the competition."],
+        hints: ["You studied the competition closely.", "You looked at the competition, but not closely.", "You never studied the competition up close."],
         reached: d("flare_stealth") || d("mentor_competitor_bomb"),
         why: "the run ended before Flare made the news.",
         got: t("flare_stealth:dive") ? 3 : t("mentor_competitor_bomb:research") ? 1.5 : 0,
@@ -495,7 +495,12 @@
       // late game a lesson has more than one story, and a single early miss
       // shouldn't be all the card remembers.
       const take = [best[0], missed[0]].filter(Boolean);
-      const hint = take.length ? take.map(m => m.hints[tier(m)]).join(" ") : null;
+      // In a lesson that's going well, the miss is the gap, not the verdict:
+      // "Your users were talking and you skipped it" under a B reads like a
+      // bad player's card.
+      const lines = take.map(m => m.hints[tier(m)]);
+      if (lines.length === 2 && score >= 70 && tier(take[1]) === 2) lines[1] = "The gap: " + lines[1].replace(/^./, ch => ch.toLowerCase());
+      const hint = lines.length ? lines.join(" ") : null;
       // How much of the lesson is still ahead, by the weight of its calls
       // (standing moments run the whole game, so they don't count), said
       // without naming any of it: a good start in week 5 isn't a lesson won.
