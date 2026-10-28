@@ -395,6 +395,22 @@
   .eg-batch { display: inline-block; margin-top: 10px; padding: 6px 14px; border-radius: 999px; background: linear-gradient(90deg, var(--blue), #8b5cf6); color: #fff; font-weight: 700; font-size: 12px; letter-spacing: .02em; }
   #endModal .intro-foot { margin-top: 16px; }
   #egPage2 .eg-outcome { margin-top: 4px; padding-top: 0; border-top: 0; }
+  /* ── the Score card mid-run (openScoreSoFar): the same rows, graded so far ── */
+  .sf-chapter { color: var(--dim); font-size: 12px; margin-top: 6px; line-height: 1.4; }
+  .grade.sf-none { background: var(--line) !important; color: #8a8a93; }
+  .sf-tag { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: #c9922a; background: #fbf1de; border-radius: 6px; padding: 2px 6px; margin-left: 6px; vertical-align: 2px; }
+  .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+  .sf-foot button, .intro-actions button { white-space: nowrap; }
+  .sf-alt:disabled { color: #b4b4bb; border-color: var(--soft); background: var(--soft); cursor: not-allowed; }
+  .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
+  /* ── going back to a week (openRewind, openResume): one dropdown ── */
+  .rw-pick { display: block; margin-top: 14px; }
+  .rw-pick span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
+  .rw-pick select { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+  .rw-pick select:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+  .sf-fine { font-size: 11px; color: var(--dim); text-align: right; margin-top: 8px; }
+  .sf-live { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 6px; color: #fff; font-weight: 800; font-size: 12px; }
+  .sf-live.pop { animation: gradePop .44s cubic-bezier(.2,.9,.3,1.35); }
   .eg-skiphint { text-align: center; font-size: 11px; color: var(--dim); margin-top: 12px; transition: opacity .3s; }
   /* ── leaderboard (endgame + intro) ──────────────────────────────────────── */
   .lb { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--soft); }
@@ -425,9 +441,13 @@
   .lb-entry input:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
   .lb-entry button { flex: none; background: var(--blue); color: #fff; border: 0; border-radius: 9px; padding: 0 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
   .lb-entry button:disabled { opacity: .5; cursor: default; }
-  /* intro leaderboard panel reuses the intro chrome */
-  .intro-board { padding: 22px 28px 12px; }
+  /* the title menu's high scores reuse the intro chrome; the board scrolls */
+  .intro-board { padding: 22px 28px 20px; }
   .intro-board .lb { margin-top: 12px; border-top: 0; padding-top: 0; }
+  .intro-board .lb-list { max-height: min(330px, calc(84vh - 260px)); overflow-y: auto; }
+  /* the title menu: three plain buttons in a row */
+  .mm-row { display: flex; gap: 10px; margin-top: 22px; }
+  .mm-row button { flex: 1; padding: 12px 8px; }
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
@@ -458,6 +478,19 @@
   .intro-next { border: 0; background: var(--ink); color: #fff; font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 22px; cursor: pointer; transition: transform .1s; }
   .intro-next:hover { opacity: .9; }
   .intro-next:active { transform: scale(.97); }
+  /* About sheet (the header's ⓘ): the making-of link and the legal line */
+  #aboutModal { padding: 0; overflow: hidden; }
+  .about-body { padding: 22px 26px 20px; }
+  .about-body h2 { font-size: 20px; font-weight: 800; margin: 0 0 8px; }
+  .about-body p { font-size: 13.5px; line-height: 1.6; color: #55555c; margin: 0 0 12px; }
+  .about-link { display: block; padding: 12px 14px; border: 1px solid #c9d8ff; border-radius: 12px; background: var(--blue-soft); text-decoration: none; color: var(--ink); margin: 6px 0 14px; transition: .13s; }
+  .about-link:hover { border-color: var(--blue); transform: translateY(-1px); }
+  .about-link span { display: block; font-size: 12.5px; line-height: 1.5; color: #55555c; }
+  .about-link .al-cta { margin-top: 6px; color: var(--blue); font-weight: 700; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+  .about-legal { font-size: 11px; line-height: 1.5; color: var(--dim); border-top: 1px solid var(--soft); padding-top: 12px; }
+  .about-repo { font-size: 12px; color: var(--dim); margin: -4px 0 14px; }
+  .about-repo a { color: var(--blue); font-weight: 600; text-decoration: none; }
+  .about-close { width: 100%; margin-top: 16px; }
   /* first-time tips: a sketchbook card — a hand-drawn border, a speech-bubble tail
      to the feature it explains, and a scribbled circle around it on a dimmed screen.
      The circle (#tipDeco, under the card) and tail (#tipTail, over it) are drawn by placeTip(); "Kalam" is loaded
@@ -961,11 +994,18 @@
     .ss-choices .chip { padding: 12px 16px; }
     #introModal { padding: 0; overflow-y: auto; }
     .intro-body, .intro-board { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
+    .intro-board .lb-list { max-height: calc(92dvh - 280px); }
+    .mm-row { gap: 8px; }
+    .mm-row button { padding: 12px 4px; }
     .intro-step b { font-size: 19px; }
     .intro-person { gap: 12px; }
     .intro-person .av { width: 60px; height: 60px; }
     .intro-art { height: clamp(100px, calc(92dvh - 450px), 50vw); }  /* sheet tops out at 92dvh */
     .intro-next { padding: 12px 20px; }
+    .sf-foot { gap: 8px; }
+    .sf-foot button { padding: 12px 12px; }
+    #aboutModal { padding: 0; }
+    .about-body { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
     /* a fingertip, not a cursor: the desktop's 14×26 hit areas are too small to
        land on the dot you meant, so each gets a 44px-tall, 26px-wide target */
     .intro-dots { margin-left: -10px; }
@@ -973,6 +1013,7 @@
     .intro-dots i { width: 8px; height: 8px; }
     .lb-entry input { font-size: 16px; }  /* 16px keeps iOS from zooming the page on focus */
     .grade-row { font-size: 12.5px; }
+    .sf-cap { display: none; }   /* the header is tight on a phone: "Score", no cap */
 
     /* ── notifications: full-width banners, capped so they can't bury the app ── */
     /* One grouped banner at a time (see showBanner): it drops in from the top
@@ -1050,8 +1091,8 @@
   </div>
   <div class="hdr-right">
     <div class="dots" id="dots" tabindex="0" role="img" aria-describedby="dotsTip"></div>
-    <button class="hdr-btn" id="hScore" title="see your founder report card again" style="display:none">🎓 Report card</button>
-    <button class="hdr-btn icon" id="hRestart" title="start a new run">↻</button>
+    <button class="hdr-btn" id="hScore" title="your score so far"><span class="sf-cap">🎓 </span>Score</button>
+    <button class="hdr-btn icon" id="hAbout" title="about this game" aria-label="About this game" aria-haspopup="dialog">ⓘ</button>
     <button class="bell" id="bell" title="this week's notifications">🔔<span class="bell-badge" id="bellBadge" style="display:none"></span></button>
   </div>
   <div id="todoPop"></div>
@@ -1120,6 +1161,18 @@
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
+<div class="overlay" id="aboutOv"><div class="modal" id="aboutModal" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="intro-stripe"></div>
+  <div class="about-body">
+    <div class="intro-eyebrow">About</div>
+    <h2 id="aboutTitle">A Silicon Valley startup game</h2>
+    <p>A startup is a race: things keep coming at you, and there's never time for all of them. Here every week brings more requests, decisions and fires than you can handle, and you get two moves. Told in chat threads, it follows a startup from the night it's founded to its first real funding.</p>
+    <a class="about-link" id="aboutMakingOf" target="_blank" rel="noopener"><div><span>How this game was designed and built: from board-game cards to chat threads, and why launch day plays like a movie.</span><span class="al-cta">Read “The Making of a Startup Simulator” ↗</span></div></a>
+    <div class="about-repo"><a href="mailto:game@foundrs.com">Feedback</a> and pull requests welcome: <a href="https://github.com/alain94040/startup_simulator" target="_blank" rel="noopener">the code is on GitHub</a>.</div>
+    <div class="about-legal">This game is a work of fiction. Not affiliated with or endorsed by Y Combinator or any company or person named in the game. Y Combinator is a trademark of its owner, used here only to refer to the real program.</div>
+    <button class="intro-next about-close" id="aboutClose">Back to the game</button>
+  </div>
+</div></div>
 <div id="tipLayer"><div id="tipRing"></div>
   <svg id="tipDeco"><defs><filter id="tipRough"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="4"/></filter></defs><g id="tipInk"></g></svg>
   <div id="tipBubble"></div><svg id="tipTail"><g id="tipTailInk"></g></svg></div>
@@ -1379,16 +1432,29 @@ const STAGES = [
 const urlSeed = new URLSearchParams(location.search).get("seed");
 let seed = urlSeed != null ? parseInt(urlSeed, 10) : Date.now() % 100000;
 let game = new Engine({ seed });
-// Progress telemetry: each week reached, each scene entered and how the run
-// ended are sent to Clicky as dynamic goals ("Week 07", "Scene: launch",
-// "End: deadline", "Grade: B"), so the Goals report reads as a funnel of how
-// far players get. A no-op when the tracker is blocked or hasn't loaded; each
-// goal fires once per page load.
+// Progress telemetry: each intro card seen ("Intro 2 of 5", then "Intro done"),
+// each first-time tip shown ("Tip 03 moves"), each week reached, each scene
+// entered and how the run ended are sent to Clicky as dynamic goals ("Week 07",
+// "Scene: launch", "End: deadline", "Grade: B"), so the Goals report reads as a
+// funnel of how far players get. Goals fired before the async tracker has
+// loaded (the first intro card fires on page load) wait for it for up to 30s;
+// a no-op when the tracker is blocked. Each goal fires once per page load.
 const tracked = new Set();
+let trackQueue = [], trackWait = null;
 function track(goal) {
   if (tracked.has(goal)) return;
   tracked.add(goal);
-  try { if (window.clicky && clicky.goal) clicky.goal(goal); } catch (e) {}
+  trackQueue.push(goal);
+  flushTrack();
+}
+function flushTrack() {
+  if (window.clicky && clicky.goal) {
+    clearInterval(trackWait); trackWait = null;
+    for (const g of trackQueue.splice(0)) { try { clicky.goal(g); } catch (e) {} }
+  } else if (!trackWait) {
+    let tries = 0;
+    trackWait = setInterval(() => { if (++tries > 60) { clearInterval(trackWait); trackWait = null; trackQueue = []; } else flushTrack(); }, 500);
+  }
 }
 const gameEnded = () => game.s.game_over || game.s.game_won;   // run is over — browsing only, no more calls
 let selected = "alex";
@@ -1447,7 +1513,7 @@ function journalMirror() {
   return entries.sort((a, b) => a.week - b.week || (a.filler ? 1 : 0) - (b.filler ? 1 : 0) || a.seq - b.seq);
 }
 function resetUiState() {
-  feedSeenLen = {}; sceneStartSeq = null; inScene = false;
+  feedSeenLen = {}; sceneStartSeq = null; inScene = false; liveGrade = undefined;
   scSelected = null; scRendered = {}; scHeadSig = null; scClockShown = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   selected = "alex"; surface = "msgs"; threadRendered = {}; newsOpen = null;
@@ -1573,7 +1639,7 @@ function renderHeader() {
   setBadge("tbFeed", feedNew);
   setBadge("tbJournal", Math.max(0, jShown - journalSeen));
   updateBell();
-  $("hScore").style.display = gameEnded() ? "" : "none";
+  renderScoreButton();
 }
 function setBadge(id, n) {
   const el = $(id);
@@ -2177,7 +2243,9 @@ function doAct(nodeId, key, charId) {
   // that lands in someone ELSE's thread (not the one just answered) needs to
   // be caught the moment it happens — see pingOtherSceneThreads.
   const preSceneLens = inScene ? sceneThreadLens() : null;
+  const acted = game.log.length;
   game.act(nodeId, key);
+  if (game.log.length > acted) recordCall([nodeId, key]);   // act() returns the fx's recap, not success: a taken call is a new log line
   const entering = !preScene && game.scene;
   if (charId) threadRendered[charId] = entering ? repliedThrough(charId, preSeq) : game.threads[charId].length;
   // your own mid-week choices ink into the journal mirror at once (ungLowed);
@@ -2683,6 +2751,7 @@ function advanceWeek() {
   const cashBefore = game.stats().cash;
 
   game.nextWeek();
+  recordCall(0);
   if (!gameEnded()) track("Week " + String(game.s.week).padStart(2, "0"));
 
   // gather this week's notifications (todo check-offs first, then arrivals)
@@ -2965,7 +3034,7 @@ const LB = (function () {
   }
   async function fetchBoard() {
     try {
-      const r = await fetch(ENDPOINT, { cache: "no-store" });
+      const r = await fetch(ENDPOINT);   // the server says how long (a CDN copy may be up to 30s old)
       if (!r.ok) throw 0;
       const data = await r.json();
       if (!Array.isArray(data)) throw 0;
@@ -3191,7 +3260,8 @@ function checkEndgame() {
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
     + '<div class="intro-foot">' + egDots(2)
-      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div>'
+      + '<div class="sf-foot" style="margin-top:0">' + (savedWeeks().length ? '<button class="sf-alt" onclick="openRewind(\'report\')">Saved games</button>' : "") + '<button class="sf-alt" onclick="restartGame(\'Play again\')">Play again</button>'
+      + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div></div>'
     + "</div>";
 
   egCardHtml = $("endModal").innerHTML;
@@ -3208,7 +3278,7 @@ $("endModal").addEventListener("click", (e) => {
 // Dismissing the report card doesn't end the session — it drops the player
 // back into the chat history of the run they just played (read-only: doAct,
 // renderSide and renderThread all gate on gameEnded()). The score itself
-// stays one tap away via the header's Report card button.
+// stays one tap away via the header's Score button.
 function closeReportCard() {
   egClearTimers();
   $("endOv").classList.remove("on");
@@ -3222,25 +3292,323 @@ function openReportCard() {
   egFinish();
   egPage(1);
 }
-$("hScore").onclick = openReportCard;
-function restartGame() {
-  if (!confirm("Start a new run? " + (gameEnded() ? "This run's chat history won't be reachable afterward." : "Your current progress will be lost."))) return;
+$("hScore").onclick = () => gameEnded() ? openReportCard() : openScoreSoFar();
+
+// ── the score so far ─────────────────────────────────────────────────────────
+// Few first runs reach week 25, so the header's Score opens a card at any
+// time: each lesson graded only on the calls made so far (Scoring.scoreSoFar),
+// with one vague line on how it's going: no counts, nothing ahead named. A
+// lesson with no call yet shows a dash; overall, the run starts at an A. Its two ways
+// out are the only two that matter: keep playing, or start over and take a
+// different path (the header has no restart button of its own).
+// The score moves only at week boundaries: it's taken once per week, before
+// the first move, and held until the next week. A call in progress mid-week
+// (the equity talk is one long sitting) can't flicker the letter.
+var weekScore = null;
+function scoreThisWeek() {
+  if (!weekScore || weekScore.game !== game || weekScore.week !== game.s.week)
+    weekScore = { game, week: game.s.week, sf: Scoring.scoreSoFar(game) };
+  return weekScore.sf;
+}
+function openScoreSoFar() {
+  const s = game.s, sf = scoreThisWeek();
+  const rows = sf.lessons.map(c => {
+    const [g, col] = GRADE(c.score);
+    // A vague read on the habit (Scoring's `hint`), not the final card's
+    // note: mid-run, "Read 1 of 4 community threads" says how many are left,
+    // and naming the next moment spoils it. The chapter line carries the scale.
+    const line = c.score == null ? "Nothing to grade yet." : [c.hint, c.outlook].filter(Boolean).join(" ");
+    return '<div class="grade-row"><div class="grade' + (c.score == null ? " sf-none" : "") + '" style="background:' + col + '"><span class="gl">' + g + "</span></div>"
+      + '<div class="g-body"><b>' + esc(c.label) + '</b><div class="g-verdict">' + esc(line) + "</div></div></div>";
+  }).join("");
+  // Every run starts at an A: until a lesson has a call, there's no bad call
+  // to count against the player. The letter itself is the reward for
+  // finishing week 1: until then, a dash.
+  const firstWeek = s.week <= 1;
+  const [og, ocol] = GRADE(firstWeek ? null : sf.score);
+  const rollCopy = firstWeek ? "<b>No score yet</b><br>Finish your first week to get one."
+    : !sf.made ? '<b>Score so far</b><span class="sf-tag">provisional</span><br>No bad calls yet: every run starts at an A.'
+    : '<b>Score so far</b><span class="sf-tag">provisional</span><br>Based on the calls you\'ve made. What\'s ahead can move it either way.';
+  // Where the run is, in the chapters the ☑ gauge already uses. Later chapters
+  // go by their spoiler-free names ("Grow the business", not the trough).
+  const cur = currentStage(), at = STAGES.indexOf(cur);
+  const chName = st => String(stageLabel(st, false)).split(" · ").pop();
+  const later = STAGES.slice(at + 1).map(chName);
+  const chapterLine = "Chapter " + (at + 1) + " of " + STAGES.length + ": " + chName(cur) + "."
+    + (later.length ? " Still ahead: " + later.join(", ") + "." : "");
+  $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Score so far</div>'
+    + '<div class="eg-headline">Week ' + s.week + (sf.made ? ": grading the calls you've made." : ": nothing to grade yet.") + "</div>"
+    + '<div class="sf-chapter">' + esc(chapterLine) + "</div></div>"
+    + rows
+    + '<div class="eg-rollup eg-final"><div class="grade eg-biggrade' + (firstWeek ? " sf-none" : "") + '" style="background:' + ocol + '"><span class="gl">' + og + "</span></div>"
+    + '<div class="eg-roll-copy">' + rollCopy + "</div></div>"
+    + '<div class="sf-foot">' + (savedWeeks().length ? '<button class="sf-alt" id="sfSaved">Saved games</button>' : "")
+    + '<button class="sf-alt" id="sfAgain">New game</button>'
+    + '<button class="intro-next" id="sfClose">Keep playing</button></div>';
+  $("sfClose").onclick = closeReportCard;
+  $("sfAgain").onclick = () => { if (confirm("Start a new game from week 1? This one stays in your saved games.")) restartGame("Restarted: week " + s.week); };
+  if ($("sfSaved")) $("sfSaved").onclick = () => openRewind("score");
+  $("endOv").classList.add("on");
+  track("Score opened");
+}
+// The header button carries the live letter, so the player sees how the run
+// is going without opening the card (and a slipping grade is a nudge to try
+// another path). Blank through week 1, then an A (a small reward for
+// finishing the first week) until the first call is graded (the equity
+// talk); the final grade once the run is over. It pops when it appears or
+// changes, but not on the first render of a run.
+var liveGrade;
+function renderScoreButton() {
+  const btn = $("hScore");
+  const done = gameEnded();
+  const score = done ? game.gradeScore() : game.s.week <= 1 ? null : scoreThisWeek().score;
+  const [g, col] = GRADE(score);
+  btn.title = done ? "see your score again" : "your score so far";
+  btn.setAttribute("aria-label", score == null ? "Score: not graded yet" : (done ? "Score: " : "Score so far: ") + g);
+  const shown = score == null ? null : g;
+  const changed = liveGrade !== undefined && shown !== null && shown !== liveGrade;
+  btn.innerHTML = '<span class="sf-cap">🎓 </span>Score' + (score == null ? "" : ' <span class="sf-live' + (changed ? " pop" : "") + '" style="background:' + col + '">' + g + "</span>");
+  liveGrade = shown;
+}
+// A tap outside the Score card closes it, like the About sheet. Only the
+// Score card: the end-of-run report card has a reveal and a leaderboard to get
+// through, and keeps its buttons as the only way out.
+$("endOv").addEventListener("click", (e) => {
+  if (e.target === $("endOv") && !gameEnded()) closeReportCard();
+});
+// A new run doesn't throw the old ones away: they stay saved, and Restart
+// (or the welcome-back card) can still go back into any of them.
+// The new page skips the welcome-back card: the player just chose a new game.
+function restartGame(goal) {
+  if (typeof goal === "string") track(goal);
+  try { sessionStorage.setItem("plusone_new", "1"); } catch (e) {}
   location.search = "?seed=" + ((Date.now() % 100000) | 0);
 }
-$("hRestart").onclick = restartGame;
 
-// ── intro ─────────────────────────────────────────────────────────────────────
-// The intro is only the premise and the bar to beat. How to play is taught in
-// place by TIPS, each the first time its feature shows up — starting with the
-// chat itself the moment the intro closes.
-// The first card says what the player is in for: a simulation, before any
-// story. The next two tell how PlusOne started, so the player meets the
+// ── saved games: go back to any week ─────────────────────────────────────────
+// A game is saved in localStorage as its seed plus every call made in it (each
+// answer, each week turn). The engine owns all the randomness, so replaying
+// that log on a fresh Engine rebuilds the game exactly, and stopping the
+// replay at a week turn gives the start of that week. So a player who went
+// broke at week 14 can go back to week 10 instead of starting over: from the
+// title menu's Resume game, or Saved games on the Score and report cards.
+// Saved weeks only ever add up. Every week start of every game stays in the
+// list, newest first, whatever game it came from: going back to week 2 and
+// playing it differently starts a new line of play (a branch that shares the
+// old one's log up to week 2), and the old weeks 3, 4… stay where they were.
+// A save the current build can't replay is hidden, not deleted, up to the
+// first week that no longer matches (a call the engine no longer offers, or a
+// week that no longer starts with the cash it was saved with): the weeks
+// before it still load. SAVE_VERSION is the manual stamp: bump it when a
+// change would replay old saves wrongly, and they're all ignored.
+const SAVE_KEY = "plusone_runs";
+const SAVE_VERSION = 1;
+// runLog: the line of play on screen, { id, seed, log, weeks }; null for a
+// debug jump (not saved). After going back to a week it also carries `from`:
+// the saved run and week it came from, settled by the first new call.
+let runLog = null;
+let hereKey = null;   // "runId:i" of the week start on screen, so the picker can say "this week"
+function chapterName(st) { return String(stageLabel(st, false)).split(" · ").pop(); }
+// The start of the week on screen: where the log stood, and enough to label
+// it in the picker and to check a replay against.
+function checkpoint() {
+  const st = currentStage();
+  return { w: game.s.week, i: runLog.log.length, cash: Math.round(game.s.cash), ch: STAGES.indexOf(st) + 1, name: chapterName(st), over: gameEnded(), at: Date.now() };
+}
+const newRunId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+function startRun() {
+  runLog = { id: newRunId(), seed, log: [], weeks: [] };
+  runLog.weeks.push(checkpoint());
+  hereKey = runLog.id + ":0";
+}
+function readRuns() {
+  try {
+    const box = JSON.parse(localStorage.getItem(SAVE_KEY));
+    return box && box.v === SAVE_VERSION && Array.isArray(box.runs) ? box.runs : [];
+  } catch (e) { return []; }
+}
+// Only a full storage ever drops anything: the game least recently played
+// goes first, so the newest weeks always get saved.
+function writeRuns(runs) {
+  runs = runs.slice().sort((a, b) => (b.at || 0) - (a.at || 0));
+  for (;;) {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify({ v: SAVE_VERSION, runs })); return; }
+    catch (e) { if (runs.length <= 1) return; runs.pop(); }
+  }
+}
+// Nothing is written until the first call: a fresh page (or going back to a
+// week) must not touch the saves before the player has played anything new.
+function recordCall(entry) {
+  if (!runLog) return;
+  if (runLog.from) {
+    // The first move after going back to a week. If the saved game has weeks
+    // after it, this is a new line of play: a new run, so those weeks stay.
+    // If not (it was that game's latest week), just carry on in it.
+    const { run, cp } = runLog.from;
+    if (run.weeks.some(c => c.i > cp.i)) { runLog.id = newRunId(); runLog.weeks = []; }
+    else runLog.weeks = run.weeks.filter(c => c.i <= cp.i);
+    delete runLog.from;
+  }
+  runLog.log.push(entry);
+  if (entry === 0) { const cp = checkpoint(); runLog.weeks.push(cp); hereKey = runLog.id + ":" + cp.i; }
+  const run = { id: runLog.id, seed: runLog.seed, log: runLog.log, weeks: runLog.weeks, at: Date.now() };
+  writeRuns([run].concat(readRuns().filter(r => r.id !== run.id)));
+  savedCache = null;
+}
+// Replay a run's log up to `upto` calls, checking every week start on the way;
+// returns the game and the week starts that matched. Stops at the first call
+// or week that no longer replays (ok: false).
+function replaySave(save, upto) {
+  const g = new Engine({ seed: save.seed });
+  const at = new Map(save.weeks.map(c => [c.i, c]));
+  const good = [];
+  for (let i = 0; i <= upto; i++) {
+    const cp = at.get(i);
+    // a week start must match what was saved, and is never inside a room
+    // (the UI can't turn a week mid-sitting)
+    if (cp) {
+      if (g.s.week !== cp.w || Math.round(g.s.cash) !== cp.cash || (g.scene && !cp.over)) return { g, good, ok: false };
+      good.push(cp);
+    }
+    if (i === upto) break;
+    const e = save.log[i];
+    if (e === 0) g.nextWeek();
+    else {
+      const n = g.log.length;
+      if (!Array.isArray(e)) return { g, good, ok: false };
+      g.act(e[0], e[1]);
+      if (g.log.length === n) return { g, good, ok: false };   // the engine no longer offers that call
+    }
+  }
+  return { g, good, ok: true };
+}
+// Every saved week a player can go back to, across all games, newest first:
+// each a { run, cp } whose replay still matches, and not the end of a game
+// (going broke at the week turn into week 14 leaves 1–13).
+// A run is replayed once per page and length (only the one being played grows).
+let savedCache = null;
+const replayed = new Map();
+function savedWeeks() {
+  if (savedCache) return savedCache;
+  const out = [];
+  for (const run of readRuns()) {
+    if (!run || !Array.isArray(run.log) || !Array.isArray(run.weeks)) continue;
+    const key = run.id + ":" + run.log.length + ":" + run.weeks.length;
+    if (!replayed.has(key)) {
+      let good = [];
+      try { good = replaySave(run, run.log.length).good; } catch (e) { /* hidden, not deleted */ }
+      replayed.set(key, good.map(c => c.i));
+    }
+    const ok = new Set(replayed.get(key));
+    for (const cp of run.weeks) if (ok.has(cp.i) && !cp.over) out.push({ run, cp });
+  }
+  out.sort((a, b) => (b.cp.at || 0) - (a.cp.at || 0) || b.cp.w - a.cp.w);
+  return (savedCache = out);
+}
+
+// Swap the game on screen for a saved week, replayed to its start.
+function rewindTo(pick, goal) {
+  const { run, cp } = pick;
+  const r = replaySave(run, cp.i);
+  if (!r.ok) { alert("That week can't be restored any more (the game has changed since it was saved)."); return; }
+  game = r.g; seed = run.seed; $("dbgSeed").value = seed;
+  runLog = { id: run.id, seed, log: run.log.slice(0, cp.i), weeks: [], from: { run, cp } };
+  hereKey = run.id + ":" + cp.i;
+  resetUiState(); dbgReset();
+  // everything up to this week was already read the first time through
+  for (const id of game.order) { threadRendered[id] = game.threads[id].length; feedSeenLen[id] = game.threads[id].length; }
+  $("introOv").classList.remove("on");
+  track(goal + ": week " + String(cp.w).padStart(2, "0"));
+  render(); queueTipCheck();
+  if (kbdNav) focusNextUp();
+}
+
+// The week picker: one dropdown of every saved week, newest first, each with
+// when the player got there (their local date and time: "the week I played
+// last night" is how people remember a game).
+function playedAt(t) {
+  if (!t) return "";
+  const d = new Date(t), now = new Date();
+  const time = d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate()) - new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  if (day === 0) return "today, " + time;
+  if (day === 864e5) return "yesterday, " + time;
+  return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" }) + ", " + time;
+}
+function rewindSelectHtml(weeks) {
+  const live = !gameEnded();
+  return '<label class="rw-pick"><span>Pick a week</span><select id="rwSel">'
+    + weeks.map(({ run, cp }, k) => '<option value="' + k + '"' + (k === 0 ? " selected" : "") + ">Week " + cp.w + " · Ch " + cp.ch
+      + (live && run.id + ":" + cp.i === hereKey ? " · this week" : cp.at ? " · played " + esc(playedAt(cp.at)) : "") + "</option>").join("")
+    + "</select></label>";
+}
+// "Saved games", from the Score card ("score") or the report card ("report"):
+// go back to any saved week.
+function openRewind(from) {
+  const weeks = savedWeeks();
+  $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Saved games</div>'
+    + '<div class="eg-headline">' + (weeks.length ? "Go back to a week you played." : "No saved games yet.") + "</div>"
+    + '<div class="sf-chapter">' + (weeks.length ? "Same story, same luck: from there, play it differently. Every week you play stays saved locally on your device." : "") + "</div></div>"
+    + (weeks.length ? rewindSelectHtml(weeks) : "")
+    + '<div class="sf-foot"><button class="sf-alt" id="rwBack">Back</button>'
+    + (weeks.length ? '<button class="intro-next" id="rwGo"></button>' : "") + "</div>";
+  $("rwBack").onclick = () => from === "report" ? (openReportCard(), egPage(2)) : openScoreSoFar();
+  if (weeks.length) {
+    const sel = $("rwSel"), go = $("rwGo");
+    const label = () => { go.textContent = "Go to week " + weeks[+sel.value].cp.w; };
+    sel.onchange = label; label();
+    go.onclick = () => rewindTo(weeks[+sel.value], "Rewound");
+  }
+  $("endOv").classList.add("on");
+  track("Restart opened");
+}
+// Resume game, from the title menu: the same dropdown as Saved games, every
+// saved week across all games, newest first. Back returns to the menu.
+function openResume() {
+  const weeks = savedWeeks();
+  if (!weeks.length) return showMenu();
+  introView = "resume";
+  track("Menu: resume game");
+  $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
+    + '<div class="intro-step"><b>Resume game.</b>Pick up at your latest week, or go back to any week you\'ve played. Every week you play stays saved on this device.</div>'
+    + rewindSelectHtml(weeks)
+    + '<div class="sf-foot"><button class="sf-alt" id="rsBack">Back</button><button class="intro-next" id="rsGo"></button></div></div>';
+  const sel = $("rwSel"), go = $("rsGo");
+  const label = () => { go.textContent = "Resume at week " + weeks[+sel.value].cp.w + " →"; };
+  sel.onchange = label; label();
+  go.onclick = () => rewindTo(weeks[+sel.value], "Resumed");
+  $("rsBack").onclick = showMenu;
+  $("introOv").classList.add("on");
+  if (kbdNav) go.focus();
+}
+startRun();
+// ── about ─────────────────────────────────────────────────────────────────────
+// The header's ⓘ: the making-of post and the legal line, reachable any time
+// without crowding the game's own screens.
+const MAKING_OF_URL = "https://foundrs.com/the-making-of-a-startup-simulator.html";
+$("aboutMakingOf").href = MAKING_OF_URL;
+$("aboutMakingOf").onclick = () => track("About: making-of");
+function openAbout() { track("About"); $("aboutOv").classList.add("on"); $("aboutClose").focus(); }
+function closeAbout() { $("aboutOv").classList.remove("on"); syncInert(); $("hAbout").focus(); }
+$("hAbout").onclick = openAbout;
+$("aboutClose").onclick = closeAbout;
+$("aboutOv").onclick = (e) => { if (e.target === $("aboutOv")) closeAbout(); };
+
+// ── title menu and intro ──────────────────────────────────────────────────────
+// The page opens on the title card, which is the game's menu, like any game's
+// first screen: New game, Resume game, High scores. New game plays the story
+// cards, then week 1. The intro is only the premise and the story; how to play
+// is taught in place by TIPS, each the first time its feature shows up —
+// starting with the chat itself the moment the intro closes.
+// The title card says what the player is in for: a simulation, before any
+// story.
+const TITLE = ["A Silicon Valley startup game.", "You play the founder of a made-up startup and live through its first months. The people are fictional, but the decisions are the real ones founders face: what to build, who to listen to, how to spend the money, when to have the hard conversation. Whether the startup makes it is up to you.", "0_title.jpg"];
+// The story cards tell how PlusOne started, so the player meets the
 // co-founders inside the story rather than on a roster. An optional fourth
 // field introduces people: [castId, role, blurb], drawn with their portrait so
 // the player meets the faces before the texts start. An optional fifth is the
 // card's illustration (img/intro/); a missing file just drops the slot.
 const INTRO = [
-  [null, "A Silicon Valley startup game.", "You play the founder of a made-up startup and live through its first months. The people are fictional, but the decisions are the real ones founders face: what to build, who to listen to, how to spend the money, when to have the hard conversation. Whether the startup makes it is up to you.", null, "0_title.jpg"],
   [null, "It started with Alex, at 1 a.m.", "You two were trading dating-app horror stories (40 matches this month, zero dates) when one of you said it: what if an app was built to get you on a date, not to keep you swiping? By 2 a.m. it had a name, PlusOne. By morning Alex had written half a spec and offered to quit his $140k job.", [
     ["alex", "Co-founder · CTO", "He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
   ], "1_idea.jpg"],
@@ -3250,64 +3618,92 @@ const INTRO = [
   ["The goal", "25 weeks to build something people want.", "PlusOne is an idea, $10,000 in the bank and two co-founders who said yes. In 25 weeks, make it good enough to get into Y Combinator, the startup program that backed Airbnb, Stripe, Dropbox and DoorDash when each was just a few people with an idea. Run out of money or lose your team, and it ends early.", null, "3_goal.jpg"],
 ];
 let introStep = 0;
-// A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
-// a new player sees the bar to beat before week 1.
+let introView = "menu";   // what the intro overlay shows: "menu", "story", "resume" or "scores"
+const introArt = art => art ? '<div class="intro-art"><img src="img/intro/' + art + '" alt="" onerror="this.parentNode.remove()"></div>' : "";
+// The menu's default is Resume game once anything is saved, New game before.
+// With nothing saved, Resume game is there but greyed out, so a first-time
+// player learns a game can be picked up later.
+function showMenu() {
+  introView = "menu";
+  const saved = savedWeeks().length > 0;
+  track(saved ? "Menu" : "Menu: nothing saved");
+  const [h, b, art] = TITLE;
+  $("introModal").innerHTML = '<div class="intro-stripe"></div>' + introArt(art)
+    + '<div class="intro-body"><div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>"
+    + '<div class="mm-row">'
+    + '<button class="' + (saved ? "sf-alt" : "intro-next") + '" id="mmNew">New game</button>'
+    + '<button class="' + (saved ? "intro-next" : "sf-alt") + '" id="mmResume"' + (saved ? "" : ' disabled title="Nothing saved yet"') + ">Resume game</button>"
+    + '<button class="sf-alt" id="mmScores">High scores</button>'
+    + "</div></div>";
+  $("mmNew").onclick = () => { track("Menu: new game"); introStep = 0; showIntro(); };
+  $("mmResume").onclick = openResume;
+  $("mmScores").onclick = openHighScores;
+  $("introOv").classList.add("on");
+  if (kbdNav) $(saved ? "mmResume" : "mmNew").focus();
+}
+// High scores: the whole board (it scrolls), the bar every finished game is
+// measured against.
+function openHighScores() {
+  introView = "scores";
+  track("Menu: high scores");
+  $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-board">'
+    + '<div class="intro-step"><b>High scores.</b>Every finished game is graded 0–100. Land in the top ' + LB.MAX + " and your name goes up here for good.</div>"
+    + '<div id="introLb"><div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div></div>'
+    + '<div class="sf-foot"><button class="sf-alt" id="hsBack">Back</button></div></div>';
+  $("hsBack").onclick = showMenu;
+  $("introOv").classList.add("on");
+  if (kbdNav) $("hsBack").focus();
+  fillIntroBoard();
+}
 function showIntro() {
-  const boardStep = introStep >= INTRO.length;
-  // The dots double as navigation: any card, the board included, is one click away.
-  const dots = INTRO.concat([0]).map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
+  introView = "story";
+  track("Intro " + (introStep + 1) + " of " + INTRO.length);
+  // The dots double as navigation: any card is one click away.
+  const dots = INTRO.map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
     '<i class="' + (i === introStep ? "on" : "") + '"></i></button>').join("");
-  const nextLabel = boardStep ? "Start the game →" : "Continue →";
-  if (boardStep) {
-    $("introModal").innerHTML =
-      '<div class="intro-stripe"></div><div class="intro-board">' +
-      '<div class="intro-eyebrow">Hall of Fame</div>' +
-      '<div class="intro-step"><b>Beat the board.</b>Every finished run is graded 0–100. Land in the top ' + LB.MAX +
-        " and your name goes up here for good.</div>" +
-      '<div id="introLb"><div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div></div>' +
-      '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
-      '<div class="intro-actions"><button class="intro-next">' + nextLabel + "</button></div></div></div>";
-  } else {
-    const [eyebrow, h, b, people, art] = INTRO[introStep];
-    $("introModal").innerHTML =
-      '<div class="intro-stripe"></div>' +
-      (art ? '<div class="intro-art"><img src="img/intro/' + art + '" alt="" onerror="this.parentNode.remove()"></div>' : "") +
-      '<div class="intro-body">' +
-      (eyebrow ? '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" : "") +
-      '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
-      (people || []).map(([id, role, blurb]) =>
-        '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
-        '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
-        '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
-      '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
-      '<div class="intro-actions"><button class="intro-skip">Skip</button>' +
-      '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
-  }
+  const nextLabel = introStep === INTRO.length - 1 ? "Start the game →" : "Continue →";
+  const [eyebrow, h, b, people, art] = INTRO[introStep];
+  $("introModal").innerHTML =
+    '<div class="intro-stripe"></div>' + introArt(art) +
+    '<div class="intro-body">' +
+    (eyebrow ? '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" : "") +
+    '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
+    (people || []).map(([id, role, blurb]) =>
+      '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
+      '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
+      '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
+    '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
+    '<div class="intro-actions"><button class="intro-skip">Skip</button>' +
+    '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   const done = () => {
+    track("Intro done");
     $("introOv").classList.remove("on"); queueTipCheck();
     // the keyboard lands where the game starts: Alex's Respond
     if (kbdNav) focusNextUp();
   };
-  $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
-  const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
+  $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep >= INTRO.length) done(); else showIntro(); };
+  $("introModal").querySelector(".intro-skip").onclick = done;
   $("introModal").querySelectorAll(".intro-dot").forEach(d => d.onclick = () => { introStep = +d.dataset.step; showIntro(); });
   $("introOv").classList.add("on");
-  if (boardStep) fillIntroBoard();
 }
-// ← / → page through the cards too (never past the board: Continue starts the run).
+// ← / → page through the story cards too (never past the last: its button starts the run).
 document.addEventListener("keydown", ev => {
-  if (!$("introOv").classList.contains("on")) return;
+  if (!$("introOv").classList.contains("on") || introView !== "story") return;
   const to = introStep + (ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0);
-  if (to === introStep || to < 0 || to > INTRO.length) return;
+  if (to === introStep || to < 0 || to >= INTRO.length) return;
   introStep = to; showIntro();
 });
 async function fillIntroBoard() {
   const { board, online } = await LB.fetchBoard();
   const el = $("introLb");
-  if (!el) return;   // intro already dismissed
-  el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
+  if (!el) return;   // already left the high scores
+  el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board, -1) + "</div>";
 }
-showIntro();
+// New game / Play again from inside a game goes straight to the story, not
+// back to the menu (a restart must not lead to saved games).
+let fromRestart = false;
+try { fromRestart = !!sessionStorage.getItem("plusone_new"); sessionStorage.removeItem("plusone_new"); } catch (e) {}
+if (fromRestart) showIntro(); else showMenu();
 
 // ── first-time tips ───────────────────────────────────────────────────────────
 // Onboarding happens when a feature is first needed, not up front: each tip is
@@ -3415,13 +3811,16 @@ const TIPS = [
     body: () => "Everything still open can wait. Spend your moves on it anyway, or end the week here." },
 ];
 // The first money a choice moved (not the weekly burn): the moment to meet the Bank.
+// Week 1 is skipped: its only money is the optional $75 for celebration drinks,
+// and the tip waits for the first real cost (usually the $500 incorporation).
 function firstChoiceTx() {
-  const all = game.ledger.flatMap(w => w.transactions).concat(game._weekTx);
+  const all = game.ledger.filter(w => w.week > 1).flatMap(w => w.transactions)
+    .concat(game.s.week > 1 ? game._weekTx : []);
   return all.find(t => t.type === "expense" || t.type === "income") || null;
 }
 function tipBlocked() {
   if (uiBusy || gameEnded() || tipOpen) return true;
-  for (const id of ["introOv", "endOv", "scSelfOv"]) if ($(id).classList.contains("on")) return true;
+  for (const id of ["introOv", "endOv", "scSelfOv", "aboutOv"]) if ($(id).classList.contains("on")) return true;
   return $("cine").classList.contains("show") || $("lightbox").classList.contains("show");
 }
 var tipTimer = null;   // var: render() may run before this line does
@@ -3452,6 +3851,7 @@ function maybeShowTip() {
   }
 }
 function showTip(tip) {
+  track("Tip " + String(TIPS.indexOf(tip) + 1).padStart(2, "0") + " " + tip.id);
   tipsSeen.add(tip.id);
   try { localStorage.setItem(TIP_KEY, JSON.stringify([...tipsSeen])); } catch (e) {}
   tipOpen = tip;
@@ -3476,6 +3876,14 @@ function showTip(tip) {
   clearInterval(tipAim); tipAim = setInterval(placeTip, 250);
 }
 let tipAim = null, tipReturn = null;
+// A click on the dimmed screen closes the tip and goes through to whatever is
+// under it, so "click Respond" works the first time the player tries it.
+$("tipLayer").addEventListener("click", ev => {
+  if (!tipOpen || ev.target.closest("#tipBubble")) return;
+  closeTip();
+  const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  if (el) el.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true, view: window, clientX: ev.clientX, clientY: ev.clientY }));
+});
 function closeTip() {
   clearInterval(tipAim); tipAim = null;
   tipOpen = null;
@@ -3618,6 +4026,7 @@ const ARROW_ROWS = [
   [".mv-opts", "button"],
   ["#railNews", ".nw"],
   ["#tabbar", "button"],
+  [".mm-row", "button"],
 ];
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: "first", End: "last" };
 function arrowMove(el, step) {
@@ -3646,6 +4055,9 @@ document.addEventListener("keydown", (e) => {
   if (ARROWS[e.key] && el.closest && arrowMove(el, ARROWS[e.key])) { e.preventDefault(); return; }
   if (e.key !== "Escape") return;
   if (tipOpen) closeTip();
+  else if ($("aboutOv").classList.contains("on")) closeAbout();
+  else if ($("introOv").classList.contains("on") && (introView === "resume" || introView === "scores")) showMenu();
+  else if ($("endOv").classList.contains("on") && !gameEnded()) closeReportCard();   // the mid-run Score card
   else if ($("lightbox").classList.contains("show")) $("lightbox").classList.remove("show");
   else if ($("noteCenter").classList.contains("show")) { $("noteCenter").classList.remove("show"); $("bell").focus(); }
   else if ($("todoPop").classList.contains("on")) { $("todoPop").classList.remove("on"); $("gTodo").focus(); }
@@ -3659,12 +4071,12 @@ document.addEventListener("keydown", (e) => {
 // order while it is up: a room hides the world, the intro and the report card
 // hide the world and any room, and the founder's "Your call" card hides its room.
 const syncInert = () => {
-  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on");
+  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on") || $("aboutOv").classList.contains("on");
   const room = $("scene").classList.contains("on");
   for (const sel of ["header", "main", "#tabbar"]) document.querySelector(sel).inert = card || room;
   $("scene").inert = card || $("scSelfOv").classList.contains("on");
 };
-for (const id of ["scene", "introOv", "endOv", "scSelfOv"]) new MutationObserver(syncInert).observe($(id), { attributes: true, attributeFilter: ["class"] });
+for (const id of ["scene", "introOv", "endOv", "scSelfOv", "aboutOv"]) new MutationObserver(syncInert).observe($(id), { attributes: true, attributeFilter: ["class"] });
 syncInert();
 // Safari, and Firefox on a Mac, leave <button>s out of the Tab order unless
 // the player has turned on "Press Tab to highlight each item" (Option-Tab
@@ -3775,7 +4187,7 @@ function dbgReset() {
 for (const btn of document.querySelectorAll("#debug [data-jump]")) {
   btn.onclick = () => {
     seed = dbgSeed();
-    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true });
+    game = Harness.jumpTo(btn.dataset.jump, { seed, debugKeepAlive: true }); runLog = null;
     resetUiState(); dbgReset();
     // leave fresh arrivals unread so the state reads naturally, but the thread
     // you land on is read (like opening the app on your current chat)
@@ -3784,7 +4196,7 @@ for (const btn of document.querySelectorAll("#debug [data-jump]")) {
     render();
   };
 }
-$("dbgSkip").onclick = () => { if (uiBusy) return; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
+$("dbgSkip").onclick = () => { if (uiBusy) return; runLog = null; for (let i = 0; i < 5 && !game.s.game_over && !game.s.game_won; i++) game.nextWeek(); resetUiState(); render(); checkEndgame(); };
 // Auto-play decent runs from the seed box until one reaches the deadline
 // having been accepted into YC (grade decided it), then jump to its reveal.
 $("dbgYC").onclick = () => {
@@ -3795,10 +4207,10 @@ $("dbgYC").onclick = () => {
     g = Harness.playGame(used, "decent");
   }
   seed = used; $("dbgSeed").value = used;
-  game = g;
+  game = g; runLog = null;
   resetUiState(); dbgReset(); render(); checkEndgame();
 };
-$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); resetUiState(); dbgReset(); render(); };
+$("dbgRestart").onclick = () => { seed = dbgSeed(); game = new Engine({ seed }); startRun(); resetUiState(); dbgReset(); render(); };
 
 syncSurfaceTabs();
 render();

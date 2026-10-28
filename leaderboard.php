@@ -3,6 +3,7 @@
  * PlusOne leaderboard — the whole server side.
  *
  * GET  leaderboard.php            → the top-50 board as JSON: [{name,score,won,week,ts}, ...]
+ *                                    (edge-cacheable for 30s; POST is never cached)
  * POST leaderboard.php  {name,score,won,week}   (Content-Type: application/json)
  *      → inserts the run, keeps the top 50, returns {board:[...], rank:<1-based place>}
  *
@@ -73,6 +74,12 @@ function lb_read() {
 $method = $_SERVER["REQUEST_METHOD"] ?? "GET";
 
 if ($method === "GET" || $method === "HEAD") {
+  // Every visitor reads the board on the title screen, so let the CDN answer
+  // reads: Cloudflare may serve one copy for 30s (s-maxage), browsers
+  // revalidate each time (max-age=0). A submitter never sees the stale copy:
+  // the POST below returns the fresh board itself. Needs a Cloudflare Cache
+  // Rule marking this path eligible for cache — .php isn't cached by default.
+  header("Cache-Control: public, max-age=0, s-maxage=30");
   send(array_values(lb_read()));
 }
 if ($method !== "POST") {

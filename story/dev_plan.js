@@ -231,11 +231,19 @@
       // `weeksSince` — and a later "skip" outcome overwrites "call", going stale.
       {
         id: "waitlist_calls", char: "founder",
-        text: (s) => "there are " + Math.max(5, (s.waitlist || 0) + 5) + " people on your waitlist, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.",
+        // The count is the real waitlist. It used to read max(5, waitlist + 5),
+        // so one interview signup became "6 people on your waitlist". Until the
+        // list holds five, the five to call are the people you interviewed.
+        text: (s) => {
+          const n = s.waitlist || 0;
+          if (n >= 5) return "there are " + n + " people on your waitlist, and you haven't spoken to one of them since the last round of calls. block an afternoon. call five.";
+          const list = n === 0 ? "nobody's on the waitlist yet" : n === 1 ? "one person is on the waitlist" : "only " + n + " people are on the waitlist";
+          return list + ", but the five people you interviewed all said to call back anytime. you haven't. block an afternoon. call all five.";
+        },
         when: {
           after: ["dev_plan"], delay: 2, cooldown: 4,
           if: (s, e) => !s.launched
-            && (s.waitlist >= 3 || e.took("interviews:interview"))
+            && (s.waitlist >= 5 || e.took("interviews:interview"))
             && e.timesResolved("waitlist_calls") < 4,
         },
         choices: [

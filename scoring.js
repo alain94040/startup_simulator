@@ -23,7 +23,8 @@
 //   max, verdict, notes, moments: [{ key, label, got, max, note, reached,
 //   optional?, voided? }] }]. `voided`: zeroed by a terminal ending.
 // finalGrade(g) → the sum of points, 0-100 (capped by gradeCap(g) when the
-// company died). moment(g, key) → one moment.
+// company died). moment(g, key) → one moment. scoreSoFar(g) → the same
+// lessons graded on the moments reached so far (the mid-run Score card).
 // Pure logic, no DOM; dual export (module.exports / window.Scoring).
 // Safe to call in any game state.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -62,14 +63,28 @@
     // One moment. `reached` says whether the run got to it; an unreached
     // moment earns 0 and, once the run is over, says why (`why`, unless the
     // run ended early). An optional moment never met earns full points.
+    // `hints`: the mid-run Score card's line for this moment, [good, mixed,
+    // poor]. The final card's `note` names counts and people ("Read 1 of 4
+    // community threads", "Two other checks went unasked for"), which mid-run
+    // tells the player what's still out there; a hint only says how the habit
+    // is going, never how many there are or what comes next.
     const moment = (key, label, max, m) => {
       if (!m.reached) {
         if (m.optional) return { key, label, max, got: max, reached: false, optional: true, note: null };
         const note = ended ? "Never reached: " + (stop || m.why) : null;
         return { key, label, max, got: 0, reached: false, note };
       }
-      return { key, label, max, got: round1(clamp(m.got, 0, max)), reached: true, note: m.note || null };
+      const r = { key, label, max, got: round1(clamp(m.got, 0, max)), reached: true, note: m.note || null };
+      // Mid-run hints for scoreSoFar (the final card ignores them): `open`, the
+      // call is still in front of the player; `soFarMax`, the points the
+      // decided parts of a many-part moment are worth so far.
+      if (m.open) r.open = true;
+      if (m.soFarMax != null) r.soFarMax = m.soFarMax;
+      if (m.hints) r.hints = m.hints;
+      return r;
     };
+    // A card the player has in front of them right now, not yet answered.
+    const isOpen = id => Object.values(g.open).some(o => o && o.nodeId === id);
 
     // ── Build something people want: 45 ──────────────────────────────────────
     const chips = [s.maya_quote, s.rachel_answer, s.demo_question_seen, s.analytics_dropoff_seen].filter(Boolean).length;
@@ -86,17 +101,22 @@
     const notPivoted = s.launched ? "the product was never questioned, so there was no v2 to ship." : notLaunched;
     const build = [
       moment("users", "Talked to users before scoping", 6, {
+        hints: ["You asked users before deciding what to build.", "You asked a few users before deciding what to build.", "You decided what to build without asking anyone who'd use it."],
         reached: d("interviews") || d("waitlist_calls") || d("dev_plan"),
         why: "the run ended before the scope was set.",
         got: (t("interviews:interview") ? 4 : 0) + (t("waitlist_calls:call") ? 2 : 0),
+        // Until the scope is set, only the calls already offered count.
+        soFarMax: d("dev_plan") ? 6 : (d("interviews") ? 4 : 0) + (d("waitlist_calls") ? 2 : 0),
         note: t("interviews:interview")
           ? (t("waitlist_calls:call") ? "Interviewed users and called the waitlist before locking scope." : "Did the customer interviews before locking scope, but never called the waitlist.")
           : t("waitlist_calls:call") ? "Called the waitlist, but never sat down for real interviews." : "Built without ever interviewing a user.",
       }),
       moment("community", "Listened in the communities", 4, {
+        hints: ["You've been listening to your market.", "You've listened in on some of the forums where your users talk.", "You skipped the forums where your users were talking."],
         reached: faced.length > 0,
         why: "the run ended before the communities started talking.",
         got: 4 * listen / THREAD_MAX,
+        soFarMax: 4 * faced.reduce((n, th) => n + th.dm, 0) / THREAD_MAX,
         note: promoted && !reads ? "Posted the link in " + promoted + " thread" + (promoted > 1 ? "s" : "") + " and read none of them."
           : dms ? "Read what the forums said, and DM'd the people behind the comments (" + dms + "×)."
             : reads ? "Read " + reads + " of " + THREADS.length + " community threads" + (promoted ? ", promoted into " + promoted : "") + "."
@@ -105,6 +125,7 @@
       // Priya's general market survey is half credit: it maps the field, but
       // not the one you're up against.
       moment("competitor", "Studied the competitor", 3, {
+        hints: ["You studied the competition closely.", "You looked at the competition, but not closely.", "You never studied the competition up close."],
         reached: d("flare_stealth") || d("mentor_competitor_bomb"),
         why: "the run ended before Flare made the news.",
         got: t("flare_stealth:dive") ? 3 : t("mentor_competitor_bomb:research") ? 1.5 : 0,
@@ -113,17 +134,20 @@
             : "Never looked at what the competition actually built.",
       }),
       moment("lean-plan", "Kept the plan lean", 5, {
+        hints: ["You kept the plan lean.", "The plan took on more than it needed.", "The plan took on more than it needed."],
         reached: d("dev_plan"),
         why: "the run ended before the plan was chosen.",
         got: s.dev_plan === "lean" ? 5 : 0,
         note: s.dev_plan === "lean" ? "Kept the scope lean." : "Over-scoped the build, and the extra work cost weeks.",
       }),
       moment("edge", "Built the edge, bought the rest", 3, {
+        hints: ["You spent build time where it mattered.", "Not every build-or-buy call went your way.", "Your build-or-buy calls went the wrong way."],
         reached: d("auth_choice") || d("matching_choice") || d("analytics_choice"),
         why: "the run ended before the build calls came up.",
         got: (t("auth_choice:buy") ? 1 : t("auth_forced:buy") ? 0.4 : 0)
           + (d("matching_choice") && !t("matching_choice:license") ? 1 : 0)
           + (t("analytics_choice:buy") ? 1 : 0),
+        soFarMax: ["auth_choice", "matching_choice", "analytics_choice"].filter(d).length,
         note: [
           t("auth_choice:buy") ? "bought the logins" : t("auth_forced:buy") ? "built logins, then bought them anyway" : d("auth_choice") ? "built our own logins" : null,
           t("matching_choice:license") ? "licensed the matching engine, the one thing you can't rent" : d("matching_choice") ? "kept the matching engine" : null,
@@ -132,6 +156,7 @@
       }),
       // Full marks for launching by week 14, sliding to nothing by week 18.
       moment("launch", "Launched on time", 4, {
+        hints: ["You launched on time.", "The launch came late.", "The launch came very late."],
         reached: !!s.launched,
         why: "the product never launched.",
         got: 4 * clamp((18 - s.launch_week) / 4, 0, 1),
@@ -140,6 +165,7 @@
       // Feature spree (shipped, or left on read so Alex shipped it anyway)
       // and copying Flare, 2 points each.
       moment("features", "Didn't chase features", 4, {
+        hints: ["So far you've kept to the roadmap.", "Part of the roadmap went to chasing features.", "The roadmap went to chasing features."],
         reached: !!s.launched,
         why: notLaunched,
         got: (s.feature_spree ? 0 : 2) + (s.copied_competitor ? 0 : 2),
@@ -149,13 +175,16 @@
               : "Held the roadmap until you knew why users leave.",
       }),
       moment("evidence", "Banked the evidence", 4, {
+        hints: ["You came into the big decision with evidence.", "You came into the big decision with some evidence.", "You came into the big decision on a hunch."],
         reached: !!s.launched,
         why: notLaunched,
         got: chips,
+        open: !(d("pivot_day_decide") || s.pivot_deferred || d("pivot_fifty_verdict")),
         note: chips === 4 ? "Banked all four pieces of evidence before the pivot night."
           : "Banked " + chips + " of the four pieces of evidence before the pivot night.",
       }),
       moment("pivot", "Pivoted on evidence", 6, {
+        hints: ["You changed course when the evidence said to.", "You changed course, but late.", "You stayed the course when the evidence said to change it."],
         reached: d("pivot_day_decide") || !!s.pivot_deferred || d("pivot_fifty_verdict"),
         why: notLaunched,
         got: t("pivot_day_decide:pivot") ? 6 : t("pivot_fifty_verdict:pivot_now") ? 3 : 0,
@@ -166,6 +195,7 @@
       // Where all the listening lands: the fit of what shipped. Nothing at 30
       // (built on guesses), full marks at 60 (a thoroughly researched run).
       moment("v2-fit", "Shipped something people want", 6, {
+        hints: ["What you shipped is built on what users told you.", "What you shipped is part listening, part guessing.", "What you shipped is mostly guesses."],
         reached: !!s.pivot_shipped,
         why: pivoted ? "v2 never reached users before the deadline." : notPivoted,
         got: 6 * fitGot,
@@ -187,6 +217,8 @@
     const eqOpened = t("equity_dance:open_up") ? (t("equity_open:open") ? 2 : 1) : 0;
     const eqRuling = g.outcome("equity_impasse");
     const eqDodge = t("equity_dance:shortcut") ? "Opened with 'equal thirds and move on'" : "Said nothing when the room opened";
+    const equityPending = !s.jordan_equity && !s.equity_tabled
+      && [...g.nodes.keys()].some(id => /^equity_|^incorporate/.test(id) && isOpen(id));
     const eqHeld = eqRuling && /^hold_/.test(eqRuling) ? (s.equity_skipped ? 1 : 3) : eqRuling && /^cave_/.test(eqRuling) ? 1 : 0;
     const team = [
       // The equity talk (GOALS.md: it can't end with everyone happy). Three
@@ -197,11 +229,13 @@
       // holding that default later is worth only what a cave is. Tabling
       // it zeroes the whole moment.
       moment("equity-split", "Negotiated the equity split", 7, {
+        hints: ["You had the equity talk for real, and held your call.", "The split got done, but you gave ground you shouldn't have.", "The equity talk never really happened."],
         reached: d("equity_open") || !!s.equity_proposal,
         why: "the run ended before the split came up.",
         // Tabling is worse than never assembling the room: both cases were
         // made and the founder still blinked, so it earns nothing at all.
         got: s.equity_tabled ? 0 : eqOpened + eqHeld + (signed ? 2 : 0),
+        open: equityPending,
         note: s.equity_tabled ? "Got the whole room through it twice, then tabled the split 'until after launch'. The default thirds went into the paperwork unexamined."
           : !s.jordan_equity ? "The split was never signed. Every later conversation got harder."
             : s.equity_skipped ? "Never made your own offer, so silence did: the split defaulted to even thirds."
@@ -214,6 +248,7 @@
       }),
       // A run where Alex never brought it up has nothing to grade.
       moment("side-project", "Asked Alex to focus", 3, {
+        hints: ["You asked Alex for his focus when it mattered.", "You asked Alex for his focus, but late.", "You let Alex's attention drift."],
         reached: d("alex_side_project"), optional: true,
         got: t("alex_side_project:pause") ? 3 : t("alex_side_project_escalation:talk") ? 1.5 : 0,
         note: t("alex_side_project:pause") ? "When Alex told you about his side project, you asked him to drop it until launch."
@@ -221,6 +256,7 @@
             : "Let Alex's side project slide. The build slowed with it.",
       }),
       moment("answered", "Kept answering Alex", 4, {
+        hints: ["You've kept answering Alex.", "Some of Alex's messages went unanswered.", "Alex has mostly been talking to himself."],
         reached: answered + ignored > 0 && !alexLeft,
         why: "",
         got: 4 * answered / (answered + ignored),
@@ -230,6 +266,7 @@
       // raises it after a late pivot). What's graded is whether the founder
       // finished the sentence, and when.
       moment("jordan-talk", "Had the conversation with Jordan", 12, {
+        hints: ["You had the hardest conversation, and finished it.", "You had the hardest conversation, but late.", "You haven't finished the hardest conversation."],
         reached: jordanAsked && !alexLeft,
         why: pivoted ? "the pivot came too late for Alex to raise Jordan."
           : s.launched ? "the product was never questioned, so the Jordan question never came up." : notLaunched,
@@ -245,6 +282,7 @@
       // Asking what was going on changes nothing about the decision and
       // everything about what it cost.
       moment("jordan-ending", "Ended it well with Jordan", 4, {
+        hints: ["You ended it with care.", "You ended it coldly.", "You ended it coldly."],
         reached: !!s.jordan_resolved,
         why: "the conversation with Jordan never happened.",
         got: s.jordan_cold_exit ? 1 : 4,
@@ -267,15 +305,23 @@
     const contract = s.contract_weeks || 0;
     const money = [
       moment("ff-asks", "Raised from friends and family", 9, {
+        hints: ["You've asked for the money you need.", "You've left some money unasked for.", "You haven't asked anyone for money."],
         reached: d("ff_family") || d("ff_family_2") || d("ff_family_3") || d("ff_friend") || d("ff_mentor"),
         why: "the run ended before anyone offered.",
         got: 3 * asks.length,
+        // Jamie and David each offer first (coffee, lunch) and only come to
+        // the money weeks later; their check counts once that ask is answered,
+        // or once the first offer was left on read and no ask will come.
+        soFarMax: 3 * [d("ff_family") || d("ff_family_2") || d("ff_family_3"),
+          d("ff_friend_ask") || (d("ff_friend") && !t("ff_friend:tell")),
+          d("ff_mentor_pitch") || (d("ff_mentor") && !t("ff_mentor:lunch"))].filter(Boolean).length,
         note: asks.length === 3 ? "Asked Mom and Dad, Jamie and David. The money bought the weeks the product needed."
           : asks.length ? "Asked " + asks.join(asks[0].includes(" and ") && asks.length > 1 ? ", and " : " and ") + ". " + (3 - asks.length === 1 ? "One other check" : "Two other checks") + " went unasked for."
             : "Never asked anyone for money.",
       }),
       // Kevin and Brett sell nothing an early company needs.
       moment("sharks", "Stayed away from the sharks", 3, {
+        hints: ["You turned down people selling what you didn't need.", "You paid someone selling what you didn't need.", "You paid people selling what you didn't need."],
         reached: d("consultant_growth") || d("consultant_brand"), optional: true,
         got: 3 - 1.5 * sharks,
         note: sharks ? "Paid " + (sharks === 2 ? "two consultants" : "a consultant") + " who cold-pitched you. Be careful of sharks: an early company draws people selling services it doesn't need, and every dollar was runway."
@@ -284,33 +330,42 @@
       // Contract weeks keep the lights on, but investors ask whether the
       // founders are full-time. Not a hard rule, a cost on the card.
       moment("full-time", "Stayed full-time", 3, {
+        hints: [null, "You took outside work to make rent.", "You took outside work to make rent."],
         reached: true,
         got: 3 - 1.5 * contract,
         note: contract ? "Took " + (contract === 2 ? "two weeks" : "a week") + " of contract work to make rent. Investors ask whether the founders are full-time, and this answer is a red flag: raise the money so you don't have to." : null,
       }),
       // Two months of burn ($4,000) at the lowest point is full marks.
       moment("runway", "Kept a cushion", 2, {
+        hints: ["You've kept a cushion in the bank.", "The bank got thin.", "The bank nearly ran dry."],
         reached: true,
         got: 2 * clamp(low / 4000, 0, 1),
         note: "Lowest bank balance: $" + Math.max(0, Math.round(low)).toLocaleString() + ".",
       }),
       moment("paperwork", "Incorporated and signed", 3, {
+        hints: ["The company is real on paper.", "The paperwork is only half done.", "The company isn't real on paper."],
         reached: d("incorporate") || d("incorporate_again") || d("equity_open"),
         why: "the run ended before the paperwork came up.",
         got: (s.incorporated ? 1.5 : 0) + (s.jordan_equity && !s.equity_tabled ? 1.5 : 0),
+        open: equityPending,
         note: !s.incorporated ? "Never formed a legal entity, so there is no cap table to keep clean."
           : s.jordan_equity && !s.equity_tabled ? "Incorporated and put the split on paper before the work belonged to nobody."
             : "Incorporated, but the split never made it onto paper.",
       }),
       moment("buyback", "Bought back Jordan's stake", 3, {
+        hints: ["The cap table survived the exit.", "The cap table still carries someone who left.", "The cap table still carries someone who left."],
         reached: !!s.jordan_resolved,
         why: "the conversation with Jordan never happened.",
         got: s.jordan_equity_gifted || s.jordan_cleanup_needed ? 0 : 3,
+        // The buyback is its own card after the firing (Alex flags the cap
+        // table); until it's answered, the stake isn't a call yet.
+        open: !!s.jordan_cleanup_needed && !s.jordan_equity_gifted && !d("jordan_cap_table"),
         note: s.jordan_equity_gifted ? "Gave a departed co-founder her full stake rather than have the buyback conversation."
           : s.jordan_cleanup_needed ? "A departed co-founder still owns her stake, fully vested, no cliff. Anyone doing diligence will stop there."
             : "Bought back the departed co-founder's stake, and the cap table survived the exit.",
       }),
       moment("app-store", "Moved the App Store listing", 2, {
+        hints: ["You tied up the loose ends of the exit.", "The exit left loose ends.", "The exit left loose ends."],
         reached: d("firing_shares") || d("firing_shares_2") || !!s.jordan_cold_exit,
         why: "the conversation with Jordan never happened.",
         got: s.appstore_on_jordan || s.app_was_delisted ? 0 : 2,
@@ -324,8 +379,8 @@
     // and losing Alex is the team lesson's: the run that ended that way
     // can't keep the points it banked before.
     const zero = (list, note) => {
-      for (const m of list) { m.got = 0; m.note = null; m.voided = true; }
-      list[0].note = note;
+      for (const m of list) { m.got = 0; m.note = null; m.hints = null; m.voided = true; }
+      list[0].note = note; list[0].hints = [note, note, note];
     };
     if (bankrupt) zero(money, "Cash hit zero in week " + s.week + ". Everything else in this lesson is a footnote to that.");
     if (alexLeft) zero(team, "Alex left in week " + s.week + ". Everything else in this lesson is a footnote to that.");
@@ -379,12 +434,103 @@
     return cap ? Math.min(sum, cap.cap) : sum;
   }
 
+  // The score so far, for a run still in progress (or one the player ended
+  // early): each lesson graded only on the moments the run has reached, so a
+  // week-9 card isn't an F for everything still ahead. Optional moments never
+  // met are left out rather than given away. `score` is null when nothing in
+  // that lesson has been reached yet (the overall `score` is 100 until any
+// lesson is); `ahead` counts the moments still to come, and `hint` is a
+// vague read on how the lesson is going (the biggest moment done well, then
+// the one that cost the most), with no counts and nothing about what's still
+// ahead.
+  // Same flinch cap as the final card, so the letter can't praise a lesson
+  // whose takeaway says "gave in".
+  const STANDING = new Set(["full-time", "runway", "answered"]);
+  // The mid-run card's second line per lesson: how much is still to come, by
+  // stage (most of it, about half, the last few calls, none). Never names a
+  // moment or counts them.
+  const OUTLOOK = {
+    // Build reads off the launch, not the stage: until you ship, you can't
+    // know whether you built something people want.
+    build: [launched => launched ? "You've launched, but whether people want it is still an open question."
+      : "But until you ship, you won't know if you built something people want.",
+      launched => launched ? "You've launched, but whether people want it is still an open question."
+        : "But until you ship, you won't know if you built something people want.",
+      "A few calls here are still ahead.",
+      null],
+    team: ["But the team hasn't faced a real challenge yet.",
+      "But the team hasn't faced a real challenge yet.",
+      "A few loose ends here are still ahead.",
+      null],
+    money: ["But the money hasn't really been tested yet.",
+      "There's more to raise, and more to get right on paper, ahead.",
+      "A few calls here are still ahead.",
+      null],
+  };
+  function scoreSoFar(g) {
+    let got = 0, max = 0, made = 0, ahead = 0;
+    const lessons = scoreGame(g).map(c => {
+      // Standing moments (never took contract work, never ran low, answered
+      // Alex) are "reached" from week 1, before the player has decided
+      // anything; on their own they'd hand a fresh run an A. They count only
+      // once the lesson has a real call in it.
+      // A call still in front of the player isn't graded yet (`open`), and a
+      // many-part moment is graded on its decided parts (`soFarMax`), so the
+      // score never drops for a decision nobody has been asked to make.
+      const counted = m => m.reached && !m.optional && !m.open && m.soFarMax !== 0;
+      const calls = c.moments.filter(m => counted(m) && !STANDING.has(m.key));
+      const reached = calls.length ? c.moments.filter(counted) : [];
+      const left = c.moments.filter(m => !m.optional && (!m.reached || m.open)).length;
+      const worth = m => m.soFarMax != null ? Math.min(m.max, m.soFarMax) : m.max;
+      const p = reached.reduce((n, m) => n + Math.min(m.got, worth(m)), 0), mx = reached.reduce((n, m) => n + worth(m), 0);
+      got += p; max += mx; made += reached.length; ahead += left;
+      const flinched = reached.some(m => worth(m) >= 3 && m.got < 0.75 * worth(m));
+      const raw = mx ? Math.round(100 * p / mx) : null;
+      const score = raw == null ? null : flinched ? Math.min(raw, 84) : raw;
+      const tier = m => { const r = m.got / worth(m); return r >= 0.99 ? 0 : r >= 0.5 ? 1 : 2; };
+      const hinted = reached.filter(m => m.hints && m.hints[tier(m)]);
+      const missed = hinted.filter(m => worth(m) - m.got >= 1).sort((x, y) => (worth(y) - y.got) - (worth(x) - x.got));
+      const best = hinted.filter(m => tier(m) === 0).sort((x, y) => worth(y) - worth(x));
+      // The biggest call done well, then the one that cost the most: by the
+      // late game a lesson has more than one story, and a single early miss
+      // shouldn't be all the card remembers.
+      const take = [best[0], missed[0]].filter(Boolean);
+      // In a lesson that's going well, the miss is the gap, not the verdict:
+      // "Your users were talking and you skipped it" under a B reads like a
+      // bad player's card.
+      const lines = take.map(m => m.hints[tier(m)]);
+      if (lines.length === 2 && score >= 70 && tier(take[1]) === 2) lines[1] = "The gap: " + lines[1].replace(/^./, ch => ch.toLowerCase());
+      const hint = lines.length ? lines.join(" ") : null;
+      // How much of the lesson is still ahead, by the weight of its calls
+      // (standing moments run the whole game, so they don't count), said
+      // without naming any of it: a good start in week 5 isn't a lesson won.
+      const all = c.moments.filter(m => !STANDING.has(m.key) && !(m.optional && !m.reached));
+      const total = all.reduce((n, m) => n + m.max, 0);
+      const done = all.filter(m => m.reached && !m.open).reduce((n, m) => n + worth(m), 0);
+      const share = total ? done / total : 1;
+      const stage = share < 1 / 3 ? 0 : share < 2 / 3 ? 1 : share < 0.99 ? 2 : 3;
+      let outlook = score == null ? null : OUTLOOK[c.key][stage];
+      if (typeof outlook === "function") outlook = outlook(!!g.s.launched);
+      // Money: while the runway doesn't reach the deadline, that is the
+      // outlook, whatever stage the lesson is at.
+      if (score != null && c.key === "money" && g.runwayWeeks < g.s.deadline_week - g.s.week)
+        outlook = "But at this burn, you don't know yet if the money will last until the deadline.";
+      // "…, but you gave ground. But you haven't…" reads twice: one "but" is enough.
+      if (outlook && /\bbut\b/i.test(hint || "")) outlook = outlook.replace(/^But (.)/, (_, ch) => ch.toUpperCase());
+      return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, hint, outlook, moments: reached };
+    });
+    // Overall: every run starts at an A (no bad call made yet) and moves
+    // with each lesson as soon as it has a call, so the first real grade lands
+    // right after the equity talk instead of weeks later.
+    return { lessons, score: max ? Math.round(100 * got / max) : 100, made, ahead };
+  }
+
   function moment(g, key) {
     for (const c of scoreGame(g)) for (const m of c.moments) if (m.key === key) return m;
     return null;
   }
 
-  const api = { scoreGame, finalGrade, gradeCap, moment, DEAD_CAP };
+  const api = { scoreGame, scoreSoFar, finalGrade, gradeCap, moment, DEAD_CAP };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else window.Scoring = api;
 })();

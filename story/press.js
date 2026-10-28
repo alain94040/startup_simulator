@@ -32,7 +32,7 @@
         // Ch 1 — mid-build, pre-demo: the gut punch. Someone shipped "your" idea
         // while your product is still a whiteboard.
         id: "flare_stealth", char: "techcrunch", from: "TechCrunch",
-        text: "Flare just went public with $3M from investors — same space, serious relationships, same price point. 5,000 users from one TikTok campaign. alex sent the article at 1am with no comment. jordan replied with one word: 'oof.'",
+        text: "Flare just announced they raised $3M from investors — same space, serious relationships, same price point. 5,000 users from one TikTok campaign. alex sent the article at 1am with no comment. jordan replied with one word: 'oof.'",
         when: { if: (s) => s.items != null && !s.has_demo && s.week >= 5 },
         // The first time you hear about a competitor. Two reactions belong to
         // the morning the news breaks (steady the team, or panic-copy) and are
@@ -43,7 +43,7 @@
         choices: [
           {
             key: "steady", label: "Steady the team — their launch isn't our roadmap", branch: true, if: newsDay,
-            journal: "Flare went public with $3M from investors and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
+            journal: "Flare just announced they raised $3M from investors and the team took it hard. Called both of them: a competitor's launch is proof the problem is real, and their broad-and-shallow approach is exactly what we're not building. Back to work.",
             effects: { char: { alex: { morale: 6 }, jordan: { morale: 4 } } },
             fx: () => "You called both of them that morning. A funded competitor is proof the problem is real — and everything in their screenshots is broad and shallow, the exact thing you're not building. Alex exhaled. Back to work.",
           },

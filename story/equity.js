@@ -10,8 +10,9 @@
 // once the player is actually in the room, and nobody names a number in it:
 // everyone dodges, in their own way, in the group. Closing the room is its
 // own beat (`equity_split_off`): the
-// player has to say "i'll talk to each of you separately" before anyone will,
-// so the DMs arrive as a consequence rather than on top of the group's last
+// player has to say "i'll talk to each of you separately" (or hand it back —
+// "you two talk it over", which comes back without a proposal) before anyone
+// will, so the DMs arrive as a consequence rather than on top of the group's last
 // word. The real asks come out in those private DMs (Alex's case,
 // with the equity calculator as his private homework; Jordan's case, with a
 // turned-down job offer she doesn't want read as leverage). Only then does
@@ -165,6 +166,20 @@
                     ? { char: "founders", speaker: "alex", text: "yeah. thanks." }
                     : { char: "founders", speaker: "jordan", text: "ok. that's probably fairer anyway." });
                   return null;
+                },
+              },
+              {
+                // Handing it back to them goes nowhere — one wants 40/40/20,
+                // the other wants thirds — so it lands on the same DMs as
+                // "separately", one round of their talking later.
+                key: "talk_over", label: "You two talk it over and tell me what you think",
+                reply: "you two know what each of you is putting in better than i do. talk it over between yourselves and tell me what you think.",
+                journal: null,
+                effects: {
+                  say: [
+                    { char: "founders", speaker: "jordan", text: "ok, we talked it over. we couldn't agree on a proposal." },
+                    { char: "founders", speaker: "alex", text: "yeah. not for lack of trying. i think you're going to have to hear each of us out on our own." },
+                  ],
                 },
               },
             ],

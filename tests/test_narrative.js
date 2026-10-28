@@ -120,6 +120,7 @@ const layerA = new Map();
 const layerB = new Map();
 let totalViolations = 0;
 const scoringFailures = [];
+const scoreSoFarFailures = [];
 
 const coverage = {};
 function cov(driver) {
@@ -180,9 +181,11 @@ function playGame(seed, driver, trace) {
   const c = cov(driver); c.games++;
   const seen = { launched: false, pivot: false, fired: false, customers: false };
 
+  let prevSoFar = null;
   const game = H.playGame(seed, driver, {
     weeks: WEEK_CAP,
     onWeekStart(g, offered) {
+      prevSoFar = checkScoreSoFar(g, prevSoFar, { seed, driver });
       const ctx = { seed, driver, week: g.s.week, surface: "offered" };
       for (const a of offered) checkCardRules(a, g.s, ctx);
       if (trace) {
@@ -231,6 +234,39 @@ function playGame(seed, driver, trace) {
   } catch (err) {
     scoringFailures.push({ seed, driver, why: `scoreGame threw: ${err.message}` });
   }
+}
+
+// The header's live Score (Scoring.scoreSoFar, taken at each week boundary):
+// players read it as a verdict on their calls, so a glitch costs trust.
+//   - Week 2 opens at an A with nothing graded: the first week asks for no
+//     call the card grades.
+//   - Well-formed: 0-100, counts non-negative.
+//   - No provisional zeros: a moment counted at nothing one week and at full
+//     marks the next was graded before its call was made (the buyback scored
+//     0 the week before its card, the equity split mid-sitting).
+//   - Every graded lesson has a hint, and no hint has a number in it: a count
+//     ("1 of 4 threads") tells the player how much is still out there.
+// Moments the story really does offer twice: Mom asks three times, so turning
+// her down and saying yes on her next offer is a real 0 then a real 3.
+const SECOND_CHANCES = new Set(["ff-asks"]);
+function checkScoreSoFar(g, prev, ctx) {
+  const fail = why => { totalViolations++; scoreSoFarFailures.push({ ...ctx, week: g.s.week, why }); };
+  let sf;
+  try { sf = Scoring.scoreSoFar(g); } catch (err) { fail(`scoreSoFar threw: ${err.message}`); return null; }
+  if (g.s.week === 2 && (sf.score !== 100 || sf.lessons.some(l => l.score != null)))
+    fail(`week 2 opens at ${sf.score}, not an ungraded A`);
+  if (!(sf.score >= 0 && sf.score <= 100) || sf.made < 0 || sf.ahead < 0) fail(`malformed (score=${sf.score}, made=${sf.made}, ahead=${sf.ahead})`);
+  for (const l of sf.lessons) {
+    if (l.score != null && typeof l.hint !== "string") fail(`${l.key} is graded but has no hint`);
+    if (/\d/.test((l.hint || "") + (l.outlook || ""))) fail(`${l.key} hint has a count in it: "${l.hint} ${l.outlook}"`);
+  }
+  const ratio = {};
+  for (const l of sf.lessons) for (const m of l.moments) {
+    const worth = m.soFarMax != null ? Math.min(m.max, m.soFarMax) : m.max;
+    ratio[m.key] = Math.min(m.got, worth) / worth;
+    if (prev && prev[m.key] === 0 && ratio[m.key] === 1 && !SECOND_CHANCES.has(m.key)) fail(`${m.key} counted at 0 the week before it scored full marks`);
+  }
+  return ratio;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -333,6 +369,11 @@ function report(games, drivers, verbose) {
   for (const f of scoringFailures.slice(0, 5)) console.log(`  FAIL seed ${f.seed} · ${f.driver} — ${f.why}`);
   if (scoringFailures.length > 5) console.log(`  … and ${scoringFailures.length - 5} more`);
 
+  console.log("\n── Live score (scoreSoFar at every week boundary) ───────");
+  if (!scoreSoFarFailures.length) console.log("  ok   opens at an ungraded A in week 2, well-formed, no provisional zeros, count-free hints");
+  for (const f of scoreSoFarFailures.slice(0, 5)) console.log(`  FAIL seed ${f.seed} · ${f.driver} wk${f.week} — ${f.why}`);
+  if (scoreSoFarFailures.length > 5) console.log(`  … and ${scoreSoFarFailures.length - 5} more`);
+
   const realB = [...layerB.values()].filter(realistic).length;
   const realA = [...layerA.values()].filter(realistic).length;
   // Dead air fails the build from ANY driver — an empty week is a hole in the
@@ -341,7 +382,7 @@ function report(games, drivers, verbose) {
   console.log(`\n${totalViolations ? "VIOLATIONS FOUND" : "ALL NARRATIVE CHECKS PASSED"} ` +
     `(${layerA.size} invariant group(s), ${layerB.size} card/message group(s); ` +
     `${realA + realB} reachable by realistic play; ${totalViolations} total occurrences)`);
-  return realA + realB + realC; // the CI bar: realistic-play violations must be 0
+  return realA + realB + realC + scoreSoFarFailures.length; // the CI bar: realistic-play violations must be 0
 }
 
 // ── CLI ───────────────────────────────────────────────────────────────────────
