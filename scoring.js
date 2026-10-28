@@ -503,6 +503,10 @@
       const stage = share < 1 / 3 ? 0 : share < 2 / 3 ? 1 : share < 0.99 ? 2 : 3;
       let outlook = score == null ? null : OUTLOOK[c.key][stage];
       if (typeof outlook === "function") outlook = outlook(!!g.s.launched);
+      // Money: while the runway doesn't reach the deadline, that is the
+      // outlook, whatever stage the lesson is at.
+      if (score != null && c.key === "money" && g.runwayWeeks < g.s.deadline_week - g.s.week)
+        outlook = "But at this burn, you don't know yet if the money will last until the deadline.";
       // "…, but you gave ground. But you haven't…" reads twice: one "but" is enough.
       if (outlook && /\bbut\b/i.test(hint || "")) outlook = outlook.replace(/^But (.)/, (_, ch) => ch.toUpperCase());
       return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, hint, outlook, moments: reached };
