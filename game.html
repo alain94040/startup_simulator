@@ -3534,7 +3534,7 @@ function openRewind(from) {
   const weeks = savedWeeks();
   $("endModal").innerHTML = '<div class="eg-cardhead"><div class="eg-eyebrow">Saved games</div>'
     + '<div class="eg-headline">' + (weeks.length ? "Go back to a week you played." : "No saved games yet.") + "</div>"
-    + '<div class="sf-chapter">' + (weeks.length ? "Same story, same luck: from there, play it differently. Every week you play stays saved." : "") + "</div></div>"
+    + '<div class="sf-chapter">' + (weeks.length ? "Same story, same luck: from there, play it differently. Every week you play stays saved locally on your device." : "") + "</div></div>"
     + (weeks.length ? rewindSelectHtml(weeks) : "")
     + '<div class="sf-foot"><button class="sf-alt" id="rwBack">Back</button>'
     + (weeks.length ? '<button class="intro-next" id="rwGo"></button>' : "") + "</div>";
@@ -3557,7 +3557,7 @@ function offerResume() {
   try { if (sessionStorage.getItem("plusone_new")) { sessionStorage.removeItem("plusone_new"); return false; } } catch (e) {}
   const weeks = savedWeeks();
   const latest = weeks[0];
-  const body = latest ? "Pick up at your latest week, or go back to any week you've played. Every week you play stays saved."
+  const body = latest ? "Pick up at your latest week, or go back to any week you've played. Every week you play stays saved locally on your device."
     : "Your game saves itself as you play, week by week. Come back any time to resume it, or to go back to a week and play it differently.";
   $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
     + '<div class="intro-eyebrow">' + (latest ? "Saved games" : "Ready?") + "</div>"
