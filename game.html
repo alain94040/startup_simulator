@@ -396,7 +396,7 @@
   .sf-foot button, .intro-actions button { white-space: nowrap; }
   .sf-alt:disabled { color: #b4b4bb; border-color: var(--soft); background: var(--soft); cursor: not-allowed; }
   .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
-  /* ── going back to a week (openRewind, offerResume): one dropdown ── */
+  /* ── going back to a week (openRewind, openResume): one dropdown ── */
   .rw-pick { display: block; margin-top: 14px; }
   .rw-pick span { display: block; font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--dim); margin-bottom: 6px; }
   .rw-pick select { width: 100%; font: inherit; font-size: 14px; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
@@ -434,9 +434,13 @@
   .lb-entry input:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
   .lb-entry button { flex: none; background: var(--blue); color: #fff; border: 0; border-radius: 9px; padding: 0 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
   .lb-entry button:disabled { opacity: .5; cursor: default; }
-  /* intro leaderboard panel reuses the intro chrome */
-  .intro-board { padding: 22px 28px 12px; }
+  /* the title menu's high scores reuse the intro chrome; the board scrolls */
+  .intro-board { padding: 22px 28px 20px; }
   .intro-board .lb { margin-top: 12px; border-top: 0; padding-top: 0; }
+  .intro-board .lb-list { max-height: min(330px, calc(84vh - 260px)); overflow-y: auto; }
+  /* the title menu: three plain buttons in a row */
+  .mm-row { display: flex; gap: 10px; margin-top: 22px; }
+  .mm-row button { flex: 1; padding: 12px 8px; }
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
@@ -983,6 +987,9 @@
     .ss-choices .chip { padding: 12px 16px; }
     #introModal { padding: 0; overflow-y: auto; }
     .intro-body, .intro-board { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
+    .intro-board .lb-list { max-height: calc(92dvh - 280px); }
+    .mm-row { gap: 8px; }
+    .mm-row button { padding: 12px 4px; }
     .intro-step b { font-size: 19px; }
     .intro-person { gap: 12px; }
     .intro-person .av { width: 60px; height: 60px; }
@@ -3370,7 +3377,7 @@ function restartGame(goal) {
 // that log on a fresh Engine rebuilds the game exactly, and stopping the
 // replay at a week turn gives the start of that week. So a player who went
 // broke at week 14 can go back to week 10 instead of starting over: from the
-// title card after the intro, or Saved games on the Score and report cards.
+// title menu's Resume game, or Saved games on the Score and report cards.
 // Saved weeks only ever add up. Every week start of every game stays in the
 // list, newest first, whatever game it came from: going back to week 2 and
 // playing it differently starts a new line of play (a branch that shares the
@@ -3541,40 +3548,24 @@ function openRewind(from) {
   $("endOv").classList.add("on");
   track("Restart opened");
 }
-// Like a game's title screen: after the intro (finished or skipped), the
-// player picks Resume (the latest saved week, or any other) or New game. With
-// nothing saved yet, Resume is there but greyed out, so a first-time player
-// learns a game can be picked up later. Skipped right after the player chose
-// New game from inside a game.
-function offerResume() {
-  try { if (sessionStorage.getItem("plusone_new")) { sessionStorage.removeItem("plusone_new"); return false; } } catch (e) {}
+// Resume game, from the title menu: the same dropdown as Saved games, every
+// saved week across all games, newest first. Back returns to the menu.
+function openResume() {
   const weeks = savedWeeks();
-  const latest = weeks[0];
-  const body = latest ? "Pick up at your latest week, or go back to any week you've played. Every week you play stays saved locally on your device."
-    : "Your game saves itself as you play, week by week. Come back any time to resume it, or to go back to a week and play it differently.";
+  if (!weeks.length) return showMenu();
+  introView = "resume";
+  track("Menu: resume game");
   $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-body">'
-    + '<div class="intro-eyebrow">' + (latest ? "Saved games" : "Ready?") + "</div>"
-    + '<div class="intro-step"><b>' + (latest ? "Resume a saved game, or start a new one?" : "Start a new game.") + "</b>" + body + "</div>"
-    + (latest ? rewindSelectHtml(weeks) : "")
-    + '<div class="intro-foot"><div></div><div class="intro-actions">'
-    + (latest ? '<button class="sf-alt" id="rsNew">New game</button><button class="intro-next" id="rsGo"></button>'
-      : '<button class="sf-alt" id="rsGo" disabled title="Nothing saved yet">Resume</button><button class="intro-next" id="rsNew">New game →</button>')
-    + "</div></div></div>";
-  if (latest) {
-    const sel = $("rwSel"), go = $("rsGo");
-    const label = () => { go.textContent = "Resume at week " + weeks[+sel.value].cp.w + " →"; };
-    sel.onchange = label; label();
-    go.onclick = () => rewindTo(weeks[+sel.value], "Resumed");
-  }
-  $("rsNew").onclick = () => {
-    track(latest ? "Resume declined" : "New game");
-    $("introOv").classList.remove("on"); queueTipCheck();
-    if (kbdNav) focusNextUp();
-  };
+    + '<div class="intro-step"><b>Resume game.</b>Pick up at your latest week, or go back to any week you\'ve played. Every week you play stays saved on this device.</div>'
+    + rewindSelectHtml(weeks)
+    + '<div class="sf-foot"><button class="sf-alt" id="rsBack">Back</button><button class="intro-next" id="rsGo"></button></div></div>';
+  const sel = $("rwSel"), go = $("rsGo");
+  const label = () => { go.textContent = "Resume at week " + weeks[+sel.value].cp.w + " →"; };
+  sel.onchange = label; label();
+  go.onclick = () => rewindTo(weeks[+sel.value], "Resumed");
+  $("rsBack").onclick = showMenu;
   $("introOv").classList.add("on");
-  track(latest ? "Resume offered" : "Title: nothing saved");
-  if (kbdNav) (latest ? $("rsGo") : $("rsNew")).focus();
-  return true;
+  if (kbdNav) go.focus();
 }
 startRun();
 // ── about ─────────────────────────────────────────────────────────────────────
@@ -3589,18 +3580,21 @@ $("hAbout").onclick = openAbout;
 $("aboutClose").onclick = closeAbout;
 $("aboutOv").onclick = (e) => { if (e.target === $("aboutOv")) closeAbout(); };
 
-// ── intro ─────────────────────────────────────────────────────────────────────
-// The intro is only the premise and the bar to beat. How to play is taught in
-// place by TIPS, each the first time its feature shows up — starting with the
-// chat itself the moment the intro closes.
-// The first card says what the player is in for: a simulation, before any
-// story. The next two tell how PlusOne started, so the player meets the
+// ── title menu and intro ──────────────────────────────────────────────────────
+// The page opens on the title card, which is the game's menu, like any game's
+// first screen: New game, Resume game, High scores. New game plays the story
+// cards, then week 1. The intro is only the premise and the story; how to play
+// is taught in place by TIPS, each the first time its feature shows up —
+// starting with the chat itself the moment the intro closes.
+// The title card says what the player is in for: a simulation, before any
+// story.
+const TITLE = ["A Silicon Valley startup game.", "You play the founder of a made-up startup and live through its first months. The people are fictional, but the decisions are the real ones founders face: what to build, who to listen to, how to spend the money, when to have the hard conversation. Whether the startup makes it is up to you.", "0_title.jpg"];
+// The story cards tell how PlusOne started, so the player meets the
 // co-founders inside the story rather than on a roster. An optional fourth
 // field introduces people: [castId, role, blurb], drawn with their portrait so
 // the player meets the faces before the texts start. An optional fifth is the
 // card's illustration (img/intro/); a missing file just drops the slot.
 const INTRO = [
-  [null, "A Silicon Valley startup game.", "You play the founder of a made-up startup and live through its first months. The people are fictional, but the decisions are the real ones founders face: what to build, who to listen to, how to spend the money, when to have the hard conversation. Whether the startup makes it is up to you.", null, "0_title.jpg"],
   [null, "It started with Alex, at 1 a.m.", "You two were trading dating-app horror stories (40 matches this month, zero dates) when one of you said it: what if an app was built to get you on a date, not to keep you swiping? By 2 a.m. it had a name, PlusOne. By morning Alex had written half a spec and offered to quit his $140k job.", [
     ["alex", "Co-founder · CTO", "He'll build everything behind the app. He always has a plan and argues for it hard, but good evidence changes his mind."],
   ], "1_idea.jpg"],
@@ -3610,67 +3604,92 @@ const INTRO = [
   ["The goal", "25 weeks to build something people want.", "PlusOne is an idea, $10,000 in the bank and two co-founders who said yes. In 25 weeks, make it good enough to get into Y Combinator, the startup program that backed Airbnb, Stripe, Dropbox and DoorDash when each was just a few people with an idea. Run out of money or lose your team, and it ends early.", null, "3_goal.jpg"],
 ];
 let introStep = 0;
-// A "Hall of Fame" board rides as the final intro step (index INTRO.length) —
-// a new player sees the bar to beat before week 1.
+let introView = "menu";   // what the intro overlay shows: "menu", "story", "resume" or "scores"
+const introArt = art => art ? '<div class="intro-art"><img src="img/intro/' + art + '" alt="" onerror="this.parentNode.remove()"></div>' : "";
+// The menu's default is Resume game once anything is saved, New game before.
+// With nothing saved, Resume game is there but greyed out, so a first-time
+// player learns a game can be picked up later.
+function showMenu() {
+  introView = "menu";
+  const saved = savedWeeks().length > 0;
+  track(saved ? "Menu" : "Menu: nothing saved");
+  const [h, b, art] = TITLE;
+  $("introModal").innerHTML = '<div class="intro-stripe"></div>' + introArt(art)
+    + '<div class="intro-body"><div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>"
+    + '<div class="mm-row">'
+    + '<button class="' + (saved ? "sf-alt" : "intro-next") + '" id="mmNew">New game</button>'
+    + '<button class="' + (saved ? "intro-next" : "sf-alt") + '" id="mmResume"' + (saved ? "" : ' disabled title="Nothing saved yet"') + ">Resume game</button>"
+    + '<button class="sf-alt" id="mmScores">High scores</button>'
+    + "</div></div>";
+  $("mmNew").onclick = () => { track("Menu: new game"); introStep = 0; showIntro(); };
+  $("mmResume").onclick = openResume;
+  $("mmScores").onclick = openHighScores;
+  $("introOv").classList.add("on");
+  if (kbdNav) $(saved ? "mmResume" : "mmNew").focus();
+}
+// High scores: the whole board (it scrolls), the bar every finished game is
+// measured against.
+function openHighScores() {
+  introView = "scores";
+  track("Menu: high scores");
+  $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-board">'
+    + '<div class="intro-step"><b>High scores.</b>Every finished game is graded 0–100. Land in the top ' + LB.MAX + " and your name goes up here for good.</div>"
+    + '<div id="introLb"><div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div></div>'
+    + '<div class="sf-foot"><button class="sf-alt" id="hsBack">Back</button></div></div>';
+  $("hsBack").onclick = showMenu;
+  $("introOv").classList.add("on");
+  if (kbdNav) $("hsBack").focus();
+  fillIntroBoard();
+}
 function showIntro() {
-  const boardStep = introStep >= INTRO.length;
-  track("Intro " + (introStep + 1) + " of " + (INTRO.length + 1));
-  // The dots double as navigation: any card, the board included, is one click away.
-  const dots = INTRO.concat([0]).map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
+  introView = "story";
+  track("Intro " + (introStep + 1) + " of " + INTRO.length);
+  // The dots double as navigation: any card is one click away.
+  const dots = INTRO.map((_, i) => '<button class="intro-dot" data-step="' + i + '" aria-label="Card ' + (i + 1) + '">' +
     '<i class="' + (i === introStep ? "on" : "") + '"></i></button>').join("");
-  const nextLabel = boardStep ? "Start the game →" : "Continue →";
-  if (boardStep) {
-    $("introModal").innerHTML =
-      '<div class="intro-stripe"></div><div class="intro-board">' +
-      '<div class="intro-eyebrow">Hall of Fame</div>' +
-      '<div class="intro-step"><b>Beat the board.</b>Every finished run is graded 0–100. Land in the top ' + LB.MAX +
-        " and your name goes up here for good.</div>" +
-      '<div id="introLb"><div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div></div>' +
-      '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
-      '<div class="intro-actions"><button class="intro-next">' + nextLabel + "</button></div></div></div>";
-  } else {
-    const [eyebrow, h, b, people, art] = INTRO[introStep];
-    $("introModal").innerHTML =
-      '<div class="intro-stripe"></div>' +
-      (art ? '<div class="intro-art"><img src="img/intro/' + art + '" alt="" onerror="this.parentNode.remove()"></div>' : "") +
-      '<div class="intro-body">' +
-      (eyebrow ? '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" : "") +
-      '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
-      (people || []).map(([id, role, blurb]) =>
-        '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
-        '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
-        '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
-      '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
-      '<div class="intro-actions"><button class="intro-skip">Skip</button>' +
-      '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
-  }
+  const nextLabel = introStep === INTRO.length - 1 ? "Start the game →" : "Continue →";
+  const [eyebrow, h, b, people, art] = INTRO[introStep];
+  $("introModal").innerHTML =
+    '<div class="intro-stripe"></div>' + introArt(art) +
+    '<div class="intro-body">' +
+    (eyebrow ? '<div class="intro-eyebrow">' + esc(eyebrow) + "</div>" : "") +
+    '<div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>" +
+    (people || []).map(([id, role, blurb]) =>
+      '<div class="intro-person">' + convAvatarHtml(id) + "<div>" +
+      '<div class="ip-role">' + esc(role).replace(/\biOS\b/g, '<span class="keep-case">iOS</span>') + '</div><div class="ip-name">' + esc(game.cast.get(id).def.name) + "</div>" +
+      '<div class="ip-blurb">' + esc(blurb) + "</div></div></div>").join("") +
+    '<div class="intro-foot"><div class="intro-dots">' + dots + "</div>" +
+    '<div class="intro-actions"><button class="intro-skip">Skip</button>' +
+    '<button class="intro-next">' + nextLabel + "</button></div></div></div>";
   const done = () => {
     track("Intro done");
-    if (offerResume()) return;   // saved games: Resume or New game comes next, like any game's title screen
     $("introOv").classList.remove("on"); queueTipCheck();
     // the keyboard lands where the game starts: Alex's Respond
     if (kbdNav) focusNextUp();
   };
-  $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep > INTRO.length) done(); else showIntro(); };
-  const sk = $("introModal").querySelector(".intro-skip"); if (sk) sk.onclick = done;
+  $("introModal").querySelector(".intro-next").onclick = () => { introStep++; if (introStep >= INTRO.length) done(); else showIntro(); };
+  $("introModal").querySelector(".intro-skip").onclick = done;
   $("introModal").querySelectorAll(".intro-dot").forEach(d => d.onclick = () => { introStep = +d.dataset.step; showIntro(); });
   $("introOv").classList.add("on");
-  if (boardStep) fillIntroBoard();
 }
-// ← / → page through the cards too (never past the board: Continue starts the run).
+// ← / → page through the story cards too (never past the last: its button starts the run).
 document.addEventListener("keydown", ev => {
-  if (!$("introOv").classList.contains("on")) return;
+  if (!$("introOv").classList.contains("on") || introView !== "story") return;
   const to = introStep + (ev.key === "ArrowRight" ? 1 : ev.key === "ArrowLeft" ? -1 : 0);
-  if (to === introStep || to < 0 || to > INTRO.length) return;
+  if (to === introStep || to < 0 || to >= INTRO.length) return;
   introStep = to; showIntro();
 });
 async function fillIntroBoard() {
   const { board, online } = await LB.fetchBoard();
   const el = $("introLb");
-  if (!el) return;   // intro already dismissed
-  el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board.slice(0, 8), -1) + "</div>";
+  if (!el) return;   // already left the high scores
+  el.innerHTML = '<div class="lb">' + lbHeadHtml(online, "Top founders") + lbRowsHtml(board, -1) + "</div>";
 }
-showIntro();
+// New game / Play again from inside a game goes straight to the story, not
+// back to the menu (a restart must not lead to saved games).
+let fromRestart = false;
+try { fromRestart = !!sessionStorage.getItem("plusone_new"); sessionStorage.removeItem("plusone_new"); } catch (e) {}
+if (fromRestart) showIntro(); else showMenu();
 
 // ── first-time tips ───────────────────────────────────────────────────────────
 // Onboarding happens when a feature is first needed, not up front: each tip is
@@ -3993,6 +4012,7 @@ const ARROW_ROWS = [
   [".mv-opts", "button"],
   ["#railNews", ".nw"],
   ["#tabbar", "button"],
+  [".mm-row", "button"],
 ];
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: "first", End: "last" };
 function arrowMove(el, step) {
@@ -4022,6 +4042,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (tipOpen) closeTip();
   else if ($("aboutOv").classList.contains("on")) closeAbout();
+  else if ($("introOv").classList.contains("on") && (introView === "resume" || introView === "scores")) showMenu();
   else if ($("endOv").classList.contains("on") && !gameEnded()) closeReportCard();   // the mid-run Score card
   else if ($("lightbox").classList.contains("show")) $("lightbox").classList.remove("show");
   else if ($("noteCenter").classList.contains("show")) { $("noteCenter").classList.remove("show"); $("bell").focus(); }
