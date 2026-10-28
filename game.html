@@ -402,6 +402,12 @@
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   .sf-foot button, .intro-actions button { white-space: nowrap; }
   .sf-about { display: none; margin: 12px auto 0; border: 0; background: none; color: var(--blue); font-size: 13px; font-weight: 600; padding: 6px 10px; }
+  /* the feedback line: on both report cards and the mid-run Score card */
+  .eg-feedback { display: flex; gap: 10px; align-items: flex-start; border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 12.5px; line-height: 1.45; color: #55555c; text-align: left; }
+  .eg-feedback .fb-ic { font-size: 17px; line-height: 1.2; }
+  .eg-feedback b { color: var(--ink); }
+  .eg-feedback a { color: var(--blue); font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .eg-feedback a:hover { text-decoration: underline; }
   .sf-alt:disabled { color: #b4b4bb; border-color: var(--soft); background: var(--soft); cursor: not-allowed; }
   .sf-alt { border: 1px solid var(--line); background: transparent; color: var(--ink); font-weight: 700; font-size: 13px; border-radius: 10px; padding: 10px 16px; cursor: pointer; }
   /* ── going back to a week (openRewind, openResume): one dropdown ── */
@@ -3247,6 +3253,7 @@ function egRunReveal() {
   t += 700;
   egTimers.push(setTimeout(() => {
     const next = $("egNext"); if (next) next.classList.add("in");
+    const fbk = $("egFeedback"); if (fbk) fbk.classList.add("in");
     const hint = $("egSkipHint"); if (hint) hint.style.opacity = "0";
     egDone = true;
   }, t));
@@ -3312,6 +3319,21 @@ function renderEndgameEntry(slot, board, online) {
   input.addEventListener("keydown", e => { if (e.key === "Enter") go(); });
   input.focus();
 }
+// The invitation to write in: one line, the address as the link. The mail
+// arrives with the run already filled in (outcome, week, grades), so the
+// player only has to say what they thought.
+const FEEDBACK_EMAIL = "game@foundrs.com";
+function feedbackHtml(lead, subject, facts) {
+  const body = (facts ? facts + "\n\n" : "")
+    + "What I think of my score:\n\nWhat I missed or didn't understand:\n\nWhat I liked:\n\nWhat I didn't like:\n";
+  const href = "mailto:" + FEEDBACK_EMAIL + "?subject=" + encodeURIComponent(subject) + "&body=" + encodeURIComponent(body);
+  return '<div class="eg-feedback"><span class="fb-ic" aria-hidden="true">✉️</span><div>' + lead
+    + ' <a href="' + href + '" onclick="track(\'Feedback email\')">' + FEEDBACK_EMAIL + "</a></div></div>";
+}
+function runFacts(cats, total) {
+  return "Week " + game.s.week + (total == null ? "" : " · grade " + Math.round(total) + "/100 (" + GRADE(total)[0] + ")") + "\n"
+    + cats.filter(c => c.score != null).map(c => c.label + ": " + GRADE(c.score)[0]).join("\n");
+}
 function checkEndgame() {
   const s = game.s;
   if (!s.game_over && !s.game_won) return;
@@ -3359,6 +3381,9 @@ function checkEndgame() {
       + '<div class="g-ref">' + esc(c.ref) + "</div></div></div>";
   }).join("");
   const cap = Scoring.gradeCap(game);
+  const fb = feedbackHtml("<b>Agree with your grade?</b> Tell me what you missed, what you liked and what you didn't:",
+    "PlusOne feedback: " + og + " (" + avg + "/100), " + (madeYC ? "made YC" : s.deadline_passed ? "missed the bar" : s.cofounder_left ? "Alex left" : "out of cash"),
+    runFacts(cats, avg));
 
   // Two cards, like the intro: the grades first, then the verdict (in or out
   // of the batch) with the leaderboard. Each fits without scrolling, so the
@@ -3373,6 +3398,7 @@ function checkEndgame() {
     + '<div id="egRollup" class="eg-rollup eg-final eg-reveal">'
       + '<div class="grade eg-biggrade pending" data-col="' + ocol + '"><span class="gl">' + og + "</span></div>"
       + '<div class="eg-roll-copy"><b>Final grade</b><br>' + avg + ' out of 100.' + (cap ? " " + esc(cap.note) : "") + '</div></div>'
+    + '<div id="egFeedback" class="eg-reveal">' + fb + "</div>"
     + '<div id="egNext" class="intro-foot eg-reveal">' + egDots(1)
       + '<button class="intro-next eg-go" data-eg-page="2">' + (madeYC || s.deadline_passed ? "The verdict →" : "Continue →") + "</button></div>"
     + '<div id="egSkipHint" class="eg-skiphint">tap anywhere to reveal faster</div>'
@@ -3382,6 +3408,7 @@ function checkEndgame() {
       + '<h2 class="eg-title">' + esc(title) + "</h2>"
       + '<div class="sub eg-sub">' + esc(sub) + "</div>" + batch + "</div>"
     + '<div id="egLeaderboard"></div>'
+    + fb
     + '<div class="intro-foot">' + egDots(2)
       + '<div class="sf-foot" style="margin-top:0">' + (savedWeeks().length ? '<button class="sf-alt" onclick="openRewind(\'report\')">Saved games</button>' : "") + '<button class="sf-alt" onclick="restartGame(\'Play again\')">Play again</button>'
       + '<button id="egBtn" class="intro-next eg-go" onclick="closeReportCard()">OK</button></div></div>'
@@ -3468,6 +3495,8 @@ function openScoreSoFar() {
     + '<div class="sf-foot">' + (savedWeeks().length ? '<button class="sf-alt" id="sfSaved">Saved games</button>' : "")
     + '<button class="sf-alt" id="sfAgain">New game</button>'
     + '<button class="intro-next" id="sfClose">Keep playing</button></div>'
+    + feedbackHtml("<b>Something feel off, or great?</b> Tell me what you liked and what you didn't:",
+      "PlusOne feedback: week " + s.week + (firstWeek ? "" : ", " + og + " so far"), firstWeek ? "" : runFacts(sf.lessons, sf.score))
     + '<button class="sf-about" id="sfAbout">About this game</button>';
   $("sfAbout").onclick = () => { closeReportCard(); openAbout(); };
   $("sfClose").onclick = closeReportCard;
