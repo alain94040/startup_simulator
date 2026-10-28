@@ -439,10 +439,10 @@
   // week-9 card isn't an F for everything still ahead. Optional moments never
   // met are left out rather than given away. `score` is null when nothing in
   // that lesson has been reached yet (the overall `score` is 100 until any
-// lesson is); `ahead` counts the moments still to come, and `hint` is one
-// vague line on how the lesson is going (the moment that cost the most, or
-// failing that the biggest one done well), with no counts and nothing about
-// what's still ahead.
+// lesson is); `ahead` counts the moments still to come, and `hint` is a
+// vague read on how the lesson is going (the biggest moment done well, then
+// the one that cost the most), with no counts and nothing about what's still
+// ahead.
   // Same flinch cap as the final card, so the letter can't praise a lesson
   // whose takeaway says "gave in".
   const STANDING = new Set(["full-time", "runway", "answered"]);
@@ -491,8 +491,11 @@
       const hinted = reached.filter(m => m.hints && m.hints[tier(m)]);
       const missed = hinted.filter(m => worth(m) - m.got >= 1).sort((x, y) => (worth(y) - y.got) - (worth(x) - x.got));
       const best = hinted.filter(m => tier(m) === 0).sort((x, y) => worth(y) - worth(x));
-      const take = missed[0] || best[0];
-      const hint = take ? take.hints[tier(take)] : null;
+      // The biggest call done well, then the one that cost the most: by the
+      // late game a lesson has more than one story, and a single early miss
+      // shouldn't be all the card remembers.
+      const take = [best[0], missed[0]].filter(Boolean);
+      const hint = take.length ? take.map(m => m.hints[tier(m)]).join(" ") : null;
       // How much of the lesson is still ahead, by the weight of its calls
       // (standing moments run the whole game, so they don't count), said
       // without naming any of it: a good start in week 5 isn't a lesson won.
