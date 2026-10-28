@@ -3296,7 +3296,7 @@ function openScoreSoFar() {
     // A vague read on the habit (Scoring's `hint`), not the final card's
     // note: mid-run, "Read 1 of 4 community threads" says how many are left,
     // and naming the next moment spoils it. The chapter line carries the scale.
-    const line = c.score == null ? "Nothing to grade yet." : c.hint || "";
+    const line = c.score == null ? "Nothing to grade yet." : [c.hint, c.outlook].filter(Boolean).join(" ");
     return '<div class="grade-row"><div class="grade' + (c.score == null ? " sf-none" : "") + '" style="background:' + col + '"><span class="gl">' + g + "</span></div>"
       + '<div class="g-body"><b>' + esc(c.label) + '</b><div class="g-verdict">' + esc(line) + "</div></div></div>";
   }).join("");

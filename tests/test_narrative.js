@@ -258,7 +258,7 @@ function checkScoreSoFar(g, prev, ctx) {
   if (!(sf.score >= 0 && sf.score <= 100) || sf.made < 0 || sf.ahead < 0) fail(`malformed (score=${sf.score}, made=${sf.made}, ahead=${sf.ahead})`);
   for (const l of sf.lessons) {
     if (l.score != null && typeof l.hint !== "string") fail(`${l.key} is graded but has no hint`);
-    if (/\d/.test(l.hint || "")) fail(`${l.key} hint has a count in it: "${l.hint}"`);
+    if (/\d/.test((l.hint || "") + (l.outlook || ""))) fail(`${l.key} hint has a count in it: "${l.hint} ${l.outlook}"`);
   }
   const ratio = {};
   for (const l of sf.lessons) for (const m of l.moments) {

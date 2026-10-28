@@ -446,6 +446,23 @@
   // Same flinch cap as the final card, so the letter can't praise a lesson
   // whose takeaway says "gave in".
   const STANDING = new Set(["full-time", "runway", "answered"]);
+  // The mid-run card's second line per lesson: how much is still to come, by
+  // stage (most of it, about half, the last few calls, none). Never names a
+  // moment or counts them.
+  const OUTLOOK = {
+    build: ["But you haven't launched yet. Most of this lesson is still ahead.",
+      "But the real test of what you built is still ahead.",
+      "A few calls here are still ahead.",
+      null],
+    team: ["But you haven't faced the real challenges yet.",
+      "The hardest conversations are still ahead.",
+      "A few loose ends here are still ahead.",
+      null],
+    money: ["But the money hasn't really been tested yet.",
+      "There's more to raise, and more to get right on paper, ahead.",
+      "A few calls here are still ahead.",
+      null],
+  };
   function scoreSoFar(g) {
     let got = 0, max = 0, made = 0, ahead = 0;
     const lessons = scoreGame(g).map(c => {
@@ -472,7 +489,18 @@
       const best = hinted.filter(m => tier(m) === 0).sort((x, y) => worth(y) - worth(x));
       const take = missed[0] || best[0];
       const hint = take ? take.hints[tier(take)] : null;
-      return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, hint, moments: reached };
+      // How much of the lesson is still ahead, by the weight of its calls
+      // (standing moments run the whole game, so they don't count), said
+      // without naming any of it: a good start in week 5 isn't a lesson won.
+      const all = c.moments.filter(m => !STANDING.has(m.key) && !(m.optional && !m.reached));
+      const total = all.reduce((n, m) => n + m.max, 0);
+      const done = all.filter(m => m.reached && !m.open).reduce((n, m) => n + worth(m), 0);
+      const share = total ? done / total : 1;
+      const stage = share < 1 / 3 ? 0 : share < 2 / 3 ? 1 : share < 0.99 ? 2 : 3;
+      let outlook = score == null ? null : OUTLOOK[c.key][stage];
+      // "…, but you gave ground. But you haven't…" reads twice: one "but" is enough.
+      if (outlook && /\bbut\b/i.test(hint || "")) outlook = outlook.replace(/^But (.)/, (_, ch) => ch.toUpperCase());
+      return { key: c.key, label: c.label, ref: c.ref, score, ahead: left, hint, outlook, moments: reached };
     });
     // Overall: every run starts at an A (no bad call made yet) and moves
     // with each lesson as soon as it has a call, so the first real grade lands
