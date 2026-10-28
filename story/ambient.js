@@ -17,7 +17,7 @@
         char: "mom",
         text: "ok!! dad and i talked it over — i just wired you $4,000. so proud of you honey ❤️ go build something amazing.",
       },
-      fx(st) { st.cash += 4000; },
+      fx(st) { st.cash += 4000; st.first_check = st.first_check || { from: "Mom and Dad", amount: 4000 }; },
     });
     return "Asked Mom and Dad if they'd put money in. They said they'd talk it over and let me know.";
   }

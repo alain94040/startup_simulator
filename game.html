@@ -586,6 +586,29 @@
   @keyframes lcPulse { 50% { color: rgba(255,255,255,.25); } }
   @keyframes fade { from { opacity: 0; } }
 
+  /* ── first money in: full-page fireworks over a night sky ───────────────── */
+  #fwOv {
+    position: fixed; inset: 0; z-index: 74; cursor: pointer; outline: none;
+    background: radial-gradient(ellipse at 50% 120%, rgba(38,28,88,.95), rgba(5,5,16,.97) 70%);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .45s ease;
+  }
+  #fwOv.on { opacity: 1; pointer-events: all; }
+  #fwCanvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #fwCard {
+    position: relative; text-align: center; color: #fff; padding: 0 16px; max-width: 420px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.7); transform: scale(.6); opacity: 0;
+  }
+  #fwOv.on #fwCard { animation: fwIn .7s cubic-bezier(.34,1.56,.64,1) .25s forwards; }
+  @keyframes fwIn { to { transform: none; opacity: 1; } }
+  .fw-emoji { font-size: 72px; line-height: 1; display: block; margin-bottom: 14px; }
+  .fw-label { font: 700 11px ui-monospace, Menlo, monospace; letter-spacing: .3em; color: #fde68a; margin-bottom: 10px; }
+  .fw-title { font: 800 34px/1.15 -apple-system, system-ui, sans-serif; margin-bottom: 10px; }
+  .fw-sub { font: italic 17px/1.55 Georgia, serif; color: rgba(235,235,255,.9); }
+  #fwOv .lc-skip { bottom: max(36px, env(safe-area-inset-bottom)); }
+  @media (prefers-reduced-motion: reduce) { #fwOv { transition: none; } #fwOv.on #fwCard { animation: none; transform: none; opacity: 1; } }
+  @media (max-width: 1023px) { .fw-emoji { font-size: 60px; } .fw-title { font-size: 28px; } .fw-sub { font-size: 15.5px; } }
+
   /* typing indicator — a light incoming bubble, matching the chat */
   .typing { display: inline-flex; gap: 4px; background: #fff; box-shadow: 0 1px 1px rgba(20,20,40,.07); border-radius: 16px; padding: 12px 15px; align-self: flex-start; }
   .typing i { width: 7px; height: 7px; border-radius: 50%; background: #b8b8bf; animation: tblink 1.2s infinite; }
@@ -1158,6 +1181,7 @@
 <div id="notifs"></div>
 <div id="noteCenter"></div>
 <div id="cine"><div class="lc-inner" id="lcInner"></div><span class="lc-skip" id="lcSkip">click to continue</span></div>
+<div id="fwOv" role="dialog" aria-modal="true" aria-labelledby="fwTitle" tabindex="-1"><canvas id="fwCanvas"></canvas><div id="fwCard"><span class="fw-emoji" aria-hidden="true">💸</span><div class="fw-label">FIRST MONEY IN</div><div class="fw-title" id="fwTitle">Cash is coming in.</div><div class="fw-sub" id="fwSub"></div></div><span class="lc-skip" id="fwSkip">click to continue</span></div>
 <div class="lightbox" id="lightbox"><button class="lb-close" id="lbClose">×</button><div class="lb-stage" id="lbStage"></div><div class="lb-thumbs" id="lbThumbs"></div></div>
 <div class="overlay" id="endOv"><div class="modal" id="endModal"></div></div>
 <div class="overlay" id="introOv"><div class="modal" id="introModal"></div></div>
@@ -2234,6 +2258,7 @@ function doAct(nodeId, key, charId) {
   // be caught the moment it happens — see pingOtherSceneThreads.
   const preSceneLens = inScene ? sceneThreadLens() : null;
   const acted = game.log.length;
+  const moneyBefore = firstMoneyIn();
   game.act(nodeId, key);
   if (game.log.length > acted) recordCall([nodeId, key]);   // act() returns the fx's recap, not success: a taken call is a new log line
   const entering = !preScene && game.scene;
@@ -2259,6 +2284,11 @@ function doAct(nodeId, key, charId) {
 
   render();
   if (game.s.game_over || game.s.game_won) { checkEndgame(); return; }
+  if (!moneyBefore && firstMoneyIn()) {
+    uiBusy = true;
+    setTimeout(() => celebrateFirstMoney(false, () => { uiBusy = false; render(); scheduleTurn(620); }), 700);
+    return;
+  }
   scheduleTurn(620);
 }
 
@@ -2293,6 +2323,105 @@ function showCine(lines, accent, done) {
   const onKey = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); advance(); } };
   el.onclick = advance;
   document.addEventListener("keydown", onKey);
+}
+
+// ── first money in: full-page fireworks ──────────────────────────────────────
+// The first check (Mom and Dad's, usually — or Jamie's or David's, whichever
+// lands first) is the moment the company stops being only the founders' money.
+// It gets the one celebration in the game: rockets over the whole page, the
+// "First Money In" card in the middle, and the week waits for a click / tap (or
+// Enter / Space / Escape), like a cinematic. Fired when the engine's
+// "firstmoney" stamp appears during a move or a week turn — never on a replay,
+// so resuming a saved game past it doesn't celebrate again.
+const firstMoneyIn = () => game.firedStamps.has("firstmoney");
+function celebrateFirstMoney(before, done) {
+  if (before || !firstMoneyIn() || gameEnded()) { done(); return; }
+  const fc = game.s.first_check || {};
+  const ov = $("fwOv"), cue = $("fwSkip");
+  $("fwSub").textContent = (fc.from || "Someone") + " just put " + money(fc.amount || 0) + " behind your idea. This changes things.";
+  cue.textContent = (isMobile ? "tap" : "click") + " to continue";
+  cue.classList.remove("ready");
+  const prevFocus = document.activeElement;
+  ov.classList.add("on"); syncInert(); ov.focus({ preventScroll: true });
+  track("First money fireworks");
+  const stop = (matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) ? () => {} : fireworks($("fwCanvas"));
+  let finished = false;
+  const cueTimer = setTimeout(() => cue.classList.add("ready"), 1400);
+  const finish = () => {
+    if (finished) return; finished = true;
+    clearTimeout(cueTimer);
+    ov.classList.remove("on"); ov.onclick = null; window.removeEventListener("keydown", onKey, true);
+    syncInert();
+    setTimeout(() => { stop(); if (prevFocus && prevFocus.focus && !prevFocus.closest("[inert]")) prevFocus.focus({ preventScroll: true }); done(); }, 450);
+  };
+  const onKey = ev => {
+    if (ev.key !== "Enter" && ev.key !== " " && ev.key !== "Escape") return;
+    ev.preventDefault(); ev.stopPropagation(); finish();
+  };
+  ov.onclick = finish;
+  window.addEventListener("keydown", onKey, true);
+}
+// Rockets rise from the bottom edge and burst anywhere on the page, each burst
+// a ring of sparks that falls and fades; returns the function that stops it.
+function fireworks(canvas) {
+  const ctx = canvas.getContext("2d");
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  let W = 0, H = 0;
+  const size = () => {
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  size(); window.addEventListener("resize", size);
+  const PALETTES = [["#fde68a", "#fbbf24", "#ffffff"], ["#4ade80", "#a3e635", "#ffffff"], ["#f472b6", "#e879f9", "#ffffff"],
+    ["#60a5fa", "#22d3ee", "#ffffff"], ["#fb923c", "#f87171", "#fde68a"], ["#a78bfa", "#c084fc", "#ffffff"]];
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const rockets = [], sparks = [];
+  const scale = Math.max(0.6, Math.min(1.2, Math.min(W, H) / 700));
+  const launch = () => {
+    const tx = rand(W * 0.08, W * 0.92), ty = rand(H * 0.1, H * 0.55);
+    const x = tx + rand(-60, 60), t = rand(0.7, 1.05) * 60;   // frames to apex
+    rockets.push({ x, y: H + 10, vx: (tx - x) / t, vy: (ty - H - 10) / t, t, pal: PALETTES[Math.floor(Math.random() * PALETTES.length)] });
+  };
+  const burst = (r) => {
+    const n = Math.round(rand(90, 130)), speed = rand(3.4, 5.8) * scale;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rand(-0.05, 0.05), v = speed * rand(0.55, 1);
+      sparks.push({ x: r.x, y: r.y, px: r.x, py: r.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v,
+        life: 1, decay: rand(0.010, 0.017), color: r.pal[Math.floor(Math.random() * r.pal.length)] });
+    }
+  };
+  // a volley to open on, then a steady show while the card is up
+  const timers = [0, 180, 380, 650, 900].map(d => setTimeout(launch, d));
+  const loop = setInterval(() => { launch(); if (Math.random() < 0.6) setTimeout(launch, 170); }, 440);
+  let raf = 0;
+  const frame = () => {
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = rockets.length - 1; i >= 0; i--) {
+      const r = rockets[i];
+      r.x += r.vx; r.y += r.vy; r.t--;
+      ctx.strokeStyle = "rgba(255,240,200,.85)"; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x - r.vx * 3, r.y - r.vy * 3); ctx.stroke();
+      if (r.t <= 0) { burst(r); rockets.splice(i, 1); }
+    }
+    for (let i = sparks.length - 1; i >= 0; i--) {
+      const p = sparks[i];
+      p.px = p.x; p.py = p.y;
+      p.vx *= 0.975; p.vy = p.vy * 0.975 + 0.06 * scale;
+      p.x += p.vx; p.y += p.vy; p.life -= p.decay;
+      if (p.life <= 0) { sparks.splice(i, 1); continue; }
+      ctx.globalAlpha = Math.min(1, p.life * 1.4);
+      ctx.strokeStyle = p.color; ctx.lineWidth = 3 * scale; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(p.px - p.vx * 2, p.py - p.vy * 2); ctx.lineTo(p.x, p.y); ctx.stroke();
+    }
+    ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    raf = requestAnimationFrame(frame);
+  };
+  raf = requestAnimationFrame(frame);
+  return () => {
+    timers.forEach(clearTimeout); clearInterval(loop); cancelAnimationFrame(raf);
+    window.removeEventListener("resize", size); ctx.clearRect(0, 0, W, H);
+  };
 }
 
 // ── focus arcs: the same iMessage chat, restricted to the people in the room ──
@@ -2739,6 +2868,7 @@ function advanceWeek() {
   for (const id of game.order) beforeLens[id] = game.threads[id].length;
   const jBefore = journalMirror().length;
   const cashBefore = game.stats().cash;
+  const moneyBefore = firstMoneyIn();
 
   game.nextWeek();
   recordCall(0);
@@ -2782,8 +2912,11 @@ function advanceWeek() {
   animateRunway(cashBefore, game.stats().cash, () => {
     // 2) the journal beat leads: ink the mirror entries in one at a time, glowing
     revealJournal(jBefore, () => {
-      // 3) a beat later, the notifications buzz
-      setTimeout(startNotifications, 420);
+      // (the first check in the bank sets off the fireworks before the buzz)
+      celebrateFirstMoney(moneyBefore, () => {
+        // 3) a beat later, the notifications buzz
+        setTimeout(startNotifications, 420);
+      });
     });
   });
 
@@ -4066,7 +4199,7 @@ document.addEventListener("keydown", (e) => {
 // order while it is up: a room hides the world, the intro and the report card
 // hide the world and any room, and the founder's "Your call" card hides its room.
 const syncInert = () => {
-  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on") || $("aboutOv").classList.contains("on");
+  const card = $("introOv").classList.contains("on") || $("endOv").classList.contains("on") || $("aboutOv").classList.contains("on") || $("fwOv").classList.contains("on");
   const room = $("scene").classList.contains("on");
   for (const sel of ["header", "main", "#tabbar"]) document.querySelector(sel).inert = card || room;
   $("scene").inert = card || $("scSelfOv").classList.contains("on");

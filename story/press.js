@@ -269,6 +269,7 @@
             fx(s, e) {
               if (e.rng() < 0.7) {
                 s.cash += 5000;
+                s.first_check = s.first_check || { from: "Jamie", amount: 5000 };
                 e.say({ char: "jamie", text: "just venmo'd you $5,000. least i could do — you'd have done the same for me. go build something great." });
                 return "$5,000 from Jamie: no terms, no paperwork, no questions about the market. He's betting on me, not on the app.";
               }
@@ -323,6 +324,7 @@
               }
               s.david_verdict = "invest";
               s.cash += 4000;
+              s.first_check = s.first_check || { from: "David", amount: 4000 };
               e.say({ char: "david", text: "you know who you're up against and you know your users. that's more than most decks i see. just wired you $4,000 — pay me back by building the thing." });
               return null;
             },

@@ -157,6 +157,7 @@
         { key: "building", cls: "green", label: "We're Building", test: (s, e) => e.done("start_prototype") },
         { key: "incorporated", cls: "blue", label: "Incorporated", test: (s) => !!s.incorporated },
         { key: "equity", cls: "red", label: "Equity Signed", test: (s) => !!s.jordan_equity },
+        { key: "firstmoney", cls: "green", label: "First Money In", test: (s) => !!s.first_check },
         { key: "demo", cls: "green", label: "First Demo", test: (s) => !!s.has_demo },
         { key: "launched", cls: "green", label: "Launched", test: (s) => !!s.launched },
         { key: "pivotshipped", cls: "green", label: "Shipped v2", test: (s) => !!s.pivot_shipped },
