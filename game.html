@@ -2444,6 +2444,54 @@ let lastSceneId = null, scTimer = null;
 const PACE = (() => { const p = parseFloat(new URLSearchParams(location.search).get("pace")); return isFinite(p) && p >= 0 ? p : 1; })();
 const scPaused = new WeakSet();   // lines whose pause has already been held
 let scHoldStep = null;            // the reveal step waiting out a pause, for the skip
+// A paused line in a thread you're NOT in (a DM while you sit in the group)
+// can't wait inside the reveal, so it is held off-screen until its moment:
+// `scLandAt` is when it shows up there (dot, preview, banner, reply chips).
+// The clock starts once the open thread has caught up, and lines chain in the
+// order the engine sent them, so the second DM lands after the first.
+const scLandAt = new WeakMap();
+let scLandTimers = [];
+function scAnyHeld() { return sceneFullCast().some(id => (game.threads[id] || []).some(m => !scLanded(m))); }
+let scRevealDone = null;           // what to run when the open thread's reveal ends
+function scLanded(m) { const t = scLandAt.get(m); return t == null || t <= Date.now(); }
+function scClearLand() { scLandTimers.forEach(clearTimeout); scLandTimers = []; }
+// Right after an answer: hide every new paused line outside the open thread.
+function scHoldOthers(preLens) {
+  if (!PACE) return [];
+  const held = [];
+  for (const id of sceneFullCast()) {
+    if (id === scSelected) continue;
+    for (const m of (game.threads[id] || []).slice(preLens[id] || 0))
+      if (m.type === "incoming" && m.scene === lastSceneId) { scLandAt.set(m, Infinity); held.push({ id, m }); }
+  }
+  // only a chain that starts with a pause is held; unpaused lines with none
+  // before them land with the open thread, as they always have
+  return held.sort((a, b) => (a.m.seq || 0) - (b.m.seq || 0));
+}
+// Once the open thread has caught up: give each held line its moment.
+function scScheduleLand(held, preLens) {
+  let t = Date.now();
+  for (const { id, m } of held) {
+    t += (m.pause || 0) * 1000 * PACE;
+    scLandAt.set(m, t);
+    scPaused.add(m);                 // its pause is spent: opening the thread later doesn't wait again
+    scLandTimers.push(setTimeout(() => scLand(id, m, preLens), Math.max(0, t - Date.now())));
+  }
+}
+function scLand(id, m, preLens) {
+  if (!inScene) return;
+  scLandAt.set(m, 0);
+  if (id === scSelected) { if (!uiBusy) openSceneThread(id); return; }
+  const lens = sceneThreadLens();
+  lens[id] = (game.threads[id] || []).indexOf(m);
+  pingOtherSceneThreads(lens);
+  if (!uiBusy) renderFocus();
+}
+// The skip also lands everything held elsewhere.
+function scLandAll() {
+  scClearLand();
+  for (const id of sceneFullCast()) for (const m of (game.threads[id] || [])) if (!scLanded(m)) scLandAt.set(m, 0);
+}
 
 // The boundary between "before the room" and the room itself: the first message
 // tagged with this scene's arc (its opening beat). Everything from there on in a
@@ -2465,7 +2513,7 @@ function sceneThread(charId) {
   // thread: while a line here waits out its pause, a DM the engine sent after
   // it stays hidden (no dot, no preview) until this thread catches up.
   const hold = charId === scSelected ? Infinity : sceneRevealSeq();
-  return (game.threads[charId] || []).filter(m => (m.seq || 0) >= sceneStartSeq && (m.seq || 0) < hold &&
+  return (game.threads[charId] || []).filter(m => (m.seq || 0) >= sceneStartSeq && (m.seq || 0) < hold && scLanded(m) &&
     (m.type === "reply" || (m.type === "incoming" && m.scene === lastSceneId)));
 }
 // The seq of the open thread's first line not yet on screen (Infinity if none).
@@ -2475,7 +2523,13 @@ function sceneRevealSeq() {
   return cur < t.length ? (t[cur].seq || 0) : Infinity;
 }
 function sceneOpenBeats() {
-  return game.scene ? game.openActions().filter(a => a.scene === game.scene.id && !a.onHold) : [];
+  return game.scene ? game.openActions().filter(a => a.scene === game.scene.id && !a.onHold && beatLanded(a)) : [];
+}
+// A beat whose message is still held off-screen can't be answered yet.
+function beatLanded(a) {
+  const t = game.threads[a.charId] || [];
+  for (let i = t.length - 1; i >= 0; i--) if (t[i].nodeId === a.nodeId) return scLanded(t[i]);
+  return true;
 }
 function sceneOpenBeat(charId) { return sceneOpenBeats().find(a => a.charId === charId) || null; }
 // The founder's own beats in a scene are private decisions (their thread is the
@@ -2526,6 +2580,7 @@ function enterScene(startSeq, charId) {
   track("Scene: " + lastSceneId);
   scRendered = {}; scHeadSig = null; scClockShown = null; scStripFront = null;
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
+  scClearLand(); scRevealDone = null;
   const start = computeSceneStart(lastSceneId);
   sceneStartSeq = isFinite(start) ? start : (startSeq != null ? startSeq : 0);
   // A room beat the player already read in the regular chat — the invitation
@@ -2562,8 +2617,14 @@ function enterScene(startSeq, charId) {
 // current conversation reveals here; anything said in another thread just lights
 // its blue unread dot in the rail, iMessage-style, for the player to open.
 function focusFlow(preLens) {
-  // the phone's banner waits until this thread has caught up, like the dots
-  openSceneThread(scSelected, () => { if (preLens) pingOtherSceneThreads(preLens); });
+  // the phone's banner waits until this thread has caught up, like the dots;
+  // a paused line elsewhere waits a little longer still (scHoldOthers)
+  const held = preLens ? scHoldOthers(preLens) : [];
+  openSceneThread(scSelected, () => {
+    if (preLens) pingOtherSceneThreads(preLens);
+    scScheduleLand(held, preLens);
+    if (held.length && !uiBusy) renderFocus();
+  });
 }
 // A phone shows one room conversation at a time, so a beat landing in someone
 // ELSE's thread while you're in this one needs saying loudly: "I was in Alex's
@@ -2579,7 +2640,7 @@ function pingOtherSceneThreads(preLens) {
   for (const id of sceneFullCast()) {
     if (id === scSelected) continue;
     const before = preLens[id] || 0;
-    const fresh = (game.threads[id] || []).slice(before).filter(m => m.type === "incoming" && m.scene === lastSceneId);
+    const fresh = (game.threads[id] || []).slice(before).filter(m => m.type === "incoming" && m.scene === lastSceneId && scLanded(m));
     if (!fresh.length) continue;
     const def = game.cast.get(id).def, stl = styleFor(id);
     pings.push({
@@ -2594,15 +2655,20 @@ function pingOtherSceneThreads(preLens) {
 
 // Reveal a thread's unread bubbles with typing dots, then hand off to render.
 function openSceneThread(charId, done) {
+  // a reveal cut short by this one still owes its follow-up (lines held elsewhere)
+  const prev = scRevealDone;
+  scRevealDone = done || null;
+  if (prev && prev !== done) prev();
+  const finish = () => { const d = scRevealDone; scRevealDone = null; if (d) d(); };
   scSelected = charId;
   const entries = sceneThread(charId);
   const from = scRendered[charId] || 0;
-  if (from >= entries.length) { renderFocus(); if (done) done(); return; }
+  if (from >= entries.length) { renderFocus(); finish(); return; }
   uiBusy = true;
   clearTimeout(scTimer);
   const step = () => {
     const cur = scRendered[charId] || 0;
-    if (!inScene || charId !== scSelected || cur >= entries.length) { uiBusy = false; renderFocus(); if (done) done(); return; }
+    if (!inScene || charId !== scSelected || cur >= entries.length) { uiBusy = false; renderFocus(); finish(); return; }
     const typing = entries[cur].type === "incoming";
     const hold = typing && entries[cur].pause && !scPaused.has(entries[cur]) ? entries[cur].pause * 1000 * PACE : 0;
     if (hold) {
@@ -2623,7 +2689,9 @@ function openSceneThread(charId, done) {
 }
 
 $("scThread").addEventListener("click", (e) => {
-  if (!scHoldStep || e.target.closest(".mk-thumb")) return;
+  if (e.target.closest(".mk-thumb")) return;
+  if (!scHoldStep && !uiBusy && scAnyHeld()) { scLandAll(); renderFocus(); return; }
+  if (!scHoldStep) return;
   const go = scHoldStep; scHoldStep = null;
   clearTimeout(scTimer); go();
 });
@@ -2861,6 +2929,7 @@ function renderFocusThread(opts) {
 
 function exitScene() {
   clearTimeout(scTimer);
+  scLandAll();
   if (scClockTimer) { clearInterval(scClockTimer); scClockTimer = null; }
   document.body.classList.remove("sc-solo");
   $("scSelfOv").classList.remove("on");

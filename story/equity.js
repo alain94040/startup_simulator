@@ -61,8 +61,10 @@
 // talk; the two DMs land seconds apart, each its own decision to reach out.
 // `?pace=0` in the URL plays the room without them, `?pace=2` doubles them.
 //
-// Pacing: a `pause` (seconds) on a `say` line is the silence before it shows
-// up in the room, on top of the usual typing dots. The pauses carry meaning:
+// Pacing: a `pause` (seconds) on a `say` line or a beat is the silence before
+// it shows up in the room, on top of the usual typing dots. A DM pauses once
+// the group thread has gone quiet, so the two confessions (and the pushbacks)
+// arrive seconds apart instead of with the group's last word. The pauses carry meaning:
 // Jordan's 👍 is instant and Alex's "sure — i mean" is not, and "you two talk
 // it over" only comes back once they've had time to talk.
 //
@@ -205,7 +207,7 @@
           // Both land together, on purpose: two people messaging you within a
           // minute of the group going quiet, neither knowing the other did.
           {
-            id: "equity_dm_alex", char: "alex",
+            id: "equity_dm_alex", char: "alex", pause: 3,
             text: "ok, not in front of jordan, but — here's what i actually think. i quit a $140k job for this. she didn't quit anything. i'm not saying that to be harsh, i'm saying the risk isn't the same and the split shouldn't pretend it is.",
             when: { after: ["equity_split_off"] },
             choices: [
@@ -252,7 +254,7 @@
             timeout: { weeks: 2, effects: { char: { alex: { morale: -6 } } } },
           },
           {
-            id: "equity_dm_jordan", char: "jordan",
+            id: "equity_dm_jordan", char: "jordan", pause: 5,
             text: "not in the group, but — i need you to actually hear this part. i had an offer. full-time, with equity, from an actual company, three weeks ago. i turned it down to keep building this.",
             when: { after: ["equity_split_off"] },
             choices: [
@@ -348,7 +350,7 @@
 
           // ── Act 4: DMs again — pushback, sharper (per anchor) ─────────────
           {
-            id: "equity_pushback_alex", char: "alex",
+            id: "equity_pushback_alex", char: "alex", pause: 5,
             text: [
               "i told you exactly what i needed and you went with the easy number anyway. i get that \"everyone's essential\" sounds nice in a group chat. it also isn't what i asked for.",
               "so — did you not believe me, or did you just not want the fight?",
@@ -377,7 +379,7 @@
             timeout: { weeks: 2, effects: { char: { alex: { morale: -6 } } } },
           },
           {
-            id: "equity_pushback_jordan", char: "jordan",
+            id: "equity_pushback_jordan", char: "jordan", pause: 5,
             text: [
               "you heard about the offer. you know what i turned down. and you still went with the number that makes it look like i wasn't all-in.",
               "i'm not going to bring up the offer again like it's a bargaining chip. but i need you to understand — you're not just picking a percentage, you're telling me what my \"yes\" was worth. and you said 20%.",
@@ -409,7 +411,7 @@
           {
             // 50/25/25: both push back independently, neither knowing the
             // other is doing the same thing in a separate DM.
-            id: "equity_pushback_alex_50", char: "alex",
+            id: "equity_pushback_alex_50", char: "alex", pause: 4,
             text: "you kept half. i left a job for this and i'm getting the same as jordan, who didn't. i'm not trying to be petty — i genuinely don't understand how you landed here.",
             when: { if: (s) => s.equity_proposal === "50/25/25" && !s.equity_decided },
             choices: [
@@ -428,7 +430,7 @@
             timeout: { weeks: 2, effects: { char: { alex: { morale: -6 } } } },
           },
           {
-            id: "equity_pushback_jordan_50", char: "jordan",
+            id: "equity_pushback_jordan_50", char: "jordan", pause: 5,
             text: "you gave yourself double what either of us gets. i get that you started this. i don't get why that means you get to un-equal it the second there's actually something to divide.",
             when: { if: (s) => s.equity_proposal === "50/25/25" && !s.equity_decided },
             choices: [
