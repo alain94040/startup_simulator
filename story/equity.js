@@ -53,6 +53,19 @@
 // whichever choice it lands on. There's no separate signing beat: the
 // founder's dictate IS the close.
 //
+// Pacing: the room plays in real time. A `pause` (seconds) on a beat or a
+// `say` line is the silence before it lands, after whatever landed before it
+// (game.html adds a typing time on top that grows with the line's length).
+// The pauses carry meaning: Jordan's 👍 is instant and Alex's "sure — i mean"
+// is not; "you two talk it over" comes back only after they've had time to
+// talk; the two DMs land seconds apart, each its own decision to reach out.
+// `?pace=0` in the URL plays the room without them, `?pace=2` doubles them.
+//
+// Pacing: a `pause` (seconds) on a `say` line is the silence before it shows
+// up in the room, on top of the usual typing dots. The pauses carry meaning:
+// Jordan's 👍 is instant and Alex's "sure — i mean" is not, and "you two talk
+// it over" only comes back once they've had time to talk.
+//
 // Shared state: `s.equity_proposal` (the split currently on the table — set
 // at the Act 3 offer, and the impasse ruling can move it again), `s.equity_
 // decided` (the founder made the call — or silence made it for them),
@@ -119,8 +132,8 @@
                 effects: {
                   say: [
                     { char: "founders", speaker: "jordan", text: "👍" },
-                    { char: "founders", speaker: "alex", text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
-                    { char: "founders", speaker: "jordan", text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
+                    { char: "founders", speaker: "jordan", pause: 1, text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
                   ],
                 },
               },
@@ -129,7 +142,7 @@
                 reply: "let's not default our way into this. tell me — actually — what feels fair to each of you. i'll listen to both before anyone signs anything.",
                 journal: null,
                 effects: {
-                  say: { char: "founders", speaker: "alex", text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
+                  say: { char: "founders", speaker: "alex", pause: 2, text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
                 },
               },
             ],
@@ -163,8 +176,8 @@
                 journal: null,
                 fx(s, e) {
                   e.say(e.took("equity_dance:open_up")
-                    ? { char: "founders", speaker: "alex", text: "yeah. thanks." }
-                    : { char: "founders", speaker: "jordan", text: "ok. that's probably fairer anyway." });
+                    ? { char: "founders", speaker: "alex", pause: 1.5, text: "yeah. thanks." }
+                    : { char: "founders", speaker: "jordan", pause: 1.5, text: "ok. that's probably fairer anyway." });
                   return null;
                 },
               },
@@ -177,8 +190,8 @@
                 journal: null,
                 effects: {
                   say: [
-                    { char: "founders", speaker: "jordan", text: "ok, we talked it over. we couldn't agree on a proposal." },
-                    { char: "founders", speaker: "alex", text: "yeah. not for lack of trying. i think you're going to have to hear each of us out on our own." },
+                    { char: "founders", speaker: "jordan", pause: 5, text: "ok, we talked it over. we couldn't agree on a proposal." },
+                    { char: "founders", speaker: "alex", pause: 2, text: "yeah. not for lack of trying. i think you're going to have to hear each of us out on our own." },
                   ],
                 },
               },
@@ -221,19 +234,19 @@
                 key: "take_seriously", label: "That's a fair ask — I'm taking it seriously",
                 reply: "that's a fair ask, alex. i'm taking it seriously — i'm not deciding anything yet, but i'm not brushing it off either.",
                 journal: null,
-                effects: { say: { char: "alex", text: "that's all i wanted. i wasn't sure i was allowed to want that." } },
+                effects: { say: { char: "alex", pause: 1.5, text: "that's all i wanted. i wasn't sure i was allowed to want that." } },
               },
               {
                 key: "see_it", label: "Send me the calculator — I want to run it myself",
                 reply: "send it to me. i want to look at the actual numbers, not just the number.",
                 journal: null,
-                effects: { say: { char: "alex", text: "...yeah, fair. here. i'm not trying to hide behind a website. i just wanted backup." } },
+                effects: { say: { char: "alex", pause: 2, text: "...yeah, fair. here. i'm not trying to hide behind a website. i just wanted backup." } },
               },
               {
                 key: "wait_for_jordan", label: "I hear you, but I'm not deciding until I've talked to Jordan too",
                 reply: "i hear you. i'm not committing to a number until i've heard her side too.",
                 journal: null,
-                effects: { char: { alex: { morale: -3 } }, say: { char: "alex", text: "...ok. fair. i just didn't want my case to get lost." } },
+                effects: { char: { alex: { morale: -3 } }, say: { char: "alex", pause: 1.5, text: "...ok. fair. i just didn't want my case to get lost." } },
               },
             ],
             timeout: { weeks: 2, effects: { char: { alex: { morale: -6 } } } },
@@ -276,19 +289,19 @@
                 key: "big_deal", label: "That's a big deal — thank you for trusting me with it",
                 reply: "that's a big deal, jordan. thank you for trusting me with it.",
                 journal: null,
-                effects: { char: { jordan: { trust: 5 } }, say: { char: "jordan", text: "...yeah. it felt like a big deal to turn down, too." } },
+                effects: { char: { jordan: { trust: 5 } }, say: { char: "jordan", pause: 1.5, text: "...yeah. it felt like a big deal to turn down, too." } },
               },
               {
                 key: "doesnt_change_math", label: "That doesn't change the math for me — but I hear you",
                 reply: "i hear you. i'm not sure it changes the number, but it changes how i see you.",
                 journal: null,
-                effects: { char: { jordan: { trust: 3 } }, say: { char: "jordan", text: "that's... actually all i wanted. i wasn't asking you to pay me for it." } },
+                effects: { char: { jordan: { trust: 3 } }, say: { char: "jordan", pause: 2, text: "that's... actually all i wanted. i wasn't asking you to pay me for it." } },
               },
               {
                 key: "need_a_minute", label: "I need to sit with that — give me a minute",
                 reply: "i need to sit with that. give me a minute.",
                 journal: null,
-                effects: { char: { jordan: { trust: -3 } }, say: { char: "jordan", text: "...yeah. that's kind of what i was afraid you'd say." } },
+                effects: { char: { jordan: { trust: -3 } }, say: { char: "jordan", pause: 4, text: "...yeah. that's kind of what i was afraid you'd say." } },
               },
             ],
             timeout: { weeks: 2, effects: { char: { jordan: { trust: -4 } } } },
@@ -309,13 +322,13 @@
                 key: "thirds", label: "Thirds — everyone's essential",
                 reply: "different risk, different shapes, but everyone here gave up something to be in this. i think it's thirds.",
                 journal: null,
-                effects: { flags: { equity_proposal: "33/33/33" }, say: { char: "founders", speaker: "alex", text: "...ok. thirds, then." } },
+                effects: { flags: { equity_proposal: "33/33/33" }, say: { char: "founders", speaker: "alex", pause: 2.5, text: "...ok. thirds, then." } },
               },
               {
                 key: "forty", label: "40/40/20 — Alex's case",
                 reply: "i've heard both of you. full-time risk isn't the same as part-time risk, and the split should say so. i'm going 40/40/20.",
                 journal: null,
-                effects: { flags: { equity_proposal: "40/40/20" }, say: { char: "founders", speaker: "jordan", text: "wow. ok. forty-forty-twenty." } },
+                effects: { flags: { equity_proposal: "40/40/20" }, say: { char: "founders", speaker: "jordan", pause: 3, text: "wow. ok. forty-forty-twenty." } },
               },
               {
                 key: "fifty", label: "50/25/25 — I'm taking half",
@@ -324,8 +337,8 @@
                 effects: {
                   flags: { equity_proposal: "50/25/25" },
                   say: [
-                    { char: "founders", speaker: "alex", text: "you're kidding — you're keeping fifty for yourself?" },
-                    { char: "founders", speaker: "jordan", text: "...that's a choice, keeping half for yourself." },
+                    { char: "founders", speaker: "alex", pause: 1.5, text: "you're kidding — you're keeping fifty for yourself?" },
+                    { char: "founders", speaker: "jordan", pause: 3, text: "...that's a choice, keeping half for yourself." },
                   ],
                 },
               },
@@ -463,8 +476,8 @@
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "jordan", text: "thank you." },
-                    { char: "founders", speaker: "alex", text: "ran the numbers and still lost the argument. noted, i guess." },
+                    { char: "founders", speaker: "jordan", pause: 2.5, text: "thank you." },
+                    { char: "founders", speaker: "alex", pause: 2, text: "ran the numbers and still lost the argument. noted, i guess." },
                   ],
                 },
               },
@@ -475,8 +488,8 @@
                 effects: {
                   flags: { equity_proposal: "40/40/20", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "alex", text: "...thank you. i wasn't sure i'd said it clearly enough the first time." },
-                    { char: "founders", speaker: "jordan", text: "so the group vote didn't count. good to know for next time." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "...thank you. i wasn't sure i'd said it clearly enough the first time." },
+                    { char: "founders", speaker: "jordan", pause: 2, text: "so the group vote didn't count. good to know for next time." },
                   ],
                 },
               },
@@ -487,8 +500,8 @@
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "alex", text: "thank you for saying it plainly." },
-                    { char: "founders", speaker: "jordan", text: "i turned down a real offer for this. twenty percent it is." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "thank you for saying it plainly." },
+                    { char: "founders", speaker: "jordan", pause: 2, text: "i turned down a real offer for this. twenty percent it is." },
                   ],
                 },
               },
@@ -499,8 +512,8 @@
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "jordan", text: "...thank you. i didn't think i'd have to say it three times." },
-                    { char: "founders", speaker: "alex", text: "so the calculator was just for my own information, then." },
+                    { char: "founders", speaker: "jordan", pause: 2.5, text: "...thank you. i didn't think i'd have to say it three times." },
+                    { char: "founders", speaker: "alex", pause: 2, text: "so the calculator was just for my own information, then." },
                   ],
                 },
               },
@@ -511,8 +524,8 @@
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "alex", text: "for the record — jordan and i actually agree on something. wish it wasn't this." },
-                    { char: "founders", speaker: "jordan", text: "he's right. mark the date." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "for the record — jordan and i actually agree on something. wish it wasn't this." },
+                    { char: "founders", speaker: "jordan", pause: 2, text: "he's right. mark the date." },
                   ],
                 },
               },
@@ -523,8 +536,8 @@
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "alex", text: "it's not the 40 i wanted. but at least nobody's taking more than their share anymore. i can live with equal." },
-                    { char: "founders", speaker: "jordan", text: "thank you. genuinely — equal is all i ever wanted. i just couldn't sit with you keeping half." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "it's not the 40 i wanted. but at least nobody's taking more than their share anymore. i can live with equal." },
+                    { char: "founders", speaker: "jordan", pause: 2, text: "thank you. genuinely — equal is all i ever wanted. i just couldn't sit with you keeping half." },
                   ],
                 },
               },
@@ -540,8 +553,8 @@
                   flags: { equity_proposal: "33/33/33", equity_decided: true, equity_tabled: true, jordan_equity: true },
                   char: { alex: { morale: -8, flags: { equity_set: true } }, jordan: { morale: -8 } },
                   say: [
-                    { char: "founders", speaker: "alex", text: "so we're back to \"fine.\" cool. that's new." },
-                    { char: "founders", speaker: "jordan", text: "we did two rounds of this to land back on the emoji. impressive, honestly." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "so we're back to \"fine.\" cool. that's new." },
+                    { char: "founders", speaker: "jordan", pause: 2, text: "we did two rounds of this to land back on the emoji. impressive, honestly." },
                   ],
                   scene: null,
                 },

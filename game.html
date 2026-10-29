@@ -2436,6 +2436,14 @@ function fireworks(canvas) {
 // thread while Alex confronts you in his"). We reuse the regular rail + thread,
 // blocking out the rest of the app.
 let lastSceneId = null, scTimer = null;
+// A room line can carry a `pause` (seconds, authored in story/*.js): the reveal
+// below holds that long in silence before the typing dots, so a reply that
+// should take a while ("you two talk it over") doesn't come back instantly.
+// `?pace=0` turns pauses off, `?pace=2` doubles them; a click on the thread
+// skips the one in progress.
+const PACE = (() => { const p = parseFloat(new URLSearchParams(location.search).get("pace")); return isFinite(p) && p >= 0 ? p : 1; })();
+const scPaused = new WeakSet();   // lines whose pause has already been held
+let scHoldStep = null;            // the reveal step waiting out a pause, for the skip
 
 // The boundary between "before the room" and the room itself: the first message
 // tagged with this scene's arc (its opening beat). Everything from there on in a
@@ -2453,8 +2461,18 @@ function computeSceneStart(arcId) {
 // prompt that happens to be waiting — never leaks in); the player's replies are
 // scene answers by construction (non-cast characters are held during a scene).
 function sceneThread(charId) {
-  return (game.threads[charId] || []).filter(m => (m.seq || 0) >= sceneStartSeq &&
+  // Nothing lands elsewhere before what is still being revealed in the open
+  // thread: while a line here waits out its pause, a DM the engine sent after
+  // it stays hidden (no dot, no preview) until this thread catches up.
+  const hold = charId === scSelected ? Infinity : sceneRevealSeq();
+  return (game.threads[charId] || []).filter(m => (m.seq || 0) >= sceneStartSeq && (m.seq || 0) < hold &&
     (m.type === "reply" || (m.type === "incoming" && m.scene === lastSceneId)));
+}
+// The seq of the open thread's first line not yet on screen (Infinity if none).
+function sceneRevealSeq() {
+  if (!scSelected) return Infinity;
+  const t = sceneThread(scSelected), cur = scRendered[scSelected] || 0;
+  return cur < t.length ? (t[cur].seq || 0) : Infinity;
 }
 function sceneOpenBeats() {
   return game.scene ? game.openActions().filter(a => a.scene === game.scene.id && !a.onHold) : [];
@@ -2544,8 +2562,8 @@ function enterScene(startSeq, charId) {
 // current conversation reveals here; anything said in another thread just lights
 // its blue unread dot in the rail, iMessage-style, for the player to open.
 function focusFlow(preLens) {
-  if (preLens) pingOtherSceneThreads(preLens);
-  openSceneThread(scSelected);
+  // the phone's banner waits until this thread has caught up, like the dots
+  openSceneThread(scSelected, () => { if (preLens) pingOtherSceneThreads(preLens); });
 }
 // A phone shows one room conversation at a time, so a beat landing in someone
 // ELSE's thread while you're in this one needs saying loudly: "I was in Alex's
@@ -2575,17 +2593,25 @@ function pingOtherSceneThreads(preLens) {
 }
 
 // Reveal a thread's unread bubbles with typing dots, then hand off to render.
-function openSceneThread(charId) {
+function openSceneThread(charId, done) {
   scSelected = charId;
   const entries = sceneThread(charId);
   const from = scRendered[charId] || 0;
-  if (from >= entries.length) { renderFocus(); return; }
+  if (from >= entries.length) { renderFocus(); if (done) done(); return; }
   uiBusy = true;
   clearTimeout(scTimer);
   const step = () => {
     const cur = scRendered[charId] || 0;
-    if (!inScene || charId !== scSelected || cur >= entries.length) { uiBusy = false; renderFocus(); return; }
+    if (!inScene || charId !== scSelected || cur >= entries.length) { uiBusy = false; renderFocus(); if (done) done(); return; }
     const typing = entries[cur].type === "incoming";
+    const hold = typing && entries[cur].pause && !scPaused.has(entries[cur]) ? entries[cur].pause * 1000 * PACE : 0;
+    if (hold) {
+      scPaused.add(entries[cur]);
+      renderFocus();
+      scHoldStep = step;
+      scTimer = setTimeout(() => { scHoldStep = null; step(); }, hold);
+      return;
+    }
     renderFocus({ typing });
     scTimer = setTimeout(() => {
       scRendered[charId] = cur + 1;
@@ -2595,6 +2621,12 @@ function openSceneThread(charId) {
   };
   step();
 }
+
+$("scThread").addEventListener("click", (e) => {
+  if (!scHoldStep || e.target.closest(".mk-thumb")) return;
+  const go = scHoldStep; scHoldStep = null;
+  clearTimeout(scTimer); go();
+});
 
 // The scene header. For most arcs it's a plain title/sub/focus-note. Launch day
 // gets the cinematic treatment: the sky walks the time of day, a giant clock
@@ -2695,7 +2727,9 @@ function renderFocus(opts) {
     scrollStrip($("scRail"), $("scRail").firstChild, frontChanged);
   } else {
     $("scRail").innerHTML = cast.map(id => {
-      const def = game.cast.get(id).def, t = sceneThread(id);
+      // the open thread previews only what has been revealed in it, so a line
+      // still waiting out its pause doesn't show up in the rail first
+      const def = game.cast.get(id).def, t = id === scSelected ? sceneThread(id).slice(0, scRendered[id] || 0) : sceneThread(id);
       const last = t.length ? t[t.length - 1] : null;
       const unread = sceneUnread(id) && id !== scSelected;
       const who = last && last.type === "incoming" && !last.system && isGroupChat(id) && last.from ? last.from + ": " : "";

@@ -412,6 +412,9 @@
         subtext: node.subtext || null,
         mockups: node.mockups || null,
         scene: this.arcOf.get(node.id) && this.arcOf.get(node.id).scene ? this.arcOf.get(node.id).id : null,
+        // seconds of silence before it lands — presentation only, the UI paces
+        // a room with it (see `pause` on a say entry below)
+        pause: node.pause || 0,
       });
       this.log.push({ week: this.s.week, charId, surfaced: node.id });
     }
@@ -628,6 +631,10 @@
           // a line spoken while a scene is running belongs to that scene, so the
           // focus UI can scope each private thread to its own sitting.
           scene: this.scene ? this.scene.id : null,
+          // `pause`: seconds of silence before the line lands, after whatever
+          // landed before it. Presentation only — nothing in the engine reads
+          // it; game.html uses it to pace a room in real time.
+          pause: m.pause || 0,
         });
       }
     }
