@@ -98,8 +98,8 @@
         // day without it. No re-nag: launch prep swallows the conversation.
         id: "pivot_open", char: "jordan",
         text: (s) => s.demo_question_seen
-          ? "been going through the test group's feedback. remember demo night. 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching. they want somewhere to go. thought i'd flag it before we get closer to launch."
-          : "been going through the test group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching. they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
+          ? "been going through the test group's feedback. remember demo night. 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?'\n\nthey're not complaining about the matching. they want somewhere to go. thought i'd flag it before we get closer to launch."
+          : "been going through the test group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?'\n\nthey're not complaining about the matching. they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
         when: { if: (s) => s.activities_cut && s.has_demo && s.market_fit >= 5 && !s.launched },
         choices: [
           {
@@ -117,8 +117,8 @@
       {
         id: "slide_hangover", char: "alex",
         text: (s) => s.launch_splash === "show_hn"
-          ? "morning-after math. the front page got us to " + Math.max(4, s.users) + " accounts and the graph looked incredible for a day. then i read the profiles: half list 'github' under interests, most have no photo. hacker news signed up to admire the matching engine, not to date. the number that actually matters is how many of them come back. i'll have a real answer friday."
-          : "morning-after math. we ended launch week at " + Math.max(4, s.users) + " accounts. day one was the spike. yesterday 6 new, today 2. some comedown is normal: the launch push is spent, that traffic was never going to repeat. the number that actually matters is how many of them come back. i'll have a real answer friday.",
+          ? "morning-after math. the front page got us to " + Math.max(4, s.users) + " accounts and the graph looked incredible for a day. then i read the profiles: half list 'github' under interests, most have no photo. hacker news signed up to admire the matching engine, not to date.\n\nthe number that actually matters is how many of them come back. i'll have a real answer friday."
+          : "morning-after math. we ended launch week at " + Math.max(4, s.users) + " accounts. day one was the spike. yesterday 6 new, today 2. some comedown is normal: the launch push is spent, that traffic was never going to repeat.\n\nthe number that actually matters is how many of them come back. i'll have a real answer friday.",
         when: { took: ["good_enough_launch:ship"], delay: 2, if: (s) => !s.activities_pivot },
         choices: [
           {
@@ -207,7 +207,7 @@
         // cold-start read. The counter-option only exists with banked evidence.
         id: "slide_alex_thesis", char: "alex",
         text: (s) => {
-          const base = "before anyone panics: we have " + Math.max(5, s.users) + " users. with " + Math.max(5, s.users) + " users, everyone gets shown the same three faces and an empty screen. of course they leave. the problem isn't the app, it's the empty room. the fix is more people: the mixer, referrals, flyers where our users actually hang out.";
+          const base = "before anyone panics: we have " + Math.max(5, s.users) + " users. with " + Math.max(5, s.users) + " users, everyone gets shown the same three faces and an empty screen. of course they leave.\n\nthe problem isn't the app, it's the empty room. the fix is more people: the mixer, referrals, flyers where our users actually hang out.";
           return s.funnel_first
             ? base + " and monday you were the one asking for more signups. so part of you already agrees with me."
             : base;

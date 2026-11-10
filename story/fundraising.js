@@ -18,7 +18,7 @@
       // hands the community to Flare.
       {
         id: "sarah_intro", char: "sarah",
-        text: "it's about 18,000 members, weekly events, real trust in the group. not just a feed people scroll. heard through a mutual you're rebuilding around real-world plans, which is basically what my events already are. want to talk about debuting the new version at one of them? i'm also talking to flare, so let me know soon.",
+        text: "it's about 18,000 members, weekly events, real trust in the group. not just a feed people scroll.\n\nheard through a mutual you're rebuilding around real-world plans, which is basically what my events already are. want to talk about debuting the new version at one of them?\n\ni'm also talking to flare, so let me know soon.",
         when: { if: (s, e) => e.chapter === 4 && s.pivot_week != null && s.week >= s.pivot_week + 1 },
         choices: [
           {

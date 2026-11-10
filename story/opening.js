@@ -92,7 +92,7 @@
       },
       {
         id: "incorporate", char: "alex",
-        text: "before we do anything else. we need to become an actual company, on paper. no bank account, no contracts, no splitting ownership until we do. there's an online service, Stripe Atlas, that does the paperwork: company registered, tax number, bank account, in about two days.",
+        text: "before we do anything else. we need to become an actual company, on paper. no bank account, no contracts, no splitting ownership until we do.\n\nthere's an online service, Stripe Atlas, that does the paperwork: company registered, tax number, bank account, in about two days.",
         when: { after: ["start_prototype"] },
         choices: [incorporateChoice],
         timeout: {

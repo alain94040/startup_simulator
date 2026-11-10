@@ -139,6 +139,9 @@
   .m-in, .m-out { position: relative; max-width: 64%; padding: 8px 13px; border-radius: 18px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; }
   .m-in { background: #fff; box-shadow: 0 1px 1px rgba(20,20,40,.07); align-self: flex-start; }
   .m-out { background: var(--blue); color: #fff; align-self: flex-end; }
+  /* back-to-back texts from one sender sit closer together than a new turn
+     (iMessage's grouping): a bubble without a tail is followed by more */
+  .m-in:not(.tail) + .m-in, .m-out:not(.tail) + .m-out { margin-top: -4px; }
   /* iMessage tails — only on the last bubble of a group */
   .m-in.tail { border-bottom-left-radius: 6px; }
   .m-in.tail::after { content: ""; position: absolute; left: -6px; bottom: 0; width: 12px; height: 17px; background: #fff; border-bottom-right-radius: 14px 15px; }
@@ -1848,15 +1851,26 @@ function openThread() {
 // A founder bubble that never arrived (engine _say `undelivered`): she
 // blocked you, and iMessage says so the only way it does — in red, under it.
 const undeliveredHtml = (m) => m.undelivered ? '<div class="m-nd">Not Delivered</div>' : "";
+// One message, drawn as the burst of texts it reads as: a blank line in a
+// message's text ("\n\n") splits it into back-to-back bubbles that land
+// together, the way people actually text. Only the last one carries the tail.
+// It is still one message to the engine (one typing reveal, one seq), so the
+// story and its timing don't change; this is presentation only.
+function bubblesHtml(cls, body, tail, extra) {
+  const parts = String(body).split(/\n[ \t]*\n+/).map(p => p.trim()).filter(Boolean);
+  if (!parts.length) parts.push("");
+  return parts.map((p, i) =>
+    '<div class="' + cls + (tail && i === parts.length - 1 ? " tail" : "") + (extra || "") + '">' + esc(p) + "</div>").join("");
+}
 function threadEntryHtml(m, isNew, tail, prev, group) {
   const anim = isNew ? " msg-new" : "";
   let out = "";
-  if (m.type === "reply") out = '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>" + undeliveredHtml(m);
+  if (m.type === "reply") out = bubblesHtml("m-out", m.body, tail, anim) + undeliveredHtml(m);
   else if (m.type === "incoming" && m.system) {
     out = '<div class="m-sys' + anim + '">' + esc(m.body) + "</div>";
   } else if (m.type === "incoming") {
     out = senderLabelHtml(m, prev, group) +
-      '<div class="m-in' + (tail ? " tail" : "") + (m.dropped ? " dropped" : "") + anim + '">' + esc(m.body) + "</div>" +
+      bubblesHtml("m-in", m.body, tail, (m.dropped ? " dropped" : "") + anim) +
       (m.subtext ? '<div class="m-sub">' + esc(m.subtext) + "</div>" : "");
     // the dev-plan message carries three CSS phone mockups → thumbnails + lightbox
     if (m.mockups) out += mockupRowHtml(m.mockups);
@@ -2867,12 +2881,12 @@ function renderFocusThread(opts) {
     const tail = !next || next.type !== m.type
       || (group && next.type === "incoming" && next.from !== m.from);
     const anim = i === shown - 1 ? " msg-new" : "";
-    if (m.type === "reply") html += '<div class="m-out' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>" + undeliveredHtml(m);
+    if (m.type === "reply") html += bubblesHtml("m-out", m.body, tail, anim) + undeliveredHtml(m);
     else if (m.system) {
       html += '<div class="m-sys' + anim + '">' + esc(m.body) + "</div>";
     } else {
       html += senderLabelHtml(m, i > 0 ? t[i - 1] : null, group);
-      html += '<div class="m-in' + (tail ? " tail" : "") + anim + '">' + esc(m.body) + "</div>";
+      html += bubblesHtml("m-in", m.body, tail, anim);
       if (m.subtext) html += '<div class="m-sub">' + esc(m.subtext) + "</div>";
       if (m.mockups) html += mockupRowHtml(m.mockups);
     }

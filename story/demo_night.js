@@ -36,7 +36,7 @@
         text: (s, e, char) => char.focus === "discover"
           ? "honest question. i've been on user calls and roadmap docs since week " + Math.max(1, s.week - 4)
             + " because that's what you asked for. it's week " + s.week
-            + " and there is still nothing a stranger can open. put me back on the build and leave me there and i can get profiles + matching working end to end."
+            + " and there is still nothing a stranger can open.\n\nput me back on the build and leave me there and i can get profiles + matching working end to end."
           : e.done("demo_stall")
           ? "week " + s.week + ". still nothing a stranger can open. i'm asking again: let the build be the only thing i do."
           : "it's week " + s.week + ". we have a plan, a company, and no product. i'm getting maybe a day a week on this between everything else you send me. i need a stretch where the build is the only thing i'm doing.",
@@ -205,7 +205,7 @@
           },
           {
             id: "demo_first_message", char: "alex",
-            text: "ok. she finished the profile. matched with one of the guys we seeded the app with. she just sent the first message and i have to read it to you verbatim: 'so what happens now?' …i've been staring at it for five minutes. i don't know what our app answers to that.",
+            text: "ok. she finished the profile. matched with one of the guys we seeded the app with.\n\nshe just sent the first message and i have to read it to you verbatim: 'so what happens now?'\n\n…i've been staring at it for five minutes. i don't know what our app answers to that.",
             choices: [
               {
                 key: "note", label: "Write it down — verbatim",

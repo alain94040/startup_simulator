@@ -450,7 +450,7 @@
       {
         // The scope call — Ch 1's lean-plan lesson, echoed under pressure.
         id: "pivot_scope_call", char: "alex",
-        text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans screen, for the users who liked it, or do we cut to the bone and ship one thing?",
+        text: "monday-morning question before i write a line of code.\n\nthe old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans screen, for the users who liked it, or do we cut to the bone and ship one thing?",
         when: {
           if: (s, e) => e.chapter === 4 && s.pivot_week != null
             && s.week >= s.pivot_week + 1
@@ -491,8 +491,8 @@
         // she's still on the team.
         id: "pivot_beta_invite", char: "jordan",
         text: (s) => (s.maya_quote
-          ? "i want to write to the people who left before we relaunch. all of them, maya included, get a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' "
-          : "i want to write to the people who left before we relaunch. every quiet account gets a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' ")
+          ? "i want to write to the people who left before we relaunch. all of them, maya included, get a two-line email: 'you told us what was wrong. we rebuilt it. want to see?'\n\n"
+          : "i want to write to the people who left before we relaunch. every quiet account gets a two-line email: 'you told us what was wrong. we rebuilt it. want to see?'\n\n")
           + "the people who quit are the only ones who already know why the old app failed. or do we save the reveal for launch day and a clean slate?",
         when: {
           if: (s, e) => e.chapter === 4 && !s.jordan_resolved

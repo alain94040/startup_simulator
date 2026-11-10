@@ -486,6 +486,10 @@ function renderText(run, o) {
 // ── HTML rendering: the run as a readable chat log ───────────────────────────
 const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+// A blank line in a message is a burst of back-to-back texts: game.html draws
+// each paragraph as its own bubble (bubblesHtml), so the page does too.
+const bubs = (body, cls) => String(body == null ? "" : body).split(/\n[ \t]*\n+/)
+  .map(p => p.trim()).filter(Boolean).map(p => `<div class="${cls}">${esc(p)}</div>`).join("") || `<div class="${cls}"></div>`;
 
 // ── the weekly board: every answerable card, side by side ────────────────────
 // One tile per card the founder could have spent an action on that week, all
@@ -576,7 +580,7 @@ function runHtml(run, idx) {
       } else {
         parts.push(`<div class="row in ${cls}"${kindAttr}><div class="av">${esc((e.from || nameOf[e.charId] || "?").slice(0, 1))}</div>` +
           `<div><div class="who">${esc(e.from || nameOf[e.charId])}${idTag}</div>` +
-          `<div class="bub">${esc(e.body)}</div>${e.subtext ? `<div class="sub">${esc(e.subtext)}</div>` : ""}</div></div>`);
+          `${bubs(e.body, "bub")}${e.subtext ? `<div class="sub">${esc(e.subtext)}</div>` : ""}</div></div>`);
       }
     } else if (e.t === "reply") {
       if (e.ui === "hidden") {
@@ -584,7 +588,7 @@ function runHtml(run, idx) {
           `which drops replies ${idTag}<div>${esc(e.body)}</div></div>`);
       } else {
         parts.push(`<div class="row out ${cls}"><div><div class="who to">to ${esc(nameOf[e.charId] || e.charId)}</div>` +
-          `<div class="bub me">${esc(e.body)}</div></div></div>`);
+          `${bubs(e.body, "bub me")}</div></div>`);
       }
     } else if (e.t === "note") {
       if (e.ui === "hidden") {
@@ -711,6 +715,7 @@ function renderHtml(runs, title) {
   .who.to { justify-content:flex-end; }
   body.ids .who code { display:inline; }
   .bub { background:#e9e9eb; border-radius:16px; border-bottom-left-radius:5px; padding:8px 13px; max-width:62ch; white-space:pre-wrap; }
+  .bub + .bub { margin-top:3px; }
   .bub.me { background:var(--blue); color:#fff; border-bottom-left-radius:16px; border-bottom-right-radius:5px; }
   .sub { font-size:12px; color:var(--dim); margin:3px 0 0 6px; }
   .choice { margin:2px 0 10px 37px; font-size:12.5px; color:#2456c4; }

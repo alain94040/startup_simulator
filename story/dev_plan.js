@@ -97,7 +97,7 @@
           // strictly worse — he runs late, you buy anyway AND lose ~2 weeks.
           {
             id: "auth_choice", char: "alex",
-            text: "first thing to build: accounts (sign up, log in, reset password, 'sign in with google'). i can build it myself, couple days tops, and we own it forever. or i plug in a service that does logins for us in an afternoon and we pay $30/wk for the privilege. your call. i genuinely don't mind building it. kind of want to, actually.",
+            text: "first thing to build: accounts (sign up, log in, reset password, 'sign in with google').\n\ni can build it myself, couple days tops, and we own it forever. or i plug in a service that does logins for us in an afternoon and we pay $30/wk for the privilege.\n\nyour call. i genuinely don't mind building it. kind of want to, actually.",
             when: { after: ["dev_plan"] },
             choices: [
               {
@@ -156,7 +156,7 @@
           // ── direction: the first screen (research-gated C-option) ────────────
           {
             id: "first_screen", char: "jordan",
-            text: "first real iOS question. someone installs plusone, opens it. ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in the test app by friday. or a guided intake. five questions before we show a single face. slower, weirder, but it's a statement.",
+            text: "first real iOS question. someone installs plusone, opens it. ten seconds later, what are they looking at?\n\ni can do a classic swipe deck: zero learning curve, demos great, i could have it in the test app by friday.\n\nor a guided intake. five questions before we show a single face. slower, weirder, but it's a statement.",
             when: { after: ["dev_plan"], delay: 1, if: (s) => !s.has_demo },
             choices: [
               {
