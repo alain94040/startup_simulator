@@ -103,12 +103,12 @@
             id: "equity_open", char: "jordan",
             text: (s) => s.incorporated
               ? "ok, the company paperwork just asked how many shares each of us gets. we should figure this out before it's a whole thing.\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?"
-              : "hey — we're going to have to answer this eventually, might as well be now: how many shares does each of us get?\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?",
+              : "hey, we're going to have to answer this eventually, might as well be now: how many shares does each of us get?\n...honestly? i don't know what's \"fair\" here. does anyone want to say a number first?",
             when: { after: ["incorporate"] },
             choices: [
               {
                 key: "open", label: "Let's sit down right now and settle it",
-                reply: "you're right. let's get the three of us on a call and hash it out now — better us than lawyers later.",
+                reply: "you're right. let's get the three of us on a call and hash it out now. better us than lawyers later.",
                 journal: null,
                 effects: { scene: "equity" },
               },
@@ -124,7 +124,7 @@
           // where the founder actually sets the tone for the sitting.
           {
             id: "equity_dance", char: "founders", system: true,
-            text: "the call's started — how do you want to open it?",
+            text: "the call's started. how do you want to open it?",
             when: { after: ["equity_open"] },
             choices: [
               {
@@ -134,17 +134,17 @@
                 effects: {
                   say: [
                     { char: "founders", speaker: "jordan", text: "👍" },
-                    { char: "founders", speaker: "alex", pause: 2.5, text: "sure — i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
-                    { char: "founders", speaker: "jordan", pause: 1, text: "we're all in this together. different contributions, sure — but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "sure, i mean, thirds works if we're all doing the same thing day to day. are we? genuinely asking. not trying to start anything." },
+                    { char: "founders", speaker: "jordan", pause: 1, text: "we're all in this together. different contributions, sure, but the second we start trying to slice percentages to match who did what, this stops being about building something and starts being about who gets more money. i don't want us to be that." },
                   ],
                 },
               },
               {
                 key: "open_up", label: "Let's actually talk about what everyone wants first",
-                reply: "let's not default our way into this. tell me — actually — what feels fair to each of you. i'll listen to both before anyone signs anything.",
+                reply: "let's not default our way into this. tell me, actually, what feels fair to each of you. i'll listen to both before anyone signs anything.",
                 journal: null,
                 effects: {
-                  say: { char: "founders", speaker: "alex", pause: 2, text: "can we not do this in the group though? no offense to either of you — i just don't want to negotiate in real time in front of both of you." },
+                  say: { char: "founders", speaker: "alex", pause: 2, text: "can we not do this in the group though? no offense to either of you. i just don't want to negotiate in real time in front of both of you." },
                 },
               },
             ],
@@ -174,7 +174,7 @@
                 // A transition, not a fork — the same "continue" shape as
                 // launch day's discover→scope→decide setup beats.
                 key: "separate", label: "I'll talk to each of you separately",
-                reply: "ok — this isn't a group conversation. i'm going to talk to each of you on your own. tell me what you actually think, not what's polite.",
+                reply: "ok, this isn't a group conversation. i'm going to talk to each of you on your own. tell me what you actually think, not what's polite.",
                 journal: null,
                 fx(s, e) {
                   e.say(e.took("equity_dance:open_up")
@@ -208,7 +208,7 @@
           // minute of the group going quiet, neither knowing the other did.
           {
             id: "equity_dm_alex", char: "alex", pause: 3,
-            text: "ok, not in front of jordan, but — here's what i actually think. i quit a $140k job for this. she didn't quit anything. i'm not saying that to be harsh, i'm saying the risk isn't the same and the split shouldn't pretend it is.",
+            text: "ok, not in front of jordan, but... here's what i actually think. i quit a $140k job for this. she didn't quit anything. i'm not saying that to be harsh, i'm saying the risk isn't the same and the split shouldn't pretend it is.",
             when: { after: ["equity_split_off"] },
             choices: [
               {
@@ -226,15 +226,15 @@
           {
             id: "equity_dm_alex_ask", char: "alex",
             text: [
-              "i want the same equity as you. not close — the same number. that's the difference between being your co-founder and being your first hire. jordan's still got a paycheck behind her, and i think that shows up in her number too. 40/40/20.",
-              "...and look, i know how \"i did math about this\" sounds. but i ran our situation through a co-founder equity calculator last night — foundrs.com has one — and it said 40/40/20 too. i'm not just making this up to sound fair.",
+              "i want the same equity as you. not close. the same number. that's the difference between being your co-founder and being your first hire. jordan's still got a paycheck behind her, and i think that shows up in her number too. 40/40/20.",
+              "...and look, i know how \"i did math about this\" sounds. but i ran our situation through a co-founder equity calculator last night, foundrs.com has one, and it said 40/40/20 too. i'm not just making this up to sound fair.",
             ].join("\n\n"),
             mockups: { calc: { variant: "calc" } },
             when: { after: ["equity_dm_alex"] },
             choices: [
               {
                 key: "take_seriously", label: "That's a fair ask — I'm taking it seriously",
-                reply: "that's a fair ask, alex. i'm taking it seriously — i'm not deciding anything yet, but i'm not brushing it off either.",
+                reply: "that's a fair ask, alex. i'm taking it seriously. i'm not deciding anything yet, but i'm not brushing it off either.",
                 journal: null,
                 effects: { say: { char: "alex", pause: 1.5, text: "that's all i wanted. i wasn't sure i was allowed to want that." } },
               },
@@ -255,7 +255,7 @@
           },
           {
             id: "equity_dm_jordan", char: "jordan", pause: 5,
-            text: "not in the group, but — i need you to actually hear this part. i had an offer. full-time, with equity, from an actual company, three weeks ago. i turned it down to keep building this.",
+            text: "not in the group, but... i need you to actually hear this part. i had an offer. full-time, with equity, from an actual company, three weeks ago. i turned it down to keep building this.",
             when: { after: ["equity_split_off"] },
             choices: [
               {
@@ -273,7 +273,7 @@
             id: "equity_dm_jordan_ask", char: "jordan",
             text: [
               "i'm not saying i need more than thirds. i'm saying don't let \"she's not all-in\" be the thing that costs me. i am all-in. i just didn't quit loudly.",
-              "so when the argument is \"jordan still has a job to fall back on\" — i want you to know that's not free. i turned down a better job offer, with equity, to stay on this. it's why i'm still working nights and weekends around the job i have. i didn't tell alex because i didn't want it to sound like a threat.",
+              "so when the argument is \"jordan still has a job to fall back on\". i want you to know that's not free. i turned down a better job offer, with equity, to stay on this. it's why i'm still working nights and weekends around the job i have. i didn't tell alex because i didn't want it to sound like a threat.",
             ].join("\n\n"),
             when: { after: ["equity_dm_jordan"] },
             choices: [
@@ -317,7 +317,7 @@
           // would be (after both DMs), not pulled out of it into a modal.
           {
             id: "equity_offer", char: "founders", system: true,
-            text: "you've heard both of them now — everyone's waiting on what you send next.",
+            text: "you've heard both of them now. everyone's waiting on what you send next.",
             when: { after: ["equity_dm_alex_ask", "equity_dm_jordan_ask"], if: (s) => !s.equity_proposal },
             choices: [
               {
@@ -339,7 +339,7 @@
                 effects: {
                   flags: { equity_proposal: "50/25/25" },
                   say: [
-                    { char: "founders", speaker: "alex", pause: 1.5, text: "you're kidding — you're keeping fifty for yourself?" },
+                    { char: "founders", speaker: "alex", pause: 1.5, text: "you're kidding. you're keeping fifty for yourself?" },
                     { char: "founders", speaker: "jordan", pause: 3, text: "...that's a choice, keeping half for yourself." },
                   ],
                 },
@@ -353,7 +353,7 @@
             id: "equity_pushback_alex", char: "alex", pause: 5,
             text: [
               "i told you exactly what i needed and you went with the easy number anyway. i get that \"everyone's essential\" sounds nice in a group chat. it also isn't what i asked for.",
-              "so — did you not believe me, or did you just not want the fight?",
+              "so, did you not believe me, or did you just not want the fight?",
             ].join("\n\n"),
             when: { if: (s) => s.equity_proposal === "33/33/33" && !s.equity_decided },
             choices: [
@@ -382,8 +382,8 @@
             id: "equity_pushback_jordan", char: "jordan", pause: 5,
             text: [
               "you heard about the offer. you know what i turned down. and you still went with the number that makes it look like i wasn't all-in.",
-              "i'm not going to bring up the offer again like it's a bargaining chip. but i need you to understand — you're not just picking a percentage, you're telling me what my \"yes\" was worth. and you said 20%.",
-              "and look — the actual difference between 40/40/20 and equal thirds is about seven points each, for you two. that's not nothing, but it's not what's keeping either of you up at night either. for me it's the difference between being a partner and being on an allowance.",
+              "i'm not going to bring up the offer again like it's a bargaining chip. but i need you to understand. you're not just picking a percentage, you're telling me what my \"yes\" was worth. and you said 20%.",
+              "and look, the actual difference between 40/40/20 and equal thirds is about seven points each, for you two. that's not nothing, but it's not what's keeping either of you up at night either. for me it's the difference between being a partner and being on an allowance.",
             ].join("\n\n"),
             when: { if: (s) => s.equity_proposal === "40/40/20" && !s.equity_decided },
             choices: [
@@ -394,8 +394,8 @@
                 effects: { say: { char: "jordan", text: "...don't say that unless you mean it." } },
               },
               {
-                key: "where_we_start", label: "20% today isn't a verdict on you. It's where we start",
-                reply: "20% today isn't a verdict on you. it's where we start, not where it ends.",
+                key: "where_we_start", label: "20% is where we start",
+                reply: "20% is where we start. it can change as we go.",
                 journal: null,
                 effects: { char: { jordan: { trust: -5 } }, say: { char: "jordan", text: "i've heard that before. from other people, about other things." } },
               },
@@ -412,7 +412,7 @@
             // 50/25/25: both push back independently, neither knowing the
             // other is doing the same thing in a separate DM.
             id: "equity_pushback_alex_50", char: "alex", pause: 4,
-            text: "you kept half. i left a job for this and i'm getting the same as jordan, who didn't. i'm not trying to be petty — i genuinely don't understand how you landed here.",
+            text: "you kept half. i left a job for this and i'm getting the same as jordan, who didn't. i'm not trying to be petty. i genuinely don't understand how you landed here.",
             when: { if: (s) => s.equity_proposal === "50/25/25" && !s.equity_decided },
             choices: [
               {
@@ -459,7 +459,7 @@
             // room it closes.
             id: "equity_impasse", char: "founders", system: true,
             text: (s, e) => s.equity_proposal === "50/25/25"
-              ? "alex and jordan just made almost the same argument, separately, without knowing it — neither thinks you should keep half. whatever you send next is final."
+              ? "alex and jordan just made almost the same argument, separately, without knowing it. neither thinks you should keep half. whatever you send next is final."
               : s.equity_proposal === "40/40/20"
                 ? "jordan's made her case twice now. whatever you send next is final."
                 : "alex's made his case twice now. whatever you send next is final.",
@@ -485,7 +485,7 @@
               },
               {
                 key: "cave_forty", label: "Cave — Alex is right, 40/40/20", if: (s) => s.equity_proposal === "33/33/33", branch: true,
-                reply: "i've been thinking about what alex said. i went with the easy number instead of the real one — he quit a job to do this full-time, and that's a different kind of risk. changing it: 40/40/20.",
+                reply: "i've been thinking about what alex said. i went with the easy number instead of the real one. he quit a job to do this full-time, and that's a different kind of risk. changing it: 40/40/20.",
                 journal: "The cap table's set: 40/40/20. I walked back my own first call once I heard Alex out again. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "40/40/20", equity_decided: true, jordan_equity: true }, scene: null,
@@ -497,7 +497,7 @@
               },
               {
                 key: "hold_forty", label: "Hold — 40/40/20, final", if: (s) => s.equity_proposal === "40/40/20", branch: true,
-                reply: "40/40/20. final. full-time risk gets full-time equity — that's the whole argument and i'm not pretending it's more complicated than that.",
+                reply: "40/40/20. final. full-time risk gets full-time equity. that's the whole argument and i'm not pretending it's more complicated than that.",
                 journal: "The cap table's set: 40/40/20. Alex got what he asked for. Jordan said the work would argue for her from here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
@@ -509,7 +509,7 @@
               },
               {
                 key: "cave_thirds_from_forty", label: "Cave — Jordan is right, thirds", if: (s) => s.equity_proposal === "40/40/20", branch: true,
-                reply: "i've been thinking about what jordan said. she turned down a real offer to be here, and she didn't make it a whole thing when she did. seven points isn't going to change how alex or i sleep at night — for her it's the difference between partner and allowance. changing it: equal thirds.",
+                reply: "i've been thinking about what jordan said. she turned down a real offer to be here, and she didn't make it a whole thing when she did. seven points isn't going to change how alex or i sleep at night. for her it's the difference between partner and allowance. changing it: equal thirds.",
                 journal: "The cap table's set: equal thirds. I walked back 40/40/20 once I actually weighed what Jordan gave up to be here. Nobody set up vesting schedules.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
@@ -526,7 +526,7 @@
                 effects: {
                   flags: { equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
-                    { char: "founders", speaker: "alex", pause: 2.5, text: "for the record — jordan and i actually agree on something. wish it wasn't this." },
+                    { char: "founders", speaker: "alex", pause: 2.5, text: "for the record, jordan and i actually agree on something. wish it wasn't this." },
                     { char: "founders", speaker: "jordan", pause: 2, text: "he's right. mark the date." },
                   ],
                 },
@@ -539,7 +539,7 @@
                   flags: { equity_proposal: "33/33/33", equity_decided: true, jordan_equity: true }, scene: null,
                   say: [
                     { char: "founders", speaker: "alex", pause: 2.5, text: "it's not the 40 i wanted. but at least nobody's taking more than their share anymore. i can live with equal." },
-                    { char: "founders", speaker: "jordan", pause: 2, text: "thank you. genuinely — equal is all i ever wanted. i just couldn't sit with you keeping half." },
+                    { char: "founders", speaker: "jordan", pause: 2, text: "thank you. genuinely, equal is all i ever wanted. i just couldn't sit with you keeping half." },
                   ],
                 },
               },
@@ -549,7 +549,7 @@
                 // plain silence, since it quietly proposes the contribution-
                 // based money-grab Jordan rejected outright back in Act 1.
                 key: "table", label: "Table it until after launch",
-                reply: "we're going in circles and we have a company to build. i'm parking this until after launch — once we're live, we'll actually be able to see who's carrying what, and we can settle it then.",
+                reply: "we're going in circles and we have a company to build. i'm parking this until after launch. once we're live, we'll actually be able to see who's carrying what, and we can settle it then.",
                 journal: "We tabled equity until after launch — and agreed we'd settle it by who's carrying what once we're live. Everyone typed something short. Nobody meant it. The default thirds went into the paperwork unexamined, like an unpaid bill.",
                 effects: {
                   flags: { equity_proposal: "33/33/33", equity_decided: true, equity_tabled: true, jordan_equity: true },

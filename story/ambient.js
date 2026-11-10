@@ -15,7 +15,7 @@
       in: 3, char: "mom",
       say: {
         char: "mom",
-        text: "ok!! dad and i talked it over — i just wired you $4,000. so proud of you honey ❤️ go build something amazing.",
+        text: "ok!! dad and i talked it over. i just wired you $4,000. so proud of you honey ❤️ go build something amazing.",
       },
       fx(st) { st.cash += 4000; st.first_check = st.first_check || { from: "Mom and Dad", amount: 4000 }; },
     });
@@ -55,7 +55,7 @@
       },
       {
         id: "ff_family_3", char: "mom", ambient: true,
-        text: "dad looked up plusone and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird — but he's really proud.",
+        text: "dad looked up plusone and has been reading everything. he wants to put some money in if you'll let him. also asked if he can 'test it for a friend.' it might feel weird, but he's really proud.",
         when: { took: ["ff_family_2:@ignored"], if: (s) => s.week <= 12 },
         choices: [
           {

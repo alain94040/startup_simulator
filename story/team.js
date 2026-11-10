@@ -22,7 +22,7 @@
         choices: [
           {
             key: "alex", label: "Go with casual dating",
-            reply: "you're right, casual is the bigger market. let's go with your framing — 'casual dating done right.'",
+            reply: "you're right, casual is the bigger market. let's go with your framing. 'casual dating done right.'",
             journal: "Conceded the framing to Alex — we're 'casual dating done right.' Broader market, easier to explain. A few old 'serious matches' conversations are awkward now, but at least we're aligned.",
             effects: { signal: -4, char: { alex: { trust: 8, morale: 10 } } },
             fx: () => "Went with casual dating. Broader market, easier to explain. Some earlier conversations about 'serious matches' are now awkward, but at least you're aligned.",
@@ -36,7 +36,7 @@
           },
           {
             key: "test", label: "Test it with users",
-            reply: "we're both guessing. let me run a quick test this week — 8 calls with real users. let's find out which framing actually resonates before we commit.",
+            reply: "we're both guessing. let me run a quick test this week. 8 calls with real users. let's find out which framing actually resonates before we commit.",
             journal: "Instead of arguing, I ran eight quick user calls. People who want serious relationships hate swiping apps, and vice versa — two real segments. We're leading with the relationship-seekers: they pay more and stick around longer.",
             effects: { signal: 14, marketFit: 6, char: { alex: { morale: 5, trust: 6 } } },
             fx: () => "Ran 8 quick calls. People who tried serious relationship apps hate swiping apps and vice versa — two real segments. Decided to lead with the relationship-seekers: they pay more and stick around longer.",
@@ -54,12 +54,12 @@
         id: "alex_sync_discover", char: "alex", ambient: true,
         text: (s, e, char) => {
           if (!e.done("alex_sync_discover"))
-            return "offer: i can spend this week on user calls instead of code. the build slips a week — that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
+            return "offer: i can spend this week on user calls instead of code. the build slips a week. that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
           const weeksAgo = e.weeksSince("alex_sync_discover");
           if (weeksAgo < 12 && e.timesResolved("alex_sync_discover") >= 2)
             return "offering again: one more week of user calls? the build slips, but we'd know more than we do now.";
           return weeksAgo >= 12
-            ? "it's been " + weeksAgo + " weeks since we last did discovery. things shift — worth a week to check if we're still solving the right problem?"
+            ? "it's been " + weeksAgo + " weeks since we last did discovery. things shift. worth a week to check if we're still solving the right problem?"
             : "we're back in build mode. it's only been a few weeks since we last talked to customers, but the queue keeps growing. do another round or keep building?";
         },
         when: {
@@ -121,7 +121,7 @@
       },
       {
         id: "alex_side_project_escalation", char: "alex",
-        text: "i know we talked about this, but i've been putting more in — probably 15 hours a week. i need to be honest about where my head is at.",
+        text: "i know we talked about this, but i've been putting more in. probably 15 hours a week. i need to be honest about where my head is at.",
         when: { if: (s, e, char) => !!char.flags.side_project_active && s.week <= 26 },
         choices: [
           {
@@ -151,7 +151,7 @@
         choices: [
           {
             key: "checkin", label: "Check in",
-            reply: "hey — noticed you've been quiet. everything ok? no pressure, just checking in.",
+            reply: "hey, noticed you've been quiet. everything ok? no pressure, just checking in.",
             journal: "Noticed Alex had gone quiet. Checked in. Honest conversation — he's exhausted. Adjusted expectations for the week.",
             effects: { char: { alex: { morale: 20 } } },
             fx: () => "Had an honest conversation. Alex is exhausted. Adjusted expectations for the week.",
@@ -227,7 +227,7 @@
       },
       {
         id: "early_customer_target", char: "alex", ambient: true,
-        text: "we keep switching who we're talking to — sometimes we pitch to young singles, sometimes to divorced 30-somethings. we should agree before it gets confusing.",
+        text: "we keep switching who we're talking to. sometimes we pitch to young singles, sometimes to divorced 30-somethings. we should agree before it gets confusing.",
         when: { after: ["dev_plan"], if: (s) => s.week <= 9 },
         choices: [
           { key: "individuals", label: "Young singles — bigger market, easier to reach",
@@ -241,7 +241,7 @@
       },
       {
         id: "early_funding_goal", char: "alex", ambient: true,
-        text: "been sitting on this: dating apps go one of three ways — VC-backed and scale fast (Hinge, Bumble), get acquired by Match Group, or build a quiet profitable subscription business. which are we aiming for? changes everything about how we make decisions.",
+        text: "been sitting on this: dating apps go one of three ways. VC-backed and scale fast (Hinge, Bumble), get acquired by Match Group, or build a quiet profitable subscription business. which are we aiming for? changes everything about how we make decisions.",
         when: { if: (s) => s.week >= 3 && s.week <= 9 },
         choices: [
           { key: "vc", label: "Raise from investors, grow fast, then sell or go public", effects: { signal: 3 },
@@ -284,7 +284,7 @@
       // ── THE DEPARTURE THREAT (neglect has a face) ────────────────────────────
       {
         id: "alex_leaving_threat", char: "alex",
-        text: "got a message from an old colleague at a well-funded startup. not going anywhere — but we need an honest conversation about where this is headed.",
+        text: "got a message from an old colleague at a well-funded startup. not going anywhere, but we need an honest conversation about where this is headed.",
         // Fires from the Jordan-fire fallout without signed equity, cratered
         // relationship stats, or sustained neglect: three of his messages
         // ignored within a rolling 10-week window.
@@ -323,7 +323,7 @@
             s.cofounder_left = true;
             s.game_over = true;
           },
-          say: { char: "alex", text: "i've decided to take the other opportunity. i'm sorry — i'll do a proper handoff this week." },
+          say: { char: "alex", text: "i've decided to take the other opportunity. i'm sorry. i'll do a proper handoff this week." },
         },
       },
     ],

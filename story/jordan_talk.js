@@ -204,7 +204,7 @@
           : prior(s) === "backed"
             ? "yes. i said yes last time too.\n\nis this what you almost asked me two weeks ago? did alex say something?"
             : (second ? "yes? it's nearly there. work had a big couple of weeks, that's all." : "yes? i've been doing it since day one.")
-              + "\n\nwhy — did alex say something?",
+              + "\n\nwhy? did alex say something?",
         when: { took: [id("jordan_ladder_go") + ":ask"] },
         choices: [
           {
@@ -223,7 +223,7 @@
                 char: "jordan",
                 text: (s) => prior(s) === "folded"
                   ? "you said all that last time.\n\nand each of those had a reason."
-                  : "…has it?\n\ni mean — each of those had a reason.",
+                  : "…has it?\n\ni mean... each of those had a reason.",
               },
             },
           },
@@ -232,7 +232,7 @@
             if: (s) => !!s.demo_jordan_absent,
             reply: "demo night. you weren't there, and it was your sister's friend testing.",
             journal: null,
-            effects: { say: { char: "jordan", text: "that was a big deadline at work. that wasn't—\n\n…okay. and the fix was two days late too." } },
+            effects: { say: { char: "jordan", text: "that was a big deadline at work. that wasn't\n\n…okay. and the fix was two days late too." } },
           },
         ],
       },
@@ -351,7 +351,7 @@
                 char: "jordan",
                 text: "sorry.\n\ni turned down a real job for this. every evening, every weekend. and i get a text at " + (second ? "2am" : "midnight") + " and 'sorry'.\n\nyou didn't even ask me anything. you'd decided before you opened this thread.\n\nanything else about shares or accounts can go through a lawyer. don't text me.",
               });
-              e.say({ char: "jordan", outgoing: true, undelivered: true, text: "jordan, the app store account is still on yours. can we at least—" });
+              e.say({ char: "jordan", outgoing: true, undelivered: true, text: "jordan, the app store account is still on yours. can we at least..." });
               jordanLeaves(s, e, "cold");
               return null;
             },
@@ -372,12 +372,12 @@
       {
         // The practical half — the half founders actually botch.
         id: id("firing_shares"), char: "jordan",
-        text: "what happens to my shares?\n\nand one practical thing — the app store listing is on my personal developer account. it was $99 and we were being careful with money.",
+        text: "what happens to my shares?\n\nand one practical thing. the app store listing is on my personal developer account. it was $99 and we were being careful with money.",
         when: { took: [id("firing_stops") + ":ask"] },
         choices: [
           {
             key: "transfer", label: "Paperwork this week, and I'll move the account ($99)",
-            reply: "you keep what's vested, i pay the lawyer. and i'll open a company account tomorrow — we transfer before you sign anything.",
+            reply: "you keep what's vested, i pay the lawyer. and i'll open a company account tomorrow. we transfer before you sign anything.",
             payee: "Apple Developer",
             journal: null,
             effects: { cash: -99, say: { char: "jordan", text: "yeah. do it while i still care about doing it properly." } },
@@ -417,7 +417,7 @@
           {
             key: "intake", label: "The intake screen was yours.",
             if: (s, e) => e.took("first_screen:intake_interviews|intake"),
-            reply: "one more thing. the intake screen — your sister's group chat — is still the only thing anyone ever shared on their own. that was you. tonight doesn't erase it.",
+            reply: "one more thing. the intake screen, your sister's group chat, is still the only thing anyone ever shared on their own. that was you. tonight doesn't erase it.",
             journal: (s) => "Told Jordan it wasn't working out — myself, over text. She argued, then she stopped. Her " + pctOf(s)
               + " gets put in writing this week; Alex has the plans screen from Monday. I told her the intake screen was hers, and that tonight doesn't erase it.",
             fx(s, e) {

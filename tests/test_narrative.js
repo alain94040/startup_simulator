@@ -209,6 +209,7 @@ function playGame(seed, driver, trace) {
     },
   });
 
+  checkChatDashes(game, { seed, driver });
   if (seen.launched) c.launched++;
   if (seen.pivot) c.pivot++;
   if (seen.fired) c.fired++;
@@ -301,16 +302,35 @@ function recordDeadAir(g, ctx) {
   bumpExample(e, { ...ctx, week: s.week }, { detail: key, state: snapshot(s) });
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Chat bubbles carry no em dashes. Nobody types one on a phone, and a thread
+// full of them reads as machine-written. Periods, commas, colons and "..." do
+// the same work in a text. Journals, labels and the news feed may keep theirs:
+// they aren't texts. The surfaces mirror tests/transcript.js's FEED + SELF.
+// ─────────────────────────────────────────────────────────────────────────────
+const NOT_CHAT = new Set(["hacker_news", "techcrunch", "twitter", "founder", "growth", "analytics", "users"]);
+const chatDashes = new Map(); // body → first sighting
+function checkChatDashes(g, ctx) {
+  for (const [cid, thread] of Object.entries(g.threads || {})) {
+    for (const m of thread) {
+      if (typeof m.body !== "string" || !m.body.includes("—")) continue;
+      if (m.type !== "reply" && NOT_CHAT.has(cid)) continue;
+      if (!chatDashes.has(m.body)) chatDashes.set(m.body, { ...ctx, thread: cid, node: m.nodeId });
+    }
+  }
+}
+
 function sweepDeadAir(games) {
   for (const name of Object.keys(H.STRATEGIES)) {
     for (let seed = 1; seed <= games; seed++) {
       const { driver, priority } = H.strategyOpts(name, seed);
-      H.playGame(seed, driver, {
+      const run = H.playGame(seed, driver, {
         weeks: WEEK_CAP, priority,
         onWeekStart(g, offered) {
           if (!offered.some(a => !a.onHold)) recordDeadAir(g, { seed, driver: name });
         },
       });
+      checkChatDashes(run, { seed, driver: name });
     }
   }
 }
@@ -364,6 +384,10 @@ function report(games, drivers, verbose) {
     console.log(`         e.g. ${fmtFirst(e.first)}`);
   }
 
+  console.log("\n── Chat bubbles (no em dashes: nobody types one in a text) ─");
+  if (!chatDashes.size) console.log("  ok   no chat bubble contains an em dash");
+  for (const [body, f] of chatDashes) console.log(`  FAIL ${f.thread}${f.node ? " · " + f.node : ""} (seed ${f.seed} · ${f.driver}): ${clip(body, 110)}`);
+
   console.log("\n── Endgame scorecard (scoring.js smoke check) ───────────");
   if (!scoringFailures.length) console.log(`  ok   scoreGame returned ${CATEGORY_COUNT} well-formed categories at every game end`);
   for (const f of scoringFailures.slice(0, 5)) console.log(`  FAIL seed ${f.seed} · ${f.driver} — ${f.why}`);
@@ -382,7 +406,7 @@ function report(games, drivers, verbose) {
   console.log(`\n${totalViolations ? "VIOLATIONS FOUND" : "ALL NARRATIVE CHECKS PASSED"} ` +
     `(${layerA.size} invariant group(s), ${layerB.size} card/message group(s); ` +
     `${realA + realB} reachable by realistic play; ${totalViolations} total occurrences)`);
-  return realA + realB + realC + scoreSoFarFailures.length; // the CI bar: realistic-play violations must be 0
+  return realA + realB + realC + scoreSoFarFailures.length + chatDashes.size; // the CI bar: realistic-play violations must be 0
 }
 
 // ── CLI ───────────────────────────────────────────────────────────────────────

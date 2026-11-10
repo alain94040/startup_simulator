@@ -40,7 +40,7 @@
           // ── morning ────────────────────────────────────────────────────────
           {
             id: "launch_preflight", char: "alex",
-            text: "email's queued — 847 addresses. want a quick look before i hit send, or we go now?",
+            text: "email's queued: 847 addresses. want a quick look before i hit send, or we go now?",
             when: { took: ["good_enough_launch:ship"] },
             choices: [
               {
@@ -59,7 +59,7 @@
                   ],
                   schedule: {
                     in: 1, char: "alex",
-                    say: { char: "alex", text: "checked the stats — about 80 people unsubscribed after the launch email. the test subject line thing. annoying but recoverable." },
+                    say: { char: "alex", text: "checked the stats. about 80 people unsubscribed after the launch email. the test subject line thing. annoying but recoverable." },
                   },
                 },
               },
@@ -67,12 +67,12 @@
           },
           {
             id: "launch_email_pulse", char: "alex",
-            text: "30 minutes since the blast. open rate's at 19% — solid. 6 click-throughs. nobody's signed up yet. want me to keep watching?",
+            text: "30 minutes since the blast. open rate's at 19%. solid. 6 click-throughs. nobody's signed up yet. want me to keep watching?",
             choices: [
               {
                 key: "yes", label: "Yes — keep an eye on it",
                 reply: "keep watching. ping me when someone signs up.", journal: null,
-                effects: { flags: { launch_time: "10AM" }, say: { char: "alex", text: "47 opens, 8 click-throughs. rate's holding at 19%. most people haven't seen it yet — opens usually spike after lunch." } },
+                effects: { flags: { launch_time: "10AM" }, say: { char: "alex", text: "47 opens, 8 click-throughs. rate's holding at 19%. most people haven't seen it yet. opens usually spike after lunch." } },
               },
               {
                 key: "no", label: "No — step away. Stats don't make signups happen.",
@@ -83,7 +83,7 @@
           },
           {
             id: "launch_first_bounce", char: "jordan",
-            text: "first click from the blast just came in. someone opened it on their phone, hit the homepage, maybe 10 seconds — didn't scroll past the top of the page. no signup.",
+            text: "first click from the blast just came in. someone opened it on their phone, hit the homepage, maybe 10 seconds. didn't scroll past the top of the page. no signup.",
             when: { after: ["launch_email_pulse"] },
             choices: [
               {
@@ -93,7 +93,7 @@
               {
                 key: "broken", label: "Was something wrong on mobile?",
                 reply: "check if the page is broken on mobile.", journal: null,
-                effects: { say: { char: "jordan", text: "tested on my phone — page loads clean, 1.4s, no errors. they just weren't ready to commit on a first glance." } },
+                effects: { say: { char: "jordan", text: "tested on my phone: page loads clean, 1.4s, no errors. they just weren't ready to commit on a first glance." } },
               },
               {
                 key: "who", label: "Can we figure out who it was?",
@@ -102,7 +102,7 @@
                   e.say({
                     char: "jordan",
                     text: s.analytics_live
-                      ? "it's just an anonymous visitor — no name until they sign up. they looked at the 'how it works' page before leaving."
+                      ? "it's just an anonymous visitor. no name until they sign up. they looked at the 'how it works' page before leaving."
                       : "just an anonymous visit. no name until they sign up.",
                   });
                   return null;
@@ -114,7 +114,7 @@
           // ── the staging-database fire ──────────────────────────────────────
           {
             id: "launch_staging_discover", char: "alex",
-            text: "hold on. signups are coming in but the match pipeline is completely silent — not a single match in 45 minutes. something is wrong. pulling logs.",
+            text: "hold on. signups are coming in but the match pipeline is completely silent. not a single match in 45 minutes. something is wrong. pulling logs.",
             when: { after: ["launch_first_bounce"] },
             choices: [
               { key: "check", label: "What's happening?", reply: "what's wrong?", journal: null,
@@ -123,10 +123,10 @@
           },
           {
             id: "launch_staging_found", char: "alex",
-            text: "oh no. oh no oh no. we launched pointed at the test copy of the app, not the real one. one wrong setting. every signup since 8am has been going into the test version — none of them can see each other. we have real users in a ghost app.",
+            text: "oh no. oh no oh no. we launched pointed at the test copy of the app, not the real one. one wrong setting. every signup since 8am has been going into the test version. none of them can see each other. we have real users in a ghost app.",
             choices: [
               { key: "options", label: "What are our options?", reply: "okay. what are our options?", journal: null,
-                effects: { say: { char: "alex", text: "i can flip the setting live — 5 minutes, but if something goes wrong mid-switch we could scramble people's data. or we take the app down behind a 'back soon' page and fix it properly, back up in 30. or we wait — peak traffic is tonight, most people haven't opened the email yet." } } },
+                effects: { say: { char: "alex", text: "i can flip the setting live. 5 minutes, but if something goes wrong mid-switch we could scramble people's data. or we take the app down behind a 'back soon' page and fix it properly, back up in 30. or we wait. peak traffic is tonight, most people haven't opened the email yet." } } },
             ],
           },
           {
@@ -169,18 +169,18 @@
           // ── midday: the humans arrive ──────────────────────────────────────
           {
             id: "launch_first_signup", char: "jordan",
-            text: "first real profile just went live — maya, 28, SF. she's still filling it out but she's in the app. pipeline runs every few minutes so matches haven't shown up yet.",
+            text: "first real profile just went live: maya, 28, SF. she's still filling it out but she's in the app. pipeline runs every few minutes so matches haven't shown up yet.",
             when: { after: ["launch_staging_decide", "launch_first_bounce"] },
             choices: [
               {
                 key: "watch", label: "Watch her — first real user in the app",
                 reply: "watch her. i want to see what a real user actually does.", journal: null,
-                effects: { say: { char: "jordan", text: "she completed her profile — 3 photos, full bio. she's now checking for matches." } },
+                effects: { say: { char: "jordan", text: "she completed her profile. 3 photos, full bio. she's now checking for matches." } },
               },
               {
                 key: "welcome", label: "Send her a welcome message",
                 reply: "send her a personal welcome. first user deserves it.", journal: null,
-                effects: { say: { char: "jordan", text: "sent. she replied 'omg i didn't expect to hear from you!' — she's filling out her profile now." } },
+                effects: { say: { char: "jordan", text: "sent. she replied 'omg i didn't expect to hear from you!' she's filling out her profile now." } },
               },
               {
                 key: "leave", label: "Leave her — let her explore on her own",
@@ -190,18 +190,18 @@
           },
           {
             id: "launch_inbox_question", char: "alex",
-            text: "first support email just hit the inbox — 'i signed up but i don't understand how matching works. when will i get someone?' what should i tell her?",
+            text: "first support email just hit the inbox. 'i signed up but i don't understand how matching works. when will i get someone?' what should i tell her?",
             when: { after: ["launch_first_signup"] },
             choices: [
               {
                 key: "personal", label: "Reply personally",
                 reply: "reply from me personally. first user gets a real answer.", journal: null,
-                effects: { flags: { launch_time: "12PM" }, say: { char: "alex", text: "done. she responded: 'omg the founder replied — so cool!'" } },
+                effects: { flags: { launch_time: "12PM" }, say: { char: "alex", text: "done. she responded: 'omg the founder replied. so cool!'" } },
               },
               {
                 key: "faq", label: "Write a 3-line FAQ answer",
                 reply: "write a quick faq answer. we'll need the template anyway.", journal: null,
-                effects: { flags: { launch_time: "12PM", faq_started: true }, say: { char: "alex", text: "wrote 3 lines, sent it. she said 'thanks!' — first ticket closed." } },
+                effects: { flags: { launch_time: "12PM", faq_started: true }, say: { char: "alex", text: "wrote 3 lines, sent it. she said 'thanks!' first ticket closed." } },
               },
               {
                 key: "wait", label: "Leave it — the product should explain itself",
@@ -225,7 +225,7 @@
               },
               {
                 key: "stay", label: "Stay in the app — watch real users",
-                reply: "stay in the app. watch how real users behave — that's worth more than 20 extra signups right now.", journal: null,
+                reply: "stay in the app. watch how real users behave. that's worth more than 20 extra signups right now.", journal: null,
                 effects: { flags: { launch_time: "1PM" } },
               },
             ],
@@ -234,7 +234,7 @@
           // ── afternoon: what the db knows (hotfix path only) ────────────────
           {
             id: "launch_test_profiles", char: "alex",
-            text: "hey — while i was fixing the setting i looked through the database to make sure nothing got lost. we still have test accounts in there.",
+            text: "hey, while i was fixing the setting i looked through the database to make sure nothing got lost. we still have test accounts in there.",
             when: { took: ["launch_staging_decide:hotfix"], after: ["launch_hustle"] },
             choices: [
               { key: "how_many", label: "How many?", reply: "how many test accounts?", journal: null,
@@ -243,7 +243,7 @@
           },
           {
             id: "launch_test_profiles_scope", char: "alex",
-            text: "6 test accounts total. most are obviously fake — no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with fake placeholder text we typed in while testing.",
+            text: "6 test accounts total. most are obviously fake. no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with fake placeholder text we typed in while testing.",
             choices: [
               { key: "damage", label: "Have they figured out she's fake?", reply: "do the users know she's a test account?", journal: null,
                 effects: { say: { char: "alex", text: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets placeholder gibberish back, it's going to be obvious. what do you want to do?" } } },
@@ -258,7 +258,7 @@
                 reply: "email them both. apologize, explain what happened, give them a free month.", journal: null,
                 effects: {
                   flags: { honest_launch: true, launch_time: "4PM" },
-                  say: { char: "alex", text: "done. two emails out, deleted all 6 test accounts. one user already replied — said he appreciated us catching it. the other hasn't opened it yet." },
+                  say: { char: "alex", text: "done. two emails out, deleted all 6 test accounts. one user already replied. said he appreciated us catching it. the other hasn't opened it yet." },
                 },
               },
               {
@@ -269,7 +269,7 @@
                   say: { char: "alex", text: "deleted. those two users just lost a match without knowing why." },
                   schedule: {
                     in: 2, char: "jordan", unless: (s) => !s.silent_delete,
-                    say: { char: "jordan", text: "one of the users who matched with sarah_test_003 just reached out — they want to know why their match disappeared. what do i tell them?" },
+                    say: { char: "jordan", text: "one of the users who matched with sarah_test_003 just reached out. they want to know why their match disappeared. what do i tell them?" },
                   },
                 },
               },
@@ -294,15 +294,15 @@
               },
               {
                 key: "warn", label: "Send him a warning first",
-                reply: "send him a warning — one chance to stop.", journal: null,
+                reply: "send him a warning. one chance to stop.", journal: null,
                 effects: { flags: { moderation_warned: true, launch_time: "4PM" } },
               },
               {
                 key: "investigate", label: "Investigate more before deciding",
-                reply: "look into it more — how many women, what did he actually say?", journal: null,
+                reply: "look into it more. how many women, what did he actually say?", journal: null,
                 effects: {
                   flags: { moderation_warned: true, launch_time: "4PM" },
-                  say: { char: "jordan", text: "checked — he sent the same message to 15 women. nothing explicitly offensive, just copy-pasted. sent him a warning for now." },
+                  say: { char: "jordan", text: "checked, he sent the same message to 15 women. nothing explicitly offensive, just copy-pasted. sent him a warning for now." },
                 },
               },
             ],
@@ -311,7 +311,7 @@
           // ── evening: the money sting ───────────────────────────────────────
           {
             id: "launch_stripe_discover", char: "alex",
-            text: "first upgrade attempt. user in SF hit the premium button. stripe rejected it — 'your account cannot currently make live charges.' we built the whole payment flow, tested it perfectly, but never finished the business verification. we literally cannot accept money right now.",
+            text: "first upgrade attempt. user in SF hit the premium button. stripe rejected it: 'your account cannot currently make live charges.' we built the whole payment flow, tested it perfectly, but never finished the business verification. we literally cannot accept money right now.",
             when: {
               after: ["launch_staging_decide", "launch_hustle"],
               if: (s, e) => e.took("launch_hustle:go") || e.done("launch_abuser"),
@@ -326,7 +326,7 @@
             text: "okay so. i got someone on stripe's support chat. we need to submit: business type, tax ID, bank account for payouts, and they run an identity check on whoever owns the account. i read through the full verification docs while i was waiting.",
             choices: [
               { key: "timeline", label: "How long does verification take?", reply: "how long does it take once we submit?", journal: null,
-                effects: { say: { char: "alex", text: "stripe says 1 to 3 business days. minimum. and that's after we submit everything, which i don't have ready right now. so realistically — not today. she's been sitting on a failed payment for 20 minutes." } } },
+                effects: { say: { char: "alex", text: "stripe says 1 to 3 business days. minimum. and that's after we submit everything, which i don't have ready right now. so realistically, not today. she's been sitting on a failed payment for 20 minutes." } } },
             ],
           },
           {
@@ -335,7 +335,7 @@
             choices: [
               {
                 key: "fix_now", label: "Tell her honestly — she'll be first when it's live",
-                reply: "email her. be honest — our fault, payment system isn't activated yet. she'll be first to retry when it is.", journal: null,
+                reply: "email her. be honest. our fault, payment system isn't activated yet. she'll be first to retry when it is.", journal: null,
                 effects: { flags: { first_paid: true, launch_time: "6PM" } },
               },
               {
@@ -354,7 +354,7 @@
           // ── night ──────────────────────────────────────────────────────────
           {
             id: "launch_going_home", char: "jordan",
-            text: "it's 6pm. heading home — long day. 19 signups total. not bad for day one?",
+            text: "it's 6pm. heading home. long day. 19 signups total. not bad for day one?",
             when: {
               after: ["launch_stripe_decide"],
               if: (s, e) => e.took("launch_hustle:go") || e.done("launch_abuser"),
@@ -377,8 +377,8 @@
             // until the victims DM'd her.
             id: "launch_9pm_crisis", char: "jordan",
             text: (s) => s.jordan_left_watch && !s.moderation_warned
-              ? "hey — just got DMs from 3 women who signed up today. one guy's been sending the same opener to everyone while i was posting on linkedin. one of them is about to go public. i had no idea this was happening."
-              : "hey — i know we said we were done. the guy i warned is back. messaged 5 more women tonight. one of them is threatening to post publicly about it. alex says he doesn't have his laptop.",
+              ? "hey, just got DMs from 3 women who signed up today. one guy's been sending the same opener to everyone while i was posting on linkedin. one of them is about to go public. i had no idea this was happening."
+              : "hey, i know we said we were done. the guy i warned is back. messaged 5 more women tonight. one of them is threatening to post publicly about it. alex says he doesn't have his laptop.",
             when: {
               after: ["launch_going_home"],
               if: (s) => !!s.moderation_warned || !!s.jordan_left_watch,
@@ -387,11 +387,11 @@
               {
                 key: "ban", label: "Ban him now",
                 reply: "ban him now. should have done it this afternoon.", journal: null,
-                effects: { flags: { launch_time: "11PM" }, say: { char: "jordan", text: "done. banned. reached out to the victim — she's still upset but said thank you. we need a real ToS." } },
+                effects: { flags: { launch_time: "11PM" }, say: { char: "jordan", text: "done. banned. reached out to the victim. she's still upset but said thank you. we need a real ToS." } },
               },
               {
                 key: "victim_first", label: "Reach out to the victim first, then ban",
-                reply: "message the victim first — apologize, then ban him.", journal: null,
+                reply: "message the victim first. apologize, then ban him.", journal: null,
                 effects: { flags: { launch_time: "11PM" }, say: { char: "jordan", text: "messaged her. she softened when we apologized. banned him. she said she'll hold off on posting." } },
               },
               {
@@ -409,7 +409,7 @@
           },
           {
             id: "launch_signal", char: "jordan",
-            text: "hey — i know it's late. just got a DM. two users matched and they're already texting each other. 😭 this is actually real.",
+            text: "hey, i know it's late. just got a DM. two users matched and they're already texting each other. 😭 this is actually real.",
             when: {
               after: ["launch_going_home"],
               if: (s, e) => {
@@ -442,12 +442,12 @@
             effects: { waitlist: 5, flags: { productPhase: "product" }, char: { alex: { effort: 1.0 } } },
             fx(s) {
               s.tech_debt = Math.max(0, (s.tech_debt || 0) - 8);
-              return "One week of deeply unglamorous work: reset emails out of spam, the zero-photo crash squashed, private photos locked down. Nothing to demo, everything to trust. Word's getting around — 5 people asked for early access.";
+              return "One week of deeply unglamorous work: reset emails out of spam, the zero-photo crash squashed, private photos locked down. Word's getting around — 5 people asked for early access.";
             },
           },
           {
             key: "delay", label: "Launch as-is — fix things as they break",
-            reply: "no bug-fixing week. we launch with the bugs and fix things as they break — write them on the whiteboard so we at least know our own landmines.",
+            reply: "no bug-fixing week. we launch with the bugs and fix things as they break. write them on the whiteboard so we at least know our own landmines.",
             journal: "Skipped the bug-fixing week — the bugs are on the whiteboard under the heading 'known landmines.' Alex didn't argue. He just circled the photo-url one twice.",
             effects: { flags: { productPhase: "product" }, char: { alex: { effort: 0.6, morale: -3 } } },
             fx(s) {
@@ -465,7 +465,7 @@
         // the question has already gone by — answered "wait" or left on read.
         text: (s, e) => {
           const n = e.timesResolved("good_enough_launch");
-          if (n === 0) return "the product is solid. we could keep polishing or we could ship it and learn from real users. nothing's on fire — let's launch.";
+          if (n === 0) return "the product is solid. we could keep polishing or we could ship it and learn from real users. nothing's on fire. let's launch.";
           if (n === 1) return "still ready to launch. nothing's changed since last week except the runway. are we shipping?";
           if (n === 2) return "three weeks of a finished product nobody outside this chat has used. every week we wait is a week of runway spent learning nothing. launch?";
           return "week " + (n + 1) + " of asking. i'll keep asking every week, because it's the only question that matters right now. do we launch?";
@@ -549,11 +549,11 @@
       {
         id: "launch_stall", char: "alex", ambient: true,
         text: (s) => !s.ios_unblocked
-          ? "the website version is solid and working. the iphone app never happened — it's been on the roadmap since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
+          ? "the website version is solid and working. the iphone app never happened. it's been on the roadmap since week 4 and there's nothing running. we can wait for mobile forever, or we can put the web version in front of real people and take the hit."
           : !allScopeBuilt(s)
-            ? "nobody has written a line of product code in weeks — i'm on calls, jordan's on calls, and the list we said we'd finish before launch hasn't moved since. it isn't going to finish itself. put me back on the build."
+            ? "nobody has written a line of product code in weeks. i'm on calls, jordan's on calls, and the list we said we'd finish before launch hasn't moved since. it isn't going to finish itself. put me back on the build."
             : "the product has been sitting on a server since week " + Math.max(1, s.week - 3)
-              + ". it works. nobody outside this chat has ever opened it. i'm on user calls because you asked me to be — but at some point the calls are just a way of not launching.",
+              + ". it works. nobody outside this chat has ever opened it. i'm on user calls because you asked me to be, but at some point the calls are just a way of not launching.",
         when: {
           cooldown: 1,
           if: (s, e, char) => {

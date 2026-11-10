@@ -28,7 +28,7 @@
       // later (applyActivitiesPivot, ported with the pivot arc).
       {
         id: "matching_choice", char: "jordan",
-        text: "next thing to build, my two cents. found something — MatchKit. you pay them monthly and plug in their ready-made matching; we'd have it working in days instead of weeks. alex will hate this because he likes to build everything himself. but why reinvent the wheel? i say we plug it in.",
+        text: "next thing to build, my two cents. found something: MatchKit. you pay them monthly and plug in their ready-made matching; we'd have it working in days instead of weeks. alex will hate this because he likes to build everything himself. but why reinvent the wheel? i say we plug it in.",
         when: {
           after: ["dev_plan"], delay: 1,
           if: (s, e) => !s.has_demo && e.weeksSince("dev_plan") <= 6,
@@ -36,7 +36,7 @@
         choices: [
           {
             key: "build", label: "No — matching is the whole product, we build it",
-            reply: "no. the matching engine *is* plusone — it's the one thing we can't outsource. we build it ourselves.",
+            reply: "no. the matching engine *is* plusone. it's the one thing we can't outsource. we build it ourselves.",
             journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
             effects: { flags: { matching_owned: true }, char: { jordan: { morale: -3 }, alex: { morale: 5, effort: 1.0 } } },
             fx(s) {
@@ -46,7 +46,7 @@
           },
           {
             key: "license", label: "Good find — license it and ship faster",
-            reply: "nice find. plug in MatchKit — if we can ship matching in days, let's not waste weeks on it.",
+            reply: "nice find. plug in MatchKit. if we can ship matching in days, let's not waste weeks on it.",
             journal: "Took Jordan's lead and licensed MatchKit for matching. Working in days — but it's a ready-made engine anyone can rent, and Alex went quiet. Outsourcing the core might be a decision I regret.",
             effects: {
               flags: { matching_licensed: true },
@@ -76,7 +76,7 @@
       // the ignore). The C-option is the research payoff.
       {
         id: "ranking", char: "alex",
-        text: "matching engine update: it runs end to end — profiles in, pairs out. one problem. right now it pairs people completely at random. before i write the real one i need product direction, not code: what makes two people a good plusone match?",
+        text: "matching engine update: it runs end to end. profiles in, pairs out. one problem. right now it pairs people completely at random. before i write the real one i need product direction, not code: what makes two people a good plusone match?",
         when: {
           took: [["matching_choice:build", "matching_choice:@ignored"]],
           if: (s) => !s.has_demo && !s.launched,
@@ -84,7 +84,7 @@
         choices: [
           {
             key: "proximity", label: "Distance, age, availability — what every app does",
-            reply: "keep it simple. distance, age range, shared availability — the stuff every app ranks on. it works.",
+            reply: "keep it simple. distance, age range, shared availability. the stuff every app ranks on. it works.",
             effects: { char: { alex: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks distance + availability";
@@ -103,12 +103,12 @@
           {
             key: "conversation", label: "Rank on conversation odds — the research answered this",
             if: freshResearch,
-            reply: "neither. every conversation with users says the same thing — matches don't fail at the match, they die in the chat. rank on conversation odds: profile specificity, question-askers, people who actually reply. optimize the first message, not the first look.",
-            journal: "Gave Alex the ranking idea straight from the research: optimize for the conversation, not the match. He went quiet, then called it 'actually a real idea.' The engine ranks conversation odds now — nobody else's does.",
+            reply: "neither. every conversation with users says the same thing: people match, then the chat dies. rank on conversation odds: profile specificity, question-askers, people who actually reply.",
+            journal: "Gave Alex the ranking idea straight from the research: rank people on whether they'll actually talk. He went quiet, then called it 'actually a real idea.' The engine ranks conversation odds now — nobody else's does.",
             effects: {
               marketFit: 6, signal: 4,
               char: { alex: { effort: 1.2, flags: { ranking_thesis: true } } },
-              say: { char: "alex", text: "huh. that's… actually a real idea. i can fake it for now — favor people whose profiles actually say something, then switch to who really replies once we have data. writing it tonight." },
+              say: { char: "alex", text: "huh. that's… actually a real idea. i can fake it for now. favor people whose profiles actually say something, then switch to who really replies once we have data. writing it tonight." },
             },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks conversation odds (from research)";
@@ -123,7 +123,7 @@
             char: { alex: { morale: -4 } },
             schedule: {
               in: 2, char: "alex",
-              say: { char: "alex", text: "fyi — i shipped distance-based ranking because we never talked about it. it works. it's also exactly what every other app does." },
+              say: { char: "alex", text: "fyi, i shipped distance-based ranking because we never talked about it. it works. it's also exactly what every other app does." },
             },
           },
           fx(s) { if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Ranks distance (Alex's default)"; },
@@ -133,12 +133,12 @@
       // ── JORDAN'S iOS SPRINTS (two effort-gated milestones) ───────────────────
       {
         id: "ios_sprint_1", char: "jordan",
-        text: "iphone app update — the screens work: profiles, photo upload, the first screen. but it's all fake data. this week i can make it look and feel great for the demo, or connect it to alex's engine so login, matching and messages actually work. pretty or real?",
+        text: "iphone app update. the screens work: profiles, photo upload, the first screen. but it's all fake data. this week i can make it look and feel great for the demo, or connect it to alex's engine so login, matching and messages actually work. pretty or real?",
         when: { after: ["first_screen"], if: (s, e, char) => !s.has_demo && char.buildEffort >= 2 },
         choices: [
           {
             key: "demo_polish", label: "Make it look great for the demo",
-            reply: "polish what they'll see. the demo has to feel good in someone's hand — we get one first impression.",
+            reply: "polish what they'll see. the demo has to feel good in someone's hand. we get one first impression.",
             effects: { signal: 4, char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items) {
@@ -175,7 +175,7 @@
       },
       {
         id: "ios_sprint_2", char: "jordan",
-        text: "the iphone app is connected to the real engine now — login, matching and messages all work, same as the website. ready to open it up.",
+        text: "the iphone app is connected to the real engine now: login, matching and messages all work, same as the website. ready to open it up.",
         when: { after: ["ios_sprint_1"], if: (s, e, char) => char.buildEffort >= 5 },
         choices: [
           {
@@ -199,7 +199,7 @@
       // pivot signal. Building it leaves you blind until it's too late.
       {
         id: "analytics_choice", char: "alex",
-        text: "demo night bugged me. the only reason i saw what she did at all is that i was reading raw server records by hand. the test group is a dozen people and i can't tell you what a single one of them does in the app — and on launch day it'll be hundreds of strangers. i can plug in a ready-made analytics tool in a day — $30/wk, charts of what people do by tomorrow. or i build our own tracking: a week of my time, free forever, and i kind of want to own our data anyway.",
+        text: "demo night bugged me. the only reason i saw what she did at all is that i was reading raw server records by hand. the test group is a dozen people and i can't tell you what a single one of them does in the app, and on launch day it'll be hundreds of strangers. i can plug in a ready-made analytics tool in a day. $30/wk, charts of what people do by tomorrow. or i build our own tracking: a week of my time, free forever, and i kind of want to own our data anyway.",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
@@ -213,7 +213,7 @@
           },
           {
             key: "build", label: "Build our own dashboard",
-            reply: "build our own — no point paying monthly when you can do it yourself.",
+            reply: "build our own. no point paying monthly when you can do it yourself.",
             effects: { char: { alex: { effort: -2.0 } } },
             fx(s) {
               if (s.items && s.items.analytics) { s.items.analytics.status = "active"; s.items.analytics.assignee = "alex"; s.items.analytics.note = "Building our own pipeline"; }
@@ -233,27 +233,27 @@
         text: (s, e) => {
           const informed = s.analytics_live || freshResearch(s, e);
           return informed
-            ? "launch mechanics. we always assumed we launch here — we live here, we can seed the first hundred by hand, jordan can host a mixer. but i pulled the waitlist by city and… austin has almost three times as many people on it as our own city. none of us has ever set foot in austin. do we launch where we live, or where the demand is?"
-            : "launch mechanics. a dating app opening to an empty room is a ghost town — first person in sees an empty deck, closes the app, never comes back. one city to start, right? here at home, where we can seed the room by hand. or do we just open the doors everywhere and pray?";
+            ? "launch mechanics. we always assumed we launch here. we live here, we can seed the first hundred by hand, jordan can host a mixer. but i pulled the waitlist by city and… austin has almost three times as many people on it as our own city. none of us has ever set foot in austin. do we launch where we live, or where the demand is?"
+            : "launch mechanics. a dating app opening to an empty room is a ghost town: first person in sees an empty deck, closes the app, never comes back. one city to start, right? here at home, where we can seed the room by hand. or do we just open the doors everywhere and pray?";
         },
         when: { after: ["analytics_choice"], if: (s) => s.has_demo && !s.launched && s.beachhead == null },
         choices: [
           {
             key: "local", label: "Launch here — hometown advantage",
-            reply: "here. hometown advantage is real — we seed the first hundred by hand, host the mixer, fix things in person.",
+            reply: "here. hometown advantage is real. we seed the first hundred by hand, host the mixer, fix things in person.",
             effects: { flags: { beachhead: "narrow", seed_strategy: "local" }, char: { alex: { effort: 0.8 } } },
             fx: () => "One city: ours. Invite waves by neighborhood, a launch mixer you can drive to, bugs fixed across a coffee table. Small top line, dense room.",
           },
           {
             key: "everywhere", label: "Open everywhere — momentum is the story",
-            reply: "open it everywhere. momentum is the story — we fill in the gaps later.",
+            reply: "open it everywhere. momentum is the story. we fill in the gaps later.",
             effects: { signal: 5, flags: { beachhead: "broad", seed_strategy: "open" }, char: { alex: { effort: 0.8 } } },
             fx: () => "Open signups, no gates. The launch-day number will look great. Whether anyone finds a match within 50 miles is a different question.",
           },
           {
             key: "waitlist_city", label: "Launch where the waitlist lives — Austin",
             if: (s, e) => s.analytics_live || freshResearch(s, e),
-            reply: "austin. the waitlist already voted — demand beats home-field advantage. we run it remote, fly out for launch week, and every invite lands somewhere dense.",
+            reply: "austin. the waitlist already voted. that's where the demand is. we run it remote, fly out for launch week, and every invite lands somewhere dense.",
             journal: "The waitlist data made the launch call for us: Austin, where our signups actually are — three times our home city. We're launching a dating app in a city none of us has set foot in, because that's where the demand lives.",
             effects: {
               marketFit: 2, waitlist: 4,
@@ -271,7 +271,7 @@
             flags: { beachhead: "narrow", seed_strategy: "local" },
             schedule: {
               in: 2, char: "alex",
-              say: { char: "alex", text: "we never picked a launch city so i'm planning around here. hope that's right — nobody ever actually checked where the waitlist lives." },
+              say: { char: "alex", text: "we never picked a launch city so i'm planning around here. hope that's right. nobody ever actually checked where the waitlist lives." },
             },
           },
         },
@@ -284,12 +284,12 @@
       // only exists for a founder who read them.
       {
         id: "trust_safety", char: "jordan",
-        text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story — how we handle people posting nasty stuff — reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
+        text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story: how we handle people posting nasty stuff, reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
             key: "report_now", label: "Report button this week, verify later",
-            reply: "report button this week. it answers apple honestly — verification can come after launch, we can't hold up the launch for a feature we haven't built.",
+            reply: "report button this week. it answers apple honestly. verification can come after launch, we can't hold up the launch for a feature we haven't built.",
             effects: { char: { jordan: { effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Report button pre-launch";
@@ -298,15 +298,15 @@
           },
           {
             key: "verify_first", label: "Full verification before launch",
-            reply: "verification before launch. the day strangers show up is the day it has to already work — one bad first week and the women never come back.",
+            reply: "verification before launch. the day strangers show up is the day it has to already work. one bad first week and the women never come back.",
             effects: { marketFit: 2, char: { jordan: { effort: 0.6 } } }, // real scope — it costs build time
             fx: () => "Photo verification goes in before launch. It costs a chunk of Jordan's week — the launch-ready date slips — but the safety story is real before a single stranger is in the app.",
           },
           {
             key: "verify_flagship", label: "Make photo verification our main feature",
             if: (s) => !!s.heard_fake_profiles,
-            reply: "look at the dating threads we read — fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it. it's not a safety feature, it's the brand.",
-            journal: "Made the call from the community threads: verification isn't a safety checkbox, it's the brand. Photo-verified at signup, checkmark on every card. Every thread we read had fake profiles as complaint #1 — now it's our headline.",
+            reply: "look at the dating threads we read. fake profiles are the top complaint, every single time. photo verification at signup, checkmark on the card, and we *lead* with it.",
+            journal: "Made the call from the community threads: photo verification is our headline. Fake profiles were complaint #1 in every thread we read.",
             effects: { marketFit: 5, waitlist: 3, char: { jordan: { effort: 1.2 } } },
             fx(s) {
               if (s.items && s.items.ios_ui) s.items.ios_ui.note = (s.items.ios_ui.note ? s.items.ios_ui.note + " · " : "") + "Verified-only (from community)";
@@ -322,7 +322,7 @@
             char: { jordan: { morale: -6, trust: -4 } },
             schedule: {
               in: 2, char: "jordan",
-              say: { char: "jordan", text: "app review wouldn't wait, so i shipped a bare report button on my own and submitted. it deserved an actual decision — this is the feature that decides whether women stay past week one." },
+              say: { char: "jordan", text: "app review wouldn't wait, so i shipped a bare report button on my own and submitted. it deserved an actual decision. this is the feature that decides whether women stay past week one." },
             },
           },
         },

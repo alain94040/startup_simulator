@@ -89,11 +89,11 @@
   // Each voice's opening case, spoken in the group the moment the founder
   // calls on them.
   const CASE = {
-    priya: () => "retention, not signups. the people who come don't stay — even the ones who matched.\n\ni don't know why yet. and neither do you. that's the problem with spending the $1,500.",
+    priya: () => "retention, not signups. the people who come don't stay. even the ones who matched.\n\ni don't know why yet. and neither do you. that's the problem with spending the $1,500.",
     jordan: () => "honestly? it looked like it was working. maya signed up, filled out everything, matched in an hour.\n\n…and then i kind of stopped watching. i figured the hard part was done.",
   };
   const CALL_ON = {
-    priya: { label: "Priya — what do you see?", reply: "priya — what do you see from the outside?" },
+    priya: { label: "Priya — what do you see?", reply: "priya, what do you see from the outside?" },
     jordan: { label: "Jordan — you watched launch day.", reply: "jordan, you watched launch day closer than anyone. what did you see?" },
   };
   const asked = (s) => s.pivot_asked || [];
@@ -133,7 +133,7 @@
             // makes his case while he's at it. The player lands knowing what
             // the meeting is about, and that it's theirs to run.
             id: "pivot_roundtable", char: "summit", speaker: "alex",
-            text: (s) => "ok, everyone's here. context for priya: i want $1,500 of what's left for a growth push — mixer at the climbing gym, referral codes, flyers on three campuses. the gym holds the slot till midnight.\n\nmy case: the room's empty. " + Math.max(5, s.users) + " users. anyone would leave an empty app. 300 users and we'll know if anything's actually broken.\n\nbut it's your meeting.",
+            text: (s) => "ok, everyone's here. context for priya: i want $1,500 of what's left for a growth push. mixer at the climbing gym, referral codes, flyers on three campuses. the gym holds the slot till midnight.\n\nmy case: the room's empty. " + Math.max(5, s.users) + " users. anyone would leave an empty app. 300 users and we'll know if anything's actually broken.\n\nbut it's your meeting.",
             when: { took: ["pivot_hail_mary:hold"] },
             choices: callOnChoices(true).concat([
               takeGrowth("users", "Alex is right — book the gym.", "you're right. the room's empty. book the gym."),
@@ -158,14 +158,14 @@
               takeGrowth("users", "Alex is right — get the users.", "alex is right. the room's empty. book the gym."),
               {
                 key: "dig_alex", label: "Wait. Alex — pull the best matches. What happened to them?",
-                reply: "wait. before we decide — alex, pull our best matches. the ones that should have worked. what happened to them?",
+                reply: "wait. before we decide, alex, pull our best matches. the ones that should have worked. what happened to them?",
                 journal: null,
               },
               {
                 key: "dig_priya", label: "Priya — why don't they stay?",
                 reply: "priya, you said even the ones who matched don't stay. why?",
                 journal: null,
-                effects: { say: { char: "summit", speaker: "priya", text: "i don't know. but alex does, he just hasn't looked. alex — pull your best matches. the ones that should have worked." } },
+                effects: { say: { char: "summit", speaker: "priya", text: "i don't know. but alex does, he just hasn't looked. alex, pull your best matches. the ones that should have worked." } },
               },
             ],
           },
@@ -173,7 +173,7 @@
             id: "pivot_dig", char: "summit", speaker: "alex",
             text: (s) => s.analytics_live
               ? "…give me a minute.\n\nokay. eleven best matches since launch. both people liked each other, both still had the app.\n\nten of them: match → 'hey' → 'hey' → nothing."
-              : "we never set up analytics, so this is me reading raw logs. give me a minute.\n\nokay. our best matches since launch — both people liked each other, both still had the app.\n\nalmost all of them: match → 'hey' → 'hey' → nothing.",
+              : "we never set up analytics, so this is me reading raw logs. give me a minute.\n\nokay. our best matches since launch. both people liked each other, both still had the app.\n\nalmost all of them: match → 'hey' → 'hey' → nothing.",
             when: { took: ["pivot_fork:dig_alex|dig_priya"] },
             choices: [
               takeGrowth("users", "Still an empty room. Book the gym.", "that's still an empty room. people get bored when there's nobody around. book the gym."),
@@ -203,7 +203,7 @@
               { key: "is_it", label: "Priya — is that it?", reply: "priya. is that it?", journal: null },
               {
                 key: "name_it", label: "The match works — it's what comes after",
-                reply: "wait. so the matching isn't broken. the match works — it's what comes after the match that's missing.",
+                reply: "wait. so the matching isn't broken. the match works. it's what comes after the match that's missing.",
                 journal: null,
               },
             ],
@@ -213,7 +213,7 @@
             text: (s, e) => (e.took("pivot_maya:name_it") ? "exactly. you just said it." : "that's it.")
               + " you don't have a matching problem. you have an 'and then what' problem.\n\nnobody knows what to say after 'hey'. so give them something to say yes to.",
             choices: [
-              { key: "look", label: "Jordan — what would that look like?", reply: "jordan — what would that look like? something to say yes to.", journal: null },
+              { key: "look", label: "Jordan — what would that look like?", reply: "jordan, what would that look like? something to say yes to.", journal: null },
               {
                 // The tempting half-measure, which Priya shuts down on the spot.
                 key: "tab", label: "So we add an events tab?",
@@ -294,14 +294,14 @@
             // A promise, not a delivery — and she has no idea anything is wrong.
             id: "pivot_board_claim", char: "summit", speaker: "jordan",
             when: { took: ["pivot_day_decide:pivot"] },
-            text: "plans screen's mine. it's the intake screen idea all grown up — asking people what they want to *do* instead of who they want to look at.\n\ni'll have a first version by sunday. this is the fun part.",
+            text: "plans screen's mine. it's the intake screen idea all grown up. asking people what they want to *do* instead of who they want to look at.\n\ni'll have a first version by sunday. this is the fun part.",
             // The founder's moment: after months of a graph that only went
             // down, this is the first night the company knows what it is.
             // Said out loud to the whole room before Priya gets the last word.
             choices: [
               {
                 key: "priya", label: "This is it. We finally know.",
-                reply: "this is it. months of watching people match and vanish, and tonight we finally know why — and what to build instead. i haven't felt like this since the day we started.\n\npriya, anything before we sign off?",
+                reply: "this is it. months of watching people match and vanish, and tonight we finally know why, and what to build instead. i haven't felt like this since the day we started.\n\npriya, anything before we sign off?",
                 journal: null,
               },
               {
@@ -331,7 +331,7 @@
               },
               {
                 key: "thanks", label: "Thank Priya.",
-                reply: "priya — thank you. tonight doesn't happen without you. goodnight, everyone.",
+                reply: "priya, thank you. tonight doesn't happen without you. goodnight, everyone.",
                 journal: null,
                 effects: {
                   say: [
@@ -410,7 +410,7 @@
           const share = s.cash <= 1500 ? "that's everything we have left."
             : s.cash <= 4000 ? "that's most of what's left in the bank."
               : "that's a real chunk of what's left in the bank.";
-          return "ok. i'm done watching the graph go down. i have a plan.\n\nmixer at the climbing gym, referral codes, flyers on three campuses. $1,500. six weeks and we're at 300 users — and at 300 the app finally has enough people in it to work.\n\n"
+          return "ok. i'm done watching the graph go down. i have a plan.\n\nmixer at the climbing gym, referral codes, flyers on three campuses. $1,500. six weeks and we're at 300 users, and at 300 the app finally has enough people in it to work.\n\n"
             + share + " i need a yes from you before i book the gym. they want an answer tonight.";
         },
         when: {
@@ -450,7 +450,7 @@
       {
         // The scope call — Ch 1's lean-plan lesson, echoed under pressure.
         id: "pivot_scope_call", char: "alex",
-        text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans screen — for the users who liked it — or do we cut to the bone and ship one thing?",
+        text: "monday-morning question before i write a line of code. the old app had profiles, browsing, the chat threads. v2 is plans. do i keep a 'classic matching' mode alive next to the plans screen, for the users who liked it, or do we cut to the bone and ship one thing?",
         when: {
           if: (s, e) => e.chapter === 4 && s.pivot_week != null
             && s.week >= s.pivot_week + 1
@@ -459,8 +459,8 @@
         choices: [
           {
             key: "cut", label: "One thing. Cut everything else",
-            reply: "cut to the bone. v2 does one thing — you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
-            journal: "Scope call for v2: one thing. The plans screen, nothing else — no old matching mode limping alongside. The lean lesson, learned twice.",
+            reply: "cut to the bone. v2 does one thing. you open the app, you see plans. anyone asking for the old mode is asking for the app that was losing everyone.",
+            journal: "Scope call for v2: one thing. The plans screen, nothing else — no old matching mode limping alongside.",
                         fx(s, e) {
               s.board_extra = (s.board_extra || 0) - 0.5;
               e.say({ char: "alex", text: "cut it is. deleting code is the fastest i will ever ship. that buys us a few days." });
@@ -469,7 +469,7 @@
           },
           {
             key: "keep", label: "Keep classic matching alive too",
-            reply: "keep the old mode alive next to the plans screen. some people liked it — i don't want to strand them.",
+            reply: "keep the old mode alive next to the plans screen. some people liked it. i don't want to strand them.",
             journal: "Told Alex to keep classic matching alive next to the plans screen. Two products in one app — he didn't argue, but the build got slower and the pitch got fuzzier the moment I said it.",
             effects: { marketFit: -4 },
             fx(s, e) {
@@ -491,7 +491,7 @@
         // she's still on the team.
         id: "pivot_beta_invite", char: "jordan",
         text: (s) => (s.maya_quote
-          ? "i want to write to the people who left before we relaunch. all of them — maya included — get a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' "
+          ? "i want to write to the people who left before we relaunch. all of them, maya included, get a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' "
           : "i want to write to the people who left before we relaunch. every quiet account gets a two-line email: 'you told us what was wrong. we rebuilt it. want to see?' ")
           + "the people who quit are the only ones who already know why the old app failed. or do we save the reveal for launch day and a clean slate?",
         when: {
@@ -501,7 +501,7 @@
         choices: [
           {
             key: "invite", label: "Write them — they diagnosed it",
-            reply: "write it. they told us exactly what was wrong — they've earned the first look.",
+            reply: "write it. they told us exactly what was wrong. they've earned the first look.",
             journal: "Jordan is writing to everyone who left, before the relaunch: 'you told us what was wrong. we rebuilt it. want to see?'",
             effects: {
               marketFit: 4, flags: { beta_invited: true }, char: { jordan: { morale: 5 } },
@@ -572,7 +572,7 @@
               s.users += 4 + (s.beta_invited ? 4 : 0);
               s.signal = clamp(s.signal + 6, 0, 100);
               e.addFit(6); // the users who stayed, telling you what works
-              return "Went live, no fireworks. Existing users got the update; the first activity was created within an hour. Retention will tell the real story — and this time you'll like what it says.";
+              return "Went live, no fireworks. Existing users got the update; the first activity was created within an hour. Now we wait for the retention numbers.";
             },
           },
           {
@@ -588,7 +588,7 @@
         // number comes due. Being wrong is recoverable exactly once, at a
         // price — later, costlier, with runway nearly spent.
         id: "pivot_fifty_verdict", char: "alex",
-        text: "i kept priya's tally. 61 new signups since the mixer — the growth push worked, you were right about that part. matches since then: 54. actual dates planned: zero. not low. zero. i erased my side of the argument this morning. how much cash do we have left?",
+        text: "i kept priya's tally. 61 new signups since the mixer. the growth push worked, you were right about that part. matches since then: 54. actual dates planned: zero. not low. zero. i erased my side of the argument this morning. how much cash do we have left?",
         when: {
           if: (s) => s.pivot_choice === "growth" && !s.activities_pivot && s.launched
             && s.pivot_growth_week != null && s.week >= s.pivot_growth_week + 2,
@@ -596,7 +596,7 @@
         choices: [
           {
             key: "pivot_now", label: "Change the app now, with what's left",
-            reply: "zero plans out of 54 matches. priya said we'd know, and now we do. we change the app — now, with whatever money is left.",
+            reply: "zero plans out of 54 matches. priya said we'd know, and now we do. we change the app. now, with whatever money is left.",
             journal: "Zero plans to meet out of 54 matches. Alex erased his own argument. We're pivoting late, with runway nearly spent. The lesson was on the table weeks ago.",
             fx(s, e) {
               s.activities_pivot = true;
@@ -626,14 +626,14 @@
         // The bookend — only exists if the player called Maya during the slide.
         id: "pivot_payoff_maya", char: "alex",
         text: (s) => s.beta_invited
-          ? "small thing. maya — launch-day maya, the one you called — answered the beta email. she just RSVP'd to a thursday climbing plan. the first person the old app lost is the first one back in the new one."
-          : "small thing. maya — launch-day maya, the one you called — just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
+          ? "small thing. maya, launch-day maya, the one you called, answered the beta email. she just RSVP'd to a thursday climbing plan. the first person the old app lost is the first one back in the new one."
+          : "small thing. maya, launch-day maya, the one you called, just RSVP'd to a thursday climbing plan. she came back on her own. someone must have told her it's a different app now.",
         when: { if: (s) => s.pivot_shipped && !!s.maya_quote },
         choices: [
           {
             key: "ack", label: "It is a different app now",
-            reply: "it is a different app now. she told us exactly what was wrong with the old one — feels right that she's first back.",
-            journal: "Maya came back. The first launch-day signup, the one who told me the app made her feel worse — she RSVP'd to a Thursday climbing plan. That's the whole pivot in one notification.",
+            reply: "it is a different app now. she told us exactly what was wrong with the old one. feels right that she's first back.",
+            journal: "Maya came back. The first launch-day signup, the one who told me the app made her feel worse — she RSVP'd to a Thursday climbing plan.",
             effects: { signal: 5 },
             fx: () => "The first churned user, back on her own. That's the whole pivot in one notification.",
           },

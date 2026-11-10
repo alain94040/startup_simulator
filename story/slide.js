@@ -54,7 +54,7 @@
         // news has broken (answered or still open in the feed) and nobody has
         // opened their app, she names them — unless David already did. Her
         // deep-dive covers Flare too.
-        text: (s, e) => "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now — two well-funded. one is YC-backed from last year. you need a sharper answer to 'why plusone.'"
+        text: (s, e) => "looked at your idea over the weekend. you should know: there are at least 8 serious relationship apps in the app store right now. two well-funded. one is YC-backed from last year. you need a sharper answer to 'why plusone.'"
           + ((e.done("flare_stealth") || (e.open.techcrunch && e.open.techcrunch.nodeId === "flare_stealth")) && !e.took("flare_stealth:dive") && s.david_verdict !== "flare"
             ? "\n\nand you do know about Flare, right? $3M, same space, same price. it's the first name any investor will say back to you."
             : ""),
@@ -79,7 +79,7 @@
         // Only exists if analytics were BOUGHT — sight, before a single stranger
         // signs up. This is the "circle" chip on pivot day.
         id: "post_match_dropoff", char: "analytics", from: "Analytics",
-        text: "first real pattern out of the analytics. the test group is tiny — a dozen people, 14 matches between them since the demo build went out. 11 of those matches never got past 'hey.' small numbers, but the pattern is loud: it's not the matching that loses people, it's what comes after a match. there's nowhere for them to go.",
+        text: "first real pattern out of the analytics. the test group is tiny — a dozen people, 14 matches between them since the demo build went out. 11 of those matches never got past 'hey.' small numbers, but the drop-off is right after the match, not before it. there's nowhere for them to go.",
         when: { if: (s) => s.analytics_live && s.has_demo && !s.launched },
         choices: [
           {
@@ -98,8 +98,8 @@
         // day without it. No re-nag: launch prep swallows the conversation.
         id: "pivot_open", char: "jordan",
         text: (s) => s.demo_question_seen
-          ? "been going through the test group's feedback. remember demo night — 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. thought i'd flag it before we get closer to launch."
-          : "been going through the test group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching — they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
+          ? "been going through the test group's feedback. remember demo night. 'so what happens now?' it wasn't a one-off. three more people in the group used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching. they want somewhere to go. thought i'd flag it before we get closer to launch."
+          : "been going through the test group's feedback. three of them independently used almost the same phrase: 'i matched, but then what?' they're not complaining about the matching. they want somewhere to go. could be noise. thought i'd flag it before we get closer to launch.",
         when: { if: (s) => s.activities_cut && s.has_demo && s.market_fit >= 5 && !s.launched },
         choices: [
           {
@@ -118,15 +118,15 @@
         id: "slide_hangover", char: "alex",
         text: (s) => s.launch_splash === "show_hn"
           ? "morning-after math. the front page got us to " + Math.max(4, s.users) + " accounts and the graph looked incredible for a day. then i read the profiles: half list 'github' under interests, most have no photo. hacker news signed up to admire the matching engine, not to date. the number that actually matters is how many of them come back. i'll have a real answer friday."
-          : "morning-after math. we ended launch week at " + Math.max(4, s.users) + " accounts. day one was the spike — yesterday 6 new, today 2. some comedown is normal: the launch push is spent, that traffic was never going to repeat. the number that actually matters is how many of them come back. i'll have a real answer friday.",
+          : "morning-after math. we ended launch week at " + Math.max(4, s.users) + " accounts. day one was the spike. yesterday 6 new, today 2. some comedown is normal: the launch push is spent, that traffic was never going to repeat. the number that actually matters is how many of them come back. i'll have a real answer friday.",
         when: { took: ["good_enough_launch:ship"], delay: 2, if: (s) => !s.activities_pivot },
         choices: [
           {
             key: "retention", label: "Track who comes back, not signups",
-            reply: "agreed — forget new signups for now. friday, i want to know who came back.",
+            reply: "agreed, forget new signups for now. friday, i want to know who came back.",
             journal: "Week one post-launch. The day-one spike is over. Told Alex the only number I care about is who comes back on Friday, not how many sign up.",
             effects: {
-              signal: 2, say: { char: "alex", text: "that's the correct question. most founders ask the other one." },
+              signal: 2, say: { char: "alex", text: "good. i'll split them by signup day and have it friday." },
               schedule: [
                 { in: 1, char: "analytics", unless: (s) => !s.analytics_live || s.pivot_summit_done,
                   say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(2, Math.round(s.users * 0.4)) + " of " + Math.max(3, s.users) + " accounts opened the app this week. down again. the line only bends one way right now." } },
@@ -139,13 +139,13 @@
           {
             key: "funnel", label: "We need another traffic push",
             reply: "2 a day won't cut it. we need another traffic push this week.",
-            journal: "Told Alex to run another traffic push. It netted five signups and cost two days — and a week later the graph had swallowed them whole. The lesson was loud: the problem isn't getting people in, it's keeping them.",
+            journal: "Told Alex to run another traffic push. It netted five signups and cost two days — and a week later all five had gone quiet. Getting people in isn't the problem.",
             effects: {
               users: 5, flags: { funnel_first: true },
-              say: { char: "alex", text: "ran the re-blast plus a post in two local subreddits. five signups. cost us two days. the leak isn't at the top." },
+              say: { char: "alex", text: "ran the re-blast plus a post in two local subreddits. five signups. cost us two days." },
               schedule: [
                 { in: 1, char: "alex", unless: (s) => s.pivot_summit_done,
-                  say: { char: "alex", text: "the re-blast bump is gone. every one of those five signups matched, said hey, and went quiet. we poured water into a bucket we haven't patched." } },
+                  say: { char: "alex", text: "the re-blast bump is gone. every one of those five signups matched, said hey, and went quiet." } },
                 { in: 1, char: "analytics", unless: (s) => !s.analytics_live || s.pivot_summit_done,
                   say: { char: "analytics", from: "Analytics", text: (s) => "weekly pulse: " + Math.max(2, Math.round(s.users * 0.4)) + " of " + Math.max(3, s.users) + " accounts opened the app this week. the traffic push shows up as a one-week blip, already fading." } },
               ],
@@ -164,7 +164,7 @@
         choices: [
           {
             key: "reply_honest", label: "Write her back yourself",
-            reply: "you're not missing a feature, rachel — tell me what you were hoping would happen next?",
+            reply: "you're not missing a feature, rachel. tell me what you were hoping would happen next?",
             journal: "Rachel K. emailed support: 'is something supposed to happen next?' I wrote back myself and asked what she'd hoped would happen. Her answer, word for word: 'I hoped the app would give one of us an excuse. A place to say yes to.' Kept it.",
             effects: {
               signal: 3, marketFit: 2, flags: { rachel_answer: true },
@@ -195,7 +195,7 @@
         choices: [
           {
             key: "dig", label: "Sit with the numbers",
-            journal: "Friday. The week-one numbers came in and it's the test group's pattern, just bigger: matches happen, conversations don't, dates — zero. It's not that we don't know. It's that the number is now too big to un-know.",
+            journal: "Friday. The week-one numbers came in and it's the test group's pattern, just bigger: matches happen, conversations don't, dates — zero.",
             effects: { marketFit: 3, signal: 2, flags: { cohort_seen: true } },
             fx: () => "You sat with the numbers until the pattern stopped being deniable: people don't leave before the match. They leave right after it.",
           },
@@ -207,23 +207,23 @@
         // cold-start read. The counter-option only exists with banked evidence.
         id: "slide_alex_thesis", char: "alex",
         text: (s) => {
-          const base = "before anyone panics: we have " + Math.max(5, s.users) + " users. with " + Math.max(5, s.users) + " users, everyone gets shown the same three faces and an empty screen — of course they leave. the problem isn't the app, it's the empty room. the fix is more people: the mixer, referrals, flyers where our users actually hang out. you don't rewrite the menu because the restaurant is empty.";
+          const base = "before anyone panics: we have " + Math.max(5, s.users) + " users. with " + Math.max(5, s.users) + " users, everyone gets shown the same three faces and an empty screen. of course they leave. the problem isn't the app, it's the empty room. the fix is more people: the mixer, referrals, flyers where our users actually hang out.";
           return s.funnel_first
-            ? base + " and monday you were the one asking for more signups — so part of you already agrees with me."
+            ? base + " and monday you were the one asking for more signups. so part of you already agrees with me."
             : base;
         },
         when: { after: ["slide_hangover"], if: (s) => !s.activities_pivot && !s.pivot_summit_done },
         choices: [
           {
             key: "hear_him", label: "Fair read — draft the growth plan",
-            reply: "it's a fair read. get me the growth plan — but i'm watching what happens *after* a match, not just how many we make.",
+            reply: "it's a fair read. get me the growth plan, but i'm watching what happens *after* a match, not just how many we make.",
             journal: "Alex made his case: too few users for matching to work — fill the room before you blame the menu. It's a fair read. I asked for the growth plan — and I'm watching what happens after a match.",
             fx: () => "He's drafting the growth plan. You're watching the after-match numbers.",
           },
           {
             key: "push_back", label: "Our test group was a full room",
             if: (s) => s.analytics_dropoff_seen || s.demo_question_seen,
-            reply: "our test group was twelve people who all knew each other — a full room, by your own logic. 11 of their 14 matches still went nowhere. explain that.",
+            reply: "our test group was twelve people who all knew each other. a full room, by your own logic. 11 of their 14 matches still went nowhere. explain that.",
             journal: "Alex blamed the empty room and I hit him with the test group: twelve people who all knew each other, and 11 of 14 matches still went nowhere. He didn't have an answer. First crack in the wall.",
             effects: {
               flags: { alex_crack: true },
@@ -234,21 +234,21 @@
         ],
         timeout: {
           weeks: 2,
-          say: { char: "alex", text: "taking the silence as agreement — starting on the growth plan. if you disagree, now's the time." },
+          say: { char: "alex", text: "taking the silence as agreement. starting on the growth plan. if you disagree, now's the time." },
         },
       },
       {
         id: "slide_priya_ping", char: "priya",
         text: (s) => s.met_priya
-          ? "saw the launch — congrats, genuinely. that's the part most people never do. real talk though: how's week two? and i mean retention, not signups. those are different numbers and only one of them is real."
-          : "so — the coffee offer was half social. the real question: how's week two treating you? and i mean retention, not signups. those are different numbers and only one of them is real.",
+          ? "saw the launch. congrats, genuinely. that's the part most people never do. real talk though: how's week two? and i mean retention, not signups."
+          : "so, the coffee offer was half social. the real question: how's week two treating you? and i mean retention, not signups.",
         when: { took: ["good_enough_launch:ship"], delay: 3, if: (s, e) => e.chapter === 3 },
         choices: [
           {
             key: "real_numbers", label: "Give her the real numbers",
             reply: "honestly? day one was great and it's been gravity ever since. matches happen, then nothing.",
-            journal: "Priya asked about week two: who comes back, not signups. I gave her the real answer: matches happen, then nothing. She said 'then nothing' is the whole ballgame, and offered to clear a Saturday.",
-            effects: { say: { char: "priya", text: "'then nothing' is the whole ballgame. when you're ready to take that seriously, i'll clear a saturday." } },
+            journal: "Gave Priya the real numbers. She zeroed in on what happens after the match.",
+            effects: { say: { char: "priya", text: "'then nothing' is the part i'd dig into. what happens right after the match? whenever you want to go through it, text me." } },
             fx: () => "'Then nothing' is the whole ballgame, she said. She's ready to clear a Saturday.",
           },
           {
@@ -290,12 +290,12 @@
       {
         // The person who flagged it, watching it come true. Deliberately quiet.
         id: "slide_jordan_echo", char: "jordan", ambient: true,
-        text: "not my lane anymore maybe. but i've been lurking the support inbox. 'i matched, but then what' — that's the test group's feedback again, word for word, from strangers this time. same shape. anyway.",
+        text: "not my lane anymore maybe. but i've been lurking the support inbox. 'i matched, but then what'. that's the test group's feedback again, word for word, from strangers this time. same shape. anyway.",
         when: { took: ["good_enough_launch:ship"], delay: 3, if: (s, e) => e.chapter === 3 },
         choices: [
           {
             key: "ack", label: "You called it first",
-            reply: "you called it first — that's on the record. it's on the agenda, for real this time.",
+            reply: "you called it first. that's on the record. it's on the agenda, for real this time.",
             effects: { flags: { pivot_flagged: true }, char: { jordan: { morale: 4 } } },
             fx: () => "Jordan called it before launch and she's calling it again now. On the record.",
           },
@@ -307,12 +307,12 @@
         // ships noise; the right call holds the roadmap until you know why users
         // leave. (Scored: "Features Won't Save You".)
         id: "feature_spree", char: "alex",
-        text: "signups are flat and i keep staring at the graph. i could bang out icebreaker prompts, streaks, read receipts — pick one and it's live by friday. something will stick, right?",
+        text: "signups are flat and i keep staring at the graph. i could bang out icebreaker prompts, streaks, read receipts. pick one and it's live by friday. something will stick, right?",
         when: { took: ["good_enough_launch:ship"], delay: 3, if: (s, e) => e.chapter === 3 && s.users >= 3 },
         choices: [
           {
             key: "spree", label: "Pick one and ship it — something will stick",
-            reply: "pick one and ship it. motion beats meetings.",
+            reply: "pick one and ship it. let's see what sticks.",
             journal: "Let Alex ship streaks by Friday. It was live, it was shiny, and the graph didn't move. We're guessing.",
             effects: {
               marketFit: -6, signal: -4, flags: { feature_spree: true },
@@ -347,7 +347,7 @@
         choices: [
           {
             key: "blast", label: "Send the win-back email tonight",
-            journal: "Sent the win-back email to every quiet account. A third opened it, a handful came back, and by the next week they'd all gone quiet again — same spot, right after the match. The email worked. The product didn't. That's not a marketing finding, that's a verdict.",
+            journal: "Sent the win-back email to every quiet account. A third opened it, a handful came back, and by the next week they'd all gone quiet again — same spot, right after the match. The email worked. The product didn't.",
             effects: {
               users: 4, flags: { winback_flat: true },
               schedule: {

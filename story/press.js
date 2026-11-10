@@ -72,7 +72,7 @@
         choices: [
           {
             key: "course", label: "Our launch, our scope — nothing gets added",
-            journal: "Flare hit 10K and Alex wanted to stuff their top features into our launch. Held the scope: we launch our product, not a reaction to theirs. He deleted the app store tab.",
+            journal: "Flare hit 10K and Alex wanted to stuff their top features into our launch. Held the scope: none of their features go in. He deleted the app store tab.",
             effects: { signal: 3, char: { alex: { morale: 5 } } },
             fx: () => "You held the scope. 'We're not launching a reaction to their product.' Alex closed the app store tab and went back to the launch list — faster, if anything.",
           },
@@ -172,7 +172,7 @@
       },
       {
         id: "reporter_deadline", char: "lena", from: "Lena (TechMedia)",
-        text: "writing a piece on the new wave of anti-Tinder apps — you'd be the only founder quote. story runs tomorrow 9am. you're out if i don't hear back tonight.",
+        text: "writing a piece on the new wave of anti-Tinder apps. you'd be the only founder quote. story runs tomorrow 9am. you're out if i don't hear back tonight.",
         when: { if: (s) => s.launched },
         choices: [
           {
@@ -195,11 +195,11 @@
         choices: [
           {
             key: "call", label: "Call Tom",
-            reply: "hey — noticed you went quiet. everything ok?",
+            reply: "hey, noticed you went quiet. everything ok?",
             journal: "Called Tom. He met someone on plusone 5 weeks ago — they've been on 7 dates. He forgot to cancel his subscription. He wrote a glowing review before hanging up. Best reason to lose a customer I've ever had.",
             effects: {
               customers: -1, signal: 16, marketFit: 8,
-              say: { char: "tom", text: "ha, sorry — i actually met someone on here 5 weeks ago. we've been on 7 dates. totally forgot to cancel. leaving a review before i go — this thing worked." },
+              say: { char: "tom", text: "ha, sorry, i actually met someone on here 5 weeks ago. we've been on 7 dates. totally forgot to cancel. leaving a review before i go. this thing worked." },
             },
           },
         ],
@@ -220,12 +220,12 @@
         ],
         timeout: {
           weeks: 2,
-          say: { char: "kevin", text: "reaching out one more time — this offer won't be available much longer. founders who act early see the biggest gains." },
+          say: { char: "kevin", text: "reaching out one more time. this offer won't be available much longer. founders who act early see the biggest gains." },
         },
       },
       {
         id: "consultant_brand", char: "brett", from: "Brett (brand strategist)", ambient: true,
-        text: "found you on a startup database. you're using the same language as tinder and bumble — 'find your match.' i can't tell you apart in 10 seconds. one-day workshop to fix that, $1,500. i work directly with founders.",
+        text: "found you on a startup database. you're using the same language as tinder and bumble. 'find your match.' i can't tell you apart in 10 seconds. one-day workshop to fix that, $1,500. i work directly with founders.",
         choices: [
           {
             key: "hire", label: "Book the session — $1,500",
@@ -236,19 +236,19 @@
         ],
         timeout: {
           weeks: 2,
-          say: { char: "brett", text: "just wanted to follow up — offer stands. a lot of founders wait too long on this." },
+          say: { char: "brett", text: "just wanted to follow up. offer stands. a lot of founders wait too long on this." },
         },
       },
 
       // ── FRIENDS & FAMILY MICRO-CHECKS ────────────────────────────────────────
       {
         id: "ff_friend", char: "jamie", from: "Jamie (college friend)", ambient: true,
-        text: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear — a dating app, seriously?",
+        text: "heard you actually quit to do this full time. wild. coffee this week? i've been wanting to hear. a dating app, seriously?",
         when: { if: (s) => s.week >= 5 && s.week <= 10 },
         choices: [
           {
             key: "tell", label: "Pitch Jamie properly",
-            reply: "ha — yes, seriously, a dating app. coffee this week and i'll tell you the whole thing.",
+            reply: "ha, yes, seriously, a dating app. coffee this week and i'll tell you the whole thing.",
             journal: "Gave Jamie the real pitch over coffee: the demo, the plan, the whole afternoon. He's on the waitlist, and I think he's wondering how else he can help.",
             effects: {
               waitlist: 1,
@@ -260,7 +260,7 @@
       },
       {
         id: "ff_friend_ask", char: "jamie", from: "Jamie (college friend)",
-        text: "hey — been thinking about what you told me. i want to support this somehow. can we talk again?",
+        text: "hey, been thinking about what you told me. i want to support this somehow. can we talk again?",
         when: { took: ["ff_friend:tell"], delay: 4, if: (s, e) => e.weeksSince("ff_friend") <= 12 },
         choices: [
           {
@@ -270,10 +270,10 @@
               if (e.rng() < 0.7) {
                 s.cash += 5000;
                 s.first_check = s.first_check || { from: "Jamie", amount: 5000 };
-                e.say({ char: "jamie", text: "just venmo'd you $5,000. least i could do — you'd have done the same for me. go build something great." });
+                e.say({ char: "jamie", text: "just venmo'd you $5,000. least i could do. you'd have done the same for me. go build something great." });
                 return "$5,000 from Jamie: no terms, no paperwork, no questions about the market. He's betting on me, not on the app.";
               }
-              e.say({ char: "jamie", text: "hate to say it but my cash is tied up right now — car loan, wedding coming up. i'm rooting for you though." });
+              e.say({ char: "jamie", text: "hate to say it but my cash is tied up right now. car loan, wedding coming up. i'm rooting for you though." });
               return "Jamie's cash is tied up. Friends invest in you, but only with money they have.";
             },
           },
@@ -282,15 +282,15 @@
       },
       {
         id: "ff_mentor", char: "david", from: "David (ex-manager)", ambient: true,
-        text: "keeping an eye on what you're doing. would love to grab lunch — been a while. let me know when you're free.",
+        text: "keeping an eye on what you're doing. would love to grab lunch. been a while. let me know when you're free.",
         when: { if: (s) => s.week <= 12 },
         choices: [
           {
             key: "lunch", label: "Prep for lunch with David",
-            reply: "would love to. lunch this week — it's been too long, and i've actually got a lot to tell you.",
+            reply: "would love to. lunch this week. it's been too long, and i've actually got a lot to tell you.",
             journal: "Spent a morning getting my story straight, then two hours of David's questions over lunch. He used to grill me in reviews and he still does. He wants something concrete: what makes users keep using the app.",
             effects: {
-              note: "David, over lunch: 'send me something concrete this week — what makes users keep using the app?'",
+              note: "David, over lunch: 'send me something concrete this week. what makes users keep using the app?'",
             },
           },
         ],
@@ -314,18 +314,18 @@
               const knowsFlare = e.took("flare_stealth:dive") || e.took("mentor_competitor_bomb:research");
               if (!knowsFlare) {
                 s.david_verdict = "flare";
-                e.say({ char: "david", text: "i'm going to pass. first thing i did after lunch was google 'dating app serious relationships' — Flare. $3M, same space, same price, all over TechCrunch. you didn't mention them once. if i found them in ten seconds, every investor after me will too." });
+                e.say({ char: "david", text: "i'm going to pass. first thing i did after lunch was google 'dating app serious relationships': Flare. $3M, same space, same price, all over TechCrunch. you didn't mention them once. if i found them in ten seconds, every investor after me will too." });
                 return null;
               }
               if (s.market_fit < FIT_KNOWS_USERS) {
                 s.david_verdict = "users";
-                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes users keep using the app and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for — then call me." });
+                e.say({ char: "david", text: "i'm going to pass, for now. i asked you what makes users keep using the app and you told me what the app does. that's a guess, not an answer. go talk to the people you're building for. then call me." });
                 return null;
               }
               s.david_verdict = "invest";
               s.cash += 4000;
               s.first_check = s.first_check || { from: "David", amount: 4000 };
-              e.say({ char: "david", text: "you know who you're up against and you know your users. that's more than most decks i see. just wired you $4,000 — pay me back by building the thing." });
+              e.say({ char: "david", text: "you know who you're up against and you know your users. that's more than most decks i see. just wired you $4,000. pay me back by building the thing." });
               return null;
             },
             journal: (s) => ({

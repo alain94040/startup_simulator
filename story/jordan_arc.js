@@ -81,7 +81,7 @@
         // because nobody got to ask her. The team finds out the way teams do:
         // a user can't find the app.
         id: "appstore_delisted", char: "founders", speaker: "alex",
-        text: "we have a problem. a user just emailed: 'is plusone gone?' i checked.\n\nit's not down. it's GONE. the listing says 'this developer account has been closed.' jordan closed her apple account — the one the app lived on.\n\nnew installs are impossible, and anyone who deletes the app can't get it back. the relaunch can't happen with no listing.",
+        text: "we have a problem. a user just emailed: 'is plusone gone?' i checked.\n\nit's not down. it's GONE. the listing says 'this developer account has been closed.' jordan closed her apple account, the one the app lived on.\n\nnew installs are impossible, and anyone who deletes the app can't get it back. the relaunch can't happen with no listing.",
         when: { if: (s) => !!s.app_delisted },
         choices: [
           {
@@ -126,7 +126,7 @@
             : (e.done("pivot_alex_door")
               ? "the thing i wanted to say the other night. i'll just say it.\n\n"
               : "can i say something i've been sitting on?\n\n")
-              + "jordan's great. i mean that. she's also been a week behind on everything since demo night — the photo picker, the iphone app, checking my code. every time there's a good reason. every time it's a week."
+              + "jordan's great. i mean that. she's also been a week behind on everything since demo night: the photo picker, the iphone app, checking my code. every time there's a good reason. every time it's a week."
               + (e.done("pivot_alex_door") ? " and the plans screen's been at the RSVP button for two weeks." : "")
               + "\n\nand v2 doesn't have a week in it. …or maybe that's on me. i don't know if i'm being fair to her.",
         when: {
@@ -191,7 +191,7 @@
             key: "weird", label: "Weird for me too.",
             reply: "weird for me too. i almost texted her about the plans screen this morning.",
             journal: "Two weeks of morning calls with just the two of us. Alex keeps typing Jordan's name out of habit. So do I.",
-            effects: { char: { alex: { morale: 4, trust: 2 } }, say: { char: "founders", speaker: "alex", text: "yeah. okay. plans screen's at the RSVP flow. i'll have it by friday — and i mean friday." } },
+            effects: { char: { alex: { morale: 4, trust: 2 } }, say: { char: "founders", speaker: "alex", text: "yeah. okay. plans screen's at the RSVP flow. i'll have it by friday, and i mean friday." } },
           },
           {
             key: "go", label: "Two people, one screen. Let's go.",
@@ -233,8 +233,8 @@
         // founder. Her own story lands here, after the decision, not as advice
         // before it: the game never tells the player the answer in advance.
         id: "priya_after_jordan", char: "priya",
-        text: (s) => (s.pivot_shipped ? "saw v2 is out. congratulations — it looks like the thing you should have built the first time." : "how's the rebuild?")
-          + "\n\nand — how are you doing, after jordan? alex mentioned it.",
+        text: (s) => (s.pivot_shipped ? "saw v2 is out. congratulations. it looks like the thing you should have built the first time." : "how's the rebuild?")
+          + "\n\nand... how are you doing, after jordan? alex mentioned it.",
         when: {
           if: (s, e) => !!s.jordan_resolved && s.jordan_fired_week != null && s.week >= s.jordan_fired_week + 3
             && s.week <= s.jordan_fired_week + 5,
@@ -263,8 +263,8 @@
         text: (s, e) => e.timesResolved("jordan_cap_table") > 0
           ? "jordan's " + pctOf(s) + " is still sitting there. it won't fix itself, and it's the first thing an investor will ask about. can we do the lawyer now?"
           : s.jordan_cold_exit
-          ? "jordan's " + pctOf(s) + " is still on the cap table — fully vested, no cliff — and she's not answering either of us. any investor who looks at this will ask questions we can't answer. we need a lawyer to talk to her lawyer."
-          : "jordan's " + pctOf(s) + " is still on the cap table — fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.",
+          ? "jordan's " + pctOf(s) + " is still on the cap table, fully vested, no cliff, and she's not answering either of us. any investor who looks at this will ask questions we can't answer. we need a lawyer to talk to her lawyer."
+          : "jordan's " + pctOf(s) + " is still on the cap table. fully vested, no cliff. any investor who looks at this will ask questions we can't answer well. we need a lawyer to clean it up.",
         // Recurs until cleaned up — a one-shot card would let a single defer
         // lock the round out permanently.
         // Only once the bill won't sink the company: the firing now lands on

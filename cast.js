@@ -80,13 +80,13 @@
       unlock: (s) => (s.met_priya === true && s.week >= (s.met_priya_week || 0) + 2)
         || (s.launched && s.week >= (s.launch_week || 0) + 2),
       intro: (s) => s.met_priya
-        ? "hey! great meeting you at the meetup last week. been thinking about what you're building — i have some thoughts on the dating app space when you have a minute."
-        : "hey — you don't know me. priya. a friend sent me plusone's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before — not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
+        ? "hey! great meeting you at the meetup last week. been thinking about what you're building. i have some thoughts on the dating app space when you have a minute."
+        : "hey, you don't know me. priya. a friend sent me plusone's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before. not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
     },
     {
       id: "sarah", name: "Sarah", role: "Community leader", type: "connector",
       unlock: (s) => s.launched && !!s.activities_pivot,
-      intro: "hey — heard about plusone from a mutual friend. i run a singles community in SF and i think there could be a fit.",
+      intro: "hey, heard about plusone from a mutual friend. i run a singles community in SF and i think there could be a fit.",
     },
     {
       id: "jamie", name: "Jamie", role: "College friend", type: "family",
@@ -126,7 +126,7 @@
     {
       id: "lena", name: "Lena", role: "Tech journalist", type: "press",
       unlock: (s) => !!s.launched,
-      intro: "hi — i'm a reporter covering the consumer dating space. might want to feature you in an upcoming piece.",
+      intro: "hi, i'm a reporter covering the consumer dating space. might want to feature you in an upcoming piece.",
     },
     {
       id: "tom", name: "Tom", role: "Power user", type: "customer",

@@ -109,7 +109,7 @@
                   waitlist: 2, marketFit: 6,
                   flags: { has_demo: true },
                   scene: "demo",
-                  say: { char: "alex", text: "ok. jordan found us a real first tester — her sister's friend. total stranger, never seen the app. she's on tonight at 8 and i'm watching the session live. don't make plans." },
+                  say: { char: "alex", text: "ok. jordan found us a real first tester. her sister's friend. total stranger, never seen the app. she's on tonight at 8 and i'm watching the session live. don't make plans." },
                 },
                 fx(s) {
                   s.tech_debt = (s.tech_debt || 0) + 12;
@@ -124,7 +124,7 @@
                   waitlist: 2, marketFit: 3, signal: 4,
                   flags: { has_demo: true },
                   scene: "demo",
-                  say: { char: "alex", text: "polish week done — worst edges are gone. and jordan lined up our first true stranger: her sister's friend, tonight at 8. i'm watching the session live. don't make plans." },
+                  say: { char: "alex", text: "polish week done. worst edges are gone. and jordan lined up our first true stranger: her sister's friend, tonight at 8. i'm watching the session live. don't make plans." },
                 },
                 fx(s) {
                   s.tech_debt = (s.tech_debt || 0) + 3;
@@ -144,7 +144,7 @@
           },
           {
             id: "demo_watch", char: "alex",
-            text: "she's in. no idea we're watching. she's been on the intake screen for 90 seconds — is that good or bad? i genuinely can't tell. nobody has ever used this without one of us narrating over their shoulder.",
+            text: "she's in. no idea we're watching. she's been on the intake screen for 90 seconds. is that good or bad? i genuinely can't tell. nobody has ever used this without one of us narrating over their shoulder.",
             when: { took: ["demo_ready:rough|polish"] },
             choices: [
               {
@@ -161,21 +161,21 @@
                 reply: "ping her that it's ok to skip anything. i don't want to lose her on question 2.",
                 journal: null,
                 effects: {
-                  say: { char: "alex", text: "she skipped straight to the matches. faster — but now we'll never know if the questions were landing or losing her." },
+                  say: { char: "alex", text: "she skipped straight to the matches. faster, but now we'll never know if the questions were landing or losing her." },
                 },
               },
             ],
           },
           {
             id: "demo_bug", char: "alex",
-            text: "problem. she's trying to upload a photo from her camera roll and the uploader just spins. she's retried twice. it's the photo picker — it chokes on the photo format every iphone has used since 2017.\n\nthat's jordan's part of the app, and i'm reading her code like it's a foreign language.",
+            text: "problem. she's trying to upload a photo from her camera roll and the uploader just spins. she's retried twice. it's the photo picker. it chokes on the photo format every iphone has used since 2017.\n\nthat's jordan's part of the app, and i'm reading her code like it's a foreign language.",
             choices: [
               {
                 key: "hotfix", label: "Patch it from your end for now",
                 reply: "do whatever you can from your side. first impressions don't get a second take.",
                 journal: null,
                 effects: {
-                  say: { char: "alex", text: "converted her photo on our end. her third retry worked — she thinks it was her wifi. it's tape, and it's still broken in the app. someone who knows that file has to do it properly." },
+                  say: { char: "alex", text: "converted her photo on our end. her third retry worked. she thinks it was her wifi. it's tape, and it's still broken in the app. someone who knows that file has to do it properly." },
                 },
                 fx(s) { s.tech_debt = (s.tech_debt || 0) + 4; return null; },
               },
@@ -189,7 +189,7 @@
                 journal: "Texted Jordan mid-demo about her own uploader. No reply — she was still at work.",
                 effects: {
                   flags: { demo_pinged_jordan: true },
-                  say: { char: "alex", text: "nothing from her yet. she's probably still at work. the tester gave up on the photo — she's carrying on without it." },
+                  say: { char: "alex", text: "nothing from her yet. she's probably still at work. the tester gave up on the photo. she's carrying on without it." },
                 },
               },
               {
@@ -222,7 +222,7 @@
                   // circle — a dozen friends-of-friends, explicitly NOT a launch.
                   schedule: {
                     in: 1, char: "jordan",
-                    say: { char: "jordan", text: "put the demo in a test app for my sister's friend group — a dozen people, all vouched for. not a launch, just eyes on it while we build." },
+                    say: { char: "jordan", text: "put the demo in a test app for my sister's friend group. a dozen people, all vouched for. not a launch, just eyes on it while we build." },
                   },
                 },
               },
@@ -234,14 +234,14 @@
             // thinking about it. This beat closes the scene.
             id: "demo_jordan_late", char: "jordan",
             text: (s) => (s.demo_pinged_jordan
-              ? "sorry — just seeing your message. what happened?\n\n"
+              ? "sorry, just seeing your message. what happened?\n\n"
               : "i am so sorry. big deadline at work, i didn't get out until eleven.\n\n")
               + "how did it go? did she finish the profile?",
             when: { after: ["demo_first_message"] },
             choices: [
               {
                 key: "tell", label: "Tell her how it went",
-                reply: "she finished. she matched. her first message was \"so what happens now?\" — alex is still staring at it. one thing: the photo upload spun forever on her iphone photos. it's in the picker.",
+                reply: "she finished. she matched. her first message was \"so what happens now?\" alex is still staring at it. one thing: the photo upload spun forever on her iphone photos. it's in the picker.",
                 journal: "Demo night. A total stranger finished the flow, matched, and her first message was 'so what happens now?' Wrote it on a post-it and stuck it on the monitor. The product answered every question except the one that matters. Jordan texted at 12:41 to ask how it went.",
                 effects: {
                   flags: { demo_jordan_absent: true },
@@ -254,7 +254,7 @@
                   // negligent; stretched. That's the whole arc in one habit.
                   e.schedule({
                     in: 1, char: "alex",
-                    say: { char: "alex", text: "jordan's photo fix landed. couple of days later than she said, but it's clean — properly done in the picker, not taped on like mine." },
+                    say: { char: "alex", text: "jordan's photo fix landed. couple of days later than she said, but it's clean. properly done in the picker, not taped on like mine." },
                   });
                   return null;
                 },

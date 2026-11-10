@@ -31,7 +31,7 @@
         beats: [
           {
             id: "dev_plan", char: "alex",
-            text: "couldn't sleep — mocked up three directions for plusone. tap through them and take a real look before we decide what to build. which one do we actually build?",
+            text: "couldn't sleep. mocked up three directions for plusone. tap through them and take a real look before we decide what to build. which one do we actually build?",
             // Lands the week after the equity question closes — one week later
             // still if the answer left Alex grudging: anything but 40/40/20,
             // or the dodge that tabled the split. A disappointed CTO costs the
@@ -71,7 +71,7 @@
               },
               {
                 key: "lean", label: "Build version B",
-                reply: "let's build B. the one core idea only — ship and learn. we can plan the rest when we know what works.",
+                reply: "let's build B. the one core idea only. ship and learn. we can plan the rest when we know what works.",
                 journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
@@ -82,7 +82,7 @@
                 // Hidden binary: C resolves to the same lean plan as B. The only
                 // real decision is avoiding A (the over-scoped build).
                 key: "sprint", label: "Build version C",
-                reply: "let's build C. strip it to the essentials and ship — we can layer the rest on once it's working.",
+                reply: "let's build C. strip it to the essentials and ship. we can layer the rest on once it's working.",
                 journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
@@ -97,12 +97,12 @@
           // strictly worse — he runs late, you buy anyway AND lose ~2 weeks.
           {
             id: "auth_choice", char: "alex",
-            text: "first thing to build: accounts — sign up, log in, reset password, 'sign in with google'. i can build it myself, couple days tops, and we own it forever. or i plug in a service that does logins for us in an afternoon and we pay $30/wk for the privilege. your call — i genuinely don't mind building it. kind of want to, actually.",
+            text: "first thing to build: accounts (sign up, log in, reset password, 'sign in with google'). i can build it myself, couple days tops, and we own it forever. or i plug in a service that does logins for us in an afternoon and we pay $30/wk for the privilege. your call. i genuinely don't mind building it. kind of want to, actually.",
             when: { after: ["dev_plan"] },
             choices: [
               {
                 key: "buy", label: "Pay for a ready-made login service",
-                reply: "let's not reinvent the wheel. plug in the login service — logins are a solved problem. the monthly fee is worth it.",
+                reply: "let's not reinvent the wheel. plug in the login service. logins are a solved problem. the monthly fee is worth it.",
                 effects: { saas: { label: "Login service", cost: 30 }, char: { alex: { effort: 1.0 } } },
                 fx(s) {
                   buyAuth(s);
@@ -111,7 +111,7 @@
               },
               {
                 key: "build", label: "Let Alex build it himself",
-                reply: "ok — build it, if you're sure it's just a few days.",
+                reply: "ok, build it, if you're sure it's just a few days.",
                 effects: { char: { alex: { morale: 4 } } },
                 fx(s) {
                   if (s.items && s.items.auth) { s.items.auth.status = "active"; s.items.auth.assignee = "alex"; s.items.auth.note = "Building our own"; }
@@ -131,12 +131,12 @@
             // Two weeks into hand-rolled auth, reality arrives. The dependency
             // covers both the explicit "build" answer and the ignored default.
             id: "auth_forced", char: "alex",
-            text: "i'm behind. the login thing is fighting me — people getting logged out at random, password resets breaking in weird cases, account recovery. it's eating the whole week. honestly... we should just buy it.",
+            text: "i'm behind. the login thing is fighting me: people getting logged out at random, password resets breaking in weird cases, account recovery. it's eating the whole week. honestly... we should just buy it.",
             when: { took: [["auth_choice:build", "auth_choice:@ignored"]], delay: 2 },
             choices: [
               {
                 key: "buy", label: "Tell him to buy it",
-                reply: "stop — buy the login service. we should've done that two weeks ago. let's move on.",
+                reply: "stop, buy the login service. we should've done that two weeks ago. let's move on.",
                 journal: "Two weeks in, Alex was still fighting random logouts and broken password resets. We bought the login service in the end — same monthly fee we'd have paid on day one, plus two weeks of his time down the drain. Lesson logged.",
                 effects: { saas: { label: "Login service", cost: 30 }, char: { alex: { effort: -2.4, morale: -4 } } },
                 fx(s) {
@@ -156,7 +156,7 @@
           // ── direction: the first screen (research-gated C-option) ────────────
           {
             id: "first_screen", char: "jordan",
-            text: "first real iOS question. someone installs plusone, opens it — ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in the test app by friday. or a guided intake — five questions before we show a single face. slower, weirder, but it's a statement.",
+            text: "first real iOS question. someone installs plusone, opens it. ten seconds later, what are they looking at? i can do a classic swipe deck: zero learning curve, demos great, i could have it in the test app by friday. or a guided intake. five questions before we show a single face. slower, weirder, but it's a statement.",
             when: { after: ["dev_plan"], delay: 1, if: (s) => !s.has_demo },
             choices: [
               {
@@ -166,7 +166,7 @@
                   waitlist: 1, char: { jordan: { effort: 1.0 } },
                   schedule: {
                     in: 2, char: "jordan",
-                    say: { char: "jordan", text: "swipe version's in the test app. showed my sister and her roommate — same reaction from both: 'nice — so it's like hinge?' not wrong. not great either." },
+                    say: { char: "jordan", text: "swipe version's in the test app. showed my sister and her roommate. same reaction from both: 'nice, so it's like hinge?' not wrong. not great either." },
                   },
                 },
                 fx(s) {
@@ -188,7 +188,7 @@
                 // interviews — research buys build options (GOALS.md).
                 key: "intake_interviews", label: "Intake — built from the interview questions",
                 if: (s, e) => e.took("interviews:interview"),
-                reply: "intake — and use the interview questions verbatim. open with 'how many matches went nowhere for you last month?' make them feel seen in ten seconds.",
+                reply: "intake, and use the interview questions verbatim. open with 'how many matches went nowhere for you last month?' make them feel seen in ten seconds.",
                 journal: "Gave Jordan the first screen straight from the interviews: open with the question every user we talked to already answered — 'how many matches went nowhere last month?' She built it word for word.",
                 effects: {
                   marketFit: 5, signal: 3, char: { jordan: { effort: 1.2 } },
@@ -211,7 +211,7 @@
                 char: { jordan: { morale: -6, trust: -4, effort: -1.0 } },
                 schedule: {
                   in: 2, char: "jordan",
-                  say: { char: "jordan", text: "you never picked a first screen so i shipped the swipe deck. showed it to three friends this week and all three asked the same question: 'so how is this different from hinge?' i didn't have an answer. rebuilding the intake — there goes most of the week." },
+                  say: { char: "jordan", text: "you never picked a first screen so i shipped the swipe deck. showed it to three friends this week and all three asked the same question: 'so how is this different from hinge?' i didn't have an answer. rebuilding the intake. there goes most of the week." },
                 },
               },
               fx(s) {

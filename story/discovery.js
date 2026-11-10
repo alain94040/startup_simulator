@@ -43,7 +43,7 @@
       // ── WHAT DISCOVERY TURNS UP (Alex in discover focus) ─────────────────────
       {
         id: "first_interview_shock", char: "alex",
-        text: "just got off a customer interview. the real frustration isn't finding matches — it's that conversations go nowhere. they matched with 20 people last month and went on zero dates. they'd pay $200/month for something that actually got them to a date.",
+        text: "just got off a customer interview. the real frustration isn't finding matches. it's that conversations go nowhere. they matched with 20 people last month and went on zero dates. they'd pay $200/month for something that actually got them to a date.",
         when: { if: (s, e, char) => s.week <= 8 && !s.has_demo && char.focus === "discover" },
         choices: [
           {
@@ -60,12 +60,12 @@
         timeout: {
           weeks: 2,
           effects: { signal: -15 },
-          say: { char: "alex", text: "had 2 more interviews. same thing — people are matching but never going on dates. we're solving the wrong problem." },
+          say: { char: "alex", text: "had 2 more interviews. same thing. people are matching but never going on dates. we're solving the wrong problem." },
         },
       },
       {
         id: "cold_silence", char: "alex",
-        text: "posted in 5 subreddits and messaged 30 people who complained about dating apps. 0 real responses — not even 'not interested.' is the message wrong, or are we targeting the wrong people?",
+        text: "posted in 5 subreddits and messaged 30 people who complained about dating apps. 0 real responses. not even 'not interested.' is the message wrong, or are we targeting the wrong people?",
         when: { if: (s, e, char) => s.week >= 2 && s.week <= 12 && !s.launched && s.signal < 50 && char.focus === "discover" },
         choices: [
           {
@@ -82,7 +82,7 @@
       },
       {
         id: "random_reframe", char: "alex",
-        text: "talked to a stranger at a coffee shop about what we're building. they reframed it completely — 'sounds less like a dating app, more like a vetting tool.' different pitch, different product. we both went quiet. it kind of makes more sense.",
+        text: "talked to a stranger at a coffee shop about what we're building. they reframed it completely: 'sounds less like a dating app, more like a vetting tool.' different pitch, different product. we both went quiet. it kind of makes more sense.",
         when: { if: (s, e, char) => s.week <= 12 && s.signal < 55 && char.focus === "discover" },
         choices: [
           {
@@ -94,13 +94,13 @@
       },
       {
         id: "pivot_insight_1", char: "alex",
-        text: "been talking to users all week and something keeps coming up. they're not frustrated by matching — they're frustrated that matches go nowhere. we've been solving the wrong part.",
+        text: "been talking to users all week and something keeps coming up. they're not frustrated by matching. they're frustrated that matches go nowhere. we've been solving the wrong part.",
         when: { if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 8 },
         choices: [
           {
             key: "pivot", label: "Pivot — rethink the approach",
             effects: { marketFit: 15, signal: 8 },
-            fx: () => "Rethought the approach. The real problem is conversation quality, not match quantity. Signal improved immediately.",
+            fx: () => "Rethought the approach: help matches turn into conversations. Signal improved immediately.",
           },
           {
             key: "stay", label: "Stay the course",
@@ -116,7 +116,7 @@
       },
       {
         id: "pivot_insight_2", char: "alex",
-        text: "second round of interviews done. consistent: they want depth on one thing, not breadth. scope's too wide — they're not seeing the core value.",
+        text: "second round of interviews done. consistent: they want depth on one thing, not breadth. scope's too wide. they're not seeing the core value.",
         // Fit thresholds here are on engine.addFit's diminishing scale (30 ≈ the
         // old flat 35, 42 ≈ the old 55).
         when: { after: ["pivot_insight_1"], if: (s, e, char) => discovering(s, e, char) && s.market_fit >= 30 },
@@ -207,7 +207,7 @@
       },
       {
         id: "website_social_proof", char: "founder", ambient: true,
-        text: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of plusone. features tell, stories sell.",
+        text: "your website still leads with features and a tagline. you now have a real story — someone who went on their first date in years because of plusone.",
         when: { if: (s) => !!s.testimonial && !s.website_updated },
         choices: [
           {

@@ -72,7 +72,7 @@
         // Jordan's own opener, so week 1 isn't Alex-only. No `when` —
         // eligible from turn one, same as start_prototype.
         id: "jordan_working_style", char: "jordan",
-        text: "heads up — i still have my day job, so my hours are all over the place. want to do a quick call every morning so you know where i'm at? or should i just work when i can and text you if i get stuck?",
+        text: "heads up, i still have my day job, so my hours are all over the place. want to do a quick call every morning so you know where i'm at? or should i just work when i can and text you if i get stuck?",
         choices: [
           {
             key: "standup", label: "Quick call every morning",
@@ -92,7 +92,7 @@
       },
       {
         id: "incorporate", char: "alex",
-        text: "before we do anything else — we need to become an actual company, on paper. no bank account, no contracts, no splitting ownership until we do. there's an online service, Stripe Atlas, that does the paperwork: company registered, tax number, bank account, in about two days.",
+        text: "before we do anything else. we need to become an actual company, on paper. no bank account, no contracts, no splitting ownership until we do. there's an online service, Stripe Atlas, that does the paperwork: company registered, tax number, bank account, in about two days.",
         when: { after: ["start_prototype"] },
         choices: [incorporateChoice],
         timeout: {
@@ -106,7 +106,7 @@
         // on "incorporate:@ignored" keeps the ignored branch a real story path
         // instead of a dead end.
         id: "incorporate_again", char: "alex",
-        text: "second time i'm asking — we're still not a company. i'm not writing another line of code that legally belongs to nobody. can we just file the thing?",
+        text: "second time i'm asking. we're still not a company. i'm not writing another line of code that legally belongs to nobody. can we just file the thing?",
         when: { took: ["incorporate:@ignored"], delay: 2, if: (s) => !s.incorporated },
         choices: [incorporateChoice],
         timeout: {

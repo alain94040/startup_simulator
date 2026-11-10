@@ -165,7 +165,7 @@
             fx(s) {
               s.channels.mixed = { fit: 0.30, cac: 40, tested: true };
               s.primary_channel = "mixed";
-              return "Decided not to decide — a little of everything. Jack of all channels, master of none. Each one limps along; nothing compounds; the spend adds up.";
+              return "Decided not to decide — a little of everything. Each one limps along; nothing compounds; the spend adds up.";
             },
           },
         ],
