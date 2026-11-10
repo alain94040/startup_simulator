@@ -244,7 +244,7 @@
             key: "honest", label: "Honestly? Not great.",
             reply: (s) => "honestly? not great. " + (s.pivot_shipped ? "v2 shipped faster than anything we've ever built." : "the plans screen's moving faster than it ever did.") + " i still feel like i did something wrong.",
             journal: "Priya asked how I was doing after Jordan. I told her the truth: the work is moving, and I still feel like I did something wrong. She told me about the co-founder she kept a year too long.",
-            effects: { say: { char: "priya", text: "that's the right feeling to have about the right call.\n\ni kept a co-founder a year too long once. lovely guy, always one week behind, always a good reason. by the time i said it, he'd heard it from everyone but me. you said it yourself, and early. that's the part that counts." } },
+            effects: { say: { char: "priya", text: "it would be strange if you didn't.\n\ni kept a co-founder a year too long once. lovely guy, always one week behind, always a good reason. by the time i said it, he'd heard it from everyone but me. you said it yourself, and early. it took me a year." } },
           },
           {
             key: "fine", label: "Heads down. It was the right call.",

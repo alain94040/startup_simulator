@@ -71,7 +71,7 @@
               },
               {
                 key: "lean", label: "Build version B",
-                reply: "let's build B. the one core idea only. ship and learn. we can plan the rest when we know what works.",
+                reply: "let's build B. the one core idea only, in front of real people fast. we can plan the rest when we know what works.",
                 journal: "Kept the plan tight: ninety minutes, five items, the one core idea only. Alex looked relieved. We can plan the rest once we know what works.",
                 fx(s) {
                   s.dev_plan = "lean";
@@ -186,9 +186,9 @@
               {
                 // The strictly-better option only exists if the founder did the
                 // interviews — research buys build options (GOALS.md).
-                key: "intake_interviews", label: "Intake — built from the interview questions",
+                key: "intake_interviews", label: "Five questions, starting with the one from our calls",
                 if: (s, e) => e.took("interviews:interview"),
-                reply: "intake, and use the interview questions verbatim. open with 'how many matches went nowhere for you last month?' make them feel seen in ten seconds.",
+                reply: "the five questions. and make the first one the question from our user calls: 'how many matches went nowhere for you last month?' everyone we asked had an answer.",
                 journal: "Gave Jordan the first screen straight from the interviews: open with the question every user we talked to already answered — 'how many matches went nowhere last month?' She built it word for word.",
                 effects: {
                   marketFit: 5, signal: 3, char: { jordan: { effort: 1.2 } },

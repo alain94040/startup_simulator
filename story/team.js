@@ -54,7 +54,7 @@
         id: "alex_sync_discover", char: "alex", ambient: true,
         text: (s, e, char) => {
           if (!e.done("alex_sync_discover"))
-            return "offer: i can spend this week on user calls instead of code. the build slips a week. that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building confidently in the dark.";
+            return "offer: i can spend this week on user calls instead of code. the build slips a week. that's real. but we've been heads-down since the plan and honestly? it's starting to feel like we're building on guesses.";
           const weeksAgo = e.weeksSince("alex_sync_discover");
           if (weeksAgo < 12 && e.timesResolved("alex_sync_discover") >= 2)
             return "offering again: one more week of user calls? the build slips, but we'd know more than we do now.";

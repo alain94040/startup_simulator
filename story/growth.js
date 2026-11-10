@@ -80,7 +80,7 @@
         // marketing decision, not just a ship call). The chosen splash's users
         // land at launch conversion in world.js (s.launch_splash).
         id: "launch_surface", char: "growth", from: "You",
-        text: "the bug-fixing week is nearly done — you flip the switch within days. now the part nobody warns you about: a launch is only as big as where you announce it, and you get exactly one first impression. where do you make the splash?",
+        text: "you're about to launch. where you announce it decides who shows up on day one. where do you make the splash?",
         // Chapter 2 only — the window closes the moment the switch flips, so
         // the plan question can't outlive the launch it was planning.
         when: { if: (s, e) => e.chapter === 2 && s.productPhase === "product" && s.beachhead != null },
@@ -155,7 +155,7 @@
       },
       {
         id: "channel_double_down", char: "growth", from: "You",
-        text: "you've got data now, not opinions. the runway won't fund three channels. the oldest advice in the book: be great at one. where do all the chips go?",
+        text: "you've run the tests and the numbers are in. the runway pays for one channel, not three. which one gets all of it?",
         when: { if: (s) => s.pivot_shipped && !s.primary_channel && tested(s).length >= 2 },
         choices: [
           commitChoice("referrals"), commitChoice("creators"), commitChoice("community"), commitChoice("paid"),

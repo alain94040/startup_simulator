@@ -37,7 +37,7 @@
           {
             key: "build", label: "No — matching is the whole product, we build it",
             reply: "no. the matching engine *is* plusone. it's the one thing we can't outsource. we build it ourselves.",
-            journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the one thing that makes us us, and Alex was relieved we're not renting our own product.",
+            journal: "Overruled Jordan — we build the matching engine ourselves. Slower, but it's the part of plusone nobody else has, and Alex was relieved we're not renting our own product.",
             effects: { flags: { matching_owned: true }, char: { jordan: { morale: -3 }, alex: { morale: 5, effort: 1.0 } } },
             fx(s) {
               if (s.items && s.items.matching_algo) s.items.matching_algo.note = "Building our own — it's what makes us different";

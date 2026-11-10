@@ -114,7 +114,7 @@
         choices: [
           {
             key: "screenshot", label: "Save the receipt — then back to the rebuild",
-            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review for the YC application and sent the team back to the rebuild. Their users just wrote our argument for us.",
+            journal: "Flare is stalling on 'matches that go nowhere' — the exact thing v2 fixes. Saved the review and sent the team back to the rebuild. Their users just wrote our argument for us.",
             effects: { signal: 4, char: { alex: { morale: 6 }, jordan: { morale: 3 } } },
             fx: () => "Screenshot saved — a competitor's users writing your argument for you. You gave the team one victory lap around the kitchen, then pointed everyone back at the rebuild. The window is open exactly as long as you're fast.",
           },
@@ -135,15 +135,15 @@
         choices: [
           {
             key: "work", label: "No panic — they validated us. Let the work answer",
-            journal: "Flare is pivoting to copy our plans-first model. Told the team the only answer is the work: we're months ahead on the thing that matters and we talk to our users every week. Their copy of our screens won't come with our understanding.",
+            journal: "Flare is pivoting to copy our plans-first model. Told the team to keep building. They can copy our screens, but we're the ones talking to users every week.",
             effects: { signal: 5, char: { alex: { morale: 6 } } },
-            fx: () => "A $3M competitor just told the market your pivot was right. They can copy the screens; they can't copy fifty user calls and a rebuilt matching engine. It goes in the application word for word. Back to work.",
+            fx: () => "A $3M competitor just told the market your pivot was right. They can copy the screens; they can't copy fifty user calls and a rebuilt matching engine. Back to work.",
           },
           {
             key: "panic", label: "They'll crush us — rush everything out now",
-            journal: "Panicked at Flare copying our pivot and rushed half-finished work out the door. Quality dipped exactly when the application needed proof of the opposite.",
+            journal: "Panicked at Flare copying our pivot and rushed half-finished work out the door. Quality dipped the week we needed proof of the opposite.",
             effects: { signal: -4, marketFit: -4, char: { alex: { morale: -8 } } },
-            fx: () => "Everything half-done shipped in a week. The bug reports arrived in the same week the application asked how many users come back. Panic is a strategy the way falling is flying.",
+            fx: () => "Everything half-done shipped in a week. The bug reports arrived the same week we were counting who comes back. Two of the fixes broke the plans screen for a day.",
           },
         ],
         timeout: { weeks: 3 },

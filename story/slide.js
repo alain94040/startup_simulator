@@ -275,9 +275,9 @@
           },
           {
             key: "survey", label: "Send an email survey",
-            journal: "Sent Maya (and the other quiet accounts) a 'why did you leave?' survey. Two replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
+            journal: "Sent Maya (and the other quiet accounts) a 'why did you leave?' survey. Two replies, both polite: 'it just wasn't for me.' Still no idea why Maya actually left.",
             effects: { marketFit: 1 },
-            fx: () => "Two survey replies, both polite, nothing quotable. Surveys get answers; calls get the truth.",
+            fx: () => "Two survey replies, both polite: 'it just wasn't for me.' You still don't know why Maya left.",
           },
           {
             key: "let_go", label: "People who leave, leave — move on",
@@ -347,7 +347,7 @@
         choices: [
           {
             key: "blast", label: "Send the win-back email tonight",
-            journal: "Sent the win-back email to every quiet account. A third opened it, a handful came back, and by the next week they'd all gone quiet again — same spot, right after the match. The email worked. The product didn't.",
+            journal: "Sent the win-back email to every quiet account. A third opened it, a handful came back, and by the next week they'd all gone quiet again. We got them back, and they still left right after the match.",
             effects: {
               users: 4, flags: { winback_flat: true },
               schedule: {

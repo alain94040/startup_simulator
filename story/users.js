@@ -67,9 +67,9 @@
           },
           {
             key: "email", label: "Send a quick email",
-            journal: "Emailed the churned subscriber. One paragraph back. Less than a call, more than nothing.",
+            journal: "Emailed the churned subscriber. One paragraph back. Thin, but more than we had.",
             effects: { marketFit: 3 },
-            fx: () => "They replied with one paragraph. Less than a call, more than nothing. You have a direction.",
+            fx: () => "They replied with one paragraph. Thin, but more than you had. You have a direction.",
           },
           {
             key: "ignore", label: "Let them go",

@@ -172,7 +172,7 @@
             choices: [
               {
                 key: "hotfix", label: "Patch it from your end for now",
-                reply: "do whatever you can from your side. first impressions don't get a second take.",
+                reply: "do whatever you can from your side. she's our first real stranger, i don't want her stuck on the photo screen.",
                 journal: null,
                 effects: {
                   say: { char: "alex", text: "converted her photo on our end. her third retry worked. she thinks it was her wifi. it's tape, and it's still broken in the app. someone who knows that file has to do it properly." },

@@ -205,7 +205,7 @@
               },
               {
                 key: "wait", label: "Leave it — the product should explain itself",
-                reply: "leave it. if the product needs a manual, that's the real problem.", journal: null,
+                reply: "leave it. if people need instructions to sign up, i'd rather fix the screen.", journal: null,
                 effects: { flags: { launch_time: "12PM" } },
               },
             ],
