@@ -81,7 +81,7 @@
         || (s.launched && s.week >= (s.launch_week || 0) + 2),
       intro: (s) => s.met_priya
         ? "hey! great meeting you at the meetup last week. been thinking about what you're building. i have some thoughts on the dating app space when you have a minute."
-        : "hey, you don't know me. priya. a friend sent me plusone's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders. i've seen your week-two graph before. not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
+        : "hey, you don't know me. priya. a friend sent me plusone's launch thread; i ran a consumer social app for four years, sold it, now i mostly drink coffee with founders.\n\ni've seen your week-two graph before. not yours specifically, but i'd bet rent on the shape. this is me offering the coffee.",
     },
     {
       id: "sarah", name: "Sarah", role: "Community leader", type: "connector",

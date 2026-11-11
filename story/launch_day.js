@@ -126,7 +126,7 @@
             text: "oh no. oh no oh no. we launched pointed at the test copy of the app, not the real one. one wrong setting. every signup since 8am has been going into the test version. none of them can see each other. we have real users in a ghost app.",
             choices: [
               { key: "options", label: "What are our options?", reply: "okay. what are our options?", journal: null,
-                effects: { say: { char: "alex", text: "i can flip the setting live. 5 minutes, but if something goes wrong mid-switch we could scramble people's data. or we take the app down behind a 'back soon' page and fix it properly, back up in 30. or we wait. peak traffic is tonight, most people haven't opened the email yet." } } },
+                effects: { say: { char: "alex", text: "i can flip the setting live. 5 minutes, but if something goes wrong mid-switch we could scramble people's data.\n\nor we take the app down behind a 'back soon' page and fix it properly, back up in 30.\n\nor we wait. peak traffic is tonight, most people haven't opened the email yet." } } },
             ],
           },
           {
@@ -243,7 +243,7 @@
           },
           {
             id: "launch_test_profiles_scope", char: "alex",
-            text: "6 test accounts total. most are obviously fake. no photo, username like 'test_user_001'. but sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds. she matched with 3 real users. two of them already sent her messages. she replied with fake placeholder text we typed in while testing.",
+            text: "6 test accounts total. most are obviously fake. no photo, username like 'test_user_001'.\n\nbut sarah_test_003 has a real photo and a full bio. she's been in there since the first test builds.\n\nshe matched with 3 real users. two of them already sent her messages. she replied with fake placeholder text we typed in while testing.",
             choices: [
               { key: "damage", label: "Have they figured out she's fake?", reply: "do the users know she's a test account?", journal: null,
                 effects: { say: { char: "alex", text: "not yet. the replies look normal enough that they probably think she's just slow to respond. but if either of them sends another message and gets placeholder gibberish back, it's going to be obvious. what do you want to do?" } } },
@@ -311,7 +311,7 @@
           // ── evening: the money sting ───────────────────────────────────────
           {
             id: "launch_stripe_discover", char: "alex",
-            text: "first upgrade attempt. user in SF hit the premium button. stripe rejected it: 'your account cannot currently make live charges.' we built the whole payment flow, tested it perfectly, but never finished the business verification. we literally cannot accept money right now.",
+            text: "first upgrade attempt. user in SF hit the premium button. stripe rejected it: 'your account cannot currently make live charges.'\n\nwe built the whole payment flow, tested it perfectly, but never finished the business verification. we literally cannot accept money right now.",
             when: {
               after: ["launch_staging_decide", "launch_hustle"],
               if: (s, e) => e.took("launch_hustle:go") || e.done("launch_abuser"),
@@ -433,7 +433,7 @@
     nodes: [
       {
         id: "proto_to_product", char: "alex",
-        text: "before we point real strangers at this: honesty hour. password-reset emails land in spam. the match queue crashes on profiles with zero photos. and i'm about 80% sure you can see other people's photos by editing a url. one week of fixing bugs and i can sleep at night. or we launch as-is and fix things as they break.",
+        text: "before we point real strangers at this: honesty hour.\n\npassword-reset emails land in spam. the match queue crashes on profiles with zero photos. and i'm about 80% sure you can see other people's photos by editing a url.\n\none week of fixing bugs and i can sleep at night. or we launch as-is and fix things as they break.",
         when: { cooldown: 4, if: (s) => s.has_demo && s.productPhase !== "product" },
         choices: [
           {

@@ -28,7 +28,7 @@
       // later (applyActivitiesPivot, ported with the pivot arc).
       {
         id: "matching_choice", char: "jordan",
-        text: "next thing to build, my two cents. found something: MatchKit. you pay them monthly and plug in their ready-made matching; we'd have it working in days instead of weeks. alex will hate this because he likes to build everything himself. but why reinvent the wheel? i say we plug it in.",
+        text: "next thing to build, my two cents.\n\nfound something: MatchKit. you pay them monthly and plug in their ready-made matching; we'd have it working in days instead of weeks.\n\nalex will hate this because he likes to build everything himself. but why reinvent the wheel? i say we plug it in.",
         when: {
           after: ["dev_plan"], delay: 1,
           if: (s, e) => !s.has_demo && e.weeksSince("dev_plan") <= 6,
@@ -199,7 +199,7 @@
       // pivot signal. Building it leaves you blind until it's too late.
       {
         id: "analytics_choice", char: "alex",
-        text: "demo night bugged me. the only reason i saw what she did at all is that i was reading raw server records by hand. the test group is a dozen people and i can't tell you what a single one of them does in the app, and on launch day it'll be hundreds of strangers. i can plug in a ready-made analytics tool in a day. $30/wk, charts of what people do by tomorrow. or i build our own tracking: a week of my time, free forever, and i kind of want to own our data anyway.",
+        text: "demo night bugged me. the only reason i saw what she did at all is that i was reading raw server records by hand.\n\nthe test group is a dozen people and i can't tell you what a single one of them does in the app, and on launch day it'll be hundreds of strangers.\n\ni can plug in a ready-made analytics tool in a day. $30/wk, charts of what people do by tomorrow. or i build our own tracking: a week of my time, free forever, and i kind of want to own our data anyway.",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
@@ -233,7 +233,7 @@
         text: (s, e) => {
           const informed = s.analytics_live || freshResearch(s, e);
           return informed
-            ? "launch mechanics. we always assumed we launch here. we live here, we can seed the first hundred by hand, jordan can host a mixer. but i pulled the waitlist by city and… austin has almost three times as many people on it as our own city. none of us has ever set foot in austin. do we launch where we live, or where the demand is?"
+            ? "launch mechanics. we always assumed we launch here. we live here, we can seed the first hundred by hand, jordan can host a mixer.\n\nbut i pulled the waitlist by city and… austin has almost three times as many people on it as our own city. none of us has ever set foot in austin.\n\ndo we launch where we live, or where the demand is?"
             : "launch mechanics. a dating app opening to an empty room is a ghost town: first person in sees an empty deck, closes the app, never comes back. one city to start, right? here at home, where we can seed the room by hand. or do we just open the doors everywhere and pray?";
         },
         when: { after: ["analytics_choice"], if: (s) => s.has_demo && !s.launched && s.beachhead == null },
@@ -284,7 +284,7 @@
       // only exists for a founder who read them.
       {
         id: "trust_safety", char: "jordan",
-        text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story: how we handle people posting nasty stuff, reporting, blocking. what we have is: nothing. i saved the form as a draft and stared at it for a while. so: a report button now and verification later, or do verification properly before we launch?",
+        text: "not a fun one. i started the app store review paperwork for the launch build and apple wants our safety story: how we handle people posting nasty stuff, reporting, blocking.\n\nwhat we have is: nothing. i saved the form as a draft and stared at it for a while.\n\nso: a report button now and verification later, or do verification properly before we launch?",
         when: { if: (s) => s.has_demo && !s.launched },
         choices: [
           {
