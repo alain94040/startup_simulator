@@ -9,7 +9,7 @@
  * same writable directory the leaderboard uses, so no new permissions). The
  * file is kept private: on first write this script drops a score/.htaccess
  * that denies web access to it (Apache 2.4), unless one already exists.
- * Read it over SSH/FTP, or `tail score/feedback.jsonl`.
+ * Read it at foundrs.com/feedback/ (feedback/index.php), or `tail score/feedback.jsonl`.
  *
  * There is no GET: feedback is write-only from the web.
  */
@@ -71,7 +71,8 @@ if (!is_dir($dir)) @mkdir($dir, 0770, true);
 // Keep the file off the web: the leaderboard's JSON in this directory is
 // public, the comments are not.
 $ht = $dir . "/.htaccess";
-if (!is_file($ht)) @file_put_contents($ht, "<Files \"feedback.jsonl\">\n  Require all denied\n</Files>\n");
+// (feedback/index.php writes the same rule; the key it creates lives here too.)
+if (!is_file($ht)) @file_put_contents($ht, "<FilesMatch \"^(feedback\\.jsonl|feedback_key\\.txt)$\">\n  Require all denied\n</FilesMatch>\n");
 
 clearstatcache();
 if (is_file(DATA_FILE) && filesize(DATA_FILE) > MAX_FILE) send(["error" => "full"], 507);

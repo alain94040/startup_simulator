@@ -69,7 +69,8 @@ After editing any source file, refresh the page. `leaderboard.php` is an optiona
 board (PHP and a writable `score/` directory, no database). Without it the game keeps a local
 board in `localStorage`, so it works from `file://`. `feedback.php` takes the star rating and
 comment from the High scores page: it appends each one to `score/feedback.jsonl` (kept off the
-web by a `.htaccess` it writes there).
+web by a `.htaccess` it writes there). Read them at `/feedback/` (`feedback/index.php`): the first
+visit creates a key in `score/feedback_key.txt`; enter it once and that browser stays signed in.
 
 ## How it's built
 
