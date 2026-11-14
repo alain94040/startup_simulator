@@ -480,6 +480,11 @@
   /* the title menu: three plain buttons in a row */
   .mm-row { display: flex; gap: 10px; margin-top: 22px; }
   .mm-row button { flex: 1; padding: 12px 8px; }
+  /* the menu's making-of line: desktop only (the phone keeps it in the ⓘ About sheet) */
+  .mm-makingof { margin-top: 16px; font-size: 13px; color: var(--dim); text-align: center; }
+  .mm-makingof a { color: var(--blue); font-weight: 600; text-decoration: none; }
+  .mm-makingof a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  @media (max-width: 1023px) { .mm-makingof { display: none; } }
   #introModal { padding: 0; overflow: hidden; }
   .intro-stripe { height: 5px; background: linear-gradient(90deg, var(--blue), #8b5cf6, #ff6482); }
   .intro-body { padding: 24px 28px 20px; }
@@ -3918,10 +3923,13 @@ function showMenu() {
     + '<button class="' + (saved ? "sf-alt" : "intro-next") + '" id="mmNew">New game</button>'
     + '<button class="' + (saved ? "intro-next" : "sf-alt") + '" id="mmResume"' + (saved ? "" : ' disabled title="Nothing saved yet"') + ">Resume game</button>"
     + '<button class="sf-alt" id="mmScores">High scores</button>'
-    + "</div></div>";
+    + "</div>"
+    + '<div class="mm-makingof">Curious how this game was made? <a id="mmMakingOf" href="' + MAKING_OF_URL + '" target="_blank" rel="noopener">Read the making-of ↗</a></div>'
+    + "</div>";
   $("mmNew").onclick = () => { track("Menu: new game"); introStep = 0; showIntro(); };
   $("mmResume").onclick = openResume;
   $("mmScores").onclick = openHighScores;
+  $("mmMakingOf").onclick = () => track("Menu: making-of");
   $("introOv").classList.add("on");
   if (kbdNav) $(saved ? "mmResume" : "mmNew").focus();
 }
