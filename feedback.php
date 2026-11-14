@@ -11,10 +11,6 @@
  * that denies web access to it (Apache 2.4), unless one already exists.
  * Read it over SSH/FTP, or `tail score/feedback.jsonl`.
  *
- * If MAIL_TO is set, each submission is also mailed there (best effort: a
- * host without a working mail() still stores the line, and the player still
- * sees "thanks").
- *
  * There is no GET: feedback is write-only from the web.
  */
 
@@ -28,7 +24,6 @@ const DATA_FILE   = __DIR__ . "/score/feedback.jsonl";
 const MAX_BODY    = 4096;              // a real submission is well under 2KB
 const MAX_COMMENT = 1000;              // characters kept from the comment
 const MAX_FILE    = 5 * 1024 * 1024;   // stop growing past 5MB (spam guard)
-const MAIL_TO     = "game@foundrs.com";   // "" turns the email off
 
 function send($data, $code = 200) {
   http_response_code($code);
@@ -82,15 +77,5 @@ clearstatcache();
 if (is_file(DATA_FILE) && filesize(DATA_FILE) > MAX_FILE) send(["error" => "full"], 507);
 $line = json_encode($entry, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n";
 if (@file_put_contents(DATA_FILE, $line, FILE_APPEND | LOCK_EX) === false) send(["error" => "write failed"], 500);
-
-if (MAIL_TO !== "") {
-  $stars = str_repeat("★", $rating) . str_repeat("☆", 5 - $rating);
-  $text = "Rating: $stars ($rating/5)\n"
-    . "Saved games on that browser: " . $entry["played"] . " (furthest: week " . $entry["furthest"] . ")\n"
-    . "Best grade there: " . ($entry["best"] === null ? "none" : $entry["best"]) . "\n\n"
-    . ($comment === "" ? "(no comment)" : $comment) . "\n";
-  @mail(MAIL_TO, "=?UTF-8?B?" . base64_encode("PlusOne feedback: $stars") . "?=", $text,
-    "Content-Type: text/plain; charset=utf-8\r\nContent-Transfer-Encoding: 8bit");
-}
 
 send(["ok" => true]);
