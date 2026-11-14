@@ -477,6 +477,26 @@
   .intro-board { padding: 22px 28px 20px; }
   .intro-board .lb { margin-top: 12px; border-top: 0; padding-top: 0; }
   .intro-board .lb-list { max-height: min(330px, calc(84vh - 260px)); overflow-y: auto; }
+  /* the player's rating, under the board: five stars, then an optional comment */
+  .fb-rate { margin-top: 14px; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 12px; }
+  .fb-q { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .fb-q b { font-size: 13.5px; color: var(--ink); }
+  .fb-stars { display: flex; gap: 2px; }
+  .fb-star { border: 0; background: none; padding: 2px 3px; font-size: 26px; line-height: 1; color: #d4d4da; cursor: pointer; transition: transform .12s, color .12s; }
+  .fb-star.on { color: #f2b01e; }
+  .fb-star:hover { transform: scale(1.15); }
+  .fb-star:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; border-radius: 6px; }
+  .fb-more { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .fb-more textarea { width: 100%; box-sizing: border-box; resize: vertical; min-height: 58px; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px; font: inherit; font-size: 14px; color: var(--ink); background: #fff; }
+  .fb-more textarea:focus { outline: 2px solid var(--blue); outline-offset: -1px; }
+  .fb-send { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+  .fb-send span { font-size: 11.5px; color: var(--dim); margin-right: auto; }
+  .fb-send button { background: var(--blue); color: #fff; border: 0; border-radius: 9px; padding: 9px 18px; font-weight: 700; font-size: 13px; cursor: pointer; }
+  .fb-send button:disabled { opacity: .5; cursor: default; }
+  .fb-thanks { font-size: 13px; color: #55555c; line-height: 1.45; }
+  .fb-thanks b { color: var(--ink); }
+  .fb-thanks a { color: var(--blue); font-weight: 700; text-decoration: none; }
+  .intro-board.fb-open .lb-list { max-height: min(220px, calc(84vh - 400px)); }
   /* the title menu: three plain buttons in a row */
   .mm-row { display: flex; gap: 10px; margin-top: 22px; }
   .mm-row button { flex: 1; padding: 12px 8px; }
@@ -1055,7 +1075,8 @@
     .ss-choices .chip { padding: 12px 16px; }
     #introModal { padding: 0; overflow-y: auto; }
     .intro-body, .intro-board { padding: 22px 20px calc(16px + env(safe-area-inset-bottom)); }
-    .intro-board .lb-list { max-height: calc(92dvh - 280px); }
+    .intro-board .lb-list { max-height: calc(92dvh - 340px); }
+    .intro-board.fb-open .lb-list { max-height: max(120px, calc(92dvh - 470px)); }
     .mm-row { gap: 8px; }
     .mm-row button { padding: 12px 4px; }
     .intro-step b { font-size: 19px; }
@@ -3941,11 +3962,72 @@ function openHighScores() {
   $("introModal").innerHTML = '<div class="intro-stripe"></div><div class="intro-board">'
     + '<div class="intro-step"><b>High scores.</b>Every finished game is graded 0–100. Land in the top ' + LB.MAX + " and your name goes up here for good.</div>"
     + '<div id="introLb"><div class="lb"><div class="lb-loading">Loading the leaderboard…</div></div></div>'
+    + '<div class="fb-rate" id="fbRate"></div>'
     + '<div class="sf-foot"><button class="sf-alt" id="hsBack">Back</button></div></div>';
   $("hsBack").onclick = showMenu;
+  renderRating();
   $("introOv").classList.add("on");
   if (kbdNav) $("hsBack").focus();
   fillIntroBoard();
+}
+// The rating under the board: "Did you like the game?" and five stars. A
+// star opens an optional comment and a Send button; Send posts both to
+// feedback.php (stored in a file on the server) and fires a
+// Clicky goal per rating, so the count shows up next to the rest of the
+// funnel. Remembered per browser: a player who rated sees their thanks.
+// Without the server (file://), the thanks offers the email instead.
+const FB_KEY = "plusone_feedback";
+let fbRating = 0;
+function fbSent() { try { return JSON.parse(localStorage.getItem(FB_KEY)); } catch (e) { return null; } }
+const starsHtml = (n, live) => [1, 2, 3, 4, 5].map(i => live
+  ? '<button class="fb-star' + (i <= n ? " on" : "") + '" data-star="' + i + '" aria-label="' + i + (i === 1 ? " star" : " stars") + '" aria-pressed="' + (i === n) + '">★</button>'
+  : '<span class="fb-star' + (i <= n ? " on" : "") + '" aria-hidden="true">★</span>').join("");
+function renderRating() {
+  const box = $("fbRate");
+  if (!box) return;
+  const sent = fbSent();
+  if (sent) {
+    box.innerHTML = '<div class="fb-q"><div class="fb-thanks"><b>Thanks for rating the game.</b>'
+      + (sent.offline ? ' It couldn\'t reach the server, so <a href="mailto:' + FEEDBACK_EMAIL + "?subject=" + encodeURIComponent("PlusOne feedback: " + sent.rating + "/5")
+        + "&body=" + encodeURIComponent(sent.comment || "") + '">email it to me</a> if you\'d like me to read it.' : " I read every one.")
+      + '</div><div class="fb-stars" aria-label="' + sent.rating + ' of 5 stars">' + starsHtml(sent.rating, false) + "</div></div>";
+    return;
+  }
+  box.innerHTML = '<div class="fb-q"><b>Did you like the game?</b><div class="fb-stars" role="group" aria-label="Rate the game">' + starsHtml(fbRating, true) + "</div></div>"
+    + (fbRating ? '<div class="fb-more"><textarea id="fbText" maxlength="1000" rows="2" placeholder="Anything you\'d tell me about it? (optional)"></textarea>'
+      + '<div class="fb-send"><span>Goes straight to the game\'s maker.</span><button id="fbSend">Send</button></div></div>' : "");
+  box.closest(".intro-board").classList.toggle("fb-open", !!fbRating);
+  box.querySelectorAll(".fb-star").forEach(b => b.onclick = () => {
+    const keep = $("fbText") ? $("fbText").value : "";
+    const first = !fbRating;
+    fbRating = +b.dataset.star;
+    renderRating();
+    if (keep) $("fbText").value = keep;
+    const star = box.querySelector('[data-star="' + fbRating + '"]');
+    if (star) star.focus();
+    if (first) track("Feedback: stars picked");
+  });
+  if ($("fbSend")) $("fbSend").onclick = sendRating;
+}
+async function sendRating() {
+  const btn = $("fbSend");
+  btn.disabled = true; btn.textContent = "Sending…";
+  const comment = $("fbText").value.trim().slice(0, 1000);
+  const runs = readRuns();
+  const furthest = runs.reduce((m, r) => Math.max(m, ...(r.weeks || []).map(w => w.w || 0)), 0);
+  let best = null;
+  try { const lb = JSON.parse(localStorage.getItem("plusone_leaderboard")) || []; if (lb.length) best = Math.max(...lb.map(e => e.score)); } catch (e) {}
+  let offline = false;
+  try {
+    const r = await fetch("feedback.php", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: fbRating, comment, played: runs.length, furthest, best }) });
+    if (!r.ok) throw 0;
+  } catch (e) { offline = true; }
+  track("Feedback: " + fbRating + (fbRating === 1 ? " star" : " stars"));
+  if (comment) track("Feedback: comment");
+  try { localStorage.setItem(FB_KEY, JSON.stringify({ rating: fbRating, comment, at: Date.now(), offline })); } catch (e) {}
+  renderRating();
+  if (kbdNav) $("hsBack").focus();
 }
 function showIntro() {
   introView = "story";
@@ -4320,6 +4402,7 @@ const ARROW_ROWS = [
   ["#railNews", ".nw"],
   ["#tabbar", "button"],
   [".mm-row", "button"],
+  [".fb-stars", "button"],
 ];
 const ARROWS = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1, Home: "first", End: "last" };
 function arrowMove(el, step) {
