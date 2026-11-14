@@ -67,7 +67,9 @@ open play.html            # plain debug harness, for inspecting state
 
 After editing any source file, refresh the page. `leaderboard.php` is an optional top-50
 board (PHP and a writable `score/` directory, no database). Without it the game keeps a local
-board in `localStorage`, so it works from `file://`.
+board in `localStorage`, so it works from `file://`. `feedback.php` takes the star rating and
+comment from the High scores page: it appends each one to `score/feedback.jsonl` (kept off the
+web by a `.htaccess` it writes there) and mails it to `game@foundrs.com` if the host's `mail()` works.
 
 ## How it's built
 
