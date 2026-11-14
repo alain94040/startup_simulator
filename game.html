@@ -480,7 +480,6 @@
   /* the title menu: three plain buttons in a row */
   .mm-row { display: flex; gap: 10px; margin-top: 22px; }
   .mm-row button { flex: 1; padding: 12px 8px; }
-  .mm-pill { display: inline-block; margin-bottom: 10px; padding: 4px 10px; border-radius: 999px; background: var(--blue-soft); border: 1px solid #c9d8ff; color: var(--blue); font-size: 12px; font-weight: 700; }
   /* the menu's making-of line: desktop only (the phone keeps it in the ⓘ About sheet) */
   .mm-makingof { margin-top: 16px; font-size: 13px; color: var(--dim); text-align: center; }
   .mm-makingof a { color: var(--blue); font-weight: 600; text-decoration: none; }
@@ -3919,7 +3918,7 @@ function showMenu() {
   track(saved ? "Menu" : "Menu: nothing saved");
   const [h, b, art] = TITLE;
   $("introModal").innerHTML = '<div class="intro-stripe"></div>' + introArt(art)
-    + '<div class="intro-body"><span class="mm-pill">⏱ Game duration ~20 min</span><div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>"
+    + '<div class="intro-body"><div class="intro-step"><b>' + esc(h) + "</b>" + esc(b) + "</div>"
     + '<div class="mm-row">'
     + '<button class="' + (saved ? "sf-alt" : "intro-next") + '" id="mmNew">New game</button>'
     + '<button class="' + (saved ? "intro-next" : "sf-alt") + '" id="mmResume"' + (saved ? "" : ' disabled title="Nothing saved yet"') + ">Resume game</button>"
