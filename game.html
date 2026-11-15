@@ -427,7 +427,7 @@
   .sf-foot { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
   .sf-foot button, .intro-actions button { white-space: nowrap; }
   .sf-about { display: none; margin: 12px auto 0; border: 0; background: none; color: var(--blue); font-size: 13px; font-weight: 600; padding: 6px 10px; }
-  /* the feedback line: on both report cards and the mid-run Score card */
+  /* the feedback line: on the final report card (the mid-run Score card has the star rating) */
   .eg-feedback { display: flex; gap: 10px; align-items: flex-start; border: 1px dashed var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 12.5px; line-height: 1.45; color: #55555c; text-align: left; }
   .eg-feedback .fb-ic { font-size: 17px; line-height: 1.2; }
   .eg-feedback b { color: var(--ink); }
@@ -3649,10 +3649,10 @@ function openScoreSoFar() {
     + '<div class="sf-foot">' + (savedWeeks().length ? '<button class="sf-alt" id="sfSaved">Saved games</button>' : "")
     + '<button class="sf-alt" id="sfAgain">New game</button>'
     + '<button class="intro-next" id="sfClose">Keep playing</button></div>'
-    + feedbackHtml("<b>Something feel off, or great?</b> Tell me what you liked and what you didn't:",
-      "PlusOne feedback: week " + s.week + (firstWeek ? "" : ", " + og + " so far"), firstWeek ? "" : runFacts(sf.lessons, sf.score))
+    + '<div class="fb-rate" id="fbRate"></div>'
     + '<button class="sf-about" id="sfAbout">About this game</button>';
   $("sfAbout").onclick = () => { closeReportCard(); openAbout(); };
+  renderRating();
   $("sfClose").onclick = closeReportCard;
   $("sfAgain").onclick = () => { if (confirm("Start a new game from week 1? This one stays in your saved games.")) restartGame("Restarted: week " + s.week); };
   if ($("sfSaved")) $("sfSaved").onclick = () => openRewind("score");
@@ -3970,7 +3970,7 @@ function openHighScores() {
   if (kbdNav) $("hsBack").focus();
   fillIntroBoard();
 }
-// The rating under the board: "Did you like the game?" and five stars. A
+// The rating under the board (and on the mid-run Score card): "Did you like the game?" and five stars. A
 // star opens an optional comment and a Send button; Send posts both to
 // feedback.php (stored in a file on the server) and fires a
 // Clicky goal per rating, so the count shows up next to the rest of the
@@ -3996,7 +3996,8 @@ function renderRating() {
   box.innerHTML = '<div class="fb-q"><b>Did you like the game?</b><div class="fb-stars" role="group" aria-label="Rate the game">' + starsHtml(fbRating, true) + "</div></div>"
     + (fbRating ? '<div class="fb-more"><textarea id="fbText" maxlength="1000" rows="2" placeholder="Anything you\'d tell me about it? (optional)"></textarea>'
       + '<div class="fb-send"><span>Goes straight to the game\'s maker.</span><button id="fbSend">Send</button></div></div>' : "");
-  box.closest(".intro-board").classList.toggle("fb-open", !!fbRating);
+  const board = box.closest(".intro-board");   // High scores: shrink the list to make room
+  if (board) board.classList.toggle("fb-open", !!fbRating);
   box.querySelectorAll(".fb-star").forEach(b => b.onclick = () => {
     const keep = $("fbText") ? $("fbText").value : "";
     const first = !fbRating;
@@ -4027,7 +4028,8 @@ async function sendRating() {
   if (comment) track("Feedback: comment");
   try { localStorage.setItem(FB_KEY, JSON.stringify({ rating: fbRating, comment, at: Date.now(), offline })); } catch (e) {}
   renderRating();
-  if (kbdNav) $("hsBack").focus();
+  const back = $("hsBack") || $("sfClose");
+  if (kbdNav && back) back.focus();
 }
 function showIntro() {
   introView = "story";
