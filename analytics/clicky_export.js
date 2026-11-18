@@ -23,8 +23,10 @@
 //                         and visitors, and conversion over all / over engaged sessions
 //   funnel.csv            sessions reaching each stage (intro → weeks → end)
 //   engagement.csv        sessions per engagement bucket, with median duration
+//   players.csv           new vs returning players (from the game's saved-game signal):
+//                         sessions, how many played, finished, won, average grade
 //   sources.csv           sessions, engaged sessions and median duration per referrer
-//                         domain / UTM source / campaign / country
+//                         domain / UTM source / campaign / country / player type
 //   actions.csv           every tracked action (pageviews, goals, clicks) with its time
 //   report_<type>.csv     Clicky's own aggregate reports (referrers, countries, campaigns, …)
 //   raw/*.json            every API response, unmodified
@@ -175,6 +177,27 @@ function bucketOf(s) {
   return "1 bounced off the menu";
 }
 const ENGAGED = b => b >= "3";
+// New or returning player, from the game's own saves rather than Clicky's
+// visitor ID (which doesn't hold up across days). The title menu fires "Menu"
+// when this browser has a saved game (anyone who made one call) and
+// "Menu: nothing saved" when not; Play again and a mid-run restart reload the
+// page past the menu and fire "Play again" / "Restarted: week N". The menu
+// shipped on 2026-10-28: earlier sessions are "unknown". A save lives in one
+// browser, so a player on a new device or in private browsing counts as new.
+function playerOf(s, names) {
+  if (!s.game_session) return "";
+  const has = p => names.some(n => n === p || n.startsWith(p + ":") || n.startsWith(p + " "));
+  if (names.includes("Menu")) {
+    if (names.includes("Menu: new game")) return "returning: new game";
+    if (has("Menu: resume game") || has("Resumed")) return "returning: resumed";
+    if (names.some(n => /^(Week|Intro|End|Scene)/.test(n))) return "returning: played";
+    return "returning: left at menu";
+  }
+  if (has("Play again") || has("Restarted")) return "replay in the same sitting";
+  if (names.includes("Menu: nothing saved")) return "new";
+  return "unknown";
+}
+const RETURNING = p => p.startsWith("returning") || p === "replay in the same sitting";
 
 // ── run ──────────────────────────────────────────────────────────────────────
 (async () => {
@@ -311,6 +334,9 @@ const ENGAGED = b => b >= "3";
       stats_url: v.stats_url || "",
     };
     s.engagement = bucketOf(s);
+    s.player = playerOf(s, goals.map(g => g.name));
+    // A replay can also happen after a returning player's menu choice.
+    s.replayed = goals.some(g => g.name === "Play again" || /^Restarted/.test(g.name)) ? 1 : 0;
     return s;
   });
   csv("sessions.csv", sessions);
@@ -387,9 +413,31 @@ const ENGAGED = b => b >= "3";
     median_duration_s: median(buckets[b].map(s => s.duration_s).filter(x => x != null)),
   })));
 
+  // ── players: new vs returning ──
+  const GRADES = "FDCBA";
+  const byPlayer = {};
+  for (const s of games) (byPlayer[s.player] = byPlayer[s.player] || []).push(s);
+  const playerRow = (label, ss) => {
+    const played = ss.filter(s => ENGAGED(s.engagement)), fin = ss.filter(s => s.end), graded = fin.filter(s => GRADES.includes(s.grade) && s.grade);
+    return {
+      player: label, sessions: ss.length, pct_of_game_sessions: pct(ss.length, nS),
+      played: played.length, played_pct: pct(played.length, ss.length),
+      finished_runs: fin.length, finished_pct: pct(fin.length, ss.length), finished_pct_of_played: pct(fin.length, played.length),
+      yc: fin.filter(s => s.end === "YC").length, out_of_cash: fin.filter(s => s.end === "out of cash").length,
+      avg_grade_0F_4A: graded.length ? Math.round(100 * graded.reduce((t, s) => t + GRADES.indexOf(s.grade), 0) / graded.length) / 100 : "",
+      replayed: ss.filter(s => s.replayed).length, phone_pct: pct(ss.filter(s => s.mobile).length, ss.length),
+      median_duration_s: median(ss.map(s => s.duration_s).filter(x => x != null)),
+    };
+  };
+  const ORDER = ["new", "returning: new game", "returning: resumed", "returning: played", "returning: left at menu", "replay in the same sitting", "unknown"];
+  csv("players.csv", [
+    ...Object.keys(byPlayer).sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b)).map(p => playerRow(p, byPlayer[p])),
+    playerRow("ALL returning (incl. same-sitting replays)", games.filter(s => RETURNING(s.player))),
+  ]);
+
   // ── sources: which traffic actually plays ──
   const sources = [];
-  for (const dim of ["referrer_domain", "utm_source", "utm_medium", "campaign", "country", "browser", "mobile"]) {
+  for (const dim of ["referrer_domain", "utm_source", "utm_medium", "campaign", "country", "browser", "mobile", "player"]) {
     const by = {};
     for (const s of games) (by[s[dim] === "" ? "(none)" : s[dim]] = by[s[dim] === "" ? "(none)" : s[dim]] || []).push(s);
     for (const [value, ss] of Object.entries(by)) sources.push({
@@ -408,6 +456,7 @@ const ENGAGED = b => b >= "3";
   console.log("\n" + calls + " API calls.");
   console.log(sessions.length + " sessions (" + nS + " touched the game), " + visitors.length + " visitors, " + completions.length + " goal completions (" + goalsSummary.length + " distinct goals).");
   for (const b of Object.keys(buckets).sort()) console.log("  " + b.padEnd(24) + String(buckets[b].length).padStart(6));
+  for (const p of ORDER) if (byPlayer[p]) console.log("  player: " + p.padEnd(28) + String(byPlayer[p].length).padStart(6));
   if (nS && !completions.length) console.warn("No goals found on any session: check raw/visitors-list_*.json for how this plan reports them.");
   console.log("Written to " + OUT);
 })().catch(e => { console.error("\n" + e.message); process.exit(1); });
